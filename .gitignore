@@ -1,0 +1,9 @@
+# Downloaded research corpora: never commit or redistribute raw audio/labels.
+/.env.local
+/data/raw/
+/data/restricted/
+/data/cache/
+
+# Resumable-download state and temporary archives.
+*.part
+*.aria2

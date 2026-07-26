@@ -1,0 +1,15 @@
+id: seoul-corpus
+source_url: https://www.openslr.org/113/
+license: CC-BY-NC-2.0
+expected_files:
+  - name: sound.tgz
+    bytes: 2589900202
+  - name: label.tgz
+    bytes: 57779067
+  - name: readme.tgz
+    bytes: 27530017
+downloaded_for: research_only_korean_phone_alignment_and_phonological_evaluation
+storage: data/raw/research-noncommercial/seoul-corpus/
+restrictions:
+  - Non-commercial research only.
+  - Do not use in a commercial model or redistribute the raw files.

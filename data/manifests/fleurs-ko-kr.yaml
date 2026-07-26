@@ -1,0 +1,16 @@
+id: google-fleurs-ko-kr
+source_repository: https://huggingface.co/datasets/google/fleurs
+source_path: data/ko_kr/audio/
+license: CC-BY-4.0
+expected_files:
+  - name: train.tar.gz
+    bytes: 1420236944
+  - name: dev.tar.gz
+    bytes: 126162634
+  - name: test.tar.gz
+    bytes: 214425558
+downloaded_for: external_native_korean_asr_alignment_evaluation
+storage: data/raw/open/fleurs-ko-kr/
+notes:
+  - Preserve Google FLEURS attribution in research outputs.
+  - Keep as an external evaluation source; do not use it as L2 pronunciation-error supervision.

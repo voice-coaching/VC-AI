@@ -1,0 +1,48 @@
+access: restricted_approval_required
+publisher: AI Hub / NIA
+storage: data/restricted/aihub/
+handling:
+  - Keep raw audio, transcripts, TextGrid files, and metadata out of Git.
+  - Do not upload to external LLMs, public repositories, or overseas storage without written permission.
+  - Preserve the AI Hub source attribution and dataset version in every experiment run.
+datasets:
+  - id: 71490
+    name: 교육용 중·일어 모국어 사용자의 한국어 음성 데이터
+    url: https://aihub.or.kr/aihubdata/data/view.do?dataSetSn=71490
+    priority: 1
+    hours: 1006.2
+    initial_component: 발음 문항
+    selected_file_keys:
+      - 475431 # TS_pronunciation_sound_1.zip
+      - 475432 # TS_pronunciation_sound_2.zip
+      - 475434 # TL_pronunciation_lab.zip
+      - 475435 # TL_pronunciation_tag.zip
+      - 475437 # VS_pronunciation_sound.zip
+      - 475439 # VL_pronunciation_lab.zip
+      - 475440 # VL_pronunciation_tag.zip
+    selected_size_gb_approx: 69.1
+  - id: 71469
+    name: 교육용 영어 모국어 사용자의 한국어 음성 데이터
+    url: https://aihub.or.kr/aihubdata/data/view.do?dataSetSn=71469
+    priority: 2
+    hours: 1029.8
+    initial_component: 발음 문항
+  - id: 71479
+    name: 교육용 기타 아시아어 모국어 사용자의 한국어 음성 데이터
+    url: https://aihub.or.kr/aihubdata/data/view.do?dataSetSn=71479
+    priority: 3
+    hours: 1500
+    initial_component: 발음 문항
+  - id: 71489
+    name: 교육용 유럽어 모국어 사용자의 한국어 음성 데이터
+    url: https://aihub.or.kr/aihubdata/data/view.do?dataSetSn=71489
+    priority: 4
+    hours: 1538.5
+    initial_component: 발음 문항
+  - id: 505
+    name: 인공지능 학습을 위한 외국인 한국어 발화 음성 데이터
+    url: https://aihub.or.kr/aihubdata/data/view.do?dataSetSn=505
+    priority: 5
+    hours: 4302
+    initial_component: 읽기 발화
+status: awaiting_account_login_and_data_use_approval

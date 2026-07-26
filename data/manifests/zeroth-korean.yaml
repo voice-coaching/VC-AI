@@ -1,0 +1,11 @@
+id: zeroth-korean
+version: v1
+source_url: https://www.openslr.org/resources/40/zeroth_korean.tar.gz
+publisher: OpenSLR / Zeroth Project
+license: CC-BY-4.0
+expected_bytes: 10339720618
+downloaded_for: native_korean_asr_alignment_baseline
+storage: data/raw/open/zeroth-korean/
+notes:
+  - Keep source attribution in papers, demos, and derived documentation.
+  - Do not use this corpus as L2 pronunciation-error supervision.
