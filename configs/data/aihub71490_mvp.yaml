@@ -1,0 +1,90 @@
+dataset:
+  id: aihub_71490
+  restricted: true
+  raw_root: data/restricted/aihub/dataset-71490
+  processed_root: data/processed/aihub71490
+  manifest_root: artifacts/manifests
+
+sources:
+  speech:
+    json_patterns:
+      - "**/extracted/TL_Speech_lab/*.json"
+      - "**/extracted/VL_Speech_lab/*.json"
+    wav_patterns:
+      - "**/Training/01.원천데이터/extracted/*.wav"
+      - "**/Validation/01.원천데이터/extracted/**/*.wav"
+  pronunciation:
+    json_patterns:
+      - "**/extracted/TL_pronunciation_lab/*.json"
+      - "**/extracted/VL_pronunciation_lab/*.json"
+    textgrid_patterns:
+      - "**/extracted/TL_pronunciation_tag/*.TextGrid"
+      - "**/extracted/VL_pronunciation_tag/*.TextGrid"
+    wav_patterns:
+      - "**/Training/01.원천데이터/extracted_pronunciation/**/*.wav"
+      - "**/Validation/01.원천데이터/extracted_pronunciation/**/*.wav"
+
+parsing:
+  encoding: utf-8
+  join_key: file_stem
+  trust_wav_header_byte_rate: false
+  duration_source: decoded_sample_count
+  target_phone_source: pronunciation_json
+  realized_phone_source: pronunciation_textgrid
+  interval_match:
+    method: max_temporal_overlap
+    tolerance_ms: 30
+    min_overlap_ratio: 0.50
+    preserve_one_to_many: true
+    unmatched_target_as_deletion: true
+    unmatched_realized_as_insertion: true
+
+derived_audio:
+  preserve_original: true
+  prosody:
+    sample_rate: 48000
+    channels: 1
+    normalize_loudness: false
+  ssl:
+    sample_rate: 16000
+    channels: 1
+    normalize_loudness: false
+
+split:
+  group_key: UserID
+  ratios:
+    train: 0.50
+    dev: 0.10
+    stack: 0.10
+    calibration: 0.10
+    locked_test: 0.20
+  stratify:
+    - language
+    - gender
+    - proficiency
+    - error_presence
+  challenge_slices:
+    - prompt_disjoint
+    - rare_language_code
+    - other_gender
+    - long_duration
+  exclude_from_primary_training:
+    language_codes: [ZA]
+    genders: [O]
+  keep_excluded_as_audit_only: true
+  preserve_natural_prevalence_in:
+    - dev
+    - stack
+    - calibration
+    - locked_test
+  train_sampling:
+    stratum_weight: inverse_sqrt
+    max_weight: 3.0
+    max_rare_error_oversampling_ratio: 5.0
+  seed: 42
+
+privacy:
+  store_relative_paths: true
+  hash_external_speaker_id: true
+  include_raw_transcript_in_git_artifact: false
+  commit_raw_data: false

@@ -3,6 +3,10 @@
 /data/raw/
 /data/restricted/
 /data/cache/
+/data/processed/
+/artifacts/
+/models/
+/checkpoints/
 
 # Resumable-download state and temporary archives.
 *.part
