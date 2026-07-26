@@ -12,7 +12,7 @@ datasets:
     priority: 1
     hours: 1006.2
     initial_component: 발음 문항
-    selected_file_keys:
+    pronunciation_mvp_file_keys:
       - 475431 # TS_pronunciation_sound_1.zip
       - 475432 # TS_pronunciation_sound_2.zip
       - 475434 # TL_pronunciation_lab.zip
@@ -20,29 +20,73 @@ datasets:
       - 475437 # VS_pronunciation_sound.zip
       - 475439 # VL_pronunciation_lab.zip
       - 475440 # VL_pronunciation_tag.zip
-    selected_size_gb_approx: 69.1
+    reproduce_current_full_file_keys:
+      - 475429 # TS_Speech_sound_1.zip
+      - 475430 # TS_Speech_sound_2.zip
+      - 475431 # TS_pronunciation_sound_1.zip
+      - 475432 # TS_pronunciation_sound_2.zip
+      - 475433 # TL_Speech_lab.zip
+      - 475434 # TL_pronunciation_lab.zip
+      - 475435 # TL_pronunciation_tag.zip
+      - 475436 # VS_Speech_sound.zip
+      - 475437 # VS_pronunciation_sound.zip
+      - 475438 # VL_Speech_lab.zip
+      - 475439 # VL_pronunciation_lab.zip
+      - 475440 # VL_pronunciation_tag.zip
+    pronunciation_download_size_gb_approx: 69.1
+    current_verified_audio:
+      files: 437841
+      uncompressed_gib: 291.91
   - id: 71469
     name: 교육용 영어 모국어 사용자의 한국어 음성 데이터
     url: https://aihub.or.kr/aihubdata/data/view.do?dataSetSn=71469
     priority: 2
     hours: 1029.8
     initial_component: 발음 문항
+    pronunciation_mvp_file_keys:
+      - 475406 # TS_pronunciation_sound_1.zip
+      - 475407 # TS_pronunciation_sound_2.zip
+      - 475409 # TL_pronunciation_lab.zip
+      - 475410 # TL_pronunciation_tag.zip
+      - 475412 # VS_pronunciation_sound.zip
+      - 475414 # VL_pronunciation_lab.zip
+      - 475415 # VL_pronunciation_tag.zip
   - id: 71479
     name: 교육용 기타 아시아어 모국어 사용자의 한국어 음성 데이터
     url: https://aihub.or.kr/aihubdata/data/view.do?dataSetSn=71479
     priority: 3
     hours: 1500
     initial_component: 발음 문항
+    pronunciation_mvp_file_keys:
+      - 475444 # TS_pronunciation_sound_1.zip
+      - 475445 # TS_pronunciation_sound_2.zip
+      - 475447 # TL_pronunciation_lab.zip
+      - 475448 # TL_pronunciation_tag.zip
+      - 475450 # VS_pronunciation_sound.zip
+      - 475452 # VL_pronunciation_lab.zip
+      - 475453 # VL_pronunciation_tag.zip
   - id: 71489
     name: 교육용 유럽어 모국어 사용자의 한국어 음성 데이터
     url: https://aihub.or.kr/aihubdata/data/view.do?dataSetSn=71489
     priority: 4
     hours: 1538.5
     initial_component: 발음 문항
+    pronunciation_mvp_file_keys:
+      - 475419 # TS_pronunciation_sound_1.zip
+      - 475420 # TS_pronunciation_sound_2.zip
+      - 475422 # TL_pronunciation_lab.zip
+      - 475423 # TL_pronunciation_tag.zip
+      - 475425 # VS_pronunciation_sound.zip
+      - 475427 # VL_pronunciation_lab.zip
+      - 475428 # VL_pronunciation_tag.zip
   - id: 505
     name: 인공지능 학습을 위한 외국인 한국어 발화 음성 데이터
     url: https://aihub.or.kr/aihubdata/data/view.do?dataSetSn=505
     priority: 5
     hours: 4302
     initial_component: 읽기 발화
-status: awaiting_account_login_and_data_use_approval
+inventory_snapshot:
+  captured_at: 2026-07-25
+  aihubshell_version: 25.09.19-v0.6
+  rule: Always rerun list mode because file keys can change after a dataset revision.
+status: dataset-71490-downloaded-and-verified_other-datasets-not-downloaded

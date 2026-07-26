@@ -1,24 +1,33 @@
 id: kss
 source_repository: https://huggingface.co/datasets/Bingsu/KSS_Dataset
+source_revision: 48fdfd7ab1dbc1a62e4e8a8b9f4c360259d51d3c
 source_path: data/
 license: CC-BY-NC-SA-4.0
 expected_files:
   - name: train-00000-of-00007.parquet
     bytes: 556061209
+    sha256: 31ad648360f30ac4a21e89a22ee88ca18198a5a57e184afd63c2cc285190a214
   - name: train-00001-of-00007.parquet
     bytes: 600367995
+    sha256: 191fc43952838bce02c6f727962fb64f854d59eed8fa4f308ac1ff3bf66c0d6d
   - name: train-00002-of-00007.parquet
     bytes: 585576771
+    sha256: 2e016c5d4754b9b57fba3923ab30eb47910715f932b525a40f69625fe101ec02
   - name: train-00003-of-00007.parquet
     bytes: 497397025
+    sha256: c058952c8ea84071467b2bf86cf951bf129a94ca794101d8be1ca51a25a934e4
   - name: train-00004-of-00007.parquet
     bytes: 494763248
+    sha256: 9395a49de11ed44e361459d9dbf707653ef15b947ab49eaf9ea0967290ee35ff
   - name: train-00005-of-00007.parquet
     bytes: 530129801
+    sha256: f2865c8483ad4ba34e65cb4ea18d0dfb4c87be2902c01c42170d831fbe20ee88
   - name: train-00006-of-00007.parquet
     bytes: 544410674
+    sha256: 89e1fb82efaac11cda47642e94280f5369172d4da029bef333f8e0049c76c2dd
 downloaded_for: research_only_native_korean_tts_baseline
 storage: data/raw/research-noncommercial/kss/
+automation_catalog: configs/data/native_korean_corpora.psd1
 restrictions:
   - Non-commercial research only.
   - Keep this corpus and any derivative experimental artifacts out of a commercial release path.

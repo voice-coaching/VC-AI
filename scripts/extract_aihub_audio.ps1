@@ -1,5 +1,5 @@
 param(
-    [string]$DatasetRoot = (Join-Path $PSScriptRoot '..\data\restricted\aihub\dataset-71490'),
+    [string]$DatasetRoot = (Join-Path $PSScriptRoot '../data/restricted/aihub/dataset-71490'),
     [switch]$DeleteArchiveAfterVerify
 )
 
@@ -9,12 +9,15 @@ if (-not (Test-Path -LiteralPath $datasetPath -PathType Container)) {
     throw "Dataset root does not exist: $datasetPath"
 }
 
-$tar = Join-Path $env:SystemRoot 'System32\tar.exe'
+$tarCommand = Get-Command tar -ErrorAction Stop
+$tar = $tarCommand.Source
 $logRoot = Join-Path $datasetPath 'extraction-logs'
 New-Item -ItemType Directory -Force -Path $logRoot | Out-Null
 Add-Type -AssemblyName System.IO.Compression.FileSystem
 
 $archiveOrder = @(
+    'TS_Speech_sound_1.zip',
+    'TS_Speech_sound_2.zip',
     'TS_pronunciation_sound_1.zip',
     'TS_pronunciation_sound_2.zip',
     'VS_pronunciation_sound.zip',
@@ -46,20 +49,139 @@ function Get-SafeEntryPath {
 
     $destinationFull = [System.IO.Path]::GetFullPath($Destination)
     $target = [System.IO.Path]::GetFullPath((Join-Path $destinationFull $relative))
-    $prefix = $destinationFull.TrimEnd('\') + '\'
+    $separator = [System.IO.Path]::DirectorySeparatorChar
+    $prefix = $destinationFull.TrimEnd('\', '/') + $separator
     if (-not $target.StartsWith($prefix, [System.StringComparison]::OrdinalIgnoreCase)) {
         throw "Archive entry escapes destination: $EntryName"
     }
     return $target
 }
 
+function Get-ArchiveVerification {
+    param(
+        [System.IO.FileInfo]$Archive,
+        [string]$Destination
+    )
+
+    $destinationFull = [System.IO.Path]::GetFullPath($Destination)
+    $separator = [System.IO.Path]::DirectorySeparatorChar
+    $destinationPrefix = $destinationFull.TrimEnd('\', '/') + $separator
+    $fileInventory = [System.Collections.Generic.Dictionary[string, int64]]::new(
+        [System.StringComparer]::OrdinalIgnoreCase
+    )
+    foreach ($file in Get-ChildItem -LiteralPath $destinationFull -File -Recurse) {
+        $relativeFile = $file.FullName.Substring($destinationPrefix.Length).Replace('\', '/')
+        $fileInventory[$relativeFile] = $file.Length
+    }
+
+    $zipFile = [System.IO.Compression.ZipFile]::OpenRead($Archive.FullName)
+    try {
+        [int64]$expectedBytes = 0
+        [int64]$verifiedBytes = 0
+        [int64]$requiredAdditionalBytes = 0
+        $expectedCount = 0
+        $verifiedCount = 0
+        $missingCount = 0
+        $sizeMismatchCount = 0
+
+        foreach ($entry in $zipFile.Entries) {
+            if ([string]::IsNullOrEmpty($entry.Name)) {
+                continue
+            }
+
+            $expectedCount++
+            $expectedBytes += $entry.Length
+            Get-SafeEntryPath -Destination $Destination -EntryName $entry.FullName | Out-Null
+            $relativeEntry = $entry.FullName.TrimStart('/', '\').Replace('\', '/')
+            [int64]$actualLength = 0
+            if (-not $fileInventory.TryGetValue($relativeEntry, [ref]$actualLength)) {
+                $missingCount++
+                $requiredAdditionalBytes += $entry.Length
+                continue
+            }
+
+            if ($actualLength -ne $entry.Length) {
+                $sizeMismatchCount++
+                if ($entry.Length -gt $actualLength) {
+                    $requiredAdditionalBytes += ($entry.Length - $actualLength)
+                }
+                continue
+            }
+
+            $verifiedCount++
+            $verifiedBytes += $actualLength
+        }
+    }
+    finally {
+        $zipFile.Dispose()
+    }
+
+    return [pscustomobject]@{
+        Complete = (
+            $verifiedCount -eq $expectedCount -and
+            $verifiedBytes -eq $expectedBytes
+        )
+        ExpectedCount = $expectedCount
+        ExpectedBytes = $expectedBytes
+        VerifiedCount = $verifiedCount
+        VerifiedBytes = $verifiedBytes
+        MissingCount = $missingCount
+        SizeMismatchCount = $sizeMismatchCount
+        RequiredAdditionalBytes = $requiredAdditionalBytes
+    }
+}
+
+function Write-CompletionMarker {
+    param(
+        [System.IO.FileInfo]$Archive,
+        [string]$Destination,
+        [pscustomobject]$Verification,
+        [string]$Marker
+    )
+
+    $markerData = [ordered]@{
+        archive = $Archive.Name
+        destination = $Destination
+        files = $Verification.VerifiedCount
+        bytes = $Verification.VerifiedBytes
+        archive_bytes = $Archive.Length
+        verified_at = (Get-Date -Format o)
+    }
+    $markerData | ConvertTo-Json | Set-Content -LiteralPath $Marker -Encoding utf8
+}
+
+$archiveLookup = @{}
+$packageRoots = @(Get-ChildItem -LiteralPath $datasetPath -Directory)
+foreach ($packageRoot in $packageRoots) {
+    $releaseRoots = @(Get-ChildItem -LiteralPath $packageRoot.FullName -Directory)
+    foreach ($releaseRoot in $releaseRoots) {
+        foreach ($splitName in @('Training', 'Validation')) {
+            $splitDirectory = Join-Path $releaseRoot.FullName $splitName
+            if (-not (Test-Path -LiteralPath $splitDirectory -PathType Container)) {
+                continue
+            }
+
+            foreach ($dataDirectory in Get-ChildItem -LiteralPath $splitDirectory -Directory) {
+                foreach ($archive in Get-ChildItem -LiteralPath $dataDirectory.FullName -File -Filter '*.zip') {
+                    if (-not ($archiveOrder -contains $archive.Name)) {
+                        continue
+                    }
+                    if ($archiveLookup.ContainsKey($archive.Name)) {
+                        throw "Duplicate archive name found: $($archive.Name)"
+                    }
+                    $archiveLookup[$archive.Name] = $archive
+                }
+            }
+        }
+    }
+}
+
 foreach ($archiveName in $archiveOrder) {
-    $archive = Get-ChildItem -LiteralPath $datasetPath -Recurse -File -Filter $archiveName |
-        Select-Object -First 1
-    if (-not $archive) {
+    if (-not $archiveLookup.ContainsKey($archiveName)) {
         Write-Output "SKIP archive not found: $archiveName"
         continue
     }
+    $archive = $archiveLookup[$archiveName]
 
     $destination = Get-DestinationPath -Archive $archive
     $destinationFull = [System.IO.Path]::GetFullPath($destination)
@@ -78,22 +200,30 @@ foreach ($archiveName in $archiveOrder) {
         continue
     }
 
-    $zipFile = [System.IO.Compression.ZipFile]::OpenRead($archive.FullName)
-    try {
-        $entries = @($zipFile.Entries | Where-Object { -not [string]::IsNullOrEmpty($_.Name) })
-        $expectedCount = $entries.Count
-        $expectedBytes = ($entries | Measure-Object -Property Length -Sum).Sum
-    }
-    finally {
-        $zipFile.Dispose()
+    Write-Output "CHECKING_EXISTING: $archiveName"
+    $verification = Get-ArchiveVerification -Archive $archive -Destination $destinationFull
+    if ($verification.Complete) {
+        Write-CompletionMarker `
+            -Archive $archive `
+            -Destination $destinationFull `
+            -Verification $verification `
+            -Marker $marker
+        Write-Output "COMPLETE_EXISTING: $archiveName files=$($verification.VerifiedCount) bytes=$($verification.VerifiedBytes)"
+
+        if ($DeleteArchiveAfterVerify) {
+            Remove-Item -LiteralPath $archive.FullName -Force
+            Write-Output "REMOVED verified archive: $archiveName"
+        }
+        continue
     }
 
     $drive = [System.IO.DriveInfo]::new(([System.IO.Path]::GetPathRoot($destinationFull)))
-    if ($drive.AvailableFreeSpace -lt ($expectedBytes + 2GB)) {
-        throw "Insufficient free space for $archiveName. Need at least $([Math]::Round(($expectedBytes + 2GB) / 1GB, 2)) GiB, available $([Math]::Round($drive.AvailableFreeSpace / 1GB, 2)) GiB."
+    $minimumFreeBytes = $verification.RequiredAdditionalBytes + 2GB
+    if ($drive.AvailableFreeSpace -lt $minimumFreeBytes) {
+        throw "Insufficient free space for $archiveName. Need at least $([Math]::Round($minimumFreeBytes / 1GB, 2)) GiB, available $([Math]::Round($drive.AvailableFreeSpace / 1GB, 2)) GiB."
     }
 
-    Write-Output "EXTRACTING: $archiveName files=$expectedCount bytes=$expectedBytes"
+    Write-Output "EXTRACTING: $archiveName expected_files=$($verification.ExpectedCount) verified_files=$($verification.VerifiedCount) missing_files=$($verification.MissingCount) size_mismatches=$($verification.SizeMismatchCount) additional_bytes=$($verification.RequiredAdditionalBytes)"
     $stderr = Join-Path $logRoot ($archive.BaseName + '.audio-extraction.stderr.log')
     $previousErrorActionPreference = $ErrorActionPreference
     $ErrorActionPreference = 'Continue'
@@ -105,44 +235,17 @@ foreach ($archiveName in $archiveOrder) {
     }
 
     Write-Output "VERIFYING: $archiveName"
-    $zipFile = [System.IO.Compression.ZipFile]::OpenRead($archive.FullName)
-    try {
-        $verifiedCount = 0
-        [int64]$verifiedBytes = 0
-        foreach ($entry in $zipFile.Entries) {
-            if ([string]::IsNullOrEmpty($entry.Name)) {
-                continue
-            }
-            $target = Get-SafeEntryPath -Destination $destinationFull -EntryName $entry.FullName
-            if (-not (Test-Path -LiteralPath $target -PathType Leaf)) {
-                throw "Missing extracted file for $archiveName : $($entry.FullName)"
-            }
-            $actualLength = (Get-Item -LiteralPath $target).Length
-            if ($actualLength -ne $entry.Length) {
-                throw "Size mismatch for $archiveName : $($entry.FullName), expected $($entry.Length), actual $actualLength"
-            }
-            $verifiedCount++
-            $verifiedBytes += $actualLength
-        }
-    }
-    finally {
-        $zipFile.Dispose()
+    $verification = Get-ArchiveVerification -Archive $archive -Destination $destinationFull
+    if (-not $verification.Complete) {
+        throw "Verification failed for $archiveName. Missing=$($verification.MissingCount), size mismatches=$($verification.SizeMismatchCount), verified=$($verification.VerifiedCount)/$($verification.ExpectedCount)"
     }
 
-    if ($verifiedCount -ne $expectedCount -or $verifiedBytes -ne $expectedBytes) {
-        throw "Verification totals failed for $archiveName"
-    }
-
-    $markerData = [ordered]@{
-        archive = $archiveName
-        destination = $destinationFull
-        files = $verifiedCount
-        bytes = $verifiedBytes
-        archive_bytes = $archive.Length
-        verified_at = (Get-Date -Format o)
-    }
-    $markerData | ConvertTo-Json | Set-Content -LiteralPath $marker -Encoding utf8
-    Write-Output "COMPLETE: $archiveName files=$verifiedCount bytes=$verifiedBytes"
+    Write-CompletionMarker `
+        -Archive $archive `
+        -Destination $destinationFull `
+        -Verification $verification `
+        -Marker $marker
+    Write-Output "COMPLETE: $archiveName files=$($verification.VerifiedCount) bytes=$($verification.VerifiedBytes)"
 
     if ($DeleteArchiveAfterVerify) {
         Remove-Item -LiteralPath $archive.FullName -Force

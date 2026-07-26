@@ -8,6 +8,10 @@
 /models/
 /checkpoints/
 
+# Local Python build/cache artifacts.
+__pycache__/
+*.py[cod]
+
 # Resumable-download state and temporary archives.
 *.part
 *.aria2

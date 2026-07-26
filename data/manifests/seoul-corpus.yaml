@@ -4,12 +4,18 @@ license: CC-BY-NC-2.0
 expected_files:
   - name: sound.tgz
     bytes: 2589900202
+    gzip_crc32: 30b6be1e
   - name: label.tgz
     bytes: 57779067
+    gzip_crc32: 90a61aa0
   - name: readme.tgz
     bytes: 27530017
+    gzip_crc32: daad9b38
 downloaded_for: research_only_korean_phone_alignment_and_phonological_evaluation
 storage: data/raw/research-noncommercial/seoul-corpus/
+automation_catalog: configs/data/native_korean_corpora.psd1
 restrictions:
   - Non-commercial research only.
   - Do not use in a commercial model or redistribute the raw files.
+notes:
+  - OpenSLR does not publish SHA-256; verification records a locally computed SHA-256 after byte, gzip CRC32, and full tar checks pass.

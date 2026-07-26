@@ -1,9 +1,10 @@
 param(
-    [string]$DatasetRoot = (Join-Path $PSScriptRoot '..\data\restricted\aihub\dataset-71490')
+    [string]$DatasetRoot = (Join-Path $PSScriptRoot '../data/restricted/aihub/dataset-71490')
 )
 
 $ErrorActionPreference = 'Stop'
-$tar = Join-Path $env:SystemRoot 'System32\tar.exe'
+$tarCommand = Get-Command tar -ErrorAction Stop
+$tar = $tarCommand.Source
 $logRoot = Join-Path $DatasetRoot 'extraction-logs'
 New-Item -ItemType Directory -Force -Path $logRoot | Out-Null
 

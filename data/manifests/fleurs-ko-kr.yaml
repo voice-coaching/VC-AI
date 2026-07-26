@@ -1,16 +1,49 @@
 id: google-fleurs-ko-kr
 source_repository: https://huggingface.co/datasets/google/fleurs
-source_path: data/ko_kr/audio/
+source_revision: 70bb2e84b976b7e960aa89f1c648e09c59f894dd
+source_paths:
+  - data/ko_kr/audio/
+  - data/ko_kr/*.tsv
+  - README.md
 license: CC-BY-4.0
 expected_files:
   - name: train.tar.gz
     bytes: 1420236944
+    sha256: 985d45a1ab3967f6851761bac8f7f325360eba3381ffed96f9ce920d3c24e9d9
+    paired_tsv: train.tsv
+    expected_rows: 2307
   - name: dev.tar.gz
     bytes: 126162634
+    sha256: 496edcb5323e75b4a2830f5b5623684a0baf86d3728101853fd4fe503372157c
+    paired_tsv: dev.tsv
+    expected_rows: 226
   - name: test.tar.gz
     bytes: 214425558
+    sha256: 3489e529f2aad18d3357b746c5f955941d258b79dc60d8a102d5bced2a223184
+    paired_tsv: test.tsv
+    expected_rows: 382
+  - name: train.tsv
+    bytes: 1249277
+    sha256: 5a943f1fdbb8534c09ac8a81d94418c0f04b030d56a1485ec72f57a9a34d7a58
+    expected_rows: 2307
+  - name: dev.tsv
+    bytes: 124920
+    sha256: 6b236de107c6a1672233f6d710d26adfdb55570a3e6e35aca9dc4ff2be01cea4
+    expected_rows: 226
+  - name: test.tsv
+    bytes: 211844
+    sha256: cf2f7c8765f6203e3c46ef620d5e936d3f331b6e8865455557777dd1347517f5
+    expected_rows: 382
+  - name: README.source.md
+    bytes: 385614
+    sha256: 688f79f2a5c731af3796e9f683eb02f9b3f09d040decd8c5625d0f37098e71c6
+    required_text:
+      - cc-by-4.0
+      - Creative Commons license (CC-BY)
 downloaded_for: external_native_korean_asr_alignment_evaluation
 storage: data/raw/open/fleurs-ko-kr/
+automation_catalog: configs/data/native_korean_corpora.psd1
 notes:
   - Preserve Google FLEURS attribution in research outputs.
   - Keep as an external evaluation source; do not use it as L2 pronunciation-error supervision.
+  - TSV rows and archive WAV basenames must match exactly before completion.

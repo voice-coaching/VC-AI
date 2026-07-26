@@ -4,8 +4,11 @@ source_url: https://www.openslr.org/resources/40/zeroth_korean.tar.gz
 publisher: OpenSLR / Zeroth Project
 license: CC-BY-4.0
 expected_bytes: 10339720618
+gzip_crc32: 927b7f23
 downloaded_for: native_korean_asr_alignment_baseline
 storage: data/raw/open/zeroth-korean/
+automation_catalog: configs/data/native_korean_corpora.psd1
 notes:
   - Keep source attribution in papers, demos, and derived documentation.
   - Do not use this corpus as L2 pronunciation-error supervision.
+  - A legacy BITS BIT*.tmp file is adopted only after exact byte, gzip CRC32, full tar, and local SHA-256 verification.
