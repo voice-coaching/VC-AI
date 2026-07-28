@@ -1,0 +1,9 @@
+seed: 42
+base_model: facebook/wav2vec2-xls-r-300m
+base_model_revision: null
+enabled: false
+reason: >-
+  Full training is disabled until the data audit proves that the configured
+  target sequence is an observed pronunciation transcription and smoke
+  evaluation passes.
+
