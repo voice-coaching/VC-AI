@@ -1,0 +1,66 @@
+version: textgrid-observed-phone-v0-draft
+status: review_required
+purpose: >-
+  Conservative candidate policy for converting AI Hub TextGrid phone tiers
+  into observed-phone CTC targets. This file does not authorize training.
+
+inventory:
+  - spn
+  - ㄱ
+  - ㄲ
+  - ㄴ
+  - ㄷ
+  - ㄸ
+  - ㄹ
+  - ㅁ
+  - ㅂ
+  - ㅃ
+  - ㅅ
+  - ㅆ
+  - ㅇ
+  - ㅈ
+  - ㅉ
+  - ㅊ
+  - ㅋ
+  - ㅌ
+  - ㅍ
+  - ㅎ
+  - ㅏ
+  - ㅐ
+  - ㅑ
+  - ㅒ
+  - ㅓ
+  - ㅔ
+  - ㅕ
+  - ㅖ
+  - ㅗ
+  - ㅘ
+  - ㅙ
+  - ㅚ
+  - ㅛ
+  - ㅜ
+  - ㅝ
+  - ㅞ
+  - ㅟ
+  - ㅠ
+  - ㅡ
+  - ㅢ
+  - ㅣ
+
+rules:
+  empty_interval: drop
+  exact_ascii_hyphen: drop_as_expected_phone_deletion_placeholder
+  whitespace_separated_known_phones: split
+  concatenated_known_single_codepoint_phones: split
+  exact_known_phone: preserve
+  unresolved_label: reject_entire_utterance
+
+aliases: {}
+forbidden_implicit_actions:
+  - Hangul syllable to phone conversion
+  - punctuation stripping
+  - SPN case folding
+  - g2p substitution
+  - confidence generation
+
+training_allowed: false
