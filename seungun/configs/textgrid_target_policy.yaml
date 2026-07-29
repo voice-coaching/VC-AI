@@ -1,8 +1,9 @@
-version: textgrid-observed-phone-v0-draft
-status: review_required
+version: textgrid-observed-phone-v1
+status: automated_preparation_complete_manual_audit_required
 purpose: >-
-  Conservative candidate policy for converting AI Hub TextGrid phone tiers
-  into observed-phone CTC targets. This file does not authorize training.
+  Conservative policy for converting AI Hub TextGrid phone tiers into
+  observed-phone CTC targets. Automated preparation is complete, but this
+  file does not authorize training before independent manual audit.
 
 inventory:
   - spn
@@ -62,5 +63,18 @@ forbidden_implicit_actions:
   - SPN case folding
   - g2p substitution
   - confidence generation
+
+exclusions:
+  unresolved_label: reject_entire_utterance
+  missing_phone_tier: reject_entire_utterance
+  empty_target_after_normalization: reject_entire_utterance
+  source_qc_flag: reject_entire_utterance
+  duplicate_pcm: keep_first_only
+  audio_longer_than_20_seconds: reject_entire_utterance
+
+manual_alignment_gate:
+  required_samples: 240
+  minimum_accuracy: 0.95
+  status: pending
 
 training_allowed: false

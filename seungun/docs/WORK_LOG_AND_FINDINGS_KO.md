@@ -226,3 +226,178 @@ artifacts/textgrid_special_cases.jsonl
 
 현재 품질 검사는 pytest 11개, Ruff lint/format, mypy strict 모두
 통과했다.
+
+## 11. 전체 학습 준비 자동화
+
+사용자의 전체 학습 진행 요청에 따라 자동화할 수 있는 준비 단계를
+수행했다. 다만 독립 수동 정렬 감사를 통과하기 전에는 smoke 및 전체
+학습을 시작하지 않도록 gate를 유지했다.
+
+### 11.1 확정한 TextGrid target 정책
+
+`configs/textgrid_target_policy.yaml`을
+`textgrid-observed-phone-v1`으로 갱신했다.
+
+- 빈 interval: 시간 공백으로 보고 target에서 제외
+- 정확한 ASCII `-`: 기대 음소 삭제 placeholder로 보고 제외
+- 공백으로 구분된 알려진 자모: 개별 phone으로 분리
+- 알려진 단일 자모가 붙어 있는 label: 개별 phone으로 분리
+- `spn`: 관측 잡음/미지 phone으로 보존
+- 그 밖의 미해결 label: 임의 교정하지 않고 발화 전체 제외
+- phone tier 누락, 정규화 후 빈 target, source QC flag: 발화 전체 제외
+- 동일 PCM: 첫 레코드만 보존
+- 20초 초과 발화: 메모리 안정성을 위해 제외
+
+완성형 음절 G2P, punctuation 제거, `SPN` case folding, 임의 alias는
+적용하지 않았다.
+
+### 11.2 CTC manifest 생성 결과
+
+기존 전체 raw manifest와 enriched Parquet를 같은 순서로 함께 읽어
+관측 발음 CTC manifest를 생성했다.
+
+| 항목 | 결과 |
+|---|---:|
+| 입력 발화 | 322,380 |
+| 채택 발화 | 316,896 |
+| 제외 발화 | 5,484 |
+| train | 217,176발화 / 1,263명 |
+| dev | 34,424발화 / 197명 |
+| test | 65,296발화 / 370명 |
+| train/dev/test 화자 교집합 | 모든 조합 0 |
+| 채택 오디오 시간 | 약 303.59시간 |
+
+기존 5-way split은 다음과 같이 CTC 3-way split으로 보수적으로
+재사용했다.
+
+```text
+train + stack + calibration -> train
+dev                         -> dev
+locked_test                 -> test
+```
+
+`locked_test`를 학습 또는 모델 선택에 합치지 않았다.
+
+제외 내역:
+
+```text
+audio_too_long                 3,002
+unresolved_textgrid_label      1,354
+source_qc_flag                 1,071
+empty_observed_phone_sequence     45
+duplicate_pcm                     12
+```
+
+생성 경로:
+
+```text
+manifest/train.jsonl
+manifest/dev.jsonl
+manifest/test.jsonl
+manifest/speaker_split.json
+manifest/vocab.json
+manifest/phone_inventory.json
+manifest/preparation_report.json
+```
+
+`manifest/`는 제한 데이터에서 파생된 로컬 산출물이므로 Git에서 제외한다.
+
+### 11.3 vocabulary와 processor
+
+Training 관측 target만으로 41개 phone과 특수 토큰 2개를 구성했다.
+
+```text
+vocab size: 43
+<pad>: 0, CTC blank
+<unk>: 1
+word boundary token: 사용하지 않음
+```
+
+Transformers tokenizer가 `word_delimiter_token=None`을 문자열 `"None"`으로
+추가하는 동작을 발견했다. vocab 크기가 몰래 44로 증가하지 않도록 이미
+존재하는 `<pad>`를 delimiter 자리에도 지정했고, phone decode는 명시적인
+ID-to-token 변환만 사용하도록 했다. 저장 후 processor vocabulary 재로딩
+일치 검증을 통과했다.
+
+Processor 경로:
+
+```text
+processor/
+```
+
+### 11.4 base model 고정과 forward 검증
+
+Hugging Face의 현재 `main`을 조회해 다음 revision을 고정했다.
+
+```text
+model: facebook/wav2vec2-xls-r-300m
+revision: 1a640f32ac3e39899438a2931f9924c02f080a54
+```
+
+가중치는 저장소 공용 Hugging Face cache에 내려받았다. 43개 출력 head는
+새로 초기화되며 feature encoder는 freeze하도록 학습 코드에 반영했다.
+
+첫 검증에서 모델 전체를 BF16으로 직접 변환하고 FP32 입력을 넣어 dtype
+mismatch가 발생했다. 실제 학습 방식인 FP32 model과 CUDA BF16 autocast로
+다시 실행해 다음 결과를 확인했다.
+
+```text
+logits shape: (1, 49, 43)
+dtype: bfloat16
+finite: true
+peak CUDA allocation: 1,902,228,992 bytes
+```
+
+### 11.5 구현한 추가 코드
+
+- `src/korean_phone_ctc/data/ctc_manifest.py`
+  - 보수적 TextGrid target 정규화와 발화 채택/제외 판정
+- `src/korean_phone_ctc/training_utils.py`
+  - CTC greedy collapse, PER/S/D/I, 수동 감사 gate
+- `scripts/prepare_ctc_data.py`
+  - 전체 manifest, 분포, vocab, split 보고서 생성
+- `scripts/create_ctc_processor.py`
+  - 고정 vocab processor 생성과 재로딩 검증
+- `scripts/train_ctc.py`
+  - 같은 코드 경로의 smoke/full 학습, dev 선택, locked test 평가,
+    confusion matrix, 대표 예측, checkpoint 재로딩 검증
+- `tests/test_ctc_manifest.py`
+- `tests/test_training_utils.py`
+
+학습 스크립트는 수동 감사 결과 JSON의 `status=passed`와
+`alignment_accuracy>=0.95`를 확인하지 못하면 모델을 로드하기 전에
+종료한다.
+
+### 11.6 현재 품질 검사
+
+```text
+pytest: 17 passed
+Ruff lint: passed
+Ruff format: 25 files passed
+mypy strict: 12 source files, no errors
+```
+
+### 11.7 현재 중단 지점
+
+다음 worksheet의 240개 행은 모두 미검수 상태다.
+
+```text
+../data/processed/aihub71490/manifests/
+  aihub71490_manual_alignment_audit.tsv
+```
+
+확인 결과:
+
+```text
+reviewer_id: 240/240 빈 값
+alignment_correct: 240/240 빈 값
+maximum_boundary_error_ms: 240/240 빈 값
+```
+
+이 단계는 한국어 음성학/정렬 역량이 있는 독립 검수자가 실제 음성과
+TextGrid를 함께 확인해야 한다. 자동 분석을 독립 인간 검수로 대신 기록하지
+않았다. 미완료 G0 audit JSON을 smoke 명령에 전달했을 때 exit code 1로
+정상 차단되는 것도 확인했다.
+
+따라서 현재까지 smoke training, checkpoint 생성, PER 평가 및 전체
+학습은 시작되지 않았다.

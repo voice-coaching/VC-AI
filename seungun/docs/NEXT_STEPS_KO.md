@@ -2,119 +2,211 @@
 
 최종 갱신: 2026-07-29 (Asia/Seoul)
 
-## 현재 판정
+## 현재 상태
 
-현재 상태는 `LABEL_NOT_SUITABLE`이다. 이 판정은 JSON phones를 실제 관측
-발음 CTC target으로 사용하는 기존 계획에 대한 것이다. TextGrid phone
-tier를 정규화한 별도 target으로 사용할 수 있는지는 아직 검증되지 않았다.
+자동으로 수행할 수 있는 CTC 준비 작업은 완료됐다.
 
-## Phase 1: TextGrid 관측 target 적합성 감사
+- TextGrid 관측 target 보수적 정규화 정책 확정
+- 전체 322,380건 처리 및 부적합 발화 제외
+- 화자 비중첩 train/dev/test 생성
+- train 217,176 / dev 34,424 / test 65,296
+- 43-token vocabulary와 processor 생성
+- XLS-R-300M exact revision과 가중치 고정
+- smoke/full 공용 학습·평가 코드 구현
+- pytest/Ruff/mypy 통과
 
-목표는 TextGrid의 모든 phone label이 일관된 규칙으로 실제 관측 음소열로
-변환 가능한지 확인하는 것이다.
+현재 상태는 `MANUAL_ALIGNMENT_AUDIT_REQUIRED`다. smoke와 전체 학습은
+아직 시작하지 않았다.
 
-측정 항목:
+## 1. 최우선 작업: 독립 수동 정렬 감사
 
-- Training/Validation 전체 raw TextGrid label inventory와 빈도
-- `-` 삭제 placeholder의 수와 발화 비율
-- 공백으로 여러 음소가 묶인 label의 종류와 빈도
-- 빈 interval, `spn`, 비한글 label 및 미지 label
-- JSON 기대열과 정규화 TextGrid 관측열의 차이
-- error tag별 차이 유형
-- Training/Validation UserID 중복
-- 정규화 후 빈 target 및 CTC에 사용할 수 없는 target 수
-
-후보 정규화 정책은 감사 결과가 나온 뒤 확정한다.
+한국어 음성학 또는 음성 정렬 검수 역량이 있는 독립 검수자가 다음
+worksheet 240건을 완성해야 한다.
 
 ```text
-빈 TextGrid interval -> 시간 공백이므로 target에서 제외
-"-" -> 기대 음소 삭제 placeholder이므로 관측 target에서 제외
-"ㄱ ㅓ" 같은 공백 label -> 두 관측 음소로 분리할 후보
-"spn" -> 명시적 unknown/noise phone으로 유지할 후보
+data/processed/aihub71490/manifests/
+  aihub71490_manual_alignment_audit.tsv
 ```
 
-정책을 확정하기 전에는 processor나 manifest를 생성하지 않는다.
+각 행에서 반드시 채울 필드:
 
-### 2026-07-29 실행 상태
+```text
+reviewer_id
+alignment_correct
+maximum_boundary_error_ms
+notes (필요한 경우)
+```
 
-전체 322,380 matched 발화를 검사했다. 현재 결과는
-`artifacts/textgrid_target_audit.json`에 저장돼 있다.
+검수자는 `audio_path`, `textgrid_path`, `alignment_detail_line`을 이용해
+실제 음성과 TextGrid phone tier, 자동 alignment를 함께 확인한다. 상세
+절차는 저장소 루트의
+`docs/AIHUB71490_MANUAL_ALIGNMENT_AUDIT_KO.md`를 따른다.
 
-- 공식 Training/Validation 화자 교집합: 1,812
-- raw TextGrid label: 1,715종
-- 삭제 placeholder: 23,873 interval
-- 공백 복합 label: 1,755 interval
-- phone tier 누락: 1개
-- 정규화 후 빈 target: 48개
-- 현재 gate: `review_required`
+완료 후 저장소 루트에서 채점한다.
 
-보수적 41-phone 정책 초안 적용 결과:
+```bash
+.venv-scorer/bin/python scripts/score_alignment_audit.py \
+  data/processed/aihub71490/manifests/aihub71490_manual_alignment_audit.tsv \
+  --output \
+  data/processed/aihub71490/manifests/aihub71490_manual_alignment_audit_result.json
+```
 
-- 안전한 자모 연결 interval: 12,873
-- 미해결 raw label: 357종
-- 미해결 interval: 1,785
-- 미해결 label 포함 발화: 1,450
-- 추가 검토 큐: `artifacts/textgrid_unresolved_labels.csv`
+통과 조건:
 
-다음 즉시 작업은 `textgrid_unresolved_labels.csv`의 label을 규칙별로
-분류하는 것이다. 허용할 수 없는 label이 있는 발화는 임의 교정하지 않고
-훈련 후보에서 제외하며, 제외율을 화자·언어·숙련도별로 다시 측정한다.
+```text
+sample_count = 240
+valid_decision_count = 240
+missing reviewer = 0
+status = passed
+alignment_accuracy >= 0.95
+```
 
-## Phase 2: TextGrid target gate
+95% 미만이면 학습하지 않고 실패 사례를 유형별로 분석해 TextGrid
+정규화·제외 정책과 manifest를 다시 생성해야 한다.
 
-다음 조건을 모두 충족해야 다음 단계로 간다.
+## 2. Smoke training
 
-1. 모든 raw label이 명시적 규칙으로 처리된다.
-2. 임의 문자열 제거 또는 암묵적 phone mapping이 없다.
-3. 정규화 후 빈 target 비율과 특수 label 비율이 보고된다.
-4. 오류 사례에서 정규화 관측열이 error tag와 일치한다.
-5. JSON 기대열과 TextGrid 관측열을 manifest에서 별도 필드로 보존한다.
-6. dataset ID/제목 불일치에 대한 사용자의 데이터셋 확인이 기록된다.
+수동 감사 통과 후에만 저장소 루트에서 실행한다.
 
-통과하지 못하면 `FIX_REQUIRED` 또는 `LABEL_NOT_SUITABLE`을 유지한다.
+```bash
+HF_HOME=data/cache/huggingface \
+PYTHONPATH=seungun/src \
+.venv-scorer/bin/python seungun/scripts/train_ctc.py \
+  --mode smoke \
+  --dataset-root data/restricted/aihub/dataset-71490 \
+  --manifest-dir seungun/manifest \
+  --processor-dir seungun/processor \
+  --manual-audit-result \
+    data/processed/aihub71490/manifests/aihub71490_manual_alignment_audit_result.json \
+  --output-dir seungun/checkpoints/smoke \
+  --seed 42 \
+  --num-workers 8
+```
 
-## Phase 3: 화자 분할 manifest
+Smoke 설정:
 
-TextGrid target gate 통과 후에만 수행한다.
+```text
+train/dev/test: 5,000 / 1,000 / 1,000
+max steps: 200
+train/eval batch: 4 / 4
+gradient accumulation: 4
+learning rate: 1e-4
+warmup ratio: 0.1
+feature encoder: frozen
+precision: BF16 autocast
+gradient checkpointing: enabled
+seed: 42
+```
 
-- 공식 Training/Validation 간 UserID 중복 검사
-- seed 42 화자 단위 train/dev/test 재분할
-- 세 분할 UserID 교집합 0 검증
-- 언어·숙련도·국적·error tag 분포 보존
-- JSONL과 Parquet 생성
-- `expected_phones`와 `observed_phones`를 명확히 분리
-- raw label과 정규화 규칙 version을 함께 기록
+Smoke 통과 조건:
 
-## Phase 4: Processor와 vocabulary
+1. loss가 finite이고 감소 추세를 보인다.
+2. NaN/Inf가 없다.
+3. 빈 decode 비율이 허용 가능한 수준이다.
+4. dev/test PER와 substitution/deletion/insertion이 산출된다.
+5. 대표 예측에 정상/오류 발화가 모두 포함된다.
+6. best checkpoint가 저장된다.
+7. checkpoint 재로딩이 성공한다.
+8. 재로딩 전후 동일 음성 greedy argmax가 일치한다.
+9. OOM 또는 반복적인 dataloader 실패가 없다.
 
-- 정규화된 Training `observed_phones`만 vocabulary 원천으로 사용
-- `<pad>`를 CTC blank로 사용하고 `<unk>` 포함
-- 명시적 단어 경계가 없으면 `|`를 target에 추가하지 않음
-- label ID encode/decode 왕복 테스트
-- AI Hub canonical/MFA mapping은 별도 JSON으로 관리
+Smoke 결과는 다음 경로에 생성된다.
 
-## Phase 5: XLS-R smoke training
+```text
+seungun/checkpoints/smoke/training_report.json
+seungun/checkpoints/smoke/dev_evaluation.json
+seungun/checkpoints/smoke/test_evaluation.json
+seungun/checkpoints/smoke/confusion_matrix.json
+seungun/checkpoints/smoke/best_model/
+```
 
-위 gate 통과와 target 정의 승인 후에만 시작한다.
+Smoke 결과가 나쁘면 전체 학습을 시작하지 않는다. 특히 200 steps에서
+loss가 전혀 감소하지 않거나 decode가 대부분 비어 있으면 learning rate,
+batch 구성, target 길이와 CTC input/output length를 먼저 조사한다.
 
-- `facebook/wav2vec2-xls-r-300m` revision 고정
-- 화자 단위 train 5천~2만, dev/test 각 1천~2천
-- bf16, gradient checkpointing, feature encoder freeze
-- 16kHz mono float32 동적 resampling/padding
-- loss 감소, NaN/Inf, 빈 decode, peak memory 검사
-- dev PER로 checkpoint 선택, test는 최종 1회
-- 저장 후 재로딩 전후 출력 일치 검증
+## 3. 전체 학습 전 최종 확인
 
-## 전체 학습 재개 조건
+Smoke 통과 후 다음 항목을 다시 확인한다.
 
-다음 조건이 모두 충족될 때만 `FULL_TRAINING_READY`를 선언한다.
+- `manifest/preparation_report.json`의 화자 교집합이 모두 0
+- train vocabulary에 `<unk>`로 변환되는 target이 0
+- locked test가 학습·checkpoint 선택에 사용되지 않음
+- base model revision이
+  `1a640f32ac3e39899438a2931f9924c02f080a54`로 고정됨
+- Git diff와 실행 명령 기록
+- 최소 500 GiB 여유 디스크
+- GPU에서 다른 대규모 작업이 실행 중이지 않음
+- smoke checkpoint와 평가 산출물 SHA-256 기록
 
-- TextGrid target 의미와 정규화 정책 검증 완료
-- 화자 누수 0
-- smoke loss와 decode 정상
-- dev/test PER 및 S/D/I 산출
-- checkpoint 재로딩 일치
-- pytest/Ruff/mypy 통과
-- 데이터셋 ID와 실제 사용 범위 확정
+## 4. 전체 학습
 
-그전까지 `xlsr300m_full.yaml`의 `enabled`는 `false`로 유지한다.
+모든 gate 통과 후 저장소 루트에서 실행한다.
+
+```bash
+HF_HOME=data/cache/huggingface \
+PYTHONPATH=seungun/src \
+.venv-scorer/bin/python seungun/scripts/train_ctc.py \
+  --mode full \
+  --dataset-root data/restricted/aihub/dataset-71490 \
+  --manifest-dir seungun/manifest \
+  --processor-dir seungun/processor \
+  --manual-audit-result \
+    data/processed/aihub71490/manifests/aihub71490_manual_alignment_audit_result.json \
+  --output-dir seungun/checkpoints/full \
+  --seed 42 \
+  --num-workers 8
+```
+
+현재 full 기본값:
+
+```text
+train/dev/test: 217,176 / 34,424 / 65,296
+epochs: 3
+train/eval batch: 4 / 4
+gradient accumulation: 4
+learning rate: 5e-5
+warmup ratio: 0.1
+feature encoder: frozen
+precision: BF16 autocast
+gradient checkpointing: enabled
+best model selection: dev PER minimum
+locked test evaluation: 학습 종료 후 1회
+```
+
+중단 후 재개할 때는 같은 output directory와
+`--resume-from-checkpoint <checkpoint-path>`를 사용한다. 다른 revision,
+vocab 또는 manifest로 기존 optimizer checkpoint를 재사용하지 않는다.
+
+## 5. 전체 학습 완료 검증
+
+전체 학습 완료 후 반드시 보고할 항목:
+
+- 총 학습시간과 peak GPU memory
+- 시작/최종 train loss와 best dev loss
+- best checkpoint
+- dev/test PER
+- substitution/deletion/insertion 수와 비율
+- 빈 decode 비율
+- NaN/Inf 여부
+- checkpoint 재로딩 결과
+- 재로딩 전후 동일 음성 출력 일치
+- 정상/오류 발화를 포함한 대표 예측 최소 10개
+- confusion matrix
+- manifest, vocab, processor, checkpoint, 평가 보고서 SHA-256
+- pytest/Ruff/mypy 재검사
+
+## 실행 순서 요약
+
+```text
+독립 전문가 240건 청취 감사
+  -> 감사 채점 및 95% gate
+  -> smoke 200 steps
+  -> smoke PER/decode/reload gate
+  -> 전체 3 epoch 학습
+  -> locked test 1회 평가
+  -> 최종 산출물 checksum과 검증 보고서
+```
+
+현재 즉시 해야 할 일은 첫 단계인 독립 수동 정렬 감사다. 그 결과가
+통과되기 전까지 `configs/xlsr300m_full.yaml`의 `enabled: false`를
+유지한다.
