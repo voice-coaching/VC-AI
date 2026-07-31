@@ -1,6 +1,7 @@
 # AI Hub 71490 전문가 수동 감사 worksheet·음성 경로 안내
 
 기준 시각: 2026-07-31 KST
+최종 갱신: 2026-07-31 KST (비식별 공개 worksheet 사본 추가)
 
 이 문서는 240건 수동 정렬 감사(G04)를 수행할 독립 전문가에게
 worksheet 위치, 채워야 하는 항목, 음성·라벨 파일 경로 구조를 안내한다.
@@ -14,8 +15,34 @@ worksheet 위치, 채워야 하는 항목, 음성·라벨 파일 경로 구조�
 worksheet의 utterance ID와 파일 경로에는 AI Hub 원본 파일 stem이 그대로
 포함되며, 이 stem은 화자 `UserID`와 연결될 수 있다. AI Hub 데이터는
 제3자 재배포가 금지되고, 저장소 정책상 제한 데이터에서 파생된 경로와
-annotation 상세는 Git에 커밋하지 않는다. 따라서 이 문서에는 파일 위치,
-스키마, checksum만 기록하고 worksheet 실물은 실행 서버 로컬에만 둔다.
+annotation 상세는 Git에 커밋하지 않는다. 따라서 worksheet 실물과 음성
+WAV는 실행 서버 로컬에만 두고, GitHub에는 아래의 비식별 공개 사본만
+올린다. 음성 파일은 private repo라도 GitHub에 올리지 않는다.
+
+## 1.1 비식별 공개 worksheet 사본
+
+전문가가 판정을 기록할 수 있도록 locator를 모두 제거한 공개 사본을
+저장소에 포함했다.
+
+```text
+docs/audit/aihub71490_manual_alignment_audit_public.tsv
+```
+
+- 생성기: `scripts/export_public_alignment_audit_worksheet.py`
+- 행 수: 240 (판정 열은 빈 값)
+- 원본 worksheet SHA-256:
+  `7e70e1d4d5742688bd1e6544f97527f8362712efdc28827df8f0e7503c1a237c`
+- 공개 사본 SHA-256 (판정 기입 전):
+  `9d6f541a3d890a5216f106c553edfec4126010e382f9ca1e8e07e8a4c678225c`
+- `utterance_id`, `audio_path`, `json_path`, `textgrid_path`,
+  `alignment_detail_line`은 제거했다.
+- `item_id`는 로컬 review UI와 동일한 namespaced SHA-256
+  (`voice-coach.aihub71490.alignment-review-item.v1:` + file stem)이므로,
+  공개 사본에 기록된 판정은 실행 서버 안에서만 `item_id`로 원본
+  worksheet와 결합해 채점한다.
+- 음성 청취는 4절의 서버 내 경로 또는
+  [`LOCAL_ALIGNMENT_REVIEW_UI_KO.md`](LOCAL_ALIGNMENT_REVIEW_UI_KO.md)의
+  token 보호 로컬 UI(항목별 WAV stream)로만 수행한다.
 
 ## 2. 전문가가 채워야 하는 파일
 
