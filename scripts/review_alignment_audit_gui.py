@@ -133,27 +133,39 @@ class AudioPlayer:
     def __init__(self) -> None:
         self.directory = Path(tempfile.mkdtemp(prefix="alignment-review-"))
         self.current: Path | None = None
+        self.payload: bytes | None = None
         self._process: subprocess.Popen[bytes] | None = None
         atexit.register(self.cleanup)
 
     def load(self, payload: bytes) -> None:
         self.stop()
+        self.payload = payload
         if self.current is not None:
             self.current.unlink(missing_ok=True)
         self.current = self.directory / "current.wav"
         self.current.write_bytes(payload)
 
     def play(self) -> None:
-        if self.current is None:
+        if self.current is None or self.payload is None:
             return
         self.stop()
         if sys.platform == "win32":
             import winsound
 
-            winsound.PlaySound(
-                str(self.current),
-                winsound.SND_FILENAME | winsound.SND_ASYNC,
-            )
+            # SND_MEMORY avoids handing a filesystem path (which can be a
+            # Korean-username temp directory) to the underlying Windows
+            # PlaySound API; some source WAVs still fail silently (no
+            # exception, no audio) on this API depending on their sample
+            # format, hence the "기본 플레이어로 열기" fallback button.
+            try:
+                winsound.PlaySound(
+                    self.payload, winsound.SND_MEMORY | winsound.SND_ASYNC
+                )
+            except RuntimeError:
+                winsound.PlaySound(
+                    str(self.current),
+                    winsound.SND_FILENAME | winsound.SND_ASYNC,
+                )
             return
         player = next(
             (
@@ -171,6 +183,20 @@ class AudioPlayer:
         self._process = subprocess.Popen(
             command, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL
         )
+
+    def open_externally(self) -> None:
+        """Open the current WAV in the OS-default player as a fallback.
+
+        Useful when in-process playback stays silent without raising an
+        error, which some source WAV sample formats can trigger on the
+        Windows PlaySound API.
+        """
+        if self.current is None:
+            return
+        if sys.platform == "win32":
+            os.startfile(str(self.current))  # noqa: S606 - local temp WAV only
+        else:
+            self.play()
 
     def stop(self) -> None:
         if sys.platform == "win32":
@@ -242,6 +268,9 @@ class ReviewApp:
         tk.Button(controls, text="■ 정지", command=self.player.stop).pack(
             side="left", padx=6
         )
+        tk.Button(
+            controls, text="🔊 기본 플레이어로 열기", command=self.on_open_externally
+        ).pack(side="left", padx=6)
 
         self.detail = scrolledtext.ScrolledText(right, height=18, wrap="none")
         self.detail.pack(fill="both", expand=True)
@@ -362,6 +391,12 @@ class ReviewApp:
     def on_play(self) -> None:
         try:
             self.player.play()
+        except Exception as error:  # noqa: BLE001 - surfaced to the reviewer
+            self.report_error(error)
+
+    def on_open_externally(self) -> None:
+        try:
+            self.player.open_externally()
         except Exception as error:  # noqa: BLE001 - surfaced to the reviewer
             self.report_error(error)
 

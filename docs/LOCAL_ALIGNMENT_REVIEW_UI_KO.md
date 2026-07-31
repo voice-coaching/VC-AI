@@ -96,8 +96,12 @@ scripts/review_alignment_audit_gui.py
   설치본에는 tkinter가 포함된다.
 - 접속: loopback(`127.0.0.1`/`localhost`) URL만 허용한다. 원격 검수는
   SSH 터널을 전제로 한다.
-- 재생: Windows는 `winsound`, macOS/Linux는
-  `afplay`/`paplay`/`aplay`/`ffplay` 중 설치된 재생기를 사용한다.
+- 재생: Windows는 `winsound`(메모리 버퍼 우선, 실패 시 임시 파일
+  재생으로 재시도), macOS/Linux는 `afplay`/`paplay`/`aplay`/`ffplay` 중
+  설치된 재생기를 사용한다. AI Hub 원본 WAV는 8/16/24/44.1/48/96kHz가
+  혼재해 일부 sample rate·포맷에서 `winsound`가 예외 없이 조용히
+  재생하지 않을 수 있다. 이때는 `🔊 기본 플레이어로 열기` 버튼으로 OS
+  기본 연결 프로그램(Windows Media Player 등)에서 같은 임시 WAV를 연다.
 - 판정 저장: 신규는 POST, 이미 저장된 항목을 다시 연 뒤 저장하면 PUT으로
   교체한다. 서버의 검증 오류(403/409/422)는 화면에 그대로 표시한다.
 - raw utterance ID·제한 경로는 서버가 내보내지 않으므로 클라이언트에도
@@ -137,6 +141,15 @@ python scripts\review_alignment_audit_gui.py --url "http://127.0.0.1:8765/#token
 수신, 잘못된 token 403 거부, non-loopback URL 거부를 headless 통합
 테스트로 검증했다. 이 검증은 판정을 저장하지 않았고 review state를
 만들지 않았다.
+
+### 화면이 구버전처럼 보일 때
+
+상세 패널 순서가 `automatic_phone_alignments` 대신 `metadata`로 시작하거나
+"정렬 정확성"/"최대 경계 오차(ms)"가 항목 선택 후에도 빈 값이면 구버전
+`review_alignment_audit_gui.py`를 실행 중인 것이다. 저장소를 다시
+`git pull`하거나 GitHub에서 파일을 다시 내려받는다. 이미 저장한 검수
+결과는 서버 `state.json`에 있으므로 클라이언트를 최신으로 바꿔도
+그대로 유지된다.
 
 token은 URL fragment에 있어 HTTP 요청·서버 access log로 전달되지 않는다.
 UI는 API/audio를 요청할 때만 `X-Review-Token` header로 보낸다. 서버
