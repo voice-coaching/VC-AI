@@ -130,9 +130,13 @@ dataset root: data/restricted/aihub/dataset-71490
 
 ## 5. 검수 → 채점 → gate 흐름
 
-1. 기본 경로는 token 보호 로컬 review UI다. UI가 worksheet를 읽어
-   항목별 음성 stream, 목표/실현 phone, 자동 mapping을 함께 보여주고,
-   판정을 원자적으로 저장한다.
+1. 기본 경로는 token 보호 로컬 review 서버다. 서버가 worksheet를 읽어
+   항목별 음성 stream, 목표/실현 phone, 자동 mapping을 제공하고 판정을
+   원자적으로 저장한다. Windows 검수자는 브라우저 대신
+   `scripts/review_alignment_audit_gui.py` tkinter 클라이언트를 SSH 터널
+   위에서 실행하는 것을 기본으로 한다
+   ([`LOCAL_ALIGNMENT_REVIEW_UI_KO.md`](LOCAL_ALIGNMENT_REVIEW_UI_KO.md)
+   참조).
 2. 240건 완료 후 UI의 `export`로 privacy-safe scorer TSV를 만든다.
 3. 저장소 루트에서 채점한다.
 
