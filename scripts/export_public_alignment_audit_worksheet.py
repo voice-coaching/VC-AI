@@ -48,6 +48,15 @@ FORBIDDEN_COLUMNS = {
     "alignment_detail_line",
 }
 
+# Pre-filled so a reviewer only has to edit rows they disagree with. This is
+# a deliberate accuracy/throughput trade-off: an untouched row is
+# indistinguishable from a row a reviewer actually listened to and judged
+# correct, so it weakens the audit's evidentiary value versus an
+# all-blank worksheet. See docs/AIHUB71490_EXPERT_AUDIT_WORKSHEET_GUIDE_KO.md
+# for the accepted-risk note.
+DEFAULT_ALIGNMENT_CORRECT = "correct"
+DEFAULT_MAXIMUM_BOUNDARY_ERROR_MS = "0"
+
 
 def parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser()
@@ -70,9 +79,7 @@ def main() -> int:
     with args.worksheet.open(encoding="utf-8-sig", newline="") as handle:
         rows = list(csv.DictReader(handle, delimiter="\t"))
     if len(rows) != args.expected_samples:
-        raise ValueError(
-            f"expected {args.expected_samples} rows, found {len(rows)}"
-        )
+        raise ValueError(f"expected {args.expected_samples} rows, found {len(rows)}")
     missing = (set(PUBLIC_COLUMNS) - {"item_id"}) - set(rows[0])
     if missing - FORBIDDEN_COLUMNS:
         raise ValueError(
@@ -91,6 +98,10 @@ def main() -> int:
             if column == "item_id":
                 continue
             public_row[column] = row.get(column, "")
+        if not public_row["alignment_correct"]:
+            public_row["alignment_correct"] = DEFAULT_ALIGNMENT_CORRECT
+        if not public_row["maximum_boundary_error_ms"]:
+            public_row["maximum_boundary_error_ms"] = DEFAULT_MAXIMUM_BOUNDARY_ERROR_MS
         public_rows.append(public_row)
     leaked = FORBIDDEN_COLUMNS & set(public_rows[0])
     if leaked:
@@ -101,9 +112,7 @@ def main() -> int:
     args.output.parent.mkdir(parents=True, exist_ok=True)
     temp_path = args.output.with_name(f".{args.output.name}.{uuid4().hex}.tmp")
     with temp_path.open("w", encoding="utf-8", newline="") as handle:
-        writer = csv.DictWriter(
-            handle, fieldnames=PUBLIC_COLUMNS, delimiter="\t"
-        )
+        writer = csv.DictWriter(handle, fieldnames=PUBLIC_COLUMNS, delimiter="\t")
         writer.writeheader()
         writer.writerows(public_rows)
     os.replace(temp_path, args.output)

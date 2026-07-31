@@ -118,6 +118,21 @@ python scripts\review_alignment_audit_gui.py --url "http://127.0.0.1:8765/#token
 `▶ 재생`으로 청취한다. 검수 도중 서버를 재시작했다면 token이 바뀌므로
 클라이언트도 새 주소로 다시 실행한다.
 
+상세 패널은 `automatic_phone_alignments`(자동 목표·실현 phone 대응)를
+가장 위에, 그 아래 `target_phone_intervals`·`realized_phone_intervals`·
+`metadata` 순서로 표시한다. 판정 대상인 자동 대응을 먼저 보게 한 순서다.
+
+아직 저장된 판정이 없는 항목을 열면 "정렬 정확성"은 `correct`,
+"최대 경계 오차(ms)"는 `0`으로 미리 선택돼 있다. 검수 속도를 위한
+기본값이며, **음성을 듣지 않고 그대로 저장하면 "정상"으로 기록된다.**
+다르게 판단한 항목만 값을 바꾸는 방식으로 진행하되, 반드시 240건 전부를
+실제로 청취해야 한다. 이 기본값 때문에 미검수 항목과 실제로 correct로
+판단한 항목을 자동으로 구분할 수 없으므로, 자동 채점 통과만으로 G04
+완료를 주장하지 않고 연구책임자가 검수자의 실제 청취 이행을 별도
+확인한다
+([`AIHUB71490_EXPERT_AUDIT_WORKSHEET_GUIDE_KO.md`](AIHUB71490_EXPERT_AUDIT_WORKSHEET_GUIDE_KO.md)
+1.2절 참고).
+
 클라이언트의 네트워크 계층은 실서버(240항목)에 대해 status/item/audio
 수신, 잘못된 token 403 거부, non-loopback URL 거부를 headless 통합
 테스트로 검증했다. 이 검증은 판정을 저장하지 않았고 review state를

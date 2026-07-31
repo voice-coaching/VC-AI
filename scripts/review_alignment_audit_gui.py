@@ -35,6 +35,15 @@ try:
 except ImportError:  # headless machine; the GUI needs a desktop Python
     tk = None  # type: ignore[assignment]
 
+# Pre-selected so the reviewer only has to change rows they disagree with.
+# Trade-off: an item left untouched is indistinguishable from one actually
+# listened to and judged correct, which weakens the audit's evidentiary
+# value versus requiring an explicit choice per item. See
+# docs/AIHUB71490_EXPERT_AUDIT_WORKSHEET_GUIDE_KO.md for the accepted-risk
+# note.
+DEFAULT_ALIGNMENT_CORRECT = "correct"
+DEFAULT_MAXIMUM_BOUNDARY_ERROR_MS = "0"
+
 
 def parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser()
@@ -316,6 +325,9 @@ class ReviewApp:
         self.current = item
         self.title_var.set(f"#{item['audit_index']} · {item['item_sha256'][:24]}…")
         detail = {
+            "automatic_phone_alignments": item["automatic_phone_alignments"],
+            "target_phone_intervals": item["target_phone_intervals"],
+            "realized_phone_intervals": item["realized_phone_intervals"],
             "metadata": {
                 key: item[key]
                 for key in (
@@ -326,9 +338,6 @@ class ReviewApp:
                     "duration_seconds",
                 )
             },
-            "target_phone_intervals": item["target_phone_intervals"],
-            "realized_phone_intervals": item["realized_phone_intervals"],
-            "automatic_phone_alignments": item["automatic_phone_alignments"],
         }
         self.detail.configure(state="normal")
         self.detail.delete("1.0", "end")
@@ -337,10 +346,16 @@ class ReviewApp:
         review = item.get("review") or {}
         correct = review.get("alignment_correct")
         self.correct_var.set(
-            "correct" if correct is True else "incorrect" if correct is False else ""
+            "correct"
+            if correct is True
+            else "incorrect"
+            if correct is False
+            else DEFAULT_ALIGNMENT_CORRECT
         )
         boundary = review.get("maximum_boundary_error_ms")
-        self.boundary_var.set("" if boundary is None else str(boundary))
+        self.boundary_var.set(
+            DEFAULT_MAXIMUM_BOUNDARY_ERROR_MS if boundary is None else str(boundary)
+        )
         self.notes.delete("1.0", "end")
         self.notes.insert("1.0", review.get("notes") or "")
 

@@ -1,7 +1,8 @@
 # AI Hub 71490 전문가 수동 감사 worksheet·음성 경로 안내
 
 기준 시각: 2026-07-31 KST
-최종 갱신: 2026-07-31 KST (비식별 공개 worksheet 사본 추가)
+최종 갱신: 2026-07-31 KST (판정 기본값 사전 기입으로 인한 감사 신뢰성
+저하 위험 명시)
 
 이 문서는 240건 수동 정렬 감사(G04)를 수행할 독립 전문가에게
 worksheet 위치, 채워야 하는 항목, 음성·라벨 파일 경로 구조를 안내한다.
@@ -29,11 +30,11 @@ docs/audit/aihub71490_manual_alignment_audit_public.tsv
 ```
 
 - 생성기: `scripts/export_public_alignment_audit_worksheet.py`
-- 행 수: 240 (판정 열은 빈 값)
+- 행 수: 240
 - 원본 worksheet SHA-256:
   `7e70e1d4d5742688bd1e6544f97527f8362712efdc28827df8f0e7503c1a237c`
-- 공개 사본 SHA-256 (판정 기입 전):
-  `9d6f541a3d890a5216f106c553edfec4126010e382f9ca1e8e07e8a4c678225c`
+- 공개 사본 SHA-256 (기본값 사전 기입 후):
+  `6f23cc27f0519e36cd6d93c011f4970be9af18b9ac54a79cb186ac827015ba96`
 - `utterance_id`, `audio_path`, `json_path`, `textgrid_path`,
   `alignment_detail_line`은 제거했다.
 - `item_id`는 로컬 review UI와 동일한 namespaced SHA-256
@@ -43,6 +44,23 @@ docs/audit/aihub71490_manual_alignment_audit_public.tsv
 - 음성 청취는 4절의 서버 내 경로 또는
   [`LOCAL_ALIGNMENT_REVIEW_UI_KO.md`](LOCAL_ALIGNMENT_REVIEW_UI_KO.md)의
   token 보호 로컬 UI(항목별 WAV stream)로만 수행한다.
+
+## 1.2 판정 기본값과 감사 신뢰성 위험 (수용된 트레이드오프)
+
+검수 속도를 위해 `alignment_correct`/`maximum_boundary_error_ms`는 이제
+빈 값이 아니라 기본값 `correct`/`0`으로 미리 채워진다. 이 기본값은
+- 공개 worksheet 사본(`docs/audit/aihub71490_manual_alignment_audit_public.tsv`)
+  생성 시 `scripts/export_public_alignment_audit_worksheet.py`가 채운다.
+- tkinter GUI(`scripts/review_alignment_audit_gui.py`)에서 아직 저장된
+  판정이 없는 항목을 열 때도 폼에 동일하게 미리 선택돼 있다.
+
+이는 의도적으로 수용한 트레이드오프다. **음성을 듣지 않고 그대로 저장한
+항목과 실제로 듣고 correct로 판단한 항목을 구분할 수 없다.** 채점
+스크립트와 review state 검증은 "빈 값=미검수"만 실패로 잡으므로, 검수자가
+모든 항목을 기본값 그대로 두고 저장해도 `status=passed`,
+`alignment_accuracy=1.0`이 나올 수 있다. 즉 이 상태의 240건 결과는
+**연구책임자가 검수자의 실제 청취 이행을 별도로 확인해야만** G04 완료
+근거로 쓸 수 있다. 자동 채점 통과만으로 완료를 주장하지 않는다.
 
 ## 2. 전문가가 채워야 하는 파일
 
@@ -90,9 +108,13 @@ aihub71490_manual_alignment_audit_metadata.json   # 표본 추출 메타데이�
 | 열 | 기입 내용 |
 |---|---|
 | `reviewer_id` | 검수자 식별자 (로컬 UI 사용 시 namespaced SHA-256 pseudonym으로 자동 대체) |
-| `alignment_correct` | 자동 mapping의 match/substitution/deletion/insertion이 시간상 올바른 목표·실현 phone을 연결하면 `true`, 아니면 `false` (yes/no, pass/fail, correct/incorrect도 허용) |
-| `maximum_boundary_error_ms` | 사람이 판단한 가장 큰 경계 오차 (ms) |
+| `alignment_correct` | 자동 mapping의 match/substitution/deletion/insertion이 시간상 올바른 목표·실현 phone을 연결하면 `true`, 아니면 `false` (yes/no, pass/fail, correct/incorrect도 허용). 기본값 `correct`로 미리 채워져 있으므로 오류를 발견하면 반드시 `incorrect`로 바꿔야 한다 |
+| `maximum_boundary_error_ms` | 사람이 판단한 가장 큰 경계 오차 (ms). 기본값 `0`으로 미리 채워져 있다 |
 | `notes` | 판단 불가 사유, 오류 유형 등 (필요한 경우) |
+
+기본값이 미리 채워져 있으므로, **음성을 듣지 않고 그대로 두면 "정상"으로
+잘못 기록된다.** 반드시 240건 전부를 실제로 청취한 뒤, 다르게 판단한
+행만 값을 바꾸는 방식으로 진행한다 (1.2절 참고).
 
 빈 판정, 알 수 없는 판정 값, 중복 utterance, 240건 미만/초과는 채점에서
 실패 처리된다.
