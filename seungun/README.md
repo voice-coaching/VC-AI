@@ -13,6 +13,23 @@ XLS-R-300M CTC smoke training으로 넘어가기 위한 독립 작업 디렉터�
 - [다음 단계와 재개 gate](docs/NEXT_STEPS_KO.md)
 - [TextGrid target 정책](configs/textgrid_target_policy.yaml)
 
+## 저장소 루트 공용 문서
+
+수동 정렬 감사와 데이터 취급은 이 디렉터리만의 도구가 아니라 저장소
+루트에 이미 구현·문서화된 자산을 그대로 따른다.
+
+- [수동 정렬 감사 절차](../docs/AIHUB71490_MANUAL_ALIGNMENT_AUDIT_KO.md) —
+  240건 판정 기준과 채점 gate
+- [토큰 보호 로컬 검수 UI/tkinter 클라이언트](../docs/LOCAL_ALIGNMENT_REVIEW_UI_KO.md) —
+  `scripts/review_alignment_audit.py`, `scripts/review_alignment_audit_gui.py`
+- [전문가 worksheet·음성 경로 안내](../docs/AIHUB71490_EXPERT_AUDIT_WORKSHEET_GUIDE_KO.md)
+- [AI Hub 71490 데이터 카드](../docs/DATA_CARD_AIHUB71490_KO.md) — 발화·화자
+  규모, 길이 분포, 이 디렉터리의 CTC 3-way split과는 별도인 5-way split
+  집계 참고용
+- [연구 데이터 개인정보·반출 경계](../docs/DATA_PRIVACY_BOUNDARY_KO.md) —
+  `manifest/`, `processor/`, `checkpoints/`는 R1 운영 제한구역 기준을
+  따른다
+
 ## 확인된 사실
 
 - 요청서의 dataset ID 71479와 실제 서버 dataset 71490이 불일치한다.
@@ -70,3 +87,16 @@ processor/  # 16 kHz feature extractor와 43-token tokenizer
 
 전체 재현 명령과 수동 감사 이후의 smoke/full 실행 순서는
 [다음 단계 문서](docs/NEXT_STEPS_KO.md)에 기록돼 있다.
+
+## locked test 접근 경계
+
+`scripts/train_ctc.py`의 smoke/full 경로는 `manifest/train.jsonl`과
+`manifest/dev.jsonl`만 연다. dev 레코드는 `split=dev`,
+`source_split=dev`인 경우만 허용하고, `locked_test` provenance나
+train/dev/vocab 파일·manifest 디렉터리·상위 경로 symlink는 fail-closed로
+거부한다. smoke의 반환 건수 제한과 관계없이 두 manifest 끝까지
+split/source_split provenance를 검사한다.
+
+`manifest/test.jsonl`은 일반 학습·smoke·checkpoint 선택·재로딩 검증에서
+읽지 않는다. 최종 locked 평가는 별도 one-shot 보호 실행기와 명시적 승인
+계약이 구현되기 전까지 미실행 상태다.

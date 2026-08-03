@@ -8,7 +8,7 @@ import json
 import math
 import random
 import time
-from collections.abc import Sequence
+from collections.abc import Mapping, Sequence
 from pathlib import Path
 from typing import Any
 
@@ -25,6 +25,7 @@ from transformers import (
 )
 from transformers.trainer_utils import EvalPrediction
 
+from korean_phone_ctc.data.training_manifest import load_training_and_dev_records
 from korean_phone_ctc.io_utils import atomic_write_json
 from korean_phone_ctc.training_utils import (
     collapse_ctc_ids,
@@ -34,6 +35,7 @@ from korean_phone_ctc.training_utils import (
 
 MODEL_ID = "facebook/wav2vec2-xls-r-300m"
 MODEL_REVISION = "1a640f32ac3e39899438a2931f9924c02f080a54"
+PROJECT_ROOT = Path(__file__).absolute().parents[1]
 
 
 def parse_args() -> argparse.Namespace:
@@ -48,19 +50,6 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--num-workers", type=int, default=8)
     parser.add_argument("--resume-from-checkpoint")
     return parser.parse_args()
-
-
-def read_jsonl(path: Path, limit: int | None = None) -> list[dict[str, Any]]:
-    records: list[dict[str, Any]] = []
-    with path.open(encoding="utf-8") as stream:
-        for line in stream:
-            value = json.loads(line)
-            if not isinstance(value, dict):
-                raise ValueError(f"non-object record in {path}")
-            records.append(value)
-            if limit is not None and len(records) >= limit:
-                break
-    return records
 
 
 class AudioPhoneDataset(Dataset[dict[str, Any]]):
@@ -224,18 +213,22 @@ def main() -> int:
     random.seed(args.seed)
     np.random.seed(args.seed)
     torch.manual_seed(args.seed)
-    processor = Wav2Vec2Processor.from_pretrained(args.processor_dir)
-    vocabulary = json.loads(
-        (args.manifest_dir / "vocab.json").read_text(encoding="utf-8")
-    )
-    limits = (
-        {"train": 5_000, "dev": 1_000, "test": 1_000}
+    limits: Mapping[str, int | None] = (
+        {"train": 5_000, "dev": 1_000}
         if args.mode == "smoke"
-        else {"train": None, "dev": None, "test": None}
+        else {"train": None, "dev": None}
     )
+    manifest_bundle = load_training_and_dev_records(
+        args.manifest_dir,
+        workspace_root=PROJECT_ROOT,
+        train_limit=limits["train"],
+        dev_limit=limits["dev"],
+    )
+    processor = Wav2Vec2Processor.from_pretrained(args.processor_dir)
+    vocabulary = manifest_bundle.vocabulary
     records = {
-        split: read_jsonl(args.manifest_dir / f"{split}.jsonl", limits[split])
-        for split in ("train", "dev", "test")
+        "train": manifest_bundle.train,
+        "dev": manifest_bundle.dev,
     }
     datasets = {
         split: AudioPhoneDataset(
@@ -301,17 +294,13 @@ def main() -> int:
     elapsed = time.monotonic() - started
     trainer.save_model(output_dir / "best_model")
     processor.save_pretrained(output_dir / "best_model")
+    dev_result = trainer.evaluate(datasets["dev"], metric_key_prefix="dev")
     atomic_write_json(output_dir / "dev_evaluation.json", metric.last_details)
-
-    test_metric = MetricComputer(vocabulary, records["test"])
-    trainer.compute_metrics = test_metric
-    test_result = trainer.evaluate(datasets["test"], metric_key_prefix="test")
-    atomic_write_json(output_dir / "test_evaluation.json", test_metric.last_details)
     atomic_write_json(
-        output_dir / "confusion_matrix.json",
-        test_metric.last_details["confusion_matrix"],
+        output_dir / "dev_confusion_matrix.json",
+        metric.last_details["confusion_matrix"],
     )
-    first = datasets["test"][0]
+    first = datasets["dev"][0]
     batch = CtcCollator(processor)([first])
     device = trainer.model.device
     trainer.model.eval()
@@ -347,12 +336,13 @@ def main() -> int:
         "first_logged_loss": losses[0] if losses else None,
         "final_logged_loss": losses[-1] if losses else None,
         "train_metrics": train_result.metrics,
-        "test_metrics": test_result,
+        "dev_metrics": dev_result,
         "best_checkpoint": trainer.state.best_model_checkpoint,
         "checkpoint_reload_succeeded": True,
         "reload_argmax_identical": bool(torch.equal(before, after)),
         "nan_or_inf_loss": any(not math.isfinite(float(value)) for value in losses),
         "manual_audit_result": str(args.manual_audit_result.resolve()),
+        "locked_test_accessed": False,
     }
     atomic_write_json(output_dir / "training_report.json", report)
     print(json.dumps(report, ensure_ascii=False, indent=2))

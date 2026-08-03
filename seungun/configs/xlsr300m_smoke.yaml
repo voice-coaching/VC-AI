@@ -6,7 +6,6 @@ dataset:
   actual_id: "71490"
   train_utterances: 5000
   dev_utterances: 1000
-  test_utterances: 1000
   sample_rate: 16000
   min_duration_seconds: null
   max_duration_seconds: null
@@ -25,4 +24,5 @@ training:
 gate:
   require_observed_phone_targets: true
   full_training_allowed: false
+  locked_test_access_allowed: false
   blocker: independent_manual_alignment_audit_pending

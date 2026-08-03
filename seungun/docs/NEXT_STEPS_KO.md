@@ -37,16 +37,33 @@ maximum_boundary_error_ms
 notes (필요한 경우)
 ```
 
+worksheet TSV를 직접 열어 수정하지 않는다. 저장소 루트에 이미 구현된
+token 보호 로컬 검수 도구가 이 4개 필드를 원자적으로 저장하고 pseudonym
+변환·경계값 검증을 대신한다.
+
+```text
+scripts/review_alignment_audit.py       # serve/status/export 서버·CLI
+scripts/review_alignment_audit_gui.py   # Windows 검수자용 tkinter 클라이언트
+```
+
 검수자는 `audio_path`, `textgrid_path`, `alignment_detail_line`을 이용해
 실제 음성과 TextGrid phone tier, 자동 alignment를 함께 확인한다. 상세
-절차는 저장소 루트의
-`docs/AIHUB71490_MANUAL_ALIGNMENT_AUDIT_KO.md`를 따른다.
+판정 절차는 저장소 루트의
+`docs/AIHUB71490_MANUAL_ALIGNMENT_AUDIT_KO.md`를, 검수 도구 실행법과
+보안·개인정보 경계는
+`docs/LOCAL_ALIGNMENT_REVIEW_UI_KO.md`를, worksheet 열 구성과 SSH 터널
+경유 Windows 실행 순서는
+`docs/AIHUB71490_EXPERT_AUDIT_WORKSHEET_GUIDE_KO.md`를 따른다. 검수 결과가
+저장소 데이터 구역 정책(`docs/DATA_PRIVACY_BOUNDARY_KO.md`)의 R1 운영
+제한구역을 벗어나지 않도록 export는 반드시 위 도구의 `export` 명령으로만
+수행한다.
 
-완료 후 저장소 루트에서 채점한다.
+검수 완료 후 로컬 UI의 `export` 명령으로 privacy-safe scorer TSV를 만든
+뒤, 저장소 루트에서 채점한다.
 
 ```bash
 .venv-scorer/bin/python scripts/score_alignment_audit.py \
-  data/processed/aihub71490/manifests/aihub71490_manual_alignment_audit.tsv \
+  data/processed/aihub71490/manifests/aihub71490_manual_alignment_audit_scoring.tsv \
   --output \
   data/processed/aihub71490/manifests/aihub71490_manual_alignment_audit_result.json
 ```
@@ -86,7 +103,7 @@ PYTHONPATH=seungun/src \
 Smoke 설정:
 
 ```text
-train/dev/test: 5,000 / 1,000 / 1,000
+train/dev: 5,000 / 1,000
 max steps: 200
 train/eval batch: 4 / 4
 gradient accumulation: 4
@@ -103,7 +120,7 @@ Smoke 통과 조건:
 1. loss가 finite이고 감소 추세를 보인다.
 2. NaN/Inf가 없다.
 3. 빈 decode 비율이 허용 가능한 수준이다.
-4. dev/test PER와 substitution/deletion/insertion이 산출된다.
+4. dev PER와 substitution/deletion/insertion이 산출된다.
 5. 대표 예측에 정상/오류 발화가 모두 포함된다.
 6. best checkpoint가 저장된다.
 7. checkpoint 재로딩이 성공한다.
@@ -115,10 +132,15 @@ Smoke 결과는 다음 경로에 생성된다.
 ```text
 seungun/checkpoints/smoke/training_report.json
 seungun/checkpoints/smoke/dev_evaluation.json
-seungun/checkpoints/smoke/test_evaluation.json
-seungun/checkpoints/smoke/confusion_matrix.json
+seungun/checkpoints/smoke/dev_confusion_matrix.json
 seungun/checkpoints/smoke/best_model/
 ```
+
+Smoke와 일반 학습 경로는 `manifest/test.jsonl`을 열지 않는다. 최종 test
+평가를 위해 이 명령을 변형하거나 test를 dev로 복사·symlink하지 않는다.
+workspace 밖 manifest, manifest 경로 구성요소 symlink, train/dev 파일
+및 vocab symlink도 거부한다. smoke는 앞 5,000/1,000건만 반환하지만
+provenance 검증은 각 manifest 끝까지 수행한다.
 
 Smoke 결과가 나쁘면 전체 학습을 시작하지 않는다. 특히 200 steps에서
 loss가 전혀 감소하지 않거나 decode가 대부분 비어 있으면 learning rate,
@@ -130,7 +152,7 @@ Smoke 통과 후 다음 항목을 다시 확인한다.
 
 - `manifest/preparation_report.json`의 화자 교집합이 모두 0
 - train vocabulary에 `<unk>`로 변환되는 target이 0
-- locked test가 학습·checkpoint 선택에 사용되지 않음
+- locked test가 학습·checkpoint 선택·일반 평가에서 읽히지 않음
 - base model revision이
   `1a640f32ac3e39899438a2931f9924c02f080a54`로 고정됨
 - Git diff와 실행 명령 기록
@@ -160,7 +182,8 @@ PYTHONPATH=seungun/src \
 현재 full 기본값:
 
 ```text
-train/dev/test: 217,176 / 34,424 / 65,296
+train/dev loaded by runner: 217,176 / 34,424
+reserved locked test: 65,296, not opened by runner
 epochs: 3
 train/eval batch: 4 / 4
 gradient accumulation: 4
@@ -170,7 +193,7 @@ feature encoder: frozen
 precision: BF16 autocast
 gradient checkpointing: enabled
 best model selection: dev PER minimum
-locked test evaluation: 학습 종료 후 1회
+locked test evaluation: 일반 학습 runner에서는 접근 금지
 ```
 
 중단 후 재개할 때는 같은 output directory와
@@ -184,7 +207,7 @@ vocab 또는 manifest로 기존 optimizer checkpoint를 재사용하지 않는�
 - 총 학습시간과 peak GPU memory
 - 시작/최종 train loss와 best dev loss
 - best checkpoint
-- dev/test PER
+- dev PER
 - substitution/deletion/insertion 수와 비율
 - 빈 decode 비율
 - NaN/Inf 여부
@@ -195,6 +218,11 @@ vocab 또는 manifest로 기존 optimizer checkpoint를 재사용하지 않는�
 - manifest, vocab, processor, checkpoint, 평가 보고서 SHA-256
 - pytest/Ruff/mypy 재검사
 
+이 항목들은 일반 학습 완료 검증 범위다. 최종 locked test PER는
+사전등록된 별도 one-shot 보호 실행기, 명시적 승인, 불변 checkpoint hash가
+모두 준비된 뒤에만 한 번 산출한다. 현재 `seungun/`에는 그 실행기가
+구현돼 있지 않으므로 test 결과를 임의로 만들지 않는다.
+
 ## 실행 순서 요약
 
 ```text
@@ -203,8 +231,8 @@ vocab 또는 manifest로 기존 optimizer checkpoint를 재사용하지 않는�
   -> smoke 200 steps
   -> smoke PER/decode/reload gate
   -> 전체 3 epoch 학습
-  -> locked test 1회 평가
-  -> 최종 산출물 checksum과 검증 보고서
+  -> dev 산출물 checksum과 검증 보고서
+  -> 별도 승인된 protected executor에서 locked test 1회 평가
 ```
 
 현재 즉시 해야 할 일은 첫 단계인 독립 수동 정렬 감사다. 그 결과가

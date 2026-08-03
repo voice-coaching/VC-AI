@@ -354,14 +354,17 @@ peak CUDA allocation: 1,902,228,992 bytes
   - 보수적 TextGrid target 정규화와 발화 채택/제외 판정
 - `src/korean_phone_ctc/training_utils.py`
   - CTC greedy collapse, PER/S/D/I, 수동 감사 gate
+- `src/korean_phone_ctc/data/training_manifest.py`
+  - 일반 학습에서 train/reviewed-dev만 여는 fail-closed manifest loader
 - `scripts/prepare_ctc_data.py`
   - 전체 manifest, 분포, vocab, split 보고서 생성
 - `scripts/create_ctc_processor.py`
   - 고정 vocab processor 생성과 재로딩 검증
 - `scripts/train_ctc.py`
-  - 같은 코드 경로의 smoke/full 학습, dev 선택, locked test 평가,
-    confusion matrix, 대표 예측, checkpoint 재로딩 검증
+  - 같은 코드 경로의 smoke/full 학습, dev 선택·평가, dev confusion matrix,
+    대표 예측, checkpoint 재로딩 검증
 - `tests/test_ctc_manifest.py`
+- `tests/test_training_manifest.py`
 - `tests/test_training_utils.py`
 
 학습 스크립트는 수동 감사 결과 JSON의 `status=passed`와
@@ -371,10 +374,10 @@ peak CUDA allocation: 1,902,228,992 bytes
 ### 11.6 현재 품질 검사
 
 ```text
-pytest: 17 passed
+pytest: 27 passed
 Ruff lint: passed
-Ruff format: 25 files passed
-mypy strict: 12 source files, no errors
+Ruff format: 27 files passed
+mypy strict: 13 source files, no errors
 ```
 
 ### 11.7 현재 중단 지점
@@ -401,3 +404,51 @@ TextGrid를 함께 확인해야 한다. 자동 분석을 독립 인간 검수로
 
 따라서 현재까지 smoke training, checkpoint 생성, PER 평가 및 전체
 학습은 시작되지 않았다.
+
+### 11.8 locked test 조기 접근 차단 보강
+
+2026-07-29 재점검에서 기존 `scripts/train_ctc.py`가 학습 시작 전에
+`train.jsonl`, `dev.jsonl`, `test.jsonl`을 모두 열고 smoke/full 종료 시
+test를 평가하는 위험을 확인했다. 이는 최종 one-shot 시점 전까지
+`locked_test`를 보지 않아야 한다는 분할 계약에 맞지 않았다.
+
+일반 학습 경로를 다음과 같이 수정했다.
+
+- smoke/full은 `train.jsonl`과 `dev.jsonl`만 연다.
+- train은 source split `train`, `stack`, `calibration`만 허용한다.
+- dev는 `split=dev`, `source_split=dev`를 동시에 만족해야 한다.
+- workspace 밖 manifest 경로를 거부한다.
+- workspace root부터 manifest directory까지 각 경로 구성요소를
+  `openat`/`O_NOFOLLOW`로 열어 symlink이면 실패한다.
+- train/dev manifest와 vocab 파일도 같은 directory descriptor 기준
+  `O_NOFOLLOW`로 열어 직접 symlink를 거부한다.
+- 각 manifest의 device/inode/mode/size/mtime/ctime을 전체 scan 전후 비교해
+  scan 도중 교체·변경되면 실패한다.
+- smoke 반환 limit 이후 레코드도 파일 끝까지 split/source provenance를
+  검사하고, 허용된 앞 N개만 반환한다.
+- dev 평가·confusion matrix·checkpoint 재로딩 확인은 dev만 사용한다.
+- `test_evaluation.json`은 일반 학습 경로에서 생성하지 않는다.
+- 설정의 수동 정렬 감사, `training_allowed: false`,
+  `full_training_allowed: false`, `enabled: false`는 변경하지 않았다.
+
+별도 protected one-shot evaluator는 이 변경에서 구현하지 않았다. 따라서
+locked test 접근과 최종 test PER 산출은 계속 미승인·미실행 상태다.
+
+집중 검증 결과:
+
+```text
+canonical train/dev full provenance scan, smoke-sized return:
+  train 5,000 / source_split calibration, stack, train
+  dev   1,000 / source_split dev only
+  secured vocabulary size 43
+pytest: 27 passed
+Ruff lint: passed
+Ruff format: 27 files passed
+mypy strict: 13 source files, no errors
+```
+
+미통과 감사 JSON과 존재하지 않는 dataset/manifest/processor/output 경로를
+함께 준 CLI 검증은 exit code 1과
+`manual alignment audit status is not passed`로 먼저 종료됐다. output
+directory도 생성되지 않아 수동 정렬 gate가 manifest·모델 접근보다 앞에서
+계속 fail-closed임을 확인했다.
