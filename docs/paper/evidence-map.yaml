@@ -1,0 +1,3672 @@
+schema_version: 1
+manuscript: docs/paper/EXPERIMENTAL_MANUSCRIPT_KO.md
+
+# All paths are workspace-relative, aggregate-only artifacts. The validator rejects
+# data/raw, data/restricted, .env*, absolute paths, path traversal, missing files,
+# and any SHA-256 drift before evaluating a claim.
+artifacts:
+  aihub_data_card:
+    path: data/processed/aihub71490/manifests/aihub71490_data_card.json
+    sha256: 4ab53c6837b1a28fbf153dd3a351a195f6931a43694467114cea6c21b8a57b13
+  aihub_g0_audit:
+    path: data/processed/aihub71490/manifests/aihub71490_g0_audit.json
+    sha256: 1a41814f04062c1f1242287e05e34f46673e0e6e2152075c0dd1cf019bce81fd
+  prompt_challenge:
+    path: data/processed/aihub71490/manifests/aihub71490_prompt_challenge.json
+    sha256: 3ea7f12ea76be07a0796d7e62f0c3727ca9858c0278df7c85ac1e08d9b653fa9
+  native_report:
+    path: data/processed/native-korean/manifests/native_korean_v1.report.json
+    sha256: d50e6f788f6e631c37b54631325dfe840c0460ecf342af71f5e38b6f638037b4
+  r00_sentence_validation:
+    path: artifacts/reference/r00/r00_sentence_card_v1.validation.json
+    sha256: 95b4fd861a3c21222ff13859cfbc9c196e3fd06493852bca823d8a63dc2816dd
+  utterance_cache_report:
+    path: data/processed/aihub71490/features/explicit_utterance_train_dev_v1_report.json
+    sha256: 2f7b540b5fb6d2aaad3e2efa29da5f5b23c967645da0eb98d9a6d68ffc5b762e
+  phone_cache_report:
+    path: data/processed/aihub71490/features/explicit_phone_train_dev_oracle_v1_report.json
+    sha256: c11e7ed85461d9c623aad390ff65b94981c686aaa859494c07a7f569ed29e53a
+  phone_cache_parquet:
+    path: data/processed/aihub71490/features/explicit_phone_train_dev_oracle_v1
+    hash_mode: tree
+    sha256: c9caeda1d38051498f3f8bc97932ce713e225e2e5ad60eb5c8bf03813f62c430
+  wavlm_base_cache_report:
+    path: data/processed/aihub71490/features/wavlm_base_plus_frozen_v1_report.json
+    sha256: 34da4c3ec48088b88e1e44763868cd15a21b7baaa06a2cb253338866262ef41d
+  wavlm_base_cache_validation:
+    path: artifacts/reviews/wavlm_base_plus_frozen_v1_full_validation.json
+    sha256: 7abb93395af73460e4542ecc92b0edb3dd1e96b942551ad4759972da5fdd6c4b
+  wavlm_head_cuda_smoke:
+    path: artifacts/reviews/wavlm_base_plus_frozen_head_cuda_smoke.json
+    sha256: 878842435419924894c6b9713f7e133afec73d492b6379d05eed47f3dfec32f6
+  wavlm_base_head_config:
+    path: configs/experiments/wavlm_base_plus_frozen_head_v1.yaml
+    sha256: 9d0b8de8e8f41c66028c4bf895cb653dc77e69b64cdce3b9f1f7d0c59e8e0291
+  wavlm_base_head_trainer:
+    path: scripts/train_wavlm_frozen_head.py
+    sha256: 0c0bd3b76e5e9bf0b9159c80c2d6267dde5ed2f74b88f88f639efecbe37d94a3
+  wavlm_base_head_model_source:
+    path: src/voice_coach/models/wavlm_frozen_head.py
+    sha256: e5cdad3ece84e0ff8320b7366a64f0255a4be1a52d9df39654fb714f8f62f78b
+  wavlm_base_head_report:
+    path: artifacts/experiments/aihub71490_wavlm_base_plus_frozen_head_v1/report.json
+    sha256: 112eedfeb6348c1b5a258ae2ca7fd4b435c96b433d3326ade94a7f4399949a2c
+  wavlm_base_head_registry:
+    path: artifacts/experiment_registry/aihub71490-wavlm-base-plus-frozen-head-v1-dev/metadata.json
+    sha256: 0f994aa578a503697c53a3ed84377baea38ca34ebd4fc6e01bafac7a31b9f79f
+  scorer_clean_recreation:
+    path: artifacts/reproducibility/scorer_clean_recreation_20260729.json
+    sha256: 76ffff9b632b335d28145f3d3ecdee1379823e81bae08632c13f5a6985545c07
+  paper_aihub71490_data_qc_table:
+    path: docs/paper/tables/aihub71490_data_qc.md
+    sha256: fcd60c47415e29eb90a8b2b3ce9be258f817b2b0d201f40aebe11a4d10e240dd
+  paper_aihub71490_cohort_flow:
+    path: docs/paper/figures/aihub71490_cohort_flow.mmd
+    sha256: 78ea599bfd2b0a5ba5df78ab66bef45110f555cca0d2630d5e905b56bb6860fd
+  paper_aihub71490_cohort_svg:
+    path: docs/paper/figures/aihub71490_cohort_flow.svg
+    sha256: d697e42cea9a820c24c082dd183653bc0a59a9ba4e3406c85eafb8117437ce9e
+  data_license_source_ledger:
+    path: docs/DATA_LICENSE_SOURCE_LEDGER_KO.md
+    sha256: b6ceeb1f874de3071462e98c3526136302ab54d3ea9ecc109400d1a3f03f7cd4
+  explicit_dev_report:
+    path: artifacts/experiments/aihub71490_explicit_oracle_boundary_v1/report.json
+    sha256: a5c3ade0738777409bb57956b088e025081cb63886808c6d6fc87724d0875519
+  explicit_registry:
+    path: artifacts/experiment_registry/aihub71490-explicit-v1-dev-primary-20260729/metadata.json
+    sha256: 0445d69cb18fd9105a531a4e5d342d60c7cad94050c6a031c0d7ee3ef6e2141e
+  failure_analysis_json:
+    path: artifacts/analysis/aihub71490_explicit_oracle_boundary_v1_failure/failure_analysis.json
+    sha256: bfdcff140326dfb73b09b0c564dbcaef75b1a4a028d865819cc6f9e53aece65b
+  failure_analysis_markdown:
+    path: artifacts/analysis/aihub71490_explicit_oracle_boundary_v1_failure/failure_analysis.md
+    sha256: aff130481880aac4324034bf9c77562d46733d64e6fa79f2c3c282a72f467eb4
+  threshold_ablation_config:
+    path: configs/experiments/explicit_threshold_ablation_v1.yaml
+    sha256: 62323455d80807ed9ad534bc53f6b21b41feb66836038699cefedc4b8fdedb10
+  threshold_ablation_report:
+    path: artifacts/experiments/aihub71490_explicit_threshold_ablation_v1/report.json
+    sha256: ef16c405ad01d1c5add4c05ce077072b218836ee683e626e12a0e24f4637a7e1
+  threshold_ablation_registry:
+    path: artifacts/experiment_registry/aihub71490-explicit-threshold-ablation-v1-20260729/metadata.json
+    sha256: e9c6ba64729f0b4a8bab577f569444f0a1e5689795fde71fc28544d1bdb43c99
+  wavlm_large_head_report:
+    path: artifacts/experiments/aihub71490_wavlm_large_frozen_head_v1/report.json
+    sha256: ba869265c6e6c1381677fe922922b68da7df92cbb9cbaf5501fff5dafa3fdd23
+  wavlm_large_head_registry:
+    path: artifacts/experiment_registry/aihub71490-wavlm-large-frozen-head-v1-dev/metadata.json
+    sha256: 85c90e95b954ec2b74081f44b4e64d311330985a0429d76f0cb67b7a86d5b565
+  wavlm_s103_comparison_commit:
+    path: artifacts/experiments/aihub71490_wavlm_frozen_head_comparison_v1/commit.json
+    sha256: e45cf869ab54beff6bcf5a3c674c0bdff0d75460ab8daabe50c7477afca16c6e
+  wavlm_s103_comparison_report:
+    path: artifacts/experiments/aihub71490_wavlm_frozen_head_comparison_v1/generations/90db58ee3af3bb47b88a8ae1700e6a0a9ce9f16feeaa06b8e1c5d7ffbe778213/report.json
+    sha256: 90db58ee3af3bb47b88a8ae1700e6a0a9ce9f16feeaa06b8e1c5d7ffbe778213
+  wavlm_s103_comparison_receipt:
+    path: artifacts/experiments/aihub71490_wavlm_frozen_head_comparison_v1/generations/90db58ee3af3bb47b88a8ae1700e6a0a9ce9f16feeaa06b8e1c5d7ffbe778213/execution_receipt.json
+    sha256: 342a9bd2b97de87a1bfd38c3ed0a22819b1151eb37836d90e941951781f620a6
+  wavlm_s103_results_commit:
+    path: artifacts/experiments/aihub71490_wavlm_frozen_head_comparison_v1/results_table.commit.json
+    sha256: af0cb1d616e3c9377985b880bb19233647964b744ab23c98e6b69d257c273e38
+  wavlm_s103_results_markdown:
+    path: docs/paper/generated/generations/191a3eed71fa4bea63943ed6e651bab1cd0f2365da91782cb2be14192722f3e6/wavlm_frozen_head_results_table.md
+    sha256: 89db29654f8c542154040e1626131fc2df29ea71ad0c99b36e531244cd255b0f
+  wavlm_s103_results_json:
+    path: artifacts/experiments/aihub71490_wavlm_frozen_head_comparison_v1/generations/191a3eed71fa4bea63943ed6e651bab1cd0f2365da91782cb2be14192722f3e6/results_table.json
+    sha256: d8556c3a433e5d09b119ffaa567735c34bf10f19ba065a3173602d44ab5d7a20
+
+claims:
+  - id: abstract_aihub_records
+    source: {artifact: aihub_data_card, kind: json_pointer, pointer: /record_count}
+    document: {regex: 'AI Hub 71490 발음 데이터\s*(?P<value>[\d,]+)건'}
+    comparison: {type: numeric, decimals: 0}
+  - id: abstract_aihub_speakers
+    source: {artifact: aihub_data_card, kind: json_pointer, pointer: /speaker_count}
+    document: {regex: 'AI Hub 71490 발음 데이터\s*[\d,]+건, (?P<value>[\d,]+)화자'}
+    comparison: {type: numeric, decimals: 0}
+  - id: abstract_aihub_hours
+    source: {artifact: aihub_data_card, kind: json_pointer, pointer: /total_hours}
+    document: {regex: 'AI Hub 71490 발음 데이터\s*[\d,]+건, [\d,]+화자, (?P<value>[\d.]+)시간'}
+    comparison: {type: numeric, decimals: 3}
+  - id: abstract_pairing_percent
+    source:
+      artifact: aihub_g0_audit
+      kind: json_pointer
+      pointer: /pairing_rate
+      transform: {operation: multiply, value: 100}
+    document: {regex: 'pairing (?P<value>[\d.]+)%'}
+    comparison: {type: numeric, decimals: 4}
+  - id: abstract_decoder_failure_percent
+    source:
+      artifact: aihub_g0_audit
+      kind: json_pointer
+      pointer: /decoder_failure_rate
+      transform: {operation: multiply, value: 100}
+    document: {regex: 'decoder failure (?P<value>[\d.]+)%'}
+    comparison: {type: numeric, decimals: 0}
+  - id: abstract_time_bound_error_percent
+    source:
+      artifact: aihub_g0_audit
+      kind: json_pointer
+      pointer: /time_bound_error_rate
+      transform: {operation: multiply, value: 100}
+    document: {regex: 'time-bound error (?P<value>[\d.]+)%'}
+    comparison: {type: numeric, decimals: 4}
+  - id: abstract_phone_macro_f1
+    source: {artifact: explicit_dev_report, kind: json_pointer, pointer: /runs/0/phone/metrics/macro_f1}
+    document: {regex: '명시적 기준선에서 phone macro F1은 (?P<value>[\d.]+)'}
+    comparison: {type: numeric, decimals: 4}
+  - id: abstract_fluency_spearman
+    source: {artifact: explicit_dev_report, kind: json_pointer, pointer: /runs/0/utterance/fluency_score/metrics/spearman}
+    document: {regex: '유창성 Spearman은\s*(?P<value>[\d.]+)'}
+    comparison: {type: numeric, decimals: 4}
+
+  - id: r00_license_spdx
+    source: {artifact: r00_sentence_validation, kind: json_pointer, pointer: /license/spdx}
+    document: {regex: '정확한 문장 텍스트의 SPDX 라이선스는 `(?P<value>[^`]+)`'}
+    comparison: {type: exact}
+  - id: r00_validation_status
+    source: {artifact: r00_sentence_validation, kind: json_pointer, pointer: /status}
+    document: {regex: '독립\s*validator 상태는 `(?P<value>[^`]+)`'}
+    comparison: {type: exact}
+  - id: r00_sentence_count
+    source: {artifact: r00_sentence_validation, kind: json_pointer, pointer: /checks/sentence_count}
+    document: {regex: '^\| 고정 문장 \| (?P<value>[\d,]+) \|$'}
+    comparison: {type: numeric, decimals: 0}
+  - id: r00_unique_hash_count
+    source: {artifact: r00_sentence_validation, kind: json_pointer, pointer: /checks/unique_normalized_hash_count}
+    document: {regex: '^\| 고유 정규화 hash \| (?P<value>[\d,]+) \|$'}
+    comparison: {type: numeric, decimals: 0}
+  - id: r00_onset_coverage_count
+    source:
+      artifact: r00_sentence_validation
+      kind: json_pointer
+      pointer: /checks/covered_onset_consonants
+      transform: {operation: length}
+    document: {regex: '^\| 초성 coverage \| (?P<value>[\d,]+) \|$'}
+    comparison: {type: numeric, decimals: 0}
+  - id: r00_vowel_coverage_count
+    source:
+      artifact: r00_sentence_validation
+      kind: json_pointer
+      pointer: /checks/covered_observed_korean_vowels
+      transform: {operation: length}
+    document: {regex: '^\| 관측 한국어 모음 coverage \| (?P<value>[\d,]+) \|$'}
+    comparison: {type: numeric, decimals: 0}
+  - id: r00_coda_coverage_count
+    source:
+      artifact: r00_sentence_validation
+      kind: json_pointer
+      pointer: /checks/covered_surface_coda_classes
+      transform: {operation: length}
+    document: {regex: '^\| 받침 표면군 coverage \| (?P<value>[\d,]+) \|$'}
+    comparison: {type: numeric, decimals: 0}
+  - id: r00_rule_coverage_count
+    source:
+      artifact: r00_sentence_validation
+      kind: json_pointer
+      pointer: /checks/covered_phonological_rules
+      transform: {operation: length}
+    document: {regex: '^\| 음운 규칙 coverage \| (?P<value>[\d,]+) \|$'}
+    comparison: {type: numeric, decimals: 0}
+  - id: r00_prosody_coverage_count
+    source:
+      artifact: r00_sentence_validation
+      kind: json_pointer
+      pointer: /checks/covered_prosody_targets
+      transform: {operation: length}
+    document: {regex: '^\| 운율 target coverage \| (?P<value>[\d,]+) \|$'}
+    comparison: {type: numeric, decimals: 0}
+  - id: r00_reserved_prompt_overlap_count
+    source: {artifact: r00_sentence_validation, kind: json_pointer, pointer: /checks/aihub_reserved_prompt_hash_overlap_count}
+    document: {regex: '^\| AI Hub 예약 prompt hash 교집합 \| (?P<value>[\d,]+) \|$'}
+    comparison: {type: numeric, decimals: 0}
+  - id: r00_pii_match_count
+    source: {artifact: r00_sentence_validation, kind: json_pointer, pointer: /checks/pii_match_count}
+    document: {regex: '^\| PII pattern match \| (?P<value>[\d,]+) \|$'}
+    comparison: {type: numeric, decimals: 0}
+  - id: r00_forbidden_content_match_count
+    source: {artifact: r00_sentence_validation, kind: json_pointer, pointer: /checks/forbidden_content_match_count}
+    document: {regex: '^\| 금칙 content match \| (?P<value>[\d,]+) \|$'}
+    comparison: {type: numeric, decimals: 0}
+
+  - id: data_table_records
+    source: {artifact: aihub_data_card, kind: json_pointer, pointer: /record_count}
+    document: {regex: '^\| 발화 \| (?P<value>[\d,]+) \|$'}
+    comparison: {type: numeric, decimals: 0}
+  - id: data_table_speakers
+    source: {artifact: aihub_data_card, kind: json_pointer, pointer: /speaker_count}
+    document: {regex: '^\| 화자 \| (?P<value>[\d,]+) \|$'}
+    comparison: {type: numeric, decimals: 0}
+  - id: data_table_hours
+    source: {artifact: aihub_data_card, kind: json_pointer, pointer: /total_hours}
+    document: {regex: '^\| 총 음성 \| (?P<value>[\d.]+)시간 \|$'}
+    comparison: {type: numeric, decimals: 3}
+  - id: data_table_prompts
+    source: {artifact: aihub_data_card, kind: json_pointer, pointer: /prompt_count}
+    document: {regex: '^\| 고유 prompt \| (?P<value>[\d,]+) \|$'}
+    comparison: {type: numeric, decimals: 0}
+  - id: data_table_train
+    source: {artifact: aihub_data_card, kind: json_pointer, pointer: /split_counts/train}
+    document: {regex: '^\| train \| (?P<value>[\d,]+) \|$'}
+    comparison: {type: numeric, decimals: 0}
+  - id: data_table_dev
+    source: {artifact: aihub_data_card, kind: json_pointer, pointer: /split_counts/dev}
+    document: {regex: '^\| dev \| (?P<value>[\d,]+) \|$'}
+    comparison: {type: numeric, decimals: 0}
+  - id: data_table_stack
+    source: {artifact: aihub_data_card, kind: json_pointer, pointer: /split_counts/stack}
+    document: {regex: '^\| stack \| (?P<value>[\d,]+) \|$'}
+    comparison: {type: numeric, decimals: 0}
+  - id: data_table_calibration
+    source: {artifact: aihub_data_card, kind: json_pointer, pointer: /split_counts/calibration}
+    document: {regex: '^\| calibration \| (?P<value>[\d,]+) \|$'}
+    comparison: {type: numeric, decimals: 0}
+  - id: data_table_locked_test
+    source: {artifact: aihub_data_card, kind: json_pointer, pointer: /split_counts/locked_test}
+    document: {regex: '^\| locked test \| (?P<value>[\d,]+) \|$'}
+    comparison: {type: numeric, decimals: 0}
+  - id: chinese_l1_records
+    source: {artifact: aihub_data_card, kind: json_pointer, pointer: '/slice_counts/l1/Chinese'}
+    document: {regex: '중국어 L1은 (?P<value>[\d,]+)건'}
+    comparison: {type: numeric, decimals: 0}
+  - id: japanese_l1_records
+    source: {artifact: aihub_data_card, kind: json_pointer, pointer: '/slice_counts/l1/Japanese'}
+    document: {regex: '일본어 L1은 (?P<value>[\d,]+)건'}
+    comparison: {type: numeric, decimals: 0}
+  - id: zhuang_l1_records
+    source: {artifact: aihub_data_card, kind: json_pointer, pointer: '/slice_counts/l1/Zhuang; Chuang'}
+    document: {regex: '`Zhuang; Chuang` (?P<value>[\d,]+)건'}
+    comparison: {type: numeric, decimals: 0}
+  - id: other_gender_records
+    source: {artifact: aihub_data_card, kind: json_pointer, pointer: '/slice_counts/gender/O'}
+    document: {regex: '성별 `O` (?P<value>[\d,]+)건'}
+    comparison: {type: numeric, decimals: 0}
+  - id: sample_rate_min_khz
+    source:
+      artifact: aihub_data_card
+      kind: json_pointer
+      pointer: /sample_rates_hz/0
+      transform: {operation: divide, value: 1000}
+    document: {regex: 'sample rate는\s*(?P<value>[\d.]+)–[\d.]+ kHz'}
+    comparison: {type: numeric, decimals: 0}
+  - id: sample_rate_max_khz
+    source:
+      artifact: aihub_data_card
+      kind: json_pointer
+      pointer: /sample_rates_hz/6
+      transform: {operation: divide, value: 1000}
+    document: {regex: 'sample rate는\s*[\d.]+–(?P<value>[\d.]+) kHz'}
+    comparison: {type: numeric, decimals: 0}
+
+  - id: native_object_count
+    source: {artifact: native_report, kind: json_pointer, pointer: /manifest/records}
+    document: {regex: 'ZEROTH-Korean (?P<value>[\d,]+)개 audio object'}
+    comparison: {type: numeric, decimals: 0}
+  - id: native_total_hours
+    source:
+      artifact: native_report
+      kind: json_pointer
+      pointer: /audio_summary/total_duration_seconds
+      transform: {operation: divide, value: 3600}
+    document: {regex: 'audio object, (?P<value>[\d.]+)시간'}
+    comparison: {type: numeric, decimals: 3}
+  - id: native_fleurs_count
+    source: {artifact: native_report, kind: json_pointer, pointer: /counts/source/fleurs-ko-kr}
+    document: {regex: 'source별 object 수는 FLEURS (?P<value>[\d,]+)개'}
+    comparison: {type: numeric, decimals: 0}
+  - id: native_kss_count
+    source: {artifact: native_report, kind: json_pointer, pointer: /counts/source/kss}
+    document: {regex: 'KSS (?P<value>[\d,]+)개'}
+    comparison: {type: numeric, decimals: 0}
+  - id: native_seoul_count
+    source: {artifact: native_report, kind: json_pointer, pointer: /counts/source/seoul-corpus}
+    document: {regex: 'Seoul Corpus\s*(?P<value>[\d,]+)개'}
+    comparison: {type: numeric, decimals: 0}
+  - id: native_zeroth_count
+    source: {artifact: native_report, kind: json_pointer, pointer: /counts/source/zeroth-korean}
+    document: {regex: 'ZEROTH-Korean (?P<value>[\d,]+)개다'}
+    comparison: {type: numeric, decimals: 0}
+
+  - id: target_phone_label_count
+    source: {artifact: aihub_data_card, kind: json_pointer, pointer: /target_phone_label_count}
+    document: {regex: '목표 phone은 (?P<value>[\d,]+)종'}
+    comparison: {type: numeric, decimals: 0}
+  - id: raw_realized_label_count
+    source: {artifact: aihub_data_card, kind: json_pointer, pointer: /realized_raw_label_count}
+    document: {regex: 'free-form annotation을 포함해\s*(?P<value>[\d,]+)종'}
+    comparison: {type: numeric, decimals: 0}
+  - id: realized_phone_coverage_percent
+    source:
+      artifact: aihub_data_card
+      kind: json_pointer
+      pointer: /realized_phone_canonical_coverage
+      transform: {operation: multiply, value: 100}
+    document: {regex: 'occurrence coverage는\s*(?P<value>[\d.]+)%'}
+    comparison: {type: numeric, decimals: 4}
+  - id: official_error_tag_count
+    source: {artifact: aihub_data_card, kind: json_pointer, pointer: /raw_error_tag_count}
+    document: {regex: '공식 오류 tag (?P<value>[\d,]+)종'}
+    comparison: {type: numeric, decimals: 0}
+  - id: error_interval_count
+    source: {artifact: aihub_data_card, kind: json_pointer, pointer: /error_interval_count}
+    document: {regex: '(?P<value>[\d,]+)구간은 고정 ontology'}
+    comparison: {type: numeric, decimals: 0}
+  - id: pronunciation_score_coverage
+    source: {artifact: aihub_data_card, kind: json_pointer, pointer: /score_coverage/pronunciation_score/valid}
+    document: {regex: '유효 coverage는 발음 (?P<value>[\d,]+)건'}
+    comparison: {type: numeric, decimals: 0}
+  - id: comprehensibility_score_coverage
+    source: {artifact: aihub_data_card, kind: json_pointer, pointer: /score_coverage/comprehensibility_score/valid}
+    document: {regex: '이해도 (?P<value>[\d,]+)건'}
+    comparison: {type: numeric, decimals: 0}
+  - id: fluency_score_coverage
+    source: {artifact: aihub_data_card, kind: json_pointer, pointer: /score_coverage/fluency_score/valid}
+    document: {regex: '유창성\s*(?P<value>[\d,]+)건이다'}
+    comparison: {type: numeric, decimals: 0}
+
+  - id: prompt_count_in_all_splits
+    source: {artifact: aihub_data_card, kind: json_pointer, pointer: /prompt_count}
+    document: {regex: '모든 (?P<value>[\d,]+)개\s*prompt가 기존 다섯 split'}
+    comparison: {type: numeric, decimals: 0}
+  - id: reserved_prompt_count
+    source: {artifact: prompt_challenge, kind: json_pointer, pointer: /selection/selected_prompt_count}
+    document: {regex: '(?P<value>[\d,]+)개 prompt를 사전 예약'}
+    comparison: {type: numeric, decimals: 0}
+  - id: prompt_challenge_rows
+    source: {artifact: prompt_challenge, kind: json_pointer, pointer: /counts/row_dispositions/prompt_challenge}
+    document: {regex: 'locked-test 화자의 (?P<value>[\d,]+)건만 prompt challenge'}
+    comparison: {type: numeric, decimals: 0}
+  - id: reserved_non_test_excluded_rows
+    source: {artifact: prompt_challenge, kind: json_pointer, pointer: /counts/row_dispositions/exclude_from_training_and_tuning}
+    document: {regex: '다른 split의 동일 prompt (?P<value>[\d,]+)건'}
+    comparison: {type: numeric, decimals: 0}
+  - id: cache_excluded_split_sentence
+    source: {artifact: utterance_cache_report, kind: json_pointer, pointer: /progress/exclusions/split_not_allowed}
+    document: {regex: '실제 train/dev explicit cache에서는 평가 split (?P<value>[\d,]+)건'}
+    comparison: {type: numeric, decimals: 0}
+  - id: cache_excluded_qc_sentence
+    source: {artifact: utterance_cache_report, kind: json_pointer, pointer: /progress/exclusions/qc_flags_present}
+    document: {regex: 'QC flag (?P<value>[\d,]+)건'}
+    comparison: {type: numeric, decimals: 0}
+  - id: cache_excluded_reserved_sentence
+    source: {artifact: utterance_cache_report, kind: json_pointer, pointer: /progress/exclusions/reserved_prompt}
+    document: {regex: '예약 prompt (?P<value>[\d,]+)건을 제외'}
+    comparison: {type: numeric, decimals: 0}
+  - id: cache_train_rows_sentence
+    source: {artifact: utterance_cache_report, kind: json_pointer, pointer: /progress/included_rows_by_split/train}
+    document: {regex: 'train (?P<value>[\d,]+)건과 dev'}
+    comparison: {type: numeric, decimals: 0}
+  - id: cache_dev_rows_sentence
+    source: {artifact: utterance_cache_report, kind: json_pointer, pointer: /progress/included_rows_by_split/dev}
+    document: {regex: 'dev\s*(?P<value>[\d,]+)건을 남겼다'}
+    comparison: {type: numeric, decimals: 0}
+
+  - id: g0_table_pairing_percent
+    source:
+      artifact: aihub_g0_audit
+      kind: json_pointer
+      pointer: /pairing_rate
+      transform: {operation: multiply, value: 100}
+    document: {regex: '^\| WAV–JSON–TextGrid pairing \| (?P<value>[\d.]+)%'}
+    comparison: {type: numeric, decimals: 7}
+  - id: g0_table_decoder_failure_percent
+    source:
+      artifact: aihub_g0_audit
+      kind: json_pointer
+      pointer: /decoder_failure_rate
+      transform: {operation: multiply, value: 100}
+    document: {regex: '^\| decoder failure \| (?P<value>[\d.]+)%'}
+    comparison: {type: numeric, decimals: 0}
+  - id: g0_table_time_bound_error_percent
+    source:
+      artifact: aihub_g0_audit
+      kind: json_pointer
+      pointer: /time_bound_error_rate
+      transform: {operation: multiply, value: 100}
+    document: {regex: '^\| time-bound error \| (?P<value>[\d.]+)%'}
+    comparison: {type: numeric, decimals: 7}
+  - id: g0_cross_split_speaker_overlap
+    source:
+      artifact: aihub_g0_audit
+      kind: json_pointer
+      pointer: /cross_split_speaker_overlap_examples
+      transform: {operation: length}
+    document: {regex: '^\| split 간 화자 중복 \| (?P<value>[\d,]+) \|'}
+    comparison: {type: numeric, decimals: 0}
+  - id: g0_cross_split_pcm_overlap
+    source:
+      artifact: aihub_g0_audit
+      kind: json_pointer
+      pointer: /cross_split_pcm_duplicate_examples
+      transform: {operation: length}
+    document: {regex: '^\| split 간 PCM 중복 \| (?P<value>[\d,]+) \|'}
+    comparison: {type: numeric, decimals: 0}
+  - id: g0_unknown_error_tags
+    source: {artifact: aihub_data_card, kind: json_pointer, pointer: /unknown_error_tag_occurrences}
+    document: {regex: '^\| error tag ontology 미매핑 \| (?P<value>[\d,]+) \|'}
+    comparison: {type: numeric, decimals: 0}
+  - id: g0_manual_required_samples
+    source: {artifact: aihub_g0_audit, kind: json_pointer, pointer: /manual_alignment_audit/required_samples}
+    document: {regex: '전문가 (?P<value>[\d,]+)건 감사가 완료될 때까지'}
+    comparison: {type: numeric, decimals: 0}
+  - id: g0_out_of_bounds_count
+    source: {artifact: aihub_g0_audit, kind: json_pointer, pointer: /qc_flag_counts/interval_out_of_bounds}
+    document: {regex: '`interval_out_of_bounds` (?P<value>[\d,]+)건'}
+    comparison: {type: numeric, decimals: 0}
+  - id: g0_missing_phone_tier_count
+    source: {artifact: aihub_g0_audit, kind: json_pointer, pointer: /qc_flag_counts/missing_realized_phone_tier}
+    document: {regex: 'phone tier 누락 (?P<value>[\d,]+)건'}
+    comparison: {type: numeric, decimals: 0}
+
+  - id: cache_table_source_rows
+    source: {artifact: utterance_cache_report, kind: json_pointer, pointer: /progress/source_rows_scanned}
+    document: {regex: '^\| 전체 source scan \| - \| (?P<value>[\d,]+) \|$'}
+    comparison: {type: numeric, decimals: 0}
+  - id: cache_table_split_exclusion
+    source: {artifact: utterance_cache_report, kind: json_pointer, pointer: /progress/exclusions/split_not_allowed}
+    document: {regex: '^\| stack/calibration/locked-test 제외 \| (?P<value>[\d,]+) \|'}
+    comparison: {type: numeric, decimals: 0}
+  - id: cache_table_after_split
+    source:
+      artifact: utterance_cache_report
+      kind: json_arithmetic
+      operation: subtract
+      pointers: [/progress/source_rows_scanned, /progress/exclusions/split_not_allowed]
+    document: {regex: '^\| stack/calibration/locked-test 제외 \| [\d,]+ \| (?P<value>[\d,]+) \|$'}
+    comparison: {type: numeric, decimals: 0}
+  - id: cache_table_qc_exclusion
+    source: {artifact: utterance_cache_report, kind: json_pointer, pointer: /progress/exclusions/qc_flags_present}
+    document: {regex: '^\| QC flag 제외 \| (?P<value>[\d,]+) \|'}
+    comparison: {type: numeric, decimals: 0}
+  - id: cache_table_after_qc
+    source:
+      artifact: utterance_cache_report
+      kind: json_arithmetic
+      operation: subtract
+      pointers: [/progress/source_rows_scanned, /progress/exclusions/split_not_allowed, /progress/exclusions/qc_flags_present]
+    document: {regex: '^\| QC flag 제외 \| [\d,]+ \| (?P<value>[\d,]+) \|$'}
+    comparison: {type: numeric, decimals: 0}
+  - id: cache_table_reserved_exclusion
+    source: {artifact: utterance_cache_report, kind: json_pointer, pointer: /progress/exclusions/reserved_prompt}
+    document: {regex: '^\| 예약 prompt 제외 \| (?P<value>[\d,]+) \|'}
+    comparison: {type: numeric, decimals: 0}
+  - id: cache_table_final_rows
+    source: {artifact: utterance_cache_report, kind: json_pointer, pointer: /progress/utterance_rows_written}
+    document: {regex: '^\| 예약 prompt 제외 \| [\d,]+ \| (?P<value>[\d,]+) \|$'}
+    comparison: {type: numeric, decimals: 0}
+  - id: phone_cache_row_count_report
+    source: {artifact: phone_cache_report, kind: json_pointer, pointer: /progress/phone_rows_written}
+    document: {regex: '완결된 train/dev oracle phone cache는 (?P<value>[\d,]+)개 target interval'}
+    comparison: {type: numeric, decimals: 0}
+  - id: phone_cache_row_count_parquet
+    source: {artifact: phone_cache_parquet, kind: parquet_metadata, aggregate: row_count}
+    document: {regex: '완결된 train/dev oracle phone cache는 (?P<value>[\d,]+)개 target interval'}
+    comparison: {type: numeric, decimals: 0}
+  - id: phone_cache_correct_count
+    source:
+      artifact: phone_cache_parquet
+      kind: parquet_metadata
+      aggregate: count_equal
+      column: binary_error_label
+      equals: 0
+    document: {regex: 'silver\s*binary label은 정상 (?P<value>[\d,]+)개'}
+    comparison: {type: numeric, decimals: 0}
+  - id: phone_cache_correct_percent
+    source:
+      artifact: phone_cache_parquet
+      kind: parquet_metadata
+      aggregate: ratio_percent
+      column: binary_error_label
+      equals: 0
+    document: {regex: '정상 [\d,]+개\((?P<value>[\d.]+)%\)'}
+    comparison: {type: numeric, decimals: 3}
+  - id: phone_cache_error_count
+    source:
+      artifact: phone_cache_parquet
+      kind: parquet_metadata
+      aggregate: count_equal
+      column: binary_error_label
+      equals: 1
+    document: {regex: '오류 (?P<value>[\d,]+)개'}
+    comparison: {type: numeric, decimals: 0}
+  - id: phone_cache_error_percent
+    source:
+      artifact: phone_cache_parquet
+      kind: parquet_metadata
+      aggregate: ratio_percent
+      column: binary_error_label
+      equals: 1
+    document: {regex: '오류 [\d,]+개\((?P<value>[\d.]+)%\)'}
+    comparison: {type: numeric, decimals: 3}
+
+  - id: wavlm_model_revision
+    source: {artifact: wavlm_base_cache_report, kind: json_pointer, pointer: /model/revision}
+    document: {regex: 'wavlm-base-plus` revision\s*`(?P<value>[0-9a-f]+)`'}
+    comparison: {type: exact}
+  - id: wavlm_hidden_dimension
+    source: {artifact: wavlm_base_cache_report, kind: json_pointer, pointer: /model/hidden_size}
+    document: {regex: 'revision\s*`[0-9a-f]+`의 (?P<value>[\d,]+)차원 hidden'}
+    comparison: {type: numeric, decimals: 0}
+  - id: wavlm_sample_rate_khz
+    source:
+      artifact: wavlm_base_cache_report
+      kind: json_pointer
+      pointer: /configuration/sample_rate_hz
+      transform: {operation: divide, value: 1000}
+    document: {regex: '(?P<value>[\d.]+) kHz로 복호화한 음성'}
+    comparison: {type: numeric, decimals: 0}
+  - id: wavlm_max_chunk_seconds
+    source: {artifact: wavlm_base_cache_report, kind: json_pointer, pointer: /configuration/max_chunk_seconds}
+    document: {regex: '최대 (?P<value>[\d.]+)초의\s*target-phone-label-aware chunk'}
+    comparison: {type: numeric, decimals: 1}
+  - id: wavlm_utterance_embedding_dimension
+    source: {artifact: wavlm_base_cache_validation, kind: json_pointer, pointer: /contract/embedding_dimensions/utterance}
+    document: {regex: 'standard\s*deviation을 이어 붙인 (?P<value>[\d,]+)차원 벡터'}
+    comparison: {type: numeric, decimals: 0}
+  - id: wavlm_phone_embedding_dimension
+    source: {artifact: wavlm_base_cache_validation, kind: json_pointer, pointer: /contract/embedding_dimensions/phone}
+    document: {regex: 'phone과 word에는 각각\s*(?P<value>[\d,]+)차원 mean vector'}
+    comparison: {type: numeric, decimals: 0}
+  - id: wavlm_word_embedding_dimension
+    source: {artifact: wavlm_base_cache_validation, kind: json_pointer, pointer: /contract/embedding_dimensions/word}
+    document: {regex: 'phone과 word에는 각각\s*(?P<value>[\d,]+)차원 mean vector'}
+    comparison: {type: numeric, decimals: 0}
+  - id: wavlm_method_source_rows_scanned
+    source: {artifact: wavlm_base_cache_report, kind: json_pointer, pointer: /progress/source_rows_scanned}
+    document: {regex: 'Cache 생성기는 source (?P<value>[\d,]+)건의 metadata'}
+    comparison: {type: numeric, decimals: 0}
+  - id: wavlm_method_evaluation_rows_excluded
+    source: {artifact: wavlm_base_cache_report, kind: json_pointer, pointer: /progress/exclusions/split_not_allowed}
+    document: {regex: 'evaluation split (?P<value>[\d,]+)건은\s*`split_not_allowed`'}
+    comparison: {type: numeric, decimals: 0}
+  - id: wavlm_method_included_utterances
+    source: {artifact: wavlm_base_cache_report, kind: json_pointer, pointer: /progress/utterance_rows_written}
+    document: {regex: 'train/dev (?P<value>[\d,]+)건만 audio decode'}
+    comparison: {type: numeric, decimals: 0}
+  - id: wavlm_evaluation_metric_access_policy
+    source: {artifact: wavlm_base_cache_report, kind: json_pointer, pointer: /policy/evaluation_split_metric_access}
+    document: {regex: '`evaluation_split_metric_access`는 `(?P<value>[^`]+)`'}
+    comparison: {type: exact}
+  - id: wavlm_holistic_score_columns_read
+    source:
+      artifact: wavlm_base_cache_report
+      kind: json_pointer
+      pointer: /policy/holistic_score_columns_read
+      transform: {operation: length}
+    document: {regex: 'holistic score column을 읽은\s*수는 (?P<value>[\d,]+)개다'}
+    comparison: {type: numeric, decimals: 0}
+  - id: wavlm_requested_inference_precision
+    source: {artifact: wavlm_base_cache_report, kind: json_pointer, pointer: /runtime/inference_precision}
+    document: {regex: 'Encoder 호출에는 (?P<value>\w+) autocast를 요청'}
+    comparison: {type: exact}
+  - id: wavlm_observed_float32_output_count
+    source: {artifact: wavlm_base_cache_report, kind: json_pointer, pointer: /runtime/observed_model_output_dtypes/float32}
+    document: {regex: '실제 (?P<value>[\d,]+)개 chunk의\s*관측 hidden output dtype은 모두 float32'}
+    comparison: {type: numeric, decimals: 0}
+  - id: wavlm_storage_precision
+    source: {artifact: wavlm_base_cache_report, kind: json_pointer, pointer: /runtime/storage_precision}
+    document: {regex: 'cache 저장\s*dtype만 (?P<value>\w+)으로 변환'}
+    comparison: {type: exact}
+
+  - id: wavlm_cache_status
+    source: {artifact: wavlm_base_cache_report, kind: json_pointer, pointer: /status}
+    document: {regex: 'WavLM Base\+ frozen feature cache 생성 상태는 `(?P<value>[^`]+)`'}
+    comparison: {type: exact}
+  - id: wavlm_validation_status
+    source: {artifact: wavlm_base_cache_validation, kind: json_pointer, pointer: /status}
+    document: {regex: '독립 전수검증\s*상태는 `(?P<value>[^`]+)`'}
+    comparison: {type: exact}
+  - id: wavlm_table_utterance_rows
+    source: {artifact: wavlm_base_cache_report, kind: json_pointer, pointer: /outputs/utterance/row_count}
+    document: {regex: '^\| 행·embedding vector \| (?P<value>[\d,]+) \|'}
+    comparison: {type: numeric, decimals: 0}
+  - id: wavlm_table_phone_rows
+    source: {artifact: wavlm_base_cache_report, kind: json_pointer, pointer: /outputs/phone/row_count}
+    document: {regex: '^\| 행·embedding vector \| [\d,]+ \| (?P<value>[\d,]+) \|'}
+    comparison: {type: numeric, decimals: 0}
+  - id: wavlm_table_word_rows
+    source: {artifact: wavlm_base_cache_report, kind: json_pointer, pointer: /outputs/word/row_count}
+    document: {regex: '^\| 행·embedding vector \| [\d,]+ \| [\d,]+ \| (?P<value>[\d,]+) \|'}
+    comparison: {type: numeric, decimals: 0}
+  - id: wavlm_table_total_rows
+    source:
+      artifact: wavlm_base_cache_report
+      kind: json_arithmetic
+      operation: sum
+      pointers: [/outputs/utterance/row_count, /outputs/phone/row_count, /outputs/word/row_count]
+    document: {regex: '^\| 행·embedding vector \| [\d,]+ \| [\d,]+ \| [\d,]+ \| (?P<value>[\d,]+) \|$'}
+    comparison: {type: numeric, decimals: 0}
+  - id: wavlm_table_utterance_shards
+    source: {artifact: wavlm_base_cache_report, kind: json_pointer, pointer: /outputs/utterance/shard_count}
+    document: {regex: '^\| Parquet shard \| (?P<value>[\d,]+) \|'}
+    comparison: {type: numeric, decimals: 0}
+  - id: wavlm_table_phone_shards
+    source: {artifact: wavlm_base_cache_report, kind: json_pointer, pointer: /outputs/phone/shard_count}
+    document: {regex: '^\| Parquet shard \| [\d,]+ \| (?P<value>[\d,]+) \|'}
+    comparison: {type: numeric, decimals: 0}
+  - id: wavlm_table_word_shards
+    source: {artifact: wavlm_base_cache_report, kind: json_pointer, pointer: /outputs/word/shard_count}
+    document: {regex: '^\| Parquet shard \| [\d,]+ \| [\d,]+ \| (?P<value>[\d,]+) \|'}
+    comparison: {type: numeric, decimals: 0}
+  - id: wavlm_table_total_shards
+    source:
+      artifact: wavlm_base_cache_report
+      kind: json_arithmetic
+      operation: sum
+      pointers: [/outputs/utterance/shard_count, /outputs/phone/shard_count, /outputs/word/shard_count]
+    document: {regex: '^\| Parquet shard \| [\d,]+ \| [\d,]+ \| [\d,]+ \| (?P<value>[\d,]+) \|$'}
+    comparison: {type: numeric, decimals: 0}
+  - id: wavlm_table_utterance_bytes
+    source: {artifact: wavlm_base_cache_report, kind: json_pointer, pointer: /outputs/utterance/byte_count}
+    document: {regex: '^\| 실제 Parquet byte \| (?P<value>[\d,]+) \|'}
+    comparison: {type: numeric, decimals: 0}
+  - id: wavlm_table_phone_bytes
+    source: {artifact: wavlm_base_cache_report, kind: json_pointer, pointer: /outputs/phone/byte_count}
+    document: {regex: '^\| 실제 Parquet byte \| [\d,]+ \| (?P<value>[\d,]+) \|'}
+    comparison: {type: numeric, decimals: 0}
+  - id: wavlm_table_word_bytes
+    source: {artifact: wavlm_base_cache_report, kind: json_pointer, pointer: /outputs/word/byte_count}
+    document: {regex: '^\| 실제 Parquet byte \| [\d,]+ \| [\d,]+ \| (?P<value>[\d,]+) \|'}
+    comparison: {type: numeric, decimals: 0}
+  - id: wavlm_table_total_bytes
+    source:
+      artifact: wavlm_base_cache_report
+      kind: json_arithmetic
+      operation: sum
+      pointers: [/outputs/utterance/byte_count, /outputs/phone/byte_count, /outputs/word/byte_count]
+    document: {regex: '^\| 실제 Parquet byte \| [\d,]+ \| [\d,]+ \| [\d,]+ \| (?P<value>[\d,]+) \|$'}
+    comparison: {type: numeric, decimals: 0}
+  - id: wavlm_validated_embedding_scalars
+    source:
+      artifact: wavlm_base_cache_validation
+      kind: json_arithmetic
+      operation: sum
+      pointers:
+        - /scan/embedding_values_checked/utterance
+        - /scan/embedding_values_checked/phone
+        - /scan/embedding_values_checked/word
+    document: {regex: '전체 (?P<value>[\d,]+)개 embedding scalar를 확인'}
+    comparison: {type: numeric, decimals: 0}
+  - id: wavlm_validation_zero_quality_errors
+    source:
+      artifact: wavlm_base_cache_validation
+      kind: json_arithmetic
+      operation: sum
+      pointers:
+        - /scan/nonfinite_embedding_values/utterance
+        - /scan/nonfinite_embedding_values/phone
+        - /scan/nonfinite_embedding_values/word
+        - /scan/all_zero_embedding_vectors/utterance
+        - /scan/all_zero_embedding_vectors/phone
+        - /scan/all_zero_embedding_vectors/word
+        - /scan/forbidden_split_rows/utterance
+        - /scan/forbidden_split_rows/phone
+        - /scan/forbidden_split_rows/word
+    document: {regex: 'validation\s*error의 합은 (?P<value>[\d,]+)이었다'}
+    comparison: {type: numeric, decimals: 0}
+  - id: wavlm_validation_error_list_length
+    source:
+      artifact: wavlm_base_cache_validation
+      kind: json_pointer
+      pointer: /errors
+      transform: {operation: length}
+    document: {regex: 'validation\s*error의 합은 (?P<value>[\d,]+)이었다'}
+    comparison: {type: numeric, decimals: 0}
+  - id: wavlm_validation_max_batch_rows
+    source: {artifact: wavlm_base_cache_validation, kind: json_pointer, pointer: /memory/max_batch_rows}
+    document: {regex: '한 번에 최대 (?P<value>[\d,]+)행,'}
+    comparison: {type: numeric, decimals: 0}
+  - id: wavlm_validation_max_embedding_batch_bytes
+    source: {artifact: wavlm_base_cache_validation, kind: json_pointer, pointer: /memory/max_embedding_batch_bytes}
+    document: {regex: '[\d,]+행, (?P<value>[\d,]+) embedding byte만'}
+    comparison: {type: numeric, decimals: 0}
+  - id: wavlm_decoded_audio_hours
+    source:
+      artifact: wavlm_base_cache_report
+      kind: json_pointer
+      pointer: /progress/decoded_audio_seconds
+      transform: {operation: divide, value: 3600}
+    document: {regex: 'decoded audio (?P<value>[\d.]+)시간'}
+    comparison: {type: numeric, decimals: 3}
+  - id: wavlm_elapsed_seconds
+    source: {artifact: wavlm_base_cache_report, kind: json_pointer, pointer: /elapsed_seconds}
+    document: {regex: 'elapsed (?P<value>[\d,.]+)초'}
+    comparison: {type: numeric, decimals: 3}
+  - id: wavlm_utterances_per_second
+    source: {artifact: wavlm_base_cache_report, kind: json_pointer, pointer: /throughput/utterances_per_second}
+    document: {regex: '(?P<value>[\d.]+) utterance/s'}
+    comparison: {type: numeric, decimals: 4}
+  - id: wavlm_audio_realtime_multiplier
+    source: {artifact: wavlm_base_cache_report, kind: json_pointer, pointer: /throughput/audio_realtime_multiplier}
+    document: {regex: 'audio realtime\s*(?P<value>[\d.]+)배'}
+    comparison: {type: numeric, decimals: 3}
+  - id: wavlm_cuda_oom_count
+    source: {artifact: wavlm_base_cache_report, kind: json_pointer, pointer: /runtime/oom_count}
+    document: {regex: 'CUDA OOM은 (?P<value>[\d,]+)회'}
+    comparison: {type: numeric, decimals: 0}
+  - id: wavlm_peak_cuda_allocated_mib
+    source:
+      artifact: wavlm_base_cache_report
+      kind: json_pointer
+      pointer: /runtime/peak_allocated_bytes
+      transform: {operation: divide, value: 1048576}
+    document: {regex: 'Peak CUDA allocated/reserved는\s*각각 (?P<value>[\d,.]+)/'}
+    comparison: {type: numeric, decimals: 3}
+  - id: wavlm_peak_cuda_reserved_mib
+    source:
+      artifact: wavlm_base_cache_report
+      kind: json_pointer
+      pointer: /runtime/peak_reserved_bytes
+      transform: {operation: divide, value: 1048576}
+    document: {regex: 'Peak CUDA allocated/reserved는\s*각각 [\d,.]+/(?P<value>[\d,.]+) MiB'}
+    comparison: {type: numeric, decimals: 3}
+  - id: wavlm_peak_process_rss_mib
+    source:
+      artifact: wavlm_base_cache_report
+      kind: json_pointer
+      pointer: /runtime/peak_process_rss_bytes
+      transform: {operation: divide, value: 1048576}
+    document: {regex: 'peak process RSS는 (?P<value>[\d,.]+) MiB'}
+    comparison: {type: numeric, decimals: 3}
+  - id: wavlm_cuda_head_smoke_status
+    source: {artifact: wavlm_head_cuda_smoke, kind: json_pointer, pointer: /status}
+    document: {regex: 'fresh-process CUDA frozen-head preflight 상태도 `(?P<value>[^`]+)`'}
+    comparison: {type: exact}
+
+  - id: pronunciation_qwk
+    source: {artifact: explicit_dev_report, kind: json_pointer, pointer: /runs/0/utterance/pronunciation_score/metrics/qwk}
+    document: {regex: '^\| pronunciation \| (?P<value>[\d.]+) \|'}
+    comparison: {type: numeric, decimals: 4}
+  - id: pronunciation_spearman
+    source: {artifact: explicit_dev_report, kind: json_pointer, pointer: /runs/0/utterance/pronunciation_score/metrics/spearman}
+    document: {regex: '^\| pronunciation \| [\d.]+ \| (?P<value>[\d.]+) \|'}
+    comparison: {type: numeric, decimals: 4}
+  - id: pronunciation_mae
+    source: {artifact: explicit_dev_report, kind: json_pointer, pointer: /runs/0/utterance/pronunciation_score/metrics/mae}
+    document: {regex: '^\| pronunciation \| [\d.]+ \| [\d.]+ \| (?P<value>[\d.]+) \|'}
+    comparison: {type: numeric, decimals: 4}
+  - id: pronunciation_icc
+    source: {artifact: explicit_dev_report, kind: json_pointer, pointer: /runs/0/utterance/pronunciation_score/metrics/icc_2_1}
+    document: {regex: '^\| pronunciation \| [\d.]+ \| [\d.]+ \| [\d.]+ \| (?P<value>[\d.]+) \|$'}
+    comparison: {type: numeric, decimals: 4}
+  - id: fluency_qwk
+    source: {artifact: explicit_dev_report, kind: json_pointer, pointer: /runs/0/utterance/fluency_score/metrics/qwk}
+    document: {regex: '^\| fluency \| (?P<value>[\d.]+) \|'}
+    comparison: {type: numeric, decimals: 4}
+  - id: fluency_spearman
+    source: {artifact: explicit_dev_report, kind: json_pointer, pointer: /runs/0/utterance/fluency_score/metrics/spearman}
+    document: {regex: '^\| fluency \| [\d.]+ \| (?P<value>[\d.]+) \|'}
+    comparison: {type: numeric, decimals: 4}
+  - id: fluency_mae
+    source: {artifact: explicit_dev_report, kind: json_pointer, pointer: /runs/0/utterance/fluency_score/metrics/mae}
+    document: {regex: '^\| fluency \| [\d.]+ \| [\d.]+ \| (?P<value>[\d.]+) \|'}
+    comparison: {type: numeric, decimals: 4}
+  - id: fluency_icc
+    source: {artifact: explicit_dev_report, kind: json_pointer, pointer: /runs/0/utterance/fluency_score/metrics/icc_2_1}
+    document: {regex: '^\| fluency \| [\d.]+ \| [\d.]+ \| [\d.]+ \| (?P<value>[\d.]+) \|$'}
+    comparison: {type: numeric, decimals: 4}
+  - id: comprehensibility_qwk
+    source: {artifact: explicit_dev_report, kind: json_pointer, pointer: /runs/0/utterance/comprehensibility_score/metrics/qwk}
+    document: {regex: '^\| comprehensibility \| (?P<value>[\d.]+) \|'}
+    comparison: {type: numeric, decimals: 4}
+  - id: comprehensibility_spearman
+    source: {artifact: explicit_dev_report, kind: json_pointer, pointer: /runs/0/utterance/comprehensibility_score/metrics/spearman}
+    document: {regex: '^\| comprehensibility \| [\d.]+ \| (?P<value>[\d.]+) \|'}
+    comparison: {type: numeric, decimals: 4}
+  - id: comprehensibility_mae
+    source: {artifact: explicit_dev_report, kind: json_pointer, pointer: /runs/0/utterance/comprehensibility_score/metrics/mae}
+    document: {regex: '^\| comprehensibility \| [\d.]+ \| [\d.]+ \| (?P<value>[\d.]+) \|'}
+    comparison: {type: numeric, decimals: 4}
+  - id: comprehensibility_icc
+    source: {artifact: explicit_dev_report, kind: json_pointer, pointer: /runs/0/utterance/comprehensibility_score/metrics/icc_2_1}
+    document: {regex: '^\| comprehensibility \| [\d.]+ \| [\d.]+ \| [\d.]+ \| (?P<value>[\d.]+) \|$'}
+    comparison: {type: numeric, decimals: 4}
+  - id: result_phone_macro_f1
+    source: {artifact: explicit_dev_report, kind: json_pointer, pointer: /runs/0/phone/metrics/macro_f1}
+    document: {regex: 'primary dev macro F1/AUPRC는\s*(?P<value>[\d.]+)/'}
+    comparison: {type: numeric, decimals: 4}
+  - id: result_phone_auprc
+    source: {artifact: explicit_dev_report, kind: json_pointer, pointer: /runs/0/phone/metrics/auprc}
+    document: {regex: 'primary dev macro F1/AUPRC는\s*[\d.]+/(?P<value>[\d.]+)'}
+    comparison: {type: numeric, decimals: 4}
+  - id: result_phone_all_dev_macro_f1
+    source: {artifact: explicit_dev_report, kind: json_pointer, pointer: /runs/0/phone/all_dev_audit_metrics/macro_f1}
+    document: {regex: 'all-dev audit F1은 (?P<value>[\d.]+)'}
+    comparison: {type: numeric, decimals: 4}
+  - id: result_fluency_spearman_repeat
+    source: {artifact: explicit_dev_report, kind: json_pointer, pointer: /runs/0/utterance/fluency_score/metrics/spearman}
+    document: {regex: 'Spearman (?P<value>[\d.]+)으로 [\d.]+ gate'}
+    comparison: {type: numeric, decimals: 4}
+
+  - id: failure_normal_precision
+    source: {artifact: failure_analysis_json, kind: json_pointer, pointer: '/seeds/0/phone/class_metrics_primary_dev/0/precision'}
+    document: {regex: '정상 class의 precision/recall/F1은\s*(?P<value>[\d.]+)/'}
+    comparison: {type: numeric, decimals: 4}
+  - id: failure_normal_recall
+    source: {artifact: failure_analysis_json, kind: json_pointer, pointer: '/seeds/0/phone/class_metrics_primary_dev/0/recall'}
+    document: {regex: '정상 class의 precision/recall/F1은\s*[\d.]+/(?P<value>[\d.]+)/'}
+    comparison: {type: numeric, decimals: 4}
+  - id: failure_normal_f1
+    source: {artifact: failure_analysis_json, kind: json_pointer, pointer: '/seeds/0/phone/class_metrics_primary_dev/0/f1'}
+    document: {regex: '정상 class의 precision/recall/F1은\s*[\d.]+/[\d.]+/(?P<value>[\d.]+)'}
+    comparison: {type: numeric, decimals: 4}
+  - id: failure_error_precision
+    source: {artifact: failure_analysis_json, kind: json_pointer, pointer: '/seeds/0/phone/class_metrics_primary_dev/1/precision'}
+    document: {regex: '오류 class는 (?P<value>[\d.]+)/'}
+    comparison: {type: numeric, decimals: 4}
+  - id: failure_error_recall
+    source: {artifact: failure_analysis_json, kind: json_pointer, pointer: '/seeds/0/phone/class_metrics_primary_dev/1/recall'}
+    document: {regex: '오류 class는 [\d.]+/(?P<value>[\d.]+)/'}
+    comparison: {type: numeric, decimals: 4}
+  - id: failure_error_f1
+    source: {artifact: failure_analysis_json, kind: json_pointer, pointer: '/seeds/0/phone/class_metrics_primary_dev/1/f1'}
+    document: {regex: '오류 class는 [\d.]+/[\d.]+/(?P<value>[\d.]+)'}
+    comparison: {type: numeric, decimals: 4}
+  - id: failure_all_dev_error_prevalence
+    source:
+      artifact: failure_analysis_json
+      kind: json_pointer
+      pointer: /seeds/0/phone/all_dev_positive_prevalence
+      transform: {operation: multiply, value: 100}
+    document: {regex: 'All-dev audit의 silver 오류 label 비율은 (?P<value>[\d.]+)%'}
+    comparison: {type: numeric, decimals: 3}
+  - id: failure_all_dev_predicted_error_rate
+    source:
+      artifact: failure_analysis_json
+      kind: json_pointer
+      pointer: /seeds/0/phone/all_dev_predicted_positive_rate
+      transform: {operation: multiply, value: 100}
+    document: {regex: '오류 예측 비율은 (?P<value>[\d.]+)%'}
+    comparison: {type: numeric, decimals: 3}
+  - id: failure_slice_chinese_macro_f1
+    source: {artifact: failure_analysis_json, kind: json_pointer, pointer: /seeds/0/phone/slices/l1/worst_groups/0/macro_f1}
+    document: {regex: 'Chinese/Japanese의\s*macro F1은 (?P<value>[\d.]+)/'}
+    comparison: {type: numeric, decimals: 4}
+  - id: failure_slice_japanese_macro_f1
+    source: {artifact: failure_analysis_json, kind: json_pointer, pointer: /seeds/0/phone/slices/l1/worst_groups/1/macro_f1}
+    document: {regex: 'Chinese/Japanese의\s*macro F1은 [\d.]+/(?P<value>[\d.]+)'}
+    comparison: {type: numeric, decimals: 4}
+  - id: failure_slice_gender_o_macro_f1
+    source: {artifact: failure_analysis_json, kind: json_pointer, pointer: /seeds/0/phone/slices/gender/worst_groups/0/macro_f1}
+    document: {regex: 'gender `O`는 (?P<value>[\d.]+)였다'}
+    comparison: {type: numeric, decimals: 4}
+  - id: failure_slice_advance_macro_f1
+    source: {artifact: failure_analysis_json, kind: json_pointer, pointer: /seeds/0/phone/slices/proficiency/worst_groups/0/macro_f1}
+    document: {regex: '숙련도별 최저값은 `Advance` (?P<value>[\d.]+)'}
+    comparison: {type: numeric, decimals: 4}
+  - id: failure_slice_phone_yu_macro_f1
+    source: {artifact: failure_analysis_json, kind: json_pointer, pointer: /seeds/0/phone/slices/target_phone/worst_groups/0/macro_f1}
+    document: {regex: 'target-phone별 최저값은\s*`ㅠ` (?P<value>[\d.]+)'}
+    comparison: {type: numeric, decimals: 4}
+  - id: failure_slice_phone_spn_macro_f1
+    source: {artifact: failure_analysis_json, kind: json_pointer, pointer: /seeds/0/phone/slices/target_phone/worst_groups/1/macro_f1}
+    document: {regex: '`spn` (?P<value>[\d.]+)'}
+    comparison: {type: numeric, decimals: 4}
+  - id: failure_slice_phone_ieung_macro_f1
+    source: {artifact: failure_analysis_json, kind: json_pointer, pointer: /seeds/0/phone/slices/target_phone/worst_groups/2/macro_f1}
+    document: {regex: '`ㅇ` (?P<value>[\d.]+)이었다'}
+    comparison: {type: numeric, decimals: 4}
+  - id: failure_minimum_slice_n
+    source: {artifact: failure_analysis_json, kind: json_pointer, pointer: /minimum_slice_n}
+    document: {regex: '모든 slice는\s*최소 (?P<value>[\d,]+)건 조건'}
+    comparison: {type: numeric, decimals: 0}
+
+  - id: threshold_abstract_macro_f1_mean
+    source: {artifact: threshold_ablation_report, kind: json_pointer, pointer: /summary/primary_dev_macro_f1/mean}
+    document: {regex: '사후 탐색적 threshold ablation은\s*phone macro F1을 (?P<value>[\d.]+)로'}
+    comparison: {type: numeric, decimals: 4}
+  - id: threshold_abstract_auprc
+    source: {artifact: threshold_ablation_report, kind: json_pointer, pointer: /summary/primary_dev_auprc/mean}
+    document: {regex: '높였지만 AUPRC는 (?P<value>[\d.]+)으로'}
+    comparison: {type: numeric, decimals: 4}
+  - id: threshold_primary_train_speakers
+    source: {artifact: threshold_ablation_report, kind: json_pointer, pointer: /data/primary_train_speakers}
+    document: {regex: 'primary train\s*화자 (?P<value>[\d,]+)명을 hash'}
+    comparison: {type: numeric, decimals: 0}
+  - id: threshold_inner_train_speakers
+    source: {artifact: threshold_ablation_report, kind: json_pointer, pointer: /runs/0/inner_split/inner_train_speakers}
+    document: {regex: 'inner train/validation\s*(?P<value>[\d,]+)/[\d,]+명'}
+    comparison: {type: numeric, decimals: 0}
+  - id: threshold_inner_validation_speakers
+    source: {artifact: threshold_ablation_report, kind: json_pointer, pointer: /runs/0/inner_split/inner_val_speakers}
+    document: {regex: 'inner train/validation\s*[\d,]+/(?P<value>[\d,]+)명'}
+    comparison: {type: numeric, decimals: 0}
+  - id: threshold_grid_start
+    source: {artifact: threshold_ablation_report, kind: json_pointer, pointer: /threshold_grid/start}
+    document: {regex: 'decision threshold\s*`(?P<value>[\d.]+)–[\d.]+'}
+    comparison: {type: numeric, decimals: 2}
+  - id: threshold_grid_stop
+    source: {artifact: threshold_ablation_report, kind: json_pointer, pointer: /threshold_grid/stop}
+    document: {regex: 'decision threshold\s*`[\d.]+–(?P<value>[\d.]+)`'}
+    comparison: {type: numeric, decimals: 2}
+  - id: threshold_grid_step
+    source: {artifact: threshold_ablation_report, kind: json_pointer, pointer: /threshold_grid/step}
+    document: {regex: '`[\d.]+–[\d.]+`\((?P<value>[\d.]+) 간격\)'}
+    comparison: {type: numeric, decimals: 2}
+  - id: threshold_selected_c_seed_42
+    source: {artifact: threshold_ablation_report, kind: json_pointer, pointer: /runs/0/selection/selected_c}
+    document: {regex: '선택한 C는 모두 (?P<value>[\d.]+),'}
+    comparison: {type: numeric, decimals: 0}
+  - id: threshold_selected_c_seed_43
+    source: {artifact: threshold_ablation_report, kind: json_pointer, pointer: /runs/1/selection/selected_c}
+    document: {regex: '선택한 C는 모두 (?P<value>[\d.]+),'}
+    comparison: {type: numeric, decimals: 0}
+  - id: threshold_selected_c_seed_44
+    source: {artifact: threshold_ablation_report, kind: json_pointer, pointer: /runs/2/selection/selected_c}
+    document: {regex: '선택한 C는 모두 (?P<value>[\d.]+),'}
+    comparison: {type: numeric, decimals: 0}
+  - id: threshold_seed_42
+    source: {artifact: threshold_ablation_report, kind: json_pointer, pointer: /runs/0/selection/selected_threshold}
+    document: {regex: 'threshold는 각각 (?P<value>[\d.]+)/'}
+    comparison: {type: numeric, decimals: 2}
+  - id: threshold_seed_43
+    source: {artifact: threshold_ablation_report, kind: json_pointer, pointer: /runs/1/selection/selected_threshold}
+    document: {regex: 'threshold는 각각 [\d.]+/(?P<value>[\d.]+)/'}
+    comparison: {type: numeric, decimals: 2}
+  - id: threshold_seed_44
+    source: {artifact: threshold_ablation_report, kind: json_pointer, pointer: /runs/2/selection/selected_threshold}
+    document: {regex: 'threshold는 각각 [\d.]+/[\d.]+/(?P<value>[\d.]+)이었다'}
+    comparison: {type: numeric, decimals: 2}
+  - id: threshold_macro_f1_seed_42
+    source: {artifact: threshold_ablation_report, kind: json_pointer, pointer: /runs/0/primary_dev/metrics/macro_f1}
+    document: {regex: 'Primary-dev macro F1은\s*각각 (?P<value>[\d.]+)/'}
+    comparison: {type: numeric, decimals: 4}
+  - id: threshold_macro_f1_seed_43
+    source: {artifact: threshold_ablation_report, kind: json_pointer, pointer: /runs/1/primary_dev/metrics/macro_f1}
+    document: {regex: 'Primary-dev macro F1은\s*각각 [\d.]+/(?P<value>[\d.]+)/'}
+    comparison: {type: numeric, decimals: 4}
+  - id: threshold_macro_f1_seed_44
+    source: {artifact: threshold_ablation_report, kind: json_pointer, pointer: /runs/2/primary_dev/metrics/macro_f1}
+    document: {regex: 'Primary-dev macro F1은\s*각각 [\d.]+/[\d.]+/(?P<value>[\d.]+),'}
+    comparison: {type: numeric, decimals: 4}
+  - id: threshold_macro_f1_mean
+    source: {artifact: threshold_ablation_report, kind: json_pointer, pointer: /summary/primary_dev_macro_f1/mean}
+    document: {regex: '평균±표본 표준편차는\s*(?P<value>[\d.]+)±'}
+    comparison: {type: numeric, decimals: 4}
+  - id: threshold_macro_f1_sample_std
+    source: {artifact: threshold_ablation_report, kind: json_pointer, pointer: /summary/primary_dev_macro_f1/sample_std}
+    document: {regex: '평균±표본 표준편차는\s*[\d.]+±(?P<value>[\d.]+)'}
+    comparison: {type: numeric, decimals: 4}
+  - id: threshold_macro_f1_delta
+    source: {artifact: threshold_ablation_report, kind: json_pointer, pointer: /summary/exploratory_macro_f1_delta_vs_predeclared_baseline}
+    document: {regex: '사전 실행한 기준선 관측값보다 (?P<value>[\d.]+) 높았다'}
+    comparison: {type: numeric, decimals: 4}
+  - id: threshold_result_auprc
+    source: {artifact: threshold_ablation_report, kind: json_pointer, pointer: /summary/primary_dev_auprc/mean}
+    document: {regex: 'AUPRC는 세\s*seed 모두 (?P<value>[\d.]+)으로'}
+    comparison: {type: numeric, decimals: 4}
+  - id: threshold_b06_status
+    source: {artifact: threshold_ablation_report, kind: json_pointer, pointer: /summary/b06_status}
+    document: {regex: 'B06은 `(?P<value>[^`]+)`로 유지'}
+    comparison: {type: exact}
+  - id: threshold_registered_artifact_count
+    source: {artifact: threshold_ablation_report, kind: json_pointer, pointer: /experiment_registry/registered_artifact_count}
+    document: {regex: '등록된 checkpoint·prediction·slice artifact (?P<value>[\d,]+)개의'}
+    comparison: {type: numeric, decimals: 0}
+
+  - id: explicit_report_sha256
+    source: {artifact: explicit_dev_report, kind: artifact_sha256}
+    document: {regex: '현재 명시적 dev report의 SHA-256은\s*`(?P<value>[0-9a-f]{64})`'}
+    comparison: {type: exact}
+  - id: registry_recorded_explicit_report_sha256
+    source: {artifact: explicit_registry, kind: json_pointer, pointer: /artifacts/12/sha256}
+    document: {regex: '현재 명시적 dev report의 SHA-256은\s*`(?P<value>[0-9a-f]{64})`'}
+    comparison: {type: exact}
+  - id: explicit_registry_sha256
+    source: {artifact: explicit_registry, kind: artifact_sha256}
+    document: {regex: 'experiment registry metadata의 SHA-256은\s*`(?P<value>[0-9a-f]{64})`'}
+    comparison: {type: exact}
+  - id: explicit_registry_run_id
+    source: {artifact: explicit_registry, kind: json_pointer, pointer: /run_id}
+    document: {regex: '현재 명시적 dev report의 SHA-256은[\s\S]{0,500}?registry run ID는\s*`(?P<value>[^`]+)`'}
+    comparison: {type: exact}
+  - id: failure_analysis_json_sha256
+    source: {artifact: failure_analysis_json, kind: artifact_sha256}
+    document: {regex: 'Privacy-safe 실패 분석 JSON/Markdown의 SHA-256은 각각\s*`(?P<value>[0-9a-f]{64})`'}
+    comparison: {type: exact}
+  - id: failure_analysis_json_sha256_recorded_by_threshold_report
+    source: {artifact: threshold_ablation_report, kind: json_pointer, pointer: /sources/failure_analysis_sha256}
+    document: {regex: 'Privacy-safe 실패 분석 JSON/Markdown의 SHA-256은 각각\s*`(?P<value>[0-9a-f]{64})`'}
+    comparison: {type: exact}
+  - id: failure_analysis_markdown_sha256
+    source: {artifact: failure_analysis_markdown, kind: artifact_sha256}
+    document: {regex: 'Privacy-safe 실패 분석 JSON/Markdown의 SHA-256은 각각\s*`[0-9a-f]{64}`,\s*`(?P<value>[0-9a-f]{64})`'}
+    comparison: {type: exact}
+  - id: threshold_config_sha256
+    source: {artifact: threshold_ablation_config, kind: artifact_sha256}
+    document: {regex: 'threshold ablation config/report/registry metadata의 SHA-256은\s*각각\s*`(?P<value>[0-9a-f]{64})`'}
+    comparison: {type: exact}
+  - id: threshold_config_sha256_recorded_by_report
+    source: {artifact: threshold_ablation_report, kind: json_pointer, pointer: /sources/config_sha256}
+    document: {regex: 'threshold ablation config/report/registry metadata의 SHA-256은\s*각각\s*`(?P<value>[0-9a-f]{64})`'}
+    comparison: {type: exact}
+  - id: threshold_report_sha256
+    source: {artifact: threshold_ablation_report, kind: artifact_sha256}
+    document: {regex: 'threshold ablation config/report/registry metadata의 SHA-256은\s*각각\s*`[0-9a-f]{64}`,\s*`(?P<value>[0-9a-f]{64})`'}
+    comparison: {type: exact}
+  - id: threshold_report_sha256_recorded_by_registry
+    source: {artifact: threshold_ablation_registry, kind: json_pointer, pointer: /artifacts/9/sha256}
+    document: {regex: 'threshold ablation config/report/registry metadata의 SHA-256은\s*각각\s*`[0-9a-f]{64}`,\s*`(?P<value>[0-9a-f]{64})`'}
+    comparison: {type: exact}
+  - id: threshold_registry_sha256
+    source: {artifact: threshold_ablation_registry, kind: artifact_sha256}
+    document: {regex: 'threshold ablation config/report/registry metadata의 SHA-256은\s*각각\s*`[0-9a-f]{64}`,\s*`[0-9a-f]{64}`,\s*`(?P<value>[0-9a-f]{64})`'}
+    comparison: {type: exact}
+  - id: threshold_registry_run_id
+    source: {artifact: threshold_ablation_registry, kind: json_pointer, pointer: /run_id}
+    document: {regex: 'threshold ablation config/report/registry metadata의 SHA-256은[\s\S]{0,500}?registry run ID는\s*`(?P<value>[^`]+)`'}
+    comparison: {type: exact}
+  - id: wavlm_base_cache_report_sha256
+    source: {artifact: wavlm_base_cache_report, kind: artifact_sha256}
+    document: {regex: 'WavLM Base\+ full cache report, 독립 validation report와 CUDA head smoke\s*report의 SHA-256은 각각\s*`(?P<value>[0-9a-f]{64})`'}
+    comparison: {type: exact}
+  - id: wavlm_base_cache_validation_sha256
+    source: {artifact: wavlm_base_cache_validation, kind: artifact_sha256}
+    document: {regex: 'WavLM Base\+ full cache report, 독립 validation report와 CUDA head smoke\s*report의 SHA-256은 각각\s*`[0-9a-f]{64}`,\s*`(?P<value>[0-9a-f]{64})`'}
+    comparison: {type: exact}
+  - id: wavlm_head_cuda_smoke_sha256
+    source: {artifact: wavlm_head_cuda_smoke, kind: artifact_sha256}
+    document: {regex: 'WavLM Base\+ full cache report, 독립 validation report와 CUDA head smoke\s*report의 SHA-256은 각각\s*`[0-9a-f]{64}`,\s*`[0-9a-f]{64}`,\s*`(?P<value>[0-9a-f]{64})`'}
+    comparison: {type: exact}
+  - id: scorer_clean_recreation_sha256
+    source: {artifact: scorer_clean_recreation, kind: artifact_sha256}
+    document: {regex: '격리 clean recreation report의\s*SHA-256은\s*`(?P<value>[0-9a-f]{64})`'}
+    comparison: {type: exact}
+
+  - id: wavlm_base_head_report_status
+    source: {artifact: wavlm_base_head_report, kind: json_pointer, pointer: /status}
+    document: {regex: 'Base\+ frozen-head 실행 report 상태는 `(?P<value>[^`]+)`'}
+    comparison: {type: exact}
+  - id: wavlm_base_head_registry_status
+    source: {artifact: wavlm_base_head_registry, kind: json_pointer, pointer: /status}
+    document: {regex: 'registry metadata의\s*종료 상태도 `(?P<value>[^`]+)`'}
+    comparison: {type: exact}
+  - id: wavlm_base_head_seed_count
+    source:
+      artifact: wavlm_base_head_report
+      kind: json_pointer
+      pointer: /summary/seeds_completed
+      transform: {operation: length}
+    document: {regex: 'Report가 완료한 seed는 (?P<value>[\d,]+)개'}
+    comparison: {type: numeric, decimals: 0}
+
+  - id: wavlm_base_head_phone_macro_f1_mean
+    source: {artifact: wavlm_base_head_report, kind: json_pointer, pointer: /summary/phone/macro_f1/mean}
+    document: {regex: '^\| Base\+ frozen phone \| (?P<value>[\d.]+) ± [\d.]+ \|'}
+    comparison: {type: numeric, decimals: 4}
+  - id: wavlm_base_head_phone_macro_f1_sample_std
+    source: {artifact: wavlm_base_head_report, kind: json_pointer, pointer: /summary/phone/macro_f1/sample_std}
+    document: {regex: '^\| Base\+ frozen phone \| [\d.]+ ± (?P<value>[\d.]+) \|'}
+    comparison: {type: numeric, decimals: 4}
+  - id: wavlm_base_head_phone_auprc_mean
+    source: {artifact: wavlm_base_head_report, kind: json_pointer, pointer: /summary/phone/auprc/mean}
+    document: {regex: '^\| Base\+ frozen phone \| [\d.]+ ± [\d.]+ \| (?P<value>[\d.]+) ± [\d.]+'}
+    comparison: {type: numeric, decimals: 4}
+  - id: wavlm_base_head_phone_auprc_sample_std
+    source: {artifact: wavlm_base_head_report, kind: json_pointer, pointer: /summary/phone/auprc/sample_std}
+    document: {regex: '^\| Base\+ frozen phone \| [\d.]+ ± [\d.]+ \| [\d.]+ ± (?P<value>[\d.]+) \|'}
+    comparison: {type: numeric, decimals: 4}
+  - id: wavlm_base_head_threshold_seed_42
+    source: {artifact: wavlm_base_head_report, kind: json_pointer, pointer: /summary/phone/thresholds_by_seed/42}
+    document: {regex: '^\| Base\+ frozen phone \| [^|]+ \| [^|]+ \| (?P<value>[\d.]+)/[\d.]+/[\d.]+ \|$'}
+    comparison: {type: numeric, decimals: 2}
+  - id: wavlm_base_head_threshold_seed_43
+    source: {artifact: wavlm_base_head_report, kind: json_pointer, pointer: /summary/phone/thresholds_by_seed/43}
+    document: {regex: '^\| Base\+ frozen phone \| [^|]+ \| [^|]+ \| [\d.]+/(?P<value>[\d.]+)/[\d.]+ \|$'}
+    comparison: {type: numeric, decimals: 2}
+  - id: wavlm_base_head_threshold_seed_44
+    source: {artifact: wavlm_base_head_report, kind: json_pointer, pointer: /summary/phone/thresholds_by_seed/44}
+    document: {regex: '^\| Base\+ frozen phone \| [^|]+ \| [^|]+ \| [\d.]+/[\d.]+/(?P<value>[\d.]+) \|$'}
+    comparison: {type: numeric, decimals: 2}
+
+  - id: wavlm_base_head_pronunciation_qwk_mean
+    source: {artifact: wavlm_base_head_report, kind: json_pointer, pointer: /summary/utterance/pronunciation_score/qwk/mean}
+    document: {regex: '^\| Base\+ pronunciation \| (?P<value>[\d.]+) ± [\d.]+ \|'}
+    comparison: {type: numeric, decimals: 4}
+  - id: wavlm_base_head_pronunciation_qwk_sample_std
+    source: {artifact: wavlm_base_head_report, kind: json_pointer, pointer: /summary/utterance/pronunciation_score/qwk/sample_std}
+    document: {regex: '^\| Base\+ pronunciation \| [\d.]+ ± (?P<value>[\d.]+) \|'}
+    comparison: {type: numeric, decimals: 4}
+  - id: wavlm_base_head_pronunciation_spearman_mean
+    source: {artifact: wavlm_base_head_report, kind: json_pointer, pointer: /summary/utterance/pronunciation_score/spearman/mean}
+    document: {regex: '^\| Base\+ pronunciation \| [^|]+ \| (?P<value>[\d.]+) ± [\d.]+ \|'}
+    comparison: {type: numeric, decimals: 4}
+  - id: wavlm_base_head_pronunciation_spearman_sample_std
+    source: {artifact: wavlm_base_head_report, kind: json_pointer, pointer: /summary/utterance/pronunciation_score/spearman/sample_std}
+    document: {regex: '^\| Base\+ pronunciation \| [^|]+ \| [\d.]+ ± (?P<value>[\d.]+) \|'}
+    comparison: {type: numeric, decimals: 4}
+  - id: wavlm_base_head_pronunciation_mae_mean
+    source: {artifact: wavlm_base_head_report, kind: json_pointer, pointer: /summary/utterance/pronunciation_score/mae/mean}
+    document: {regex: '^\| Base\+ pronunciation \| [^|]+ \| [^|]+ \| (?P<value>[\d.]+) ± [\d.]+ \|'}
+    comparison: {type: numeric, decimals: 4}
+  - id: wavlm_base_head_pronunciation_mae_sample_std
+    source: {artifact: wavlm_base_head_report, kind: json_pointer, pointer: /summary/utterance/pronunciation_score/mae/sample_std}
+    document: {regex: '^\| Base\+ pronunciation \| [^|]+ \| [^|]+ \| [\d.]+ ± (?P<value>[\d.]+) \|'}
+    comparison: {type: numeric, decimals: 4}
+  - id: wavlm_base_head_pronunciation_icc_mean
+    source: {artifact: wavlm_base_head_report, kind: json_pointer, pointer: /summary/utterance/pronunciation_score/icc_2_1/mean}
+    document: {regex: '^\| Base\+ pronunciation \| [^|]+ \| [^|]+ \| [^|]+ \| (?P<value>[\d.]+) ± [\d.]+ \|$'}
+    comparison: {type: numeric, decimals: 4}
+  - id: wavlm_base_head_pronunciation_icc_sample_std
+    source: {artifact: wavlm_base_head_report, kind: json_pointer, pointer: /summary/utterance/pronunciation_score/icc_2_1/sample_std}
+    document: {regex: '^\| Base\+ pronunciation \| [^|]+ \| [^|]+ \| [^|]+ \| [\d.]+ ± (?P<value>[\d.]+) \|$'}
+    comparison: {type: numeric, decimals: 4}
+
+  - id: wavlm_base_head_fluency_qwk_mean
+    source: {artifact: wavlm_base_head_report, kind: json_pointer, pointer: /summary/utterance/fluency_score/qwk/mean}
+    document: {regex: '^\| Base\+ fluency \| (?P<value>[\d.]+) ± [\d.]+ \|'}
+    comparison: {type: numeric, decimals: 4}
+  - id: wavlm_base_head_fluency_qwk_sample_std
+    source: {artifact: wavlm_base_head_report, kind: json_pointer, pointer: /summary/utterance/fluency_score/qwk/sample_std}
+    document: {regex: '^\| Base\+ fluency \| [\d.]+ ± (?P<value>[\d.]+) \|'}
+    comparison: {type: numeric, decimals: 4}
+  - id: wavlm_base_head_fluency_spearman_mean
+    source: {artifact: wavlm_base_head_report, kind: json_pointer, pointer: /summary/utterance/fluency_score/spearman/mean}
+    document: {regex: '^\| Base\+ fluency \| [^|]+ \| (?P<value>[\d.]+) ± [\d.]+ \|'}
+    comparison: {type: numeric, decimals: 4}
+  - id: wavlm_base_head_fluency_spearman_sample_std
+    source: {artifact: wavlm_base_head_report, kind: json_pointer, pointer: /summary/utterance/fluency_score/spearman/sample_std}
+    document: {regex: '^\| Base\+ fluency \| [^|]+ \| [\d.]+ ± (?P<value>[\d.]+) \|'}
+    comparison: {type: numeric, decimals: 4}
+  - id: wavlm_base_head_fluency_mae_mean
+    source: {artifact: wavlm_base_head_report, kind: json_pointer, pointer: /summary/utterance/fluency_score/mae/mean}
+    document: {regex: '^\| Base\+ fluency \| [^|]+ \| [^|]+ \| (?P<value>[\d.]+) ± [\d.]+ \|'}
+    comparison: {type: numeric, decimals: 4}
+  - id: wavlm_base_head_fluency_mae_sample_std
+    source: {artifact: wavlm_base_head_report, kind: json_pointer, pointer: /summary/utterance/fluency_score/mae/sample_std}
+    document: {regex: '^\| Base\+ fluency \| [^|]+ \| [^|]+ \| [\d.]+ ± (?P<value>[\d.]+) \|'}
+    comparison: {type: numeric, decimals: 4}
+  - id: wavlm_base_head_fluency_icc_mean
+    source: {artifact: wavlm_base_head_report, kind: json_pointer, pointer: /summary/utterance/fluency_score/icc_2_1/mean}
+    document: {regex: '^\| Base\+ fluency \| [^|]+ \| [^|]+ \| [^|]+ \| (?P<value>[\d.]+) ± [\d.]+ \|$'}
+    comparison: {type: numeric, decimals: 4}
+  - id: wavlm_base_head_fluency_icc_sample_std
+    source: {artifact: wavlm_base_head_report, kind: json_pointer, pointer: /summary/utterance/fluency_score/icc_2_1/sample_std}
+    document: {regex: '^\| Base\+ fluency \| [^|]+ \| [^|]+ \| [^|]+ \| [\d.]+ ± (?P<value>[\d.]+) \|$'}
+    comparison: {type: numeric, decimals: 4}
+
+  - id: wavlm_base_head_comprehensibility_qwk_mean
+    source: {artifact: wavlm_base_head_report, kind: json_pointer, pointer: /summary/utterance/comprehensibility_score/qwk/mean}
+    document: {regex: '^\| Base\+ comprehensibility \| (?P<value>[\d.]+) ± [\d.]+ \|'}
+    comparison: {type: numeric, decimals: 4}
+  - id: wavlm_base_head_comprehensibility_qwk_sample_std
+    source: {artifact: wavlm_base_head_report, kind: json_pointer, pointer: /summary/utterance/comprehensibility_score/qwk/sample_std}
+    document: {regex: '^\| Base\+ comprehensibility \| [\d.]+ ± (?P<value>[\d.]+) \|'}
+    comparison: {type: numeric, decimals: 4}
+  - id: wavlm_base_head_comprehensibility_spearman_mean
+    source: {artifact: wavlm_base_head_report, kind: json_pointer, pointer: /summary/utterance/comprehensibility_score/spearman/mean}
+    document: {regex: '^\| Base\+ comprehensibility \| [^|]+ \| (?P<value>[\d.]+) ± [\d.]+ \|'}
+    comparison: {type: numeric, decimals: 4}
+  - id: wavlm_base_head_comprehensibility_spearman_sample_std
+    source: {artifact: wavlm_base_head_report, kind: json_pointer, pointer: /summary/utterance/comprehensibility_score/spearman/sample_std}
+    document: {regex: '^\| Base\+ comprehensibility \| [^|]+ \| [\d.]+ ± (?P<value>[\d.]+) \|'}
+    comparison: {type: numeric, decimals: 4}
+  - id: wavlm_base_head_comprehensibility_mae_mean
+    source: {artifact: wavlm_base_head_report, kind: json_pointer, pointer: /summary/utterance/comprehensibility_score/mae/mean}
+    document: {regex: '^\| Base\+ comprehensibility \| [^|]+ \| [^|]+ \| (?P<value>[\d.]+) ± [\d.]+ \|'}
+    comparison: {type: numeric, decimals: 4}
+  - id: wavlm_base_head_comprehensibility_mae_sample_std
+    source: {artifact: wavlm_base_head_report, kind: json_pointer, pointer: /summary/utterance/comprehensibility_score/mae/sample_std}
+    document: {regex: '^\| Base\+ comprehensibility \| [^|]+ \| [^|]+ \| [\d.]+ ± (?P<value>[\d.]+) \|'}
+    comparison: {type: numeric, decimals: 4}
+  - id: wavlm_base_head_comprehensibility_icc_mean
+    source: {artifact: wavlm_base_head_report, kind: json_pointer, pointer: /summary/utterance/comprehensibility_score/icc_2_1/mean}
+    document: {regex: '^\| Base\+ comprehensibility \| [^|]+ \| [^|]+ \| [^|]+ \| (?P<value>[\d.]+) ± [\d.]+ \|$'}
+    comparison: {type: numeric, decimals: 4}
+  - id: wavlm_base_head_comprehensibility_icc_sample_std
+    source: {artifact: wavlm_base_head_report, kind: json_pointer, pointer: /summary/utterance/comprehensibility_score/icc_2_1/sample_std}
+    document: {regex: '^\| Base\+ comprehensibility \| [^|]+ \| [^|]+ \| [^|]+ \| [\d.]+ ± (?P<value>[\d.]+) \|$'}
+    comparison: {type: numeric, decimals: 4}
+
+  - id: wavlm_base_head_cublas_workspace
+    source: {artifact: wavlm_base_head_report, kind: json_pointer, pointer: /runtime/determinism/cublas_workspace_config}
+    document: {regex: 'Completed Base\+ report의 CUBLAS workspace 값은 `(?P<value>[^`]+)`'}
+    comparison: {type: exact}
+  - id: wavlm_base_head_environment_files_read
+    source:
+      artifact: wavlm_base_head_report
+      kind: json_pointer
+      pointer: /leakage_controls/environment_files_read
+      transform: {operation: length}
+    document: {regex: '환경 파일\s*read/register 항목도 (?P<value>[\d,]+)/[\d,]+개였다'}
+    comparison: {type: numeric, decimals: 0}
+  - id: wavlm_base_head_environment_files_registered
+    source:
+      artifact: wavlm_base_head_report
+      kind: json_pointer
+      pointer: /leakage_controls/environment_files_registered
+      transform: {operation: length}
+    document: {regex: '환경 파일\s*read/register 항목도 [\d,]+/(?P<value>[\d,]+)개였다'}
+    comparison: {type: numeric, decimals: 0}
+  - id: wavlm_base_head_registered_artifact_count
+    source: {artifact: wavlm_base_head_report, kind: json_pointer, pointer: /experiment_registry/registered_artifact_count}
+    document: {regex: '최종 report를 합쳐 (?P<value>[\d,]+)개\s*artifact가 등록됐다'}
+    comparison: {type: numeric, decimals: 0}
+
+  - id: wavlm_base_head_config_sha256
+    source: {artifact: wavlm_base_head_config, kind: artifact_sha256}
+    document: {regex: 'Base\+ head config/trainer/model-source SHA-256은 각각\s*`(?P<value>[0-9a-f]{64})`'}
+    comparison: {type: exact}
+  - id: wavlm_base_head_config_sha256_recorded_by_report
+    source: {artifact: wavlm_base_head_report, kind: json_pointer, pointer: /sources/training_config_sha256}
+    document: {regex: 'Base\+ head config/trainer/model-source SHA-256은 각각\s*`(?P<value>[0-9a-f]{64})`'}
+    comparison: {type: exact}
+  - id: wavlm_base_head_trainer_sha256
+    source: {artifact: wavlm_base_head_trainer, kind: artifact_sha256}
+    document: {regex: 'Base\+ head config/trainer/model-source SHA-256은 각각\s*`[0-9a-f]{64}`,\s*`(?P<value>[0-9a-f]{64})`'}
+    comparison: {type: exact}
+  - id: wavlm_base_head_trainer_sha256_recorded_by_report
+    source: {artifact: wavlm_base_head_report, kind: json_pointer, pointer: /sources/trainer_source_sha256}
+    document: {regex: 'Base\+ head config/trainer/model-source SHA-256은 각각\s*`[0-9a-f]{64}`,\s*`(?P<value>[0-9a-f]{64})`'}
+    comparison: {type: exact}
+  - id: wavlm_base_head_model_source_sha256
+    source: {artifact: wavlm_base_head_model_source, kind: artifact_sha256}
+    document: {regex: 'Base\+ head config/trainer/model-source SHA-256은 각각\s*`[0-9a-f]{64}`,\s*`[0-9a-f]{64}`,\s*`(?P<value>[0-9a-f]{64})`'}
+    comparison: {type: exact}
+  - id: wavlm_base_head_model_source_sha256_recorded_by_report
+    source: {artifact: wavlm_base_head_report, kind: json_pointer, pointer: /sources/head_source_sha256}
+    document: {regex: 'Base\+ head config/trainer/model-source SHA-256은 각각\s*`[0-9a-f]{64}`,\s*`[0-9a-f]{64}`,\s*`(?P<value>[0-9a-f]{64})`'}
+    comparison: {type: exact}
+  - id: wavlm_base_head_report_sha256
+    source: {artifact: wavlm_base_head_report, kind: artifact_sha256}
+    document: {regex: 'Base\+ frozen-head report/registry metadata SHA-256은 각각\s*`(?P<value>[0-9a-f]{64})`'}
+    comparison: {type: exact}
+  - id: wavlm_base_head_report_sha256_recorded_by_registry
+    source: {artifact: wavlm_base_head_registry, kind: json_pointer, pointer: /artifacts/12/sha256}
+    document: {regex: 'Base\+ frozen-head report/registry metadata SHA-256은 각각\s*`(?P<value>[0-9a-f]{64})`'}
+    comparison: {type: exact}
+  - id: wavlm_base_head_registry_sha256
+    source: {artifact: wavlm_base_head_registry, kind: artifact_sha256}
+    document: {regex: 'Base\+ frozen-head report/registry metadata SHA-256은 각각\s*`[0-9a-f]{64}`,\s*`(?P<value>[0-9a-f]{64})`'}
+    comparison: {type: exact}
+  - id: wavlm_base_head_registry_run_id
+    source: {artifact: wavlm_base_head_registry, kind: json_pointer, pointer: /run_id}
+    document: {regex: 'Base\+ frozen-head report/registry metadata SHA-256은[\s\S]{0,500}?registry run ID는\s*`(?P<value>[^`]+)`'}
+    comparison: {type: exact}
+
+  - id: wavlm_s103_phone_base_plus_42_macro_f1
+    source:
+      artifact: wavlm_s103_results_json
+      kind: json_pointer
+      pointer: /phone/42/base_plus/macro_f1
+    document:
+      regex: ^\| WavLM\ Base\+ \| 42 \| (?P<value>[+-]?\d+(?:\.\d+)?) \| [+-]?\d+(?:\.\d+)? \| [+-]?\d+(?:\.\d+)? \|$
+    comparison:
+      type: numeric
+      decimals: 6
+  - id: wavlm_s103_phone_base_plus_42_auprc
+    source:
+      artifact: wavlm_s103_results_json
+      kind: json_pointer
+      pointer: /phone/42/base_plus/auprc
+    document:
+      regex: ^\| WavLM\ Base\+ \| 42 \| [+-]?\d+(?:\.\d+)? \| (?P<value>[+-]?\d+(?:\.\d+)?) \| [+-]?\d+(?:\.\d+)? \|$
+    comparison:
+      type: numeric
+      decimals: 6
+  - id: wavlm_s103_phone_base_plus_42_event_f1
+    source:
+      artifact: wavlm_s103_results_json
+      kind: json_pointer
+      pointer: /phone/42/base_plus/event_f1
+    document:
+      regex: ^\| WavLM\ Base\+ \| 42 \| [+-]?\d+(?:\.\d+)? \| [+-]?\d+(?:\.\d+)? \| (?P<value>[+-]?\d+(?:\.\d+)?) \|$
+    comparison:
+      type: numeric
+      decimals: 6
+  - id: wavlm_s103_phone_base_plus_43_macro_f1
+    source:
+      artifact: wavlm_s103_results_json
+      kind: json_pointer
+      pointer: /phone/43/base_plus/macro_f1
+    document:
+      regex: ^\| WavLM\ Base\+ \| 43 \| (?P<value>[+-]?\d+(?:\.\d+)?) \| [+-]?\d+(?:\.\d+)? \| [+-]?\d+(?:\.\d+)? \|$
+    comparison:
+      type: numeric
+      decimals: 6
+  - id: wavlm_s103_phone_base_plus_43_auprc
+    source:
+      artifact: wavlm_s103_results_json
+      kind: json_pointer
+      pointer: /phone/43/base_plus/auprc
+    document:
+      regex: ^\| WavLM\ Base\+ \| 43 \| [+-]?\d+(?:\.\d+)? \| (?P<value>[+-]?\d+(?:\.\d+)?) \| [+-]?\d+(?:\.\d+)? \|$
+    comparison:
+      type: numeric
+      decimals: 6
+  - id: wavlm_s103_phone_base_plus_43_event_f1
+    source:
+      artifact: wavlm_s103_results_json
+      kind: json_pointer
+      pointer: /phone/43/base_plus/event_f1
+    document:
+      regex: ^\| WavLM\ Base\+ \| 43 \| [+-]?\d+(?:\.\d+)? \| [+-]?\d+(?:\.\d+)? \| (?P<value>[+-]?\d+(?:\.\d+)?) \|$
+    comparison:
+      type: numeric
+      decimals: 6
+  - id: wavlm_s103_phone_base_plus_44_macro_f1
+    source:
+      artifact: wavlm_s103_results_json
+      kind: json_pointer
+      pointer: /phone/44/base_plus/macro_f1
+    document:
+      regex: ^\| WavLM\ Base\+ \| 44 \| (?P<value>[+-]?\d+(?:\.\d+)?) \| [+-]?\d+(?:\.\d+)? \| [+-]?\d+(?:\.\d+)? \|$
+    comparison:
+      type: numeric
+      decimals: 6
+  - id: wavlm_s103_phone_base_plus_44_auprc
+    source:
+      artifact: wavlm_s103_results_json
+      kind: json_pointer
+      pointer: /phone/44/base_plus/auprc
+    document:
+      regex: ^\| WavLM\ Base\+ \| 44 \| [+-]?\d+(?:\.\d+)? \| (?P<value>[+-]?\d+(?:\.\d+)?) \| [+-]?\d+(?:\.\d+)? \|$
+    comparison:
+      type: numeric
+      decimals: 6
+  - id: wavlm_s103_phone_base_plus_44_event_f1
+    source:
+      artifact: wavlm_s103_results_json
+      kind: json_pointer
+      pointer: /phone/44/base_plus/event_f1
+    document:
+      regex: ^\| WavLM\ Base\+ \| 44 \| [+-]?\d+(?:\.\d+)? \| [+-]?\d+(?:\.\d+)? \| (?P<value>[+-]?\d+(?:\.\d+)?) \|$
+    comparison:
+      type: numeric
+      decimals: 6
+  - id: wavlm_s103_phone_base_plus_macro_f1_mean
+    source:
+      artifact: wavlm_s103_comparison_report
+      kind: json_pointer
+      pointer: /metrics/aggregate/phone/macro_f1/base_plus/mean
+    document:
+      regex: ^\| WavLM\ Base\+ \| Mean\ ±\ sample\ SD \| (?P<value>[+-]?\d+(?:\.\d+)?) ± [+-]?\d+(?:\.\d+)? \| [+-]?\d+(?:\.\d+)? ± [+-]?\d+(?:\.\d+)? \| [+-]?\d+(?:\.\d+)? ± [+-]?\d+(?:\.\d+)? \|$
+    comparison:
+      type: numeric
+      decimals: 6
+  - id: wavlm_s103_phone_base_plus_macro_f1_sample_std
+    source:
+      artifact: wavlm_s103_comparison_report
+      kind: json_pointer
+      pointer: /metrics/aggregate/phone/macro_f1/base_plus/sample_std
+    document:
+      regex: ^\| WavLM\ Base\+ \| Mean\ ±\ sample\ SD \| [+-]?\d+(?:\.\d+)? ± (?P<value>[+-]?\d+(?:\.\d+)?) \| [+-]?\d+(?:\.\d+)? ± [+-]?\d+(?:\.\d+)? \| [+-]?\d+(?:\.\d+)? ± [+-]?\d+(?:\.\d+)? \|$
+    comparison:
+      type: numeric
+      decimals: 6
+  - id: wavlm_s103_phone_base_plus_auprc_mean
+    source:
+      artifact: wavlm_s103_comparison_report
+      kind: json_pointer
+      pointer: /metrics/aggregate/phone/auprc/base_plus/mean
+    document:
+      regex: ^\| WavLM\ Base\+ \| Mean\ ±\ sample\ SD \| [+-]?\d+(?:\.\d+)? ± [+-]?\d+(?:\.\d+)? \| (?P<value>[+-]?\d+(?:\.\d+)?) ± [+-]?\d+(?:\.\d+)? \| [+-]?\d+(?:\.\d+)? ± [+-]?\d+(?:\.\d+)? \|$
+    comparison:
+      type: numeric
+      decimals: 6
+  - id: wavlm_s103_phone_base_plus_auprc_sample_std
+    source:
+      artifact: wavlm_s103_comparison_report
+      kind: json_pointer
+      pointer: /metrics/aggregate/phone/auprc/base_plus/sample_std
+    document:
+      regex: ^\| WavLM\ Base\+ \| Mean\ ±\ sample\ SD \| [+-]?\d+(?:\.\d+)? ± [+-]?\d+(?:\.\d+)? \| [+-]?\d+(?:\.\d+)? ± (?P<value>[+-]?\d+(?:\.\d+)?) \| [+-]?\d+(?:\.\d+)? ± [+-]?\d+(?:\.\d+)? \|$
+    comparison:
+      type: numeric
+      decimals: 6
+  - id: wavlm_s103_phone_base_plus_event_f1_mean
+    source:
+      artifact: wavlm_s103_comparison_report
+      kind: json_pointer
+      pointer: /metrics/aggregate/phone/event_f1/base_plus/mean
+    document:
+      regex: ^\| WavLM\ Base\+ \| Mean\ ±\ sample\ SD \| [+-]?\d+(?:\.\d+)? ± [+-]?\d+(?:\.\d+)? \| [+-]?\d+(?:\.\d+)? ± [+-]?\d+(?:\.\d+)? \| (?P<value>[+-]?\d+(?:\.\d+)?) ± [+-]?\d+(?:\.\d+)? \|$
+    comparison:
+      type: numeric
+      decimals: 6
+  - id: wavlm_s103_phone_base_plus_event_f1_sample_std
+    source:
+      artifact: wavlm_s103_comparison_report
+      kind: json_pointer
+      pointer: /metrics/aggregate/phone/event_f1/base_plus/sample_std
+    document:
+      regex: ^\| WavLM\ Base\+ \| Mean\ ±\ sample\ SD \| [+-]?\d+(?:\.\d+)? ± [+-]?\d+(?:\.\d+)? \| [+-]?\d+(?:\.\d+)? ± [+-]?\d+(?:\.\d+)? \| [+-]?\d+(?:\.\d+)? ± (?P<value>[+-]?\d+(?:\.\d+)?) \|$
+    comparison:
+      type: numeric
+      decimals: 6
+  - id: wavlm_s103_phone_large_42_macro_f1
+    source:
+      artifact: wavlm_s103_results_json
+      kind: json_pointer
+      pointer: /phone/42/large/macro_f1
+    document:
+      regex: ^\| WavLM\ Large \| 42 \| (?P<value>[+-]?\d+(?:\.\d+)?) \| [+-]?\d+(?:\.\d+)? \| [+-]?\d+(?:\.\d+)? \|$
+    comparison:
+      type: numeric
+      decimals: 6
+  - id: wavlm_s103_phone_large_42_auprc
+    source:
+      artifact: wavlm_s103_results_json
+      kind: json_pointer
+      pointer: /phone/42/large/auprc
+    document:
+      regex: ^\| WavLM\ Large \| 42 \| [+-]?\d+(?:\.\d+)? \| (?P<value>[+-]?\d+(?:\.\d+)?) \| [+-]?\d+(?:\.\d+)? \|$
+    comparison:
+      type: numeric
+      decimals: 6
+  - id: wavlm_s103_phone_large_42_event_f1
+    source:
+      artifact: wavlm_s103_results_json
+      kind: json_pointer
+      pointer: /phone/42/large/event_f1
+    document:
+      regex: ^\| WavLM\ Large \| 42 \| [+-]?\d+(?:\.\d+)? \| [+-]?\d+(?:\.\d+)? \| (?P<value>[+-]?\d+(?:\.\d+)?) \|$
+    comparison:
+      type: numeric
+      decimals: 6
+  - id: wavlm_s103_phone_large_43_macro_f1
+    source:
+      artifact: wavlm_s103_results_json
+      kind: json_pointer
+      pointer: /phone/43/large/macro_f1
+    document:
+      regex: ^\| WavLM\ Large \| 43 \| (?P<value>[+-]?\d+(?:\.\d+)?) \| [+-]?\d+(?:\.\d+)? \| [+-]?\d+(?:\.\d+)? \|$
+    comparison:
+      type: numeric
+      decimals: 6
+  - id: wavlm_s103_phone_large_43_auprc
+    source:
+      artifact: wavlm_s103_results_json
+      kind: json_pointer
+      pointer: /phone/43/large/auprc
+    document:
+      regex: ^\| WavLM\ Large \| 43 \| [+-]?\d+(?:\.\d+)? \| (?P<value>[+-]?\d+(?:\.\d+)?) \| [+-]?\d+(?:\.\d+)? \|$
+    comparison:
+      type: numeric
+      decimals: 6
+  - id: wavlm_s103_phone_large_43_event_f1
+    source:
+      artifact: wavlm_s103_results_json
+      kind: json_pointer
+      pointer: /phone/43/large/event_f1
+    document:
+      regex: ^\| WavLM\ Large \| 43 \| [+-]?\d+(?:\.\d+)? \| [+-]?\d+(?:\.\d+)? \| (?P<value>[+-]?\d+(?:\.\d+)?) \|$
+    comparison:
+      type: numeric
+      decimals: 6
+  - id: wavlm_s103_phone_large_44_macro_f1
+    source:
+      artifact: wavlm_s103_results_json
+      kind: json_pointer
+      pointer: /phone/44/large/macro_f1
+    document:
+      regex: ^\| WavLM\ Large \| 44 \| (?P<value>[+-]?\d+(?:\.\d+)?) \| [+-]?\d+(?:\.\d+)? \| [+-]?\d+(?:\.\d+)? \|$
+    comparison:
+      type: numeric
+      decimals: 6
+  - id: wavlm_s103_phone_large_44_auprc
+    source:
+      artifact: wavlm_s103_results_json
+      kind: json_pointer
+      pointer: /phone/44/large/auprc
+    document:
+      regex: ^\| WavLM\ Large \| 44 \| [+-]?\d+(?:\.\d+)? \| (?P<value>[+-]?\d+(?:\.\d+)?) \| [+-]?\d+(?:\.\d+)? \|$
+    comparison:
+      type: numeric
+      decimals: 6
+  - id: wavlm_s103_phone_large_44_event_f1
+    source:
+      artifact: wavlm_s103_results_json
+      kind: json_pointer
+      pointer: /phone/44/large/event_f1
+    document:
+      regex: ^\| WavLM\ Large \| 44 \| [+-]?\d+(?:\.\d+)? \| [+-]?\d+(?:\.\d+)? \| (?P<value>[+-]?\d+(?:\.\d+)?) \|$
+    comparison:
+      type: numeric
+      decimals: 6
+  - id: wavlm_s103_phone_large_macro_f1_mean
+    source:
+      artifact: wavlm_s103_comparison_report
+      kind: json_pointer
+      pointer: /metrics/aggregate/phone/macro_f1/large/mean
+    document:
+      regex: ^\| WavLM\ Large \| Mean\ ±\ sample\ SD \| (?P<value>[+-]?\d+(?:\.\d+)?) ± [+-]?\d+(?:\.\d+)? \| [+-]?\d+(?:\.\d+)? ± [+-]?\d+(?:\.\d+)? \| [+-]?\d+(?:\.\d+)? ± [+-]?\d+(?:\.\d+)? \|$
+    comparison:
+      type: numeric
+      decimals: 6
+  - id: wavlm_s103_phone_large_macro_f1_sample_std
+    source:
+      artifact: wavlm_s103_comparison_report
+      kind: json_pointer
+      pointer: /metrics/aggregate/phone/macro_f1/large/sample_std
+    document:
+      regex: ^\| WavLM\ Large \| Mean\ ±\ sample\ SD \| [+-]?\d+(?:\.\d+)? ± (?P<value>[+-]?\d+(?:\.\d+)?) \| [+-]?\d+(?:\.\d+)? ± [+-]?\d+(?:\.\d+)? \| [+-]?\d+(?:\.\d+)? ± [+-]?\d+(?:\.\d+)? \|$
+    comparison:
+      type: numeric
+      decimals: 6
+  - id: wavlm_s103_phone_large_auprc_mean
+    source:
+      artifact: wavlm_s103_comparison_report
+      kind: json_pointer
+      pointer: /metrics/aggregate/phone/auprc/large/mean
+    document:
+      regex: ^\| WavLM\ Large \| Mean\ ±\ sample\ SD \| [+-]?\d+(?:\.\d+)? ± [+-]?\d+(?:\.\d+)? \| (?P<value>[+-]?\d+(?:\.\d+)?) ± [+-]?\d+(?:\.\d+)? \| [+-]?\d+(?:\.\d+)? ± [+-]?\d+(?:\.\d+)? \|$
+    comparison:
+      type: numeric
+      decimals: 6
+  - id: wavlm_s103_phone_large_auprc_sample_std
+    source:
+      artifact: wavlm_s103_comparison_report
+      kind: json_pointer
+      pointer: /metrics/aggregate/phone/auprc/large/sample_std
+    document:
+      regex: ^\| WavLM\ Large \| Mean\ ±\ sample\ SD \| [+-]?\d+(?:\.\d+)? ± [+-]?\d+(?:\.\d+)? \| [+-]?\d+(?:\.\d+)? ± (?P<value>[+-]?\d+(?:\.\d+)?) \| [+-]?\d+(?:\.\d+)? ± [+-]?\d+(?:\.\d+)? \|$
+    comparison:
+      type: numeric
+      decimals: 6
+  - id: wavlm_s103_phone_large_event_f1_mean
+    source:
+      artifact: wavlm_s103_comparison_report
+      kind: json_pointer
+      pointer: /metrics/aggregate/phone/event_f1/large/mean
+    document:
+      regex: ^\| WavLM\ Large \| Mean\ ±\ sample\ SD \| [+-]?\d+(?:\.\d+)? ± [+-]?\d+(?:\.\d+)? \| [+-]?\d+(?:\.\d+)? ± [+-]?\d+(?:\.\d+)? \| (?P<value>[+-]?\d+(?:\.\d+)?) ± [+-]?\d+(?:\.\d+)? \|$
+    comparison:
+      type: numeric
+      decimals: 6
+  - id: wavlm_s103_phone_large_event_f1_sample_std
+    source:
+      artifact: wavlm_s103_comparison_report
+      kind: json_pointer
+      pointer: /metrics/aggregate/phone/event_f1/large/sample_std
+    document:
+      regex: ^\| WavLM\ Large \| Mean\ ±\ sample\ SD \| [+-]?\d+(?:\.\d+)? ± [+-]?\d+(?:\.\d+)? \| [+-]?\d+(?:\.\d+)? ± [+-]?\d+(?:\.\d+)? \| [+-]?\d+(?:\.\d+)? ± (?P<value>[+-]?\d+(?:\.\d+)?) \|$
+    comparison:
+      type: numeric
+      decimals: 6
+  - id: wavlm_s103_phone_large_minus_base_42_macro_f1
+    source:
+      artifact: wavlm_s103_results_json
+      kind: json_pointer
+      pointer: /phone/42/large_minus_base/macro_f1
+    document:
+      regex: ^\| Large\ −\ Base\+ \| 42 \| (?P<value>[+-]?\d+(?:\.\d+)?) \| [+-]?\d+(?:\.\d+)? \| [+-]?\d+(?:\.\d+)? \|$
+    comparison:
+      type: numeric
+      decimals: 6
+  - id: wavlm_s103_phone_large_minus_base_42_auprc
+    source:
+      artifact: wavlm_s103_results_json
+      kind: json_pointer
+      pointer: /phone/42/large_minus_base/auprc
+    document:
+      regex: ^\| Large\ −\ Base\+ \| 42 \| [+-]?\d+(?:\.\d+)? \| (?P<value>[+-]?\d+(?:\.\d+)?) \| [+-]?\d+(?:\.\d+)? \|$
+    comparison:
+      type: numeric
+      decimals: 6
+  - id: wavlm_s103_phone_large_minus_base_42_event_f1
+    source:
+      artifact: wavlm_s103_results_json
+      kind: json_pointer
+      pointer: /phone/42/large_minus_base/event_f1
+    document:
+      regex: ^\| Large\ −\ Base\+ \| 42 \| [+-]?\d+(?:\.\d+)? \| [+-]?\d+(?:\.\d+)? \| (?P<value>[+-]?\d+(?:\.\d+)?) \|$
+    comparison:
+      type: numeric
+      decimals: 6
+  - id: wavlm_s103_phone_large_minus_base_43_macro_f1
+    source:
+      artifact: wavlm_s103_results_json
+      kind: json_pointer
+      pointer: /phone/43/large_minus_base/macro_f1
+    document:
+      regex: ^\| Large\ −\ Base\+ \| 43 \| (?P<value>[+-]?\d+(?:\.\d+)?) \| [+-]?\d+(?:\.\d+)? \| [+-]?\d+(?:\.\d+)? \|$
+    comparison:
+      type: numeric
+      decimals: 6
+  - id: wavlm_s103_phone_large_minus_base_43_auprc
+    source:
+      artifact: wavlm_s103_results_json
+      kind: json_pointer
+      pointer: /phone/43/large_minus_base/auprc
+    document:
+      regex: ^\| Large\ −\ Base\+ \| 43 \| [+-]?\d+(?:\.\d+)? \| (?P<value>[+-]?\d+(?:\.\d+)?) \| [+-]?\d+(?:\.\d+)? \|$
+    comparison:
+      type: numeric
+      decimals: 6
+  - id: wavlm_s103_phone_large_minus_base_43_event_f1
+    source:
+      artifact: wavlm_s103_results_json
+      kind: json_pointer
+      pointer: /phone/43/large_minus_base/event_f1
+    document:
+      regex: ^\| Large\ −\ Base\+ \| 43 \| [+-]?\d+(?:\.\d+)? \| [+-]?\d+(?:\.\d+)? \| (?P<value>[+-]?\d+(?:\.\d+)?) \|$
+    comparison:
+      type: numeric
+      decimals: 6
+  - id: wavlm_s103_phone_large_minus_base_44_macro_f1
+    source:
+      artifact: wavlm_s103_results_json
+      kind: json_pointer
+      pointer: /phone/44/large_minus_base/macro_f1
+    document:
+      regex: ^\| Large\ −\ Base\+ \| 44 \| (?P<value>[+-]?\d+(?:\.\d+)?) \| [+-]?\d+(?:\.\d+)? \| [+-]?\d+(?:\.\d+)? \|$
+    comparison:
+      type: numeric
+      decimals: 6
+  - id: wavlm_s103_phone_large_minus_base_44_auprc
+    source:
+      artifact: wavlm_s103_results_json
+      kind: json_pointer
+      pointer: /phone/44/large_minus_base/auprc
+    document:
+      regex: ^\| Large\ −\ Base\+ \| 44 \| [+-]?\d+(?:\.\d+)? \| (?P<value>[+-]?\d+(?:\.\d+)?) \| [+-]?\d+(?:\.\d+)? \|$
+    comparison:
+      type: numeric
+      decimals: 6
+  - id: wavlm_s103_phone_large_minus_base_44_event_f1
+    source:
+      artifact: wavlm_s103_results_json
+      kind: json_pointer
+      pointer: /phone/44/large_minus_base/event_f1
+    document:
+      regex: ^\| Large\ −\ Base\+ \| 44 \| [+-]?\d+(?:\.\d+)? \| [+-]?\d+(?:\.\d+)? \| (?P<value>[+-]?\d+(?:\.\d+)?) \|$
+    comparison:
+      type: numeric
+      decimals: 6
+  - id: wavlm_s103_phone_large_minus_base_macro_f1_mean
+    source:
+      artifact: wavlm_s103_comparison_report
+      kind: json_pointer
+      pointer: /metrics/aggregate/phone/macro_f1/large_minus_base/mean
+    document:
+      regex: ^\| Large\ −\ Base\+ \| Mean\ ±\ sample\ SD \| (?P<value>[+-]?\d+(?:\.\d+)?) ± [+-]?\d+(?:\.\d+)? \| [+-]?\d+(?:\.\d+)? ± [+-]?\d+(?:\.\d+)? \| [+-]?\d+(?:\.\d+)? ± [+-]?\d+(?:\.\d+)? \|$
+    comparison:
+      type: numeric
+      decimals: 6
+  - id: wavlm_s103_phone_large_minus_base_macro_f1_sample_std
+    source:
+      artifact: wavlm_s103_comparison_report
+      kind: json_pointer
+      pointer: /metrics/aggregate/phone/macro_f1/large_minus_base/sample_std
+    document:
+      regex: ^\| Large\ −\ Base\+ \| Mean\ ±\ sample\ SD \| [+-]?\d+(?:\.\d+)? ± (?P<value>[+-]?\d+(?:\.\d+)?) \| [+-]?\d+(?:\.\d+)? ± [+-]?\d+(?:\.\d+)? \| [+-]?\d+(?:\.\d+)? ± [+-]?\d+(?:\.\d+)? \|$
+    comparison:
+      type: numeric
+      decimals: 6
+  - id: wavlm_s103_phone_large_minus_base_auprc_mean
+    source:
+      artifact: wavlm_s103_comparison_report
+      kind: json_pointer
+      pointer: /metrics/aggregate/phone/auprc/large_minus_base/mean
+    document:
+      regex: ^\| Large\ −\ Base\+ \| Mean\ ±\ sample\ SD \| [+-]?\d+(?:\.\d+)? ± [+-]?\d+(?:\.\d+)? \| (?P<value>[+-]?\d+(?:\.\d+)?) ± [+-]?\d+(?:\.\d+)? \| [+-]?\d+(?:\.\d+)? ± [+-]?\d+(?:\.\d+)? \|$
+    comparison:
+      type: numeric
+      decimals: 6
+  - id: wavlm_s103_phone_large_minus_base_auprc_sample_std
+    source:
+      artifact: wavlm_s103_comparison_report
+      kind: json_pointer
+      pointer: /metrics/aggregate/phone/auprc/large_minus_base/sample_std
+    document:
+      regex: ^\| Large\ −\ Base\+ \| Mean\ ±\ sample\ SD \| [+-]?\d+(?:\.\d+)? ± [+-]?\d+(?:\.\d+)? \| [+-]?\d+(?:\.\d+)? ± (?P<value>[+-]?\d+(?:\.\d+)?) \| [+-]?\d+(?:\.\d+)? ± [+-]?\d+(?:\.\d+)? \|$
+    comparison:
+      type: numeric
+      decimals: 6
+  - id: wavlm_s103_phone_large_minus_base_event_f1_mean
+    source:
+      artifact: wavlm_s103_comparison_report
+      kind: json_pointer
+      pointer: /metrics/aggregate/phone/event_f1/large_minus_base/mean
+    document:
+      regex: ^\| Large\ −\ Base\+ \| Mean\ ±\ sample\ SD \| [+-]?\d+(?:\.\d+)? ± [+-]?\d+(?:\.\d+)? \| [+-]?\d+(?:\.\d+)? ± [+-]?\d+(?:\.\d+)? \| (?P<value>[+-]?\d+(?:\.\d+)?) ± [+-]?\d+(?:\.\d+)? \|$
+    comparison:
+      type: numeric
+      decimals: 6
+  - id: wavlm_s103_phone_large_minus_base_event_f1_sample_std
+    source:
+      artifact: wavlm_s103_comparison_report
+      kind: json_pointer
+      pointer: /metrics/aggregate/phone/event_f1/large_minus_base/sample_std
+    document:
+      regex: ^\| Large\ −\ Base\+ \| Mean\ ±\ sample\ SD \| [+-]?\d+(?:\.\d+)? ± [+-]?\d+(?:\.\d+)? \| [+-]?\d+(?:\.\d+)? ± [+-]?\d+(?:\.\d+)? \| [+-]?\d+(?:\.\d+)? ± (?P<value>[+-]?\d+(?:\.\d+)?) \|$
+    comparison:
+      type: numeric
+      decimals: 6
+  - id: wavlm_s103_utterance_base_plus_pronunciation_score_42_qwk
+    source:
+      artifact: wavlm_s103_results_json
+      kind: json_pointer
+      pointer: /utterance/42/pronunciation_score/base_plus/qwk
+    document:
+      regex: ^\| WavLM\ Base\+ \| pronunciation_score \| 42 \| (?P<value>[+-]?\d+(?:\.\d+)?) \| [+-]?\d+(?:\.\d+)? \| [+-]?\d+(?:\.\d+)? \| [+-]?\d+(?:\.\d+)? \|$
+    comparison:
+      type: numeric
+      decimals: 6
+  - id: wavlm_s103_utterance_base_plus_pronunciation_score_42_spearman
+    source:
+      artifact: wavlm_s103_results_json
+      kind: json_pointer
+      pointer: /utterance/42/pronunciation_score/base_plus/spearman
+    document:
+      regex: ^\| WavLM\ Base\+ \| pronunciation_score \| 42 \| [+-]?\d+(?:\.\d+)? \| (?P<value>[+-]?\d+(?:\.\d+)?) \| [+-]?\d+(?:\.\d+)? \| [+-]?\d+(?:\.\d+)? \|$
+    comparison:
+      type: numeric
+      decimals: 6
+  - id: wavlm_s103_utterance_base_plus_pronunciation_score_42_mae
+    source:
+      artifact: wavlm_s103_results_json
+      kind: json_pointer
+      pointer: /utterance/42/pronunciation_score/base_plus/mae
+    document:
+      regex: ^\| WavLM\ Base\+ \| pronunciation_score \| 42 \| [+-]?\d+(?:\.\d+)? \| [+-]?\d+(?:\.\d+)? \| (?P<value>[+-]?\d+(?:\.\d+)?) \| [+-]?\d+(?:\.\d+)? \|$
+    comparison:
+      type: numeric
+      decimals: 6
+  - id: wavlm_s103_utterance_base_plus_pronunciation_score_42_icc_2_1
+    source:
+      artifact: wavlm_s103_results_json
+      kind: json_pointer
+      pointer: /utterance/42/pronunciation_score/base_plus/icc_2_1
+    document:
+      regex: ^\| WavLM\ Base\+ \| pronunciation_score \| 42 \| [+-]?\d+(?:\.\d+)? \| [+-]?\d+(?:\.\d+)? \| [+-]?\d+(?:\.\d+)? \| (?P<value>[+-]?\d+(?:\.\d+)?) \|$
+    comparison:
+      type: numeric
+      decimals: 6
+  - id: wavlm_s103_utterance_base_plus_pronunciation_score_43_qwk
+    source:
+      artifact: wavlm_s103_results_json
+      kind: json_pointer
+      pointer: /utterance/43/pronunciation_score/base_plus/qwk
+    document:
+      regex: ^\| WavLM\ Base\+ \| pronunciation_score \| 43 \| (?P<value>[+-]?\d+(?:\.\d+)?) \| [+-]?\d+(?:\.\d+)? \| [+-]?\d+(?:\.\d+)? \| [+-]?\d+(?:\.\d+)? \|$
+    comparison:
+      type: numeric
+      decimals: 6
+  - id: wavlm_s103_utterance_base_plus_pronunciation_score_43_spearman
+    source:
+      artifact: wavlm_s103_results_json
+      kind: json_pointer
+      pointer: /utterance/43/pronunciation_score/base_plus/spearman
+    document:
+      regex: ^\| WavLM\ Base\+ \| pronunciation_score \| 43 \| [+-]?\d+(?:\.\d+)? \| (?P<value>[+-]?\d+(?:\.\d+)?) \| [+-]?\d+(?:\.\d+)? \| [+-]?\d+(?:\.\d+)? \|$
+    comparison:
+      type: numeric
+      decimals: 6
+  - id: wavlm_s103_utterance_base_plus_pronunciation_score_43_mae
+    source:
+      artifact: wavlm_s103_results_json
+      kind: json_pointer
+      pointer: /utterance/43/pronunciation_score/base_plus/mae
+    document:
+      regex: ^\| WavLM\ Base\+ \| pronunciation_score \| 43 \| [+-]?\d+(?:\.\d+)? \| [+-]?\d+(?:\.\d+)? \| (?P<value>[+-]?\d+(?:\.\d+)?) \| [+-]?\d+(?:\.\d+)? \|$
+    comparison:
+      type: numeric
+      decimals: 6
+  - id: wavlm_s103_utterance_base_plus_pronunciation_score_43_icc_2_1
+    source:
+      artifact: wavlm_s103_results_json
+      kind: json_pointer
+      pointer: /utterance/43/pronunciation_score/base_plus/icc_2_1
+    document:
+      regex: ^\| WavLM\ Base\+ \| pronunciation_score \| 43 \| [+-]?\d+(?:\.\d+)? \| [+-]?\d+(?:\.\d+)? \| [+-]?\d+(?:\.\d+)? \| (?P<value>[+-]?\d+(?:\.\d+)?) \|$
+    comparison:
+      type: numeric
+      decimals: 6
+  - id: wavlm_s103_utterance_base_plus_pronunciation_score_44_qwk
+    source:
+      artifact: wavlm_s103_results_json
+      kind: json_pointer
+      pointer: /utterance/44/pronunciation_score/base_plus/qwk
+    document:
+      regex: ^\| WavLM\ Base\+ \| pronunciation_score \| 44 \| (?P<value>[+-]?\d+(?:\.\d+)?) \| [+-]?\d+(?:\.\d+)? \| [+-]?\d+(?:\.\d+)? \| [+-]?\d+(?:\.\d+)? \|$
+    comparison:
+      type: numeric
+      decimals: 6
+  - id: wavlm_s103_utterance_base_plus_pronunciation_score_44_spearman
+    source:
+      artifact: wavlm_s103_results_json
+      kind: json_pointer
+      pointer: /utterance/44/pronunciation_score/base_plus/spearman
+    document:
+      regex: ^\| WavLM\ Base\+ \| pronunciation_score \| 44 \| [+-]?\d+(?:\.\d+)? \| (?P<value>[+-]?\d+(?:\.\d+)?) \| [+-]?\d+(?:\.\d+)? \| [+-]?\d+(?:\.\d+)? \|$
+    comparison:
+      type: numeric
+      decimals: 6
+  - id: wavlm_s103_utterance_base_plus_pronunciation_score_44_mae
+    source:
+      artifact: wavlm_s103_results_json
+      kind: json_pointer
+      pointer: /utterance/44/pronunciation_score/base_plus/mae
+    document:
+      regex: ^\| WavLM\ Base\+ \| pronunciation_score \| 44 \| [+-]?\d+(?:\.\d+)? \| [+-]?\d+(?:\.\d+)? \| (?P<value>[+-]?\d+(?:\.\d+)?) \| [+-]?\d+(?:\.\d+)? \|$
+    comparison:
+      type: numeric
+      decimals: 6
+  - id: wavlm_s103_utterance_base_plus_pronunciation_score_44_icc_2_1
+    source:
+      artifact: wavlm_s103_results_json
+      kind: json_pointer
+      pointer: /utterance/44/pronunciation_score/base_plus/icc_2_1
+    document:
+      regex: ^\| WavLM\ Base\+ \| pronunciation_score \| 44 \| [+-]?\d+(?:\.\d+)? \| [+-]?\d+(?:\.\d+)? \| [+-]?\d+(?:\.\d+)? \| (?P<value>[+-]?\d+(?:\.\d+)?) \|$
+    comparison:
+      type: numeric
+      decimals: 6
+  - id: wavlm_s103_utterance_base_plus_pronunciation_score_qwk_mean
+    source:
+      artifact: wavlm_s103_comparison_report
+      kind: json_pointer
+      pointer: /metrics/aggregate/utterance/pronunciation_score/qwk/base_plus/mean
+    document:
+      regex: ^\| WavLM\ Base\+ \| pronunciation_score \| Mean\ ±\ sample\ SD \| (?P<value>[+-]?\d+(?:\.\d+)?) ± [+-]?\d+(?:\.\d+)? \| [+-]?\d+(?:\.\d+)? ± [+-]?\d+(?:\.\d+)? \| [+-]?\d+(?:\.\d+)? ± [+-]?\d+(?:\.\d+)? \| [+-]?\d+(?:\.\d+)? ± [+-]?\d+(?:\.\d+)? \|$
+    comparison:
+      type: numeric
+      decimals: 6
+  - id: wavlm_s103_utterance_base_plus_pronunciation_score_qwk_sample_std
+    source:
+      artifact: wavlm_s103_comparison_report
+      kind: json_pointer
+      pointer: /metrics/aggregate/utterance/pronunciation_score/qwk/base_plus/sample_std
+    document:
+      regex: ^\| WavLM\ Base\+ \| pronunciation_score \| Mean\ ±\ sample\ SD \| [+-]?\d+(?:\.\d+)? ± (?P<value>[+-]?\d+(?:\.\d+)?) \| [+-]?\d+(?:\.\d+)? ± [+-]?\d+(?:\.\d+)? \| [+-]?\d+(?:\.\d+)? ± [+-]?\d+(?:\.\d+)? \| [+-]?\d+(?:\.\d+)? ± [+-]?\d+(?:\.\d+)? \|$
+    comparison:
+      type: numeric
+      decimals: 6
+  - id: wavlm_s103_utterance_base_plus_pronunciation_score_spearman_mean
+    source:
+      artifact: wavlm_s103_comparison_report
+      kind: json_pointer
+      pointer: /metrics/aggregate/utterance/pronunciation_score/spearman/base_plus/mean
+    document:
+      regex: ^\| WavLM\ Base\+ \| pronunciation_score \| Mean\ ±\ sample\ SD \| [+-]?\d+(?:\.\d+)? ± [+-]?\d+(?:\.\d+)? \| (?P<value>[+-]?\d+(?:\.\d+)?) ± [+-]?\d+(?:\.\d+)? \| [+-]?\d+(?:\.\d+)? ± [+-]?\d+(?:\.\d+)? \| [+-]?\d+(?:\.\d+)? ± [+-]?\d+(?:\.\d+)? \|$
+    comparison:
+      type: numeric
+      decimals: 6
+  - id: wavlm_s103_utterance_base_plus_pronunciation_score_spearman_sample_std
+    source:
+      artifact: wavlm_s103_comparison_report
+      kind: json_pointer
+      pointer: /metrics/aggregate/utterance/pronunciation_score/spearman/base_plus/sample_std
+    document:
+      regex: ^\| WavLM\ Base\+ \| pronunciation_score \| Mean\ ±\ sample\ SD \| [+-]?\d+(?:\.\d+)? ± [+-]?\d+(?:\.\d+)? \| [+-]?\d+(?:\.\d+)? ± (?P<value>[+-]?\d+(?:\.\d+)?) \| [+-]?\d+(?:\.\d+)? ± [+-]?\d+(?:\.\d+)? \| [+-]?\d+(?:\.\d+)? ± [+-]?\d+(?:\.\d+)? \|$
+    comparison:
+      type: numeric
+      decimals: 6
+  - id: wavlm_s103_utterance_base_plus_pronunciation_score_mae_mean
+    source:
+      artifact: wavlm_s103_comparison_report
+      kind: json_pointer
+      pointer: /metrics/aggregate/utterance/pronunciation_score/mae/base_plus/mean
+    document:
+      regex: ^\| WavLM\ Base\+ \| pronunciation_score \| Mean\ ±\ sample\ SD \| [+-]?\d+(?:\.\d+)? ± [+-]?\d+(?:\.\d+)? \| [+-]?\d+(?:\.\d+)? ± [+-]?\d+(?:\.\d+)? \| (?P<value>[+-]?\d+(?:\.\d+)?) ± [+-]?\d+(?:\.\d+)? \| [+-]?\d+(?:\.\d+)? ± [+-]?\d+(?:\.\d+)? \|$
+    comparison:
+      type: numeric
+      decimals: 6
+  - id: wavlm_s103_utterance_base_plus_pronunciation_score_mae_sample_std
+    source:
+      artifact: wavlm_s103_comparison_report
+      kind: json_pointer
+      pointer: /metrics/aggregate/utterance/pronunciation_score/mae/base_plus/sample_std
+    document:
+      regex: ^\| WavLM\ Base\+ \| pronunciation_score \| Mean\ ±\ sample\ SD \| [+-]?\d+(?:\.\d+)? ± [+-]?\d+(?:\.\d+)? \| [+-]?\d+(?:\.\d+)? ± [+-]?\d+(?:\.\d+)? \| [+-]?\d+(?:\.\d+)? ± (?P<value>[+-]?\d+(?:\.\d+)?) \| [+-]?\d+(?:\.\d+)? ± [+-]?\d+(?:\.\d+)? \|$
+    comparison:
+      type: numeric
+      decimals: 6
+  - id: wavlm_s103_utterance_base_plus_pronunciation_score_icc_2_1_mean
+    source:
+      artifact: wavlm_s103_comparison_report
+      kind: json_pointer
+      pointer: /metrics/aggregate/utterance/pronunciation_score/icc_2_1/base_plus/mean
+    document:
+      regex: ^\| WavLM\ Base\+ \| pronunciation_score \| Mean\ ±\ sample\ SD \| [+-]?\d+(?:\.\d+)? ± [+-]?\d+(?:\.\d+)? \| [+-]?\d+(?:\.\d+)? ± [+-]?\d+(?:\.\d+)? \| [+-]?\d+(?:\.\d+)? ± [+-]?\d+(?:\.\d+)? \| (?P<value>[+-]?\d+(?:\.\d+)?) ± [+-]?\d+(?:\.\d+)? \|$
+    comparison:
+      type: numeric
+      decimals: 6
+  - id: wavlm_s103_utterance_base_plus_pronunciation_score_icc_2_1_sample_std
+    source:
+      artifact: wavlm_s103_comparison_report
+      kind: json_pointer
+      pointer: /metrics/aggregate/utterance/pronunciation_score/icc_2_1/base_plus/sample_std
+    document:
+      regex: ^\| WavLM\ Base\+ \| pronunciation_score \| Mean\ ±\ sample\ SD \| [+-]?\d+(?:\.\d+)? ± [+-]?\d+(?:\.\d+)? \| [+-]?\d+(?:\.\d+)? ± [+-]?\d+(?:\.\d+)? \| [+-]?\d+(?:\.\d+)? ± [+-]?\d+(?:\.\d+)? \| [+-]?\d+(?:\.\d+)? ± (?P<value>[+-]?\d+(?:\.\d+)?) \|$
+    comparison:
+      type: numeric
+      decimals: 6
+  - id: wavlm_s103_utterance_base_plus_fluency_score_42_qwk
+    source:
+      artifact: wavlm_s103_results_json
+      kind: json_pointer
+      pointer: /utterance/42/fluency_score/base_plus/qwk
+    document:
+      regex: ^\| WavLM\ Base\+ \| fluency_score \| 42 \| (?P<value>[+-]?\d+(?:\.\d+)?) \| [+-]?\d+(?:\.\d+)? \| [+-]?\d+(?:\.\d+)? \| [+-]?\d+(?:\.\d+)? \|$
+    comparison:
+      type: numeric
+      decimals: 6
+  - id: wavlm_s103_utterance_base_plus_fluency_score_42_spearman
+    source:
+      artifact: wavlm_s103_results_json
+      kind: json_pointer
+      pointer: /utterance/42/fluency_score/base_plus/spearman
+    document:
+      regex: ^\| WavLM\ Base\+ \| fluency_score \| 42 \| [+-]?\d+(?:\.\d+)? \| (?P<value>[+-]?\d+(?:\.\d+)?) \| [+-]?\d+(?:\.\d+)? \| [+-]?\d+(?:\.\d+)? \|$
+    comparison:
+      type: numeric
+      decimals: 6
+  - id: wavlm_s103_utterance_base_plus_fluency_score_42_mae
+    source:
+      artifact: wavlm_s103_results_json
+      kind: json_pointer
+      pointer: /utterance/42/fluency_score/base_plus/mae
+    document:
+      regex: ^\| WavLM\ Base\+ \| fluency_score \| 42 \| [+-]?\d+(?:\.\d+)? \| [+-]?\d+(?:\.\d+)? \| (?P<value>[+-]?\d+(?:\.\d+)?) \| [+-]?\d+(?:\.\d+)? \|$
+    comparison:
+      type: numeric
+      decimals: 6
+  - id: wavlm_s103_utterance_base_plus_fluency_score_42_icc_2_1
+    source:
+      artifact: wavlm_s103_results_json
+      kind: json_pointer
+      pointer: /utterance/42/fluency_score/base_plus/icc_2_1
+    document:
+      regex: ^\| WavLM\ Base\+ \| fluency_score \| 42 \| [+-]?\d+(?:\.\d+)? \| [+-]?\d+(?:\.\d+)? \| [+-]?\d+(?:\.\d+)? \| (?P<value>[+-]?\d+(?:\.\d+)?) \|$
+    comparison:
+      type: numeric
+      decimals: 6
+  - id: wavlm_s103_utterance_base_plus_fluency_score_43_qwk
+    source:
+      artifact: wavlm_s103_results_json
+      kind: json_pointer
+      pointer: /utterance/43/fluency_score/base_plus/qwk
+    document:
+      regex: ^\| WavLM\ Base\+ \| fluency_score \| 43 \| (?P<value>[+-]?\d+(?:\.\d+)?) \| [+-]?\d+(?:\.\d+)? \| [+-]?\d+(?:\.\d+)? \| [+-]?\d+(?:\.\d+)? \|$
+    comparison:
+      type: numeric
+      decimals: 6
+  - id: wavlm_s103_utterance_base_plus_fluency_score_43_spearman
+    source:
+      artifact: wavlm_s103_results_json
+      kind: json_pointer
+      pointer: /utterance/43/fluency_score/base_plus/spearman
+    document:
+      regex: ^\| WavLM\ Base\+ \| fluency_score \| 43 \| [+-]?\d+(?:\.\d+)? \| (?P<value>[+-]?\d+(?:\.\d+)?) \| [+-]?\d+(?:\.\d+)? \| [+-]?\d+(?:\.\d+)? \|$
+    comparison:
+      type: numeric
+      decimals: 6
+  - id: wavlm_s103_utterance_base_plus_fluency_score_43_mae
+    source:
+      artifact: wavlm_s103_results_json
+      kind: json_pointer
+      pointer: /utterance/43/fluency_score/base_plus/mae
+    document:
+      regex: ^\| WavLM\ Base\+ \| fluency_score \| 43 \| [+-]?\d+(?:\.\d+)? \| [+-]?\d+(?:\.\d+)? \| (?P<value>[+-]?\d+(?:\.\d+)?) \| [+-]?\d+(?:\.\d+)? \|$
+    comparison:
+      type: numeric
+      decimals: 6
+  - id: wavlm_s103_utterance_base_plus_fluency_score_43_icc_2_1
+    source:
+      artifact: wavlm_s103_results_json
+      kind: json_pointer
+      pointer: /utterance/43/fluency_score/base_plus/icc_2_1
+    document:
+      regex: ^\| WavLM\ Base\+ \| fluency_score \| 43 \| [+-]?\d+(?:\.\d+)? \| [+-]?\d+(?:\.\d+)? \| [+-]?\d+(?:\.\d+)? \| (?P<value>[+-]?\d+(?:\.\d+)?) \|$
+    comparison:
+      type: numeric
+      decimals: 6
+  - id: wavlm_s103_utterance_base_plus_fluency_score_44_qwk
+    source:
+      artifact: wavlm_s103_results_json
+      kind: json_pointer
+      pointer: /utterance/44/fluency_score/base_plus/qwk
+    document:
+      regex: ^\| WavLM\ Base\+ \| fluency_score \| 44 \| (?P<value>[+-]?\d+(?:\.\d+)?) \| [+-]?\d+(?:\.\d+)? \| [+-]?\d+(?:\.\d+)? \| [+-]?\d+(?:\.\d+)? \|$
+    comparison:
+      type: numeric
+      decimals: 6
+  - id: wavlm_s103_utterance_base_plus_fluency_score_44_spearman
+    source:
+      artifact: wavlm_s103_results_json
+      kind: json_pointer
+      pointer: /utterance/44/fluency_score/base_plus/spearman
+    document:
+      regex: ^\| WavLM\ Base\+ \| fluency_score \| 44 \| [+-]?\d+(?:\.\d+)? \| (?P<value>[+-]?\d+(?:\.\d+)?) \| [+-]?\d+(?:\.\d+)? \| [+-]?\d+(?:\.\d+)? \|$
+    comparison:
+      type: numeric
+      decimals: 6
+  - id: wavlm_s103_utterance_base_plus_fluency_score_44_mae
+    source:
+      artifact: wavlm_s103_results_json
+      kind: json_pointer
+      pointer: /utterance/44/fluency_score/base_plus/mae
+    document:
+      regex: ^\| WavLM\ Base\+ \| fluency_score \| 44 \| [+-]?\d+(?:\.\d+)? \| [+-]?\d+(?:\.\d+)? \| (?P<value>[+-]?\d+(?:\.\d+)?) \| [+-]?\d+(?:\.\d+)? \|$
+    comparison:
+      type: numeric
+      decimals: 6
+  - id: wavlm_s103_utterance_base_plus_fluency_score_44_icc_2_1
+    source:
+      artifact: wavlm_s103_results_json
+      kind: json_pointer
+      pointer: /utterance/44/fluency_score/base_plus/icc_2_1
+    document:
+      regex: ^\| WavLM\ Base\+ \| fluency_score \| 44 \| [+-]?\d+(?:\.\d+)? \| [+-]?\d+(?:\.\d+)? \| [+-]?\d+(?:\.\d+)? \| (?P<value>[+-]?\d+(?:\.\d+)?) \|$
+    comparison:
+      type: numeric
+      decimals: 6
+  - id: wavlm_s103_utterance_base_plus_fluency_score_qwk_mean
+    source:
+      artifact: wavlm_s103_comparison_report
+      kind: json_pointer
+      pointer: /metrics/aggregate/utterance/fluency_score/qwk/base_plus/mean
+    document:
+      regex: ^\| WavLM\ Base\+ \| fluency_score \| Mean\ ±\ sample\ SD \| (?P<value>[+-]?\d+(?:\.\d+)?) ± [+-]?\d+(?:\.\d+)? \| [+-]?\d+(?:\.\d+)? ± [+-]?\d+(?:\.\d+)? \| [+-]?\d+(?:\.\d+)? ± [+-]?\d+(?:\.\d+)? \| [+-]?\d+(?:\.\d+)? ± [+-]?\d+(?:\.\d+)? \|$
+    comparison:
+      type: numeric
+      decimals: 6
+  - id: wavlm_s103_utterance_base_plus_fluency_score_qwk_sample_std
+    source:
+      artifact: wavlm_s103_comparison_report
+      kind: json_pointer
+      pointer: /metrics/aggregate/utterance/fluency_score/qwk/base_plus/sample_std
+    document:
+      regex: ^\| WavLM\ Base\+ \| fluency_score \| Mean\ ±\ sample\ SD \| [+-]?\d+(?:\.\d+)? ± (?P<value>[+-]?\d+(?:\.\d+)?) \| [+-]?\d+(?:\.\d+)? ± [+-]?\d+(?:\.\d+)? \| [+-]?\d+(?:\.\d+)? ± [+-]?\d+(?:\.\d+)? \| [+-]?\d+(?:\.\d+)? ± [+-]?\d+(?:\.\d+)? \|$
+    comparison:
+      type: numeric
+      decimals: 6
+  - id: wavlm_s103_utterance_base_plus_fluency_score_spearman_mean
+    source:
+      artifact: wavlm_s103_comparison_report
+      kind: json_pointer
+      pointer: /metrics/aggregate/utterance/fluency_score/spearman/base_plus/mean
+    document:
+      regex: ^\| WavLM\ Base\+ \| fluency_score \| Mean\ ±\ sample\ SD \| [+-]?\d+(?:\.\d+)? ± [+-]?\d+(?:\.\d+)? \| (?P<value>[+-]?\d+(?:\.\d+)?) ± [+-]?\d+(?:\.\d+)? \| [+-]?\d+(?:\.\d+)? ± [+-]?\d+(?:\.\d+)? \| [+-]?\d+(?:\.\d+)? ± [+-]?\d+(?:\.\d+)? \|$
+    comparison:
+      type: numeric
+      decimals: 6
+  - id: wavlm_s103_utterance_base_plus_fluency_score_spearman_sample_std
+    source:
+      artifact: wavlm_s103_comparison_report
+      kind: json_pointer
+      pointer: /metrics/aggregate/utterance/fluency_score/spearman/base_plus/sample_std
+    document:
+      regex: ^\| WavLM\ Base\+ \| fluency_score \| Mean\ ±\ sample\ SD \| [+-]?\d+(?:\.\d+)? ± [+-]?\d+(?:\.\d+)? \| [+-]?\d+(?:\.\d+)? ± (?P<value>[+-]?\d+(?:\.\d+)?) \| [+-]?\d+(?:\.\d+)? ± [+-]?\d+(?:\.\d+)? \| [+-]?\d+(?:\.\d+)? ± [+-]?\d+(?:\.\d+)? \|$
+    comparison:
+      type: numeric
+      decimals: 6
+  - id: wavlm_s103_utterance_base_plus_fluency_score_mae_mean
+    source:
+      artifact: wavlm_s103_comparison_report
+      kind: json_pointer
+      pointer: /metrics/aggregate/utterance/fluency_score/mae/base_plus/mean
+    document:
+      regex: ^\| WavLM\ Base\+ \| fluency_score \| Mean\ ±\ sample\ SD \| [+-]?\d+(?:\.\d+)? ± [+-]?\d+(?:\.\d+)? \| [+-]?\d+(?:\.\d+)? ± [+-]?\d+(?:\.\d+)? \| (?P<value>[+-]?\d+(?:\.\d+)?) ± [+-]?\d+(?:\.\d+)? \| [+-]?\d+(?:\.\d+)? ± [+-]?\d+(?:\.\d+)? \|$
+    comparison:
+      type: numeric
+      decimals: 6
+  - id: wavlm_s103_utterance_base_plus_fluency_score_mae_sample_std
+    source:
+      artifact: wavlm_s103_comparison_report
+      kind: json_pointer
+      pointer: /metrics/aggregate/utterance/fluency_score/mae/base_plus/sample_std
+    document:
+      regex: ^\| WavLM\ Base\+ \| fluency_score \| Mean\ ±\ sample\ SD \| [+-]?\d+(?:\.\d+)? ± [+-]?\d+(?:\.\d+)? \| [+-]?\d+(?:\.\d+)? ± [+-]?\d+(?:\.\d+)? \| [+-]?\d+(?:\.\d+)? ± (?P<value>[+-]?\d+(?:\.\d+)?) \| [+-]?\d+(?:\.\d+)? ± [+-]?\d+(?:\.\d+)? \|$
+    comparison:
+      type: numeric
+      decimals: 6
+  - id: wavlm_s103_utterance_base_plus_fluency_score_icc_2_1_mean
+    source:
+      artifact: wavlm_s103_comparison_report
+      kind: json_pointer
+      pointer: /metrics/aggregate/utterance/fluency_score/icc_2_1/base_plus/mean
+    document:
+      regex: ^\| WavLM\ Base\+ \| fluency_score \| Mean\ ±\ sample\ SD \| [+-]?\d+(?:\.\d+)? ± [+-]?\d+(?:\.\d+)? \| [+-]?\d+(?:\.\d+)? ± [+-]?\d+(?:\.\d+)? \| [+-]?\d+(?:\.\d+)? ± [+-]?\d+(?:\.\d+)? \| (?P<value>[+-]?\d+(?:\.\d+)?) ± [+-]?\d+(?:\.\d+)? \|$
+    comparison:
+      type: numeric
+      decimals: 6
+  - id: wavlm_s103_utterance_base_plus_fluency_score_icc_2_1_sample_std
+    source:
+      artifact: wavlm_s103_comparison_report
+      kind: json_pointer
+      pointer: /metrics/aggregate/utterance/fluency_score/icc_2_1/base_plus/sample_std
+    document:
+      regex: ^\| WavLM\ Base\+ \| fluency_score \| Mean\ ±\ sample\ SD \| [+-]?\d+(?:\.\d+)? ± [+-]?\d+(?:\.\d+)? \| [+-]?\d+(?:\.\d+)? ± [+-]?\d+(?:\.\d+)? \| [+-]?\d+(?:\.\d+)? ± [+-]?\d+(?:\.\d+)? \| [+-]?\d+(?:\.\d+)? ± (?P<value>[+-]?\d+(?:\.\d+)?) \|$
+    comparison:
+      type: numeric
+      decimals: 6
+  - id: wavlm_s103_utterance_base_plus_comprehensibility_score_42_qwk
+    source:
+      artifact: wavlm_s103_results_json
+      kind: json_pointer
+      pointer: /utterance/42/comprehensibility_score/base_plus/qwk
+    document:
+      regex: ^\| WavLM\ Base\+ \| comprehensibility_score \| 42 \| (?P<value>[+-]?\d+(?:\.\d+)?) \| [+-]?\d+(?:\.\d+)? \| [+-]?\d+(?:\.\d+)? \| [+-]?\d+(?:\.\d+)? \|$
+    comparison:
+      type: numeric
+      decimals: 6
+  - id: wavlm_s103_utterance_base_plus_comprehensibility_score_42_spearman
+    source:
+      artifact: wavlm_s103_results_json
+      kind: json_pointer
+      pointer: /utterance/42/comprehensibility_score/base_plus/spearman
+    document:
+      regex: ^\| WavLM\ Base\+ \| comprehensibility_score \| 42 \| [+-]?\d+(?:\.\d+)? \| (?P<value>[+-]?\d+(?:\.\d+)?) \| [+-]?\d+(?:\.\d+)? \| [+-]?\d+(?:\.\d+)? \|$
+    comparison:
+      type: numeric
+      decimals: 6
+  - id: wavlm_s103_utterance_base_plus_comprehensibility_score_42_mae
+    source:
+      artifact: wavlm_s103_results_json
+      kind: json_pointer
+      pointer: /utterance/42/comprehensibility_score/base_plus/mae
+    document:
+      regex: ^\| WavLM\ Base\+ \| comprehensibility_score \| 42 \| [+-]?\d+(?:\.\d+)? \| [+-]?\d+(?:\.\d+)? \| (?P<value>[+-]?\d+(?:\.\d+)?) \| [+-]?\d+(?:\.\d+)? \|$
+    comparison:
+      type: numeric
+      decimals: 6
+  - id: wavlm_s103_utterance_base_plus_comprehensibility_score_42_icc_2_1
+    source:
+      artifact: wavlm_s103_results_json
+      kind: json_pointer
+      pointer: /utterance/42/comprehensibility_score/base_plus/icc_2_1
+    document:
+      regex: ^\| WavLM\ Base\+ \| comprehensibility_score \| 42 \| [+-]?\d+(?:\.\d+)? \| [+-]?\d+(?:\.\d+)? \| [+-]?\d+(?:\.\d+)? \| (?P<value>[+-]?\d+(?:\.\d+)?) \|$
+    comparison:
+      type: numeric
+      decimals: 6
+  - id: wavlm_s103_utterance_base_plus_comprehensibility_score_43_qwk
+    source:
+      artifact: wavlm_s103_results_json
+      kind: json_pointer
+      pointer: /utterance/43/comprehensibility_score/base_plus/qwk
+    document:
+      regex: ^\| WavLM\ Base\+ \| comprehensibility_score \| 43 \| (?P<value>[+-]?\d+(?:\.\d+)?) \| [+-]?\d+(?:\.\d+)? \| [+-]?\d+(?:\.\d+)? \| [+-]?\d+(?:\.\d+)? \|$
+    comparison:
+      type: numeric
+      decimals: 6
+  - id: wavlm_s103_utterance_base_plus_comprehensibility_score_43_spearman
+    source:
+      artifact: wavlm_s103_results_json
+      kind: json_pointer
+      pointer: /utterance/43/comprehensibility_score/base_plus/spearman
+    document:
+      regex: ^\| WavLM\ Base\+ \| comprehensibility_score \| 43 \| [+-]?\d+(?:\.\d+)? \| (?P<value>[+-]?\d+(?:\.\d+)?) \| [+-]?\d+(?:\.\d+)? \| [+-]?\d+(?:\.\d+)? \|$
+    comparison:
+      type: numeric
+      decimals: 6
+  - id: wavlm_s103_utterance_base_plus_comprehensibility_score_43_mae
+    source:
+      artifact: wavlm_s103_results_json
+      kind: json_pointer
+      pointer: /utterance/43/comprehensibility_score/base_plus/mae
+    document:
+      regex: ^\| WavLM\ Base\+ \| comprehensibility_score \| 43 \| [+-]?\d+(?:\.\d+)? \| [+-]?\d+(?:\.\d+)? \| (?P<value>[+-]?\d+(?:\.\d+)?) \| [+-]?\d+(?:\.\d+)? \|$
+    comparison:
+      type: numeric
+      decimals: 6
+  - id: wavlm_s103_utterance_base_plus_comprehensibility_score_43_icc_2_1
+    source:
+      artifact: wavlm_s103_results_json
+      kind: json_pointer
+      pointer: /utterance/43/comprehensibility_score/base_plus/icc_2_1
+    document:
+      regex: ^\| WavLM\ Base\+ \| comprehensibility_score \| 43 \| [+-]?\d+(?:\.\d+)? \| [+-]?\d+(?:\.\d+)? \| [+-]?\d+(?:\.\d+)? \| (?P<value>[+-]?\d+(?:\.\d+)?) \|$
+    comparison:
+      type: numeric
+      decimals: 6
+  - id: wavlm_s103_utterance_base_plus_comprehensibility_score_44_qwk
+    source:
+      artifact: wavlm_s103_results_json
+      kind: json_pointer
+      pointer: /utterance/44/comprehensibility_score/base_plus/qwk
+    document:
+      regex: ^\| WavLM\ Base\+ \| comprehensibility_score \| 44 \| (?P<value>[+-]?\d+(?:\.\d+)?) \| [+-]?\d+(?:\.\d+)? \| [+-]?\d+(?:\.\d+)? \| [+-]?\d+(?:\.\d+)? \|$
+    comparison:
+      type: numeric
+      decimals: 6
+  - id: wavlm_s103_utterance_base_plus_comprehensibility_score_44_spearman
+    source:
+      artifact: wavlm_s103_results_json
+      kind: json_pointer
+      pointer: /utterance/44/comprehensibility_score/base_plus/spearman
+    document:
+      regex: ^\| WavLM\ Base\+ \| comprehensibility_score \| 44 \| [+-]?\d+(?:\.\d+)? \| (?P<value>[+-]?\d+(?:\.\d+)?) \| [+-]?\d+(?:\.\d+)? \| [+-]?\d+(?:\.\d+)? \|$
+    comparison:
+      type: numeric
+      decimals: 6
+  - id: wavlm_s103_utterance_base_plus_comprehensibility_score_44_mae
+    source:
+      artifact: wavlm_s103_results_json
+      kind: json_pointer
+      pointer: /utterance/44/comprehensibility_score/base_plus/mae
+    document:
+      regex: ^\| WavLM\ Base\+ \| comprehensibility_score \| 44 \| [+-]?\d+(?:\.\d+)? \| [+-]?\d+(?:\.\d+)? \| (?P<value>[+-]?\d+(?:\.\d+)?) \| [+-]?\d+(?:\.\d+)? \|$
+    comparison:
+      type: numeric
+      decimals: 6
+  - id: wavlm_s103_utterance_base_plus_comprehensibility_score_44_icc_2_1
+    source:
+      artifact: wavlm_s103_results_json
+      kind: json_pointer
+      pointer: /utterance/44/comprehensibility_score/base_plus/icc_2_1
+    document:
+      regex: ^\| WavLM\ Base\+ \| comprehensibility_score \| 44 \| [+-]?\d+(?:\.\d+)? \| [+-]?\d+(?:\.\d+)? \| [+-]?\d+(?:\.\d+)? \| (?P<value>[+-]?\d+(?:\.\d+)?) \|$
+    comparison:
+      type: numeric
+      decimals: 6
+  - id: wavlm_s103_utterance_base_plus_comprehensibility_score_qwk_mean
+    source:
+      artifact: wavlm_s103_comparison_report
+      kind: json_pointer
+      pointer: /metrics/aggregate/utterance/comprehensibility_score/qwk/base_plus/mean
+    document:
+      regex: ^\| WavLM\ Base\+ \| comprehensibility_score \| Mean\ ±\ sample\ SD \| (?P<value>[+-]?\d+(?:\.\d+)?) ± [+-]?\d+(?:\.\d+)? \| [+-]?\d+(?:\.\d+)? ± [+-]?\d+(?:\.\d+)? \| [+-]?\d+(?:\.\d+)? ± [+-]?\d+(?:\.\d+)? \| [+-]?\d+(?:\.\d+)? ± [+-]?\d+(?:\.\d+)? \|$
+    comparison:
+      type: numeric
+      decimals: 6
+  - id: wavlm_s103_utterance_base_plus_comprehensibility_score_qwk_sample_std
+    source:
+      artifact: wavlm_s103_comparison_report
+      kind: json_pointer
+      pointer: /metrics/aggregate/utterance/comprehensibility_score/qwk/base_plus/sample_std
+    document:
+      regex: ^\| WavLM\ Base\+ \| comprehensibility_score \| Mean\ ±\ sample\ SD \| [+-]?\d+(?:\.\d+)? ± (?P<value>[+-]?\d+(?:\.\d+)?) \| [+-]?\d+(?:\.\d+)? ± [+-]?\d+(?:\.\d+)? \| [+-]?\d+(?:\.\d+)? ± [+-]?\d+(?:\.\d+)? \| [+-]?\d+(?:\.\d+)? ± [+-]?\d+(?:\.\d+)? \|$
+    comparison:
+      type: numeric
+      decimals: 6
+  - id: wavlm_s103_utterance_base_plus_comprehensibility_score_spearman_mean
+    source:
+      artifact: wavlm_s103_comparison_report
+      kind: json_pointer
+      pointer: /metrics/aggregate/utterance/comprehensibility_score/spearman/base_plus/mean
+    document:
+      regex: ^\| WavLM\ Base\+ \| comprehensibility_score \| Mean\ ±\ sample\ SD \| [+-]?\d+(?:\.\d+)? ± [+-]?\d+(?:\.\d+)? \| (?P<value>[+-]?\d+(?:\.\d+)?) ± [+-]?\d+(?:\.\d+)? \| [+-]?\d+(?:\.\d+)? ± [+-]?\d+(?:\.\d+)? \| [+-]?\d+(?:\.\d+)? ± [+-]?\d+(?:\.\d+)? \|$
+    comparison:
+      type: numeric
+      decimals: 6
+  - id: wavlm_s103_utterance_base_plus_comprehensibility_score_spearman_sample_std
+    source:
+      artifact: wavlm_s103_comparison_report
+      kind: json_pointer
+      pointer: /metrics/aggregate/utterance/comprehensibility_score/spearman/base_plus/sample_std
+    document:
+      regex: ^\| WavLM\ Base\+ \| comprehensibility_score \| Mean\ ±\ sample\ SD \| [+-]?\d+(?:\.\d+)? ± [+-]?\d+(?:\.\d+)? \| [+-]?\d+(?:\.\d+)? ± (?P<value>[+-]?\d+(?:\.\d+)?) \| [+-]?\d+(?:\.\d+)? ± [+-]?\d+(?:\.\d+)? \| [+-]?\d+(?:\.\d+)? ± [+-]?\d+(?:\.\d+)? \|$
+    comparison:
+      type: numeric
+      decimals: 6
+  - id: wavlm_s103_utterance_base_plus_comprehensibility_score_mae_mean
+    source:
+      artifact: wavlm_s103_comparison_report
+      kind: json_pointer
+      pointer: /metrics/aggregate/utterance/comprehensibility_score/mae/base_plus/mean
+    document:
+      regex: ^\| WavLM\ Base\+ \| comprehensibility_score \| Mean\ ±\ sample\ SD \| [+-]?\d+(?:\.\d+)? ± [+-]?\d+(?:\.\d+)? \| [+-]?\d+(?:\.\d+)? ± [+-]?\d+(?:\.\d+)? \| (?P<value>[+-]?\d+(?:\.\d+)?) ± [+-]?\d+(?:\.\d+)? \| [+-]?\d+(?:\.\d+)? ± [+-]?\d+(?:\.\d+)? \|$
+    comparison:
+      type: numeric
+      decimals: 6
+  - id: wavlm_s103_utterance_base_plus_comprehensibility_score_mae_sample_std
+    source:
+      artifact: wavlm_s103_comparison_report
+      kind: json_pointer
+      pointer: /metrics/aggregate/utterance/comprehensibility_score/mae/base_plus/sample_std
+    document:
+      regex: ^\| WavLM\ Base\+ \| comprehensibility_score \| Mean\ ±\ sample\ SD \| [+-]?\d+(?:\.\d+)? ± [+-]?\d+(?:\.\d+)? \| [+-]?\d+(?:\.\d+)? ± [+-]?\d+(?:\.\d+)? \| [+-]?\d+(?:\.\d+)? ± (?P<value>[+-]?\d+(?:\.\d+)?) \| [+-]?\d+(?:\.\d+)? ± [+-]?\d+(?:\.\d+)? \|$
+    comparison:
+      type: numeric
+      decimals: 6
+  - id: wavlm_s103_utterance_base_plus_comprehensibility_score_icc_2_1_mean
+    source:
+      artifact: wavlm_s103_comparison_report
+      kind: json_pointer
+      pointer: /metrics/aggregate/utterance/comprehensibility_score/icc_2_1/base_plus/mean
+    document:
+      regex: ^\| WavLM\ Base\+ \| comprehensibility_score \| Mean\ ±\ sample\ SD \| [+-]?\d+(?:\.\d+)? ± [+-]?\d+(?:\.\d+)? \| [+-]?\d+(?:\.\d+)? ± [+-]?\d+(?:\.\d+)? \| [+-]?\d+(?:\.\d+)? ± [+-]?\d+(?:\.\d+)? \| (?P<value>[+-]?\d+(?:\.\d+)?) ± [+-]?\d+(?:\.\d+)? \|$
+    comparison:
+      type: numeric
+      decimals: 6
+  - id: wavlm_s103_utterance_base_plus_comprehensibility_score_icc_2_1_sample_std
+    source:
+      artifact: wavlm_s103_comparison_report
+      kind: json_pointer
+      pointer: /metrics/aggregate/utterance/comprehensibility_score/icc_2_1/base_plus/sample_std
+    document:
+      regex: ^\| WavLM\ Base\+ \| comprehensibility_score \| Mean\ ±\ sample\ SD \| [+-]?\d+(?:\.\d+)? ± [+-]?\d+(?:\.\d+)? \| [+-]?\d+(?:\.\d+)? ± [+-]?\d+(?:\.\d+)? \| [+-]?\d+(?:\.\d+)? ± [+-]?\d+(?:\.\d+)? \| [+-]?\d+(?:\.\d+)? ± (?P<value>[+-]?\d+(?:\.\d+)?) \|$
+    comparison:
+      type: numeric
+      decimals: 6
+  - id: wavlm_s103_utterance_large_pronunciation_score_42_qwk
+    source:
+      artifact: wavlm_s103_results_json
+      kind: json_pointer
+      pointer: /utterance/42/pronunciation_score/large/qwk
+    document:
+      regex: ^\| WavLM\ Large \| pronunciation_score \| 42 \| (?P<value>[+-]?\d+(?:\.\d+)?) \| [+-]?\d+(?:\.\d+)? \| [+-]?\d+(?:\.\d+)? \| [+-]?\d+(?:\.\d+)? \|$
+    comparison:
+      type: numeric
+      decimals: 6
+  - id: wavlm_s103_utterance_large_pronunciation_score_42_spearman
+    source:
+      artifact: wavlm_s103_results_json
+      kind: json_pointer
+      pointer: /utterance/42/pronunciation_score/large/spearman
+    document:
+      regex: ^\| WavLM\ Large \| pronunciation_score \| 42 \| [+-]?\d+(?:\.\d+)? \| (?P<value>[+-]?\d+(?:\.\d+)?) \| [+-]?\d+(?:\.\d+)? \| [+-]?\d+(?:\.\d+)? \|$
+    comparison:
+      type: numeric
+      decimals: 6
+  - id: wavlm_s103_utterance_large_pronunciation_score_42_mae
+    source:
+      artifact: wavlm_s103_results_json
+      kind: json_pointer
+      pointer: /utterance/42/pronunciation_score/large/mae
+    document:
+      regex: ^\| WavLM\ Large \| pronunciation_score \| 42 \| [+-]?\d+(?:\.\d+)? \| [+-]?\d+(?:\.\d+)? \| (?P<value>[+-]?\d+(?:\.\d+)?) \| [+-]?\d+(?:\.\d+)? \|$
+    comparison:
+      type: numeric
+      decimals: 6
+  - id: wavlm_s103_utterance_large_pronunciation_score_42_icc_2_1
+    source:
+      artifact: wavlm_s103_results_json
+      kind: json_pointer
+      pointer: /utterance/42/pronunciation_score/large/icc_2_1
+    document:
+      regex: ^\| WavLM\ Large \| pronunciation_score \| 42 \| [+-]?\d+(?:\.\d+)? \| [+-]?\d+(?:\.\d+)? \| [+-]?\d+(?:\.\d+)? \| (?P<value>[+-]?\d+(?:\.\d+)?) \|$
+    comparison:
+      type: numeric
+      decimals: 6
+  - id: wavlm_s103_utterance_large_pronunciation_score_43_qwk
+    source:
+      artifact: wavlm_s103_results_json
+      kind: json_pointer
+      pointer: /utterance/43/pronunciation_score/large/qwk
+    document:
+      regex: ^\| WavLM\ Large \| pronunciation_score \| 43 \| (?P<value>[+-]?\d+(?:\.\d+)?) \| [+-]?\d+(?:\.\d+)? \| [+-]?\d+(?:\.\d+)? \| [+-]?\d+(?:\.\d+)? \|$
+    comparison:
+      type: numeric
+      decimals: 6
+  - id: wavlm_s103_utterance_large_pronunciation_score_43_spearman
+    source:
+      artifact: wavlm_s103_results_json
+      kind: json_pointer
+      pointer: /utterance/43/pronunciation_score/large/spearman
+    document:
+      regex: ^\| WavLM\ Large \| pronunciation_score \| 43 \| [+-]?\d+(?:\.\d+)? \| (?P<value>[+-]?\d+(?:\.\d+)?) \| [+-]?\d+(?:\.\d+)? \| [+-]?\d+(?:\.\d+)? \|$
+    comparison:
+      type: numeric
+      decimals: 6
+  - id: wavlm_s103_utterance_large_pronunciation_score_43_mae
+    source:
+      artifact: wavlm_s103_results_json
+      kind: json_pointer
+      pointer: /utterance/43/pronunciation_score/large/mae
+    document:
+      regex: ^\| WavLM\ Large \| pronunciation_score \| 43 \| [+-]?\d+(?:\.\d+)? \| [+-]?\d+(?:\.\d+)? \| (?P<value>[+-]?\d+(?:\.\d+)?) \| [+-]?\d+(?:\.\d+)? \|$
+    comparison:
+      type: numeric
+      decimals: 6
+  - id: wavlm_s103_utterance_large_pronunciation_score_43_icc_2_1
+    source:
+      artifact: wavlm_s103_results_json
+      kind: json_pointer
+      pointer: /utterance/43/pronunciation_score/large/icc_2_1
+    document:
+      regex: ^\| WavLM\ Large \| pronunciation_score \| 43 \| [+-]?\d+(?:\.\d+)? \| [+-]?\d+(?:\.\d+)? \| [+-]?\d+(?:\.\d+)? \| (?P<value>[+-]?\d+(?:\.\d+)?) \|$
+    comparison:
+      type: numeric
+      decimals: 6
+  - id: wavlm_s103_utterance_large_pronunciation_score_44_qwk
+    source:
+      artifact: wavlm_s103_results_json
+      kind: json_pointer
+      pointer: /utterance/44/pronunciation_score/large/qwk
+    document:
+      regex: ^\| WavLM\ Large \| pronunciation_score \| 44 \| (?P<value>[+-]?\d+(?:\.\d+)?) \| [+-]?\d+(?:\.\d+)? \| [+-]?\d+(?:\.\d+)? \| [+-]?\d+(?:\.\d+)? \|$
+    comparison:
+      type: numeric
+      decimals: 6
+  - id: wavlm_s103_utterance_large_pronunciation_score_44_spearman
+    source:
+      artifact: wavlm_s103_results_json
+      kind: json_pointer
+      pointer: /utterance/44/pronunciation_score/large/spearman
+    document:
+      regex: ^\| WavLM\ Large \| pronunciation_score \| 44 \| [+-]?\d+(?:\.\d+)? \| (?P<value>[+-]?\d+(?:\.\d+)?) \| [+-]?\d+(?:\.\d+)? \| [+-]?\d+(?:\.\d+)? \|$
+    comparison:
+      type: numeric
+      decimals: 6
+  - id: wavlm_s103_utterance_large_pronunciation_score_44_mae
+    source:
+      artifact: wavlm_s103_results_json
+      kind: json_pointer
+      pointer: /utterance/44/pronunciation_score/large/mae
+    document:
+      regex: ^\| WavLM\ Large \| pronunciation_score \| 44 \| [+-]?\d+(?:\.\d+)? \| [+-]?\d+(?:\.\d+)? \| (?P<value>[+-]?\d+(?:\.\d+)?) \| [+-]?\d+(?:\.\d+)? \|$
+    comparison:
+      type: numeric
+      decimals: 6
+  - id: wavlm_s103_utterance_large_pronunciation_score_44_icc_2_1
+    source:
+      artifact: wavlm_s103_results_json
+      kind: json_pointer
+      pointer: /utterance/44/pronunciation_score/large/icc_2_1
+    document:
+      regex: ^\| WavLM\ Large \| pronunciation_score \| 44 \| [+-]?\d+(?:\.\d+)? \| [+-]?\d+(?:\.\d+)? \| [+-]?\d+(?:\.\d+)? \| (?P<value>[+-]?\d+(?:\.\d+)?) \|$
+    comparison:
+      type: numeric
+      decimals: 6
+  - id: wavlm_s103_utterance_large_pronunciation_score_qwk_mean
+    source:
+      artifact: wavlm_s103_comparison_report
+      kind: json_pointer
+      pointer: /metrics/aggregate/utterance/pronunciation_score/qwk/large/mean
+    document:
+      regex: ^\| WavLM\ Large \| pronunciation_score \| Mean\ ±\ sample\ SD \| (?P<value>[+-]?\d+(?:\.\d+)?) ± [+-]?\d+(?:\.\d+)? \| [+-]?\d+(?:\.\d+)? ± [+-]?\d+(?:\.\d+)? \| [+-]?\d+(?:\.\d+)? ± [+-]?\d+(?:\.\d+)? \| [+-]?\d+(?:\.\d+)? ± [+-]?\d+(?:\.\d+)? \|$
+    comparison:
+      type: numeric
+      decimals: 6
+  - id: wavlm_s103_utterance_large_pronunciation_score_qwk_sample_std
+    source:
+      artifact: wavlm_s103_comparison_report
+      kind: json_pointer
+      pointer: /metrics/aggregate/utterance/pronunciation_score/qwk/large/sample_std
+    document:
+      regex: ^\| WavLM\ Large \| pronunciation_score \| Mean\ ±\ sample\ SD \| [+-]?\d+(?:\.\d+)? ± (?P<value>[+-]?\d+(?:\.\d+)?) \| [+-]?\d+(?:\.\d+)? ± [+-]?\d+(?:\.\d+)? \| [+-]?\d+(?:\.\d+)? ± [+-]?\d+(?:\.\d+)? \| [+-]?\d+(?:\.\d+)? ± [+-]?\d+(?:\.\d+)? \|$
+    comparison:
+      type: numeric
+      decimals: 6
+  - id: wavlm_s103_utterance_large_pronunciation_score_spearman_mean
+    source:
+      artifact: wavlm_s103_comparison_report
+      kind: json_pointer
+      pointer: /metrics/aggregate/utterance/pronunciation_score/spearman/large/mean
+    document:
+      regex: ^\| WavLM\ Large \| pronunciation_score \| Mean\ ±\ sample\ SD \| [+-]?\d+(?:\.\d+)? ± [+-]?\d+(?:\.\d+)? \| (?P<value>[+-]?\d+(?:\.\d+)?) ± [+-]?\d+(?:\.\d+)? \| [+-]?\d+(?:\.\d+)? ± [+-]?\d+(?:\.\d+)? \| [+-]?\d+(?:\.\d+)? ± [+-]?\d+(?:\.\d+)? \|$
+    comparison:
+      type: numeric
+      decimals: 6
+  - id: wavlm_s103_utterance_large_pronunciation_score_spearman_sample_std
+    source:
+      artifact: wavlm_s103_comparison_report
+      kind: json_pointer
+      pointer: /metrics/aggregate/utterance/pronunciation_score/spearman/large/sample_std
+    document:
+      regex: ^\| WavLM\ Large \| pronunciation_score \| Mean\ ±\ sample\ SD \| [+-]?\d+(?:\.\d+)? ± [+-]?\d+(?:\.\d+)? \| [+-]?\d+(?:\.\d+)? ± (?P<value>[+-]?\d+(?:\.\d+)?) \| [+-]?\d+(?:\.\d+)? ± [+-]?\d+(?:\.\d+)? \| [+-]?\d+(?:\.\d+)? ± [+-]?\d+(?:\.\d+)? \|$
+    comparison:
+      type: numeric
+      decimals: 6
+  - id: wavlm_s103_utterance_large_pronunciation_score_mae_mean
+    source:
+      artifact: wavlm_s103_comparison_report
+      kind: json_pointer
+      pointer: /metrics/aggregate/utterance/pronunciation_score/mae/large/mean
+    document:
+      regex: ^\| WavLM\ Large \| pronunciation_score \| Mean\ ±\ sample\ SD \| [+-]?\d+(?:\.\d+)? ± [+-]?\d+(?:\.\d+)? \| [+-]?\d+(?:\.\d+)? ± [+-]?\d+(?:\.\d+)? \| (?P<value>[+-]?\d+(?:\.\d+)?) ± [+-]?\d+(?:\.\d+)? \| [+-]?\d+(?:\.\d+)? ± [+-]?\d+(?:\.\d+)? \|$
+    comparison:
+      type: numeric
+      decimals: 6
+  - id: wavlm_s103_utterance_large_pronunciation_score_mae_sample_std
+    source:
+      artifact: wavlm_s103_comparison_report
+      kind: json_pointer
+      pointer: /metrics/aggregate/utterance/pronunciation_score/mae/large/sample_std
+    document:
+      regex: ^\| WavLM\ Large \| pronunciation_score \| Mean\ ±\ sample\ SD \| [+-]?\d+(?:\.\d+)? ± [+-]?\d+(?:\.\d+)? \| [+-]?\d+(?:\.\d+)? ± [+-]?\d+(?:\.\d+)? \| [+-]?\d+(?:\.\d+)? ± (?P<value>[+-]?\d+(?:\.\d+)?) \| [+-]?\d+(?:\.\d+)? ± [+-]?\d+(?:\.\d+)? \|$
+    comparison:
+      type: numeric
+      decimals: 6
+  - id: wavlm_s103_utterance_large_pronunciation_score_icc_2_1_mean
+    source:
+      artifact: wavlm_s103_comparison_report
+      kind: json_pointer
+      pointer: /metrics/aggregate/utterance/pronunciation_score/icc_2_1/large/mean
+    document:
+      regex: ^\| WavLM\ Large \| pronunciation_score \| Mean\ ±\ sample\ SD \| [+-]?\d+(?:\.\d+)? ± [+-]?\d+(?:\.\d+)? \| [+-]?\d+(?:\.\d+)? ± [+-]?\d+(?:\.\d+)? \| [+-]?\d+(?:\.\d+)? ± [+-]?\d+(?:\.\d+)? \| (?P<value>[+-]?\d+(?:\.\d+)?) ± [+-]?\d+(?:\.\d+)? \|$
+    comparison:
+      type: numeric
+      decimals: 6
+  - id: wavlm_s103_utterance_large_pronunciation_score_icc_2_1_sample_std
+    source:
+      artifact: wavlm_s103_comparison_report
+      kind: json_pointer
+      pointer: /metrics/aggregate/utterance/pronunciation_score/icc_2_1/large/sample_std
+    document:
+      regex: ^\| WavLM\ Large \| pronunciation_score \| Mean\ ±\ sample\ SD \| [+-]?\d+(?:\.\d+)? ± [+-]?\d+(?:\.\d+)? \| [+-]?\d+(?:\.\d+)? ± [+-]?\d+(?:\.\d+)? \| [+-]?\d+(?:\.\d+)? ± [+-]?\d+(?:\.\d+)? \| [+-]?\d+(?:\.\d+)? ± (?P<value>[+-]?\d+(?:\.\d+)?) \|$
+    comparison:
+      type: numeric
+      decimals: 6
+  - id: wavlm_s103_utterance_large_fluency_score_42_qwk
+    source:
+      artifact: wavlm_s103_results_json
+      kind: json_pointer
+      pointer: /utterance/42/fluency_score/large/qwk
+    document:
+      regex: ^\| WavLM\ Large \| fluency_score \| 42 \| (?P<value>[+-]?\d+(?:\.\d+)?) \| [+-]?\d+(?:\.\d+)? \| [+-]?\d+(?:\.\d+)? \| [+-]?\d+(?:\.\d+)? \|$
+    comparison:
+      type: numeric
+      decimals: 6
+  - id: wavlm_s103_utterance_large_fluency_score_42_spearman
+    source:
+      artifact: wavlm_s103_results_json
+      kind: json_pointer
+      pointer: /utterance/42/fluency_score/large/spearman
+    document:
+      regex: ^\| WavLM\ Large \| fluency_score \| 42 \| [+-]?\d+(?:\.\d+)? \| (?P<value>[+-]?\d+(?:\.\d+)?) \| [+-]?\d+(?:\.\d+)? \| [+-]?\d+(?:\.\d+)? \|$
+    comparison:
+      type: numeric
+      decimals: 6
+  - id: wavlm_s103_utterance_large_fluency_score_42_mae
+    source:
+      artifact: wavlm_s103_results_json
+      kind: json_pointer
+      pointer: /utterance/42/fluency_score/large/mae
+    document:
+      regex: ^\| WavLM\ Large \| fluency_score \| 42 \| [+-]?\d+(?:\.\d+)? \| [+-]?\d+(?:\.\d+)? \| (?P<value>[+-]?\d+(?:\.\d+)?) \| [+-]?\d+(?:\.\d+)? \|$
+    comparison:
+      type: numeric
+      decimals: 6
+  - id: wavlm_s103_utterance_large_fluency_score_42_icc_2_1
+    source:
+      artifact: wavlm_s103_results_json
+      kind: json_pointer
+      pointer: /utterance/42/fluency_score/large/icc_2_1
+    document:
+      regex: ^\| WavLM\ Large \| fluency_score \| 42 \| [+-]?\d+(?:\.\d+)? \| [+-]?\d+(?:\.\d+)? \| [+-]?\d+(?:\.\d+)? \| (?P<value>[+-]?\d+(?:\.\d+)?) \|$
+    comparison:
+      type: numeric
+      decimals: 6
+  - id: wavlm_s103_utterance_large_fluency_score_43_qwk
+    source:
+      artifact: wavlm_s103_results_json
+      kind: json_pointer
+      pointer: /utterance/43/fluency_score/large/qwk
+    document:
+      regex: ^\| WavLM\ Large \| fluency_score \| 43 \| (?P<value>[+-]?\d+(?:\.\d+)?) \| [+-]?\d+(?:\.\d+)? \| [+-]?\d+(?:\.\d+)? \| [+-]?\d+(?:\.\d+)? \|$
+    comparison:
+      type: numeric
+      decimals: 6
+  - id: wavlm_s103_utterance_large_fluency_score_43_spearman
+    source:
+      artifact: wavlm_s103_results_json
+      kind: json_pointer
+      pointer: /utterance/43/fluency_score/large/spearman
+    document:
+      regex: ^\| WavLM\ Large \| fluency_score \| 43 \| [+-]?\d+(?:\.\d+)? \| (?P<value>[+-]?\d+(?:\.\d+)?) \| [+-]?\d+(?:\.\d+)? \| [+-]?\d+(?:\.\d+)? \|$
+    comparison:
+      type: numeric
+      decimals: 6
+  - id: wavlm_s103_utterance_large_fluency_score_43_mae
+    source:
+      artifact: wavlm_s103_results_json
+      kind: json_pointer
+      pointer: /utterance/43/fluency_score/large/mae
+    document:
+      regex: ^\| WavLM\ Large \| fluency_score \| 43 \| [+-]?\d+(?:\.\d+)? \| [+-]?\d+(?:\.\d+)? \| (?P<value>[+-]?\d+(?:\.\d+)?) \| [+-]?\d+(?:\.\d+)? \|$
+    comparison:
+      type: numeric
+      decimals: 6
+  - id: wavlm_s103_utterance_large_fluency_score_43_icc_2_1
+    source:
+      artifact: wavlm_s103_results_json
+      kind: json_pointer
+      pointer: /utterance/43/fluency_score/large/icc_2_1
+    document:
+      regex: ^\| WavLM\ Large \| fluency_score \| 43 \| [+-]?\d+(?:\.\d+)? \| [+-]?\d+(?:\.\d+)? \| [+-]?\d+(?:\.\d+)? \| (?P<value>[+-]?\d+(?:\.\d+)?) \|$
+    comparison:
+      type: numeric
+      decimals: 6
+  - id: wavlm_s103_utterance_large_fluency_score_44_qwk
+    source:
+      artifact: wavlm_s103_results_json
+      kind: json_pointer
+      pointer: /utterance/44/fluency_score/large/qwk
+    document:
+      regex: ^\| WavLM\ Large \| fluency_score \| 44 \| (?P<value>[+-]?\d+(?:\.\d+)?) \| [+-]?\d+(?:\.\d+)? \| [+-]?\d+(?:\.\d+)? \| [+-]?\d+(?:\.\d+)? \|$
+    comparison:
+      type: numeric
+      decimals: 6
+  - id: wavlm_s103_utterance_large_fluency_score_44_spearman
+    source:
+      artifact: wavlm_s103_results_json
+      kind: json_pointer
+      pointer: /utterance/44/fluency_score/large/spearman
+    document:
+      regex: ^\| WavLM\ Large \| fluency_score \| 44 \| [+-]?\d+(?:\.\d+)? \| (?P<value>[+-]?\d+(?:\.\d+)?) \| [+-]?\d+(?:\.\d+)? \| [+-]?\d+(?:\.\d+)? \|$
+    comparison:
+      type: numeric
+      decimals: 6
+  - id: wavlm_s103_utterance_large_fluency_score_44_mae
+    source:
+      artifact: wavlm_s103_results_json
+      kind: json_pointer
+      pointer: /utterance/44/fluency_score/large/mae
+    document:
+      regex: ^\| WavLM\ Large \| fluency_score \| 44 \| [+-]?\d+(?:\.\d+)? \| [+-]?\d+(?:\.\d+)? \| (?P<value>[+-]?\d+(?:\.\d+)?) \| [+-]?\d+(?:\.\d+)? \|$
+    comparison:
+      type: numeric
+      decimals: 6
+  - id: wavlm_s103_utterance_large_fluency_score_44_icc_2_1
+    source:
+      artifact: wavlm_s103_results_json
+      kind: json_pointer
+      pointer: /utterance/44/fluency_score/large/icc_2_1
+    document:
+      regex: ^\| WavLM\ Large \| fluency_score \| 44 \| [+-]?\d+(?:\.\d+)? \| [+-]?\d+(?:\.\d+)? \| [+-]?\d+(?:\.\d+)? \| (?P<value>[+-]?\d+(?:\.\d+)?) \|$
+    comparison:
+      type: numeric
+      decimals: 6
+  - id: wavlm_s103_utterance_large_fluency_score_qwk_mean
+    source:
+      artifact: wavlm_s103_comparison_report
+      kind: json_pointer
+      pointer: /metrics/aggregate/utterance/fluency_score/qwk/large/mean
+    document:
+      regex: ^\| WavLM\ Large \| fluency_score \| Mean\ ±\ sample\ SD \| (?P<value>[+-]?\d+(?:\.\d+)?) ± [+-]?\d+(?:\.\d+)? \| [+-]?\d+(?:\.\d+)? ± [+-]?\d+(?:\.\d+)? \| [+-]?\d+(?:\.\d+)? ± [+-]?\d+(?:\.\d+)? \| [+-]?\d+(?:\.\d+)? ± [+-]?\d+(?:\.\d+)? \|$
+    comparison:
+      type: numeric
+      decimals: 6
+  - id: wavlm_s103_utterance_large_fluency_score_qwk_sample_std
+    source:
+      artifact: wavlm_s103_comparison_report
+      kind: json_pointer
+      pointer: /metrics/aggregate/utterance/fluency_score/qwk/large/sample_std
+    document:
+      regex: ^\| WavLM\ Large \| fluency_score \| Mean\ ±\ sample\ SD \| [+-]?\d+(?:\.\d+)? ± (?P<value>[+-]?\d+(?:\.\d+)?) \| [+-]?\d+(?:\.\d+)? ± [+-]?\d+(?:\.\d+)? \| [+-]?\d+(?:\.\d+)? ± [+-]?\d+(?:\.\d+)? \| [+-]?\d+(?:\.\d+)? ± [+-]?\d+(?:\.\d+)? \|$
+    comparison:
+      type: numeric
+      decimals: 6
+  - id: wavlm_s103_utterance_large_fluency_score_spearman_mean
+    source:
+      artifact: wavlm_s103_comparison_report
+      kind: json_pointer
+      pointer: /metrics/aggregate/utterance/fluency_score/spearman/large/mean
+    document:
+      regex: ^\| WavLM\ Large \| fluency_score \| Mean\ ±\ sample\ SD \| [+-]?\d+(?:\.\d+)? ± [+-]?\d+(?:\.\d+)? \| (?P<value>[+-]?\d+(?:\.\d+)?) ± [+-]?\d+(?:\.\d+)? \| [+-]?\d+(?:\.\d+)? ± [+-]?\d+(?:\.\d+)? \| [+-]?\d+(?:\.\d+)? ± [+-]?\d+(?:\.\d+)? \|$
+    comparison:
+      type: numeric
+      decimals: 6
+  - id: wavlm_s103_utterance_large_fluency_score_spearman_sample_std
+    source:
+      artifact: wavlm_s103_comparison_report
+      kind: json_pointer
+      pointer: /metrics/aggregate/utterance/fluency_score/spearman/large/sample_std
+    document:
+      regex: ^\| WavLM\ Large \| fluency_score \| Mean\ ±\ sample\ SD \| [+-]?\d+(?:\.\d+)? ± [+-]?\d+(?:\.\d+)? \| [+-]?\d+(?:\.\d+)? ± (?P<value>[+-]?\d+(?:\.\d+)?) \| [+-]?\d+(?:\.\d+)? ± [+-]?\d+(?:\.\d+)? \| [+-]?\d+(?:\.\d+)? ± [+-]?\d+(?:\.\d+)? \|$
+    comparison:
+      type: numeric
+      decimals: 6
+  - id: wavlm_s103_utterance_large_fluency_score_mae_mean
+    source:
+      artifact: wavlm_s103_comparison_report
+      kind: json_pointer
+      pointer: /metrics/aggregate/utterance/fluency_score/mae/large/mean
+    document:
+      regex: ^\| WavLM\ Large \| fluency_score \| Mean\ ±\ sample\ SD \| [+-]?\d+(?:\.\d+)? ± [+-]?\d+(?:\.\d+)? \| [+-]?\d+(?:\.\d+)? ± [+-]?\d+(?:\.\d+)? \| (?P<value>[+-]?\d+(?:\.\d+)?) ± [+-]?\d+(?:\.\d+)? \| [+-]?\d+(?:\.\d+)? ± [+-]?\d+(?:\.\d+)? \|$
+    comparison:
+      type: numeric
+      decimals: 6
+  - id: wavlm_s103_utterance_large_fluency_score_mae_sample_std
+    source:
+      artifact: wavlm_s103_comparison_report
+      kind: json_pointer
+      pointer: /metrics/aggregate/utterance/fluency_score/mae/large/sample_std
+    document:
+      regex: ^\| WavLM\ Large \| fluency_score \| Mean\ ±\ sample\ SD \| [+-]?\d+(?:\.\d+)? ± [+-]?\d+(?:\.\d+)? \| [+-]?\d+(?:\.\d+)? ± [+-]?\d+(?:\.\d+)? \| [+-]?\d+(?:\.\d+)? ± (?P<value>[+-]?\d+(?:\.\d+)?) \| [+-]?\d+(?:\.\d+)? ± [+-]?\d+(?:\.\d+)? \|$
+    comparison:
+      type: numeric
+      decimals: 6
+  - id: wavlm_s103_utterance_large_fluency_score_icc_2_1_mean
+    source:
+      artifact: wavlm_s103_comparison_report
+      kind: json_pointer
+      pointer: /metrics/aggregate/utterance/fluency_score/icc_2_1/large/mean
+    document:
+      regex: ^\| WavLM\ Large \| fluency_score \| Mean\ ±\ sample\ SD \| [+-]?\d+(?:\.\d+)? ± [+-]?\d+(?:\.\d+)? \| [+-]?\d+(?:\.\d+)? ± [+-]?\d+(?:\.\d+)? \| [+-]?\d+(?:\.\d+)? ± [+-]?\d+(?:\.\d+)? \| (?P<value>[+-]?\d+(?:\.\d+)?) ± [+-]?\d+(?:\.\d+)? \|$
+    comparison:
+      type: numeric
+      decimals: 6
+  - id: wavlm_s103_utterance_large_fluency_score_icc_2_1_sample_std
+    source:
+      artifact: wavlm_s103_comparison_report
+      kind: json_pointer
+      pointer: /metrics/aggregate/utterance/fluency_score/icc_2_1/large/sample_std
+    document:
+      regex: ^\| WavLM\ Large \| fluency_score \| Mean\ ±\ sample\ SD \| [+-]?\d+(?:\.\d+)? ± [+-]?\d+(?:\.\d+)? \| [+-]?\d+(?:\.\d+)? ± [+-]?\d+(?:\.\d+)? \| [+-]?\d+(?:\.\d+)? ± [+-]?\d+(?:\.\d+)? \| [+-]?\d+(?:\.\d+)? ± (?P<value>[+-]?\d+(?:\.\d+)?) \|$
+    comparison:
+      type: numeric
+      decimals: 6
+  - id: wavlm_s103_utterance_large_comprehensibility_score_42_qwk
+    source:
+      artifact: wavlm_s103_results_json
+      kind: json_pointer
+      pointer: /utterance/42/comprehensibility_score/large/qwk
+    document:
+      regex: ^\| WavLM\ Large \| comprehensibility_score \| 42 \| (?P<value>[+-]?\d+(?:\.\d+)?) \| [+-]?\d+(?:\.\d+)? \| [+-]?\d+(?:\.\d+)? \| [+-]?\d+(?:\.\d+)? \|$
+    comparison:
+      type: numeric
+      decimals: 6
+  - id: wavlm_s103_utterance_large_comprehensibility_score_42_spearman
+    source:
+      artifact: wavlm_s103_results_json
+      kind: json_pointer
+      pointer: /utterance/42/comprehensibility_score/large/spearman
+    document:
+      regex: ^\| WavLM\ Large \| comprehensibility_score \| 42 \| [+-]?\d+(?:\.\d+)? \| (?P<value>[+-]?\d+(?:\.\d+)?) \| [+-]?\d+(?:\.\d+)? \| [+-]?\d+(?:\.\d+)? \|$
+    comparison:
+      type: numeric
+      decimals: 6
+  - id: wavlm_s103_utterance_large_comprehensibility_score_42_mae
+    source:
+      artifact: wavlm_s103_results_json
+      kind: json_pointer
+      pointer: /utterance/42/comprehensibility_score/large/mae
+    document:
+      regex: ^\| WavLM\ Large \| comprehensibility_score \| 42 \| [+-]?\d+(?:\.\d+)? \| [+-]?\d+(?:\.\d+)? \| (?P<value>[+-]?\d+(?:\.\d+)?) \| [+-]?\d+(?:\.\d+)? \|$
+    comparison:
+      type: numeric
+      decimals: 6
+  - id: wavlm_s103_utterance_large_comprehensibility_score_42_icc_2_1
+    source:
+      artifact: wavlm_s103_results_json
+      kind: json_pointer
+      pointer: /utterance/42/comprehensibility_score/large/icc_2_1
+    document:
+      regex: ^\| WavLM\ Large \| comprehensibility_score \| 42 \| [+-]?\d+(?:\.\d+)? \| [+-]?\d+(?:\.\d+)? \| [+-]?\d+(?:\.\d+)? \| (?P<value>[+-]?\d+(?:\.\d+)?) \|$
+    comparison:
+      type: numeric
+      decimals: 6
+  - id: wavlm_s103_utterance_large_comprehensibility_score_43_qwk
+    source:
+      artifact: wavlm_s103_results_json
+      kind: json_pointer
+      pointer: /utterance/43/comprehensibility_score/large/qwk
+    document:
+      regex: ^\| WavLM\ Large \| comprehensibility_score \| 43 \| (?P<value>[+-]?\d+(?:\.\d+)?) \| [+-]?\d+(?:\.\d+)? \| [+-]?\d+(?:\.\d+)? \| [+-]?\d+(?:\.\d+)? \|$
+    comparison:
+      type: numeric
+      decimals: 6
+  - id: wavlm_s103_utterance_large_comprehensibility_score_43_spearman
+    source:
+      artifact: wavlm_s103_results_json
+      kind: json_pointer
+      pointer: /utterance/43/comprehensibility_score/large/spearman
+    document:
+      regex: ^\| WavLM\ Large \| comprehensibility_score \| 43 \| [+-]?\d+(?:\.\d+)? \| (?P<value>[+-]?\d+(?:\.\d+)?) \| [+-]?\d+(?:\.\d+)? \| [+-]?\d+(?:\.\d+)? \|$
+    comparison:
+      type: numeric
+      decimals: 6
+  - id: wavlm_s103_utterance_large_comprehensibility_score_43_mae
+    source:
+      artifact: wavlm_s103_results_json
+      kind: json_pointer
+      pointer: /utterance/43/comprehensibility_score/large/mae
+    document:
+      regex: ^\| WavLM\ Large \| comprehensibility_score \| 43 \| [+-]?\d+(?:\.\d+)? \| [+-]?\d+(?:\.\d+)? \| (?P<value>[+-]?\d+(?:\.\d+)?) \| [+-]?\d+(?:\.\d+)? \|$
+    comparison:
+      type: numeric
+      decimals: 6
+  - id: wavlm_s103_utterance_large_comprehensibility_score_43_icc_2_1
+    source:
+      artifact: wavlm_s103_results_json
+      kind: json_pointer
+      pointer: /utterance/43/comprehensibility_score/large/icc_2_1
+    document:
+      regex: ^\| WavLM\ Large \| comprehensibility_score \| 43 \| [+-]?\d+(?:\.\d+)? \| [+-]?\d+(?:\.\d+)? \| [+-]?\d+(?:\.\d+)? \| (?P<value>[+-]?\d+(?:\.\d+)?) \|$
+    comparison:
+      type: numeric
+      decimals: 6
+  - id: wavlm_s103_utterance_large_comprehensibility_score_44_qwk
+    source:
+      artifact: wavlm_s103_results_json
+      kind: json_pointer
+      pointer: /utterance/44/comprehensibility_score/large/qwk
+    document:
+      regex: ^\| WavLM\ Large \| comprehensibility_score \| 44 \| (?P<value>[+-]?\d+(?:\.\d+)?) \| [+-]?\d+(?:\.\d+)? \| [+-]?\d+(?:\.\d+)? \| [+-]?\d+(?:\.\d+)? \|$
+    comparison:
+      type: numeric
+      decimals: 6
+  - id: wavlm_s103_utterance_large_comprehensibility_score_44_spearman
+    source:
+      artifact: wavlm_s103_results_json
+      kind: json_pointer
+      pointer: /utterance/44/comprehensibility_score/large/spearman
+    document:
+      regex: ^\| WavLM\ Large \| comprehensibility_score \| 44 \| [+-]?\d+(?:\.\d+)? \| (?P<value>[+-]?\d+(?:\.\d+)?) \| [+-]?\d+(?:\.\d+)? \| [+-]?\d+(?:\.\d+)? \|$
+    comparison:
+      type: numeric
+      decimals: 6
+  - id: wavlm_s103_utterance_large_comprehensibility_score_44_mae
+    source:
+      artifact: wavlm_s103_results_json
+      kind: json_pointer
+      pointer: /utterance/44/comprehensibility_score/large/mae
+    document:
+      regex: ^\| WavLM\ Large \| comprehensibility_score \| 44 \| [+-]?\d+(?:\.\d+)? \| [+-]?\d+(?:\.\d+)? \| (?P<value>[+-]?\d+(?:\.\d+)?) \| [+-]?\d+(?:\.\d+)? \|$
+    comparison:
+      type: numeric
+      decimals: 6
+  - id: wavlm_s103_utterance_large_comprehensibility_score_44_icc_2_1
+    source:
+      artifact: wavlm_s103_results_json
+      kind: json_pointer
+      pointer: /utterance/44/comprehensibility_score/large/icc_2_1
+    document:
+      regex: ^\| WavLM\ Large \| comprehensibility_score \| 44 \| [+-]?\d+(?:\.\d+)? \| [+-]?\d+(?:\.\d+)? \| [+-]?\d+(?:\.\d+)? \| (?P<value>[+-]?\d+(?:\.\d+)?) \|$
+    comparison:
+      type: numeric
+      decimals: 6
+  - id: wavlm_s103_utterance_large_comprehensibility_score_qwk_mean
+    source:
+      artifact: wavlm_s103_comparison_report
+      kind: json_pointer
+      pointer: /metrics/aggregate/utterance/comprehensibility_score/qwk/large/mean
+    document:
+      regex: ^\| WavLM\ Large \| comprehensibility_score \| Mean\ ±\ sample\ SD \| (?P<value>[+-]?\d+(?:\.\d+)?) ± [+-]?\d+(?:\.\d+)? \| [+-]?\d+(?:\.\d+)? ± [+-]?\d+(?:\.\d+)? \| [+-]?\d+(?:\.\d+)? ± [+-]?\d+(?:\.\d+)? \| [+-]?\d+(?:\.\d+)? ± [+-]?\d+(?:\.\d+)? \|$
+    comparison:
+      type: numeric
+      decimals: 6
+  - id: wavlm_s103_utterance_large_comprehensibility_score_qwk_sample_std
+    source:
+      artifact: wavlm_s103_comparison_report
+      kind: json_pointer
+      pointer: /metrics/aggregate/utterance/comprehensibility_score/qwk/large/sample_std
+    document:
+      regex: ^\| WavLM\ Large \| comprehensibility_score \| Mean\ ±\ sample\ SD \| [+-]?\d+(?:\.\d+)? ± (?P<value>[+-]?\d+(?:\.\d+)?) \| [+-]?\d+(?:\.\d+)? ± [+-]?\d+(?:\.\d+)? \| [+-]?\d+(?:\.\d+)? ± [+-]?\d+(?:\.\d+)? \| [+-]?\d+(?:\.\d+)? ± [+-]?\d+(?:\.\d+)? \|$
+    comparison:
+      type: numeric
+      decimals: 6
+  - id: wavlm_s103_utterance_large_comprehensibility_score_spearman_mean
+    source:
+      artifact: wavlm_s103_comparison_report
+      kind: json_pointer
+      pointer: /metrics/aggregate/utterance/comprehensibility_score/spearman/large/mean
+    document:
+      regex: ^\| WavLM\ Large \| comprehensibility_score \| Mean\ ±\ sample\ SD \| [+-]?\d+(?:\.\d+)? ± [+-]?\d+(?:\.\d+)? \| (?P<value>[+-]?\d+(?:\.\d+)?) ± [+-]?\d+(?:\.\d+)? \| [+-]?\d+(?:\.\d+)? ± [+-]?\d+(?:\.\d+)? \| [+-]?\d+(?:\.\d+)? ± [+-]?\d+(?:\.\d+)? \|$
+    comparison:
+      type: numeric
+      decimals: 6
+  - id: wavlm_s103_utterance_large_comprehensibility_score_spearman_sample_std
+    source:
+      artifact: wavlm_s103_comparison_report
+      kind: json_pointer
+      pointer: /metrics/aggregate/utterance/comprehensibility_score/spearman/large/sample_std
+    document:
+      regex: ^\| WavLM\ Large \| comprehensibility_score \| Mean\ ±\ sample\ SD \| [+-]?\d+(?:\.\d+)? ± [+-]?\d+(?:\.\d+)? \| [+-]?\d+(?:\.\d+)? ± (?P<value>[+-]?\d+(?:\.\d+)?) \| [+-]?\d+(?:\.\d+)? ± [+-]?\d+(?:\.\d+)? \| [+-]?\d+(?:\.\d+)? ± [+-]?\d+(?:\.\d+)? \|$
+    comparison:
+      type: numeric
+      decimals: 6
+  - id: wavlm_s103_utterance_large_comprehensibility_score_mae_mean
+    source:
+      artifact: wavlm_s103_comparison_report
+      kind: json_pointer
+      pointer: /metrics/aggregate/utterance/comprehensibility_score/mae/large/mean
+    document:
+      regex: ^\| WavLM\ Large \| comprehensibility_score \| Mean\ ±\ sample\ SD \| [+-]?\d+(?:\.\d+)? ± [+-]?\d+(?:\.\d+)? \| [+-]?\d+(?:\.\d+)? ± [+-]?\d+(?:\.\d+)? \| (?P<value>[+-]?\d+(?:\.\d+)?) ± [+-]?\d+(?:\.\d+)? \| [+-]?\d+(?:\.\d+)? ± [+-]?\d+(?:\.\d+)? \|$
+    comparison:
+      type: numeric
+      decimals: 6
+  - id: wavlm_s103_utterance_large_comprehensibility_score_mae_sample_std
+    source:
+      artifact: wavlm_s103_comparison_report
+      kind: json_pointer
+      pointer: /metrics/aggregate/utterance/comprehensibility_score/mae/large/sample_std
+    document:
+      regex: ^\| WavLM\ Large \| comprehensibility_score \| Mean\ ±\ sample\ SD \| [+-]?\d+(?:\.\d+)? ± [+-]?\d+(?:\.\d+)? \| [+-]?\d+(?:\.\d+)? ± [+-]?\d+(?:\.\d+)? \| [+-]?\d+(?:\.\d+)? ± (?P<value>[+-]?\d+(?:\.\d+)?) \| [+-]?\d+(?:\.\d+)? ± [+-]?\d+(?:\.\d+)? \|$
+    comparison:
+      type: numeric
+      decimals: 6
+  - id: wavlm_s103_utterance_large_comprehensibility_score_icc_2_1_mean
+    source:
+      artifact: wavlm_s103_comparison_report
+      kind: json_pointer
+      pointer: /metrics/aggregate/utterance/comprehensibility_score/icc_2_1/large/mean
+    document:
+      regex: ^\| WavLM\ Large \| comprehensibility_score \| Mean\ ±\ sample\ SD \| [+-]?\d+(?:\.\d+)? ± [+-]?\d+(?:\.\d+)? \| [+-]?\d+(?:\.\d+)? ± [+-]?\d+(?:\.\d+)? \| [+-]?\d+(?:\.\d+)? ± [+-]?\d+(?:\.\d+)? \| (?P<value>[+-]?\d+(?:\.\d+)?) ± [+-]?\d+(?:\.\d+)? \|$
+    comparison:
+      type: numeric
+      decimals: 6
+  - id: wavlm_s103_utterance_large_comprehensibility_score_icc_2_1_sample_std
+    source:
+      artifact: wavlm_s103_comparison_report
+      kind: json_pointer
+      pointer: /metrics/aggregate/utterance/comprehensibility_score/icc_2_1/large/sample_std
+    document:
+      regex: ^\| WavLM\ Large \| comprehensibility_score \| Mean\ ±\ sample\ SD \| [+-]?\d+(?:\.\d+)? ± [+-]?\d+(?:\.\d+)? \| [+-]?\d+(?:\.\d+)? ± [+-]?\d+(?:\.\d+)? \| [+-]?\d+(?:\.\d+)? ± [+-]?\d+(?:\.\d+)? \| [+-]?\d+(?:\.\d+)? ± (?P<value>[+-]?\d+(?:\.\d+)?) \|$
+    comparison:
+      type: numeric
+      decimals: 6
+  - id: wavlm_s103_utterance_large_minus_base_pronunciation_score_42_qwk
+    source:
+      artifact: wavlm_s103_results_json
+      kind: json_pointer
+      pointer: /utterance/42/pronunciation_score/large_minus_base/qwk
+    document:
+      regex: ^\| Large\ −\ Base\+ \| pronunciation_score \| 42 \| (?P<value>[+-]?\d+(?:\.\d+)?) \| [+-]?\d+(?:\.\d+)? \| [+-]?\d+(?:\.\d+)? \| [+-]?\d+(?:\.\d+)? \|$
+    comparison:
+      type: numeric
+      decimals: 6
+  - id: wavlm_s103_utterance_large_minus_base_pronunciation_score_42_spearman
+    source:
+      artifact: wavlm_s103_results_json
+      kind: json_pointer
+      pointer: /utterance/42/pronunciation_score/large_minus_base/spearman
+    document:
+      regex: ^\| Large\ −\ Base\+ \| pronunciation_score \| 42 \| [+-]?\d+(?:\.\d+)? \| (?P<value>[+-]?\d+(?:\.\d+)?) \| [+-]?\d+(?:\.\d+)? \| [+-]?\d+(?:\.\d+)? \|$
+    comparison:
+      type: numeric
+      decimals: 6
+  - id: wavlm_s103_utterance_large_minus_base_pronunciation_score_42_mae
+    source:
+      artifact: wavlm_s103_results_json
+      kind: json_pointer
+      pointer: /utterance/42/pronunciation_score/large_minus_base/mae
+    document:
+      regex: ^\| Large\ −\ Base\+ \| pronunciation_score \| 42 \| [+-]?\d+(?:\.\d+)? \| [+-]?\d+(?:\.\d+)? \| (?P<value>[+-]?\d+(?:\.\d+)?) \| [+-]?\d+(?:\.\d+)? \|$
+    comparison:
+      type: numeric
+      decimals: 6
+  - id: wavlm_s103_utterance_large_minus_base_pronunciation_score_42_icc_2_1
+    source:
+      artifact: wavlm_s103_results_json
+      kind: json_pointer
+      pointer: /utterance/42/pronunciation_score/large_minus_base/icc_2_1
+    document:
+      regex: ^\| Large\ −\ Base\+ \| pronunciation_score \| 42 \| [+-]?\d+(?:\.\d+)? \| [+-]?\d+(?:\.\d+)? \| [+-]?\d+(?:\.\d+)? \| (?P<value>[+-]?\d+(?:\.\d+)?) \|$
+    comparison:
+      type: numeric
+      decimals: 6
+  - id: wavlm_s103_utterance_large_minus_base_pronunciation_score_43_qwk
+    source:
+      artifact: wavlm_s103_results_json
+      kind: json_pointer
+      pointer: /utterance/43/pronunciation_score/large_minus_base/qwk
+    document:
+      regex: ^\| Large\ −\ Base\+ \| pronunciation_score \| 43 \| (?P<value>[+-]?\d+(?:\.\d+)?) \| [+-]?\d+(?:\.\d+)? \| [+-]?\d+(?:\.\d+)? \| [+-]?\d+(?:\.\d+)? \|$
+    comparison:
+      type: numeric
+      decimals: 6
+  - id: wavlm_s103_utterance_large_minus_base_pronunciation_score_43_spearman
+    source:
+      artifact: wavlm_s103_results_json
+      kind: json_pointer
+      pointer: /utterance/43/pronunciation_score/large_minus_base/spearman
+    document:
+      regex: ^\| Large\ −\ Base\+ \| pronunciation_score \| 43 \| [+-]?\d+(?:\.\d+)? \| (?P<value>[+-]?\d+(?:\.\d+)?) \| [+-]?\d+(?:\.\d+)? \| [+-]?\d+(?:\.\d+)? \|$
+    comparison:
+      type: numeric
+      decimals: 6
+  - id: wavlm_s103_utterance_large_minus_base_pronunciation_score_43_mae
+    source:
+      artifact: wavlm_s103_results_json
+      kind: json_pointer
+      pointer: /utterance/43/pronunciation_score/large_minus_base/mae
+    document:
+      regex: ^\| Large\ −\ Base\+ \| pronunciation_score \| 43 \| [+-]?\d+(?:\.\d+)? \| [+-]?\d+(?:\.\d+)? \| (?P<value>[+-]?\d+(?:\.\d+)?) \| [+-]?\d+(?:\.\d+)? \|$
+    comparison:
+      type: numeric
+      decimals: 6
+  - id: wavlm_s103_utterance_large_minus_base_pronunciation_score_43_icc_2_1
+    source:
+      artifact: wavlm_s103_results_json
+      kind: json_pointer
+      pointer: /utterance/43/pronunciation_score/large_minus_base/icc_2_1
+    document:
+      regex: ^\| Large\ −\ Base\+ \| pronunciation_score \| 43 \| [+-]?\d+(?:\.\d+)? \| [+-]?\d+(?:\.\d+)? \| [+-]?\d+(?:\.\d+)? \| (?P<value>[+-]?\d+(?:\.\d+)?) \|$
+    comparison:
+      type: numeric
+      decimals: 6
+  - id: wavlm_s103_utterance_large_minus_base_pronunciation_score_44_qwk
+    source:
+      artifact: wavlm_s103_results_json
+      kind: json_pointer
+      pointer: /utterance/44/pronunciation_score/large_minus_base/qwk
+    document:
+      regex: ^\| Large\ −\ Base\+ \| pronunciation_score \| 44 \| (?P<value>[+-]?\d+(?:\.\d+)?) \| [+-]?\d+(?:\.\d+)? \| [+-]?\d+(?:\.\d+)? \| [+-]?\d+(?:\.\d+)? \|$
+    comparison:
+      type: numeric
+      decimals: 6
+  - id: wavlm_s103_utterance_large_minus_base_pronunciation_score_44_spearman
+    source:
+      artifact: wavlm_s103_results_json
+      kind: json_pointer
+      pointer: /utterance/44/pronunciation_score/large_minus_base/spearman
+    document:
+      regex: ^\| Large\ −\ Base\+ \| pronunciation_score \| 44 \| [+-]?\d+(?:\.\d+)? \| (?P<value>[+-]?\d+(?:\.\d+)?) \| [+-]?\d+(?:\.\d+)? \| [+-]?\d+(?:\.\d+)? \|$
+    comparison:
+      type: numeric
+      decimals: 6
+  - id: wavlm_s103_utterance_large_minus_base_pronunciation_score_44_mae
+    source:
+      artifact: wavlm_s103_results_json
+      kind: json_pointer
+      pointer: /utterance/44/pronunciation_score/large_minus_base/mae
+    document:
+      regex: ^\| Large\ −\ Base\+ \| pronunciation_score \| 44 \| [+-]?\d+(?:\.\d+)? \| [+-]?\d+(?:\.\d+)? \| (?P<value>[+-]?\d+(?:\.\d+)?) \| [+-]?\d+(?:\.\d+)? \|$
+    comparison:
+      type: numeric
+      decimals: 6
+  - id: wavlm_s103_utterance_large_minus_base_pronunciation_score_44_icc_2_1
+    source:
+      artifact: wavlm_s103_results_json
+      kind: json_pointer
+      pointer: /utterance/44/pronunciation_score/large_minus_base/icc_2_1
+    document:
+      regex: ^\| Large\ −\ Base\+ \| pronunciation_score \| 44 \| [+-]?\d+(?:\.\d+)? \| [+-]?\d+(?:\.\d+)? \| [+-]?\d+(?:\.\d+)? \| (?P<value>[+-]?\d+(?:\.\d+)?) \|$
+    comparison:
+      type: numeric
+      decimals: 6
+  - id: wavlm_s103_utterance_large_minus_base_pronunciation_score_qwk_mean
+    source:
+      artifact: wavlm_s103_comparison_report
+      kind: json_pointer
+      pointer: /metrics/aggregate/utterance/pronunciation_score/qwk/large_minus_base/mean
+    document:
+      regex: ^\| Large\ −\ Base\+ \| pronunciation_score \| Mean\ ±\ sample\ SD \| (?P<value>[+-]?\d+(?:\.\d+)?) ± [+-]?\d+(?:\.\d+)? \| [+-]?\d+(?:\.\d+)? ± [+-]?\d+(?:\.\d+)? \| [+-]?\d+(?:\.\d+)? ± [+-]?\d+(?:\.\d+)? \| [+-]?\d+(?:\.\d+)? ± [+-]?\d+(?:\.\d+)? \|$
+    comparison:
+      type: numeric
+      decimals: 6
+  - id: wavlm_s103_utterance_large_minus_base_pronunciation_score_qwk_sample_std
+    source:
+      artifact: wavlm_s103_comparison_report
+      kind: json_pointer
+      pointer: /metrics/aggregate/utterance/pronunciation_score/qwk/large_minus_base/sample_std
+    document:
+      regex: ^\| Large\ −\ Base\+ \| pronunciation_score \| Mean\ ±\ sample\ SD \| [+-]?\d+(?:\.\d+)? ± (?P<value>[+-]?\d+(?:\.\d+)?) \| [+-]?\d+(?:\.\d+)? ± [+-]?\d+(?:\.\d+)? \| [+-]?\d+(?:\.\d+)? ± [+-]?\d+(?:\.\d+)? \| [+-]?\d+(?:\.\d+)? ± [+-]?\d+(?:\.\d+)? \|$
+    comparison:
+      type: numeric
+      decimals: 6
+  - id: wavlm_s103_utterance_large_minus_base_pronunciation_score_spearman_mean
+    source:
+      artifact: wavlm_s103_comparison_report
+      kind: json_pointer
+      pointer: /metrics/aggregate/utterance/pronunciation_score/spearman/large_minus_base/mean
+    document:
+      regex: ^\| Large\ −\ Base\+ \| pronunciation_score \| Mean\ ±\ sample\ SD \| [+-]?\d+(?:\.\d+)? ± [+-]?\d+(?:\.\d+)? \| (?P<value>[+-]?\d+(?:\.\d+)?) ± [+-]?\d+(?:\.\d+)? \| [+-]?\d+(?:\.\d+)? ± [+-]?\d+(?:\.\d+)? \| [+-]?\d+(?:\.\d+)? ± [+-]?\d+(?:\.\d+)? \|$
+    comparison:
+      type: numeric
+      decimals: 6
+  - id: wavlm_s103_utterance_large_minus_base_pronunciation_score_spearman_sample_std
+    source:
+      artifact: wavlm_s103_comparison_report
+      kind: json_pointer
+      pointer: /metrics/aggregate/utterance/pronunciation_score/spearman/large_minus_base/sample_std
+    document:
+      regex: ^\| Large\ −\ Base\+ \| pronunciation_score \| Mean\ ±\ sample\ SD \| [+-]?\d+(?:\.\d+)? ± [+-]?\d+(?:\.\d+)? \| [+-]?\d+(?:\.\d+)? ± (?P<value>[+-]?\d+(?:\.\d+)?) \| [+-]?\d+(?:\.\d+)? ± [+-]?\d+(?:\.\d+)? \| [+-]?\d+(?:\.\d+)? ± [+-]?\d+(?:\.\d+)? \|$
+    comparison:
+      type: numeric
+      decimals: 6
+  - id: wavlm_s103_utterance_large_minus_base_pronunciation_score_mae_mean
+    source:
+      artifact: wavlm_s103_comparison_report
+      kind: json_pointer
+      pointer: /metrics/aggregate/utterance/pronunciation_score/mae/large_minus_base/mean
+    document:
+      regex: ^\| Large\ −\ Base\+ \| pronunciation_score \| Mean\ ±\ sample\ SD \| [+-]?\d+(?:\.\d+)? ± [+-]?\d+(?:\.\d+)? \| [+-]?\d+(?:\.\d+)? ± [+-]?\d+(?:\.\d+)? \| (?P<value>[+-]?\d+(?:\.\d+)?) ± [+-]?\d+(?:\.\d+)? \| [+-]?\d+(?:\.\d+)? ± [+-]?\d+(?:\.\d+)? \|$
+    comparison:
+      type: numeric
+      decimals: 6
+  - id: wavlm_s103_utterance_large_minus_base_pronunciation_score_mae_sample_std
+    source:
+      artifact: wavlm_s103_comparison_report
+      kind: json_pointer
+      pointer: /metrics/aggregate/utterance/pronunciation_score/mae/large_minus_base/sample_std
+    document:
+      regex: ^\| Large\ −\ Base\+ \| pronunciation_score \| Mean\ ±\ sample\ SD \| [+-]?\d+(?:\.\d+)? ± [+-]?\d+(?:\.\d+)? \| [+-]?\d+(?:\.\d+)? ± [+-]?\d+(?:\.\d+)? \| [+-]?\d+(?:\.\d+)? ± (?P<value>[+-]?\d+(?:\.\d+)?) \| [+-]?\d+(?:\.\d+)? ± [+-]?\d+(?:\.\d+)? \|$
+    comparison:
+      type: numeric
+      decimals: 6
+  - id: wavlm_s103_utterance_large_minus_base_pronunciation_score_icc_2_1_mean
+    source:
+      artifact: wavlm_s103_comparison_report
+      kind: json_pointer
+      pointer: /metrics/aggregate/utterance/pronunciation_score/icc_2_1/large_minus_base/mean
+    document:
+      regex: ^\| Large\ −\ Base\+ \| pronunciation_score \| Mean\ ±\ sample\ SD \| [+-]?\d+(?:\.\d+)? ± [+-]?\d+(?:\.\d+)? \| [+-]?\d+(?:\.\d+)? ± [+-]?\d+(?:\.\d+)? \| [+-]?\d+(?:\.\d+)? ± [+-]?\d+(?:\.\d+)? \| (?P<value>[+-]?\d+(?:\.\d+)?) ± [+-]?\d+(?:\.\d+)? \|$
+    comparison:
+      type: numeric
+      decimals: 6
+  - id: wavlm_s103_utterance_large_minus_base_pronunciation_score_icc_2_1_sample_std
+    source:
+      artifact: wavlm_s103_comparison_report
+      kind: json_pointer
+      pointer: /metrics/aggregate/utterance/pronunciation_score/icc_2_1/large_minus_base/sample_std
+    document:
+      regex: ^\| Large\ −\ Base\+ \| pronunciation_score \| Mean\ ±\ sample\ SD \| [+-]?\d+(?:\.\d+)? ± [+-]?\d+(?:\.\d+)? \| [+-]?\d+(?:\.\d+)? ± [+-]?\d+(?:\.\d+)? \| [+-]?\d+(?:\.\d+)? ± [+-]?\d+(?:\.\d+)? \| [+-]?\d+(?:\.\d+)? ± (?P<value>[+-]?\d+(?:\.\d+)?) \|$
+    comparison:
+      type: numeric
+      decimals: 6
+  - id: wavlm_s103_utterance_large_minus_base_fluency_score_42_qwk
+    source:
+      artifact: wavlm_s103_results_json
+      kind: json_pointer
+      pointer: /utterance/42/fluency_score/large_minus_base/qwk
+    document:
+      regex: ^\| Large\ −\ Base\+ \| fluency_score \| 42 \| (?P<value>[+-]?\d+(?:\.\d+)?) \| [+-]?\d+(?:\.\d+)? \| [+-]?\d+(?:\.\d+)? \| [+-]?\d+(?:\.\d+)? \|$
+    comparison:
+      type: numeric
+      decimals: 6
+  - id: wavlm_s103_utterance_large_minus_base_fluency_score_42_spearman
+    source:
+      artifact: wavlm_s103_results_json
+      kind: json_pointer
+      pointer: /utterance/42/fluency_score/large_minus_base/spearman
+    document:
+      regex: ^\| Large\ −\ Base\+ \| fluency_score \| 42 \| [+-]?\d+(?:\.\d+)? \| (?P<value>[+-]?\d+(?:\.\d+)?) \| [+-]?\d+(?:\.\d+)? \| [+-]?\d+(?:\.\d+)? \|$
+    comparison:
+      type: numeric
+      decimals: 6
+  - id: wavlm_s103_utterance_large_minus_base_fluency_score_42_mae
+    source:
+      artifact: wavlm_s103_results_json
+      kind: json_pointer
+      pointer: /utterance/42/fluency_score/large_minus_base/mae
+    document:
+      regex: ^\| Large\ −\ Base\+ \| fluency_score \| 42 \| [+-]?\d+(?:\.\d+)? \| [+-]?\d+(?:\.\d+)? \| (?P<value>[+-]?\d+(?:\.\d+)?) \| [+-]?\d+(?:\.\d+)? \|$
+    comparison:
+      type: numeric
+      decimals: 6
+  - id: wavlm_s103_utterance_large_minus_base_fluency_score_42_icc_2_1
+    source:
+      artifact: wavlm_s103_results_json
+      kind: json_pointer
+      pointer: /utterance/42/fluency_score/large_minus_base/icc_2_1
+    document:
+      regex: ^\| Large\ −\ Base\+ \| fluency_score \| 42 \| [+-]?\d+(?:\.\d+)? \| [+-]?\d+(?:\.\d+)? \| [+-]?\d+(?:\.\d+)? \| (?P<value>[+-]?\d+(?:\.\d+)?) \|$
+    comparison:
+      type: numeric
+      decimals: 6
+  - id: wavlm_s103_utterance_large_minus_base_fluency_score_43_qwk
+    source:
+      artifact: wavlm_s103_results_json
+      kind: json_pointer
+      pointer: /utterance/43/fluency_score/large_minus_base/qwk
+    document:
+      regex: ^\| Large\ −\ Base\+ \| fluency_score \| 43 \| (?P<value>[+-]?\d+(?:\.\d+)?) \| [+-]?\d+(?:\.\d+)? \| [+-]?\d+(?:\.\d+)? \| [+-]?\d+(?:\.\d+)? \|$
+    comparison:
+      type: numeric
+      decimals: 6
+  - id: wavlm_s103_utterance_large_minus_base_fluency_score_43_spearman
+    source:
+      artifact: wavlm_s103_results_json
+      kind: json_pointer
+      pointer: /utterance/43/fluency_score/large_minus_base/spearman
+    document:
+      regex: ^\| Large\ −\ Base\+ \| fluency_score \| 43 \| [+-]?\d+(?:\.\d+)? \| (?P<value>[+-]?\d+(?:\.\d+)?) \| [+-]?\d+(?:\.\d+)? \| [+-]?\d+(?:\.\d+)? \|$
+    comparison:
+      type: numeric
+      decimals: 6
+  - id: wavlm_s103_utterance_large_minus_base_fluency_score_43_mae
+    source:
+      artifact: wavlm_s103_results_json
+      kind: json_pointer
+      pointer: /utterance/43/fluency_score/large_minus_base/mae
+    document:
+      regex: ^\| Large\ −\ Base\+ \| fluency_score \| 43 \| [+-]?\d+(?:\.\d+)? \| [+-]?\d+(?:\.\d+)? \| (?P<value>[+-]?\d+(?:\.\d+)?) \| [+-]?\d+(?:\.\d+)? \|$
+    comparison:
+      type: numeric
+      decimals: 6
+  - id: wavlm_s103_utterance_large_minus_base_fluency_score_43_icc_2_1
+    source:
+      artifact: wavlm_s103_results_json
+      kind: json_pointer
+      pointer: /utterance/43/fluency_score/large_minus_base/icc_2_1
+    document:
+      regex: ^\| Large\ −\ Base\+ \| fluency_score \| 43 \| [+-]?\d+(?:\.\d+)? \| [+-]?\d+(?:\.\d+)? \| [+-]?\d+(?:\.\d+)? \| (?P<value>[+-]?\d+(?:\.\d+)?) \|$
+    comparison:
+      type: numeric
+      decimals: 6
+  - id: wavlm_s103_utterance_large_minus_base_fluency_score_44_qwk
+    source:
+      artifact: wavlm_s103_results_json
+      kind: json_pointer
+      pointer: /utterance/44/fluency_score/large_minus_base/qwk
+    document:
+      regex: ^\| Large\ −\ Base\+ \| fluency_score \| 44 \| (?P<value>[+-]?\d+(?:\.\d+)?) \| [+-]?\d+(?:\.\d+)? \| [+-]?\d+(?:\.\d+)? \| [+-]?\d+(?:\.\d+)? \|$
+    comparison:
+      type: numeric
+      decimals: 6
+  - id: wavlm_s103_utterance_large_minus_base_fluency_score_44_spearman
+    source:
+      artifact: wavlm_s103_results_json
+      kind: json_pointer
+      pointer: /utterance/44/fluency_score/large_minus_base/spearman
+    document:
+      regex: ^\| Large\ −\ Base\+ \| fluency_score \| 44 \| [+-]?\d+(?:\.\d+)? \| (?P<value>[+-]?\d+(?:\.\d+)?) \| [+-]?\d+(?:\.\d+)? \| [+-]?\d+(?:\.\d+)? \|$
+    comparison:
+      type: numeric
+      decimals: 6
+  - id: wavlm_s103_utterance_large_minus_base_fluency_score_44_mae
+    source:
+      artifact: wavlm_s103_results_json
+      kind: json_pointer
+      pointer: /utterance/44/fluency_score/large_minus_base/mae
+    document:
+      regex: ^\| Large\ −\ Base\+ \| fluency_score \| 44 \| [+-]?\d+(?:\.\d+)? \| [+-]?\d+(?:\.\d+)? \| (?P<value>[+-]?\d+(?:\.\d+)?) \| [+-]?\d+(?:\.\d+)? \|$
+    comparison:
+      type: numeric
+      decimals: 6
+  - id: wavlm_s103_utterance_large_minus_base_fluency_score_44_icc_2_1
+    source:
+      artifact: wavlm_s103_results_json
+      kind: json_pointer
+      pointer: /utterance/44/fluency_score/large_minus_base/icc_2_1
+    document:
+      regex: ^\| Large\ −\ Base\+ \| fluency_score \| 44 \| [+-]?\d+(?:\.\d+)? \| [+-]?\d+(?:\.\d+)? \| [+-]?\d+(?:\.\d+)? \| (?P<value>[+-]?\d+(?:\.\d+)?) \|$
+    comparison:
+      type: numeric
+      decimals: 6
+  - id: wavlm_s103_utterance_large_minus_base_fluency_score_qwk_mean
+    source:
+      artifact: wavlm_s103_comparison_report
+      kind: json_pointer
+      pointer: /metrics/aggregate/utterance/fluency_score/qwk/large_minus_base/mean
+    document:
+      regex: ^\| Large\ −\ Base\+ \| fluency_score \| Mean\ ±\ sample\ SD \| (?P<value>[+-]?\d+(?:\.\d+)?) ± [+-]?\d+(?:\.\d+)? \| [+-]?\d+(?:\.\d+)? ± [+-]?\d+(?:\.\d+)? \| [+-]?\d+(?:\.\d+)? ± [+-]?\d+(?:\.\d+)? \| [+-]?\d+(?:\.\d+)? ± [+-]?\d+(?:\.\d+)? \|$
+    comparison:
+      type: numeric
+      decimals: 6
+  - id: wavlm_s103_utterance_large_minus_base_fluency_score_qwk_sample_std
+    source:
+      artifact: wavlm_s103_comparison_report
+      kind: json_pointer
+      pointer: /metrics/aggregate/utterance/fluency_score/qwk/large_minus_base/sample_std
+    document:
+      regex: ^\| Large\ −\ Base\+ \| fluency_score \| Mean\ ±\ sample\ SD \| [+-]?\d+(?:\.\d+)? ± (?P<value>[+-]?\d+(?:\.\d+)?) \| [+-]?\d+(?:\.\d+)? ± [+-]?\d+(?:\.\d+)? \| [+-]?\d+(?:\.\d+)? ± [+-]?\d+(?:\.\d+)? \| [+-]?\d+(?:\.\d+)? ± [+-]?\d+(?:\.\d+)? \|$
+    comparison:
+      type: numeric
+      decimals: 6
+  - id: wavlm_s103_utterance_large_minus_base_fluency_score_spearman_mean
+    source:
+      artifact: wavlm_s103_comparison_report
+      kind: json_pointer
+      pointer: /metrics/aggregate/utterance/fluency_score/spearman/large_minus_base/mean
+    document:
+      regex: ^\| Large\ −\ Base\+ \| fluency_score \| Mean\ ±\ sample\ SD \| [+-]?\d+(?:\.\d+)? ± [+-]?\d+(?:\.\d+)? \| (?P<value>[+-]?\d+(?:\.\d+)?) ± [+-]?\d+(?:\.\d+)? \| [+-]?\d+(?:\.\d+)? ± [+-]?\d+(?:\.\d+)? \| [+-]?\d+(?:\.\d+)? ± [+-]?\d+(?:\.\d+)? \|$
+    comparison:
+      type: numeric
+      decimals: 6
+  - id: wavlm_s103_utterance_large_minus_base_fluency_score_spearman_sample_std
+    source:
+      artifact: wavlm_s103_comparison_report
+      kind: json_pointer
+      pointer: /metrics/aggregate/utterance/fluency_score/spearman/large_minus_base/sample_std
+    document:
+      regex: ^\| Large\ −\ Base\+ \| fluency_score \| Mean\ ±\ sample\ SD \| [+-]?\d+(?:\.\d+)? ± [+-]?\d+(?:\.\d+)? \| [+-]?\d+(?:\.\d+)? ± (?P<value>[+-]?\d+(?:\.\d+)?) \| [+-]?\d+(?:\.\d+)? ± [+-]?\d+(?:\.\d+)? \| [+-]?\d+(?:\.\d+)? ± [+-]?\d+(?:\.\d+)? \|$
+    comparison:
+      type: numeric
+      decimals: 6
+  - id: wavlm_s103_utterance_large_minus_base_fluency_score_mae_mean
+    source:
+      artifact: wavlm_s103_comparison_report
+      kind: json_pointer
+      pointer: /metrics/aggregate/utterance/fluency_score/mae/large_minus_base/mean
+    document:
+      regex: ^\| Large\ −\ Base\+ \| fluency_score \| Mean\ ±\ sample\ SD \| [+-]?\d+(?:\.\d+)? ± [+-]?\d+(?:\.\d+)? \| [+-]?\d+(?:\.\d+)? ± [+-]?\d+(?:\.\d+)? \| (?P<value>[+-]?\d+(?:\.\d+)?) ± [+-]?\d+(?:\.\d+)? \| [+-]?\d+(?:\.\d+)? ± [+-]?\d+(?:\.\d+)? \|$
+    comparison:
+      type: numeric
+      decimals: 6
+  - id: wavlm_s103_utterance_large_minus_base_fluency_score_mae_sample_std
+    source:
+      artifact: wavlm_s103_comparison_report
+      kind: json_pointer
+      pointer: /metrics/aggregate/utterance/fluency_score/mae/large_minus_base/sample_std
+    document:
+      regex: ^\| Large\ −\ Base\+ \| fluency_score \| Mean\ ±\ sample\ SD \| [+-]?\d+(?:\.\d+)? ± [+-]?\d+(?:\.\d+)? \| [+-]?\d+(?:\.\d+)? ± [+-]?\d+(?:\.\d+)? \| [+-]?\d+(?:\.\d+)? ± (?P<value>[+-]?\d+(?:\.\d+)?) \| [+-]?\d+(?:\.\d+)? ± [+-]?\d+(?:\.\d+)? \|$
+    comparison:
+      type: numeric
+      decimals: 6
+  - id: wavlm_s103_utterance_large_minus_base_fluency_score_icc_2_1_mean
+    source:
+      artifact: wavlm_s103_comparison_report
+      kind: json_pointer
+      pointer: /metrics/aggregate/utterance/fluency_score/icc_2_1/large_minus_base/mean
+    document:
+      regex: ^\| Large\ −\ Base\+ \| fluency_score \| Mean\ ±\ sample\ SD \| [+-]?\d+(?:\.\d+)? ± [+-]?\d+(?:\.\d+)? \| [+-]?\d+(?:\.\d+)? ± [+-]?\d+(?:\.\d+)? \| [+-]?\d+(?:\.\d+)? ± [+-]?\d+(?:\.\d+)? \| (?P<value>[+-]?\d+(?:\.\d+)?) ± [+-]?\d+(?:\.\d+)? \|$
+    comparison:
+      type: numeric
+      decimals: 6
+  - id: wavlm_s103_utterance_large_minus_base_fluency_score_icc_2_1_sample_std
+    source:
+      artifact: wavlm_s103_comparison_report
+      kind: json_pointer
+      pointer: /metrics/aggregate/utterance/fluency_score/icc_2_1/large_minus_base/sample_std
+    document:
+      regex: ^\| Large\ −\ Base\+ \| fluency_score \| Mean\ ±\ sample\ SD \| [+-]?\d+(?:\.\d+)? ± [+-]?\d+(?:\.\d+)? \| [+-]?\d+(?:\.\d+)? ± [+-]?\d+(?:\.\d+)? \| [+-]?\d+(?:\.\d+)? ± [+-]?\d+(?:\.\d+)? \| [+-]?\d+(?:\.\d+)? ± (?P<value>[+-]?\d+(?:\.\d+)?) \|$
+    comparison:
+      type: numeric
+      decimals: 6
+  - id: wavlm_s103_utterance_large_minus_base_comprehensibility_score_42_qwk
+    source:
+      artifact: wavlm_s103_results_json
+      kind: json_pointer
+      pointer: /utterance/42/comprehensibility_score/large_minus_base/qwk
+    document:
+      regex: ^\| Large\ −\ Base\+ \| comprehensibility_score \| 42 \| (?P<value>[+-]?\d+(?:\.\d+)?) \| [+-]?\d+(?:\.\d+)? \| [+-]?\d+(?:\.\d+)? \| [+-]?\d+(?:\.\d+)? \|$
+    comparison:
+      type: numeric
+      decimals: 6
+  - id: wavlm_s103_utterance_large_minus_base_comprehensibility_score_42_spearman
+    source:
+      artifact: wavlm_s103_results_json
+      kind: json_pointer
+      pointer: /utterance/42/comprehensibility_score/large_minus_base/spearman
+    document:
+      regex: ^\| Large\ −\ Base\+ \| comprehensibility_score \| 42 \| [+-]?\d+(?:\.\d+)? \| (?P<value>[+-]?\d+(?:\.\d+)?) \| [+-]?\d+(?:\.\d+)? \| [+-]?\d+(?:\.\d+)? \|$
+    comparison:
+      type: numeric
+      decimals: 6
+  - id: wavlm_s103_utterance_large_minus_base_comprehensibility_score_42_mae
+    source:
+      artifact: wavlm_s103_results_json
+      kind: json_pointer
+      pointer: /utterance/42/comprehensibility_score/large_minus_base/mae
+    document:
+      regex: ^\| Large\ −\ Base\+ \| comprehensibility_score \| 42 \| [+-]?\d+(?:\.\d+)? \| [+-]?\d+(?:\.\d+)? \| (?P<value>[+-]?\d+(?:\.\d+)?) \| [+-]?\d+(?:\.\d+)? \|$
+    comparison:
+      type: numeric
+      decimals: 6
+  - id: wavlm_s103_utterance_large_minus_base_comprehensibility_score_42_icc_2_1
+    source:
+      artifact: wavlm_s103_results_json
+      kind: json_pointer
+      pointer: /utterance/42/comprehensibility_score/large_minus_base/icc_2_1
+    document:
+      regex: ^\| Large\ −\ Base\+ \| comprehensibility_score \| 42 \| [+-]?\d+(?:\.\d+)? \| [+-]?\d+(?:\.\d+)? \| [+-]?\d+(?:\.\d+)? \| (?P<value>[+-]?\d+(?:\.\d+)?) \|$
+    comparison:
+      type: numeric
+      decimals: 6
+  - id: wavlm_s103_utterance_large_minus_base_comprehensibility_score_43_qwk
+    source:
+      artifact: wavlm_s103_results_json
+      kind: json_pointer
+      pointer: /utterance/43/comprehensibility_score/large_minus_base/qwk
+    document:
+      regex: ^\| Large\ −\ Base\+ \| comprehensibility_score \| 43 \| (?P<value>[+-]?\d+(?:\.\d+)?) \| [+-]?\d+(?:\.\d+)? \| [+-]?\d+(?:\.\d+)? \| [+-]?\d+(?:\.\d+)? \|$
+    comparison:
+      type: numeric
+      decimals: 6
+  - id: wavlm_s103_utterance_large_minus_base_comprehensibility_score_43_spearman
+    source:
+      artifact: wavlm_s103_results_json
+      kind: json_pointer
+      pointer: /utterance/43/comprehensibility_score/large_minus_base/spearman
+    document:
+      regex: ^\| Large\ −\ Base\+ \| comprehensibility_score \| 43 \| [+-]?\d+(?:\.\d+)? \| (?P<value>[+-]?\d+(?:\.\d+)?) \| [+-]?\d+(?:\.\d+)? \| [+-]?\d+(?:\.\d+)? \|$
+    comparison:
+      type: numeric
+      decimals: 6
+  - id: wavlm_s103_utterance_large_minus_base_comprehensibility_score_43_mae
+    source:
+      artifact: wavlm_s103_results_json
+      kind: json_pointer
+      pointer: /utterance/43/comprehensibility_score/large_minus_base/mae
+    document:
+      regex: ^\| Large\ −\ Base\+ \| comprehensibility_score \| 43 \| [+-]?\d+(?:\.\d+)? \| [+-]?\d+(?:\.\d+)? \| (?P<value>[+-]?\d+(?:\.\d+)?) \| [+-]?\d+(?:\.\d+)? \|$
+    comparison:
+      type: numeric
+      decimals: 6
+  - id: wavlm_s103_utterance_large_minus_base_comprehensibility_score_43_icc_2_1
+    source:
+      artifact: wavlm_s103_results_json
+      kind: json_pointer
+      pointer: /utterance/43/comprehensibility_score/large_minus_base/icc_2_1
+    document:
+      regex: ^\| Large\ −\ Base\+ \| comprehensibility_score \| 43 \| [+-]?\d+(?:\.\d+)? \| [+-]?\d+(?:\.\d+)? \| [+-]?\d+(?:\.\d+)? \| (?P<value>[+-]?\d+(?:\.\d+)?) \|$
+    comparison:
+      type: numeric
+      decimals: 6
+  - id: wavlm_s103_utterance_large_minus_base_comprehensibility_score_44_qwk
+    source:
+      artifact: wavlm_s103_results_json
+      kind: json_pointer
+      pointer: /utterance/44/comprehensibility_score/large_minus_base/qwk
+    document:
+      regex: ^\| Large\ −\ Base\+ \| comprehensibility_score \| 44 \| (?P<value>[+-]?\d+(?:\.\d+)?) \| [+-]?\d+(?:\.\d+)? \| [+-]?\d+(?:\.\d+)? \| [+-]?\d+(?:\.\d+)? \|$
+    comparison:
+      type: numeric
+      decimals: 6
+  - id: wavlm_s103_utterance_large_minus_base_comprehensibility_score_44_spearman
+    source:
+      artifact: wavlm_s103_results_json
+      kind: json_pointer
+      pointer: /utterance/44/comprehensibility_score/large_minus_base/spearman
+    document:
+      regex: ^\| Large\ −\ Base\+ \| comprehensibility_score \| 44 \| [+-]?\d+(?:\.\d+)? \| (?P<value>[+-]?\d+(?:\.\d+)?) \| [+-]?\d+(?:\.\d+)? \| [+-]?\d+(?:\.\d+)? \|$
+    comparison:
+      type: numeric
+      decimals: 6
+  - id: wavlm_s103_utterance_large_minus_base_comprehensibility_score_44_mae
+    source:
+      artifact: wavlm_s103_results_json
+      kind: json_pointer
+      pointer: /utterance/44/comprehensibility_score/large_minus_base/mae
+    document:
+      regex: ^\| Large\ −\ Base\+ \| comprehensibility_score \| 44 \| [+-]?\d+(?:\.\d+)? \| [+-]?\d+(?:\.\d+)? \| (?P<value>[+-]?\d+(?:\.\d+)?) \| [+-]?\d+(?:\.\d+)? \|$
+    comparison:
+      type: numeric
+      decimals: 6
+  - id: wavlm_s103_utterance_large_minus_base_comprehensibility_score_44_icc_2_1
+    source:
+      artifact: wavlm_s103_results_json
+      kind: json_pointer
+      pointer: /utterance/44/comprehensibility_score/large_minus_base/icc_2_1
+    document:
+      regex: ^\| Large\ −\ Base\+ \| comprehensibility_score \| 44 \| [+-]?\d+(?:\.\d+)? \| [+-]?\d+(?:\.\d+)? \| [+-]?\d+(?:\.\d+)? \| (?P<value>[+-]?\d+(?:\.\d+)?) \|$
+    comparison:
+      type: numeric
+      decimals: 6
+  - id: wavlm_s103_utterance_large_minus_base_comprehensibility_score_qwk_mean
+    source:
+      artifact: wavlm_s103_comparison_report
+      kind: json_pointer
+      pointer: /metrics/aggregate/utterance/comprehensibility_score/qwk/large_minus_base/mean
+    document:
+      regex: ^\| Large\ −\ Base\+ \| comprehensibility_score \| Mean\ ±\ sample\ SD \| (?P<value>[+-]?\d+(?:\.\d+)?) ± [+-]?\d+(?:\.\d+)? \| [+-]?\d+(?:\.\d+)? ± [+-]?\d+(?:\.\d+)? \| [+-]?\d+(?:\.\d+)? ± [+-]?\d+(?:\.\d+)? \| [+-]?\d+(?:\.\d+)? ± [+-]?\d+(?:\.\d+)? \|$
+    comparison:
+      type: numeric
+      decimals: 6
+  - id: wavlm_s103_utterance_large_minus_base_comprehensibility_score_qwk_sample_std
+    source:
+      artifact: wavlm_s103_comparison_report
+      kind: json_pointer
+      pointer: /metrics/aggregate/utterance/comprehensibility_score/qwk/large_minus_base/sample_std
+    document:
+      regex: ^\| Large\ −\ Base\+ \| comprehensibility_score \| Mean\ ±\ sample\ SD \| [+-]?\d+(?:\.\d+)? ± (?P<value>[+-]?\d+(?:\.\d+)?) \| [+-]?\d+(?:\.\d+)? ± [+-]?\d+(?:\.\d+)? \| [+-]?\d+(?:\.\d+)? ± [+-]?\d+(?:\.\d+)? \| [+-]?\d+(?:\.\d+)? ± [+-]?\d+(?:\.\d+)? \|$
+    comparison:
+      type: numeric
+      decimals: 6
+  - id: wavlm_s103_utterance_large_minus_base_comprehensibility_score_spearman_mean
+    source:
+      artifact: wavlm_s103_comparison_report
+      kind: json_pointer
+      pointer: /metrics/aggregate/utterance/comprehensibility_score/spearman/large_minus_base/mean
+    document:
+      regex: ^\| Large\ −\ Base\+ \| comprehensibility_score \| Mean\ ±\ sample\ SD \| [+-]?\d+(?:\.\d+)? ± [+-]?\d+(?:\.\d+)? \| (?P<value>[+-]?\d+(?:\.\d+)?) ± [+-]?\d+(?:\.\d+)? \| [+-]?\d+(?:\.\d+)? ± [+-]?\d+(?:\.\d+)? \| [+-]?\d+(?:\.\d+)? ± [+-]?\d+(?:\.\d+)? \|$
+    comparison:
+      type: numeric
+      decimals: 6
+  - id: wavlm_s103_utterance_large_minus_base_comprehensibility_score_spearman_sample_std
+    source:
+      artifact: wavlm_s103_comparison_report
+      kind: json_pointer
+      pointer: /metrics/aggregate/utterance/comprehensibility_score/spearman/large_minus_base/sample_std
+    document:
+      regex: ^\| Large\ −\ Base\+ \| comprehensibility_score \| Mean\ ±\ sample\ SD \| [+-]?\d+(?:\.\d+)? ± [+-]?\d+(?:\.\d+)? \| [+-]?\d+(?:\.\d+)? ± (?P<value>[+-]?\d+(?:\.\d+)?) \| [+-]?\d+(?:\.\d+)? ± [+-]?\d+(?:\.\d+)? \| [+-]?\d+(?:\.\d+)? ± [+-]?\d+(?:\.\d+)? \|$
+    comparison:
+      type: numeric
+      decimals: 6
+  - id: wavlm_s103_utterance_large_minus_base_comprehensibility_score_mae_mean
+    source:
+      artifact: wavlm_s103_comparison_report
+      kind: json_pointer
+      pointer: /metrics/aggregate/utterance/comprehensibility_score/mae/large_minus_base/mean
+    document:
+      regex: ^\| Large\ −\ Base\+ \| comprehensibility_score \| Mean\ ±\ sample\ SD \| [+-]?\d+(?:\.\d+)? ± [+-]?\d+(?:\.\d+)? \| [+-]?\d+(?:\.\d+)? ± [+-]?\d+(?:\.\d+)? \| (?P<value>[+-]?\d+(?:\.\d+)?) ± [+-]?\d+(?:\.\d+)? \| [+-]?\d+(?:\.\d+)? ± [+-]?\d+(?:\.\d+)? \|$
+    comparison:
+      type: numeric
+      decimals: 6
+  - id: wavlm_s103_utterance_large_minus_base_comprehensibility_score_mae_sample_std
+    source:
+      artifact: wavlm_s103_comparison_report
+      kind: json_pointer
+      pointer: /metrics/aggregate/utterance/comprehensibility_score/mae/large_minus_base/sample_std
+    document:
+      regex: ^\| Large\ −\ Base\+ \| comprehensibility_score \| Mean\ ±\ sample\ SD \| [+-]?\d+(?:\.\d+)? ± [+-]?\d+(?:\.\d+)? \| [+-]?\d+(?:\.\d+)? ± [+-]?\d+(?:\.\d+)? \| [+-]?\d+(?:\.\d+)? ± (?P<value>[+-]?\d+(?:\.\d+)?) \| [+-]?\d+(?:\.\d+)? ± [+-]?\d+(?:\.\d+)? \|$
+    comparison:
+      type: numeric
+      decimals: 6
+  - id: wavlm_s103_utterance_large_minus_base_comprehensibility_score_icc_2_1_mean
+    source:
+      artifact: wavlm_s103_comparison_report
+      kind: json_pointer
+      pointer: /metrics/aggregate/utterance/comprehensibility_score/icc_2_1/large_minus_base/mean
+    document:
+      regex: ^\| Large\ −\ Base\+ \| comprehensibility_score \| Mean\ ±\ sample\ SD \| [+-]?\d+(?:\.\d+)? ± [+-]?\d+(?:\.\d+)? \| [+-]?\d+(?:\.\d+)? ± [+-]?\d+(?:\.\d+)? \| [+-]?\d+(?:\.\d+)? ± [+-]?\d+(?:\.\d+)? \| (?P<value>[+-]?\d+(?:\.\d+)?) ± [+-]?\d+(?:\.\d+)? \|$
+    comparison:
+      type: numeric
+      decimals: 6
+  - id: wavlm_s103_utterance_large_minus_base_comprehensibility_score_icc_2_1_sample_std
+    source:
+      artifact: wavlm_s103_comparison_report
+      kind: json_pointer
+      pointer: /metrics/aggregate/utterance/comprehensibility_score/icc_2_1/large_minus_base/sample_std
+    document:
+      regex: ^\| Large\ −\ Base\+ \| comprehensibility_score \| Mean\ ±\ sample\ SD \| [+-]?\d+(?:\.\d+)? ± [+-]?\d+(?:\.\d+)? \| [+-]?\d+(?:\.\d+)? ± [+-]?\d+(?:\.\d+)? \| [+-]?\d+(?:\.\d+)? ± [+-]?\d+(?:\.\d+)? \| [+-]?\d+(?:\.\d+)? ± (?P<value>[+-]?\d+(?:\.\d+)?) \|$
+    comparison:
+      type: numeric
+      decimals: 6
+  - id: wavlm_s103_primary_estimate
+    source:
+      artifact: wavlm_s103_results_json
+      kind: json_pointer
+      pointer: /primary_comparison/paired_speaker_bootstrap/estimate
+    document:
+      regex: ^\| Phone\ macro\ F1 \| (?P<value>[+-]?\d+(?:\.\d+)?) \| \[[+-]?\d+(?:\.\d+)?, [+-]?\d+(?:\.\d+)?\] \| ≥ [+-]?\d+(?:\.\d+)? \| [^|]+ \|$
+    comparison:
+      type: numeric
+      decimals: 6
+  - id: wavlm_s103_primary_confidence_lower
+    source:
+      artifact: wavlm_s103_results_json
+      kind: json_pointer
+      pointer: /primary_comparison/paired_speaker_bootstrap/confidence_lower
+    document:
+      regex: ^\| Phone\ macro\ F1 \| [+-]?\d+(?:\.\d+)? \| \[(?P<value>[+-]?\d+(?:\.\d+)?), [+-]?\d+(?:\.\d+)?\] \| ≥ [+-]?\d+(?:\.\d+)? \| [^|]+ \|$
+    comparison:
+      type: numeric
+      decimals: 6
+  - id: wavlm_s103_primary_confidence_upper
+    source:
+      artifact: wavlm_s103_results_json
+      kind: json_pointer
+      pointer: /primary_comparison/paired_speaker_bootstrap/confidence_upper
+    document:
+      regex: ^\| Phone\ macro\ F1 \| [+-]?\d+(?:\.\d+)? \| \[[+-]?\d+(?:\.\d+)?, (?P<value>[+-]?\d+(?:\.\d+)?)\] \| ≥ [+-]?\d+(?:\.\d+)? \| [^|]+ \|$
+    comparison:
+      type: numeric
+      decimals: 6
+  - id: wavlm_s103_primary_threshold_absolute
+    source:
+      artifact: wavlm_s103_results_json
+      kind: json_pointer
+      pointer: /primary_comparison/gate/threshold_absolute
+    document:
+      regex: ^\| Phone\ macro\ F1 \| [+-]?\d+(?:\.\d+)? \| \[[+-]?\d+(?:\.\d+)?, [+-]?\d+(?:\.\d+)?\] \| ≥ (?P<value>[+-]?\d+(?:\.\d+)?) \| [^|]+ \|$
+    comparison:
+      type: numeric
+      decimals: 6
+  - id: wavlm_s103_primary_gate_status
+    source:
+      artifact: wavlm_s103_results_json
+      kind: json_pointer
+      pointer: /primary_comparison/gate/status
+    document:
+      regex: ^\| Phone\ macro\ F1 \| [+-]?\d+(?:\.\d+)? \| \[[+-]?\d+(?:\.\d+)?, [+-]?\d+(?:\.\d+)?\] \| ≥ [+-]?\d+(?:\.\d+)? \| (?P<value>[^| ]+) \|$
+    comparison:
+      type: exact
+  - id: wavlm_s103_primary_n_resamples
+    source:
+      artifact: wavlm_s103_results_json
+      kind: json_pointer
+      pointer: /primary_comparison/paired_speaker_bootstrap/n_resamples
+    document:
+      regex: 'Bootstrap unit: speaker; repetitions: (?P<value>[\d,]+); valid repetitions: [\d,]+\.'
+    comparison:
+      type: numeric
+      decimals: 0
+  - id: wavlm_s103_primary_n_valid_resamples
+    source:
+      artifact: wavlm_s103_results_json
+      kind: json_pointer
+      pointer: /primary_comparison/paired_speaker_bootstrap/n_valid_resamples
+    document:
+      regex: 'Bootstrap unit: speaker; repetitions: [\d,]+; valid repetitions: (?P<value>[\d,]+)\.'
+    comparison:
+      type: numeric
+      decimals: 0
+
+# The exact unresolved marker multiset is hashed. Removing/replacing a marker,
+# including replacing it with an attractive-looking number, fails validation.
+pending_contract:
+  marker_regex: '\[PENDING:[^\]]+\]'
+  expected_count: 18
+  expected_markers_sha256: 1d0cce59025c86879d0a9972f0da31e45e87169b41f5b8fadd427c111e6d7673
+  forbidden_numeric_regexes:
+    - '수동 정렬 정확도\s*\|\s*(?:NaN|Inf(?:inity)?|[+-]?\d+(?:\.\d+)?)\s*\|'
+
+# B05 remains unresolved. Until a dedicated locked-test artifact exists, the
+# development report must say it was unopened, the registry may contain dev only,
+# and no manuscript locked-test metric value is permitted.
+locked_test_guard:
+  access_checks:
+    - artifact: explicit_dev_report
+      pointer: /leakage_controls/locked_test_accessed
+    - artifact: threshold_ablation_report
+      pointer: /forbidden_split_access/locked_test
+    - artifact: wavlm_base_cache_report
+      pointer: /policy/metric_evaluation_performed
+    - artifact: wavlm_base_head_report
+      pointer: /leakage_controls/stack_accessed
+    - artifact: wavlm_base_head_report
+      pointer: /leakage_controls/calibration_accessed
+    - artifact: wavlm_base_head_report
+      pointer: /leakage_controls/locked_test_accessed
+    - artifact: wavlm_large_head_report
+      pointer: /leakage_controls/stack_accessed
+    - artifact: wavlm_large_head_report
+      pointer: /leakage_controls/calibration_accessed
+    - artifact: wavlm_large_head_report
+      pointer: /leakage_controls/locked_test_accessed
+    - artifact: wavlm_s103_comparison_report
+      pointer: /contract/leakage/stack_accessed
+    - artifact: wavlm_s103_comparison_report
+      pointer: /contract/leakage/calibration_accessed
+    - artifact: wavlm_s103_comparison_report
+      pointer: /contract/leakage/locked_test_accessed
+    - artifact: wavlm_s103_results_json
+      pointer: /scope/stack_accessed
+    - artifact: wavlm_s103_results_json
+      pointer: /scope/calibration_accessed
+    - artifact: wavlm_s103_results_json
+      pointer: /scope/locked_test_accessed
+    - artifact: wavlm_s103_results_json
+      pointer: /scope/promotion_decision_allowed
+  registries:
+    - artifact: explicit_registry
+      array_pointer: /metrics
+      split_field: split
+      forbidden_splits: [locked_test]
+    - artifact: threshold_ablation_registry
+      array_pointer: /metrics
+      split_field: split
+      forbidden_splits: [locked_test]
+    - artifact: wavlm_base_head_registry
+      array_pointer: /metrics
+      split_field: split
+      forbidden_splits: [stack, calibration, locked_test]
+    - artifact: wavlm_large_head_registry
+      array_pointer: /metrics
+      split_field: split
+      forbidden_splits: [stack, calibration, locked_test]
+  forbidden_document_regexes:
+    - 'locked[- ]?test[^\n]{0,160}(?:macro F1|AUPRC|QWK|Spearman|MAE|ICC|ECE|Brier)[^\n]{0,40}(?:NaN|Inf(?:inity)?|[+-]?\d+\.\d+)'

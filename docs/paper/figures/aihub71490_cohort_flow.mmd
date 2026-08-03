@@ -1,0 +1,57 @@
+flowchart TD
+    A["전체 source metadata scan<br/><b>322,380</b>"]
+    S{"고정 split gate"}
+    X1["평가 split 제외<br/><b>136,629</b><br/>stack 35,211 + calibration 35,106 + locked-test 66,312"]
+    B["train/dev 후보<br/><b>185,751</b>"]
+    Q{"QC flag gate"}
+    X2["QC 제외<br/><b>642</b>"]
+    C["QC 통과<br/><b>185,109</b>"]
+    R{"예약 prompt gate"}
+    X3["예약 prompt 제외<br/><b>15,272</b>"]
+    D["최종 train/dev cache<br/><b>169,837</b>"]
+    T["train<br/><b>137,759</b>"]
+    V["dev<br/><b>32,078</b>"]
+
+    G["자동 G0 aggregate"]
+    G1["pairing <b>99.9996898%</b><br/>decoder failure <b>0%</b><br/>time-bound error <b>0.3319064%</b>"]
+    G2["split speaker overlap <b>0</b><br/>PCM duplicate <b>0</b><br/>ontology 미매핑 <b>0</b>"]
+    H["외부 전문가 정렬 G0<br/><b>PENDING</b><br/>자동 G0와 별도"]
+
+    A --> S
+    S -->|"제외"| X1
+    S -->|"train/dev"| B
+    B --> Q
+    Q -->|"제외"| X2
+    Q -->|"통과"| C
+    C --> R
+    R -->|"제외"| X3
+    R -->|"통과"| D
+    D --> T
+    D --> V
+
+    A -. "aggregate audit" .-> G
+    G --> G1
+    G --> G2
+    G -. "대체하지 않음" .-> H
+
+    classDef source fill:#e8f0fe,stroke:#2457a6,color:#12223a;
+    classDef gate fill:#fff4cc,stroke:#9a6b00,color:#3c2a00;
+    classDef excluded fill:#fde8e8,stroke:#a52a2a,color:#411;
+    classDef included fill:#e4f5e9,stroke:#24753d,color:#153d23;
+    classDef pending fill:#f2e8ff,stroke:#7040a0,color:#321850;
+
+    class A,G,G1,G2 source;
+    class S,Q,R gate;
+    class X1,X2,X3 excluded;
+    class B,C,D,T,V included;
+    class H pending;
+
+%% Source lineage (aggregate-only; no row identifiers):
+%% data card SHA-256:
+%% 4ab53c6837b1a28fbf153dd3a351a195f6931a43694467114cea6c21b8a57b13
+%% automatic G0 SHA-256:
+%% 1a41814f04062c1f1242287e05e34f46673e0e6e2152075c0dd1cf019bce81fd
+%% prompt challenge SHA-256:
+%% 3ea7f12ea76be07a0796d7e62f0c3727ca9858c0278df7c85ac1e08d9b653fa9
+%% explicit utterance filter report SHA-256:
+%% 2f7b540b5fb6d2aaad3e2efa29da5f5b23c967645da0eb98d9a6d68ffc5b762e

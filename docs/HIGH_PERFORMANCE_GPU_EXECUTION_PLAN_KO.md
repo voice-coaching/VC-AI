@@ -1,9 +1,10 @@
-# 고성능 GPU 전환 실행 계획
+# 고성능 GPU 실행 계획
 
-GTX 1660 설계는 폐기하지 않고 재현 가능한 저비용 baseline으로 보존한다.
-새 GPU에서는 먼저 동일 manifest와 평가 split을 유지한 채 모델 용량과
-미세조정 범위만 확장한다. GPU 모델과 VRAM이 아직 문서화되지 않았으므로
-실측 전에는 batch size나 full fine-tuning을 확정하지 않는다.
+이 프로젝트의 데이터 준비, 모델 학습, 평가와 TTS 생성은 고성능 GPU
+머신만을 기준으로 수행한다. 먼저 고정 manifest와 평가 split을 유지한 채
+모델 용량과 미세조정 범위를 단계적으로 확장한다. GPU 모델과 VRAM이 아직
+문서화되지 않았으므로 실측 전에는 batch size나 full fine-tuning을
+확정하지 않는다.
 
 ## 1. 첫 실행에서 기록할 항목
 
@@ -41,6 +42,12 @@ VRAM으로 결정한다.
 
 ## 4. 실험 순서
 
+> WP4 S103 이후 S104–S108의 순서·split·label·승격 gate는
+> [WP4 S103 이후 실행 계약](./WP4_POST_S103_EXECUTION_CONTRACT_KO.md)이
+> 아래 G1–G3 요약보다 우선한다. 아래의 “동일 seed와 locked test” 중
+> seed 고정만 유효하며, locked test는 G04 240건 수동 정렬과 후속
+> 외부·사전등록 gate 전에는 열지 않는다.
+
 ### G0 데이터 gate
 
 - WAV–JSON–TextGrid 결합률 99% 이상
@@ -52,7 +59,7 @@ VRAM으로 결정한다.
 ### G1 저비용 baseline
 
 - 명시적 duration·pause·speech-rate·F0·energy 특징
-- GTX 1660에서 정의한 frozen WavLM Base+ 결과 재현
+- frozen WavLM Base+ 기준선 구축
 - 동일 seed와 locked test를 사용
 
 ### G2 모델 크기 비교
@@ -99,4 +106,3 @@ full fine-tuning으로 바로 확대하지 않는다.
 
 GPU가 커져도 데이터 누수, calibration, 하위집단 평가와 근거 제한 정책은
 완화하지 않는다.
-

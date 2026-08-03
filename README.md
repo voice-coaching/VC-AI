@@ -5,11 +5,11 @@
 
 ## 현재 상태
 
-- 논문 기반 전체 구현 계획과 GTX 1660 MVP 실험 설계 완료
-- AI Hub 71490 학습자 음성 437,841개, 약 291.91 GiB 압축 해제·크기 검증 완료
-- WAV–JSON–TextGrid 결합, 음성 디코드 QC, 화자 비중첩 split 생성기 구현
-- KSS, Seoul Corpus, ZEROTH-Korean, FLEURS ko-KR 수집·검증 파이프라인 구현
-- 고성능 GPU 전환을 위한 단계별 실험 계획 수립
+- NVIDIA GB10/CUDA 13 고성능 GPU 환경과 WavLM Base+/Large smoke 검증 완료
+- AI Hub 71490 발음 WAV–JSON–TextGrid 322,380건 추출·검증 완료
+- 전체 raw/enriched manifest와 화자 비중첩 고정 split 생성 완료
+- 자동 G0 gate 통과, 240건 전문가 수동 정렬 감사 진행 중
+- KSS, Seoul Corpus, ZEROTH-Korean, FLEURS ko-KR 수집·검증 완료
 
 AI Hub 원본, 공개 코퍼스 원본, 처리된 음성, 모델 체크포인트는 GitHub에
 올리지 않습니다. 저장소에는 재현 가능한 코드, 설정, 체크섬 manifest와
@@ -26,11 +26,45 @@ AI Hub 원본, 공개 코퍼스 원본, 처리된 음성, 모델 체크포인트
 ## 주요 문서
 
 - [전체 구현 계획](docs/IMPLEMENTATION_PLAN_KO.md)
-- [GTX 1660 MVP 실험 설계](docs/GTX1660_MVP_EXPERIMENT_DESIGN_KO.md)
-- [고성능 GPU 전환 계획](docs/HIGH_PERFORMANCE_GPU_EXECUTION_PLAN_KO.md)
+- [고성능 GPU 실행 계획](docs/HIGH_PERFORMANCE_GPU_EXECUTION_PLAN_KO.md)
 - [CLI 전용 GPU 머신 데이터 준비](docs/CLI_ONLY_GPU_DATA_SETUP_KO.md)
 - [현재 작업 상태와 인수인계](docs/PROJECT_STATUS_AND_HANDOFF_KO.md)
+- [연구 완성 하위 작업 추적기](docs/RESEARCH_COMPLETION_TRACKER_KO.md)
+- [2026-07-28 실행 로그와 다음 작업](docs/EXECUTION_LOG_2026-07-28_KO.md)
+- [AI Hub 71490 데이터 카드](docs/DATA_CARD_AIHUB71490_KO.md)
+- [원어민 한국어 통합 코퍼스 데이터 카드](docs/DATA_CARD_NATIVE_KOREAN_KO.md)
+- [연구 데이터 개인정보·반출 경계](docs/DATA_PRIVACY_BOUNDARY_KO.md)
+- [데이터 라이선스·역할 매트릭스](docs/DATA_LICENSE_AND_ROLE_MATRIX_KO.md)
+- [전문가·원어민·학습자 외부평가 실행 패킷](docs/EXTERNAL_EVALUATION_EXECUTION_PACK_KO.md)
+- [AI Hub 71490 수동 정렬 감사 절차](docs/AIHUB71490_MANUAL_ALIGNMENT_AUDIT_KO.md)
 - [원어민 코퍼스 파이프라인](docs/NATIVE_KOREAN_CORPUS_PIPELINE_KO.md)
+- [실험 결과 반영용 편집 원고](docs/paper/EXPERIMENTAL_MANUSCRIPT_KO.md)
+- [논문 수치 증거 검증](docs/MANUSCRIPT_EVIDENCE_VALIDATION_KO.md)
+- [설계 PDF 요구 실험·실행 매트릭스](docs/paper/PDF_REQUIREMENTS_EXECUTION_MATRIX_KO.md)
+- [Phase 0 9축 label·missing-mask primitive](docs/P0_NINE_AXIS_LABEL_MASK_PRIMITIVE_KO.md)
+- [Phase 0 초분절 taxonomy·결측 primitive](docs/P0_SUPRASEGMENTAL_TAXONOMY_PRIMITIVE_KO.md)
+- [발음 교정 Feedback GAN 프로토타입](docs/ADVERSARIAL_TTS_FEEDBACK_GAN_KO.md)
+- [CoreaSpeech 고정 스냅샷 QC](docs/COREASPEECH_QC_KO.md)
+- [S201 한국어 content metric 순수 함수](docs/S201_KOREAN_CONTENT_METRICS_PRIMITIVES_KO.md)
+- [Phase 1 음향 도구 환경 감사](docs/paper/PHASE1_TOOL_ENV_AUDIT_20260729_KO.md)
+- [UTMOSv2 exact artifact gate 감사](docs/paper/UTMOSV2_ARTIFACT_GATE_AUDIT_20260729_KO.md)
+- [WavLM Base+ SV exact artifact gate 감사](docs/paper/WAVLM_BASE_PLUS_SV_ARTIFACT_GATE_AUDIT_20260729_KO.md)
+- [Phase 1 Parselmouth F0 contour primitive](docs/PHASE1_PARSELMOUTH_PITCH_PRIMITIVE_KO.md)
+- [Phase 1 torchcrepe 환경·수치 감사](docs/paper/PHASE1_TORCHCREPE_ENV_GATE_20260729_KO.md)
+- [Phase 1 torchcrepe F0 contour primitive](docs/PHASE1_TORCHCREPE_PITCH_PRIMITIVE_KO.md)
+- [Phase 1 synthetic pitch backend agreement smoke](docs/paper/PHASE1_SYNTHETIC_PITCH_AGREEMENT_SMOKE_20260729_KO.md)
+- [Phase 1 공통 시간축 pitch agreement primitive](docs/PHASE1_PITCH_CONTOUR_AGREEMENT_PRIMITIVE_KO.md)
+- [Phase 1 한국어 MFA 환경·artifact gate 감사](docs/paper/MFA_KOREAN_ARTIFACT_ENV_GATE_AUDIT_20260729_KO.md)
+- [Phase 1 g2pK 환경·offline smoke](docs/paper/PHASE1_G2PK_ENV_GATE_20260729_KO.md)
+- [Phase 1 g2pK expected-phone primitive](docs/PHASE1_G2PK_EXPECTED_PHONE_PRIMITIVE_KO.md)
+- [Phase 1 g2pK–AI Hub expected-phone dev smoke](docs/paper/PHASE1_G2PK_AIHUB71490_DEV_AGREEMENT_SMOKE_20260729_KO.md)
+- [Phase 1 duration-sequence DTW primitive](docs/PHASE1_DURATION_SEQUENCE_DTW_PRIMITIVE_KO.md)
+- [Phase 1 화자 embedding cosine primitive](docs/PHASE1_SPEAKER_SIMILARITY_PRIMITIVE_KO.md)
+- [E01 silence·gain waveform primitive](docs/E01_SILENCE_GAIN_PRIMITIVES_KO.md)
+- [E01 잔여 변형군 감사·F0 PSOLA primitive](docs/E01_MISSING_PERTURBATION_FAMILY_AUDIT_KO.md)
+- [E01 numeric relation evaluator primitive](docs/E01_RELATION_EVALUATOR_PRIMITIVE_KO.md)
+- [R03 source-blind Pareto·diversity primitive](docs/R03_PARETO_DIVERSITY_SELECTOR_PRIMITIVE_KO.md)
+- [Frozen WavLM feature cache 독립 검증](docs/WAVLM_FEATURE_CACHE_VALIDATION_KO.md)
 - [연구의 기반 논문](docs/한국어%20AI%20보이스%20코칭을%20위한%20폐쇄루프%20TTS%20아키텍처.pdf)
 
 ## 데이터 준비

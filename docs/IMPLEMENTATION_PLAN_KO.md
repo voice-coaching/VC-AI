@@ -2,9 +2,21 @@
 
 ## 1. 문서 목적
 
-이 문서는 `한국어 AI 보이스 코칭을 위한 폐쇄루프 TTS 아키텍처`의 설계를 실제 연구용 PoC로 구현하기 위한 실행 계획이다. 논문의 Phase 0-7을 그대로 나열하지 않고, 현재 저장소와 확보된 AI Hub 71490 데이터, 로컬 하드웨어 제약을 반영해 작업 순서와 완료 기준을 재구성한다.
+이 문서는 `한국어 AI 보이스 코칭을 위한 폐쇄루프 TTS 아키텍처`의 설계를 실제 연구용 PoC로 구현하기 위한 실행 계획이다. 논문의 Phase 0-7을 그대로 나열하지 않고, 현재 저장소와 확보된 AI Hub 71490 데이터, 고성능 GPU 실행 환경을 반영해 작업 순서와 완료 기준을 재구성한다.
 
-GTX 1660 6GB에서 먼저 수행할 고정 subset, 모델 ablation, VRAM gate와 통계 절차는 [GTX 1660 MVP 실험 설계](./GTX1660_MVP_EXPERIMENT_DESIGN_KO.md)에 별도로 정의한다.
+> 상태 주의(2026-07-29): 이 문서의 2장은 최초 계획 당시의 스냅샷이라
+> ZIP 미해제, 코드 미구현 등 일부 설명이 현재와 다르다. 실제 완료 상태,
+> 충돌 해소 결정과 계속 갱신되는 하위 작업은
+> [연구 완성 추적기](./RESEARCH_COMPLETION_TRACKER_KO.md)와
+> [실행 로그](./EXECUTION_LOG_2026-07-28_KO.md)를 기준으로 한다.
+
+> WP4 S103 이후 S104–S108의 정본 실행 순서와 split·label·artifact·gate는
+> [WP4 S103 이후 실행 계약](./WP4_POST_S103_EXECUTION_CONTRACT_KO.md)을
+> 따른다. 아래 초기 Phase 2 순서와 충돌할 때만 새 계약을 우선하며,
+> 현재 상태·배점은 tracker, 완료 사실은 고정 artifact·registry를
+> 계속 정본으로 사용한다.
+
+GPU 모델·VRAM 실측, 모델 용량별 시작점, benchmark와 중단 기준은 [고성능 GPU 실행 계획](./HIGH_PERFORMANCE_GPU_EXECUTION_PLAN_KO.md)에 정의한다.
 
 핵심 결정은 다음과 같다.
 
@@ -20,9 +32,9 @@ GTX 1660 6GB에서 먼저 수행할 고정 subset, 모델 ablation, VRAM gate와
 
 - 현재 저장소에는 데이터 다운로드·해제 스크립트만 있고 학습·API·평가 코드는 없다.
 - Python은 3.14이므로 음성 연구 라이브러리 호환성을 위해 별도 Python 3.10 또는 3.11 환경이 필요하다.
-- 로컬 GPU는 NVIDIA GTX 1660 6GB다.
-- 로컬 환경은 데이터 전처리, 품질 검사, 소규모 추론, API 개발에 사용한다.
-- WavLM-large 미세조정과 다중 TTS 생성은 24GB 이상 GPU가 있는 Linux 환경으로 분리한다.
+- 데이터 준비, 모델 학습, 평가와 TTS 생성은 고성능 Linux GPU 머신을 기준으로 수행한다.
+- GPU 모델과 VRAM을 첫 실행 시 실측한 뒤 batch size, 입력 길이와 미세조정 범위를 확정한다.
+- scorer, TTS와 데이터 준비 환경은 각각 분리하고 버전을 고정한다.
 
 ### 2.2 AI Hub 71490 데이터
 
@@ -468,23 +480,15 @@ GRPO 전에는 best-of-N/rejection sampling으로 reward의 방향성을 먼저 
 
 ## 9. 인프라 계획
 
-### 로컬 GTX 1660 6GB
-
-- 데이터 해제와 manifest 생성
-- 오디오 QC
-- JSON/TextGrid parser
-- CPU 기반 feature 계산
-- 단일 샘플 모델 추론
-- API와 테스트
-
-### 24GB GPU 작업
+### 12-24GB GPU 작업
 
 - frozen/base WavLM feature 추출
-- base 모델 미세조정
+- Base+ adapter 또는 부분 미세조정
+- WavLM Large frozen 비교
 - CosyVoice 소규모 후보 생성
 - 소규모 S2 실험
 
-### 48-80GB GPU 작업
+### 32-80GB 이상 GPU 작업
 
 - WavLM-large 전체 또는 부분 미세조정
 - 큰 batch의 다중 태스크 학습
@@ -493,8 +497,7 @@ GRPO 전에는 best-of-N/rejection sampling으로 reward의 방향성을 먼저 
 
 권장 운영 방식:
 
-- Windows 저장소는 제어·개발 환경으로 유지
-- 모델 학습은 Linux 컨테이너 또는 원격 GPU 작업으로 수행
+- 데이터 준비와 모델 학습은 고성능 Linux GPU 머신의 분리된 환경에서 수행
 - 데이터는 manifest 기반 shard로 전송
 - MLflow 또는 W&B로 실험 ID, commit, 데이터 버전, metric을 기록
 - 모델 승격은 자동 지표와 전문가 audit를 모두 통과해야 한다

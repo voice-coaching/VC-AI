@@ -1,0 +1,139 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" width="1440" height="900" viewBox="0 0 1440 900" role="img" aria-labelledby="diagram-title diagram-description" font-family="Noto Sans CJK KR, Noto Sans KR, Malgun Gothic, sans-serif">
+  <title id="diagram-title">AI Hub 71490 학습·개발 cohort 흐름</title>
+  <desc id="diagram-description">322,380건의 집계 메타데이터에서 평가 split, QC 오류, 예약 prompt를 순서대로 제외해 169,837건의 train/dev cache를 구성한 흐름이다. 자동 G0는 통과했지만 외부 전문가 정렬 감사는 PENDING이다.</desc>
+  <metadata>
+    {&quot;aggregate_only&quot;:true,&quot;pending_manual_alignment&quot;:true,&quot;schema_version&quot;:&quot;voice_coach.paper.cohort_flow_svg_receipt.v2&quot;,&quot;source_sha256&quot;:{&quot;data_card&quot;:&quot;4ab53c6837b1a28fbf153dd3a351a195f6931a43694467114cea6c21b8a57b13&quot;,&quot;filter_report&quot;:&quot;2f7b540b5fb6d2aaad3e2efa29da5f5b23c967645da0eb98d9a6d68ffc5b762e&quot;,&quot;g0_audit&quot;:&quot;1a41814f04062c1f1242287e05e34f46673e0e6e2152075c0dd1cf019bce81fd&quot;,&quot;prompt_reservation&quot;:&quot;3ea7f12ea76be07a0796d7e62f0c3727ca9858c0278df7c85ac1e08d9b653fa9&quot;,&quot;source_mmd&quot;:&quot;78ea599bfd2b0a5ba5df78ab66bef45110f555cca0d2630d5e905b56bb6860fd&quot;}}
+  </metadata>
+  <defs>
+    <marker id="arrow" markerWidth="8" markerHeight="8" refX="7" refY="4" orient="auto" markerUnits="strokeWidth">
+      <path d="M 0 0 L 8 4 L 0 8 z" fill="#425466"/>
+    </marker>
+  </defs>
+  <rect width="1440" height="900" fill="#ffffff"/>
+  <text x="720" y="31" text-anchor="middle" fill="#14213d" font-size="22" font-weight="700">AI Hub 71490 학습·개발 cohort 흐름</text>
+  <g id="edges" fill="none" stroke="#425466" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+    <path id="edge-A-S" d="M 360 127 V 146" marker-end="url(#arrow)"/>
+    <path id="edge-S-X1" d="M 470 190 H 555" marker-end="url(#arrow)"/>
+    <text x="515" y="176" text-anchor="middle" fill="#334155" stroke="none" font-size="13">제외</text>
+    <path id="edge-S-B" d="M 360 234 V 263" marker-end="url(#arrow)"/>
+    <text x="410" y="254" text-anchor="middle" fill="#334155" stroke="none" font-size="13">train/dev</text>
+    <path id="edge-B-Q" d="M 360 337 V 356" marker-end="url(#arrow)"/>
+    <path id="edge-Q-X2" d="M 470 400 H 625" marker-end="url(#arrow)"/>
+    <text x="545" y="386" text-anchor="middle" fill="#334155" stroke="none" font-size="13">제외</text>
+    <path id="edge-Q-C" d="M 360 444 V 463" marker-end="url(#arrow)"/>
+    <text x="405" y="454" text-anchor="middle" fill="#334155" stroke="none" font-size="13">통과</text>
+    <path id="edge-C-R" d="M 360 537 V 556" marker-end="url(#arrow)"/>
+    <path id="edge-R-X3" d="M 470 600 H 615" marker-end="url(#arrow)"/>
+    <text x="545" y="586" text-anchor="middle" fill="#334155" stroke="none" font-size="13">제외</text>
+    <path id="edge-R-D" d="M 360 644 V 663" marker-end="url(#arrow)"/>
+    <text x="405" y="654" text-anchor="middle" fill="#334155" stroke="none" font-size="13">통과</text>
+    <path id="edge-D-T" d="M 300 737 V 770 H 190 V 783" marker-end="url(#arrow)"/>
+    <path id="edge-D-V" d="M 420 737 V 770 H 530 V 783" marker-end="url(#arrow)"/>
+    <path id="edge-A-G" d="M 525 90 H 970" stroke-dasharray="7 6" marker-end="url(#arrow)"/>
+    <text x="745" y="76" text-anchor="middle" fill="#334155" stroke="none" font-size="13">aggregate audit</text>
+    <path id="edge-G-G1" d="M 1120 122 V 185" marker-end="url(#arrow)"/>
+    <path id="edge-G-G2" d="M 970 90 H 960 V 385 H 945" marker-end="url(#arrow)"/>
+    <path id="edge-G-H" d="M 1270 90 H 1400 V 550 H 1295" stroke-dasharray="7 6" marker-end="url(#arrow)"/>
+    <text x="1348" y="315" text-anchor="middle" fill="#334155" stroke="none" font-size="13">대체하지 않음</text>
+  </g>
+  <g id="nodes">
+    <g id="node-A" role="img" aria-label="전체 source metadata scan / 322,380">
+      <title>전체 source metadata scan / 322,380</title>
+      <rect x="195" y="53" width="330" height="74" rx="10" fill="#e8f0fe" stroke="#2457a6" stroke-width="2"/>
+      <text x="360" y="79.5" text-anchor="middle" dominant-baseline="middle" fill="#12223a" font-size="15"><tspan font-weight="400">전체 source metadata scan</tspan></text>
+      <text x="360" y="100.5" text-anchor="middle" dominant-baseline="middle" fill="#12223a" font-size="15"><tspan font-weight="700">322,380</tspan></text>
+    </g>
+    <g id="node-S" role="img" aria-label="고정 split gate">
+      <title>고정 split gate</title>
+      <polygon points="360,146 470,190 360,234 250,190" fill="#fff4cc" stroke="#9a6b00" stroke-width="2"/>
+      <text x="360" y="190.0" text-anchor="middle" dominant-baseline="middle" fill="#3c2a00" font-size="15"><tspan font-weight="400">고정 split gate</tspan></text>
+    </g>
+    <g id="node-X1" role="img" aria-label="평가 split 제외 / 136,629 / stack 35,211 + calibration 35,106 + locked-test 66,312">
+      <title>평가 split 제외 / 136,629 / stack 35,211 + calibration 35,106 + locked-test 66,312</title>
+      <rect x="555" y="138" width="390" height="104" rx="10" fill="#fde8e8" stroke="#a52a2a" stroke-width="2"/>
+      <text x="750" y="169.0" text-anchor="middle" dominant-baseline="middle" fill="#411" font-size="15"><tspan font-weight="400">평가 split 제외</tspan></text>
+      <text x="750" y="190.0" text-anchor="middle" dominant-baseline="middle" fill="#411" font-size="15"><tspan font-weight="700">136,629</tspan></text>
+      <text x="750" y="211.0" text-anchor="middle" dominant-baseline="middle" fill="#411" font-size="15"><tspan font-weight="400">stack 35,211 + calibration 35,106 + locked-test 66,312</tspan></text>
+    </g>
+    <g id="node-B" role="img" aria-label="train/dev 후보 / 185,751">
+      <title>train/dev 후보 / 185,751</title>
+      <rect x="210" y="263" width="300" height="74" rx="10" fill="#e4f5e9" stroke="#24753d" stroke-width="2"/>
+      <text x="360" y="289.5" text-anchor="middle" dominant-baseline="middle" fill="#153d23" font-size="15"><tspan font-weight="400">train/dev 후보</tspan></text>
+      <text x="360" y="310.5" text-anchor="middle" dominant-baseline="middle" fill="#153d23" font-size="15"><tspan font-weight="700">185,751</tspan></text>
+    </g>
+    <g id="node-Q" role="img" aria-label="QC flag gate">
+      <title>QC flag gate</title>
+      <polygon points="360,356 470,400 360,444 250,400" fill="#fff4cc" stroke="#9a6b00" stroke-width="2"/>
+      <text x="360" y="400.0" text-anchor="middle" dominant-baseline="middle" fill="#3c2a00" font-size="15"><tspan font-weight="400">QC flag gate</tspan></text>
+    </g>
+    <g id="node-X2" role="img" aria-label="QC 제외 / 642">
+      <title>QC 제외 / 642</title>
+      <rect x="625" y="363" width="250" height="74" rx="10" fill="#fde8e8" stroke="#a52a2a" stroke-width="2"/>
+      <text x="750" y="389.5" text-anchor="middle" dominant-baseline="middle" fill="#411" font-size="15"><tspan font-weight="400">QC 제외</tspan></text>
+      <text x="750" y="410.5" text-anchor="middle" dominant-baseline="middle" fill="#411" font-size="15"><tspan font-weight="700">642</tspan></text>
+    </g>
+    <g id="node-C" role="img" aria-label="QC 통과 / 185,109">
+      <title>QC 통과 / 185,109</title>
+      <rect x="210" y="463" width="300" height="74" rx="10" fill="#e4f5e9" stroke="#24753d" stroke-width="2"/>
+      <text x="360" y="489.5" text-anchor="middle" dominant-baseline="middle" fill="#153d23" font-size="15"><tspan font-weight="400">QC 통과</tspan></text>
+      <text x="360" y="510.5" text-anchor="middle" dominant-baseline="middle" fill="#153d23" font-size="15"><tspan font-weight="700">185,109</tspan></text>
+    </g>
+    <g id="node-R" role="img" aria-label="예약 prompt gate">
+      <title>예약 prompt gate</title>
+      <polygon points="360,556 470,600 360,644 250,600" fill="#fff4cc" stroke="#9a6b00" stroke-width="2"/>
+      <text x="360" y="600.0" text-anchor="middle" dominant-baseline="middle" fill="#3c2a00" font-size="15"><tspan font-weight="400">예약 prompt gate</tspan></text>
+    </g>
+    <g id="node-X3" role="img" aria-label="예약 prompt 제외 / 15,272">
+      <title>예약 prompt 제외 / 15,272</title>
+      <rect x="615" y="563" width="270" height="74" rx="10" fill="#fde8e8" stroke="#a52a2a" stroke-width="2"/>
+      <text x="750" y="589.5" text-anchor="middle" dominant-baseline="middle" fill="#411" font-size="15"><tspan font-weight="400">예약 prompt 제외</tspan></text>
+      <text x="750" y="610.5" text-anchor="middle" dominant-baseline="middle" fill="#411" font-size="15"><tspan font-weight="700">15,272</tspan></text>
+    </g>
+    <g id="node-D" role="img" aria-label="최종 train/dev cache / 169,837">
+      <title>최종 train/dev cache / 169,837</title>
+      <rect x="200" y="663" width="320" height="74" rx="10" fill="#e4f5e9" stroke="#24753d" stroke-width="2"/>
+      <text x="360" y="689.5" text-anchor="middle" dominant-baseline="middle" fill="#153d23" font-size="15"><tspan font-weight="400">최종 train/dev cache</tspan></text>
+      <text x="360" y="710.5" text-anchor="middle" dominant-baseline="middle" fill="#153d23" font-size="15"><tspan font-weight="700">169,837</tspan></text>
+    </g>
+    <g id="node-T" role="img" aria-label="train / 137,759">
+      <title>train / 137,759</title>
+      <rect x="80" y="783" width="220" height="74" rx="10" fill="#e4f5e9" stroke="#24753d" stroke-width="2"/>
+      <text x="190" y="809.5" text-anchor="middle" dominant-baseline="middle" fill="#153d23" font-size="15"><tspan font-weight="400">train</tspan></text>
+      <text x="190" y="830.5" text-anchor="middle" dominant-baseline="middle" fill="#153d23" font-size="15"><tspan font-weight="700">137,759</tspan></text>
+    </g>
+    <g id="node-V" role="img" aria-label="dev / 32,078">
+      <title>dev / 32,078</title>
+      <rect x="420" y="783" width="220" height="74" rx="10" fill="#e4f5e9" stroke="#24753d" stroke-width="2"/>
+      <text x="530" y="809.5" text-anchor="middle" dominant-baseline="middle" fill="#153d23" font-size="15"><tspan font-weight="400">dev</tspan></text>
+      <text x="530" y="830.5" text-anchor="middle" dominant-baseline="middle" fill="#153d23" font-size="15"><tspan font-weight="700">32,078</tspan></text>
+    </g>
+    <g id="node-G" role="img" aria-label="자동 G0 aggregate">
+      <title>자동 G0 aggregate</title>
+      <rect x="970" y="58" width="300" height="64" rx="10" fill="#e8f0fe" stroke="#2457a6" stroke-width="2"/>
+      <text x="1120" y="90.0" text-anchor="middle" dominant-baseline="middle" fill="#12223a" font-size="15"><tspan font-weight="400">자동 G0 aggregate</tspan></text>
+    </g>
+    <g id="node-G1" role="img" aria-label="pairing 99.9996898% / decoder failure 0% / time-bound error 0.3319064%">
+      <title>pairing 99.9996898% / decoder failure 0% / time-bound error 0.3319064%</title>
+      <rect x="945" y="185" width="350" height="100" rx="10" fill="#e8f0fe" stroke="#2457a6" stroke-width="2"/>
+      <text x="1120" y="214.0" text-anchor="middle" dominant-baseline="middle" fill="#12223a" font-size="15"><tspan font-weight="400">pairing </tspan><tspan font-weight="700">99.9996898%</tspan></text>
+      <text x="1120" y="235.0" text-anchor="middle" dominant-baseline="middle" fill="#12223a" font-size="15"><tspan font-weight="400">decoder failure </tspan><tspan font-weight="700">0%</tspan></text>
+      <text x="1120" y="256.0" text-anchor="middle" dominant-baseline="middle" fill="#12223a" font-size="15"><tspan font-weight="400">time-bound error </tspan><tspan font-weight="700">0.3319064%</tspan></text>
+    </g>
+    <g id="node-G2" role="img" aria-label="split speaker overlap 0 / PCM duplicate 0 / ontology 미매핑 0">
+      <title>split speaker overlap 0 / PCM duplicate 0 / ontology 미매핑 0</title>
+      <rect x="945" y="335" width="350" height="100" rx="10" fill="#e8f0fe" stroke="#2457a6" stroke-width="2"/>
+      <text x="1120" y="364.0" text-anchor="middle" dominant-baseline="middle" fill="#12223a" font-size="15"><tspan font-weight="400">split speaker overlap </tspan><tspan font-weight="700">0</tspan></text>
+      <text x="1120" y="385.0" text-anchor="middle" dominant-baseline="middle" fill="#12223a" font-size="15"><tspan font-weight="400">PCM duplicate </tspan><tspan font-weight="700">0</tspan></text>
+      <text x="1120" y="406.0" text-anchor="middle" dominant-baseline="middle" fill="#12223a" font-size="15"><tspan font-weight="400">ontology 미매핑 </tspan><tspan font-weight="700">0</tspan></text>
+    </g>
+    <g id="node-H" role="img" aria-label="외부 전문가 정렬 G0 / PENDING / 자동 G0와 별도">
+      <title>외부 전문가 정렬 G0 / PENDING / 자동 G0와 별도</title>
+      <rect x="945" y="500" width="350" height="100" rx="10" fill="#f2e8ff" stroke="#7040a0" stroke-width="2"/>
+      <text x="1120" y="529.0" text-anchor="middle" dominant-baseline="middle" fill="#321850" font-size="15"><tspan font-weight="400">외부 전문가 정렬 G0</tspan></text>
+      <text x="1120" y="550.0" text-anchor="middle" dominant-baseline="middle" fill="#321850" font-size="15"><tspan font-weight="700">PENDING</tspan></text>
+      <text x="1120" y="571.0" text-anchor="middle" dominant-baseline="middle" fill="#321850" font-size="15"><tspan font-weight="400">자동 G0와 별도</tspan></text>
+    </g>
+  </g>
+  <text x="20" y="883" fill="#64748b" font-size="11">집계 전용 · 외부 전문가 정렬 감사 PENDING · locked-test 미개봉</text>
+</svg>

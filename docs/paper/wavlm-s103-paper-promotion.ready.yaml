@@ -1,0 +1,39 @@
+schema_version: voice_coach.wavlm_paper_promotion_manifest.v1
+status: ready
+
+inputs:
+  base_report:
+    path: artifacts/experiments/aihub71490_wavlm_base_plus_frozen_head_v1/report.json
+    sha256: 112eedfeb6348c1b5a258ae2ca7fd4b435c96b433d3326ade94a7f4399949a2c
+    size_bytes: 289855
+  base_registry:
+    path: artifacts/experiment_registry/aihub71490-wavlm-base-plus-frozen-head-v1-dev/metadata.json
+    sha256: 0f994aa578a503697c53a3ed84377baea38ca34ebd4fc6e01bafac7a31b9f79f
+    size_bytes: 19967
+  large_report:
+    path: artifacts/experiments/aihub71490_wavlm_large_frozen_head_v1/report.json
+    sha256: ba869265c6e6c1381677fe922922b68da7df92cbb9cbaf5501fff5dafa3fdd23
+    size_bytes: 293690
+  large_registry:
+    path: artifacts/experiment_registry/aihub71490-wavlm-large-frozen-head-v1-dev/metadata.json
+    sha256: 85c90e95b954ec2b74081f44b4e64d311330985a0429d76f0cb67b7a86d5b565
+    size_bytes: 19760
+  comparison_commit:
+    path: artifacts/experiments/aihub71490_wavlm_frozen_head_comparison_v1/commit.json
+    sha256: e45cf869ab54beff6bcf5a3c674c0bdff0d75460ab8daabe50c7477afca16c6e
+    size_bytes: 988
+  results_commit:
+    path: artifacts/experiments/aihub71490_wavlm_frozen_head_comparison_v1/results_table.commit.json
+    sha256: af0cb1d616e3c9377985b880bb19233647964b744ab23c98e6b69d257c273e38
+    size_bytes: 1106
+
+targets:
+  manuscript:
+    path: docs/paper/EXPERIMENTAL_MANUSCRIPT_KO.md
+    sha256: da36092c0080a066670ca84753cec010614de5552c8b321b6af8a838b372ccd3
+    size_bytes: 34171
+  evidence_map:
+    path: docs/paper/evidence-map.yaml
+    sha256: a283d92348970698c3421c3d7857adda3da30df1d03a591352ef17ae90aeb9f3
+    size_bytes: 72532
+  insert_before_pending_marker: "[PENDING: S101–S108 — explicit/Base+/Large/adapter/HiPAMA/fusion 표]"

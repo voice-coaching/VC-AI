@@ -177,6 +177,15 @@ bash scripts/download_aihub_cli.sh download 71490 \
 SSH가 끊겨도 `tmux attach -t aihub`로 돌아올 수 있다. 실패 시 같은 명령을
 재실행하되, shell이 만든 `.part*`와 archive를 임의로 지우지 않는다.
 
+포털 승인이 아직 반영되지 않았다면 Linux 전용 감시 스크립트를 `tmux`에서
+실행할 수 있다. 이 스크립트는 `.env.local`을 직접 파싱하며 키를 로그에
+기록하지 않는다.
+
+```bash
+MAX_ATTEMPTS=24 RETRY_SECONDS=300 \
+  bash scripts/await_aihub_approval.sh
+```
+
 ## 8. 압축 해제와 검증
 
 `aihubshell`은 분할 파일을 병합하고 AI Hub 디렉터리 구조를 복원한다.

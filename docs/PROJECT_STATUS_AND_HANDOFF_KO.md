@@ -1,6 +1,31 @@
 # 프로젝트 작업 상태와 인수인계
 
-기준 시각: 2026-07-26 KST
+기준 시각: 2026-07-28 KST
+
+> 2026-07-29 이후의 장기 실험 진행률과 현재 실행 큐는
+> [연구 완성 하위 작업 추적기](./RESEARCH_COMPLETION_TRACKER_KO.md)를
+> 기준으로 한다.
+
+## 0. 고성능 GPU 머신 실행 현황
+
+- 실행 머신은 NVIDIA GB10, CUDA 13.0, compute capability 12.1이다.
+- Python 3.12 scorer 환경과 PyTorch 2.12.1+cu130을 분리 구성했고 CUDA
+  BF16 연산을 확인했다.
+- WavLM Base+와 Large의 8/12/20초 frozen BF16 smoke benchmark는 모두
+  OOM 0으로 통과했다. Large의 p95 RTF는 0.00485-0.00610, peak CUDA
+  allocation은 1.38-1.64 GiB였다.
+- 새 API key로 AI Hub dataset 71490 권한 확인에 성공했다. 발음 MVP 7개
+  묶음 약 68.6 GiB를 다운로드하고 WAV·JSON·TextGrid 322,380건을
+  추출·검증했다. 전체 raw/enriched manifest 322,380건과 자동 G0 감사를
+  완료했다. 자동 gate는 통과했으며 240건 전문가 수동 감사가 남았다.
+- FLEURS ko-KR은 원본 검증과 2,915 WAV 추출을 완료했다.
+- KSS는 Parquet 7개, 12,854행, embedded RIFF audio 12,854개를 전수
+  확인했다.
+- Seoul Corpus는 이중 압축을 안전하게 해제했으며 FLAC/TextGrid가 stem
+  기준 240/240 완전 일치한다.
+- ZEROTH-Korean은 9.1 GiB archive의 고정 hash·gzip·tar 검증과 안전 추출을
+  완료했다. 16 kHz mono FLAC 22,720개와 transcript 22,720행이 ID 기준
+  완전 일치한다.
 
 ## 1. 지금까지 완료한 작업
 
@@ -20,24 +45,21 @@
 
 ### AI Hub 71490
 
-`교육용 중·일어 모국어 사용자의 한국어 음성 데이터`의 라벨 6개 묶음과
-음성 6개 묶음을 압축 해제했다. 음성은 ZIP entry의 파일 수와 비압축
-바이트를 실제 파일과 대조한 뒤 완료 marker를 만들었고, 검증된 음성 ZIP은
-삭제해 디스크를 회수했다.
+`교육용 중·일어 모국어 사용자의 한국어 음성 데이터`의 발음 MVP 7개
+묶음을 공식 CLI로 받았다. 음성은 ZIP entry의 파일 수와 비압축 바이트를
+실제 파일과 대조한 뒤 완료 marker를 만들었고, 검증된 음성 ZIP은 삭제해
+디스크를 회수했다.
 
 | 묶음 | 검증 파일 수 | 비압축 용량 |
 |---|---:|---:|
 | Training pronunciation 1 | 283,667 | 97.66 GiB |
 | Training pronunciation 2 | 2,893 | 0.99 GiB |
-| Training general speech 1 | 58,735 | 97.66 GiB |
-| Training general speech 2 | 43,897 | 63.51 GiB |
 | Validation pronunciation | 35,820 | 12.29 GiB |
-| Validation general speech | 12,829 | 19.80 GiB |
-| **합계** | **437,841** | **291.91 GiB** |
+| **합계** | **322,380** | **110.93 GiB** |
 
-일반 음성은 WAV와 JSON, 발음 음성은 WAV·JSON·TextGrid를 stem으로
-결합한다. JSON의 목표 음소와 TextGrid의 실제 음소는 배열 인덱스가 아니라
-시간 overlap 기반으로 정렬해야 한다.
+발음 WAV·JSON·TextGrid를 stem으로 결합한다. JSON의 목표 음소와
+TextGrid의 실제 음소는 배열 인덱스가 아니라 시간 overlap 기반으로
+정렬한다.
 
 ### Manifest와 개인정보 처리
 
@@ -59,10 +81,10 @@ Git에서 제외된다.
 
 | 데이터셋 | 현재 로컬 상태 | 연구 역할 | 남은 일 |
 |---|---|---|---|
-| FLEURS ko-KR | 오디오 tar 3개 수동 구조·크기 검증 | 외부 ASR·정렬 평가 | TSV/README 동기화와 파이프라인 완료 marker 생성 후 추출 |
-| KSS | Parquet 7개, 12,854 row 구조 검증 | 비상업 TTS 기준선 | 전용 환경에서 embedded audio materialize |
-| Seoul Corpus | FLAC 240·TextGrid 240 쌍 확인 | 음소 정렬·자발화 운율 | 이중압축 안전 추출 |
-| ZEROTH-Korean | BITS 임시파일, tar truncated | ASR·정렬 기준선 | 다운로드 완료 후 전체 재검증 |
+| FLEURS ko-KR | 검증·추출 완료, WAV 2,915개 | 외부 ASR·정렬 평가 | loader smoke test |
+| KSS | Parquet 7개·12,854행·embedded RIFF 전수 확인 | 비상업 TTS 기준선 | Parquet 직접 loader |
+| Seoul Corpus | 안전한 이중압축 해제, FLAC/TextGrid 240쌍 | 음소 정렬·자발화 운율 | loader smoke test |
+| ZEROTH-Korean | 검증·추출 완료, FLAC/전사 22,720쌍 | ASR·정렬 기준선 | loader smoke test |
 
 통합 카탈로그는 `configs/data/native_korean_corpora.psd1`, 실행기는
 `scripts/sync_native_korean_corpora.ps1`이다. Hugging Face 파일은 고정
@@ -74,13 +96,20 @@ revision과 SHA-256, OpenSLR 파일은 바이트·gzip CRC32·tar 전체 순회�
 | 경로 | 역할 |
 |---|---|
 | `docs/IMPLEMENTATION_PLAN_KO.md` | 논문 전체 구현·실현 계획 |
-| `docs/GTX1660_MVP_EXPERIMENT_DESIGN_KO.md` | 저사양 GPU용 실험·중단 기준 |
-| `docs/HIGH_PERFORMANCE_GPU_EXECUTION_PLAN_KO.md` | 고성능 GPU 전환 계획 |
+| `docs/HIGH_PERFORMANCE_GPU_EXECUTION_PLAN_KO.md` | 고성능 GPU 전용 실험·중단 기준 |
 | `docs/CLI_ONLY_GPU_DATA_SETUP_KO.md` | Linux CLI 머신 재다운로드·추가 데이터 절차 |
+| `docs/EXECUTION_LOG_2026-07-28_KO.md` | 실제 완료 내역·수치·다음 실행 순서 |
+| `docs/AIHUB71490_MANUAL_ALIGNMENT_AUDIT_KO.md` | 240건 G0 전문가 감사 절차 |
+| `docs/DATA_CARD_AIHUB71490_KO.md` | 전체 데이터·label coverage·QC 집계 |
+| `docs/RESEARCH_COMPLETION_TRACKER_KO.md` | 최종 논문까지 하위 작업·gate·진행률 |
 | `configs/data/aihub71490_mvp.yaml` | AI Hub join·split·privacy 규칙 |
-| `configs/experiments/gtx1660_mvp.yaml` | MVP 모델·평가 gate |
+| `configs/experiments/high_performance_gpu.yaml` | 고성능 GPU 모델·평가 gate |
 | `scripts/extract_aihub_audio.ps1` | 재개 가능한 음성 검증·추출·정리 |
 | `scripts/build_aihub71490_manifest.py` | manifest와 QC 생성 |
+| `scripts/enrich_aihub71490_manifest.py` | 음소 정렬·PCM hash·고정 split Parquet |
+| `scripts/audit_aihub71490_enriched.py` | 전체 자동 G0 재감사 |
+| `scripts/sample_alignment_audit.py` | 결정적 층화 수동 감사 표본 생성 |
+| `scripts/score_alignment_audit.py` | 완성된 수동 감사 결과 판정 |
 | `scripts/sync_native_korean_corpora.ps1` | 원어민 코퍼스 통합 실행기 |
 | `scripts/native_corpus_archive.py` | 안전한 tar 검사·추출 |
 
@@ -94,19 +123,26 @@ revision과 SHA-256, OpenSLR 파일은 바이트·gzip CRC32·tar 전체 순회�
 - tar 경로 탈출·링크·장치 파일 차단 단위 테스트
 - FLEURS dev.tsv 226행과 dev tar WAV 226개 이름 집합 일치
 - Git raw/restricted/processed/artifact/checkpoint 제외 규칙
+- GB10 CUDA BF16 matmul
+- WavLM Base+/Large 8/12/20초 OOM 0
+- TextGrid interval parser와 시간 overlap 음소 정렬
+- 화자 단위 층화 split, PCM hash, G0 manifest 감사
+- 인접 음소 중복 매핑 교정과 전체 enriched Parquet 재생성
+- L1·성별·숙련도·오류 유무 층화 240건 수동 감사 worksheet
+- Oracle 계약, 명시적 음향 특징, frozen SSL pooling
+- 전체 Python 테스트 25개 통과
 
 ## 4. 남은 실행 순서
 
-1. 전체 AI Hub manifest와 QC 완료 여부 확인
-2. 화자·L1·성별·숙련도 층화 split을 고정하고 hash를 기록
-3. 고성능 GPU의 모델명·VRAM·CUDA·드라이버를 기록하고 smoke benchmark
-4. 명시적 음향 특징 baseline
-5. frozen WavLM Base+와 WavLM Large 비교
-6. 통과한 모델에만 adapter/partial fine-tuning 적용
-7. calibration split에서 confidence 보정
-8. 근거 제한 코칭 150건 전문가 감사
-9. 원어민/TTS 기준음 20문장 bank 생성
-10. 재녹음 전후 한 사이클 end-to-end demo
+1. 진행 중: 고정된 240건 worksheet로 전문가 수동 정렬 감사
+2. 228/240 이상 정확도를 확인하고 G0를 최종 고정
+3. 명시적 음향 특징 baseline의 실제 phone F1 측정
+4. 동일 split에서 frozen WavLM Base+와 Large phone F1 비교
+5. 통과한 모델에만 adapter/partial fine-tuning 적용
+6. calibration split에서 confidence 보정
+7. 근거 제한 코칭 150건 전문가 감사
+8. 원어민/TTS 기준음 20문장 bank 생성
+9. 재녹음 전후 한 사이클 end-to-end demo
 
 ## 5. 데이터와 비밀정보 정책
 
