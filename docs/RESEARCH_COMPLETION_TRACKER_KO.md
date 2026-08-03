@@ -52,9 +52,8 @@ preflight와 v1 source-pin 불일치 판정 반영)
 | **합계** | **100** | **완료 milestone만 합산** | **48** |
 
 현재 가중 진행률: **48/100**
-현재 최우선 경로: **무효화된 v1 시도와 stale state를 보존한 채 현재 코드
-기준 v2 S104 contract를 persistent supervisor에서 GPU 3-seed로 실행하고
-completed commit을 독립 검증 → v2 commit에 맞춘 S105 re-pin/계층 ablation**과
+현재 최우선 경로: **진행 중인 v2 S104 GPU 3-seed를 terminal commit까지
+완료하고 독립 검증 → v2 commit에 맞춘 S105 re-pin/계층 ablation**과
 **검증 완료한 B07을 S106 4-component 계약에 편입하는 amendment**를 병행한
 뒤 S106 정본 실행
 
@@ -206,7 +205,7 @@ locked-test·배포·canonical B03 결과가 아니다. GOP/SSL milestone은
 | S101 | 완료(개발·oracle) | frozen Base+ feature cache와 head 3 seeds | full cache·전수검증·CUDA smoke 통과; report/registry `completed`·failure 없음, seeds 42/43/44, 등록 artifact 13개; report SHA `112eedfe…9949a2c`, registry SHA `0f994aa5…1b9f79f`, run ID `aihub71490-wavlm-base-plus-frozen-head-v1-dev`; dev-only oracle alignment, promotion 금지, locked/stack/calibration 미접근 | S102 비canonical 100건 smoke·독립 review |
 | S102 | 완료(개발·oracle) | frozen Large 동일 조건 3 seeds | full cache report/validation SHA `98fe95d0…5fe47`/`d3f34b34…83676e`와 head report/registry SHA `ba869265…fdd23`/`85c90e95…5b565`; seeds 42/43/44, completed/failure null, artifact 13개·전이 49/49 검증; prediction Parquet 직접 재계산 phone macro F1 0.671164±0.000443, AUPRC 0.360830±0.000669, utterance QWK/Spearman/MAE/ICC는 pronunciation 0.162764/0.274672/0.802580/0.140056, fluency 0.271806/0.495003/0.791396/0.307800, comprehensibility 0.129550/0.260861/0.771907/0.135741; dev-only oracle alignment, promotion 금지, stack/calibration/locked-test 미접근; S102 4점 획득 | S103의 고정 입력으로 보존 |
 | S103 | 완료(개발·oracle; Large 채택 gate 실패) | Large−Base+ phone F1 및 95% CI | comparison commit/report/receipt SHA `e45cf869…16c6e`/`90db58ee…78213`/`342a9bd2…620a6`, results-table commit/Markdown/JSON SHA `af0cb1d6…73e38`/`89db2965…5b0f`/`d8556c3a…d7a20`; prediction 원시 재계산과 5,000회 paired-speaker bootstrap 재실행 결과 Large−Base+ F1 `+0.0014656956`, 95% CI `[0.0000061249, 0.0029903885]`, two-sided p `0.0491902`; 사전 고정 `+0.03` gate 실패, strict 재렌더 Markdown/JSON exact 일치, dev-only oracle/no-promotion·보호 split 미접근; S103 2점 획득 | Large 확대를 중단하고 S104의 고정 Base+ adapter branch 실행 |
-| S104 | v1 시도 무효화·v2 current-code contract/full preflight 완료(실제 GPU 0) | adapter/partial fine-tune 후보 | v2 config SHA `7a78e718…be6434`, execution lock SHA `c37ce4e3…a3e`; full preflight는 Base+·169,837 utterances, 현재 `intervals.py` SHA `0fc28d73…47cf`, status `ready_for_s104_gpu_training`, raw-audio/GPU/output 0. v1 registry/빈 partial은 source pin mismatch로 기존 rollover 계약을 적용하지 못해 변경 없이 보존, DEV-S104-003 `INVALIDATING`, S104 획득 0 | v2 lock을 그대로 사용해 persistent user-systemd supervisor+연속 pin watcher에서 처음부터 GPU 3-seed 실행; completed commit을 `--validate-commit-only`로 독립 검증한 뒤 v2 기준 S105 re-pin |
+| S104 | v1 시도 무효화·v2 current-code 3-seed GPU 실행 중 | adapter/partial fine-tune 후보 | v2 config SHA `7a78e718…be6434`, execution lock SHA `c37ce4e3…a3e`; full preflight는 Base+·169,837 utterances, 현재 `intervals.py` SHA `0fc28d73…47cf`; user-systemd unit `intelligentai-s104-v2.service` active, trainer PID `57618`, CUDA 사용 관측. 현재 checkpoint·metric·generation·completed registry·commit 0, DEV-S104-003 `INVALIDATING`, S104 획득 0 | terminal 상태까지 supervisor 실행을 유지하고 v2 completed commit을 `--validate-commit-only`로 독립 검증한 뒤 v2 기준 S105 re-pin |
 | S105 | 실행 준비 완료(구현 100%·실제 실험 0%) | phone→word→utterance multi-task/HiPAMA ablation | production runner·82-file generation·5개 registry·deep commit validator와 원자 publish/recovery를 구현·합성 검증; config/validator/readiness SHA `e7818240…64ea0`/`e2f7269c…3ad1`/`f5839e59…6ed1`; S105 targeted 53개·관련 회귀 63개, Ruff/format/mypy, 독립 C/H/M 0 통과; config-only는 S104/data/raw/CUDA read와 output 0, full preflight는 S104 commit 부재에서 fail-closed·S105 output 0; 실제 checkpoint/metric/generation/registry/commit 0, S105 획득 0 | S104 completed commit의 독립 검증 직후 full preflight와 5 variant×3 seed 정본 GPU 실행 |
 | S106 | 4-component production generator·bundle v3 consumer·deep validator 완료(실제 generator 실행·fusion 실험 0%) | explicit+S104+S105+GOP confidence-aware fusion | exact order `explicit,s104_adapter,s105_selected_hierarchy,gop_acoustic_posterior`, 4×3=12 stack prediction·26-feature·`gop_only`; main/generator config, generator CLI/module, projection/contract/training/train CLI/readiness SHA `196ed40a…caabb`/`feafe24c…72b0`/`249a9747…314d`/`31b15dde…f5b`/`baeb6192…40e`/`8210581f…7793`/`e8366b15…8097`/`b1ed2979…888c`/`aa8b127f…386e`; held-fd filtered bounded Parquet scanner, anonymous unlinked label staging, crash-released single-writer flock, exact sealed producer tree·별도 inode public view, fsync·cleanup·recovery를 구현하고 독립 C/H/M 0/0/0 승인; S106 focused 98/98, S107/S108 44/44, direct downstream 226/226; config-only actual/output 0; actual blocker는 S104/S105 validated commit 부재 2개이며 execution lock·12 prediction·bundle·metric·generation·registry·commit 모두 0, S106 획득 0 | S104·S105 completed commit 독립 검증 뒤 production generator로 12 prediction/receipt/label/bundle v3를 발행하고 stack-only 정본 실행 |
 | S107 | 실행 준비 완료(구현 100%·실제 calibration 0%) | calibration ECE≤0.10, issued precision≥0.90 | calibration-only production runner·7-file generation·deep validator와 provisional engineering policy를 구현·합성 검증; frozen S106 exact pin 반영 뒤 config/contract/runner/readiness SHA `6702ea19…909f`/`04909937…ac1e`/`201973a2…d6d3`/`c1abb3bc…e1c7`; targeted 15/15, S106→S107 70/70; full preflight는 S106 commit 부재에서 fail-closed되어 calibration/data/raw/env 접근과 output 0; 실제 calibration bundle·fit·metric·generation·registry·commit 0, S107 획득 0 | S104–S106 completed commit을 차례로 독립 검증한 뒤 calibration split에서만 정본 실행 |
@@ -216,7 +215,7 @@ locked-test·배포·canonical B03 결과가 아니다. GOP/SSL milestone은
 
 | 단계 | 구현·실행 준비 완성도 | 실제 실험 산출물 완성도 | 배점 판정 |
 |---|---:|---:|---|
-| S104 | 100%; v2 current-code immutable lock과 정본 GPU 실행 경로 준비 | 0%; v1 시도는 무효화됐고 v2 full preflight만 완료, 실제 metric·generation artifact·commit·completed registry 0 | 0/2 |
+| S104 | 100%; v2 current-code immutable lock과 정본 GPU 실행 경로 실행 중 | 0%; v1 시도는 무효화됐고 v2 trainer는 아직 terminal artifact를 만들지 않음, metric·generation artifact·commit·completed registry 0 | 0/2 |
 | S105 | 100%; production runner·deep validator·fault/recovery 검증 완료 | 0%; S104 completed commit 대기, 실제 GPU 실험과 결과 0 | 0/2 |
 | S106 | 100%; production component generator, bundle v3 consumer, producer evidence deep validator와 held-fd bounded scan·anonymous label staging·single-writer/fsync/recovery 검증 완료 | 0%; S104/S105 completed commit 대기, actual predecessor audit·stack 접근·12 prediction·bundle·결과 0 | 0/1 |
 | S107 | 100%; calibration-only runner·deep validator·provisional policy 검증 완료 | 0%; S106 completed commit 대기, calibration 접근·fit·metric·결과 0 | 0/1 |
@@ -2121,6 +2120,17 @@ delivery readiness만 사용할 수 있고 stage 1의 unblinded effect 접근은
     generation·completed registry·commit은 0이다. 이를 DEV-S104-003
     `INVALIDATING`으로 기록하고 S104 0/2, S105 이후 단계의 v2 re-pin은
     v2 completed commit 이후에만 허용한다.
+
+93. 진행(현재 코드 기준 S104 v2 GPU 3-seed 실행 시작; terminal 결과 0):
+    v2 execution lock SHA `c37ce4e3d0aa7b7e0c016c56342397b818d6316d6a0e7e22bab9867a63ab5a3e`를
+    변경하지 않고 2026-08-03 19:18 KST user-systemd unit
+    `intelligentai-s104-v2.service`에서 trainer PID `57618`을 시작했다.
+    임시 연속 watcher는 config·lock·implementation hash를 10초마다
+    확인하며 mismatch 시 fail-closed 종료한다. 19:20 KST CUDA process와
+    약 1.6 GiB GPU allocation이 관측됐으나, checkpoint·metric·generation
+    artifact·registry·commit은 아직 0이다. S104 terminal commit과
+    `--validate-commit-only` 독립 검증 전에는 S105–S108 v2 re-pin이나
+    결과·점수 반영을 진행하지 않는다.
 
 ## 6. 외부 의존과 정직한 중단 기준
 

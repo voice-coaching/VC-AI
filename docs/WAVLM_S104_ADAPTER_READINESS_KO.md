@@ -3,7 +3,7 @@
 최초 작성: 2026-07-29 KST  
 최종 갱신: 2026-08-03 KST
 상태: **v1 CUDA 시도 무효화 / 현재 코드 기준 v2 contract·full preflight
-완료 / 실제 GPU 실행 대기**
+완료 / user-systemd GPU 3-seed 실행 중**
 
 ## 1. 현재 결론
 
@@ -20,6 +20,9 @@ publisher, completed/failure registry, commit-only 독립 validator까지
 - 따라서 논문의 S104 실험 셀을 채울 수 없고 어떤 점수도 주장할 수 없다.
 - 정본 S103 comparison은 gate 실패를 확정해 Base+를 선택했고, 실제
   full preflight는 immutable execution lock을 생성했다.
+- v2 정본 trainer는 2026-08-03 19:18 KST user-systemd unit
+  `intelligentai-s104-v2.service`에서 시작됐다. 연속 source-pin watcher가
+  config·lock·implementation hash를 10초 간격으로 검사하고 있다.
 
 즉, **v1 첫 실행 시도는 정본 결과로 사용할 수 없고, 현재 checkout을
 기준으로 분리한 v2 실행 계약만 다음 실행에 사용한다**. v1의 stale
@@ -61,7 +64,7 @@ oracle-alignment, silver-label, no-promotion 실행이다. S104 실제 GPU
 | S104-05 | inner selection과 dev 1회 평가 | 100% 구현 | train speaker-disjoint selection, train-only vocab/weight/threshold, seed별 dev 정확히 1회 |
 | S104-06 | 산출물·registry·atomic publisher | 100% 구현 | seed당 5개+aggregate 1개, 정확히 16개, 실패/복구 fault injection 통과 |
 | S104-07 | 독립 commit validator | 100% 구현 | source truth·metrics·slice·checkpoint·registry·S103 predecessor를 재구성해 검증 |
-| S104-08 | 실제 고성능 GPU 3-seed 실행 | 0%; v1 시도 무효화, v2 대기 | v1 PID `386918`은 seed 42 epoch 9 중 exit 143. v2 full preflight는 통과했지만 실제 GPU 실행·metric·artifact·commit은 0. v2를 persistent supervisor에서 처음부터 실행 |
+| S104-08 | 실제 고성능 GPU 3-seed 실행 | 진행 중; v1 시도 무효화 | v1 PID `386918`은 seed 42 epoch 9 중 exit 143. v2 unit `intelligentai-s104-v2.service`는 active, trainer PID `57618`에서 CUDA 사용이 관측됐다. 현재 checkpoint·metric·artifact·commit은 0이며 종료·성공 판정은 아직 없다 |
 | S104-09 | 실제 결과 검증·논문 반영 | 0% | committed S104 generation과 독립 validator 통과 뒤 수행 |
 | S104-10 | 승격 판단 | 0% | S104는 development-only이며 별도 G04/D07 수동 gate 없이는 승격 금지 |
 
@@ -283,9 +286,8 @@ PYTHONPATH=src ./.venv-scorer/bin/python \
 9. 승격이 필요하면 별도 G04 수동 alignment와 D07 전문가 검증을 완료한다.
 
 검증된 S103 commit과 v2 full preflight blocker는 해소됐다. v2 lock은
-Base+를 선택했지만 정본 S104 GPU 실행은 아직 시작하지 않았다. 다음
-판정 지점은 persistent supervisor에서의 v2 실행 시작, commit 생성과
-read-only validator 통과다.
+Base+를 선택했고 정본 S104 GPU 3-seed 실행이 user-systemd에서 진행 중이다.
+다음 판정 지점은 terminal commit 생성과 read-only validator 통과다.
 
 ## 9. 검증 기록
 
