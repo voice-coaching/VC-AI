@@ -149,10 +149,10 @@ comparator test 통과만으로는 실제 통계 결과가 아니다.
 | E02 | A | R0/R1/D1/A1/C1 구역과 반출 경계를 원고 표에 반영 | 개인정보 경계 문서, 원고 5절 | 산출물별 실제 zone과 공개 가능 여부를 공개 전 재대조 |
 | E03 | A | Namespaced SHA-256을 가명화로 한정하고 대응표 분리·자유서술 검토를 명시 | 개인정보 경계 문서, 원고 5절 | 익명화 표현을 금지하고 접근권한·보존정책을 승인 계획과 연결 |
 | E04 | A | AI Hub 제한, FLEURS/ZEROTH attribution, KSS/Seoul 비상업 격리와 F5 code/weight 조건 분리를 반영 | 라이선스·역할 매트릭스, source ledger, 원고 5절 | 최종 P05 license 원문·revision·재배포 감사 전 완전 공개 가능 주장 금지 |
-| E05 | A | 사람 자료의 동의·철회, 목적 제한, 접근자, 보존·폐기와 note 검토를 수집 전 protocol로 반영 | 개인정보 경계·외부평가 패킷, 원고 5절 | 승인된 consent/version/hash 전에는 수행 완료 시제 금지 |
-| E06 | A | 미성년자·위해 중단을 포함한 IRB/기관 승인 전 사람 자료 수집 금지 조건을 반영 | 외부평가 패킷·H01 사전등록, 원고 5절 | 기관 검토·승인 전에는 계획으로만 유지하고 실제 adverse 결과로 표현하지 않음 |
-| E07 | C | IRB/PIPA 승인번호, 승인일, protocol version과 모집 허가 | H00 외부 의존 | 기관 승인본과 공개 가능한 승인 metadata hash 필요 |
-| E08 | C | 실제 participant/reviewer 수·인구통계·철회·adverse event·보존/삭제 이행 | 사람 자료 미수집 | 동의된 자료, 접근통제 audit trail, 비식별 집계와 기관 승인 범위 확인 필요 |
+| E05 | A | 성인 사람 자료의 동의·철회, 목적 제한, 접근자, 보존·폐기와 note 검토를 수집 전 protocol로 반영 | 개인정보 경계·외부평가 패킷, 원고 5절 | 개인 연구 scope attestation과 consent/version/hash 전에는 수행 완료 시제 금지 |
+| E06 | A | 참여자 연구를 선택할 때 미성년자·위해 중단을 포함한 IRB/기관 승인 전 수집 금지 조건을 반영 | 외부평가 패킷·H01 사전등록, 원고 5절 | 참여자 기관 검토·승인 전에는 계획으로만 유지하고 실제 adverse 결과로 표현하지 않음 |
+| E07 | C | 참여자 연구의 IRB/PIPA 승인번호, 승인일, protocol version과 모집 허가 | H00 외부 의존 | 참여자 기관 승인본과 공개 가능한 승인 metadata hash 필요 |
+| E08 | C | 실제 participant/reviewer 수·인구통계·철회·adverse event·보존/삭제 이행 | 사람 자료 미수집 | 동의된 자료, 접근통제 audit trail, 비식별 집계와 해당 경로의 승인 범위 확인 필요 |
 
 ### 개인정보 zone을 원고에 옮길 때의 제한
 
@@ -218,7 +218,7 @@ Base+ cache builder report SHA-256은
    S103→S104→S105→S106→S107→S108 순서를 따른다.
 3. **S2/E01/C03/R04**: 독립 holdout, 전문가 판정, perturbation report,
    coaching 200건, blind MOS/CMOS 원본과 통계를 각각 완료해야 한다.
-4. **H00–H04**: 기관 승인, consent, 모집, pre/post/retention, blind
+4. **H00–H04 참여자 연구 경로**: 기관 승인, consent, 모집, pre/post/retention, blind
    rating, SAP lock, pilot nuisance, final N simulation, ITT/missingness
    분석을 순서대로 완료해야 학습효과 문장을 쓸 수 있다.
 5. **최종 부록**: 모든 완료 run의 config/report/registry, 실패 사례,

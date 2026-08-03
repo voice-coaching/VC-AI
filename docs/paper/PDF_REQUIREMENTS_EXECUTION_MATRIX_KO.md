@@ -24,8 +24,8 @@
 - `구현 준비`: 계약, runner, 정적 preflight나 합성 테스트만 있다.
 - `실행 중`: 정본 프로세스가 살아 있으나 완료 artifact가 아직 없다.
 - `미실행`: 실제 데이터·모델·metric 결과가 없다.
-- `외부 의존`: 기관 승인, 전문가, 원어민 녹음 또는 학습자 참여가
-  필요하다.
+- `외부 의존`: 개인 연구 scope attestation, 전문가·원어민 평가 또는
+  참여자 연구의 기관 승인·학습자 참여가 필요하다.
 
 PDF에는 IRB 승인 상태, 모집 표본수, power analysis, 특정 코퍼스와 GPU
 요구사항이 적혀 있지 않다. 저장소의 IRB·표본수·데이터·하드웨어 계획은
@@ -270,10 +270,10 @@ DAG를 구분해 기술해야 한다.
 | P7-10 | pronunciation accuracy·satisfaction | 실제 자료 없음 | 외부 의존 | 승인된 척도와 분석 |
 | P7-11 | 4주 retention | 실제 자료 없음 | 외부 의존 | longitudinal collection |
 | P7-12 | Loop A 품질과 Loop B 학습효과 분리·인과 간극 | 실제 결합 자료 없음 | 외부 의존 | R04+H04 별도 결과 후 분석 |
-| P7-13 | PIPA/GDPR·미성년자 동의·편향 감사 | H00 package만 준비 | 외부 의존 | 기관 공식 판단·동의·감사 이행 |
+| P7-13 | PIPA/GDPR·미성년자 동의·편향 감사 | H00 package만 준비 | 외부 의존 | 참여자 연구를 선택할 때의 기관 공식 판단·동의·감사 이행 |
 
 PDF는 C0~C5를 모두 제시하지만 arm 간 primary contrast, 모집 N,
-randomization, allocation concealment, 결측 처리와 IRB 절차를 정하지
+randomization, allocation concealment, 결측 처리와 참여자 연구의 IRB 절차를 정하지
 않았다. 저장소는 feasibility와 confirmatory를 분리하고
 `C3-C0`, `C5-C3`를 독립 participant-unit 비교로 계획했지만, 이는 실제
 승인·사전등록 전까지 계획일 뿐이다.

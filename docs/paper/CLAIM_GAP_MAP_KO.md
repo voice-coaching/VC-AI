@@ -81,7 +81,7 @@ synthetic/unit test 개수는 프로젝트 관리·코드 검증 상태이지 �
 | 3.3 WavLM | Base+/Large cache·head·registry, S103 비교와 Large 채택 gate 실패 | 후속 S104–S108 계약 | WavLM/계층·fusion 설계 | adapter·fusion·calibration·promotion |
 | 3.4–3.6 | R00 CC0 문장 텍스트 패키지 | 후속 평가 설계 | 없음 | S2/metamorphic, R01–R04 코칭/TTS, H04 |
 | 4. 논의 | explicit·Base+/Large/S103 dev와 threshold/oracle/silver 제한 | 후속 GOP/SSL·adapter 비교 질문 | 기존 PDF 주장 철회 | 인과·배포·교육 효과 |
-| 5. 윤리·재현성 | 현재 hash/registry, Base+/Large/S103 source chain, R00 라이선스와 비식별 처리 | 데이터·run 보존 정책 | 없음 | IRB·동의·외부 녹음/평정 |
+| 5. 윤리·재현성 | 현재 hash/registry, Base+/Large/S103 source chain, R00 라이선스와 비식별 처리 | 데이터·run 보존 정책 | 없음 | 개인 연구 scope·동의·외부 녹음/평정; 참여자 연구를 선택할 때 IRB |
 | 부록 | 없음 | 없음 | 없음 | hyperparameter, ontology, 실패 사례, license |
 
 ## 4. O — 관측된 engineering 결과
@@ -163,8 +163,8 @@ source는 구성요소와 선행 범위만 지지하며 본 연구의 한국어 
 | X04 | adapter/HiPAMA/fusion/calibration/S108 비교·승격 성능 | S101–S103은 O21–O24로 완료; S104 Base+ adapter 3-seed 정본 GPU 학습 실행 중, S105–S108 실제 결과 0 | S104 completed commit과 S105–S108 ablation·calibration·promotion report |
 | X05 | S2 독립 감사 결과 | S200–S203 대기 | 독립 backbone/정렬/holdout/목표와 전문가 결과 |
 | X06 | coaching 위치·유형·unsupported claim | C03 외부 의존 | 200건 전문가 감사 |
-| X07 | reference/TTS MOS·CMOS와 단일 대비 우위 | R04 외부 의존 | 동의된 평가 원본과 blind 통계 |
-| X08 | IRB, 모집, 학습자 녹음, post/retention, 학습 효과 | H00/H02/H03 외부 의존, H04 대기 | 승인·동의·실제 참여자·blind rating·mixed-model report |
+| X07 | reference/TTS MOS·CMOS와 단일 대비 우위 | R04 외부 의존 | 개인 연구 scope attestation·동의된 평가 원본과 blind 통계 |
+| X08 | 참여자 연구의 IRB, 모집, 학습자 녹음, post/retention, 학습 효과 | H00/H02/H03 외부 의존, H04 대기 | 참여자 승인·동의·실제 참여자·blind rating·mixed-model report |
 | X09 | silence/gain/duration/F0/phone metamorphic 결과 | E01 대기 | 실행 artifact와 ≥95% 판정 |
 | X10 | 전체 hyperparameter, ontology, 실패 사례, S1/S2 disagreement, license 부록 | 부록 marker 유지 | 각 고정 artifact와 citation/license 감사 |
 | X11 | 중국어·일본어 L1 밖 일반화와 배포 성능 | 추가 L1·외부평가 없음 | 별도 데이터와 predicted-alignment 외부 평가 |
