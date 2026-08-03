@@ -1,6 +1,6 @@
 # 다음 단계 실행 계획
 
-최종 갱신: 2026-07-29 (Asia/Seoul)
+최종 갱신: 2026-08-02 (Asia/Seoul)
 
 ## 현재 상태
 
@@ -15,13 +15,41 @@
 - smoke/full 공용 학습·평가 코드 구현
 - pytest/Ruff/mypy 통과
 
-현재 상태는 `MANUAL_ALIGNMENT_AUDIT_REQUIRED`다. smoke와 전체 학습은
-아직 시작하지 않았다.
+240건 1차 독립 수동 정렬 감사는 **실제로 완료됐지만 gate를 통과하지
+못했다.** 결과: `sample_count=240`, `correct_count=178`,
+`alignment_accuracy=0.7417`, `status=failed`(기준 0.95). 실패 62건
+분석과 후속 조치(phone-level accuracy 지표 도입, duration 5초 이상
+30건 재감사 표본 생성)는 저장소 루트
+`docs/AIHUB71490_EXPERT_AUDIT_WORKSHEET_GUIDE_KO.md` 6절과
+`docs/RESEARCH_COMPLETION_TRACKER_KO.md`(G04, 즉시 실행 큐 91번
+항목)를 따른다. 현재 상태는 여전히
+`MANUAL_ALIGNMENT_AUDIT_REQUIRED`(gate 통과분 없음)이며, smoke와 전체
+학습은 시작하지 않았다.
 
-## 1. 최우선 작업: 독립 수동 정렬 감사
+## 1. 진행 중: 5초 이상 30건 재감사와 gate 재정의
 
-한국어 음성학 또는 음성 정렬 검수 역량이 있는 독립 검수자가 다음
-worksheet 240건을 완성해야 한다.
+1차 240건 실패 원인은 phone(음소) 개수가 많은 발화일수록 "발화 전체가
+완벽할 확률"이 이항분포적으로 낮아지는 통계적 효과였다(phone 단위
+오류율은 발화 길이와 무관하게 5~8%로 일정함을 확인). 알고리즘
+파라미터 문제가 아니었다. 이에 따라 `incorrect_interval_count` 기반
+phone-level accuracy를 발화 단위 accuracy와 병행 도입했고, duration
+5초 이상 utterance 30건을 현재(버그 수정 반영) 알고리즘으로
+재계산해 독립 표본으로 만들었다.
+
+```text
+data/processed/aihub71490/manifests/
+  aihub71490_manual_alignment_audit_long30_v2.tsv
+  aihub71490_manual_alignment_audit_long30_v2_details.jsonl
+docs/audit/aihub71490_manual_alignment_audit_long30_v2_public.tsv
+```
+
+이 30건 재감사 결과와, 어느 지표(발화 단위 vs phone 단위)를 최종 G04
+gate로 쓸지는 연구책임자 결정 사항이며 아직 확정되지 않았다.
+
+## 2. 240건 1차 worksheet 참고 (완료됨)
+
+240건 worksheet 자체는 이미 완료됐다. 재현·재검증이 필요하면 다음
+파일을 사용한다.
 
 ```text
 data/processed/aihub71490/manifests/
@@ -81,7 +109,7 @@ alignment_accuracy >= 0.95
 95% 미만이면 학습하지 않고 실패 사례를 유형별로 분석해 TextGrid
 정규화·제외 정책과 manifest를 다시 생성해야 한다.
 
-## 2. Smoke training
+## 3. Smoke training
 
 수동 감사 통과 후에만 저장소 루트에서 실행한다.
 
@@ -146,7 +174,7 @@ Smoke 결과가 나쁘면 전체 학습을 시작하지 않는다. 특히 200 st
 loss가 전혀 감소하지 않거나 decode가 대부분 비어 있으면 learning rate,
 batch 구성, target 길이와 CTC input/output length를 먼저 조사한다.
 
-## 3. 전체 학습 전 최종 확인
+## 4. 전체 학습 전 최종 확인
 
 Smoke 통과 후 다음 항목을 다시 확인한다.
 
@@ -160,7 +188,7 @@ Smoke 통과 후 다음 항목을 다시 확인한다.
 - GPU에서 다른 대규모 작업이 실행 중이지 않음
 - smoke checkpoint와 평가 산출물 SHA-256 기록
 
-## 4. 전체 학습
+## 5. 전체 학습
 
 모든 gate 통과 후 저장소 루트에서 실행한다.
 
@@ -200,7 +228,7 @@ locked test evaluation: 일반 학습 runner에서는 접근 금지
 `--resume-from-checkpoint <checkpoint-path>`를 사용한다. 다른 revision,
 vocab 또는 manifest로 기존 optimizer checkpoint를 재사용하지 않는다.
 
-## 5. 전체 학습 완료 검증
+## 6. 전체 학습 완료 검증
 
 전체 학습 완료 후 반드시 보고할 항목:
 
@@ -226,8 +254,10 @@ vocab 또는 manifest로 기존 optimizer checkpoint를 재사용하지 않는�
 ## 실행 순서 요약
 
 ```text
-독립 전문가 240건 청취 감사
-  -> 감사 채점 및 95% gate
+독립 전문가 240건 청취 감사 (완료: 74.17%, gate 미달)
+  -> 실패 원인 분석 (완료: 파라미터 문제 아님, phone-level accuracy 도입)
+  -> 5초 이상 30건 재감사 (진행 중)
+  -> 감사 채점 및 95% gate 재확정
   -> smoke 200 steps
   -> smoke PER/decode/reload gate
   -> 전체 3 epoch 학습
@@ -235,6 +265,7 @@ vocab 또는 manifest로 기존 optimizer checkpoint를 재사용하지 않는�
   -> 별도 승인된 protected executor에서 locked test 1회 평가
 ```
 
-현재 즉시 해야 할 일은 첫 단계인 독립 수동 정렬 감사다. 그 결과가
-통과되기 전까지 `configs/xlsr300m_full.yaml`의 `enabled: false`를
-유지한다.
+현재 즉시 해야 할 일은 5초 이상 30건 재감사 완료와, 어느 정확도
+지표(발화 단위 vs phone 단위)를 최종 gate로 쓸지 연구책임자가
+확정하는 것이다. gate가 확정·통과되기 전까지
+`configs/xlsr300m_full.yaml`의 `enabled: false`를 유지한다.

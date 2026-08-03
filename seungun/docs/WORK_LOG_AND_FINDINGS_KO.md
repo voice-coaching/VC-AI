@@ -1,6 +1,6 @@
 # XLS-R 한국어 음소 인식 베이스라인 작업 기록
 
-최종 갱신: 2026-07-29 (Asia/Seoul)
+최종 갱신: 2026-08-02 (Asia/Seoul)
 
 ## 1. 작업 목적과 안전 원칙
 
@@ -452,3 +452,38 @@ mypy strict: 13 source files, no errors
 `manual alignment audit status is not passed`로 먼저 종료됐다. output
 directory도 생성되지 않아 수동 정렬 gate가 manifest·모델 접근보다 앞에서
 계속 fail-closed임을 확인했다.
+
+### 11.9 240건 1차 감사 실제 완료(2026-08-02) 및 gate 미달
+
+독립 검수자가 token 보호 로컬 review UI(브라우저·Windows tkinter
+클라이언트)로 240건 전부를 실제 청취·판정했다. 판정 결과를 원본
+worksheet에 반영하는 과정에서 worksheet 파일의 pinned SHA-256이
+일시적으로 어긋난 사고가 있었으나 pristine 사본으로 즉시 복구했다.
+
+```text
+sample_count=240, valid_decision_count=240
+correct_count=178, alignment_accuracy=0.7417
+status=failed (minimum_accuracy=0.95, 228/240 필요)
+```
+
+62건 실패를 층화·자동 operation·검수자 메모로 분석한 결과, "발화가
+길수록 실패율이 높다"는 관찰은 phone(음소) 개수 누적에 따른
+이항분포 효과로 확인됐다(phone 단위 오류율은 발화 길이와 무관하게
+5~8%로 일정). `align_intervals`의 tolerance_seconds/min_overlap_ratio
+파라미터를 완화해도 deletion+insertion이 줄지 않고 오히려 늘어,
+파라미터 튜닝으로 해결되는 문제가 아님을 확인했다. 검수자 메모 기반
+가설 두 건(Unicode 자모 인코딩, target null)도 원본 데이터 직접
+대조 결과 사실이 아니었다. 다만 `_parse_interval_list`의 null-label
+방어와 `align_intervals`의 Hangul 자모 정규화는 별개의 정당한 방어
+코드로 반영했다(`src/voice_coach/data/aihub71490.py`,
+`src/voice_coach/data/intervals.py`).
+
+이에 따라 `incorrect_interval_count` 기반 phone-level accuracy를
+발화 단위 accuracy와 병행 도입하고, duration 5초 이상 utterance
+30건을 현재(버그 수정 반영) 알고리즘으로 재계산한 독립 재감사
+표본을 생성했다(`aihub71490_manual_alignment_audit_long30_v2.tsv`).
+이 재감사 결과와 최종 gate 지표 확정은 아직 진행 중이며, 통과 전까지
+`configs/xlsr300m_full.yaml`의 `enabled: false`를 유지한다. 상세는
+저장소 루트 `docs/AIHUB71490_EXPERT_AUDIT_WORKSHEET_GUIDE_KO.md` 6절과
+`docs/RESEARCH_COMPLETION_TRACKER_KO.md`(즉시 실행 큐 91번 항목)를
+따른다.

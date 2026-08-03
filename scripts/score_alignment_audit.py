@@ -110,8 +110,16 @@ def main() -> int:
     total_phone_intervals = 0
     total_incorrect_phone_intervals = 0
     invalid_phone_level_indices = []
+    legacy_phone_level_indices = []
     if has_phone_level_columns and not invalid:
         for row in rows:
+            # A legacy review (predating incorrect_interval_count) exports
+            # this column as an empty string, not a malformed value: skip
+            # it for the phone-level aggregate instead of failing the
+            # whole audit on data it was never asked to collect.
+            if not row["incorrect_interval_count"].strip():
+                legacy_phone_level_indices.append(row["audit_index"])
+                continue
             try:
                 incorrect_count = int(row["incorrect_interval_count"])
                 total_count = int(row["total_alignment_interval_count"])
@@ -126,7 +134,7 @@ def main() -> int:
             total_incorrect_phone_intervals += incorrect_count
         if invalid_phone_level_indices:
             failed_checks.append("invalid_phone_level_counts")
-        elif total_phone_intervals > 0:
+        elif not legacy_phone_level_indices and total_phone_intervals > 0:
             phone_level_accuracy = 1 - (
                 total_incorrect_phone_intervals / total_phone_intervals
             )
@@ -146,6 +154,7 @@ def main() -> int:
             "total_phone_intervals": total_phone_intervals,
             "total_incorrect_phone_intervals": total_incorrect_phone_intervals,
             "invalid_audit_indices": invalid_phone_level_indices,
+            "legacy_audit_index_count": len(legacy_phone_level_indices),
         },
         "invalid_audit_indices": invalid,
         "missing_reviewer_indices": missing_reviewers,

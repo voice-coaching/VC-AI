@@ -1,7 +1,8 @@
 # 연구 완성 하위 작업 추적기
 
 최초 작성: 2026-07-29 KST
-최종 갱신: 2026-07-29 KST
+최종 갱신: 2026-08-02 KST (G04 1차 240건 실제 감사 결과·원인 분석·
+phone-level accuracy·30건 재감사 표본 반영)
 상태: 실행 중
 
 ## 1. 최종 목표
@@ -62,7 +63,7 @@ amendment**를 병행한 뒤 S106 정본 실행
 |---|---|---:|---:|---|---|
 | WP0 | 재현 환경·계약·추적 | 5 | 5 | 완료 | 후속 trainer registry 연결 상태를 계속 감사 |
 | WP1 | 데이터 수집·라이선스·카탈로그 | 12 | 10 | 진행 중 | 전문가 holdout, 원어민 reference, 파일럿 데이터 |
-| WP2 | 정규 manifest·split·G0 | 10 | 9 | 진행 중 | 240건 전문가 정렬 감사 95% |
+| WP2 | 정규 manifest·split·G0 | 10 | 9 | 진행 중 | G04 1차 240건 감사 완료(74.17%, gate 미달); 원인 분석·phone-level accuracy 도입·30건 재감사 진행 중 |
 | WP3 | 명시적 특징·GOP 기준선 | 12 | 8 | 진행 중 | B05 joint one-shot evaluator, G0·D07·S108 뒤 최종 locked gate |
 | WP4 | S1 WavLM·계층 모델·fusion | 18 | 11 | 진행 중 | Base+ adapter·계층 ablation·fusion·보정 |
 | WP5 | S2 독립 감사기 | 8 | 0 | 대기(실제 S2) | S200–S203 정적 preflight 준비는 완료; S108 final gate와 독립 holdout·사전등록 뒤 실제 S201–S203 실행 |
@@ -132,7 +133,7 @@ DC/content/noise/reverb/interruption metric·threshold와 adjudication도
 | G01 | 완료 | speaker-disjoint 5-way split, 교집합 0 | split hash | 고정 |
 | G02 | 완료 | PCM cross-split 중복 0 | enriched audit | 고정 |
 | G03 | 완료 | pairing≥99%, decoder≤0.1%, time-bound≤1% | G0 audit JSON | 고정 |
-| G04 | 외부 의존 | 240건 수동 정렬 정확도≥95% | 로컬 review UI/CLI, 현재 0/240 progress report | 한국어 음성학 전문가 판정 필요 |
+| G04 | 실패(1차 감사 완료·95% 미달) | 240건 수동 정렬 정확도≥95% | 240/240 실제 전문가 판정 완료, `alignment_accuracy=0.7417`(178/240), `status=failed`; scoring TSV/review report/result SHA `05a4fc2b…d17`/`add6942a…e17`/`411eb721…d17`; 실패 분석 report SHA `1bda1868…19d`(층화·operation별 실패율, 검수자 메모); phone-level accuracy 지표 도입(legacy 240건은 미수집이라 null); duration≥5초 30건 재감사 표본 신규 생성(metadata SHA `452299fc…5d2`, 검수 진행 중) | 30건 재감사 완료 확인, phone-level accuracy 채택 여부와 최종 G04 gate 정의는 연구책임자 결정 필요 |
 | G05 | 완료 | 20개 prompt 예약, challenge 5,522건 | challenge JSON/hash | 학습 filter에 연결 |
 | G06 | 완료 | 17종 error ontology 미매핑 0, phone coverage 99.9682% | data card/taxonomy tests | unknown audit 유지 |
 
@@ -2045,6 +2046,57 @@ delivery readiness만 사용할 수 있고 stage 1의 unblinded effect 접근은
     새 실행은 동일 immutable config/lock으로 처음부터 수행하되
     persistent user-systemd service와 연속 pin watcher로 unified-exec
     수명에서 분리한다.
+91. 완료(G04 1차 240건 실제 전문가 감사·gate 미달·원인 분석): 독립
+    검수자가 token 보호 로컬 review UI(브라우저 및 Windows tkinter
+    클라이언트)로 240건 전부를 실제 청취·판정했다. 판정을 원본
+    worksheet에 반영하는 과정에서 발생한 pinned SHA-256 불일치는
+    pristine 사본으로 복구해 해소했다. 결과:
+
+    ```text
+    sample_count=240, valid_decision_count=240
+    correct_count=178, alignment_accuracy=0.7417
+    status=failed (minimum_accuracy=0.95, 228/240 필요)
+    reviewer_count=2, maximum_boundary_error_ms.max=50.0
+    ```
+
+    scoring TSV/review report/result JSON SHA-256:
+    `05a4fc2b7c1fc7cda73eff5fb539dd3d04fa65b0a824fbf0a6daa9e7622f05c5`/
+    `add6942a428fad939db4d806773d061d947184be0cedaea13d7ddb1ca8f18e17`/
+    `411eb721f05a1c2afd562233a6dee911cc3a9be147e9b7e624cc521942072d17`.
+
+    실패 62건을 층화·자동 operation·검수자 메모로 분석했다(report SHA
+    `1bda1868c643d0ee525f815b9638ff23983812b68ef818037c6078d7a29a419d`).
+    검수자 메모 기반 가설 두 건(#129 Unicode 자모 인코딩, #216 target
+    null)은 원본 데이터 직접 대조 결과 둘 다 사실이 아니었다. 그래도
+    `_parse_interval_list`의 null-label 방어(JSON null이
+    `str(None)`으로 조용히 `"None"` 문자열이 되던 결함 차단)와
+    `align_intervals`의 Hangul 조합/호환 자모 정규화(`unicodedata` 이름
+    기반 자체 검증 매핑, 67개 전수 커버)는 별개의 정당한 방어 코드로
+    반영했다(`src/voice_coach/data/aihub71490.py`,
+    `src/voice_coach/data/intervals.py`). 실제 enriched Parquet 429만
+    target interval 전수 검사 결과 `"None"` 문자열 라벨은 0건이었다.
+
+    "발화가 길수록 실패율이 높다"는 관찰은 phone(음소) 개수 누적에 따른
+    이항분포 효과로 확인됐다(phone 단위 오류율은 길이 무관 5~8%로
+    일정, report SHA
+    `ce0303c0ddcb41ce92a2860ad799d253fc57caeb43625b016e8984b958240317`).
+    tolerance_seconds/min_overlap_ratio 완화는 deletion+insertion을
+    줄이지 않고 오히려 늘려, 파라미터 튜닝으로 해결되는 문제도 아님을
+    확인했다.
+
+    이에 따라 `incorrect_interval_count` 필드와 phone-level accuracy
+    지표를 review 스키마·GUI·`review_alignment_audit.py`·
+    `score_alignment_audit.py`에 도입했다(발화 단위 accuracy를 대체하지
+    않고 병행 보고; 기존 240건은 legacy로 null 처리). duration 5초
+    이상 utterance만 대상으로 한 독립 30건 표본을 현재(버그 수정
+    반영) `align_intervals()`로 재계산해 생성했다(metadata SHA
+    `452299fce50289ae04653c9d2bf5ca567dd074e08605e8ac45cdcf96d1a595d2`,
+    `docs/audit/aihub71490_manual_alignment_audit_long30_v2_public.tsv`).
+    관련 pytest 전체와 D07 계약 테스트 통과, 무관한 사전 존재 실패 3건은
+    `git stash`로 이번 작업과 무관함을 확인했다.
+
+    G04는 여전히 95% 미달로 미점수 상태이며, WP2 배점을 올리지 않는다.
+    30건 재감사 완료와 phone-level accuracy 채택 여부는 후속 항목이다.
 
 ## 6. 외부 의존과 정직한 중단 기준
 

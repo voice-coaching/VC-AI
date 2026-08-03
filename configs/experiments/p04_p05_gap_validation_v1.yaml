@@ -74,8 +74,8 @@ sources:
     aggregate_only: true
   tracker:
     path: docs/RESEARCH_COMPLETION_TRACKER_KO.md
-    sha256: 7edddb0ad54fcf81ff36a12dd2fe878e9fabd02709444b4f5405203138dd4e20
-    size_bytes: 201741
+    sha256: 898dc5ae90b9079f7ff8d6de396551e2be36bdb53d54bf2a83f185b7e8d018c3
+    size_bytes: 207125
     aggregate_only: true
   b07_config:
     path: configs/experiments/b07_gop_acoustic_posterior_v1.yaml
