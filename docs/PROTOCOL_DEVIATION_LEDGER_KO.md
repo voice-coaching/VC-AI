@@ -151,3 +151,47 @@
 DEV-S104-001은 첫 시도의 결과를 사후 수용하는 근거로 사용하지 않는다.
 깨끗한 재실행과 독립 commit 검증이 끝난 뒤에만
 `CLOSED_BY_RERUN`으로 닫을 수 있다.
+
+## DEV-S104-003 — 현재 checkout source pin 불일치에 따른 v2 계약 교체
+
+현재 판정: **INVALIDATING**
+발견 시각: 2026-08-03 KST
+대상: `aihub71490-wavlm-s104-adapter-v1-dev` 첫 시도와 그 rollover
+
+### 확인된 사실
+
+1. v1의 read-only rollover audit는
+   `implementation interval_module SHA-256 differs`에서 fail-closed됐다.
+   v1 lock의 기대 SHA는
+   `60b430cc421920f2f7907b93391d18a80b9f9f47fa83e669ba3a5aa07fed2b9e`,
+   현재 `src/voice_coach/data/intervals.py` SHA는
+   `0fc28d734951ca300bb208d2b76b89a9207093886853a0ce65adf30705c247cf`다.
+2. v1 registry(`running`, metric/artifact 0)와 빈 partial은 수동 삭제,
+   metadata 수정 또는 기존 경로 덮어쓰기 없이 그대로 보존했다. 이
+   상태에서는 v1을 current checkout 기준의 정본 rerun으로 archive할 수
+   없다.
+3. 사용자 승인으로 v1과 분리된 v2 contract를 생성했다. config는
+   `configs/experiments/wavlm_s104_adapter_v2_current_code.yaml`, SHA는
+   `7a78e718954c45eb3ad03658b6da916a5c1163a51d683125daccd6c272be6434`다.
+   execution lock은
+   `artifacts/experiments/aihub71490_wavlm_s104_adapter_v2_current_code/execution_lock.json`,
+   SHA는 `c37ce4e3d0aa7b7e0c016c56342397b818d6316d6a0e7e22bab9867a63ab5a3e`다.
+4. v2 full preflight는 planned run ID
+   `aihub71490-wavlm-s104-adapter-v2-current-code-dev`, Base+ 선택,
+   169,837 included utterances, status
+   `ready_for_s104_gpu_training`으로 종료됐다. config-only/full preflight
+   모두 raw-audio와 GPU를 열지 않았고 output을 쓰지 않았다.
+
+### 판정과 후속 계약
+
+- v1 시도는 source pin 불일치 때문에 정본 결과나 v2의 predecessor로
+  사용할 수 없다. v1 lock/registry/partial을 재작성하거나 소급
+  성공으로 바꾸지 않는다.
+- v2는 새로운 experiment ID와 artifact root를 가진 별도 실행이다.
+  실제 실행은 v2 lock을 변경하지 않고 persistent supervisor와 연속
+  source-pin watcher 아래에서 처음부터 시작해야 한다.
+- v2 completed commit과 독립 `--validate-commit-only` 검증이 생기기
+  전에는 S104 metric·점수·논문 반영·S105/S106/S107 v2 re-pin을 허용하지
+  않는다.
+- 이 항목은 v1을 성공으로 인정하거나 v2 실행이 완료됐다는 증거가
+  아니다. 현재 완료된 것은 v2 contract와 CPU/static full preflight뿐이다.

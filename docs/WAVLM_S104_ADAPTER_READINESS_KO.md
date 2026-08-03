@@ -1,9 +1,9 @@
 # WavLM S104 adapter 구현·실행 준비 기록
 
 최초 작성: 2026-07-29 KST  
-최종 갱신: 2026-07-29 KST  
-상태: **CPU 구현·full preflight 완료 / 첫 CUDA 시도 외부 SIGTERM 중단 /
-증거 보존·깨끗한 재실행 준비 중**
+최종 갱신: 2026-08-03 KST
+상태: **v1 CUDA 시도 무효화 / 현재 코드 기준 v2 contract·full preflight
+완료 / 실제 GPU 실행 대기**
 
 ## 1. 현재 결론
 
@@ -21,10 +21,34 @@ publisher, completed/failure registry, commit-only 독립 validator까지
 - 정본 S103 comparison은 gate 실패를 확정해 Base+를 선택했고, 실제
   full preflight는 immutable execution lock을 생성했다.
 
-즉, **구현·실행 준비도는 완료됐지만 첫 실행 시도는 정본 결과로 사용할
-수 없다**. 비종료 registry와 빈 partial을 검증된 rollover 절차로 보존한
-뒤 persistent supervisor에서 처음부터 재실행한다. 완료 commit과 독립
-validator가 나오기 전에는 결과 완료나 metric을 주장하지 않는다.
+즉, **v1 첫 실행 시도는 정본 결과로 사용할 수 없고, 현재 checkout을
+기준으로 분리한 v2 실행 계약만 다음 실행에 사용한다**. v1의 stale
+registry/partial은 source pin이 현재 checkout과 달라 기존 rollover
+계약으로 archive할 수 없으므로 그대로 보존한다. v2의 completed commit과
+독립 validator가 나오기 전에는 결과 완료나 metric을 주장하지 않는다.
+
+## 1.1 현재 코드 기준 v2 실행 계약
+
+2026-08-03 KST 사용자 승인으로 v1 실패 시도와 분리된 새 계약을 만들었다.
+기존 v1 config·execution lock·registry·partial은 변경하지 않는다.
+
+| 항목 | v2 고정값 |
+|---|---|
+| config | `configs/experiments/wavlm_s104_adapter_v2_current_code.yaml` |
+| config SHA-256 | `7a78e718954c45eb3ad03658b6da916a5c1163a51d683125daccd6c272be6434` |
+| execution lock | `artifacts/experiments/aihub71490_wavlm_s104_adapter_v2_current_code/execution_lock.json` |
+| execution lock SHA-256 | `c37ce4e3d0aa7b7e0c016c56342397b818d6316d6a0e7e22bab9867a63ab5a3e` |
+| experiment ID | `aihub71490_wavlm_s104_adapter_v2_current_code` |
+| planned run ID | `aihub71490-wavlm-s104-adapter-v2-current-code-dev` |
+| selected candidate | WavLM Base+ |
+| included utterances | 169,837 |
+| current interval source pin | `0fc28d734951ca300bb208d2b76b89a9207093886853a0ce65adf30705c247cf` |
+| preflight status | `ready_for_s104_gpu_training` |
+| preflight GPU/raw-audio execution | 0 |
+
+이 v2는 현재 checkout의 source hash를 고정한 development-only,
+oracle-alignment, silver-label, no-promotion 실행이다. S104 실제 GPU
+실행·checkpoint·dev metric·completed registry·commit은 아직 0이다.
 
 ## 2. 서브태스크 완성도
 
@@ -37,7 +61,7 @@ validator가 나오기 전에는 결과 완료나 metric을 주장하지 않는�
 | S104-05 | inner selection과 dev 1회 평가 | 100% 구현 | train speaker-disjoint selection, train-only vocab/weight/threshold, seed별 dev 정확히 1회 |
 | S104-06 | 산출물·registry·atomic publisher | 100% 구현 | seed당 5개+aggregate 1개, 정확히 16개, 실패/복구 fault injection 통과 |
 | S104-07 | 독립 commit validator | 100% 구현 | source truth·metrics·slice·checkpoint·registry·S103 predecessor를 재구성해 검증 |
-| S104-08 | 실제 고성능 GPU 3-seed 실행 | 0%; 첫 시도 중단 | GB10 첫 PID `386918`은 seed 42 epoch 9 중 exit 143; registry `running`/metric 0/artifact 0, 빈 partial만 존재. incident archive 뒤 persistent user-systemd service에서 full restart |
+| S104-08 | 실제 고성능 GPU 3-seed 실행 | 0%; v1 시도 무효화, v2 대기 | v1 PID `386918`은 seed 42 epoch 9 중 exit 143. v2 full preflight는 통과했지만 실제 GPU 실행·metric·artifact·commit은 0. v2를 persistent supervisor에서 처음부터 실행 |
 | S104-09 | 실제 결과 검증·논문 반영 | 0% | committed S104 generation과 독립 validator 통과 뒤 수행 |
 | S104-10 | 승격 판단 | 0% | S104는 development-only이며 별도 G04/D07 수동 gate 없이는 승격 금지 |
 
@@ -115,8 +139,9 @@ D1 restricted-internal 범위다.
 
 주요 파일은 다음과 같다.
 
-- `configs/experiments/wavlm_s104_adapter_v1.yaml`
-  - S103 branch, 두 model snapshot pin, optimization/evaluation/output 계약
+- `configs/experiments/wavlm_s104_adapter_v2_current_code.yaml`
+  - 현재 checkout source pin, S103 branch, 두 model snapshot pin,
+    optimization/evaluation/output 계약
 - `src/voice_coach/models/wavlm_adapter.py`
   - residual adapter 주입, backbone freeze, canonical trainable allowlist
 - `src/voice_coach/training/wavlm_adapter_contract.py`
@@ -183,7 +208,7 @@ fault-injection으로 검증했다. 유효한 generation+completed registry가
 ```bash
 PYTHONPATH=src ./.venv-scorer/bin/python \
   scripts/prepare_wavlm_s104_adapter.py \
-  --config configs/experiments/wavlm_s104_adapter_v1.yaml \
+  --config configs/experiments/wavlm_s104_adapter_v2_current_code.yaml \
   --config-only
 ```
 
@@ -194,12 +219,12 @@ PYTHONPATH=src ./.venv-scorer/bin/python \
 ```bash
 PYTHONPATH=src ./.venv-scorer/bin/python \
   scripts/prepare_wavlm_s104_adapter.py \
-  --config configs/experiments/wavlm_s104_adapter_v1.yaml
+  --config configs/experiments/wavlm_s104_adapter_v2_current_code.yaml
 ```
 
 성공 시 다음 execution lock이 생긴다.
 
-`artifacts/experiments/aihub71490_wavlm_s104_adapter_v1/execution_lock.json`
+`artifacts/experiments/aihub71490_wavlm_s104_adapter_v2_current_code/execution_lock.json`
 
 선택 후보, S103 gate, data cardinality, model/implementation hash를 검토한
 뒤에만 GPU 실행으로 넘어간다.
@@ -209,7 +234,7 @@ PYTHONPATH=src ./.venv-scorer/bin/python \
 ```bash
 PYTHONPATH=src ./.venv-scorer/bin/python \
   scripts/train_wavlm_s104_adapter.py \
-  --config configs/experiments/wavlm_s104_adapter_v1.yaml
+  --config configs/experiments/wavlm_s104_adapter_v2_current_code.yaml
 ```
 
 2026-07-29 KST에 `CUDA_VISIBLE_DEVICES=0`,
@@ -234,7 +259,7 @@ admission이 실패하거나 OOM이 나면 실패 registry를 보존하고 새 p
 ```bash
 PYTHONPATH=src ./.venv-scorer/bin/python \
   scripts/train_wavlm_s104_adapter.py \
-  --config configs/experiments/wavlm_s104_adapter_v1.yaml \
+  --config configs/experiments/wavlm_s104_adapter_v2_current_code.yaml \
   --validate-commit-only
 ```
 
@@ -247,9 +272,9 @@ PYTHONPATH=src ./.venv-scorer/bin/python \
    독립 검증한다.
 3. S104 full preflight를 실행해 immutable execution lock을 만든다.
 4. 선택 model과 execution lock hash를 검토한다.
-5. 중단된 첫 시도의 registry와 빈 partial을 검증·archive하고 incident
-   receipt를 deep validation한다. **진행 중**
-6. persistent user-systemd service와 연속 pin watcher에서 동일
+5. v1 source pin mismatch와 stale state를 보존 기록한다. 기존 v1
+   rollover는 실행하지 않는다. **완료(archive 불가 사유 기록)**
+6. persistent user-systemd service와 연속 pin watcher에서 v2
    immutable config/lock의 정본 3-seed S104를 처음부터 실행한다.
    **대기**
 7. `--validate-commit-only`로 16개 산출물과 predecessor chain을 검증한다.
@@ -257,9 +282,10 @@ PYTHONPATH=src ./.venv-scorer/bin/python \
 8. development-only 한계를 유지해 논문 표와 실험 절을 갱신한다.
 9. 승격이 필요하면 별도 G04 수동 alignment와 D07 전문가 검증을 완료한다.
 
-검증된 S103 commit과 full preflight blocker는 해소됐다. 실제 lock은
-Base+를 선택했고 정본 S104 GPU 실행이 진행 중이다. 다음 판정 지점은
-commit 생성과 read-only validator 통과다.
+검증된 S103 commit과 v2 full preflight blocker는 해소됐다. v2 lock은
+Base+를 선택했지만 정본 S104 GPU 실행은 아직 시작하지 않았다. 다음
+판정 지점은 persistent supervisor에서의 v2 실행 시작, commit 생성과
+read-only validator 통과다.
 
 ## 9. 검증 기록
 
@@ -289,7 +315,8 @@ attention-mask deprecation뿐이며 현재까지 실패는 아니다. 위 정적
 
 | 파일 | SHA-256 |
 |---|---|
-| S104 config | `aa9a19fa1bf2b706d2c692498055795284364d2cfab13774fddb2ad77e1ba8e9` |
+| S104 v1 historical config | `aa9a19fa1bf2b706d2c692498055795284364d2cfab13774fddb2ad77e1ba8e9` |
+| S104 v2 current-code config | `7a78e718954c45eb3ad03658b6da916a5c1163a51d683125daccd6c272be6434` |
 | preflight CLI | `58642383dbab13db4a00ada5188be701a2aefab5a3475d1c953bc85f53610e77` |
 | trainer CLI | `68048e553fbb50f291588076897c9a7372c6bb557b8b8b952d23c1c60917cda5` |
 | contract module | `a5c3c933b4fb55cbe0f8c33deb70a98bf47b53539304f6299b0728188b9ea06c` |

@@ -19,7 +19,7 @@ from voice_coach.training import wavlm_adapter_contract as contract
 
 
 ROOT = Path(__file__).resolve().parents[2]
-CONFIG = ROOT / "configs/experiments/wavlm_s104_adapter_v1.yaml"
+CONFIG = ROOT / "configs/experiments/wavlm_s104_adapter_v2_current_code.yaml"
 SCRIPT = ROOT / "scripts/prepare_wavlm_s104_adapter.py"
 CONTRACT_SOURCE = ROOT / "src/voice_coach/training/wavlm_adapter_contract.py"
 
