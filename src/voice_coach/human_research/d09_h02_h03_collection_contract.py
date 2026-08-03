@@ -92,13 +92,6 @@ SOURCE_PATHS = (
     "src/voice_coach/references/r03_selection_contract.py",
     "configs/experiments/r04_blind_multireference_evaluation_v1.yaml",
     "src/voice_coach/references/r04_blind_evaluation_contract.py",
-    "docs/D09_H02_H03_LONGITUDINAL_DATA_MODEL_PRIVACY_SAFETY_CARD_KO.md",
-    "docs/D09_H02_H03_LONGITUDINAL_COLLECTION_READINESS_KO.md",
-    "docs/LEARNING_EFFECT_PREREGISTRATION_KO.md",
-    "docs/EXTERNAL_EVALUATION_EXECUTION_PACK_KO.md",
-    "docs/H00_HUMAN_RESEARCH_ETHICS_PRIVACY_CARD_KO.md",
-    "docs/H00_HUMAN_RESEARCH_APPROVAL_READINESS_KO.md",
-    "docs/H04_LEARNING_EFFECT_DATA_MODEL_PRIVACY_SAFETY_STATISTICS_CARD_KO.md",
     "configs/experiments/learning_effect_power_v1.yaml",
 )
 

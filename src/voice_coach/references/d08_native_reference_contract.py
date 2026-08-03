@@ -80,7 +80,6 @@ SOURCE_PATHS = (
     "data/reference/r00/CC0_NOTICE.txt",
     "data/reference/r00/r00_sentence_card_v1.json",
     "docs/DATA_PRIVACY_BOUNDARY_KO.md",
-    "docs/EXTERNAL_EVALUATION_EXECUTION_PACK_KO.md",
     "docs/R00_FIXED_SENTENCE_CARD_DATA_CARD_KO.md",
     "docs/R01_CANDIDATE_DATA_MODEL_LICENSE_CARD_KO.md",
     "docs/R01_CANDIDATE_GENERATION_READINESS_KO.md",

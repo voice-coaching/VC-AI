@@ -17,7 +17,7 @@ R03 전용 신규 파일만 사용해 다음 정적 계약을 구현했다.
 | `scripts/prepare_r03_reference_bank_selection.py` | config-only와 read-only full preflight CLI |
 | `tests/unit/test_r03_selection_contract.py` | bank/privacy/order/path bounded fault tests |
 | `tests/integration/test_prepare_r03_reference_bank_selection.py` | canonical zero-runtime와 R00→missing R01 fail 순서 |
-| `docs/R03_REFERENCE_BANK_DATA_MODEL_CARD_KO.md` | data/model/privacy/prereg/publication 경계 |
+| [retired contract 통합 안내](README.md#retired-contracts) | data/model/privacy/prereg/publication 경계의 이전 카드와 통합 위치 |
 | `docs/R03_REFERENCE_BANK_SELECTION_READINESS_KO.md` | 본 증거 문서 |
 
 R00/R01/R02 파일, 정본 tracker, 원고와 evidence map은 수정하지 않았다.

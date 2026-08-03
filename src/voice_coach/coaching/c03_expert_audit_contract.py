@@ -92,7 +92,6 @@ SOURCE_PATHS = (
     "docs/C02_COACHING_SELECTION_DATA_MODEL_SAFETY_CARD_KO.md",
     "docs/C02_DETERMINISTIC_COACHING_SELECTION_READINESS_KO.md",
     "docs/DATA_PRIVACY_BOUNDARY_KO.md",
-    "docs/EXTERNAL_EVALUATION_EXECUTION_PACK_KO.md",
     "docs/WAVLM_S107_CALIBRATION_READINESS_KO.md",
     "scripts/prepare_c03_expert_coaching_audit.py",
     "src/voice_coach/coaching/c02_selection_contract.py",

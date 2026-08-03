@@ -33,35 +33,27 @@ canonical_sources:
     - path: configs/human_research/h04_analyst_attestation_v1.template.json
       sha256: f3fe61c3ed5b3adb2d6d1fb9603e6316b885ff70757207b5e163247911cae1f0
     - path: configs/experiments/h00_human_research_approval_v1.yaml
-      sha256: 7128d30304bd3d1c8784ad79e14485a9bbca52fed9d90c878370d549e45f9698
+      sha256: 25f1925cc987ffade5e2f75e14c55fadd4d0b1e244b69a6da3b90fb818970933
     - path: src/voice_coach/human_research/h00_approval_contract.py
-      sha256: 1ef2c62b8c654bb409a2717061292548dd48d79fbae2e88b1b6ab93c224985cd
+      sha256: 1d45356f6aab3a5ebcc2f8268bce2a698dd5eaa2c555a8e22e6e0c9ffd0fc701
     - path: configs/experiments/learning_effect_power_v1.yaml
       sha256: 67737548ce1a22b7716fb5c58635f55a216ff7059fd709476198df3d5fb75c86
     - path: artifacts/planning/learning_effect_power_sensitivity_v1.json
       sha256: d63dc95bb4df4967775781def0386beb7ec959c396d847ae6b6e8c982dbce66d
-    - path: docs/LEARNING_EFFECT_PREREGISTRATION_KO.md
-      sha256: a125b655eecc358cb00f15d6b1ea38c0c4f19700f3503f328aa0753a493cd503
-    - path: docs/EXTERNAL_EVALUATION_EXECUTION_PACK_KO.md
-      sha256: bd8c38b48072a373803fccdc73bc812bcfd6d6750bcdbf50ac2896ef81aa71c3
-    - path: docs/H00_HUMAN_RESEARCH_APPROVAL_READINESS_KO.md
-      sha256: 52261068d25b34d92608ea25e3fee7ae725cfe749edf6c4373ebee6aa405e020
-    - path: docs/H00_HUMAN_RESEARCH_ETHICS_PRIVACY_CARD_KO.md
-      sha256: 4b5c5ed6beca0d703e1bd746ef9a4e317a5fd84ab1c682c428bf30b8e96c30ee
     - path: docs/paper/EXPERIMENTAL_MANUSCRIPT_KO.md
       sha256: dea994728ae8c73be098a29e9a70af2ab4730a651063e64687b40c07433b17eb
     - path: docs/paper/CLAIM_GAP_MAP_KO.md
       sha256: 2168233b459bbe0b2aac411de94d57720408be2479c96e589b14388ff3d5d7a1
     - path: docs/paper/METHODS_ETHICS_REPRODUCIBILITY_GAP_KO.md
-      sha256: 50847eb7eea13f5819a07d1aea3202ae40b2f528a9ea8c07d6d3661e6879a90c
+      sha256: 05f44e0f7fd7faa44601e0ab8073b29efa87712a0423d04a9ce08652dc57d575
 
 predecessor_h00:
   deep_validation_required: true
   actual_official_authorization_required: true
   config_path: configs/experiments/h00_human_research_approval_v1.yaml
-  config_sha256: 7128d30304bd3d1c8784ad79e14485a9bbca52fed9d90c878370d549e45f9698
+  config_sha256: 25f1925cc987ffade5e2f75e14c55fadd4d0b1e244b69a6da3b90fb818970933
   contract_path: src/voice_coach/human_research/h00_approval_contract.py
-  contract_sha256: 1ef2c62b8c654bb409a2717061292548dd48d79fbae2e88b1b6ab93c224985cd
+  contract_sha256: 1d45356f6aab3a5ebcc2f8268bce2a698dd5eaa2c555a8e22e6e0c9ffd0fc701
   approval_path: artifacts/external_attestations/h00/h00_human_research_approval_public_v1.json
   approval_sha256: TBD_H00_APPROVAL
   attestation_path: artifacts/external_attestations/h00/h00_official_document_attestation_v1.json

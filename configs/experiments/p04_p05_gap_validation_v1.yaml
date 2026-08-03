@@ -44,7 +44,7 @@ contract:
 sources:
   methods_gap:
     path: docs/paper/METHODS_ETHICS_REPRODUCIBILITY_GAP_KO.md
-    sha256: 50847eb7eea13f5819a07d1aea3202ae40b2f528a9ea8c07d6d3661e6879a90c
+    sha256: 05f44e0f7fd7faa44601e0ab8073b29efa87712a0423d04a9ce08652dc57d575
     size_bytes: 22900
     aggregate_only: true
   manuscript:
@@ -59,7 +59,7 @@ sources:
     aggregate_only: true
   evidence_map:
     path: docs/paper/evidence-map.yaml
-    sha256: 1a4d897f3872a3a685be73667ac1e5676cd085711420f790e950f1b7af9e28be
+    sha256: 5e6833270081e1d2944041fe4dc57e7fed8da357a2ebc03eaa541dd8b79a6fb0
     size_bytes: 189898
     aggregate_only: true
   validation_doc:
@@ -74,7 +74,7 @@ sources:
     aggregate_only: true
   tracker:
     path: docs/RESEARCH_COMPLETION_TRACKER_KO.md
-    sha256: 898dc5ae90b9079f7ff8d6de396551e2be36bdb53d54bf2a83f185b7e8d018c3
+    sha256: 00a8e78818c6a321309ebb358b269314e30f48e44ddd35d8814b4a602d71f0de
     size_bytes: 207125
     aggregate_only: true
   b07_config:

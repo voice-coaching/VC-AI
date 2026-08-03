@@ -54,8 +54,8 @@ canonical:
     size_bytes: 41262
   evidence_map:
     path: docs/paper/evidence-map.yaml
-    sha256: 1a4d897f3872a3a685be73667ac1e5676cd085711420f790e950f1b7af9e28be
-    size_bytes: 189898
+    sha256: 5e6833270081e1d2944041fe4dc57e7fed8da357a2ebc03eaa541dd8b79a6fb0
+    size_bytes: 189647
   source_ledger:
     path: docs/paper/RELATED_WORK_SOURCE_LEDGER_KO.md
     sha256: d37bf2ab5564c55f03dbb9e1974e9bf421274df9971b30d31bb54ff4909e44b6

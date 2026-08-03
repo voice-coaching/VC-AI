@@ -47,10 +47,6 @@ SOURCE_PATHS = (
     "configs/human_research/h00_official_document_attestation_v1.template.json",
     "docs/DATA_LICENSE_AND_ROLE_MATRIX_KO.md",
     "docs/DATA_PRIVACY_BOUNDARY_KO.md",
-    "docs/EXTERNAL_EVALUATION_EXECUTION_PACK_KO.md",
-    "docs/LEARNING_EFFECT_PREREGISTRATION_KO.md",
-    "docs/R04_BLIND_EVALUATION_DATA_MODEL_PRIVACY_STATISTICS_CARD_KO.md",
-    "docs/R05_GRPO_GO_NO_GO_DATA_MODEL_LICENSE_SAFETY_CARD_KO.md",
 )
 
 EXPECTED_EXECUTION_ORDER = (

@@ -3,7 +3,7 @@
 기준 시각: 2026-07-28 KST
 
 > 2026-07-29 이후의 장기 실험 진행률과 현재 실행 큐는
-> [연구 완성 하위 작업 추적기](./RESEARCH_COMPLETION_TRACKER_KO.md)를
+> [연구 완성 하위 작업 추적기](../RESEARCH_COMPLETION_TRACKER_KO.md)를
 > 기준으로 한다.
 
 ## 0. 고성능 GPU 머신 실행 현황

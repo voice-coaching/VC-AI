@@ -24,7 +24,7 @@ S104–S108을 완료 처리하거나 승격 점수를 부여하지 않는다.
 - G04 수동 정렬:
   [AI Hub 71490 수동 정렬 감사 절차](AIHUB71490_MANUAL_ALIGNMENT_AUDIT_KO.md)
 - D07 전문가 gold:
-  [전문가·원어민·학습자 외부평가 실행 패킷](EXTERNAL_EVALUATION_EXECUTION_PACK_KO.md)
+  [retired contract 통합 안내](README.md#retired-contracts)
 - 현재 원고의 결과·계획 경계:
   [방법·윤리·재현성 독립 갭 감사](paper/METHODS_ETHICS_REPRODUCIBILITY_GAP_KO.md)
 

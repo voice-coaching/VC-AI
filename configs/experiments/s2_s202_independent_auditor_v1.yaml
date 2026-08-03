@@ -20,21 +20,17 @@ canonical_sources:
   access_scope: C1_code_config_docs_only
   pins:
     - path: configs/experiments/s2_s200_independent_auditor_v1.yaml
-      sha256: a0999096662ac4763219375e570423b4bc850409017488ffca73bfc05e35fc79
-    - path: docs/S2_S200_DATA_CARD_KO.md
-      sha256: fb362153895cd5021cd7e066faee28dc0d3137a5d58c9af906f6788ee0d14256
+      sha256: d5cdab23dc9f8e36cc26ee6b6f7c63f7f76e826b9ab0220d34bd07369969466b
     - path: docs/S2_S200_INDEPENDENT_AUDITOR_READINESS_KO.md
-      sha256: ce454671e6ff0c216d0916797947a5afb5ae77d2b48e721b05de2bc27b84f2a0
+      sha256: 9b44ecd60de659a1431533e4c4823d264d2a67f3d39f34ec952f6ea6aa8d147c
     - path: configs/experiments/s2_s201_whisper_content_gate_v1.yaml
-      sha256: 865c3152f90dd38a2705e4fa0b58fd2a511ee20a098ef159e142b16ee2bd8c02
+      sha256: 00c35e2141e2dd857db2d58d05bcf850627e56f61a56cecafad7c1b9e96e27cc
     - path: src/voice_coach/training/s2_s201_whisper_contract.py
       sha256: 88f0cd148129fd880b8af4322b30d21715e9aea26eea4d48bb2f64f130ad7667
     - path: scripts/prepare_s2_s201_whisper_content.py
       sha256: 0f10c1d9104e80152baba94e1764ffcc1af2b2c2f0147d20af656586ef22d2b2
-    - path: docs/S2_S201_WHISPER_CONTENT_DATA_CARD_KO.md
-      sha256: 189e0eca2828bdd9fc53802e91f6dab0cd0df89d4e3f686b047c4cb5ac51b594
     - path: docs/S2_S201_WHISPER_CONTENT_READINESS_KO.md
-      sha256: 849a1b113848ef10cfc287d0f5b0a4f679a94ff9ed97312bcd4324aadd3e1838
+      sha256: 99fb7b7963a1092113fbab6dce5da385ec8bdf17ec2d86e333801f6d6f2c6fc3
     - path: docs/IMPLEMENTATION_PLAN_KO.md
       sha256: 12ce84cd7f4f3e34b332dcd1f9a7ded276a367c0339792d1ed74ca8ceb217acf
     - path: docs/paper/EXPERIMENTAL_MANUSCRIPT_KO.md
@@ -45,8 +41,6 @@ canonical_sources:
       sha256: 0ba78271b3d4d99ec3fff865e65bbe992428edfb587785021632677bc46fdaac
     - path: scripts/prepare_s2_s202_independent_auditor.py
       sha256: 05cddea0070d146a43f830c3e0c767163bc913530bace8dbd61d53b37ec7c97d
-    - path: docs/S2_S202_INDEPENDENT_AUDITOR_DATA_MODEL_CARD_KO.md
-      sha256: cadafe868cda02955134a5d89f9d94aa4b6b881e812f0732a2e7d30cc2729c3d
     - path: docs/paper/S2_S202_INDEPENDENT_AUDITOR_AMENDMENT_TEMPLATE_KO.md
       sha256: 62da51dbe9289acf349f177f69c4585ef08c48d2b363055c36874bd235935417
 

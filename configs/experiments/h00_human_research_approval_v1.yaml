@@ -29,18 +29,10 @@ canonical_sources:
       sha256: 67737548ce1a22b7716fb5c58635f55a216ff7059fd709476198df3d5fb75c86
     - path: artifacts/planning/learning_effect_power_sensitivity_v1.json
       sha256: d63dc95bb4df4967775781def0386beb7ec959c396d847ae6b6e8c982dbce66d
-    - path: docs/EXTERNAL_EVALUATION_EXECUTION_PACK_KO.md
-      sha256: bd8c38b48072a373803fccdc73bc812bcfd6d6750bcdbf50ac2896ef81aa71c3
-    - path: docs/LEARNING_EFFECT_PREREGISTRATION_KO.md
-      sha256: a125b655eecc358cb00f15d6b1ea38c0c4f19700f3503f328aa0753a493cd503
     - path: docs/DATA_PRIVACY_BOUNDARY_KO.md
       sha256: 52ad56a726d3d97574f1f55a36935b18fc0d808f2023611f37cb17c0c812dbc0
     - path: docs/DATA_LICENSE_AND_ROLE_MATRIX_KO.md
       sha256: 3257b0dcdb511b79576ffd99329bcde0754e477b6215b5ae81f2c609684dcf58
-    - path: docs/R04_BLIND_EVALUATION_DATA_MODEL_PRIVACY_STATISTICS_CARD_KO.md
-      sha256: e7e5be7bab7a4de18ccddcbe6c6af388b5356459670c396d169c0f4d0f1c1f03
-    - path: docs/R05_GRPO_GO_NO_GO_DATA_MODEL_LICENSE_SAFETY_CARD_KO.md
-      sha256: b8095707280864440be68601302e2b8b995282f1bf66931fd91828111ff9171c
 
 official_approval:
   approval_path: artifacts/external_attestations/h00/h00_human_research_approval_public_v1.json

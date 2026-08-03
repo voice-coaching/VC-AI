@@ -44,8 +44,6 @@ canonical_sources:
       sha256: 5face76de79ba175e0c72ec91967901e5d24add6af6d5cfb97a392333157822e
     - path: docs/DATA_PRIVACY_BOUNDARY_KO.md
       sha256: 52ad56a726d3d97574f1f55a36935b18fc0d808f2023611f37cb17c0c812dbc0
-    - path: docs/EXTERNAL_EVALUATION_EXECUTION_PACK_KO.md
-      sha256: bd8c38b48072a373803fccdc73bc812bcfd6d6750bcdbf50ac2896ef81aa71c3
     - path: docs/WAVLM_S107_CALIBRATION_READINESS_KO.md
       sha256: c1abb3bc1960e78b768ba07e4d0a02712cee3b781f971eb6a97a53db2665e1c7
     - path: scripts/prepare_c03_expert_coaching_audit.py
@@ -53,7 +51,7 @@ canonical_sources:
     - path: src/voice_coach/coaching/c02_selection_contract.py
       sha256: 59941428030e653b013459b003ce99d1169cd940ee9a06fb320634d75dd11667
     - path: src/voice_coach/coaching/c03_expert_audit_contract.py
-      sha256: 641107be437439eb17e8ad32cfc531b085ea6a6f6ee436c6c2a9423b4d9a531c
+      sha256: e2754cf8c9ca91d544e500b58f07a0bff51600e265cfb36fb8cc1ed4a4c4b27b
     - path: src/voice_coach/training/wavlm_s107_calibration_training.py
       sha256: 201973a25e75da77ec86468a60094c22ac3d3376d936d5e2d089531d52b5d6d3
 

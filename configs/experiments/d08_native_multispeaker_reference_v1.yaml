@@ -45,8 +45,6 @@ canonical_sources:
       sha256: 08dc149ccf10006a587e6216dda0471c19b5c55eab6b320b4348587527d82c4d
     - path: docs/DATA_PRIVACY_BOUNDARY_KO.md
       sha256: 52ad56a726d3d97574f1f55a36935b18fc0d808f2023611f37cb17c0c812dbc0
-    - path: docs/EXTERNAL_EVALUATION_EXECUTION_PACK_KO.md
-      sha256: bd8c38b48072a373803fccdc73bc812bcfd6d6750bcdbf50ac2896ef81aa71c3
     - path: docs/R00_FIXED_SENTENCE_CARD_DATA_CARD_KO.md
       sha256: d48e75ee83d61be9434d0f94c0f4fdda5401450e25a6dac422644c969e02138c
     - path: docs/R01_CANDIDATE_DATA_MODEL_LICENSE_CARD_KO.md
@@ -58,7 +56,7 @@ canonical_sources:
     - path: scripts/validate_r00_sentence_card.py
       sha256: 967517e74194936c91dad1eed4fcfb0c059b5480af32b8adfc9725fdb7d6e7d0
     - path: src/voice_coach/references/d08_native_reference_contract.py
-      sha256: 1082147df808503dcf92be8466984171f9b2c5364afc0fcc78dd88cae7700549
+      sha256: 5808281cc13e9dced9cc7079ce222dc6034c91ac0f3f0c0d3d3df8e6d728cff1
 
 predecessor_r00:
   deep_validation_required: true

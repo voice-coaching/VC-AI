@@ -38,7 +38,7 @@ checkpoint·result·output은 모두 0이며 S202 완료나 WP5 배점 근거가
 | `scripts/prepare_s2_s202_independent_auditor.py` | config-only/full read-only fail-closed CLI |
 | `tests/unit/test_s2_s202_auditor_contract.py` | policy·hash·symlink·traversal·TOCTOU·S201 artifact fault test |
 | `tests/integration/test_prepare_s2_s202_independent_auditor.py` | 실제 workspace zero-access와 S108-first 실패 검사 |
-| `docs/S2_S202_INDEPENDENT_AUDITOR_DATA_MODEL_CARD_KO.md` | 모델·label·rater·split·privacy·license·claim 경계 |
+| [retired contract 통합 안내](README.md#retired-contracts) | 모델·label·rater·split·privacy·license·claim 경계의 이전 카드와 통합 위치 |
 | `docs/paper/S2_S202_INDEPENDENT_AUDITOR_AMENDMENT_TEMPLATE_KO.md` | 실제 commit 전 승격 금지 PENDING 논문 표·문장 |
 
 기존 tracker, 정본 원고, S104–S201과 R00 파일은 수정하지 않았다.

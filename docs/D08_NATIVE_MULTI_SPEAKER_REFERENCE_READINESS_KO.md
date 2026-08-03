@@ -37,7 +37,7 @@ QC report, completion, commit과 publication은 생성하지 않았다.
 | `scripts/prepare_d08_native_multispeaker_reference.py` | config-only/full read-only CLI |
 | `tests/unit/test_d08_native_reference_contract.py` | policy·TBD·schema·attestation·metadata·QC·completion fault test |
 | `tests/integration/test_prepare_d08_native_multispeaker_reference.py` | 실제 workspace zero-runtime와 R00-first/H00 path-read-zero 검사 |
-| `docs/D08_NATIVE_REFERENCE_DATA_MODEL_LICENSE_PRIVACY_CARD_KO.md` | 데이터·동의·source/license·R0/R1/D1/A1 경계 |
+| [retired contract 통합 안내](README.md#retired-contracts) | 데이터·동의·source/license·R0/R1/D1/A1 경계의 이전 카드와 통합 위치 |
 | `docs/D08_NATIVE_MULTI_SPEAKER_REFERENCE_READINESS_KO.md` | 본 준비 증거 |
 
 기존 canonical tracker, R00/R01 artifact, 원고와 evidence map은 수정하지

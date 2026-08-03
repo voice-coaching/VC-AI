@@ -31,39 +31,31 @@ canonical_sources:
     - path: docs/WAVLM_S108_NO_LOCKED_DRY_RUN_READINESS_KO.md
       sha256: 542aabfaba3c13817671e925f8340eb2e7553d4849201f26cdd41caa312d1566
     - path: configs/experiments/s2_s200_independent_auditor_v1.yaml
-      sha256: a0999096662ac4763219375e570423b4bc850409017488ffca73bfc05e35fc79
-    - path: docs/S2_S200_DATA_CARD_KO.md
-      sha256: fb362153895cd5021cd7e066faee28dc0d3137a5d58c9af906f6788ee0d14256
+      sha256: d5cdab23dc9f8e36cc26ee6b6f7c63f7f76e826b9ab0220d34bd07369969466b
     - path: docs/S2_S200_INDEPENDENT_AUDITOR_READINESS_KO.md
-      sha256: ce454671e6ff0c216d0916797947a5afb5ae77d2b48e721b05de2bc27b84f2a0
+      sha256: 9b44ecd60de659a1431533e4c4823d264d2a67f3d39f34ec952f6ea6aa8d147c
     - path: configs/experiments/s2_s201_whisper_content_gate_v1.yaml
-      sha256: 865c3152f90dd38a2705e4fa0b58fd2a511ee20a098ef159e142b16ee2bd8c02
+      sha256: 00c35e2141e2dd857db2d58d05bcf850627e56f61a56cecafad7c1b9e96e27cc
     - path: src/voice_coach/training/s2_s201_whisper_contract.py
       sha256: 88f0cd148129fd880b8af4322b30d21715e9aea26eea4d48bb2f64f130ad7667
     - path: scripts/prepare_s2_s201_whisper_content.py
       sha256: 0f10c1d9104e80152baba94e1764ffcc1af2b2c2f0147d20af656586ef22d2b2
-    - path: docs/S2_S201_WHISPER_CONTENT_DATA_CARD_KO.md
-      sha256: 189e0eca2828bdd9fc53802e91f6dab0cd0df89d4e3f686b047c4cb5ac51b594
     - path: docs/S2_S201_WHISPER_CONTENT_READINESS_KO.md
-      sha256: 849a1b113848ef10cfc287d0f5b0a4f679a94ff9ed97312bcd4324aadd3e1838
+      sha256: 99fb7b7963a1092113fbab6dce5da385ec8bdf17ec2d86e333801f6d6f2c6fc3
     - path: configs/experiments/s2_s202_independent_auditor_v1.yaml
-      sha256: d401ab5466971e02adb706379eaa01a9e116b232a86eca396dfd2348be22aa65
+      sha256: d0b9859845b5d0f56102b23b2431017a9bd8c60c1cf95a03f6aedd79197145f6
     - path: src/voice_coach/training/s2_s202_auditor_contract.py
       sha256: 0ba78271b3d4d99ec3fff865e65bbe992428edfb587785021632677bc46fdaac
     - path: scripts/prepare_s2_s202_independent_auditor.py
       sha256: 05cddea0070d146a43f830c3e0c767163bc913530bace8dbd61d53b37ec7c97d
-    - path: docs/S2_S202_INDEPENDENT_AUDITOR_DATA_MODEL_CARD_KO.md
-      sha256: cadafe868cda02955134a5d89f9d94aa4b6b881e812f0732a2e7d30cc2729c3d
     - path: docs/S2_S202_INDEPENDENT_AUDITOR_READINESS_KO.md
-      sha256: 21891eaf6d57194cd63763192559a57fd92fc3076fad9f05f67505ab398846fa
+      sha256: 113fbcfd5d202f50d34c6dc9f07b77eb88d2dd3d21edeee77ddd1fddae60b9c9
     - path: docs/paper/S2_S202_INDEPENDENT_AUDITOR_AMENDMENT_TEMPLATE_KO.md
       sha256: 62da51dbe9289acf349f177f69c4585ef08c48d2b363055c36874bd235935417
     - path: src/voice_coach/training/s2_s203_holdout_contract.py
       sha256: 35ee786e59b247c28eb2cd06e5e58c11096cb4ad7944b74c0ab6950b5d2f578b
     - path: scripts/prepare_s2_s203_expert_holdout.py
       sha256: afa42ee94aceabbb2cfaa6e589c290909c2636fb652ae80a08dcb9b39a3e0756
-    - path: docs/S2_S203_EXPERT_HOLDOUT_EVALUATION_CARD_KO.md
-      sha256: a9fb81d3d4d5e4b9e6eab5c80e86b056a494e3ef6d52ad61af7aa3e4f59b2a8f
     - path: docs/paper/S2_S203_EXPERT_HOLDOUT_AMENDMENT_TEMPLATE_KO.md
       sha256: e1fec889cbf9456194adec25a9ddd267a6ea67b53bee92999d368fdff216197a
 

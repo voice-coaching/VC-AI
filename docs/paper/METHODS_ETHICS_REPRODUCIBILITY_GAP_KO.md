@@ -40,13 +40,11 @@ A는 대체로 O, protocol 시제의 B는 G, 외부·후속 결과인 C는 X에
 5. [데이터 라이선스·역할 매트릭스](../DATA_LICENSE_AND_ROLE_MATRIX_KO.md)
 6. [논문 수치 evidence validation](../MANUSCRIPT_EVIDENCE_VALIDATION_KO.md)
 7. [G04 수동 정렬 감사 절차](../AIHUB71490_MANUAL_ALIGNMENT_AUDIT_KO.md)
-8. [H01 학습효과 사전등록 초안](../LEARNING_EFFECT_PREREGISTRATION_KO.md)
-9. [외부평가 실행 패킷](../EXTERNAL_EVALUATION_EXECUTION_PACK_KO.md)
-10. [WavLM frozen-head 학습 계약](../pipeline/WAVLM_FROZEN_HEAD_TRAINING_KO.md)
-11. [WavLM Base+–Large 비교 계약](../pipeline/WAVLM_FROZEN_HEAD_COMPARISON_KO.md)
-12. [WavLM cache 독립 검증 계약](../WAVLM_FEATURE_CACHE_VALIDATION_KO.md)
-13. [관련연구 source ledger](RELATED_WORK_SOURCE_LEDGER_KO.md)
-14. [자료 라이선스 원문·역할 ledger](../DATA_LICENSE_SOURCE_LEDGER_KO.md)
+8. [퇴역 계약 통합 안내](../README.md#retired-contracts)
+9. [WP4 S103 이후 실행 계약](../WP4_POST_S103_EXECUTION_CONTRACT_KO.md)
+10. [WavLM cache 독립 검증 계약](../WAVLM_FEATURE_CACHE_VALIDATION_KO.md)
+11. [관련연구 source ledger](RELATED_WORK_SOURCE_LEDGER_KO.md)
+12. [자료 라이선스 원문·역할 ledger](../DATA_LICENSE_SOURCE_LEDGER_KO.md)
 
 상태 충돌 시 고정 aggregate artifact와 registry, evidence validator,
 tracker, 최신 세부 protocol, 오래된 실행계획 순으로 우선한다. 계획 문서의

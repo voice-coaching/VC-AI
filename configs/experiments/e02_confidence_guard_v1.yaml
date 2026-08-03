@@ -40,7 +40,7 @@ canonical_sources:
     - path: docs/IMPLEMENTATION_PLAN_KO.md
       sha256: 12ce84cd7f4f3e34b332dcd1f9a7ded276a367c0339792d1ed74ca8ceb217acf
     - path: docs/WP4_POST_S103_EXECUTION_CONTRACT_KO.md
-      sha256: 46ebafeb48bba95f8de04553dfe2c13c5466a03e5dfc8d6e3bc42e8d81f4a3e7
+      sha256: 0b0664065ee481e636c1715977925ed1f2b46705a5cd1a072bcac7ac72dfc84a
     - path: docs/WAVLM_S107_CALIBRATION_READINESS_KO.md
       sha256: c1abb3bc1960e78b768ba07e4d0a02712cee3b781f971eb6a97a53db2665e1c7
     - path: docs/C02_COACHING_SELECTION_DATA_MODEL_SAFETY_CARD_KO.md

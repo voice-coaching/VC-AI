@@ -90,7 +90,6 @@ EXPECTED_SOURCE_PATHS = {
     "src/voice_coach/human_research/h00_approval_contract.py",
     "docs/IMPLEMENTATION_PLAN_KO.md",
     "docs/HIGH_PERFORMANCE_GPU_EXECUTION_PLAN_KO.md",
-    "docs/LEARNING_EFFECT_PREREGISTRATION_KO.md",
     "docs/DATA_PRIVACY_BOUNDARY_KO.md",
     "docs/architecture/architecture.md",
     "docs/architecture/component.md",

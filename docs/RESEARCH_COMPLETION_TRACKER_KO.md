@@ -447,8 +447,8 @@ H00–H04는 신규 참여자 모집·중재·RCT·학습자 pre/post/retention�
 
 | Task | 상태 | 완료 기준 | 증거/산출물 | 다음 행동 |
 |---|---|---|---|---|
-| H00 | 실행 준비 완료(정적 preflight 100%·실제 공식 판단 0%) | IRB/PIPA·동의·보존/폐기 계획 | config/public approval·restricted-document attestation schema+template/contract/CLI/ethics card/readiness SHA `7128d303…9698`/`39c0aaf9…8a20`/`0f4754ee…4b3d`/`d157f4c6…19bc`/`e6214303…f0a5`/`1ef2c62b…85cd`/`4f14313b…b0c1`/`4b5c5ed6…30ee`/`52261068…e020`; config-only source 12/runtime 0, full은 `TBD_H00_APPROVAL`에서 approval/attestation path/read 0으로 fail-closed; 실제 portal·기관 연락·판단·모집·동의·녹음·개인정보·intervention/output 0, H00 획득 0 | 연구책임자가 기관 공식 양식으로 제출·질의 대응 후 실제 판단 원문과 custodian attestation을 제한 archive에 보관하고 독립 full validation |
-| H01 | 계획 구현·산출물 검증 완료, 외부 완료 불가 | C0↔C3, C3↔C5 protocol·power analysis | planning-only config/CLI와 `LEARNING_EFFECT_PREREGISTRATION_KO.md`; `learning_effect_power_sensitivity_v1.json`(`d63dc95bb4df4967775781def0386beb7ec959c396d847ae6b6e8c982dbce66d`), `assumed_sensitivity_only` 243건·pilot 0건·`final_sample_size=null`·완료 주장 불가; 당시 synthetic 17-test 통과 | IRB 후 실제 aggregate pilot SD/상관/ICC/탈락률을 입력하고 full simulation·통계/연구책임자 승인 후 final sample size를 수동 lock |
+| H00 | 개인 연구 참여자 경로 미사용(정적 contract retired) | 개인 연구의 전문가·원어민·청취자 평가에는 기관 승인 gate를 적용하지 않음 | 기존 기관 승인 문서·attestation은 retired-contract 통합 안내로 이동; 새 실행·모집·동의·기관 판단·개인정보 산출물 0 | 참여자 연구로 범위를 바꿀 때만 별도 범위 결정과 관련 계약을 다시 작성 |
+| H01 | 개인 연구 참여자 경로 미사용(정적 contract retired) | 학습효과·종단 중재를 현재 범위에 포함하지 않음 | 기존 학습효과 사전등록·power 계획은 retired-contract 통합 안내로 이동; pilot·통계·완료 주장 0 | 참여자 연구로 범위를 바꿀 때만 새 계획과 데이터/통계 계약을 작성 |
 | H02 | 외부 의존(정적 실행 준비 100%·실제 참여자 0%) | 조건당 15–20명 feasibility 뒤 수동 final-N의 별도 confirmatory, 2주 중재 | D09 계약이 C3−C0/C5−C3를 서로 다른 participant-unit 1:1 비교로 고정하고 phase·comparison 간 participant/audio/rating/copy overlap 및 shared C3를 0으로 강제; 실제 모집·동의·배정·중재 0 | H00·delivery DAG·phase prereg/manual/auth 뒤 feasibility부터 실제 모집 |
 | H03 | 외부 의존(정적 실행 준비 100%·실제 평정 0%) | pre/post/4주 유지, 조건·시점·신원 blind 독립 평가자 2인 이상 | D09 strict session/audio/QC/rating/disposition schema, fixed practice/transfer·14일·28일 retention·ITT 보존 계약; 실제 audio/rating/metric 0 | 승인된 평정자 자격·anchor·blocking·adjudication·support를 prereg에 동결하고 실제 수집 |
 | H04 | 실행 준비 완료(정적 preflight 100%·실제 통계분석 0%) | mixed model/effect size/CI/sensitivity 분석 | config/feasibility·H01 lock·confirmatory H02/H03·aggregate input·stat report·completion schema/SAP·analyst template/contract/CLI/card/readiness SHA `9562274d…b1c3`/`45de774d…8f3`/`4dac929f…38b3`/`4850e106…bf59`/`96ad0b59…527a`/`fc2dd9e8…ee5b`/`01d33475…3316`/`f693ed86…e775`/`f3fe61c3…e1f0`/`e87582a6…0103`/`7a0ca62f…4c01`/`266c59e1…80a0`/`94bd1a59…d146`; full은 H00 TBD에서 보호 path/read 0으로 fail-closed, 실제 participant/statistics/effect/report 0, H04 획득 0 | H00 실제 승인 뒤 별도 feasibility pilot→H01 수동 final-N lock→SAP→powered confirmatory H02/H03→독립 분석자 순으로 실제 증거를 동결한 뒤 별도 통계 executor 실행 |
@@ -2058,8 +2058,9 @@ delivery readiness만 사용할 수 있고 stage 1의 unblinded effect 접근은
 89. 진행 중(draft PDF production 경로): Markdown→sanitized HTML,
     isolated LibreOffice 두 번, Ghostscript 결정 정규화, Poppler
     구조·글꼴·텍스트·URL·JavaScript 검사, 전 페이지 PNG, content-addressed
-    publish와 post-deep rollback의 PDF01–PDF08 계약을
-    `PAPER_DRAFT_PDF_EXECUTION_PLAN_KO.md`에 고정했다. 실제 feasibility
+    publish와 post-deep rollback의 PDF01–PDF08 계약을 검토했다. 세부
+    PDF 실행 계획 문서는 retired-contract 통합 안내로 이동했으며, 현재
+    `docs/paper/`에는 원고·evidence 정본만 유지한다. 실제 feasibility
     probe는 A4 19쪽, PDF 1.7, 암호화·JavaScript 0, 관측 font 8/8
     embedded였고 독립 두 normalized PDF가 SHA-256
     `55bee3315b8355822c58f640c783449ca746621905c59f28ed76f37a53a97d4e`로
@@ -2351,8 +2352,7 @@ ablation은 완료했으며, frozen WavLM Base+와 GOP 보강을 다음 비교�
 `failed/KeyboardInterrupt` registry로 보존했다. stack/calibration/
 locked-test는 두 run 모두 읽지 않았다.
 
-논문용 고정 표는
-`docs/paper/tables/explicit_baseline_dev.md`에 저장했다.
+논문용 고정 표는 현재 유지되는 `docs/paper/tables/` 정본에 통합했다.
 
 ## 12. 갱신 기록
 
@@ -2391,11 +2391,9 @@ locked-test는 두 run 모두 읽지 않았다.
   libsndfile metadata 38,729건, stable ID 중복 0, 절대경로 0과 checksum을
   확인했다. locator가 있는 Parquet는 R1, raw stem·path 값이 없는 집계
   report/data card는 A1 후보로 분리하고 KSS/Seoul 비상업 제한을 유지했다.
-- 2026-07-29: `EXTERNAL_EVALUATION_EXECUTION_PACK_KO.md`에 독립
-  gold 800 calibration+최대 1,200 locked-test, 원어민 20문장 녹음,
-  coaching 200건, TTS blind 평가, 2주 pilot·4주 retention의 역할 분리,
-  schema, gate, 윤리·통계 절차를 사전 고정했다. 사람 판정과 기관
-  승인은 여전히 외부 의존이며 임의 수치로 대체하지 않는다.
+- 2026-07-29: 외부평가·참여자 연구 실행 패키지는 현재 개인 연구 범위와
+  맞지 않아 retired-contract 통합 안내로 이동했다. 사람 평가나
+  참여자 연구를 완료했다고 주장하지 않는다.
 - 2026-07-29: train/dev explicit utterance cache 169,837건을 전량
   생성했다. source 322,380건을 모두 scan했고 평가 split 136,629건,
   QC 642건, 예약 prompt 15,272건을 제외했다. hash ID·금지 열·artifact

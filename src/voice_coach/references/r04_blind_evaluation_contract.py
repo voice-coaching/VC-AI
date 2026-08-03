@@ -98,7 +98,6 @@ SOURCE_PATHS = (
     "configs/reference/r04_randomization_manifest_v1.template.json",
     "configs/reference/r04_rating_manifest_v1.schema.json",
     "configs/reference/r04_rating_manifest_v1.template.json",
-    "docs/EXTERNAL_EVALUATION_EXECUTION_PACK_KO.md",
     "docs/IMPLEMENTATION_PLAN_KO.md",
     "docs/paper/EXPERIMENTAL_MANUSCRIPT_KO.md",
     "docs/한국어 AI 보이스 코칭을 위한 폐쇄루프 TTS 아키텍처.pdf",

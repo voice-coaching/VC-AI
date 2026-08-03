@@ -34,11 +34,11 @@ canonical_sources:
     - path: configs/experiments/wavlm_s108_no_locked_dry_run_v1.yaml
       sha256: 038947cc9ee77840870cc0df31a6d66e9384f89908a7d91a8706cda0757e65aa
     - path: configs/experiments/s2_s202_independent_auditor_v1.yaml
-      sha256: d401ab5466971e02adb706379eaa01a9e116b232a86eca396dfd2348be22aa65
+      sha256: d0b9859845b5d0f56102b23b2431017a9bd8c60c1cf95a03f6aedd79197145f6
     - path: src/voice_coach/training/s2_s202_auditor_contract.py
       sha256: 0ba78271b3d4d99ec3fff865e65bbe992428edfb587785021632677bc46fdaac
     - path: configs/experiments/s2_s203_expert_holdout_audit_v1.yaml
-      sha256: d06d056181b032325170789b05dadc8bfcf5227ba5ccc9aa4472ae51b65abeaa
+      sha256: 8292ebd6afb9667d9123deaa51be9794ee10ba66d5153361e0c7da6733561de5
     - path: src/voice_coach/training/s2_s203_holdout_contract.py
       sha256: 35ee786e59b247c28eb2cd06e5e58c11096cb4ad7944b74c0ab6950b5d2f578b
     - path: docs/IMPLEMENTATION_PLAN_KO.md
@@ -54,7 +54,7 @@ predecessor_s108:
   validation_order: 1
   deep_validation_required: true
   delegate_config_path: configs/experiments/s2_s202_independent_auditor_v1.yaml
-  delegate_config_sha256: d401ab5466971e02adb706379eaa01a9e116b232a86eca396dfd2348be22aa65
+  delegate_config_sha256: d0b9859845b5d0f56102b23b2431017a9bd8c60c1cf95a03f6aedd79197145f6
   delegate_contract_path: src/voice_coach/training/s2_s202_auditor_contract.py
   delegate_contract_sha256: 0ba78271b3d4d99ec3fff865e65bbe992428edfb587785021632677bc46fdaac
   completion_commit_path: artifacts/experiments/aihub71490_wavlm_s108_final_s1_v1/commit.json

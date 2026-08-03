@@ -108,9 +108,6 @@ artifacts:
   wavlm_s103_results_commit:
     path: artifacts/experiments/aihub71490_wavlm_frozen_head_comparison_v1/results_table.commit.json
     sha256: af0cb1d616e3c9377985b880bb19233647964b744ab23c98e6b69d257c273e38
-  wavlm_s103_results_markdown:
-    path: docs/paper/generated/generations/191a3eed71fa4bea63943ed6e651bab1cd0f2365da91782cb2be14192722f3e6/wavlm_frozen_head_results_table.md
-    sha256: 89db29654f8c542154040e1626131fc2df29ea71ad0c99b36e531244cd255b0f
   wavlm_s103_results_json:
     path: artifacts/experiments/aihub71490_wavlm_frozen_head_comparison_v1/generations/191a3eed71fa4bea63943ed6e651bab1cd0f2365da91782cb2be14192722f3e6/results_table.json
     sha256: d8556c3a433e5d09b119ffaa567735c34bf10f19ba065a3173602d44ab5d7a20
