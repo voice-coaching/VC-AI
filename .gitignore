@@ -9,9 +9,13 @@
 /checkpoints/
 
 # Local Python build/cache artifacts.
+.venv*/
 __pycache__/
 *.py[cod]
 
 # Resumable-download state and temporary archives.
 *.part
 *.aria2
+
+# Single-writer flock files held by publishers at runtime.
+*.publish.lock
