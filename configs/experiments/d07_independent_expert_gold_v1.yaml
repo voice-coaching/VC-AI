@@ -49,7 +49,7 @@ canonical_sources:
     - path: docs/EXTERNAL_EVALUATION_EXECUTION_PACK_KO.md
       sha256: bd8c38b48072a373803fccdc73bc812bcfd6d6750bcdbf50ac2896ef81aa71c3
     - path: docs/LOCAL_ALIGNMENT_REVIEW_UI_KO.md
-      sha256: 3bd3dce21186e2fcb19ad51f55cf891f3916351928c7c058de9fb60646bcaa83
+      sha256: 6221ab24222896b196e72bf06da4660e0afe2200a038cf1d0d0ffe61cfe1e71d
     - path: docs/S2_S200_DATA_CARD_KO.md
       sha256: fb362153895cd5021cd7e066faee28dc0d3137a5d58c9af906f6788ee0d14256
     - path: docs/S2_S201_WHISPER_CONTENT_DATA_CARD_KO.md

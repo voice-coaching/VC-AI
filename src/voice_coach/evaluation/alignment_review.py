@@ -29,6 +29,17 @@ REVIEWER_HASH_NAMESPACE = "voice-coach.alignment-reviewer.v1"
 STATE_SCHEMA_VERSION = "voice_coach.alignment_review_state.v1"
 REPORT_SCHEMA_VERSION = "voice_coach.alignment_review_report.v1"
 SHA256_PATTERN = re.compile(r"^[0-9a-f]{64}$")
+
+LEGACY_REVIEW_FIELDS = frozenset(
+    {
+        "reviewer_id_sha256",
+        "alignment_correct",
+        "maximum_boundary_error_ms",
+        "notes",
+        "updated_at_utc",
+    }
+)
+CURRENT_REVIEW_FIELDS = LEGACY_REVIEW_FIELDS | {"incorrect_interval_count"}
 REQUIRED_WORKSHEET_COLUMNS = {
     "audit_index",
     "utterance_id",
@@ -235,18 +246,12 @@ class ReviewDataset:
                 raise ValueError(f"negative phone count at {audit_index}")
             error_presence_text = row["error_presence"].strip().lower()
             if error_presence_text not in {"true", "false"}:
-                raise ValueError(
-                    f"invalid error_presence at audit_index {audit_index}"
-                )
+                raise ValueError(f"invalid error_presence at audit_index {audit_index}")
             if detail_index != audit_index:
-                raise ValueError(
-                    f"alignment_detail_line mismatch at {audit_index}"
-                )
+                raise ValueError(f"alignment_detail_line mismatch at {audit_index}")
             detail = detail_rows.get(detail_index)
             if detail is None or detail.get("utterance_id") != raw_id:
-                raise ValueError(
-                    f"worksheet/detail ID mismatch at {audit_index}"
-                )
+                raise ValueError(f"worksheet/detail ID mismatch at {audit_index}")
             for key in (
                 "target_phone_intervals",
                 "realized_phone_intervals",
@@ -255,13 +260,9 @@ class ReviewDataset:
                 if not isinstance(detail.get(key), list):
                     raise ValueError(f"{key} must be a list at {audit_index}")
             if len(detail["target_phone_intervals"]) != target_count:
-                raise ValueError(
-                    f"target phone count mismatch at {audit_index}"
-                )
+                raise ValueError(f"target phone count mismatch at {audit_index}")
             if len(detail["realized_phone_intervals"]) != realized_count:
-                raise ValueError(
-                    f"realized phone count mismatch at {audit_index}"
-                )
+                raise ValueError(f"realized phone count mismatch at {audit_index}")
             item_hash = hash_item_id(raw_id)
             if item_hash in item_hashes:
                 raise ValueError("duplicate namespaced item hash")
@@ -285,9 +286,7 @@ class ReviewDataset:
                     audio_path=audio_path,
                     target_phone_intervals=detail["target_phone_intervals"],
                     realized_phone_intervals=detail["realized_phone_intervals"],
-                    automatic_phone_alignments=detail[
-                        "automatic_phone_alignments"
-                    ],
+                    automatic_phone_alignments=detail["automatic_phone_alignments"],
                 )
             )
         if set(detail_rows) != indices:
@@ -303,10 +302,24 @@ class ReviewDataset:
 
 
 class ReviewSubmission(BaseModel):
+    """A completed judgment for one audit item.
+
+    ``incorrect_interval_count`` supports a phone-level accuracy metric
+    in addition to the whole-utterance ``alignment_correct`` judgment.
+    Whole-utterance pass/fail conflates utterance length with apparent
+    difficulty: a 35-phone utterance needs 35 independent phones to all
+    be correct to pass, while a 6-phone utterance only needs 6, so
+    utterance-level failure rate rises with phone count even when
+    per-phone accuracy is constant. Recording how many displayed
+    automatic_phone_alignments entries are actually wrong allows scoring
+    accuracy per phone instead of per utterance.
+    """
+
     model_config = ConfigDict(extra="forbid", strict=True)
 
     alignment_correct: bool
     maximum_boundary_error_ms: float = Field(ge=0)
+    incorrect_interval_count: int = Field(ge=0, default=0)
     notes: str = Field(max_length=2_000)
 
     @field_validator("maximum_boundary_error_ms")
@@ -353,19 +366,15 @@ class ReviewStore:
                 raise ValueError("review state contains an unknown item hash")
             if not isinstance(review, Mapping):
                 raise ValueError("review state item must be an object")
-            required = {
-                "reviewer_id_sha256",
-                "alignment_correct",
-                "maximum_boundary_error_ms",
-                "notes",
-                "updated_at_utc",
-            }
-            if set(review) != required:
+            if set(review) == LEGACY_REVIEW_FIELDS:
+                # Predates the phone-level accuracy field: whole-utterance
+                # judgment only, incorrect-interval count unknown.
+                review = {**review, "incorrect_interval_count": None}
+            elif set(review) != CURRENT_REVIEW_FIELDS:
                 raise ValueError("review state item has incomplete/extra fields")
             reviewer_hash = review["reviewer_id_sha256"]
-            if (
-                not isinstance(reviewer_hash, str)
-                or not SHA256_PATTERN.fullmatch(reviewer_hash)
+            if not isinstance(reviewer_hash, str) or not SHA256_PATTERN.fullmatch(
+                reviewer_hash
             ):
                 raise ValueError("reviewer_id_sha256 is invalid")
             if not isinstance(review["alignment_correct"], bool):
@@ -380,6 +389,25 @@ class ReviewStore:
                 > self.dataset.by_hash[item_hash].duration_seconds * 1_000
             ):
                 raise ValueError("maximum_boundary_error_ms is out of range")
+            incorrect_count = review["incorrect_interval_count"]
+            total_intervals = len(
+                self.dataset.by_hash[item_hash].automatic_phone_alignments
+            )
+            if incorrect_count is not None:
+                if isinstance(incorrect_count, bool) or not isinstance(
+                    incorrect_count, int
+                ):
+                    raise ValueError("incorrect_interval_count must be an integer")
+                if incorrect_count < 0 or incorrect_count > total_intervals:
+                    raise ValueError("incorrect_interval_count is out of range")
+                if review["alignment_correct"] and incorrect_count != 0:
+                    raise ValueError(
+                        "alignment_correct=true requires incorrect_interval_count=0"
+                    )
+                if not review["alignment_correct"] and incorrect_count == 0:
+                    raise ValueError(
+                        "alignment_correct=false requires incorrect_interval_count>=1"
+                    )
             notes = review["notes"]
             if not isinstance(notes, str) or len(notes) > 2_000:
                 raise ValueError("notes are invalid")
@@ -398,9 +426,7 @@ class ReviewStore:
                 "reviewer_ids_namespaced_sha256_only": True,
                 "raw_paths_or_utterance_ids_stored": False,
             },
-            "reviews": {
-                key: self.reviews[key] for key in sorted(self.reviews)
-            },
+            "reviews": {key: self.reviews[key] for key in sorted(self.reviews)},
         }
 
     def save_review(
@@ -417,8 +443,22 @@ class ReviewStore:
         if not SHA256_PATTERN.fullmatch(reviewer_hash):
             raise ValueError("reviewer_id_sha256 is invalid")
         if submission.maximum_boundary_error_ms > item.duration_seconds * 1_000:
+            raise ValueError("maximum_boundary_error_ms exceeds utterance duration")
+        total_intervals = len(item.automatic_phone_alignments)
+        if submission.incorrect_interval_count > total_intervals:
             raise ValueError(
-                "maximum_boundary_error_ms exceeds utterance duration"
+                "incorrect_interval_count exceeds displayed alignment count"
+            )
+        if submission.alignment_correct and submission.incorrect_interval_count != 0:
+            raise ValueError(
+                "alignment_correct=true requires incorrect_interval_count=0"
+            )
+        if (
+            not submission.alignment_correct
+            and submission.incorrect_interval_count == 0
+        ):
+            raise ValueError(
+                "alignment_correct=false requires incorrect_interval_count>=1"
             )
         for sensitive in self.dataset.items:
             if sensitive.raw_utterance_id in submission.notes:
@@ -431,9 +471,8 @@ class ReviewStore:
             review = {
                 "reviewer_id_sha256": reviewer_hash,
                 "alignment_correct": submission.alignment_correct,
-                "maximum_boundary_error_ms": (
-                    submission.maximum_boundary_error_ms
-                ),
+                "maximum_boundary_error_ms": (submission.maximum_boundary_error_ms),
+                "incorrect_interval_count": submission.incorrect_interval_count,
                 "notes": submission.notes,
                 "updated_at_utc": datetime.now(timezone.utc).isoformat(),
             }
@@ -669,10 +708,29 @@ def build_aggregate_report(
     reviews = list(store.reviews.values())
     complete = status["remaining_count"] == 0 and status["expected_count"] > 0
     correct = sum(bool(review["alignment_correct"]) for review in reviews)
-    boundaries = [
-        float(review["maximum_boundary_error_ms"]) for review in reviews
-    ]
+    boundaries = [float(review["maximum_boundary_error_ms"]) for review in reviews]
     accuracy = correct / len(reviews) if complete else None
+
+    # Phone-level accuracy: unlike utterance-level accuracy above, this is
+    # not skewed by utterance length/phone count, since it counts wrong
+    # phone intervals rather than "did every phone in this utterance pass".
+    # Only computable when every review carries incorrect_interval_count
+    # (reviews predating that field have it as None).
+    legacy_review_count = sum(
+        1 for review in reviews if review.get("incorrect_interval_count") is None
+    )
+    phone_level_accuracy = None
+    total_phone_intervals = 0
+    total_incorrect_phone_intervals = 0
+    if complete and legacy_review_count == 0:
+        for item_hash, review in store.reviews.items():
+            item = dataset.by_hash[item_hash]
+            total_phone_intervals += len(item.automatic_phone_alignments)
+            total_incorrect_phone_intervals += int(review["incorrect_interval_count"])
+        if total_phone_intervals > 0:
+            phone_level_accuracy = 1 - (
+                total_incorrect_phone_intervals / total_phone_intervals
+            )
     gate_status = (
         "passed"
         if complete and accuracy is not None and accuracy >= minimum_accuracy
@@ -688,13 +746,17 @@ def build_aggregate_report(
         "incorrect_count": len(reviews) - correct if reviews else 0,
         "alignment_accuracy": accuracy,
         "minimum_accuracy": minimum_accuracy,
+        "phone_level_accuracy": {
+            "value": phone_level_accuracy,
+            "total_phone_intervals": total_phone_intervals,
+            "total_incorrect_phone_intervals": total_incorrect_phone_intervals,
+            "legacy_reviews_missing_interval_count": legacy_review_count,
+        },
         "maximum_boundary_error_ms": {
             "median": statistics.median(boundaries) if boundaries else None,
             "maximum": max(boundaries) if boundaries else None,
         },
-        "reviewer_count": len(
-            {review["reviewer_id_sha256"] for review in reviews}
-        ),
+        "reviewer_count": len({review["reviewer_id_sha256"] for review in reviews}),
         "source": {
             "worksheet_sha256": dataset.worksheet_sha256,
             "alignment_details_sha256": dataset.details_sha256,
@@ -743,6 +805,8 @@ def export_completed_reviews(
         "reviewer_id",
         "alignment_correct",
         "maximum_boundary_error_ms",
+        "incorrect_interval_count",
+        "total_alignment_interval_count",
         "notes",
     ]
     buffer = io.StringIO(newline="")
@@ -750,17 +814,18 @@ def export_completed_reviews(
     writer.writeheader()
     for item in dataset.items:
         review = store.reviews[item.item_sha256]
+        incorrect_count = review.get("incorrect_interval_count")
         writer.writerow(
             {
                 "audit_index": item.audit_index,
                 "utterance_id": item.item_sha256,
                 "reviewer_id": review["reviewer_id_sha256"],
-                "alignment_correct": str(
-                    review["alignment_correct"]
-                ).lower(),
-                "maximum_boundary_error_ms": (
-                    review["maximum_boundary_error_ms"]
+                "alignment_correct": str(review["alignment_correct"]).lower(),
+                "maximum_boundary_error_ms": (review["maximum_boundary_error_ms"]),
+                "incorrect_interval_count": (
+                    "" if incorrect_count is None else incorrect_count
                 ),
+                "total_alignment_interval_count": len(item.automatic_phone_alignments),
                 "notes": review["notes"],
             }
         )

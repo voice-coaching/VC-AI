@@ -43,6 +43,7 @@ except ImportError:  # headless machine; the GUI needs a desktop Python
 # note.
 DEFAULT_ALIGNMENT_CORRECT = "correct"
 DEFAULT_MAXIMUM_BOUNDARY_ERROR_MS = "0"
+DEFAULT_INCORRECT_INTERVAL_COUNT = "0"
 
 
 def parse_args() -> argparse.Namespace:
@@ -292,9 +293,14 @@ class ReviewApp:
         tk.Entry(form, textvariable=self.boundary_var, width=10).grid(
             row=0, column=3, sticky="w", padx=6
         )
+        tk.Label(form, text="틀린 자동 대응 개수").grid(row=0, column=4, sticky="w")
+        self.incorrect_count_var = tk.StringVar(value="")
+        tk.Entry(form, textvariable=self.incorrect_count_var, width=6).grid(
+            row=0, column=5, sticky="w", padx=6
+        )
         tk.Label(form, text="메모").grid(row=1, column=0, sticky="nw", pady=4)
         self.notes = tk.Text(form, height=3, width=80)
-        self.notes.grid(row=1, column=1, columnspan=3, sticky="we", pady=4)
+        self.notes.grid(row=1, column=1, columnspan=5, sticky="we", pady=4)
         tk.Button(form, text="원자 저장", command=self.on_save).grid(
             row=2, column=0, pady=4, sticky="w"
         )
@@ -385,6 +391,12 @@ class ReviewApp:
         self.boundary_var.set(
             DEFAULT_MAXIMUM_BOUNDARY_ERROR_MS if boundary is None else str(boundary)
         )
+        incorrect_count = review.get("incorrect_interval_count")
+        self.incorrect_count_var.set(
+            DEFAULT_INCORRECT_INTERVAL_COUNT
+            if incorrect_count is None
+            else str(incorrect_count)
+        )
         self.notes.delete("1.0", "end")
         self.notes.insert("1.0", review.get("notes") or "")
 
@@ -413,9 +425,32 @@ class ReviewApp:
                 "입력 필요", "최대 경계 오차(ms)를 숫자로 입력하세요."
             )
             return
+        try:
+            incorrect_count = int(self.incorrect_count_var.get())
+        except ValueError:
+            messagebox.showwarning(
+                "입력 필요", "틀린 자동 대응 개수를 정수로 입력하세요."
+            )
+            return
+        is_correct = self.correct_var.get() == "correct"
+        total_intervals = len(self.current.get("automatic_phone_alignments", []))
+        if is_correct and incorrect_count != 0:
+            messagebox.showwarning(
+                "입력 확인",
+                "정렬 정확성이 correct이면 틀린 자동 대응 개수는 0이어야 합니다.",
+            )
+            return
+        if not is_correct and not (1 <= incorrect_count <= total_intervals):
+            messagebox.showwarning(
+                "입력 확인",
+                f"정렬 정확성이 incorrect이면 틀린 자동 대응 개수는 1~"
+                f"{total_intervals} 사이여야 합니다.",
+            )
+            return
         body = {
-            "alignment_correct": self.correct_var.get() == "correct",
+            "alignment_correct": is_correct,
             "maximum_boundary_error_ms": boundary,
+            "incorrect_interval_count": incorrect_count,
             "notes": self.notes.get("1.0", "end-1c"),
         }
         try:

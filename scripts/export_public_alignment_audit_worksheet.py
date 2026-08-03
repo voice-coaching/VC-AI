@@ -37,6 +37,7 @@ PUBLIC_COLUMNS = [
     "reviewer_id",
     "alignment_correct",
     "maximum_boundary_error_ms",
+    "incorrect_interval_count",
     "notes",
 ]
 
@@ -56,6 +57,7 @@ FORBIDDEN_COLUMNS = {
 # for the accepted-risk note.
 DEFAULT_ALIGNMENT_CORRECT = "correct"
 DEFAULT_MAXIMUM_BOUNDARY_ERROR_MS = "0"
+DEFAULT_INCORRECT_INTERVAL_COUNT = "0"
 
 
 def parse_args() -> argparse.Namespace:
@@ -102,6 +104,8 @@ def main() -> int:
             public_row["alignment_correct"] = DEFAULT_ALIGNMENT_CORRECT
         if not public_row["maximum_boundary_error_ms"]:
             public_row["maximum_boundary_error_ms"] = DEFAULT_MAXIMUM_BOUNDARY_ERROR_MS
+        if not public_row.get("incorrect_interval_count"):
+            public_row["incorrect_interval_count"] = DEFAULT_INCORRECT_INTERVAL_COUNT
         public_rows.append(public_row)
     leaked = FORBIDDEN_COLUMNS & set(public_rows[0])
     if leaked:

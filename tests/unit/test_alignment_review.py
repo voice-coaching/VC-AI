@@ -237,6 +237,7 @@ def test_atomic_review_validation_duplicate_update_and_resume(
         json={
             "alignment_correct": False,
             "maximum_boundary_error_ms": 20.0,
+            "incorrect_interval_count": 1,
             "notes": "duplicate",
         },
     ).status_code == 409
@@ -246,6 +247,7 @@ def test_atomic_review_validation_duplicate_update_and_resume(
         json={
             "alignment_correct": False,
             "maximum_boundary_error_ms": 20.0,
+            "incorrect_interval_count": 1,
             "notes": " corrected ",
         },
     )
@@ -292,6 +294,7 @@ def test_incomplete_then_completed_privacy_safe_scorer_export(
             submission=ReviewSubmission(
                 alignment_correct=decision,
                 maximum_boundary_error_ms=10.0,
+                incorrect_interval_count=0 if decision else 1,
                 notes="",
             ),
             replace=False,

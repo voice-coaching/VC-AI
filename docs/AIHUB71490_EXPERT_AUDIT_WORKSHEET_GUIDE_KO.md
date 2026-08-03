@@ -1,8 +1,8 @@
 # AI Hub 71490 전문가 수동 감사 worksheet·음성 경로 안내
 
 기준 시각: 2026-07-31 KST
-최종 갱신: 2026-07-31 KST (판정 기본값 사전 기입으로 인한 감사 신뢰성
-저하 위험 명시)
+최종 갱신: 2026-08-02 KST (240건 실제 결과·실패 원인 조사·phone-level
+accuracy 도입·5초 이상 30건 신규 표본 추가)
 
 이 문서는 240건 수동 정렬 감사(G04)를 수행할 독립 전문가에게
 worksheet 위치, 채워야 하는 항목, 음성·라벨 파일 경로 구조를 안내한다.
@@ -172,7 +172,39 @@ dataset root: data/restricted/aihub/dataset-71490
    `status=passed`, `alignment_accuracy >= 0.95` (228/240 이상).
 5. 결과 JSON은 seungun CTC smoke/full 학습의 fail-closed gate 입력이다.
    통과 전에는 `seungun/scripts/train_ctc.py`가 모델 로드 전에 종료된다.
-6. 95% 미만이면 학습하지 않고 실패 사례를 유형별로 분석해 TextGrid
-   정규화·제외 정책과 manifest를 다시 생성한다. manifest가 바뀌면 기존
-   worksheet를 재사용하지 않고
-   `scripts/sample_alignment_audit.py`로 재생성한다.
+6. 95% 미만이면 학습하지 않고 실패 사례를 유형별로 분석한다 (6절 참고).
+
+## 6. 240건 실제 결과와 후속 조사
+
+240건 검수가 완료됐다: `alignment_correct` true 178 / false 62,
+`alignment_accuracy = 0.7417` — 0.95 gate 미달로 `status=failed`.
+
+실패 62건을 분석한 결과와 후속 조치는 다음과 같다.
+
+- 실패율은 `error_presence=true`(오류 발화)에서 59.55%, `false`에서
+  5.96%로 압도적으로 차이가 났다. `split`/`l1`/`gender`/`proficiency`별
+  세부 실패율, 자동 대응 operation별 분포, 검수자 메모는
+  `data/processed/aihub71490/manifests/aihub71490_manual_alignment_audit_failure_analysis.md`에
+  있다(Git 제외, 서버 로컬).
+- 검수자 메모 기반 가설(#129 Unicode 자모 인코딩, #216 target null) 두
+  건은 원본 데이터를 직접 대조한 결과 **둘 다 사실이 아니었다** — 그래도
+  `_parse_interval_list`의 null 방어(str(None)→"None" 은닉 방지)와
+  `align_intervals`의 Hangul 자모 정규화는 별개의 정당한 방어 코드로
+  반영했다(`src/voice_coach/data/aihub71490.py`,
+  `src/voice_coach/data/intervals.py`).
+- "긴 발화일수록 실패율이 높다"는 관찰은 phone(음소) 개수 누적에 따른
+  이항분포 효과로 확인됐다 — phone 단위 오류율은 길이와 무관하게
+  5~8%로 일정하다. tolerance_seconds/min_overlap_ratio 완화도 효과가
+  없었다(자세한 내용은
+  [`LOCAL_ALIGNMENT_REVIEW_UI_KO.md`](LOCAL_ALIGNMENT_REVIEW_UI_KO.md)
+  "발화 단위 대신 phone 단위 정확도" 절 참고).
+- 이 발견에 따라 발화 단위 대신 phone 단위 정확도(`incorrect_interval_count`
+  기반 `phone_level_accuracy`)를 병행 지표로 도입했고, duration 5초 이상
+  utterance만 대상으로 한 독립 30건 표본
+  (`aihub71490_manual_alignment_audit_long30_v2.tsv`, 공개 사본은
+  `docs/audit/aihub71490_manual_alignment_audit_long30_v2_public.tsv`)을
+  만들어 현재(버그 수정 반영) 알고리즘으로 재계산한 `automatic_phone_alignments`를
+  다시 검수하도록 했다. 어느 지표를 최종 G04 gate로 쓸지는 연구책임자가
+  결정한다.
+- 240건 원표본과 30건 신규 표본은 서로 다른 독립 표본이며, 30건 결과가
+  240건의 74.17%를 소급 대체하지 않는다.

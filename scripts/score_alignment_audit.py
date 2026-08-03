@@ -95,6 +95,42 @@ def main() -> int:
     accuracy = sum(decisions) / len(decisions) if decisions else 0.0
     if not invalid and accuracy < args.minimum_accuracy:
         failed_checks.append("alignment_accuracy")
+
+    # Phone-level accuracy: unlike alignment_accuracy above (utterance
+    # pass/fail), this is not skewed by phone count per utterance, since it
+    # counts wrong phone intervals rather than "did every phone pass".
+    # Only present in worksheets exported with incorrect_interval_count
+    # (scripts/review_alignment_audit.py export from a phone-level-aware
+    # review); absent from legacy utterance-only worksheets.
+    has_phone_level_columns = bool(rows) and {
+        "incorrect_interval_count",
+        "total_alignment_interval_count",
+    } <= set(rows[0])
+    phone_level_accuracy = None
+    total_phone_intervals = 0
+    total_incorrect_phone_intervals = 0
+    invalid_phone_level_indices = []
+    if has_phone_level_columns and not invalid:
+        for row in rows:
+            try:
+                incorrect_count = int(row["incorrect_interval_count"])
+                total_count = int(row["total_alignment_interval_count"])
+                if incorrect_count < 0 or total_count < 0:
+                    raise ValueError
+                if incorrect_count > total_count:
+                    raise ValueError
+            except (TypeError, ValueError):
+                invalid_phone_level_indices.append(row["audit_index"])
+                continue
+            total_phone_intervals += total_count
+            total_incorrect_phone_intervals += incorrect_count
+        if invalid_phone_level_indices:
+            failed_checks.append("invalid_phone_level_counts")
+        elif total_phone_intervals > 0:
+            phone_level_accuracy = 1 - (
+                total_incorrect_phone_intervals / total_phone_intervals
+            )
+
     status = "passed" if not failed_checks else "failed"
     result = {
         "schema_version": "aihub71490.manual_alignment_audit.v1",
@@ -105,6 +141,12 @@ def main() -> int:
         "correct_count": sum(decisions),
         "alignment_accuracy": accuracy,
         "minimum_accuracy": args.minimum_accuracy,
+        "phone_level_accuracy": {
+            "value": phone_level_accuracy,
+            "total_phone_intervals": total_phone_intervals,
+            "total_incorrect_phone_intervals": total_incorrect_phone_intervals,
+            "invalid_audit_indices": invalid_phone_level_indices,
+        },
         "invalid_audit_indices": invalid,
         "missing_reviewer_indices": missing_reviewers,
         "invalid_boundary_error_indices": invalid_boundaries,
@@ -114,9 +156,7 @@ def main() -> int:
         "failed_checks": failed_checks,
     }
     args.output.parent.mkdir(parents=True, exist_ok=True)
-    temporary = args.output.with_name(
-        f".{args.output.name}.part-{uuid4().hex}"
-    )
+    temporary = args.output.with_name(f".{args.output.name}.part-{uuid4().hex}")
     try:
         temporary.write_text(
             json.dumps(result, ensure_ascii=False, indent=2) + "\n",

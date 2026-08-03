@@ -1,12 +1,14 @@
 # 로컬 전용 정렬 감사 UI/CLI
 
 기준일: 2026-07-29 KST  
-현재 실제 전문가 판정: **0/240**  
-G04 상태: **외부 전문가 판정 대기**
+최종 갱신: 2026-08-02 KST  
+240건 1차 표본: **240/240 완료**, `alignment_accuracy=0.7417`
+(228/240 미달, `status=failed`)  
+5초 이상 30건 2차 표본: **검수 진행용으로 신규 생성**, phone-level
+accuracy 병행 도입
 
-이 도구는 기존 240건 표본을 한국어 음성학 전문가가 검수하기 위한
-로컬 실행 도구다. 자동화 에이전트가 전문가 판정을 대신 생성하는
-도구가 아니며, 현재 worksheet와 review state에는 실제 판정이 없다.
+이 도구는 한국어 음성학 전문가가 검수하기 위한 로컬 실행 도구다.
+자동화 에이전트가 전문가 판정을 대신 생성하는 도구가 아니다.
 
 ## 보안·개인정보 경계
 
@@ -49,8 +51,16 @@ state에는 source 두 파일의 SHA-256과 hash item별 다음 필드만 저장
 - `reviewer_id_sha256`
 - `alignment_correct`
 - `maximum_boundary_error_ms`
+- `incorrect_interval_count`
 - `notes`
 - `updated_at_utc`
+
+`incorrect_interval_count`는 phone-level accuracy 계산용이다(아래
+"발화 단위 대신 phone 단위 정확도" 절 참고). `alignment_correct=true`면
+반드시 `0`, `false`면 반드시 화면에 표시된 `automatic_phone_alignments`
+개수 이하의 1 이상 값이어야 한다. 이 필드가 없는 기존(240건) review
+항목은 `incorrect_interval_count=null`로 취급해 phone-level accuracy
+계산에서 제외한다(집계는 null).
 
 저장은 같은 디렉터리의 고유 `.part-*`에 먼저 쓴 뒤 `os.replace`로
 원자 publish한다. 재실행 시 source hash와 모든 review를 검증해 resume한다.
@@ -161,7 +171,76 @@ access log도 비활성화한다.
 
 - `alignment_correct`: strict boolean
 - `maximum_boundary_error_ms`: 0 이상, 유한, 해당 발화 길이 이내
+- `incorrect_interval_count`: 0 이상 정수. `alignment_correct=true`면
+  반드시 0, `false`면 반드시 1 이상이고 화면에 표시된
+  `automatic_phone_alignments` 개수 이하
 - `notes`: 최대 2,000자, 빈 문자열 허용, 개인정보·원본 ID/경로 금지
+
+## 발화 단위 대신 phone 단위 정확도
+
+240건 1차 감사(74.17%, 178/240 정상) 실패 62건을 분석한 결과, 발화
+길이(phone 개수)와 실패율이 강하게 상관됐다. 그러나 phone(interval)
+단위 오류율은 길이와 무관하게 5~8%로 일정했다. 즉 발화가 길수록
+"발화 전체가 완벽할 확률"이 이항분포적으로 떨어질 뿐(phone이 6개면
+0.92⁶≈60%, 35개면 0.92³⁵≈5%), 알고리즘이 긴 발화에서 더 나빠지는 게
+아니다. tolerance_seconds/min_overlap_ratio를 완화해도 deletion+
+insertion 수는 줄지 않고 오히려 늘어나, 파라미터 튜닝으로 해결되는
+문제도 아니었다(재현: `scripts/analyze_error_presence_failure_patterns.py`).
+
+이 편향을 피하기 위해 `incorrect_interval_count`를 도입해 **phone 단위
+정확도**를 별도로 집계한다.
+
+```text
+phone_level_accuracy = 1 - (Σ incorrect_interval_count) / (Σ automatic_phone_alignments 개수)
+```
+
+`scripts/review_alignment_audit.py`의 `status`/`export`와
+`scripts/score_alignment_audit.py`가 모두 이 값을 `phone_level_accuracy`로
+함께 보고한다. 이 지표는 발화 단위 `alignment_accuracy`를 대체하지
+않고 나란히 보고되며, 어느 지표를 G04 최종 gate로 쓸지는 연구책임자가
+결정한다.
+
+### 5초 이상 30건 phone-level 재검수 표본
+
+긴 발화(phone 개수가 많은 발화)에서 실제로 알고리즘이 잘 작동하는지
+phone 단위로 직접 확인하기 위해, duration 5초 이상 utterance만 대상으로
+한 별도 30건 표본을 만들었다. 240건 1차 감사와는 독립적인 표본이며,
+`error_presence`(정상/오류 발화)로만 층화해 각 15건씩 뽑았다.
+
+```text
+worksheet:
+  data/processed/aihub71490/manifests/aihub71490_manual_alignment_audit_long30_v2.tsv
+details:
+  data/processed/aihub71490/manifests/aihub71490_manual_alignment_audit_long30_v2_details.jsonl
+metadata:
+  data/processed/aihub71490/manifests/aihub71490_manual_alignment_audit_long30_v2_metadata.json
+공개 사본:
+  docs/audit/aihub71490_manual_alignment_audit_long30_v2_public.tsv
+```
+
+이 표본의 `automatic_phone_alignments`는 기존 enriched Parquet의 저장된
+값을 그대로 쓰지 않고, 현재(null 방어·Hangul 자모 정규화 수정이 반영된)
+`src/voice_coach/data/intervals.py`의 `align_intervals()`로
+**다시 계산**했다(`scripts/sample_alignment_audit.py --recompute-alignments`).
+생성 명령:
+
+```bash
+.venv-scorer/bin/python scripts/sample_alignment_audit.py \
+  data/processed/aihub71490/manifests/aihub71490_enriched.parquet \
+  --output data/processed/aihub71490/manifests/aihub71490_manual_alignment_audit_long30_v2.tsv \
+  --details-output data/processed/aihub71490/manifests/aihub71490_manual_alignment_audit_long30_v2_details.jsonl \
+  --metadata-output data/processed/aihub71490/manifests/aihub71490_manual_alignment_audit_long30_v2_metadata.json \
+  --sample-size 30 \
+  --minimum-per-stratum 1 \
+  --min-duration-seconds 5.0 \
+  --stratum-columns error_presence \
+  --recompute-alignments \
+  --seed "aihub71490-g0-alignment-audit-v2-long-30"
+```
+
+검수 방식은 240건과 동일하다(GUI/브라우저, token 보호 서버). 폼에
+"틀린 자동 대응 개수" 입력이 추가됐으며, `alignment_correct=incorrect`를
+고르면 반드시 1 이상을 입력해야 저장된다.
 
 ## 진행 상태 확인
 
@@ -195,7 +274,8 @@ report만 `incomplete`로 쓰고 scorer TSV를 생성하지 않는다.
 ```
 
 export TSV는 기존 scorer가 요구하는 다음 열을 유지하되 두 식별자를
-namespaced SHA-256으로 바꾼다.
+namespaced SHA-256으로 바꾸고, phone-level accuracy 계산용 두 열을
+추가한다.
 
 ```text
 audit_index
@@ -203,6 +283,8 @@ utterance_id
 reviewer_id
 alignment_correct
 maximum_boundary_error_ms
+incorrect_interval_count
+total_alignment_interval_count
 notes
 ```
 
@@ -216,7 +298,8 @@ notes
 
 `score_alignment_audit.py`도 표본 수, item/audit index 중복, reviewer 누락,
 판정값, boundary error 누락·범위와 95% gate를 검사하고 결과를 원자
-저장한다.
+저장한다. `incorrect_interval_count`/`total_alignment_interval_count`
+열이 있으면 `phone_level_accuracy`도 함께 계산해 보고한다(없으면 null).
 
 ## 완료 판정
 
