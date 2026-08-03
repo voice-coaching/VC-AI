@@ -10,6 +10,12 @@
 
 이 카드는 실행 결과 카드가 아니다. 미래 외부 인간 평가가 지켜야 할 데이터 구조와 개인정보·통계 경계를 정적으로 고정한다.
 
+현재 성인 청취자 평가는 기관 승인이 필요한 참여자 연구가 아니라 개인 연구다.
+기관/IRB 승인은 선행 gate가 아니며, 개인 연구 scope attestation, 청취자 개별
+동의·자격 attestation, 데이터 라이선스, privacy, blind, preregistration,
+pilot/SAP를 요구한다. 신규 참여자 모집·중재·RCT·학습자 효과 검증을 선택할
+때만 H00 참여자 연구 경로를 적용한다.
+
 ## 2. 예정 입력 데이터
 
 ### 2.1 R03 참조 bank
@@ -23,15 +29,15 @@
 
 현재 R03 completion commit, registry, bank는 없다. R03 completion SHA와 completion/registry schema version은 `TBD_R03_COMPLETION`이다. 따라서 R04는 R03 D1 경로를 열지 않는다.
 
-### 2.2 인간 연구 승인 계층
+### 2.2 개인 연구 평가 계층
 
 다음 artifact가 순서대로 고정되어야 한다.
 
-1. 인간 연구 승인
+1. 개인 연구 scope attestation과 데이터 라이선스
 2. R04 preregistration
 3. pilot 분산·청취자 내 상관 aggregate attestation
 4. 통계분석계획(SAP)
-5. 모든 confirmatory listener의 pseudonymous attestation
+5. 모든 confirmatory listener의 개별 동의·pseudonymous attestation
 
 승인 artifact에는 이름, 이메일, 전화번호, 주소, 자유서술을 저장하지 않는다. 서명 증거는 역할과 SHA-256 receipt로만 결합한다.
 
@@ -88,7 +94,7 @@ rating validator는 범위·중복·assignment·attestation·20문장 coverage�
 - 실제 GPU 접근 수: 0
 - 실제 오디오 read/write 수: 0/0
 - 블라인드 manifest에는 재생 endpoint나 파일 경로를 쓰지 않는다.
-- 오디오 object resolver와 rating collector는 인간승인·preregistration·pilot·SAP·listener attestation을 모두 통과한 별도 등록 executor에서만 사용할 수 있다.
+- 오디오 object resolver와 rating collector는 개인 연구 scope attestation·preregistration·pilot·SAP·listener attestation을 모두 통과한 별도 등록 executor에서만 사용할 수 있다.
 
 ## 5. 개인정보 및 블라인드 정책
 
@@ -153,4 +159,3 @@ rating validator는 범위·중복·assignment·attestation·20문장 coverage�
 - 우월성/열등성/동등성 판정
 - completion, registry, commit
 - 논문 삽입용 실험 결과
-

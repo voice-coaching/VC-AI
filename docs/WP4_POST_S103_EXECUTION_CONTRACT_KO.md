@@ -250,7 +250,7 @@ Deployment 검토에는 별도로 다음이 필요하다.
 - C03 200건 blind 전문가 감사에서 위치·유형 정확도 각각 `>= 0.90`,
   unsupported claim rate `< 0.02`
 - predicted-alignment 성능과 oracle-alignment sensitivity
-- 개인정보·라이선스·기관 승인과 운영 rollback 경로
+- 개인정보·라이선스·개인 연구 scope attestation과 운영 rollback 경로
 
 이 deployment 판정은 WP4/S108의 1점을 추가로 주는 milestone이 아니다.
 

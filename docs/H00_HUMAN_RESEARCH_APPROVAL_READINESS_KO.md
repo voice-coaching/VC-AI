@@ -3,6 +3,19 @@
 최종 갱신: 2026-07-29 KST  
 판정: **정적 fail-closed 준비 완료 / 실제 H00 승인·실행 미완료**
 
+## 개인 연구 범위 정책
+
+현재 저장소는 기관 소속 인간대상연구가 아닌 개인 연구를 기본 범위로 한다.
+기존 라이선스·접근권한이 있는 데이터 분석과 성인 전문가·청취자의 자발적
+평가에는 기관/IRB 승인을 선행 gate로 요구하지 않는다.
+대신 데이터 라이선스, 개별 동의·철회·보존·폐기, 개인 연구 scope
+attestation, R0/R1/D1/A1, 가명키 분리, blind와 preregistration을 요구한다.
+
+H00은 신규 참여자 모집·중재·RCT·학습자 pre/post/retention 같은
+participant-study를 선택할 때만 적용한다. 현재 H00 v1 CLI/config는
+이전 기관 승인 계약을 검사하므로, 이 문서 변경만으로 실행 gate가 해제되지는
+않으며 개인 연구 executor에는 별도 contract amendment가 필요하다.
+
 ## 1. 구현 산출물
 
 | 역할 | 경로 |
@@ -15,9 +28,9 @@
 | 윤리·개인정보 카드 | `docs/H00_HUMAN_RESEARCH_ETHICS_PRIVACY_CARD_KO.md` |
 | 단위/통합 검증 | `tests/unit/test_h00_approval_contract.py`, `tests/integration/test_prepare_h00_human_research_approval.py` |
 
-이 구현은 H00 tracker 점수를 올리거나 공식 판단을 만들어 내는 executor가
-아니다. 공식 문서가 없는 현재 상태에서는 `TBD_H00_APPROVAL`에서
-fail closed한다.
+이 구현은 개인 연구 평가를 승인하는 executor가 아니다. H00 경로를
+사용하는 participant-study에서는 공식 판단이 없을 때
+`TBD_H00_APPROVAL`에서 fail closed한다.
 
 ## 2. 정적 계약이 고정한 범위
 
@@ -131,9 +144,15 @@ H00 approval is TBD_H00_APPROVAL
 공식 판단을 생성하지 않는다. 참여자·오디오·개인정보·모델/GPU/TTS에
 접근하지 않고 artifact도 쓰지 않는다.
 
-## 6. 향후 공식 인수인계
+## 6. 향후 경로
 
-외부 권한을 가진 연구책임자와 기관 담당자가 다음 순서로 처리해야 한다.
+개인 연구의 D07/C03/R04 평가에는 기관 제출 대신 개인 연구 scope
+attestation, 평가자·청취자 개별 동의와 라이선스 확인, preregistration,
+blindness·보안 검토를 보관한다.
+
+참여자 연구를 실제로 시작하려는 경우에만 다음 기관 경로를 사용한다.
+
+participant-study의 연구책임자와 기관 담당자가 다음 순서로 처리해야 한다.
 
 1. 기관이 지정한 공식 양식과 관할 심의 경로를 확인한다.
 2. protocol, C0/C3/C5 manual, allocation, consent, PIA, DMP, 모집·보상,
@@ -154,8 +173,8 @@ H00 approval is TBD_H00_APPROVAL
     intervention을 시작한다.
 
 공식 양식이나 판단 문구를 이 저장소가 임의로 만들 수 없다. Portal
-제출·기관 연락·서명과 법률/윤리 판단은 반드시 권한 있는 사람과 기관의
-외부 작업으로 남는다.
+제출·기관 연락·서명과 법률/윤리 판단은 participant-study를 선택한
+경우에만 권한 있는 사람과 기관의 외부 작업으로 남는다.
 
 ## 7. 다음 차단 조건
 
@@ -169,6 +188,6 @@ H00 approval is TBD_H00_APPROVAL
 - 외부/TTS/국외 이전 scope: `TBD_EXTERNAL`
 - 만료·amendment·현재 유효 상태와 공식 receipt: `TBD_EXTERNAL`
 
-따라서 H00 실제 완성도와 tracker 배점은 0으로 유지한다. H00의 정적
-준비 완료는 H01–H04 실행, 연구 승인, 개인정보 적법성 또는 논문용
-학습효과 결과를 의미하지 않는다.
+따라서 개인 연구의 D07/C03/R04에는 H00 배점을 적용하지 않는다. H00의
+정적 준비 완료는 participant-study의 승인, 개인정보 적법성 또는
+논문용 학습효과 결과를 의미하지 않는다.

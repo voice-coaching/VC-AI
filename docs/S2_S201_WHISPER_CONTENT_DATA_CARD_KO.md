@@ -108,7 +108,7 @@ WER와 CER의 정의는 고정했지만 통과 임계값과 두 지표를 conten
 | content mismatch 결합 규칙·threshold | `TBD_PREREGISTRATION` |
 
 수치를 임의로 채우거나 FLEURS/ZEROTH 결과를 본 뒤 선택할 수 없다.
-별도 S2 content pilot/protocol 근거, 연구책임자 승인, 결과 미열람,
+별도 S2 content pilot/protocol 근거, 개인 연구 scope attestation, 결과 미열람,
 data/model path 미해석을 증명하는 immutable preregistration이 먼저
 필요하다. 미해결 상태에서는 preflight와 production 실행 모두
 fail-closed한다.
@@ -124,8 +124,8 @@ phone·운율 품질 통과를 뜻하지도 않는다.
 별도 S2 전문가 자료는 한국어 L2 발화의 canonical prompt와 독립 content
 reference/evaluation에만 사용한다. S1 labeler·split·예측·threshold와
 독립이어야 한다. Phone·prosody label은 S201에 입력하지 않는다.
-기관 승인, 동의·철회, 보존·폐기, item/speaker/rater 분리와 manifest
-hash를 row-free attestation으로 먼저 고정해야 한다.
+개인 연구 scope attestation, 동의·철회, 보존·폐기, item/speaker/rater
+분리와 manifest hash를 row-free attestation으로 먼저 고정해야 한다.
 
 ### FLEURS ko-KR와 ZEROTH-Korean
 

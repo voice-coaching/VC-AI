@@ -14,9 +14,9 @@
 | ZEROTH-Korean | 22,720 FLAC+전사 | CC-BY-4.0 | 원어민 ASR·alignment 기준선 | 출처 표시, L2 오류 감독학습으로 사용 금지 |
 | KSS | 12,854 embedded audio | CC-BY-NC-SA-4.0 | 연구용 TTS/원어민 기준음 후보 | 비상업 경로 격리, 상업 artifact에 혼합 금지, 동일조건 공유 확인 |
 | Seoul Corpus | 240 FLAC/TextGrid | CC-BY-NC-2.0 | phone alignment·자발화 운율 외부평가 | 비상업 연구만, 원본 재배포 금지 |
-| 전문가 재평가 | 미수집 | 별도 동의·기관 정책 | G0, calibration, 독립 gold/S2 holdout | 비식별, 평가자 분리, 보존·폐기 계획 필요 |
+| 전문가 재평가 | 미수집 | 개인 연구 scope attestation·별도 동의·데이터 약관 | G0, calibration, 독립 gold/S2 holdout | 비식별, 평가자 분리, 보존·폐기 계획 필요 |
 | 원어민 reference 녹음 | 미수집 | 별도 녹음·사용 동의 | 20문장 multi-reference와 TTS 편향 감사 | 음성·화자 정보 접근 통제, 용도·기간 명시 |
-| 학습자 파일럿/RCT | 미수집 | IRB/PIPA·명시적 동의 | C0↔C3, C3↔C5 학습 효과 | 모집 전 승인, 철회권, 미성년자 정책, 4주 유지 데이터 보호 |
+| 학습자 파일럿/RCT | 미수집 | 참여자 연구의 IRB/PIPA·명시적 동의 | C0↔C3, C3↔C5 학습 효과 | 모집 전 승인, 철회권, 미성년자 정책, 4주 유지 데이터 보호 |
 
 ## 실험 경계
 

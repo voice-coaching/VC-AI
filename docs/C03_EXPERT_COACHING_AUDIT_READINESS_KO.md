@@ -1,4 +1,4 @@
-# C03 전문가 coaching 감사 STATIC readiness
+# C03 전문가 coaching 감사 STATIC readiness (개인 연구)
 
 ## 1. 판정
 
@@ -9,6 +9,13 @@ template, read-only fail-closed contract/CLI, unit/integration test,
 data-model/privacy/safety/statistics card를 구현했다. 실제 전문가·평정,
 audio/보호행 접근, metric, 결과, commit은 모두 0이다.
 
+현재 C03은 기관 승인이 필요한 참여자 연구가 아니라 개인 연구의 성인 전문가
+감사다. 기관/IRB 승인은 선행 gate가 아니며 개인 연구 scope attestation,
+평가자 개별 동의·자격·기밀 attestation, privacy, blind, preregistration을
+요구한다. 신규 참여자 모집·중재·RCT·학습자 효과 검증을 선택할 때만 H00
+참여자 연구 경로를 적용한다. 레거시 C03 v1 CLI/config의 승인 검사는 이
+문서 수정만으로 해제되지 않으므로 별도 contract amendment 전에는 실행하지 않는다.
+
 현재 canonical full preflight는 최초 미완료 S107에서 멈춘다.
 
 ```text
@@ -16,7 +23,7 @@ stage = s107_completion
 error = S107 actual completion is TBD_S107_COMPLETION
 S107 path resolution/read/module/deep/threshold read = 0
 C02 completion/bundle path/read/row = 0
-approval/reviewer/preregistration path/read = 0
+scope-attestation/reviewer/preregistration path/read = 0
 D1/R1/R0/audio/rating/model/GPU/network/metric/result/output/commit = 0
 ```
 
@@ -65,7 +72,7 @@ config-only 결과:
 3. pinned C02 contract를 통한 actual S107 deep validation
 4. C02 actual completed commit와 D1 bundle SHA pin
 5. actual C02 preregistration 및 모든 D1 input/output deterministic 재검증
-6. 기관·전문가 승인
+6. 개인 연구 scope attestation과 평가자 개별 동의·자격 attestation
 7. reviewer 자격·기밀·blind attestation
 8. no-TBD frozen C03 preregistration
 9. protected audit data 전에 정지
@@ -114,7 +121,7 @@ unit test는 다음을 검증한다.
 - original/adjudication 분리와 원평정 보존
 - 위치·유형 0.90 inclusive 및 unsupported 0.02 strict failure
 - 네 가지 safety event의 revision+reaudit 강제
-- 기관 승인 → reviewer → frozen prereg binding
+- 개인 연구 scope attestation → reviewer → frozen prereg binding
 - unresolved design과 reviewer N drift 차단
 - root `additionalProperties=false` schema
 
@@ -129,7 +136,7 @@ fail-closed JSON을 검증한다.
    별도 executor로 실행한다.
 3. C02 D1 bundle commit/bundle을 현재 C03 predecessor schema에 맞춰
    발행하고 모든 row 재검증을 통과한다.
-4. 기관·전문가 평가 승인을 발급한다.
+4. 개인 연구 scope attestation과 평가자 동의·자격 attestation을 발급한다.
 5. reviewer N·자격을 결정하고 reviewer별 attestation을 발급한다.
 6. exact 표집·adjudication·CI·multiplicity·support·risk taxonomy를
    승인된 preregistration에서 동결한다.

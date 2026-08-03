@@ -1,13 +1,21 @@
-# D07 독립 전문가 gold STATIC readiness
+# D07 독립 전문가 gold STATIC readiness (개인 연구)
 
 ## 1. 결론
 
-**정적 구현 준비 완료 / 실제 D07 0%**
+**정적 구현 준비 완료 / 실제 D07 0% / 기관 승인 비적용**
+
+현재 D07은 기관 소속 참여자 연구가 아니라 개인 연구의 성인 전문가 평가 경로다.
+따라서 기관/IRB 승인을 선행 gate로 요구하지 않고, 개인 연구 scope attestation,
+AI Hub 라이선스·접근권한, 평가자 개별 동의·자격·기밀 attestation, privacy zone,
+blind, preregistration을 요구한다. 신규 참여자 모집·중재·RCT·학습자
+pre/post/retention을 선택하는 경우에만 H00 참여자 연구 경로를 적용한다.
+현재 v1 CLI/config는 레거시 H00 gate를 검사하므로, 이 문서만으로 실제 실행
+gate가 해제되지 않으며 개인 연구 executor에는 별도 contract amendment가 필요하다.
 
 다음을 구현했다.
 
 - strict item/rating/calibration/locked/completion schema 5개
-- D07-specific institutional approval, reviewer attestation, frozen
+- D07-specific personal-research scope attestation, reviewer attestation, frozen
   preregistration, locked authorization template 4개
 - source-pinned config
 - read-only fail-closed contract와 CLI
@@ -65,7 +73,9 @@ counter도 0이다. G04 worksheet/detail/audio를 열지 않았고 기존 파일
 ## 4. 현재 full fail-closed 결과
 
 Full preflight는 static source 25개와 TOCTOU 25개, G04 A1 aggregate
-1개를 검증한 뒤 최초 외부 blocker인 H00에서 멈춘다.
+1개를 검증한 뒤 레거시 v1 실행기의 H00 gate에서 멈춘다. 개인 연구
+scope attestation으로 전환하려면 별도 contract amendment와 executor 변경이
+필요하므로 현재 실제 평가 접근은 0이다.
 
 ```text
 stage = h00_approval
@@ -73,7 +83,7 @@ H00 module load = 0
 H00 approval path/read = 0
 H00 attestation path/read = 0
 H00 restricted document path/read = 0
-D07 institutional approval path/read = 0
+D07 personal scope attestation path/read = 0
 reviewer attestation path/read = 0
 preregistration path/read = 0
 D1 item path/read/row = 0
@@ -126,7 +136,8 @@ Unit test는 다음을 확인한다.
 - source pin 25와 G04 aggregate 1만 읽고 보호 runtime 0
 - H00 TBD에서 module/path/read 0
 - G04 0/240 state/export 미생성과 D07 reuse 금지
-- H00 → D07 institutional approval → 3-role reviewer → frozen prereg 결합
+- H00 participant-study path is not required for current D07; personal scope
+  attestation + 3-role reviewer → frozen prereg 결합
 - calibration 800 + locked 200의 split count
 - item/speaker hash, 여섯 strata, G04/S203 reuse false
 - 두 original rating의 mutual/model blindness
@@ -165,19 +176,18 @@ Full 실측 counter는 source pin 25/25, TOCTOU 25/25, G04 aggregate read
 
 ## 7. 다음 실제 실행 순서
 
-1. H00 actual public approval과 official-document attestation을 발급·검증한다.
-2. H00을 D07 승인으로 대체하지 말고 D07-specific institutional
-   approval을 별도로 발급한다.
-3. 자격 evidence를 확인한 primary expert 2명과 adjudicator 1명을
+1. 개인 연구 scope attestation과 AI Hub 데이터 라이선스·접근권한을 검증한다.
+2. 자격 evidence를 확인한 primary expert 2명과 adjudicator 1명을
    attestation에 등록한다.
-4. exact allocation, disagreement, statistics, note limit, one-shot policy를
+3. exact allocation, disagreement, statistics, note limit, one-shot policy를
    preregistration으로 동결한다.
-5. 별도 executor에서 800 calibration을 두 primary가 독립 평정한다.
-6. adjudication 전 원평정 agreement를 계산한다.
-7. gate 미달이면 rubric 재교육 후 별도 800 표본으로 다시 calibration한다.
-8. gate 통과 후 rubric/primary를 동결한다.
-9. G04 240건을 별도 전문가 stage로 실제 완료하고 attestation을 발급한다.
-10. prior expert locked access 0을 확인해 one-shot authorization을 발급한다.
-11. locked 200–1,200을 단일 expert transaction으로 평정한다.
-12. 두 원평정과 adjudicated gold sensitivity를 각각 보고한다.
-13. 독립 검증 뒤 aggregate D07 completion attestation만 S108에 전달한다.
+4. 별도 executor에서 800 calibration을 두 primary가 독립 평정한다.
+5. adjudication 전 원평정 agreement를 계산한다.
+6. gate 미달이면 rubric 재교육 후 별도 800 표본으로 다시 calibration한다.
+7. gate 통과 후 rubric/primary를 동결한다.
+8. G04 240건을 별도 전문가 stage로 실제 완료하고 completion attestation을
+   발급한다.
+9. prior expert locked access 0을 확인해 one-shot authorization을 발급한다.
+10. locked 200–1,200을 단일 expert transaction으로 평정한다.
+11. 두 원평정과 adjudicated gold sensitivity를 각각 보고한다.
+12. 독립 검증 뒤 aggregate D07 completion attestation만 S108에 전달한다.

@@ -5,6 +5,22 @@
 preflight와 v1 source-pin 불일치 판정 반영)
 상태: 실행 중
 
+## 현재 개인 연구 범위 정책 (2026-08-03)
+
+현재 저장소의 성인 전문가·원어민·청취자 평가는 기관 소속 참여자 연구가
+아닌 개인 연구다. 따라서 D07/D08/C03/R01/R04의 선행 gate로 기관/IRB 승인을
+요구하지 않는다. 대신 개인 연구 scope attestation, AI Hub 및 recording
+license/약관, 평가자·화자의 개별 동의·철회·보존·폐기, 가명키 분리, R0/R1/D1/A1
+privacy, blind, preregistration, QC와 독립 검증을 유지한다.
+
+H00–H04의 신규 참여자 모집·중재·RCT·학습자 pre/post/retention 경로를
+선택할 때만 기관/IRB 및 참여자 동의 gate를 적용한다. 아래 기존 표와
+과거 실행 로그에 남은 H00·기관 승인 표현은 해당 참여자 연구 경로 또는
+레거시 v1 executor의 상태를 기록한 것이다. 현재 개인 연구 평가를 실제로
+열었다는 뜻이 아니다. D07/R04/C03/D08 v1 CLI/config가 여전히 H00 승인
+검사를 수행하므로 개인 연구 executor로 전환하는 별도 contract amendment
+전에는 사람 평가·음성 수집을 시작하지 않는다.
+
 ## 1. 최종 목표
 
 `한국어 AI 보이스 코칭을 위한 폐쇄루프 TTS 아키텍처`의 설계를 실제
@@ -70,7 +86,7 @@ preflight와 v1 source-pin 불일치 판정 반영)
 | WP6 | 근거 제한 코칭 | 7 | 1 | 진행 중 | 200건 전문가 정확도/안전 감사 |
 | WP7 | 다중 참조음·TTS Loop A | 10 | 1 | 진행 중 | R01 외부 human/CosyVoice 승인·실제 후보 생성, R02–R03 gate/Pareto, R04 blind 평가 |
 | WP8 | 폐쇄루프·metamorphic·API | 5 | 0 | 대기(정적 준비 완료) | S108/C02/C03/R03/D08 actual 선행 뒤 한 사이클 demo·metamorphic 95%·API guard 실행 |
-| WP9 | 전문가 평가·파일럿/RCT | 8 | 0 | 외부 의존 | IRB/동의/모집/사전-사후-유지 평가 |
+| WP9 | 전문가 평가·파일럿/RCT | 8 | 0 | 외부 의존 | 개인 연구 전문가 평가는 scope attestation·동의·license; 참여자 pilot/RCT는 IRB/동의/모집/사전-사후-유지 평가 |
 | WP10 | 통계·표·그림·논문 개정 | 5 | 3 | 진행 중 | 모델·후속/외부 결과 표와 최종 PDF |
 
 ## 4. 실행 가능한 하위 작업
@@ -101,6 +117,12 @@ preflight와 v1 source-pin 불일치 판정 반영)
 
 #### D07 준비도와 실제 독립 전문가 gold 평가 분리
 
+정책 보정: D07 성인 전문가 평가는 개인 연구이므로 기관·IRB 승인 대신
+개인 연구 scope attestation, 라이선스, 평가자 동의·자격 attestation을
+요구한다. 아래 표의 H00/D07 기관 승인 문구는 참여자 연구 경로나 레거시
+executor의 정적 상태를 가리키며, 실제 D07 평가 0%와 실행 계약 amendment
+미완료 상태는 그대로다.
+
 | 구분 | 현재 상태 | 확인한 근거 | 배점 |
 |---|---|---|---:|
 | Production static readiness | 100%; G04 240건과 별도 D07 1,000–2,000건, calibration 800+locked 최대 1,200, 정확히 독립 primary 2인과 disagreement-only adjudicator, calibration gate→one-shot locked 순서를 강제하는 package 완료 | config-only source 25건·G04 aggregate 1건 외 H00/external/D1/R1/audio/rating/locked/model/GPU/network/metric/output 0; full은 H00 actual approval TBD에서 모든 보호 path/read 0으로 종료; targeted 17개, 관련 회귀 166개와 전체 1,091개, Ruff/format/mypy 통과 | 0 |
@@ -114,6 +136,11 @@ multiplicity·support·one-shot recovery는 승인된 frozen preregistration
 유지한다.
 
 #### D08 준비도와 실제 외부 데이터 수집 분리
+
+정책 보정: D08 원어민 녹음은 개인 연구 scope attestation, 개별 동의,
+recording license, QC preregistration을 요구하며 기관 승인을 선행 gate로
+요구하지 않는다. 아래 표의 H00 승인 문구는 참여자 연구 경로나 레거시
+executor의 정적 상태를 가리키며, 실제 수집 0%는 그대로다.
 
 | 구분 | 현재 상태 | 확인한 근거 | 배점 |
 |---|---|---|---:|
@@ -290,6 +317,10 @@ semantics와 issue-type별 support matrix는 근거가 없어
 
 #### C03 준비도와 실제 전문가 감사 진행 분리
 
+정책 보정: C03 성인 전문가 감사는 개인 연구 scope attestation과 평가자
+동의·자격 attestation을 요구한다. 기관·전문가 승인 문구는 레거시 executor
+계약의 상태이며 실제 감사 0%와 amendment 미완료를 바꾸지 않는다.
+
 | 구분 | 현재 상태 | 확인한 근거 | 배점 |
 |---|---|---|---:|
 | Production static readiness | 100%; S107 actual→C02 actual D1 bundle→기관/전문가 승인→reviewer attestation→frozen preregistration 순서와 blind 200-item gate를 강제하는 package 검증 완료 | config-only source 21건 외 runtime 0; full은 S107 TBD에서 S107/C02/approval/reviewer/prereg/audio/rating/model/GPU/network/metric/output 0; targeted 15개, C01–C03 47개, 전체 1,047개와 Ruff/format/mypy 통과 | 0 |
@@ -340,6 +371,11 @@ audit target일 뿐 observed realization/gold가 아니며, R02 pass도 publicat
 48/100을 유지한다.
 
 #### R04–R05 준비도와 실제 평가·GRPO 진행 분리
+
+정책 보정: R04 성인 청취자 평가는 개인 연구 scope attestation, 개별 동의,
+listener attestation, preregistration, pilot/SAP가 선행한다. 기관 승인
+문구는 참여자 연구 경로 또는 레거시 정적 계약으로만 해석하며 실제 blind
+평가 0%를 유지한다.
 
 | 단계 | 구현·실행 준비 완성도 | 실제 실험 산출물 완성도 | 배점 판정 |
 |---|---:|---:|---|
@@ -404,6 +440,10 @@ safe next action만 허용한다. 실제 integration artifact가 없으므로 WP
 0/5와 전체 48/100을 유지한다.
 
 ### WP9. 전문가 평가·파일럿/RCT
+
+H00–H04는 신규 참여자 모집·중재·RCT·학습자 pre/post/retention을 선택할
+때만 적용하는 참여자 연구 경로다. 현재 개인 연구의 전문가·원어민·청취자
+평가에는 H00 기관 승인 gate를 적용하지 않는다.
 
 | Task | 상태 | 완료 기준 | 증거/산출물 | 다음 행동 |
 |---|---|---|---|---|
@@ -2132,6 +2172,14 @@ delivery readiness만 사용할 수 있고 stage 1의 unblinded effect 접근은
     `--validate-commit-only` 독립 검증 전에는 S105–S108 v2 re-pin이나
     결과·점수 반영을 진행하지 않는다.
 
+94. 완료(개인 연구 범위 정책 정정; 실행 계약 amendment 미완료):
+    기관 승인/IRB를 현재 성인 전문가·원어민·청취자 평가의 선행 gate로 요구하지
+    않도록 관련 정본 문서를 수정했다. 개인 scope attestation, individual
+    consent/license, privacy, blind/prereg remain. H00은 참여자 모집·중재·RCT·
+    학습자 pre/post/retention을 선택할 때만 적용한다. 기존 D07/R04/C03/D08
+    v1 CLI/config는 레거시 H00 gate를 계속 검사하며 실제 evaluation은 열지
+    않았다. 점수·사람 평가·음성 수집·registry·commit 상태는 변경하지 않았다.
+
 ## 6. 외부 의존과 정직한 중단 기준
 
 다음 항목은 자동화 에이전트가 사람 대신 완료 판정을 만들 수 없다.
@@ -2140,7 +2188,7 @@ delivery readiness만 사용할 수 있고 stage 1의 unblinded effect 접근은
 - 독립 전문가 2인의 1,000–2,000건 재평가와 ICC/QWK
 - 원어민 다화자 reference 녹음 및 사용 동의
 - TTS/코칭 blind MOS·CMOS·정확도 감사
-- IRB 또는 기관 연구윤리 검토, 학습자 동의와 모집
+- 참여자 연구를 선택할 때의 IRB 또는 기관 연구윤리 검토, 학습자 동의와 모집
 - 2주 훈련 및 4주 유지 평가
 
 이 외부 작업을 기다리는 동안 train/dev engineering, 평가 코드,

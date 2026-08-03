@@ -1,13 +1,13 @@
-# R04 블라인드 다중 참조 인간 평가 STATIC readiness
+# R04 블라인드 다중 참조 인간 평가 STATIC readiness (개인 연구)
 
 ## 1. 결론
 
-R04의 production STATIC 계약, 승인 템플릿, 블라인드 randomization/rating 스키마, read-only CLI, synthetic tests를 구현했다. 정적 설정은 유효하지만 실제 평가 준비 완료는 아니다.
+R04의 production STATIC 계약, 승인 템플릿, 블라인드 randomization/rating 스키마, read-only CLI, synthetic tests를 구현했다. 정적 설정은 유효하지만 실제 평가 준비 완료는 아니다. 현재 성인 청취자 평가는 개인 연구 범위이므로 기관/IRB 승인을 선행 gate로 요구하지 않는다. 개인 연구 scope attestation, 청취자 개별 동의·자격 attestation, 데이터 라이선스, privacy, blind, preregistration, pilot/SAP는 계속 필수다. 신규 참여자 모집·중재·RCT·학습자 효과 검증을 선택하는 경우에만 H00 참여자 연구 경로가 적용된다.
 
 - 정적 설정: 통과
 - full preflight: R00 deep validation 후 R01 `TBD_R01_COMPLETION`에서 fail closed
 - R02/R03 completion 접근: 0
-- 인간승인/preregistration/pilot/SAP/listener attestation 접근: 0
+- 개인 연구 scope attestation/preregistration/pilot/SAP/listener attestation 접근: 0
 - D1 audio/rating 경로 해석: 0
 - output 해석/생성: 0
 - 실제 listener/audio/model/GPU/rating/metric/statistics/result: 0
@@ -66,7 +66,7 @@ R04의 production STATIC 계약, 승인 템플릿, 블라인드 randomization/ra
 3. R01 completed candidate generation deep validation
 4. R02 completed hard gate deep validation 및 failure rescue 금지
 5. R03 completed reference bank와 R01/R02 eligible lineage deep validation
-6. 인간 연구 승인
+6. 개인 연구 scope attestation과 청취자 개별 동의·자격 attestation
 7. frozen R04 preregistration
 8. 승인된 pilot variance·intra-listener correlation
 9. frozen SAP
@@ -145,7 +145,7 @@ PYTHONPATH=src python scripts/prepare_r04_blind_multireference_evaluation.py
 2. `TBD_R02_COMPLETION`
 3. `TBD_R03_COMPLETION`
 4. R03 completion/registry exact schema version 미정
-5. 인간 연구 승인 `TBD_EXTERNAL`
+5. 개인 연구 scope attestation·청취자 attestation `TBD_EXTERNAL`
 6. R04 preregistration `TBD_PREREGISTRATION`
 7. pilot variance·intra-listener correlation `TBD_EXTERNAL`
 8. listener N, exact estimand/link/CI/bootstrap/multiplicity/superiority margin·comparator/rater/adjudication `TBD_PREREGISTRATION`

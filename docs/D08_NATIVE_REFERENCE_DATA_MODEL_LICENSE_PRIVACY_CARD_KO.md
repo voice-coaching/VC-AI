@@ -1,4 +1,4 @@
-# D08 원어민 다화자 기준음 데이터·라이선스·개인정보 카드
+# D08 원어민 다화자 기준음 데이터·라이선스·개인정보 카드 (개인 연구)
 
 최초 작성: 2026-07-29 KST  
 상태: **production 정적 준비 계약만 구현 / 실제 모집·동의·녹음·QC 0**
@@ -6,14 +6,17 @@
 ## 1. 결론
 
 D08은 R00에서 실제 완료된 한국어 고정 문장 20개를 동의된 성인 한국어
-원어민이 녹음하는 외부 수집 단계다. 이번 패키지는 녹음기가 아니다.
-승인·동의·권리·사전등록·R0/R1/D1/A1 경계를 강제하는 config, strict
-schema, 비승인 template, read-only preflight와 합성 validator만 구현했다.
+원어민이 녹음하는 개인 연구 외부 수집 단계다. 이번 패키지는 녹음기가 아니다.
+기관/IRB 승인은 선행 gate가 아니며, 개인 연구 scope attestation,
+개별 동의·녹음 권리·라이선스·사전등록·R0/R1/D1/A1 경계를 강제하는 config,
+strict schema, template, read-only preflight와 합성 validator만 구현했다.
 
-현재 H00 또는 동등한 기관 승인 SHA가
-`TBD_EXTERNAL_ATTESTATION`이다. 따라서 정본 full preflight는 R00
-완료본을 심층 재검증한 다음 H00 경로를 해석하거나 존재 여부를 확인하기
-전에 중단한다. 실제 화자 모집, 개별 동의, 녹음 권리 부여, 녹음, WAV,
+현재 레거시 v1 실행기의 H00 approval SHA가 TBD_EXTERNAL_ATTESTATION이다.
+H00는 현재 개인 연구에 적용하지 않는 구형 참여자 연구 경로다. 개인 연구
+scope와 AI Hub license/access로 executor를 전환하는 별도 contract amendment
+전에는 정본 full preflight가 R00 완료본을 심층 재검증한 다음 레거시 H00
+경로에서 중단한다.
+실제 화자 모집, 개별 동의, 녹음 권리 부여, 녹음, WAV,
 metadata, QC, completion과 commit은 모두 0이다.
 
 ## 2. 선행 증거와 실행 순서
@@ -23,7 +26,7 @@ metadata, QC, completion과 commit은 모두 0이다.
 ```text
 D08 C1 config/source/schema/template
   -> R00 actual completed sentence card deep validation
-  -> H00 또는 동등한 기관 승인
+  -> AI Hub access/license와 개인 연구 데이터 사용 scope
   -> 활성 개별 동의 attestation
   -> 녹음 권리·source·license attestation
   -> QC·화자 완료 하한·adjudication 사전등록
@@ -71,11 +74,12 @@ R00은 project-original CC0-1.0 문장 20개만 완료했다. R00 완료에는 �
 4보다 낮고 실제 문장별 화자가 4보다 적으면 completion과 별개로
 `planning_target_met=false`를 숨기지 않는다.
 
-## 4. 승인·동의·권리
+## 4. 데이터 권리와 사용 범위
 
-### H00 또는 동등한 기관 승인
+### 현재 사용하지 않는 H00 참여자 연구 경로
 
-기관 승인 attestation은 승인/결정 ID, revision, 승인 문서 hash와
+현재 개인 연구에서는 기관·법적 승인을 요구하지 않는다. 참여자 연구를
+선택할 때만 기관 승인 attestation은 승인/결정 ID, revision, 승인 문서 hash와
 유효기간을 가져야 한다. 성인 원어민 모집, 음성 녹음, 자동 QC, 사람
 청취 QC와 연구 기준음 사용 범위가 명시돼야 한다. 접근권한, 보존,
 폐기, 철회와 사고 대응 계획 및 R0/R1/D1/A1 경계도 승인 범위에
@@ -118,7 +122,7 @@ human/TTS/source/license는 명시하며 checksum, 공개 repository 이름 또�
 |---|---|---|---|
 | 원본 PCM WAV | R0 | 생체·개인정보인 원음 | 금지 |
 | locator·신원 대응·세션 metadata | R1 | 제한 상대 locator, 장비/공간/take, receipt binding | 금지 |
-| pseudonymized row-level QC·embedding | D1 | 가명 recording ID, 측정값·pass code | 별도 승인 전 금지 |
+| pseudonymized row-level QC·embedding | D1 | 가명 recording ID, 측정값·pass code | 개인 scope attestation·license 전 금지 |
 | completion 집계 | A1 | 문장별·전체 count와 gate 상태만 | 별도 반출 검토 후 가능 |
 | schema/config/code/docs | C1 | 값 없는 계약과 상대 예시 경로 | 가능 |
 
@@ -166,7 +170,7 @@ Canonical config-only:
 
 - C1/public·aggregate source pin 19개 read
 - R00 deep validation 0
-- H00/동의/권리/사전등록 path·read 0
+- AI Hub/데이터권리/사전등록 path·read 0
 - 모집·동의수집·R0/R1/D1·오디오·마이크·모델·네트워크·GPU·QC·출력 0
 
 Canonical full:
@@ -175,7 +179,7 @@ Canonical full:
 - R00 public·aggregate evidence access 33
 - R00 raw audio/row-level read 0/0
 - 정적 source TOCTOU 재검증 19
-- H00 SHA가 TBD라 H00 path resolution/read attempt/read 0/0/0
+- 레거시 H00 SHA가 TBD라 H00 path resolution/read attempt/read 0/0/0
 - 이후 동의·권리·사전등록·runtime·output 모두 0
 
 따라서 현재 실제 speaker, consent receipt, recording-right grant, microphone
@@ -196,7 +200,7 @@ commit은 모두 0이다.
 
 ## 8. 다음 실행
 
-1. H00 또는 동등한 기관 승인과 승인 문서 hash를 외부에서 확정한다.
+1. AI Hub 접근 승인·라이선스와 개인 연구 데이터 사용 scope를 확정한다.
 2. QC metric·speaker floor·adjudication을 audio 접근 전에 사전등록한다.
 3. 성인 원어민을 모집하고 분리된 범위의 개별 동의 receipt를 수집한다.
 4. 녹음 권리와 exact 장비·마이크·공간 profile을 서명한다.

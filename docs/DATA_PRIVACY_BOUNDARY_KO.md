@@ -20,12 +20,14 @@ AI Hub 71490의 원시 `UserID` 필드를 제거한 것만으로는 비식별화
 |---|---|---|---|
 | R0 원천 제한구역 | `data/restricted/` WAV/JSON/TextGrid | 원시 ID, 음성, 전사, annotation | 금지 |
 | R1 운영 제한구역 | raw/enriched/modeling manifest, 수동 감사 worksheet | 원천 상대경로, file stem, 상세 interval | 금지 |
-| D1 비식별 실험구역 | explicit/SSL feature cache, prediction | namespaced SHA-256 발화 ID, 가명 화자 ID, 허용 특징·label·slice | 라이선스·연구승인 별도 확인 |
+| D1 비식별 실험구역 | explicit/SSL feature cache, prediction | namespaced SHA-256 발화 ID, 가명 화자 ID, 허용 특징·label·slice | 라이선스·개인 연구 scope attestation 별도 확인 |
 | A1 집계 결과구역 | metric/report, 표·그림, data card | count, 분포, 성능, CI, checksum | 검토 후 가능 |
 | C1 공개 코드구역 | `src/`, `scripts/`, `configs/`, `docs/` | 코드, 상대적인 예시 경로, schema, 집계값 | 가능 |
 
 R0/R1/D1 및 실험 artifact는 `.gitignore`로 Git 추적에서 제외한다.
-접근권한, 보존기간, 백업·폐기 정책은 기관 정책과 데이터 약관을 따른다.
+접근권한, 보존기간, 백업·폐기 정책은 개인 연구 보안 정책과 데이터 약관을
+따른다. 신규 참여자 모집·중재·RCT를 선택할 때는 H00 참여자 연구 경로와
+해당 동의·기관 요구를 추가로 따른다.
 
 ## D1 캐시 강제 계약
 
@@ -95,8 +97,10 @@ explicit feature cache의 초기 전량 실행을 5,000건 시점에 점검하�
 
 ## 사람 평가 데이터
 
-전문가 재평가, 원어민 녹음, 학습자 파일럿은 각각 별도의 동의·철회,
-목적 제한, 보존·폐기, 접근권한 계획이 승인된 뒤 수집한다. reviewer와
+전문가 재평가와 원어민 녹음은 개인 연구 scope attestation과 각각 별도의
+동의·철회, 목적 제한, 보존·폐기, 접근권한 계획이 동결된 뒤 수집한다.
+학습자 파일럿은 참여자 연구 경로의 기관 승인과 동의가 선행돼야 한다.
+reviewer와
 participant ID는 연구별 namespace를 붙인 가명 키로 저장하고, 대응표는
 연구 데이터와 분리한다. 음성·자유서술 notes는 자동 비식별 결과만 믿지
-않고 승인된 담당자가 반출 전에 검토한다.
+않고 scope attestation에 지정된 담당자가 반출 전에 검토한다.

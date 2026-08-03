@@ -8,18 +8,18 @@
 R01은 R00에서 고정한 한국어 20문장마다 인간 원어민 녹음과 CosyVoice
 inference 후보를 합쳐 8–16개를 만드는 내부 연구 단계다. 이 카드는
 후보를 실제로 만들지 않고, 후보 생성 전에 반드시 존재해야 하는
-동의·권리·모델·환경·GPU·개인정보 계약을 고정한다.
+AI Hub 접근·라이선스, 데이터 권리, 모델·환경·GPU·개인정보 계약을 고정한다.
 
 현재 다음 외부 증빙이 없다.
 
-- 승인된 원어민 녹음 연구 결정과 개별 화자 동의 receipt
+- AI Hub 접근 승인·라이선스와 원어민 데이터 권리 receipt
 - 녹음물 연구 사용권과 정확한 녹음 protocol
 - CosyVoice code와 weight를 실제 R01에 사용할 수 있다는 artifact별 판단
 - standalone weight license 부재를 다룬 서명된 license evidence
 - 재현 가능한 runtime lock, local weight bundle manifest와 GPU pin
 
 따라서 현재 full preflight는 R00을 심층 재검증한 직후
-`TBD_EXTERNAL_ATTESTATION`에서 종료한다. Human attestation 파일 경로,
+`TBD_EXTERNAL_ATTESTATION`에서 종료한다. AI Hub/data-rights attestation 경로,
 녹음·후보 data path, audio, model, environment, GPU와 output path는
 열거나 해석하지 않는다. 이 상태는 R01 완료나 후보 생성 가능 판정이
 아니다.
@@ -74,9 +74,9 @@ validator를 통과할 수 없다.
 
 서명된 aggregate attestation은 최소한 다음을 정확히 고정해야 한다.
 
-### 기관·동의
+### AI Hub·데이터 권리
 
-- 결정/승인 ID·revision·문서 SHA-256·유효기간
+- AI Hub 접근·라이선스 receipt와 개인 연구 데이터 사용 scope
 - 동의 protocol과 동의서 revision·SHA-256
 - 허용 목적: R01 후보 생성, 자동 hard gate, blind 연구평가
 - 철회 절차, 보존기간, 폐기 protocol
@@ -210,9 +210,9 @@ result, completion artifact는 모두 0이다.
 
 ## 9. 완료에 필요한 후속 산출물
 
-1. 기관·연구책임자가 서명한 human aggregate attestation
+1. AI Hub 접근·라이선스와 데이터 권리를 확인한 human aggregate attestation
 2. 유효한 개별 화자 consent/license receipt와 고정 recording protocol
-3. 법적·운영 검토가 서명한 CosyVoice artifact attestation
+3. CosyVoice artifact별 license·runtime 권리를 확인한 attestation
 4. 격리된 TTS environment lock, local weight manifest와 GPU pin
 5. 별도 production recorder/inference package의 symlink/hash/TOCTOU,
    no-overwrite, atomic publish와 failure cleanup 감사

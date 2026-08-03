@@ -74,8 +74,9 @@ data/model path 미해석을 증명해야 한다.
 
 S2 expert content transcript는 별도 L2 content reference/evaluation이다.
 S1의 다섯 split, speaker와 labeler cohort overlap이 모두 0이고
-기관 승인·동의·철회·보존/폐기·제한 재배포가 완료된 aggregate
-attestation만 허용한다.
+개인 연구 scope attestation·동의·철회·보존/폐기·제한 재배포가 완료된
+aggregate attestation만 허용한다. 신규 참여자 연구를 선택하는 경우에만
+기관/IRB 경로를 추가한다.
 
 FLEURS ko-KR와 ZEROTH-Korean은 CC-BY-4.0 attribution, license audit와
 official partition name/hash 보존 뒤 외부 ASR 평가에만 사용한다. 두

@@ -1,4 +1,4 @@
-# WP7 R01 인간·CosyVoice 후보 생성 production 정적 준비도
+# WP7 R01 인간·CosyVoice 후보 생성 production 정적 준비도 (개인 연구)
 
 최초 작성: 2026-07-29 KST  
 상태: **정적 preflight 구현 완료 / 실제 human·TTS 후보·audio·GPU 실행 0**
@@ -14,14 +14,15 @@ Runtime gate는 다음 순서를 강제한다.
 ```text
 R01 C1 config/source/schema/template
   -> R00 public/aggregate deep validation + immutable report exact match
-  -> human consent/license/recording attestation
+  -> AI Hub access/license와 데이터 사용 scope
+  -> human recording data-rights receipt
   -> CosyVoice code/model/weight-license attestation
   -> offline runtime lock + local bundle + exact GPU pin
   -> 별도 production recording/inference package
 ```
 
-현재 human attestation SHA가 `TBD_EXTERNAL_ATTESTATION`이므로 canonical full
-preflight는 R00 deep validation 직후 종료된다. Human attestation path 자체,
+현재 AI Hub/data-rights attestation SHA가 `TBD_EXTERNAL_ATTESTATION`이므로 canonical full
+preflight는 R00 deep validation 직후 종료된다. 해당 attestation path 자체,
 CosyVoice attestation, protected data/audio, model/environment/GPU와 output
 path는 읽거나 해석하지 않는다.
 
@@ -39,7 +40,7 @@ metric, R02 결과, publication과 R01 completion artifact는 모두 0이다.
 |---|---|
 | `configs/experiments/r01_human_cosyvoice_candidates_v1.yaml` | R00→human→CosyVoice→env/GPU 순서와 8–16개 후보 정책 |
 | `configs/reference/r01_candidate_manifest_v1.schema.json` | D1 private candidate row/audio binding schema |
-| `configs/reference/r01_human_recording_attestation_v1.template.json` | 기관·개별 동의·녹음 권리·protocol aggregate 양식 |
+| `configs/reference/r01_human_recording_attestation_v1.template.json` | 데이터 사용권·녹음 권리·protocol aggregate 양식(기관 승인 비적용) |
 | `configs/reference/r01_cosyvoice_model_attestation_v1.template.json` | code/model/weight license·runtime·GPU 서명 양식 |
 | `src/voice_coach/references/r01_candidate_contract.py` | strict YAML/JSON, R00 deep validation, attestation·schema·privacy 검증, symlink/hash/TOCTOU/no-overwrite guard |
 | `scripts/prepare_r01_human_cosyvoice_candidates.py` | config-only/full read-only CLI |
@@ -72,12 +73,12 @@ R00을 통과한 다음 canonical source와 report snapshot을 다시 비교해
 source-to-attestation 사이 TOCTOU를 차단한다. 그 뒤에만 external
 attestation 여부를 본다.
 
-## 4. Human attestation gate
+## 4. AI Hub 및 데이터 권리 attestation gate
 
 Canonical template는 승인 문서가 아니며 speaker receipt를 만들지 않는다.
 다음 값은 전부 외부 서명된 aggregate attestation에서 와야 한다.
 
-- 기관 결정/승인 ID·revision·문서 hash·유효기간
+- AI Hub 접근 승인·라이선스 receipt와 개인 연구 데이터 사용 scope
 - consent protocol/form hash와 목적·철회·보존·삭제 정책
 - 정확한 recording protocol, 장비, 거리, sample format와 QC hash
 - 최소 2명 각각의 namespaced speaker ID, consent receipt hash,
@@ -87,7 +88,7 @@ Canonical template는 승인 문서가 아니며 speaker receipt를 만들지 �
 개별 receipt schema는 직접 식별 field의 추가를 거부한다. TTS 학습,
 voice cloning, public release, commercial use는 모두 false다.
 
-현재 config의 human attestation SHA가 TBD이므로 attestation path read
+현재 config의 AI Hub/data-rights attestation SHA가 TBD이므로 attestation path read
 attempt도 0이다. 파일 존재 여부를 probing하지 않는다.
 
 ## 5. CosyVoice artifact/license/runtime/GPU gate
@@ -261,8 +262,8 @@ opaque ID 위반, R02 전 publication, symlink/hash/TOCTOU/no-overwrite와
 
 다음은 구현 결함을 숨긴 것이 아니라 의도적으로 실행을 막는 외부 blocker다.
 
-1. 기관/연구책임자 승인과 원어민 개별 동의·녹음 권리 없음
-2. 승인된 recording protocol 없음
+1. AI Hub 접근·라이선스와 원어민 데이터 사용권·녹음 권리 receipt 없음
+2. 고정된 recording protocol 없음
 3. CosyVoice weight license와 실제 R01 사용 판단 없음
 4. offline runtime/local weight bundle/GPU pin 없음
 5. 별도 production recorder/inference package 없음
@@ -273,8 +274,8 @@ opaque ID 위반, R02 전 publication, symlink/hash/TOCTOU/no-overwrite와
 
 ## 11. 다음 실행
 
-1. Human institutional/consent/recording protocol을 외부 승인받고 최소
-   2명 speaker receipt를 aggregate attestation으로 서명한다.
+1. AI Hub 접근·라이선스와 data-rights/recording protocol을 고정하고
+   최소 2명 speaker receipt를 aggregate attestation으로 서명한다.
 2. CosyVoice code와 weight 권리를 분리 검토해 artifact authorization을
    서명한다.
 3. S104 GPU가 끝난 뒤 별도 TTS environment와 local weight bundle을 만들고

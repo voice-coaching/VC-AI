@@ -125,7 +125,7 @@ Oracle mode이면 `oracle_only=true`,
 - source SHA-256 drift
 - 불완전·실패 S108 또는 oracle/predicted provenance 혼동
 - S1/S2 item/speaker/rater overlap
-- 외부 승인·동의·blinding·보존/폐기 누락
+- 개인 연구 scope attestation·동의·blinding·보존/폐기 누락
 - 기존 readiness lock 존재
 
 Lock은 동일 directory file descriptor 안에서 임시 파일을 `O_EXCL`로
@@ -252,7 +252,7 @@ PYTHONPATH=src ./.venv-scorer/bin/python \
 
 1. S108 final S1을 단일 locked batch로 완료하고 final commit·registry를
    별도 validator로 검증한다.
-2. S2 전문가 자료의 기관 승인·동의·분할·평가자 분리를 완료하고
+2. S2 전문가 자료의 개인 연구 scope attestation·동의·분할·평가자 분리를 완료하고
    row-free aggregate attestation을 만든다.
 3. S200 full preflight를 실행해 aggregate readiness lock을 한 번 publish한다.
 4. 별도 S201 config에서 Whisper checkpoint, 한국어 transcript 정규화,

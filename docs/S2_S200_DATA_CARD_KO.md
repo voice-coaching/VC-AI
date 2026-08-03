@@ -130,8 +130,8 @@ hash를 다시 고정한다.
 
 예정 표본은 1,000–2,000개 발화, 독립 평가자 2인, adjudicator 1인이다.
 평가자는 S1/S2 출력에 blind이고, 원평정은 adjudication 뒤에도 보존한다.
-기관 승인, 동의·철회, 보존·폐기와 제한 재배포 계획이 모두 확인돼야
-aggregate attestation을 `ready`로 만들 수 있다.
+개인 연구 scope attestation, 평가자 동의·철회, 보존·폐기와 제한 재배포
+계획이 모두 확인돼야 aggregate attestation을 `ready`로 만들 수 있다.
 
 | primary metric | gate |
 |---|---:|

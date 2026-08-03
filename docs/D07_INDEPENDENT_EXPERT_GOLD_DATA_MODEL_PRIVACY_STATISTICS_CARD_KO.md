@@ -4,6 +4,14 @@
 
 D07은 **STATIC readiness only**다.
 
+현재 D07은 기관 승인이 필요한 참여자 연구가 아니라 개인 연구의 성인 전문가
+평가다. 기관/IRB 승인은 선행 gate가 아니며, 개인 연구 scope attestation,
+AI Hub 라이선스·접근권한, 평가자 개별 동의·자격·기밀 attestation, privacy,
+blind, preregistration을 요구한다. 신규 참여자 모집·중재·RCT·학습자
+pre/post/retention을 선택하는 경우에만 H00 참여자 연구 경로를 적용한다.
+레거시 D07 v1 CLI/config는 H00 approval을 검사하므로 실제 executor를
+개인 연구 계약으로 전환하는 별도 amendment 전에는 실행하지 않는다.
+
 - 실제 전문가: 0명
 - 실제 평정: 0건
 - calibration/locked audio 접근: 0건
@@ -13,8 +21,9 @@ D07은 **STATIC readiness only**다.
 - output·registry·commit: 0건
 
 이 package는 전문가 판정을 만들거나 G04/D07을 통과로 바꾸지 않는다.
-현재 full preflight는 actual H00 approval/attestation이 없어서 모든 external,
-D1/R1/R0, reviewer, locked, model, metric, output path 전에 멈춘다.
+현재 full preflight는 레거시 H00 gate에서 모든 external, D1/R1/R0, reviewer,
+locked, model, metric, output path 전에 멈춘다. 개인 연구 scope attestation
+경로를 아직 executor에 반영하지 않았으므로 실제 접근과 평정은 0이다.
 
 ## 2. G04와 D07은 서로 다른 stage다
 
@@ -39,12 +48,11 @@ G04 completion attestation은 calibration agreement를 통과한 D07이
 locked-test expert access authorization을 받기 전의 별도 gate로만
 사용한다.
 
-## 3. 승인과 접근 순서
+## 3. Scope와 접근 순서
 
 ```text
 C1/A1 static source pins + G04 0/240 aggregate
-  -> actual H00 public approval + official-document attestation
-  -> D07-specific institutional/expert approval
+  -> personal research scope attestation + AI Hub access/license receipt
   -> reviewer attestation: primary 2 + adjudicator 1
   -> frozen D07 preregistration, no TBD
   -> STOP before D1/R1/R0
@@ -59,11 +67,11 @@ C1/A1 static source pins + G04 0/240 aggregate
   -> aggregate D07 completion attestation
 ```
 
-현재 H00 package의 공식 결정은 C0/C3/C5 학습자 연구 scope를 검증하도록
-구현돼 있다. 그 artifact를 D07 승인으로 추론하거나 대체하지 않는다.
-D07-specific institutional approval은 기존 제한 audio의 전문가 평정,
-calibration 800, locked 최대 1,200, 2인 독립 평가와 disagreement-only
-adjudicator를 명시적으로 승인하고 actual H00 hashes에 결합해야 한다.
+H00 package는 C0/C3/C5 학습자 참여자 연구 scope를 검증하는 별도 경로다.
+현재 D07 개인 연구에는 H00 artifact를 요구하지 않는다. D07 scope attestation은
+기존 제한 audio의 전문가 평정, calibration 800, locked 최대 1,200, 2인 독립
+평가와 disagreement-only adjudicator, 라이선스·보존·폐기 범위를 명시하고
+reviewer attestation 및 실제 데이터 약관과 결합해야 한다.
 
 ## 4. 표본과 split
 
@@ -230,4 +238,3 @@ audio를 단일 transaction으로 평정했다는 뜻이므로 둘을 혼동하�
 Reviewer SHA도 익명화가 아니라 가명 키다. 원음, 자유 note, reviewer
 mapping, row label을 공개하지 않는다. Checksum은 무결성 식별자이지
 재배포 허가가 아니다.
-

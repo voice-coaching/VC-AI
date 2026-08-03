@@ -1,14 +1,16 @@
 # 전문가·원어민·학습자 외부평가 실행 패킷
 
 최초 작성: 2026-07-29 KST  
-상태: 프로토콜 준비 완료, 모집·승인·수집은 외부 의존
+상태: 프로토콜 준비 완료, AI Hub/data-rights·수집은 외부 의존
 
 ## 1. 범위와 완료 판정
 
 이 문서는 자동화만으로 끝낼 수 없는 D07/D08/C03/R04/H00–H04의
-사전 고정 프로토콜이다. 실제 전문가·원어민·학습자의 판정이나 기관
-승인이 없는 상태를 “통과”로 기록하지 않는다. 모든 사람 대상 자료는
-승인된 동의서, 철회 절차, 접근권한, 보존·폐기 계획이 확정된 뒤 수집한다.
+사전 고정 프로토콜이다. 현재 성인 전문가·원어민·청취자 평가는 개인 연구
+범위이므로 기관/IRB 승인을 선행 gate로 요구하지 않는다. AI Hub 접근·라이선스,
+데이터 사용권, 개별 동의·철회 절차, 접근권한, 보존·폐기 계획이 확정된 뒤
+수집한다. 신규 참여자 모집·중재·RCT·학습자 효과 검증을 선택하는 H00–H04만
+참여자 연구 경로를 적용한다.
 
 | Task | 준비 산출물 | 실제 완료 증거 | 현재 상태 |
 |---|---|---|---|
@@ -16,7 +18,7 @@
 | D08 | 20문장 녹음·QC·동의 protocol | 동의된 다화자 WAV와 metadata | 외부 의존 |
 | C03 | coaching 정확도·안전 rubric | 200건 blind 전문가 판정 | 외부 의존 |
 | R04 | 기준음 blind 평가 설계 | 무작위화 원본, MOS/CMOS와 통계 | 외부 의존 |
-| H00 | IRB/PIPA 제출 체크리스트 | 기관 승인번호·승인본 | 외부 의존 |
+| H00 | 참여자 연구를 선택할 때만 쓰는 별도 경로 | 기관 승인번호·승인본 | 현재 개인 연구에는 비적용 |
 | H01 | C0↔C3/C3↔C5 planning·power draft | `final_sample_size=null`인 assumed sensitivity artifact | 계획 구현 완료, 외부 완료 불가 |
 | H02–H03 | 2주 훈련·4주 유지 protocol | 비식별 pre/post/retention 원자료 | 외부 의존 |
 | H04 | ITT mixed-model·missingness·Holm SAP | effect size·CI·sensitivity aggregate report | H03 후 대기 |
@@ -127,7 +129,7 @@
   power 0.80, 양측 alpha 0.05 기준으로 고정한다. 분산을 임의로
   가정해 완료 수를 만들지 않는다.
 
-## 6. H00–H04 학습자 파일럿과 유지 평가
+## 6. H00–H04 참여자 연구를 선택할 때의 학습자 파일럿과 유지 평가
 
 ### 현재 증거 지위와 설계
 
@@ -135,7 +137,7 @@
 [`LEARNING_EFFECT_PREREGISTRATION_KO.md`](LEARNING_EFFECT_PREREGISTRATION_KO.md)와
 `configs/experiments/learning_effect_power_v1.yaml`이다. 둘은 실행 가능한
 planning/preregistration draft이지 등록 완료 protocol이나 H01 외부 완료
-증거가 아니다. 현재 IRB/기관 승인, 모집·동의된 참여자, 학습자
+증거가 아니다. 현재 참여자 연구 경로의 IRB/기관 승인, 모집·동의된 참여자, 학습자
 pre/post/retention 녹음, empirical pilot nuisance estimate와 관측 교육
 효과는 모두 없다.
 
