@@ -32,7 +32,7 @@ result, output은 모두 0이다. 이 package는 session을 실행하거나 E00 
 | `scripts/prepare_e00_closed_loop_demo.py` | `8ff23c5b8c8cce54ea1229ccef722d88f3aad71e5999bb5f4b389222d14981f2` |
 | `tests/unit/test_e00_closed_loop_contract.py` | `8dbf1d67f9d2ad03a51ea403b1ee4a3a3599387f9f531c97de75db95263c3fef` |
 | `tests/integration/test_prepare_e00_closed_loop_demo.py` | `0153d572572ff1d8d3940fb9ca1e71e59c2c4bb78f3f838ef7a5e95b6a5a53c2` |
-| `docs/E00_CLOSED_LOOP_DEMO_DATA_MODEL_PRIVACY_SAFETY_STATISTICS_CARD_KO.md` | `3017cfd732703e9699dc0549dfdccdc7bf17b84c2780b32ff36f4f2bde5cc3fd` |
+| `docs/evaluation/E00_CLOSED_LOOP_DEMO_DATA_MODEL_PRIVACY_SAFETY_STATISTICS_CARD_KO.md` | `3017cfd732703e9699dc0549dfdccdc7bf17b84c2780b32ff36f4f2bde5cc3fd` |
 
 Readiness/card 문서는 canonical config source pin에 넣지 않아 config↔문서
 hash 순환 의존을 만들지 않았다.

@@ -31,8 +31,8 @@ eligible/quarantine, registry, commit과 R02 완료 점수는 0이다.
 | `scripts/prepare_r02_candidate_hard_gate.py` | config-only/full read-only CLI |
 | `tests/unit/test_r02_hard_gate_contract.py` | policy/report/partition/hash/order/symlink/TOCTOU bounded fault tests |
 | `tests/integration/test_prepare_r02_candidate_hard_gate.py` | 실제 workspace zero-runtime와 R00-first/R01-stop 검증 |
-| `docs/R02_HARD_GATE_DATA_MODEL_CARD_KO.md` | data/model/license/privacy/blindness 경계 |
-| `docs/R02_HARD_GATE_READINESS_KO.md` | 본 준비 증거 |
+| `docs/evaluation/R02_HARD_GATE_DATA_MODEL_CARD_KO.md` | data/model/license/privacy/blindness 경계 |
+| `docs/evaluation/R02_HARD_GATE_READINESS_KO.md` | 본 준비 증거 |
 
 R00/R01/S104–S203 구현 파일과 정본 원고/evidence-map은 수정하지 않았다.
 Tracker는 상위 orchestration 요청에 따라 준비도 사실만 별도 반영한다.

@@ -77,9 +77,9 @@ checkpoint를 내려받지 않았다는 제한된 확인이다.
 이 감사는 기존 m8 primitive, D08/R02 계약, 정본 config/template,
 README, PDF 실행 매트릭스와 S104/S106–S108 source를 수정하지 않는다.
 대조한 내부 경계는
-[m8/Phase 4 speaker-cosine primitive](../PHASE1_SPEAKER_SIMILARITY_PRIMITIVE_KO.md),
-[D08 reference data·license·privacy card](../D08_NATIVE_REFERENCE_DATA_MODEL_LICENSE_PRIVACY_CARD_KO.md),
-[R02 hard-gate data/model card](../R02_HARD_GATE_DATA_MODEL_CARD_KO.md),
+[m8/Phase 4 speaker-cosine primitive](../pipeline/PHASE1_SPEAKER_SIMILARITY_PRIMITIVE_KO.md),
+[D08 reference data·license·privacy card](../evaluation/D08_NATIVE_REFERENCE_DATA_MODEL_LICENSE_PRIVACY_CARD_KO.md),
+[R02 hard-gate data/model card](../evaluation/R02_HARD_GATE_DATA_MODEL_CARD_KO.md),
 [연구 데이터 개인정보 경계](../DATA_PRIVACY_BOUNDARY_KO.md)다.
 
 ## 3. Hugging Face model snapshot과 전체 manifest

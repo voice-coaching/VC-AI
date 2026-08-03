@@ -19,7 +19,7 @@ R05 전용 신규 파일만 작성했다.
 | `tests/unit/test_r05_grpo_decision_contract.py` | fixed gate/A1/decision/integrity bounded-fault tests |
 | `tests/integration/test_prepare_r05_grpo_go_no_go.py` | canonical runtime0와 earliest-S108 failure |
 | `docs/R05_GRPO_GO_NO_GO_DATA_MODEL_LICENSE_SAFETY_CARD_KO.md` | data/model/license/reward/safety 경계 |
-| `docs/R05_GRPO_GO_NO_GO_READINESS_KO.md` | 본 증거 문서 |
+| `docs/evaluation/R05_GRPO_GO_NO_GO_READINESS_KO.md` | 본 증거 문서 |
 
 R04 파일, 정본 tracker, 원고와 evidence map은 수정하지 않았다. GRPO/F5/
 StyleTTS executor, downloader, model loader, GPU/reward runner, effect

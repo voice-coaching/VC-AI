@@ -54,7 +54,7 @@ audio decode와 inference는 실행하지 않았다.
 
 이 감사는 기존
 [Phase 1 도구 환경 감사](PHASE1_TOOL_ENV_AUDIT_20260729_KO.md)와
-[R02 정적 준비도](../R02_HARD_GATE_READINESS_KO.md)의
+[R02 정적 준비도](../evaluation/R02_HARD_GATE_READINESS_KO.md)의
 `TBD_ATTESTATION`을 임의로 해제하지 않는다. 정본 config/template/contract
 또는 S104/S106–S108 파일도 수정하지 않았다.
 
