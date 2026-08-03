@@ -1,0 +1,21 @@
+{
+  "schema_version": "voice_coach.d07_locked_access_authorization.v1",
+  "status": "TBD_EXTERNAL_AUTHORIZATION",
+  "preregistration_sha256": "TBD_EXTERNAL_AUTHORIZATION",
+  "item_manifest_sha256": "TBD_EXTERNAL_AUTHORIZATION",
+  "calibration_report_sha256": "TBD_EXTERNAL_AUTHORIZATION",
+  "g04_completion_attestation_sha256": "TBD_EXTERNAL_AUTHORIZATION",
+  "rubric_sha256": "TBD_EXTERNAL_AUTHORIZATION",
+  "primary_definition_sha256": "TBD_EXTERNAL_AUTHORIZATION",
+  "calibration_agreement_gate_passed": false,
+  "g04_completed_as_separate_stage": false,
+  "rubric_frozen": false,
+  "primary_definition_frozen": false,
+  "prior_expert_locked_access_transaction_count": "TBD_EXTERNAL_AUTHORIZATION",
+  "authorized_expert_locked_access_transaction_count": 1,
+  "developer_locked_access_authorized": false,
+  "model_result_access_authorized": false,
+  "one_shot_transaction_id_sha256": "TBD_EXTERNAL_AUTHORIZATION",
+  "authorization_receipt_sha256": "TBD_EXTERNAL_AUTHORIZATION",
+  "privacy_zone": "C1_public_template_only"
+}

@@ -1,0 +1,44 @@
+{
+  "schema_version": "voice_coach.r05_grpo_human_authorization.v1",
+  "authorization_id": "TBD_EXTERNAL",
+  "status": "not_authorized",
+  "authorized_at": "TBD_EXTERNAL",
+  "expires_at": "TBD_EXTERNAL",
+  "independent_authorizer_role": "TBD_EXTERNAL",
+  "authorization_attestation_sha256": "TBD_EXTERNAL",
+  "bindings": {
+    "r05_config_sha256": "TBD_EXTERNAL",
+    "r05_preregistration_sha256": "TBD_EXTERNAL",
+    "s108_commit_sha256": "TBD_EXTERNAL",
+    "s203_commit_sha256": "TBD_EXTERNAL",
+    "r04_commit_sha256": "TBD_EXTERNAL",
+    "h00_approval_sha256": "TBD_EXTERNAL",
+    "h04_report_sha256": "TBD_EXTERNAL"
+  },
+  "reviewed_assurances": {
+    "all_five_gate_evidence_reviewed": false,
+    "exact_model_identity_verified": false,
+    "code_license_verified": false,
+    "weight_license_verified": false,
+    "training_data_license_verified": false,
+    "reward_directionality_verified": false,
+    "reward_hacking_audit_passed": false,
+    "safety_review_passed": false,
+    "privacy_and_retention_reviewed": false,
+    "rollback_plan_reviewed": false
+  },
+  "authorization_scope": {
+    "go_no_go_decision_authorized": false,
+    "grpo_training_authorized": false,
+    "model_download_authorized": false,
+    "gpu_execution_authorized": false,
+    "deployment_authorized": false,
+    "publication_authorized": false
+  },
+  "integrity": {
+    "contains_direct_identifier": false,
+    "contains_free_text": false,
+    "unresolved_field_count": "TBD_EXTERNAL",
+    "binding_sha256": "TBD_EXTERNAL"
+  }
+}

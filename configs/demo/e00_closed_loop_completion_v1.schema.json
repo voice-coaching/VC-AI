@@ -1,0 +1,242 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://voice-coach.local/schemas/e00_closed_loop_completion_v1.schema.json",
+  "title": "E00 aggregate noninferential demo completion",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_version",
+    "completion_id",
+    "status",
+    "config_sha256",
+    "preregistration_sha256",
+    "authorization_sha256",
+    "predecessor_chain_sha256",
+    "execution_mode",
+    "privacy_zone",
+    "trace_count",
+    "eligible_completed_loop_count",
+    "blocked_safe_exit_count",
+    "no_correction_safe_exit_count",
+    "same_scorer_comparison_count",
+    "traces_sha256",
+    "safety_counts",
+    "actual_execution",
+    "claims",
+    "contains_rows_or_pseudonymous_ids",
+    "contains_audio_or_locator_hashes",
+    "contains_numeric_scores_thresholds_or_effects",
+    "contains_source_identity_or_condition",
+    "contains_free_text",
+    "completion_claim_allowed",
+    "publication_allowed",
+    "implementation_git_commit",
+    "binding_sha256"
+  ],
+  "properties": {
+    "schema_version": {
+      "const": "voice_coach.e00_closed_loop_completion.v1"
+    },
+    "completion_id": {
+      "type": "string",
+      "pattern": "^e00completion_[0-9a-f]{32}$"
+    },
+    "status": {
+      "const": "completed_noninferential_demo"
+    },
+    "config_sha256": {
+      "$ref": "#/$defs/sha256"
+    },
+    "preregistration_sha256": {
+      "$ref": "#/$defs/sha256"
+    },
+    "authorization_sha256": {
+      "$ref": "#/$defs/sha256"
+    },
+    "predecessor_chain_sha256": {
+      "$ref": "#/$defs/sha256"
+    },
+    "execution_mode": {
+      "enum": [
+        "human_authorized_demo",
+        "nonhuman_test_fixture"
+      ]
+    },
+    "privacy_zone": {
+      "const": "A1_aggregate_only"
+    },
+    "trace_count": {
+      "type": "integer",
+      "minimum": 1
+    },
+    "eligible_completed_loop_count": {
+      "type": "integer",
+      "minimum": 1
+    },
+    "blocked_safe_exit_count": {
+      "type": "integer",
+      "minimum": 0
+    },
+    "no_correction_safe_exit_count": {
+      "type": "integer",
+      "minimum": 0
+    },
+    "same_scorer_comparison_count": {
+      "type": "integer",
+      "minimum": 1
+    },
+    "traces_sha256": {
+      "$ref": "#/$defs/sha256"
+    },
+    "safety_counts": {
+      "$ref": "#/$defs/safetyCounts"
+    },
+    "actual_execution": {
+      "$ref": "#/$defs/actualExecution"
+    },
+    "claims": {
+      "$ref": "#/$defs/claims"
+    },
+    "contains_rows_or_pseudonymous_ids": {
+      "const": false
+    },
+    "contains_audio_or_locator_hashes": {
+      "const": false
+    },
+    "contains_numeric_scores_thresholds_or_effects": {
+      "const": false
+    },
+    "contains_source_identity_or_condition": {
+      "const": false
+    },
+    "contains_free_text": {
+      "const": false
+    },
+    "completion_claim_allowed": {
+      "const": true
+    },
+    "publication_allowed": {
+      "const": false
+    },
+    "implementation_git_commit": {
+      "type": "string",
+      "pattern": "^[0-9a-f]{40}$"
+    },
+    "binding_sha256": {
+      "$ref": "#/$defs/sha256"
+    }
+  },
+  "$defs": {
+    "sha256": {
+      "type": "string",
+      "pattern": "^[0-9a-f]{64}$"
+    },
+    "safetyCounts": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "user_data_fabrication_count",
+        "free_generation_count",
+        "blocked_override_count",
+        "locked_result_copy_count",
+        "score_or_threshold_leak_count",
+        "source_or_locator_leak_count"
+      ],
+      "properties": {
+        "user_data_fabrication_count": {
+          "const": 0
+        },
+        "free_generation_count": {
+          "const": 0
+        },
+        "blocked_override_count": {
+          "const": 0
+        },
+        "locked_result_copy_count": {
+          "const": 0
+        },
+        "score_or_threshold_leak_count": {
+          "const": 0
+        },
+        "source_or_locator_leak_count": {
+          "const": 0
+        }
+      }
+    },
+    "actualExecution": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "attempt1_recording_count",
+        "s108_diagnostic_handoff_count",
+        "e02_guard_count",
+        "c02_top1_coaching_delivery_count",
+        "licensed_reference_delivery_count",
+        "attempt2_recording_count",
+        "same_scorer_comparison_count"
+      ],
+      "properties": {
+        "attempt1_recording_count": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "s108_diagnostic_handoff_count": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "e02_guard_count": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "c02_top1_coaching_delivery_count": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "licensed_reference_delivery_count": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "attempt2_recording_count": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "same_scorer_comparison_count": {
+          "type": "integer",
+          "minimum": 1
+        }
+      }
+    },
+    "claims": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "noninferential_demo_only",
+        "effect_estimated",
+        "confidence_interval_computed",
+        "pedagogical_effect_claimed",
+        "clinical_claimed",
+        "production_deployment_claimed"
+      ],
+      "properties": {
+        "noninferential_demo_only": {
+          "const": true
+        },
+        "effect_estimated": {
+          "const": false
+        },
+        "confidence_interval_computed": {
+          "const": false
+        },
+        "pedagogical_effect_claimed": {
+          "const": false
+        },
+        "clinical_claimed": {
+          "const": false
+        },
+        "production_deployment_claimed": {
+          "const": false
+        }
+      }
+    }
+  }
+}

@@ -1,0 +1,67 @@
+{
+  "schema_version": "voice_coach.wavlm_feature_cache_smoke_review.v1",
+  "status": "pending",
+  "review_type": "automated_engineering_gate",
+  "human_expert_review": false,
+  "full_run_approved": false,
+  "smoke_report_path": "data/processed/aihub71490/features/wavlm_large_frozen_v1_smoke100_v2_report.json",
+  "smoke_report_sha256": null,
+  "experiment_config_sha256": "0191afdba13e38619ab6f2c24494f0766cf9f16a802575a132eda7dadcd9c4fd",
+  "builder_sha256": "bfca5a5d065a7a55b3fce5671750dd4011f8a2b0e538d3c3a6aa8eab4972772f",
+  "builder_dependency_sha256": "2acd48d4f7dbb735dab96cdf4b9222a654627a96cf6a068539f0480839a56dde",
+  "reviewer_source": {
+    "cli_path": "scripts/review_wavlm_feature_cache_smoke.py",
+    "cli_sha256": "6e42189f5a927c9ba91062e04ca5337c5a8adff94b28cd1e56f826c85ce261f3",
+    "core_path": "src/voice_coach/reproducibility/wavlm_smoke_review.py",
+    "core_sha256": "b7dc9a105d9817daa8d109910106c4bea74b0742c09b1ef5f8292ca6f9b7c85c"
+  },
+  "source_contract": {
+    "model_id": "microsoft/wavlm-large",
+    "model_revision": "c1423ed94bb01d80a3f5ce5bc39f6026a0f4828c",
+    "preprocessor_config_sha256": "60ca5a31e13f69ee2fbf147504c8676db5f6398fd7a6b12294341dff838edfcf",
+    "do_normalize": true,
+    "allowed_splits": [
+      "train",
+      "dev"
+    ],
+    "observed_output_splits": null,
+    "allowed_split_coverage_complete": null,
+    "full_cache_validation_requires_all_allowed_splits": true,
+    "metric_evaluation_performed": false,
+    "evaluation_manifest_annotations_may_be_deserialized_for_filtering": true,
+    "evaluation_audio_decoded": false,
+    "evaluation_rows_sent_to_encoder": false,
+    "evaluation_labels_used_for_training_or_metrics": false
+  },
+  "technical_checks": {
+    "report_status_completed": false,
+    "smoke_utterance_limit": 100,
+    "embedding_dimensions": {
+      "utterance_mean_std": 2048,
+      "phone_mean": 1024,
+      "word_mean": 1024
+    },
+    "all_reported_shard_sizes_and_sha256_match": false,
+    "storage_dtype_float16": false,
+    "pinned_preprocessor_config_validated": false,
+    "all_embeddings_finite_and_nonzero": false,
+    "prohibited_output_column_hits": null,
+    "identifier_columns_are_lowercase_sha256": false,
+    "frame_geometry_check_passed": false,
+    "oom_count": null
+  },
+  "resource_review": {
+    "approved": false,
+    "peak_rss_bytes": null,
+    "estimated_full_cache_upper_bytes": null,
+    "max_row_group_rows": 2048
+  },
+  "reviewed_at_utc": null,
+  "limitations": [
+    "This is an automated engineering gate, not a model-quality, human-expert, or G0 alignment review.",
+    "Approve only after the 100-utterance Large smoke report and every output shard have been independently verified.",
+    "A bounded ordered smoke may contain only a nonempty subset of train/dev; record the observed split coverage without treating absent allowed splits as a smoke failure.",
+    "Full-cache validation still requires every allowed split.",
+    "The full Large cache also requires a completed, train/dev-only Base+ head report for seeds 42, 43, and 44."
+  ]
+}

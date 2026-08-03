@@ -1,0 +1,62 @@
+{
+  "schema_version": "voice_coach.d09_h02_h03_intervention_manual.v1",
+  "manual_bundle_id": "TBD_MANUAL",
+  "phase": "TBD_MANUAL",
+  "status": "draft_unapproved",
+  "frozen_at_utc": "TBD_MANUAL",
+  "lineage": {
+    "h00_approval_sha256": "TBD_H00_APPROVAL",
+    "operational_preregistration_sha256": "TBD_PREREGISTRATION",
+    "delivery_predecessor_receipt_sha256": "TBD_DELIVERY_PREDECESSORS"
+  },
+  "common_delivery": {
+    "two_week_duration_required": true,
+    "equal_exposure_time_and_practice_count_required": true,
+    "exact_session_schedule_id": "TBD_MANUAL",
+    "exact_exposure_matching_rule_id": "TBD_MANUAL",
+    "human_escalation_workflow_id": "TBD_MANUAL",
+    "blocked_safe_action_override_allowed": false
+  },
+  "c0": {
+    "version_id": "TBD_MANUAL",
+    "manual_sha256": "TBD_MANUAL",
+    "active_control_time_and_practice_matched": true,
+    "automated_diagnostic_or_coaching_delivered": false,
+    "multi_reference_or_coached_reattempt_delivered": false
+  },
+  "c3": {
+    "version_id": "TBD_MANUAL",
+    "manual_sha256": "TBD_MANUAL",
+    "structured_evidence_limited_diagnostic_and_coaching": true,
+    "s108_completion_sha256": "TBD_S108_COMPLETION",
+    "e01_completion_sha256": "TBD_E01_COMPLETION",
+    "c02_completion_sha256": "TBD_C02_COMPLETION",
+    "e02_completion_sha256": "TBD_E02_COMPLETION",
+    "c03_report_sha256": "TBD_C03_COMPLETION",
+    "multi_reference_or_coached_reattempt_delivered": false
+  },
+  "c5": {
+    "version_id": "TBD_MANUAL",
+    "manual_sha256": "TBD_MANUAL",
+    "inherits_c3_exact_delivery": true,
+    "e00_completion_sha256": "TBD_E00_COMPLETION",
+    "r03_bank_sha256": "TBD_R03_COMPLETION",
+    "r04_completion_sha256": "TBD_R04_COMPLETION",
+    "multi_reference_and_coached_reattempt_required": true
+  },
+  "assurance": {
+    "manuals_versioned_and_immutable": false,
+    "condition_components_incremental_only": true,
+    "free_generation_allowed": false,
+    "unapproved_reference_or_coaching_allowed": false,
+    "participant_blinding_claimed": false
+  },
+  "approval": {
+    "decision": "TBD_MANUAL",
+    "principal_investigator_receipt_sha256": "TBD_MANUAL",
+    "intervention_owner_receipt_sha256": "TBD_MANUAL",
+    "safety_reviewer_receipt_sha256": "TBD_MANUAL",
+    "approved_and_frozen": false
+  },
+  "binding_sha256": "TBD_MANUAL"
+}

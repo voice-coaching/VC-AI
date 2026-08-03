@@ -1,0 +1,125 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://voice-coach.local/schemas/b05_locked_commit_v1.schema.json",
+  "title": "B05 completion commit cross-bound to the same S108 locked batch",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_version",
+    "status",
+    "config_sha256",
+    "preregistration_sha256",
+    "batch_manifest_sha256",
+    "authorization_sha256",
+    "batch_receipt_sha256",
+    "b03_checkpoint_set_sha256",
+    "s108_arm_freeze_sha256",
+    "b05_locked_predictions_sha256",
+    "b05_aggregate_report_sha256",
+    "b05_registry_sha256",
+    "s108_locked_predictions_sha256",
+    "s108_promotion_report_sha256",
+    "s108_registry_sha256",
+    "joint_locked_transaction_id_sha256",
+    "joint_locked_access_count",
+    "both_arms_published_together",
+    "first_result_used_to_change_other_arm",
+    "rerun_count",
+    "rerun_allowed",
+    "new_independent_test_set_required_for_any_new_run",
+    "b05_completion_claim_allowed",
+    "s108_completion_claim_bound_to_joint_root",
+    "child_commit_back_reference_allowed",
+    "deployment_claim_allowed",
+    "binding_sha256"
+  ],
+  "properties": {
+    "schema_version": {
+      "const": "voice_coach.b05_locked_commit.v1"
+    },
+    "status": {
+      "const": "committed_joint_one_shot"
+    },
+    "config_sha256": {
+      "$ref": "#/$defs/sha256"
+    },
+    "preregistration_sha256": {
+      "$ref": "#/$defs/sha256"
+    },
+    "batch_manifest_sha256": {
+      "$ref": "#/$defs/sha256"
+    },
+    "authorization_sha256": {
+      "$ref": "#/$defs/sha256"
+    },
+    "batch_receipt_sha256": {
+      "$ref": "#/$defs/sha256"
+    },
+    "b03_checkpoint_set_sha256": {
+      "$ref": "#/$defs/sha256"
+    },
+    "s108_arm_freeze_sha256": {
+      "$ref": "#/$defs/sha256"
+    },
+    "b05_locked_predictions_sha256": {
+      "$ref": "#/$defs/sha256"
+    },
+    "b05_aggregate_report_sha256": {
+      "$ref": "#/$defs/sha256"
+    },
+    "b05_registry_sha256": {
+      "$ref": "#/$defs/sha256"
+    },
+    "s108_locked_predictions_sha256": {
+      "$ref": "#/$defs/sha256"
+    },
+    "s108_promotion_report_sha256": {
+      "$ref": "#/$defs/sha256"
+    },
+    "s108_registry_sha256": {
+      "$ref": "#/$defs/sha256"
+    },
+    "joint_locked_transaction_id_sha256": {
+      "$ref": "#/$defs/sha256"
+    },
+    "joint_locked_access_count": {
+      "const": 1
+    },
+    "both_arms_published_together": {
+      "const": true
+    },
+    "first_result_used_to_change_other_arm": {
+      "const": false
+    },
+    "rerun_count": {
+      "const": 0
+    },
+    "rerun_allowed": {
+      "const": false
+    },
+    "new_independent_test_set_required_for_any_new_run": {
+      "const": true
+    },
+    "b05_completion_claim_allowed": {
+      "const": true
+    },
+    "s108_completion_claim_bound_to_joint_root": {
+      "const": true
+    },
+    "child_commit_back_reference_allowed": {
+      "const": false
+    },
+    "deployment_claim_allowed": {
+      "const": false
+    },
+    "binding_sha256": {
+      "$ref": "#/$defs/sha256"
+    }
+  },
+  "$defs": {
+    "sha256": {
+      "type": "string",
+      "pattern": "^[0-9a-f]{64}$"
+    }
+  }
+}

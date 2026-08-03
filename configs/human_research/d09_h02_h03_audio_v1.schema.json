@@ -1,0 +1,44 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://voice-coach.local/schemas/d09_h02_h03_audio_v1.schema.json",
+  "title": "D09 H02-H03 restricted audio inventory record",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_version",
+    "audio_object_id_sha256",
+    "participant_key_sha256",
+    "phase",
+    "comparison",
+    "timepoint",
+    "item_set",
+    "item_card_sha256",
+    "target_text_sha256",
+    "recording_content_sha256",
+    "recording_receipt_sha256",
+    "condition_time_identity_masked_for_rating",
+    "qc_status",
+    "audio_locator_present",
+    "privacy_zone"
+  ],
+  "properties": {
+    "schema_version": {"const": "voice_coach.d09_h02_h03_audio.v1"},
+    "audio_object_id_sha256": {"$ref": "#/$defs/sha256"},
+    "participant_key_sha256": {"$ref": "#/$defs/sha256"},
+    "phase": {"enum": ["feasibility", "confirmatory"]},
+    "comparison": {"enum": ["c3_minus_c0", "c5_minus_c3"]},
+    "timepoint": {"enum": ["pre", "post_at_2_weeks", "retention_4_weeks_after_post"]},
+    "item_set": {"enum": ["fixed_practice", "fixed_transfer"]},
+    "item_card_sha256": {"$ref": "#/$defs/sha256"},
+    "target_text_sha256": {"$ref": "#/$defs/sha256"},
+    "recording_content_sha256": {"$ref": "#/$defs/sha256"},
+    "recording_receipt_sha256": {"$ref": "#/$defs/sha256"},
+    "condition_time_identity_masked_for_rating": {"const": true},
+    "qc_status": {"enum": ["passed", "failed_preserved_as_missingness"]},
+    "audio_locator_present": {"const": false},
+    "privacy_zone": {"const": "D1_pseudonymized_restricted_human_research"}
+  },
+  "$defs": {
+    "sha256": {"type": "string", "pattern": "^[0-9a-f]{64}$"}
+  }
+}

@@ -1,0 +1,282 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://voice-coach.local/schemas/r04_randomization_manifest_v1.schema.json",
+  "title": "R04 blinded per-listener randomization manifest",
+  "description": "D1-only assignment manifest. It contains opaque stimulus identifiers and immutable hashes, never system names, filenames, paths, synthesis status, source labels, or ratings.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_version",
+    "randomization_id",
+    "status",
+    "r03_completion_commit_sha256",
+    "r03_bank_manifest_sha256",
+    "r04_config_sha256",
+    "r04_preregistration_sha256",
+    "statistical_analysis_plan_sha256",
+    "privacy_zone",
+    "per_listener_within_sentence_randomization",
+    "fatigue_blocks_present",
+    "system_names_present",
+    "filenames_or_paths_present",
+    "synthesis_status_present",
+    "source_labels_present",
+    "ratings_present",
+    "stimuli",
+    "listener_schedules"
+  ],
+  "properties": {
+    "schema_version": {
+      "const": "voice_coach.r04_randomization_manifest.v1"
+    },
+    "randomization_id": {
+      "type": "string",
+      "pattern": "^r04rand_[0-9a-f]{32}$"
+    },
+    "status": {
+      "const": "randomized_and_locked_before_rating"
+    },
+    "r03_completion_commit_sha256": {
+      "$ref": "#/$defs/sha256"
+    },
+    "r03_bank_manifest_sha256": {
+      "$ref": "#/$defs/sha256"
+    },
+    "r04_config_sha256": {
+      "$ref": "#/$defs/sha256"
+    },
+    "r04_preregistration_sha256": {
+      "$ref": "#/$defs/sha256"
+    },
+    "statistical_analysis_plan_sha256": {
+      "$ref": "#/$defs/sha256"
+    },
+    "privacy_zone": {
+      "const": "D1_pseudonymized_restricted_experiment"
+    },
+    "per_listener_within_sentence_randomization": {
+      "const": true
+    },
+    "fatigue_blocks_present": {
+      "const": true
+    },
+    "system_names_present": {
+      "const": false
+    },
+    "filenames_or_paths_present": {
+      "const": false
+    },
+    "synthesis_status_present": {
+      "const": false
+    },
+    "source_labels_present": {
+      "const": false
+    },
+    "ratings_present": {
+      "const": false
+    },
+    "stimuli": {
+      "type": "array",
+      "minItems": 60,
+      "maxItems": 100,
+      "items": {
+        "$ref": "#/$defs/stimulus"
+      }
+    },
+    "listener_schedules": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "$ref": "#/$defs/listenerSchedule"
+      }
+    }
+  },
+  "$defs": {
+    "sha256": {
+      "type": "string",
+      "pattern": "^[0-9a-f]{64}$"
+    },
+    "sentenceId": {
+      "type": "string",
+      "pattern": "^R00-(0[1-9]|1[0-9]|20)$"
+    },
+    "blindStimulusId": {
+      "type": "string",
+      "pattern": "^r04stim_[0-9a-f]{32}$"
+    },
+    "stimulus": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "stimulus_blind_id",
+        "sentence_id",
+        "audio_object_id_sha256",
+        "audio_sha256",
+        "r03_candidate_lineage_sha256"
+      ],
+      "properties": {
+        "stimulus_blind_id": {
+          "$ref": "#/$defs/blindStimulusId"
+        },
+        "sentence_id": {
+          "$ref": "#/$defs/sentenceId"
+        },
+        "audio_object_id_sha256": {
+          "$ref": "#/$defs/sha256"
+        },
+        "audio_sha256": {
+          "$ref": "#/$defs/sha256"
+        },
+        "r03_candidate_lineage_sha256": {
+          "$ref": "#/$defs/sha256"
+        }
+      }
+    },
+    "listenerSchedule": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "listener_id_sha256",
+        "schedule_id",
+        "randomization_seed_commitment_sha256",
+        "blocks"
+      ],
+      "properties": {
+        "listener_id_sha256": {
+          "$ref": "#/$defs/sha256"
+        },
+        "schedule_id": {
+          "type": "string",
+          "pattern": "^r04sched_[0-9a-f]{32}$"
+        },
+        "randomization_seed_commitment_sha256": {
+          "$ref": "#/$defs/sha256"
+        },
+        "blocks": {
+          "type": "array",
+          "minItems": 2,
+          "items": {
+            "$ref": "#/$defs/block"
+          }
+        }
+      }
+    },
+    "block": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "block_id",
+        "block_order",
+        "mandatory_break_after",
+        "assignments"
+      ],
+      "properties": {
+        "block_id": {
+          "type": "string",
+          "pattern": "^r04block_[0-9a-f]{32}$"
+        },
+        "block_order": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "mandatory_break_after": {
+          "type": "boolean"
+        },
+        "assignments": {
+          "type": "array",
+          "minItems": 1,
+          "items": {
+            "oneOf": [
+              {
+                "$ref": "#/$defs/mosAssignment"
+              },
+              {
+                "$ref": "#/$defs/cmosAssignment"
+              }
+            ]
+          }
+        }
+      }
+    },
+    "mosAssignment": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "task_type",
+        "assignment_id",
+        "sentence_id",
+        "stimulus_blind_id",
+        "within_sentence_position",
+        "block_position"
+      ],
+      "properties": {
+        "task_type": {
+          "const": "mos"
+        },
+        "assignment_id": {
+          "type": "string",
+          "pattern": "^r04assign_[0-9a-f]{32}$"
+        },
+        "sentence_id": {
+          "$ref": "#/$defs/sentenceId"
+        },
+        "stimulus_blind_id": {
+          "$ref": "#/$defs/blindStimulusId"
+        },
+        "within_sentence_position": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 5
+        },
+        "block_position": {
+          "type": "integer",
+          "minimum": 1
+        }
+      }
+    },
+    "cmosAssignment": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "task_type",
+        "assignment_id",
+        "pair_blind_id",
+        "sentence_id",
+        "left_stimulus_blind_id",
+        "right_stimulus_blind_id",
+        "within_sentence_pair_position",
+        "block_position"
+      ],
+      "properties": {
+        "task_type": {
+          "const": "cmos"
+        },
+        "assignment_id": {
+          "type": "string",
+          "pattern": "^r04assign_[0-9a-f]{32}$"
+        },
+        "pair_blind_id": {
+          "type": "string",
+          "pattern": "^r04pair_[0-9a-f]{32}$"
+        },
+        "sentence_id": {
+          "$ref": "#/$defs/sentenceId"
+        },
+        "left_stimulus_blind_id": {
+          "$ref": "#/$defs/blindStimulusId"
+        },
+        "right_stimulus_blind_id": {
+          "$ref": "#/$defs/blindStimulusId"
+        },
+        "within_sentence_pair_position": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "block_position": {
+          "type": "integer",
+          "minimum": 1
+        }
+      }
+    }
+  }
+}

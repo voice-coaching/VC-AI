@@ -1,0 +1,206 @@
+{
+  "schema_version": "voice_coach.h00_human_research_approval_public.v1",
+  "approval_artifact_id": "TBD_H00_APPROVAL",
+  "status": "TBD_EXTERNAL",
+  "privacy_zone": "A1_C1_public_summary_only",
+  "public_summary_only": true,
+  "actual_pilot_covered": false,
+  "consent_approved": false,
+  "privacy_approved": false,
+  "retention_approved": false,
+  "deletion_approved": false,
+  "institution_evidence": {
+    "institution_id_sha256": "TBD_EXTERNAL",
+    "approving_body_role": "TBD_EXTERNAL",
+    "official_determination_category": "TBD_EXTERNAL",
+    "official_determination_id_sha256": "TBD_EXTERNAL",
+    "institution_form_sha256": "TBD_EXTERNAL",
+    "official_determination_document_sha256": "TBD_EXTERNAL",
+    "restricted_document_attestation_sha256": "TBD_H00_ATTESTATION",
+    "official_source_verified": false
+  },
+  "protocol": {
+    "protocol_id_sha256": "TBD_EXTERNAL",
+    "protocol_version": "TBD_EXTERNAL",
+    "protocol_sha256": "TBD_EXTERNAL",
+    "application_bundle_sha256": "TBD_EXTERNAL",
+    "consent_form_version": "TBD_EXTERNAL",
+    "consent_form_sha256": "TBD_EXTERNAL",
+    "privacy_impact_assessment_sha256": "TBD_EXTERNAL",
+    "data_management_plan_sha256": "TBD_EXTERNAL"
+  },
+  "study_scope": {
+    "comparisons": [
+      "c3_minus_c0",
+      "c5_minus_c3"
+    ],
+    "design": "participant_level_parallel_1_to_1_randomized",
+    "intervention_duration": "P2W",
+    "timepoints": [
+      "pre",
+      "post_at_2_weeks",
+      "retention_4_weeks_after_post"
+    ],
+    "c0_covered": false,
+    "c3_covered": false,
+    "c5_covered": false,
+    "participant_recruitment_authorized": false,
+    "informed_consent_authorized": false,
+    "audio_recording_authorized": false,
+    "randomized_intervention_authorized": false,
+    "blind_rating_authorized": false,
+    "d1_pseudonymized_processing_authorized": false,
+    "a1_aggregate_analysis_authorized": false,
+    "confirmatory_study_covered": false
+  },
+  "intervention_manuals": {
+    "c0": {
+      "condition": "c0",
+      "version": "TBD_PREREGISTRATION",
+      "manual_sha256": "TBD_PREREGISTRATION",
+      "frozen_before_recruitment": false
+    },
+    "c3": {
+      "condition": "c3",
+      "version": "TBD_PREREGISTRATION",
+      "manual_sha256": "TBD_PREREGISTRATION",
+      "frozen_before_recruitment": false
+    },
+    "c5": {
+      "condition": "c5",
+      "version": "TBD_PREREGISTRATION",
+      "manual_sha256": "TBD_PREREGISTRATION",
+      "frozen_before_recruitment": false
+    }
+  },
+  "randomization_and_concealment": {
+    "unit": "participant",
+    "allocation_ratio": "1:1",
+    "parallel_design": true,
+    "stratification_factors": [
+      "l1",
+      "baseline_comprehensibility_band"
+    ],
+    "allocation_concealment_required": true,
+    "allocation_method_id": "TBD_PREREGISTRATION",
+    "allocation_implementation_receipt_sha256": "TBD_EXTERNAL",
+    "randomization_seed_custody_receipt_sha256": "TBD_EXTERNAL",
+    "independent_allocation_role_id": "TBD_EXTERNAL",
+    "blind_outcome_raters": true,
+    "participant_blinding_claimed": false
+  },
+  "data_governance": {
+    "audio_recording_in_scope": true,
+    "personal_data_in_scope": true,
+    "sensitive_or_special_category_review_completed": false,
+    "approved_purpose_ids": [
+      "learning_effect_evaluation",
+      "blind_pronunciation_rating",
+      "retention_analysis"
+    ],
+    "purpose_limitation_required": true,
+    "personal_data_categories_sha256": "TBD_EXTERNAL",
+    "sensitive_data_categories_sha256": "TBD_EXTERNAL",
+    "retention_duration_or_trigger_code": "TBD_EXTERNAL",
+    "retention_policy_sha256": "TBD_EXTERNAL",
+    "authorized_role_matrix_sha256": "TBD_EXTERNAL",
+    "access_logging_required": true,
+    "deletion_method_id": "TBD_EXTERNAL",
+    "deletion_protocol_sha256": "TBD_EXTERNAL",
+    "backup_deletion_covered": false,
+    "data_zones": [
+      "R0_restricted_raw",
+      "R1_restricted_operations",
+      "D1_pseudonymized_experiment",
+      "A1_aggregate"
+    ],
+    "raw_or_identifiable_data_publication_allowed": false
+  },
+  "consent_withdrawal_and_participant_rights": {
+    "informed_consent_required": true,
+    "explicit_audio_recording_consent_required": true,
+    "ai_incorrect_feedback_risk_disclosed": false,
+    "withdrawal_without_penalty_allowed": true,
+    "withdrawal_protocol_sha256": "TBD_EXTERNAL",
+    "withdrawal_existing_data_handling_code": "TBD_EXTERNAL",
+    "deletion_request_route_sha256": "TBD_EXTERNAL",
+    "human_contact_and_escalation_route_sha256": "TBD_EXTERNAL",
+    "consent_language_accessibility_reviewed": false
+  },
+  "recruitment_compensation_and_minors": {
+    "recruitment_materials_sha256": "TBD_EXTERNAL",
+    "eligibility_protocol_sha256": "TBD_EXTERNAL",
+    "undue_influence_review_completed": false,
+    "compensation_terms_code": "TBD_EXTERNAL",
+    "compensation_protocol_sha256": "TBD_EXTERNAL",
+    "compensation_withdrawal_treatment_code": "TBD_EXTERNAL",
+    "minors_policy": "TBD_EXTERNAL",
+    "guardian_consent_protocol_sha256": "TBD_EXTERNAL",
+    "minor_assent_protocol_sha256": "TBD_EXTERNAL"
+  },
+  "ai_feedback_and_safety": {
+    "incorrect_feedback_risk_documented": false,
+    "human_escalation_available": false,
+    "unsupported_claim_abstention_required": true,
+    "identity_inference_prohibited": true,
+    "medical_judgment_prohibited": true,
+    "feedback_safety_protocol_sha256": "TBD_EXTERNAL",
+    "human_escalation_protocol_sha256": "TBD_EXTERNAL",
+    "adverse_feedback_monitoring_protocol_sha256": "TBD_EXTERNAL"
+  },
+  "pseudonymization_and_transfer": {
+    "study_namespaced_pseudonymous_ids_required": true,
+    "pseudonym_key_mapping_separated": true,
+    "pseudonym_key_mapping_zone": "R1_restricted_separate_key_store",
+    "key_custodian_role_receipt_sha256": "TBD_EXTERNAL",
+    "direct_identifiers_in_public_artifact_allowed": false,
+    "external_service_transfer_allowed": "TBD_EXTERNAL",
+    "tts_service_transfer_allowed": "TBD_EXTERNAL",
+    "cross_border_transfer_allowed": "TBD_EXTERNAL",
+    "transfer_policy_sha256": "TBD_EXTERNAL",
+    "approved_provider_scope_sha256": "TBD_EXTERNAL",
+    "minimum_necessary_transfer_required": true,
+    "separate_transfer_consent_required": "TBD_EXTERNAL",
+    "separate_transfer_consent_approved": false
+  },
+  "incident_pause_stop": {
+    "incident_response_protocol_sha256": "TBD_EXTERNAL",
+    "breach_notification_protocol_sha256": "TBD_EXTERNAL",
+    "pause_stop_triggers": [
+      "official_body_stop_or_pause_order",
+      "consent_or_privacy_breach",
+      "unexpected_serious_intervention_related_harm",
+      "randomization_or_data_integrity_failure",
+      "registered_intervention_cannot_be_delivered"
+    ],
+    "pause_on_trigger_required": true,
+    "stop_protocol_sha256": "TBD_EXTERNAL",
+    "resume_requires_official_body_and_principal_investigator": true,
+    "resume_protocol_sha256": "TBD_EXTERNAL"
+  },
+  "lifecycle": {
+    "approved_at_utc": "TBD_EXTERNAL",
+    "effective_at_utc": "TBD_EXTERNAL",
+    "expires_at_utc_or_status_code": "TBD_EXTERNAL",
+    "status_verified_at_utc": "TBD_EXTERNAL",
+    "amendment_status": "TBD_EXTERNAL",
+    "current_amendment_version": "TBD_EXTERNAL",
+    "current_amendment_sha256": "TBD_EXTERNAL",
+    "scope_change_requires_prior_amendment": true,
+    "expiration_action": "stop_recruitment_intervention_and_recording",
+    "suspended": false,
+    "withdrawn": false,
+    "current_and_active": false
+  },
+  "authorization": {
+    "decision": "TBD_EXTERNAL",
+    "official_determination_verified": false,
+    "signed_receipt_sha256": "TBD_EXTERNAL",
+    "immutable_archive_receipt_sha256": "TBD_EXTERNAL",
+    "independent_verification_receipt_sha256": "TBD_EXTERNAL",
+    "recruitment_execution_authorized": false,
+    "consent_execution_authorized": false,
+    "recording_execution_authorized": false
+  },
+  "binding_sha256": "TBD_H00_APPROVAL"
+}

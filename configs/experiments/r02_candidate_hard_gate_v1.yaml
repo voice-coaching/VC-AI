@@ -1,0 +1,255 @@
+schema_version: 1
+
+experiment:
+  id: r02_candidate_hard_gate_v1
+  stage: wp7_r02_private_blinded_hard_gate
+  implementation_status: production_static_preflight_only
+  actual_audio_read_allowed: false
+  actual_model_read_allowed: false
+  actual_model_download_allowed: false
+  actual_gpu_access_allowed: false
+  actual_metric_execution_allowed: false
+  actual_output_write_allowed: false
+  publication_allowed: false
+  completion_claim_allowed: false
+
+canonical_sources:
+  access_scope: C1_public_or_aggregate_only
+  pins:
+    - path: artifacts/reference/r00/r00_sentence_card_v1.validation.json
+      sha256: 95b4fd861a3c21222ff13859cfbc9c196e3fd06493852bca823d8a63dc2816dd
+    - path: configs/experiments/r01_human_cosyvoice_candidates_v1.yaml
+      sha256: 7a7167574b083af8d90653199411ee2ecdf3937bd75a89c53d63224923cb6cb8
+    - path: configs/reference/r00_sentence_card_v1.schema.json
+      sha256: 1f8bcf0325414e1923cda0def9a973ac2f7be7bd85cca4ee869743ef862a7b92
+    - path: configs/reference/r01_candidate_manifest_v1.schema.json
+      sha256: 7ffe1b152276b12621575680d022d9b87cd9c19e7fe36374a3186cf7449e1470
+    - path: configs/reference/r01_cosyvoice_model_attestation_v1.template.json
+      sha256: 2ce20ac3fd17714ff487c47f45b227b490e75fa8bebe6e7596bb4ce8328abc2e
+    - path: configs/reference/r01_human_recording_attestation_v1.template.json
+      sha256: aeeebf426b86427f3f2a1f4fd1adc1f4382aa3ace6d88474feed3d8081ecd096
+    - path: configs/reference/r02_artifact_attestation_v1.template.json
+      sha256: 940f36e3c1c0f82c1eaa408256bf9461961f7bb354c8f81e833dce8a7a2191cc
+    - path: configs/reference/r02_asr_attestation_v1.template.json
+      sha256: f1c0ea10e08baf425b36d1fd3ad936b93557af5224f043df374d19648a2df53f
+    - path: configs/reference/r02_gate_preregistration_v1.template.json
+      sha256: 07b53aa937d0490116c4b8aeedc5d6aab1754479990404ccb318dd2dd98528c0
+    - path: configs/reference/r02_hard_gate_report_v1.schema.json
+      sha256: 60525a3b685574a3dce193a7423d77a811050c9c38d36b2c3ba947b71f06a92b
+    - path: data/reference/r00/r00_sentence_card_v1.json
+      sha256: 08dc149ccf10006a587e6216dda0471c19b5c55eab6b320b4348587527d82c4d
+    - path: docs/IMPLEMENTATION_PLAN_KO.md
+      sha256: 12ce84cd7f4f3e34b332dcd1f9a7ded276a367c0339792d1ed74ca8ceb217acf
+    - path: docs/paper/EXPERIMENTAL_MANUSCRIPT_KO.md
+      sha256: dea994728ae8c73be098a29e9a70af2ab4730a651063e64687b40c07433b17eb
+    - path: docs/paper/RELATED_WORK_SOURCE_LEDGER_KO.md
+      sha256: d37bf2ab5564c55f03dbb9e1974e9bf421274df9971b30d31bb54ff4909e44b6
+    - path: scripts/validate_r00_sentence_card.py
+      sha256: 967517e74194936c91dad1eed4fcfb0c059b5480af32b8adfc9725fdb7d6e7d0
+    - path: src/voice_coach/references/r01_candidate_contract.py
+      sha256: e70bd5ed2fcf678537ef8ec41ceb2b76bfba3037cd40a2fc4b617dee31619a95
+
+predecessor_r00:
+  deep_validation_required: true
+  card_path: data/reference/r00/r00_sentence_card_v1.json
+  card_sha256: 08dc149ccf10006a587e6216dda0471c19b5c55eab6b320b4348587527d82c4d
+  schema_path: configs/reference/r00_sentence_card_v1.schema.json
+  schema_sha256: 1f8bcf0325414e1923cda0def9a973ac2f7be7bd85cca4ee869743ef862a7b92
+  validator_path: scripts/validate_r00_sentence_card.py
+  validator_sha256: 967517e74194936c91dad1eed4fcfb0c059b5480af32b8adfc9725fdb7d6e7d0
+  validation_report_path: artifacts/reference/r00/r00_sentence_card_v1.validation.json
+  validation_report_sha256: 95b4fd861a3c21222ff13859cfbc9c196e3fd06493852bca823d8a63dc2816dd
+  required_status: valid
+  required_sentence_count: 20
+  required_r00_completion_claim_allowed: true
+  target_phones_and_rules_may_be_read_for_coverage_audit: true
+  target_phones_and_rules_are_not_gold_test_labels: true
+  raw_audio_or_row_level_access_allowed: false
+
+predecessor_r01:
+  deep_validation_required: true
+  config_path: configs/experiments/r01_human_cosyvoice_candidates_v1.yaml
+  config_sha256: 7a7167574b083af8d90653199411ee2ecdf3937bd75a89c53d63224923cb6cb8
+  completion_commit_path: artifacts/experiments/r01_human_cosyvoice_candidates_v1/commit.json
+  completion_commit_sha256: TBD_R01_COMPLETION
+  completion_schema_version: voice_coach.r01_candidate_completion.v1
+  registry_path: artifacts/experiment_registry/r01-human-cosyvoice-candidates-v1/metadata.json
+  registry_sha256: TBD_R01_COMPLETION
+  candidate_manifest_path: data/processed/references/r01/r01_candidate_manifest_v1.json
+  candidate_manifest_sha256: TBD_R01_COMPLETION
+  human_attestation_path: artifacts/external_attestations/r01/human_recording_attestation_v1.json
+  human_attestation_sha256: TBD_R01_COMPLETION
+  cosyvoice_attestation_path: artifacts/external_attestations/r01/cosyvoice_model_attestation_v1.json
+  cosyvoice_attestation_sha256: TBD_R01_COMPLETION
+  required_status: completed
+  required_sentence_count: 20
+  candidate_count_minimum: 160
+  candidate_count_maximum: 320
+  candidates_per_sentence_minimum: 8
+  candidates_per_sentence_maximum: 16
+  exact_equal_source_balance_within_sentence: true
+  required_r02_hard_gate_status: not_run
+  required_publication_allowed: false
+  d1_audio_may_resolve_only_after_all_r01_evidence_is_deep_valid: true
+
+prerequisites:
+  preregistration:
+    path: artifacts/external_attestations/r02/r02_gate_preregistration_v1.json
+    sha256: TBD_PREREGISTRATION
+    required_status: approved_locked_before_r02_audio_access
+  asr_attestation:
+    path: artifacts/external_attestations/r02/r02_asr_attestation_v1.json
+    sha256: TBD_ATTESTATION
+    required_status: approved_for_r02_content_gate
+  artifact_attestation:
+    path: artifacts/external_attestations/r02/r02_artifact_attestation_v1.json
+    sha256: TBD_ATTESTATION
+    required_status: approved_for_r02_noncontent_gates
+  resolve_before_d1_audio: true
+  exact_metric_threshold_model_checkpoint_normalization_segmentation_support_and_license_required: true
+
+hard_gates:
+  order:
+    - asr_content_match
+    - acoustic_artifact
+    - pause_rhythm
+    - target_phone_coverage
+  pass_rule: all_four_gates_must_pass
+  missing_nonfinite_or_insufficient_support_decision: fail
+  posthoc_threshold_change_allowed: false
+  asr_content_match:
+    plan_backed_role: whisper_content_consistency_and_wer_hard_gate
+    plan_backed_model_family: openai/whisper-large-v3
+    metric_id: TBD_PREREGISTRATION
+    threshold: TBD_PREREGISTRATION
+    exact_model_id: TBD_ATTESTATION
+    exact_checkpoint_revision: TBD_ATTESTATION
+    normalization_id: TBD_PREREGISTRATION
+    segmentation_id: TBD_PREREGISTRATION
+    minimum_support: TBD_PREREGISTRATION
+    code_and_checkpoint_license: TBD_ATTESTATION
+  acoustic_artifact:
+    plan_backed_role: utmosv2_artifact_gate_not_human_evaluation_replacement
+    plan_backed_model_family: UTMOSv2
+    metric_id: TBD_PREREGISTRATION
+    threshold: TBD_PREREGISTRATION
+    exact_model_id: TBD_ATTESTATION
+    exact_checkpoint_revision: TBD_ATTESTATION
+    normalization_id: TBD_PREREGISTRATION
+    segmentation_id: TBD_PREREGISTRATION
+    minimum_support: TBD_PREREGISTRATION
+    code_and_checkpoint_license: TBD_ATTESTATION
+  pause_rhythm:
+    plan_backed_role: duration_pause_and_npvi_family
+    metric_id: TBD_PREREGISTRATION
+    threshold: TBD_PREREGISTRATION
+    exact_implementation_revision: TBD_ATTESTATION
+    normalization_id: TBD_PREREGISTRATION
+    segmentation_id: TBD_PREREGISTRATION
+    minimum_support: TBD_PREREGISTRATION
+    implementation_license: TBD_ATTESTATION
+  target_phone_coverage:
+    plan_backed_role: r00_target_phone_and_phonological_rule_coverage_audit
+    metric_id: TBD_PREREGISTRATION
+    threshold: TBD_PREREGISTRATION
+    exact_implementation_revision: TBD_ATTESTATION
+    exact_model_checkpoint_revision: TBD_ATTESTATION
+    normalization_id: TBD_PREREGISTRATION
+    segmentation_id: TBD_PREREGISTRATION
+    minimum_support: TBD_PREREGISTRATION
+    implementation_and_checkpoint_license: TBD_ATTESTATION
+
+blindness:
+  gate_input_is_source_blind: true
+  source_kind_in_gate_input_allowed: false
+  source_label_sidecar_separate_from_gate_input_and_report: true
+  human_and_tts_use_identical_gate_metric_threshold_normalization_and_support: true
+  source_conditioned_exception_allowed: false
+  unblinding_before_immutable_gate_commit_allowed: false
+  source_stratified_audit_only_after_immutable_gate_commit: true
+
+leakage_boundary:
+  s1_prediction_score_checkpoint_or_threshold_allowed: false
+  s2_prediction_score_checkpoint_or_threshold_allowed: false
+  s1_or_s2_training_dev_stack_calibration_manifest_allowed: false
+  gold_test_label_or_annotation_allowed: false
+  locked_test_split_allowed: false
+  learner_error_label_allowed: false
+  r00_sentence_target_phones_and_rules_for_coverage_audit_only: true
+  r00_target_rules_must_not_be_treated_as_observed_realization: true
+
+candidate_flow:
+  sentence_ids:
+    - R00-01
+    - R00-02
+    - R00-03
+    - R00-04
+    - R00-05
+    - R00-06
+    - R00-07
+    - R00-08
+    - R00-09
+    - R00-10
+    - R00-11
+    - R00-12
+    - R00-13
+    - R00-14
+    - R00-15
+    - R00-16
+    - R00-17
+    - R00-18
+    - R00-19
+    - R00-20
+  input_candidates_per_sentence:
+    minimum: 8
+    maximum: 16
+  input_source_balance: exact_equal_human_and_cosyvoice_within_each_sentence
+  minimum_eligible_candidates_per_sentence: TBD_PREREGISTRATION
+  eligible_if_and_only_if_all_four_gates_pass: true
+  aggregate_transcript_error_metric_id: TBD_PREREGISTRATION
+  aggregate_transcript_error_metric_definition_sha256: TBD_PREREGISTRATION
+  aggregate_transcript_error_aggregation: TBD_PREREGISTRATION
+  aggregate_transcript_error_threshold_operator: le
+  aggregate_transcript_error_completion_boundary: 0.02
+  aggregate_boundary_is_not_a_candidate_threshold: true
+  no_candidate_quality_superiority_claim_from_r02: true
+
+failure_and_r03:
+  failed_candidate_audio_and_r01_lineage_preserved_in_d1: true
+  failed_candidate_delete_move_or_overwrite_allowed: false
+  failed_candidate_status: quarantined
+  passing_candidate_status: eligible_for_r03_private_selection
+  r03_input_must_be_exact_eligible_partition: true
+  r03_may_read_quarantined_candidates: false
+  r03_may_relabel_gate_fail_as_pass: false
+  r02_pass_does_not_allow_publication: true
+  blind_human_evaluation_is_not_r02: true
+  blind_human_evaluation_must_keep_source_labels_hidden: true
+  tts_and_human_are_subject_to_same_r02_gate: true
+
+execution_order:
+  - validate_r02_c1_config_source_schema_and_templates
+  - deep_validate_r00_public_or_aggregate_completion
+  - require_exact_r01_completion_commit
+  - deep_validate_r01_registry_manifest_and_human_cosyvoice_attestations
+  - verify_r00_r01_and_r02_source_snapshots_against_toctou
+  - require_locked_r02_preregistration
+  - validate_asr_artifact_pipeline_model_checkpoint_and_license_attestations
+  - resolve_d1_candidate_manifest_and_audio_only_after_all_prior_gates
+  - build_source_blind_execution_manifest_and_separate_lineage_sidecar
+  - stop_ready_for_separate_metric_execution_package
+
+outputs:
+  report_schema_path: configs/reference/r02_hard_gate_report_v1.schema.json
+  blinded_execution_manifest_path: artifacts/experiments/r02_candidate_hard_gate_v1/blinded_execution_manifest.json
+  source_lineage_sidecar_path: artifacts/experiments/r02_candidate_hard_gate_v1/source_lineage_sidecar.json
+  gate_report_path: artifacts/experiments/r02_candidate_hard_gate_v1/report.json
+  eligible_manifest_path: artifacts/experiments/r02_candidate_hard_gate_v1/eligible_for_r03.json
+  quarantine_manifest_path: artifacts/experiments/r02_candidate_hard_gate_v1/quarantined.json
+  registry_path: artifacts/experiment_registry/r02-candidate-hard-gate-v1/metadata.json
+  completion_commit_path: artifacts/experiments/r02_candidate_hard_gate_v1/commit.json
+  failure_report_path: artifacts/experiments/r02_candidate_hard_gate_v1/failure.json
+  atomic_publish_required: true
+  no_overwrite: true
+  failed_candidates_preserved: true
+  write_enabled_in_this_package: false

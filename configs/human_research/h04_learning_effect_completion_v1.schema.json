@@ -1,0 +1,188 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://voice-coach.local/schemas/h04_learning_effect_completion_v1.schema.json",
+  "title": "H04 learning-effect statistical analysis completion commit",
+  "description": "An immutable aggregate-only completion receipt binding the approved predecessors, frozen SAP, analyst attestation, aggregate input, and validated statistical report. This static package never creates it.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_version",
+    "commit_id",
+    "status",
+    "privacy_zone",
+    "lineage",
+    "artifacts",
+    "assurance",
+    "binding_sha256"
+  ],
+  "properties": {
+    "schema_version": {
+      "const": "voice_coach.h04_learning_effect_completion.v1"
+    },
+    "commit_id": {
+      "type": "string",
+      "pattern": "^h04commit_[0-9a-f]{32}$"
+    },
+    "status": {
+      "const": "committed"
+    },
+    "privacy_zone": {
+      "const": "A1_aggregate_completion_receipt"
+    },
+    "lineage": {
+      "$ref": "#/$defs/lineage"
+    },
+    "artifacts": {
+      "$ref": "#/$defs/artifacts"
+    },
+    "assurance": {
+      "$ref": "#/$defs/assurance"
+    },
+    "binding_sha256": {
+      "$ref": "#/$defs/sha256"
+    }
+  },
+  "$defs": {
+    "sha256": {
+      "type": "string",
+      "pattern": "^[0-9a-f]{64}$"
+    },
+    "artifact": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "sha256",
+        "size_bytes"
+      ],
+      "properties": {
+        "sha256": {
+          "$ref": "#/$defs/sha256"
+        },
+        "size_bytes": {
+          "type": "integer",
+          "minimum": 1
+        }
+      }
+    },
+    "lineage": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "h00_approval_sha256",
+        "h00_attestation_sha256",
+        "h01_final_sample_size_lock_sha256",
+        "h02_h03_completion_sha256",
+        "frozen_sap_sha256",
+        "analyst_attestation_sha256"
+      ],
+      "properties": {
+        "h00_approval_sha256": {
+          "$ref": "#/$defs/sha256"
+        },
+        "h00_attestation_sha256": {
+          "$ref": "#/$defs/sha256"
+        },
+        "h01_final_sample_size_lock_sha256": {
+          "$ref": "#/$defs/sha256"
+        },
+        "h02_h03_completion_sha256": {
+          "$ref": "#/$defs/sha256"
+        },
+        "frozen_sap_sha256": {
+          "$ref": "#/$defs/sha256"
+        },
+        "analyst_attestation_sha256": {
+          "$ref": "#/$defs/sha256"
+        }
+      }
+    },
+    "artifacts": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "aggregate_input",
+        "statistical_report"
+      ],
+      "properties": {
+        "aggregate_input": {
+          "$ref": "#/$defs/artifact"
+        },
+        "statistical_report": {
+          "$ref": "#/$defs/artifact"
+        }
+      }
+    },
+    "assurance": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "actual_h04_analysis_completed",
+        "strict_report_validation_completed",
+        "itt_primary",
+        "likelihood_mixed_model_primary",
+        "all_registered_contrasts_reported",
+        "all_registered_sensitivities_reported",
+        "familywise_holm_reported",
+        "last_observation_carried_forward_used",
+        "post_randomization_exclusion_used",
+        "participant_or_rating_rows_present",
+        "audio_or_transcript_present",
+        "raw_locator_present",
+        "free_text_present",
+        "model_gpu_network_used_by_static_package",
+        "aggregate_only",
+        "publication_allowed"
+      ],
+      "properties": {
+        "actual_h04_analysis_completed": {
+          "const": true
+        },
+        "strict_report_validation_completed": {
+          "const": true
+        },
+        "itt_primary": {
+          "const": true
+        },
+        "likelihood_mixed_model_primary": {
+          "const": true
+        },
+        "all_registered_contrasts_reported": {
+          "const": true
+        },
+        "all_registered_sensitivities_reported": {
+          "const": true
+        },
+        "familywise_holm_reported": {
+          "const": true
+        },
+        "last_observation_carried_forward_used": {
+          "const": false
+        },
+        "post_randomization_exclusion_used": {
+          "const": false
+        },
+        "participant_or_rating_rows_present": {
+          "const": false
+        },
+        "audio_or_transcript_present": {
+          "const": false
+        },
+        "raw_locator_present": {
+          "const": false
+        },
+        "free_text_present": {
+          "const": false
+        },
+        "model_gpu_network_used_by_static_package": {
+          "const": false
+        },
+        "aggregate_only": {
+          "const": true
+        },
+        "publication_allowed": {
+          "const": false
+        }
+      }
+    }
+  }
+}

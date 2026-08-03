@@ -1,0 +1,152 @@
+schema_version: voice_coach.paper_publication_audit_config.v1
+status: ready
+
+policy:
+  offline_default: true
+  network_is_completion_evidence: false
+  canonical_write_allowed: false
+  expected_markdown_tables: 13
+  pending_marker_regex: '\[PENDING:[^\]]+\]'
+  expected_pending_count: 18
+  expected_pending_markers_sha256: 1d0cce59025c86879d0a9972f0da31e45e87169b41f5b8fadd427c111e6d7673
+
+implementation:
+  module:
+    path: src/voice_coach/reproducibility/paper_publication.py
+    sha256: dde43c6f6a8788bc7b85b79e838de569494a7415efc61f87ba93f3cef5612f0d
+    size_bytes: 90182
+  cli:
+    path: scripts/audit_paper_publication.py
+    sha256: 037e14d1c69a74c488f805aedc488aa17f9d9068d87e4a9439e7e62467811956
+    size_bytes: 4547
+
+evidence_gate:
+  # This completed report is the first referenced source opened by the audit.
+  report:
+    path: artifacts/reproducibility/manuscript_evidence_validation.json
+    sha256: 026799ab9ceb3d93128cc7c4558dcbe8d5ed4f0be3afefe19db198bb5e48b7bd
+    size_bytes: 139628
+  validator_script:
+    path: scripts/validate_manuscript_evidence.py
+    sha256: 21d02f78a1c3a7aebc9762934876de1fd122a2c0f8835061b08e11574f961362
+    size_bytes: 2387
+  validator_module:
+    path: src/voice_coach/reproducibility/evidence.py
+    sha256: 183ba32fe3e047c4c97b98ab36d3295673f4dc317af3c8ed59afb65bf615b2a9
+    size_bytes: 30260
+  validation_document:
+    path: docs/MANUSCRIPT_EVIDENCE_VALIDATION_KO.md
+    sha256: c40075548b70eac32efed6fe012db1ae8435652532858a0c49829ab9c07ee051
+    size_bytes: 5449
+  expected:
+    status: passed
+    artifact_count: 36
+    claim_count: 475
+    pending_count: 18
+    pending_markers_sha256: 1d0cce59025c86879d0a9972f0da31e45e87169b41f5b8fadd427c111e6d7673
+    locked_guard_status: passed
+    registry_metric_splits: [dev, dev_exploratory, inner_val]
+
+canonical:
+  manuscript:
+    path: docs/paper/EXPERIMENTAL_MANUSCRIPT_KO.md
+    sha256: dea994728ae8c73be098a29e9a70af2ab4730a651063e64687b40c07433b17eb
+    size_bytes: 41262
+  evidence_map:
+    path: docs/paper/evidence-map.yaml
+    sha256: 1a4d897f3872a3a685be73667ac1e5676cd085711420f790e950f1b7af9e28be
+    size_bytes: 189898
+  source_ledger:
+    path: docs/paper/RELATED_WORK_SOURCE_LEDGER_KO.md
+    sha256: d37bf2ab5564c55f03dbb9e1974e9bf421274df9971b30d31bb54ff4909e44b6
+    size_bytes: 24444
+  local_assets:
+    - link_target: tables/aihub71490_data_qc.md
+      source:
+        path: docs/paper/tables/aihub71490_data_qc.md
+        sha256: fcd60c47415e29eb90a8b2b3ce9be258f817b2b0d201f40aebe11a4d10e240dd
+        size_bytes: 3670
+    - link_target: figures/aihub71490_cohort_flow.mmd
+      source:
+        path: docs/paper/figures/aihub71490_cohort_flow.mmd
+        sha256: 78ea599bfd2b0a5ba5df78ab66bef45110f555cca0d2630d5e905b56bb6860fd
+        size_bytes: 2045
+    - link_target: figures/aihub71490_cohort_flow.svg
+      source:
+        path: docs/paper/figures/aihub71490_cohort_flow.svg
+        sha256: d697e42cea9a820c24c082dd183653bc0a59a9ba4e3406c85eafb8117437ce9e
+        size_bytes: 13542
+    - link_target: tables/explicit_threshold_ablation_dev.md
+      source:
+        path: docs/paper/tables/explicit_threshold_ablation_dev.md
+        sha256: 5b96d10eb2b4b5ad99bda4d17d7c34c8a0a640e3af57aad31e5dd263a1f3deb1
+        size_bytes: 4208
+
+citation_contract:
+  expected_reference_count: 11
+  expected_definition_sequence: [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11]
+  # This records the current, intentional manuscript first-use order. Reference
+  # definitions themselves remain exactly ordered 1..11.
+  expected_first_use_order: [1, 2, 3, 4, 5, 6, 7, 8, 10, 11, 9]
+  expected_primary_targets:
+    "1": https://doi.org/10.1109/JSTSP.2022.3188113
+    "2": https://doi.org/10.1109/ICASSP49357.2023.10095733
+    "3": https://arxiv.org/abs/2212.04356
+    "4": https://doi.org/10.1109/TASLP.2021.3122291
+    "5": https://arxiv.org/abs/2412.10117
+    "6": https://doi.org/10.21437/ICSLP.1998-821
+    "7": https://doi.org/10.21437/Interspeech.2017-64
+    "8": https://doi.org/10.1109/ICASSP.2004.1327190
+    "9": https://arxiv.org/abs/2410.06885
+    "10": https://doi.org/10.21437/Interspeech.2022-439
+    "11": https://doi.org/10.21437/SSW.2025-11
+
+external_url_contract:
+  expected_count: 36
+  expected_status_counts:
+    "200": 32
+    "202": 4
+  # Sorted canonical URL set from RELATED_WORK_SOURCE_LEDGER_KO.md. Expected
+  # status is validated offline; observations require an explicit separate mode.
+  records:
+    - {url: https://arxiv.org/abs/2106.07447, expected_status: 200}
+    - {url: https://arxiv.org/abs/2110.13900, expected_status: 200}
+    - {url: https://arxiv.org/abs/2204.02152, expected_status: 200}
+    - {url: https://arxiv.org/abs/2211.08102, expected_status: 200}
+    - {url: https://arxiv.org/abs/2212.04356, expected_status: 200}
+    - {url: https://arxiv.org/abs/2402.03300, expected_status: 200}
+    - {url: https://arxiv.org/abs/2410.06885, expected_status: 200}
+    - {url: https://arxiv.org/abs/2412.10117, expected_status: 200}
+    - {url: https://arxiv.org/abs/2505.17589, expected_status: 200}
+    - {url: https://arxiv.org/abs/2603.14328, expected_status: 200}
+    - {url: https://doi.org/10.1109/ICASSP.2004.1327190, expected_status: 202}
+    - {url: https://doi.org/10.1109/ICASSP49357.2023.10095733, expected_status: 202}
+    - {url: https://doi.org/10.1109/JSTSP.2022.3188113, expected_status: 202}
+    - {url: https://doi.org/10.1109/TASLP.2021.3122291, expected_status: 202}
+    - {url: https://doi.org/10.21437/ICSLP.1998-821, expected_status: 200}
+    - {url: https://doi.org/10.21437/Interspeech.2017-64, expected_status: 200}
+    - {url: https://doi.org/10.21437/Interspeech.2022-439, expected_status: 200}
+    - {url: https://doi.org/10.21437/SSW.2025-11, expected_status: 200}
+    - {url: https://github.com/QwenAudio/CosyVoice/blob/074ca6dc9e80a2f424f1f74b48bdd7d3fea531cc/LICENSE, expected_status: 200}
+    - {url: https://github.com/QwenAudio/CosyVoice/tree/074ca6dc9e80a2f424f1f74b48bdd7d3fea531cc, expected_status: 200}
+    - {url: https://github.com/QwenAudio/CosyVoice/tree/074ca6dc9e80a2f424f1f74b48bdd7d3fea531cc/examples/grpo/cosyvoice2, expected_status: 200}
+    - {url: https://github.com/SWivid/F5-TTS/blob/9c614e9657089213efc6a7421b30630be138a3f5/LICENSE, expected_status: 200}
+    - {url: https://github.com/SWivid/F5-TTS/tree/9c614e9657089213efc6a7421b30630be138a3f5, expected_status: 200}
+    - {url: https://github.com/doheejin/HiPAMA/blob/89e3f650e224e27b76e87f9cfe4fca2a30b142ab/LICENSE, expected_status: 200}
+    - {url: https://github.com/doheejin/HiPAMA/tree/89e3f650e224e27b76e87f9cfe4fca2a30b142ab, expected_status: 200}
+    - {url: https://github.com/facebookresearch/fairseq/blob/3d262bb25690e4eb2e7d3c1309b1e9c406ca4b99/LICENSE, expected_status: 200}
+    - {url: https://github.com/facebookresearch/fairseq/tree/3d262bb25690e4eb2e7d3c1309b1e9c406ca4b99/examples/hubert, expected_status: 200}
+    - {url: https://github.com/microsoft/unilm/blob/833df7e7832e5064a281131ee64a481afa8e5b95/LICENSE, expected_status: 200}
+    - {url: https://github.com/microsoft/unilm/tree/833df7e7832e5064a281131ee64a481afa8e5b95/wavlm, expected_status: 200}
+    - {url: https://github.com/openai/whisper/blob/90fdc51112dc59242201d038a48add97ffd24b5d/LICENSE, expected_status: 200}
+    - {url: https://github.com/openai/whisper/tree/90fdc51112dc59242201d038a48add97ffd24b5d, expected_status: 200}
+    - {url: https://github.com/sarulab-speech/UTMOS22/blob/2d6d612cdf5bc610fde1a1b913c2d6c6fac8e063/LICENSE, expected_status: 200}
+    - {url: https://github.com/sarulab-speech/UTMOS22/tree/2d6d612cdf5bc610fde1a1b913c2d6c6fac8e063, expected_status: 200}
+    - {url: https://huggingface.co/FunAudioLLM/CosyVoice2-0.5B/tree/eec1ae6c79877dbd9379285cf8789c9e0879293d, expected_status: 200}
+    - {url: https://huggingface.co/SWivid/F5-TTS/tree/84e5a410d9cead4de2f847e7c9369a6440bdfaca, expected_status: 200}
+    - {url: https://huggingface.co/microsoft/wavlm-large/tree/c1423ed94bb01d80a3f5ce5bc39f6026a0f4828c, expected_status: 200}
+
+output:
+  root: artifacts/reproducibility/paper_publication
+  commit_name: commit.json
+  receipt_name: publication-audit.json

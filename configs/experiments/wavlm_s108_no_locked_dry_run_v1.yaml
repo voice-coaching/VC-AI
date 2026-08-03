@@ -1,0 +1,267 @@
+schema_version: 1
+
+experiment:
+  id: aihub71490_wavlm_s108_no_locked_dry_run_v1
+  stage: s108_aggregate_only_no_locked_dry_run
+  dry_run_only: true
+  aggregate_only: true
+  result_metric_generation_allowed: false
+  s108_completion_claim_allowed: false
+  s108_score_allowed: false
+  pending_marker_clear_allowed: false
+  promotion_decision_allowed: false
+  locked_batch_execution_implemented: false
+
+state_machine:
+  allowed_states:
+    - waiting_s103
+    - engineering_in_progress
+    - blocked_preregistration
+    - blocked_g04
+    - blocked_d07
+    - ready_for_locked_batch
+  terminal_result_states_forbidden:
+    - locked_batch_running
+    - research_candidate_failed
+    - research_candidate_passed
+    - deployment_pending
+    - deployment_approved
+    - deployment_rejected
+  predecessor_order: [s103, s104, s105, s106, s107]
+  external_gate_evaluation_order: [preregistration, g04, d07]
+  stop_predecessor_validation_after_first_incomplete: true
+  ready_requires_all_predecessors_and_external_gates: true
+
+predecessors:
+  aggregate_only: true
+  no_row_level_artifact_read: true
+  s103:
+    config:
+      path: configs/experiments/wavlm_frozen_head_comparison_v1.yaml
+      sha256: 4db7ae9d9d7df9e9f35df65534d18fb6d3c46cb98f45dfaa35fadcdd5fe47e27
+    validator_source:
+      path: src/voice_coach/evaluation/wavlm_comparison.py
+      sha256: 8a6a9757b1ef0cfc3322935e975d9377b9580225346d4e4c6553bfabc1393381
+    commit:
+      path: artifacts/experiments/aihub71490_wavlm_frozen_head_comparison_v1/commit.json
+      sha256: e45cf869ab54beff6bcf5a3c674c0bdff0d75460ab8daabe50c7477afca16c6e
+      schema_version: voice_coach.wavlm_frozen_head_comparison_commit.v1
+      required_status: committed
+    report:
+      sha256: 90db58ee3af3bb47b88a8ae1700e6a0a9ce9f16feeaa06b8e1c5d7ffbe778213
+      schema_version: voice_coach.wavlm_frozen_head_comparison.v1
+      required_status: completed
+      required_selected_branch: base_plus
+      required_locked_test_accessed: false
+    registries:
+      - path: artifacts/experiment_registry/aihub71490-wavlm-base-plus-frozen-head-v1-dev/metadata.json
+        sha256: 0f994aa578a503697c53a3ed84377baea38ca34ebd4fc6e01bafac7a31b9f79f
+        run_id: aihub71490-wavlm-base-plus-frozen-head-v1-dev
+        required_status: completed
+        required_artifact_count: 13
+      - path: artifacts/experiment_registry/aihub71490-wavlm-large-frozen-head-v1-dev/metadata.json
+        sha256: 85c90e95b954ec2b74081f44b4e64d311330985a0429d76f0cb67b7a86d5b565
+        run_id: aihub71490-wavlm-large-frozen-head-v1-dev
+        required_status: completed
+        required_artifact_count: 13
+  s104:
+    config:
+      path: configs/experiments/wavlm_s104_adapter_v1.yaml
+      sha256: aa9a19fa1bf2b706d2c692498055795284364d2cfab13774fddb2ad77e1ba8e9
+    commit:
+      path: artifacts/experiments/aihub71490_wavlm_s104_adapter_v1/commit.json
+      schema_version: voice_coach.wavlm_s104_adapter_commit.v1
+      required_status: committed
+    progress_registry:
+      path: artifacts/experiment_registry/aihub71490-wavlm-s104-adapter-v1-dev/metadata.json
+      run_id: aihub71490-wavlm-s104-adapter-v1-dev
+      allowed_statuses: [running, failed, completed]
+    validator:
+      symbol: voice_coach.training.wavlm_adapter_training.validate_s104_commit
+      module:
+        path: src/voice_coach/training/wavlm_adapter_training.py
+        sha256: a7b41d507385c7f45b102f2d1603ad4214f0247ad9e0e08c6a3640f2df6bed80
+      required_status: valid
+  s105:
+    config:
+      path: configs/experiments/wavlm_s105_hierarchy_v1.yaml
+      sha256: e7818240f477af9957c4e13b88479a69820bbb44d48ece2c47e9a54cfc964ea0
+    commit:
+      path: artifacts/experiments/aihub71490_wavlm_s105_hierarchy_v1/commit.json
+      schema_version: voice_coach.wavlm_s105_hierarchy_commit.v1
+      required_status: committed
+    validator:
+      symbol: voice_coach.training.wavlm_hierarchy_training.validate_s105_commit
+      module:
+        path: src/voice_coach/training/wavlm_hierarchy_training.py
+        sha256: e2f7269c757ddee82f33de6787df466b29cbe9e1e2b1fed90130eaaec1c53ad1
+      required_status: valid
+  s106:
+    config:
+      path: configs/experiments/wavlm_s106_stack_fusion_v1.yaml
+      sha256: 196ed40aa59c77af1f7d4d975941b90229d21a9de16f4109e7621b4c3fbcaabb
+    commit:
+      path: artifacts/experiments/aihub71490_wavlm_s106_stack_fusion_v1/commit.json
+      schema_version: voice_coach.wavlm_s106_stack_fusion_commit.v2
+      required_status: committed
+    validator:
+      symbol: voice_coach.training.wavlm_s106_fusion_training.validate_s106_commit
+      module:
+        path: src/voice_coach/training/wavlm_s106_fusion_training.py
+        sha256: e8366b150f507b12a48a7608fbbb2f9af619fcdd7eb10ffaceda4c9952d88097
+      required_status: valid
+  s107:
+    config:
+      path: configs/experiments/wavlm_s107_calibration_v1.yaml
+      sha256: 6702ea196481784319c03e413d8ee6844a060e83407aed204f9344cb0230909f
+    commit:
+      path: artifacts/experiments/aihub71490_wavlm_s107_calibration_v1/commit.json
+      schema_version: voice_coach.wavlm_s107_calibration_commit.v1
+      required_status: committed
+    validator:
+      symbol: voice_coach.training.wavlm_s107_calibration_training.validate_s107_commit
+      module:
+        path: src/voice_coach/training/wavlm_s107_calibration_training.py
+        sha256: 201973a25e75da77ec86468a60094c22ac3d3376d936d5e2d089531d52b5d6d3
+      required_status: valid
+
+external_aggregate_evidence:
+  aggregate_only_schema_required: true
+  identifiers_rows_audio_labels_predictions_forbidden: true
+  preregistration:
+    attestation_path: artifacts/external_evaluation/s108_preregistration_freeze_v1.json
+    schema_version: voice_coach.wavlm_s108_preregistration_freeze.v1
+    required_status: frozen
+  g04:
+    progress_path: data/processed/aihub71490/manifests/aihub71490_manual_alignment_review_progress.json
+    progress_schema_version: voice_coach.alignment_review_report.v1
+    attestation_path: artifacts/external_evaluation/g04_alignment_completion_attestation_v1.json
+    attestation_schema_version: voice_coach.g04_alignment_completion_attestation.v1
+    expected_count: 240
+    minimum_correct_count: 228
+    minimum_accuracy: 0.95
+    reviewer_qualification_attestation_required: true
+  d07:
+    attestation_path: artifacts/external_evaluation/d07_gold_completion_attestation_v1.json
+    schema_version: voice_coach.d07_gold_completion_attestation.v1
+    calibration_count: 800
+    locked_gold_minimum_count: 1
+    locked_gold_maximum_count: 1200
+    independent_rater_count: 2
+    adjudicator_count: 1
+    scalar_agreement_threshold: 0.70
+    taxonomy_agreement_threshold: 0.65
+
+preregistration_contract:
+  unresolved_marker: TBD_PREREGISTRATION
+  primary_icc:
+    outcome: TBD_PREREGISTRATION
+    allowed_outcomes:
+      - pronunciation_score
+      - fluency_score
+      - comprehensibility_score
+    metric: icc_2_1
+    gate_minimum: 0.70
+  word_and_primary_family:
+    decision: TBD_PREREGISTRATION
+    allowed_resolutions:
+      - independent_word_label_preserve_2_of_3
+      - approved_protocol_amendment
+    word_pcc_without_independent_gold_forbidden: true
+    missing_word_may_not_count_as_success: true
+  issued_phone_precision:
+    gate_minimum: 0.90
+    minimum_issued_phone_count: TBD_PREREGISTRATION
+    minimum_issued_coverage: TBD_PREREGISTRATION
+    ci_method: TBD_PREREGISTRATION
+    confidence_level: TBD_PREREGISTRATION
+    gate_statistic: TBD_PREREGISTRATION
+    cluster_unit: TBD_PREREGISTRATION
+    allowed_ci_methods:
+      - percentile_cluster_bootstrap
+      - basic_cluster_bootstrap
+      - bca_cluster_bootstrap
+    allowed_gate_statistics: [point_estimate, ci_lower_bound]
+    required_cluster_unit: speaker_id_sha256
+  subgroup_support:
+    primary_axes: [l1_group, gender_group, proficiency_group]
+    audit_axes: [duration_bucket, error_type_group]
+    minimum_speakers_per_group: TBD_PREREGISTRATION
+    minimum_positive_phones_per_group: TBD_PREREGISTRATION
+    minimum_negative_phones_per_group: TBD_PREREGISTRATION
+    missing_group_policy: TBD_PREREGISTRATION
+    allowed_missing_group_policies:
+      - exclude_missing_from_primary_report_separately
+      - retain_missing_as_preregistered_group
+    max_worst_group_gap: 0.10
+  one_shot_batch:
+    includes_models: [b05_explicit_baseline, s108_final_s1]
+    access_count: 1
+    result_based_reselection_allowed: false
+    rerun_after_gate_failure_allowed: false
+
+frozen_binding_contract:
+  required_hash_names:
+    - s103_commit_sha256
+    - s104_commit_sha256
+    - s105_commit_sha256
+    - s106_commit_sha256
+    - s107_commit_sha256
+    - final_fusion_checkpoint_sha256
+    - calibrator_parameters_sha256
+    - threshold_policy_sha256
+    - source_chain_sha256
+  every_hash_must_be_lowercase_sha256: true
+  preregistration_hashes_must_match_validated_predecessors: true
+
+no_locked_boundary:
+  locked_manifest_locator_present_in_config: false
+  locked_manifest_resolution_allowed: false
+  locked_row_read_allowed: false
+  locked_audio_read_allowed: false
+  locked_label_read_allowed: false
+  locked_prediction_read_allowed: false
+  locked_metric_computation_allowed: false
+  required_access_counts:
+    locked_locator_resolution_count: 0
+    locked_row_read_count: 0
+    locked_audio_read_count: 0
+    locked_label_read_count: 0
+    locked_prediction_read_count: 0
+    locked_access_count: 0
+
+implementation:
+  preflight_script:
+    path: scripts/prepare_wavlm_s108_no_locked_dry_run.py
+    sha256: 467ef6011338ec48ef1485ce118466f5e440b4f7828f57e1bf6767622703b6b6
+  contract_module:
+    path: src/voice_coach/training/wavlm_s108_dry_run.py
+    sha256: 38002184f5a48924c79eab88ef3ce9cc9b29beebe3474ab2408c8cdeb31b2ba2
+  project_manifest:
+    path: pyproject.toml
+    sha256: c33af395f4f3a3c23b625219d4f0911de2c35b08d6ffecc2710a118766f17328
+  scorer_lock:
+    path: requirements/scorer-lock-linux-aarch64-cu130.txt
+    sha256: f6c5b10c1028506d7361c83ad1e9aae0b1fafcf34f4e918e5b7123c51fac8cf2
+
+outputs:
+  generation_root: artifacts/experiments/aihub71490_wavlm_s108_no_locked_dry_run_v1/generations
+  receipt_root: artifacts/experiments/aihub71490_wavlm_s108_no_locked_dry_run_v1/receipts
+  expected_artifact_count: 1
+  artifact_name: no_locked_checklist
+  artifact_relative_path: no_locked_checklist.json
+  artifact_access_scope: A1_aggregate
+  generation_schema_version: voice_coach.wavlm_s108_no_locked_checklist.v1
+  receipt_schema_version: voice_coach.wavlm_s108_no_locked_dry_run_receipt.v1
+  atomic_publish: true
+  content_addressed_generation: true
+  no_overwrite: true
+  completed_registry_created: false
+  canonical_s108_commit_created: false
+
+runtime:
+  device: cpu
+  cuda_allowed: false
+  raw_audio_access_allowed: false
+  environment_files_allowed: false
+  temporary_generation_cleanup_required: true

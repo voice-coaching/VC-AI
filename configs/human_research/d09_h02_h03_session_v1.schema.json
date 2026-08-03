@@ -1,0 +1,48 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://voice-coach.local/schemas/d09_h02_h03_session_v1.schema.json",
+  "title": "D09 H02-H03 restricted session record",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_version",
+    "session_id_sha256",
+    "participant_key_sha256",
+    "phase",
+    "assigned_condition",
+    "session_index",
+    "session_kind",
+    "scheduled_at_utc",
+    "occurred",
+    "protocol_deviation_present",
+    "protocol_deviation_receipt_sha256",
+    "privacy_zone"
+  ],
+  "properties": {
+    "schema_version": {"const": "voice_coach.d09_h02_h03_session.v1"},
+    "session_id_sha256": {"$ref": "#/$defs/sha256"},
+    "participant_key_sha256": {"$ref": "#/$defs/sha256"},
+    "phase": {"enum": ["feasibility", "confirmatory"]},
+    "assigned_condition": {"enum": ["C0", "C3", "C5"]},
+    "session_index": {"type": "integer", "minimum": 0},
+    "session_kind": {
+      "enum": [
+        "pre_baseline",
+        "intervention",
+        "post_at_2_weeks",
+        "retention_4_weeks_after_post"
+      ]
+    },
+    "scheduled_at_utc": {
+      "type": "string",
+      "pattern": "^[0-9]{4}-[0-9]{2}-[0-9]{2}T[0-9]{2}:[0-9]{2}:[0-9]{2}Z$"
+    },
+    "occurred": {"type": "boolean"},
+    "protocol_deviation_present": {"type": "boolean"},
+    "protocol_deviation_receipt_sha256": {"$ref": "#/$defs/sha256"},
+    "privacy_zone": {"const": "D1_pseudonymized_restricted_human_research"}
+  },
+  "$defs": {
+    "sha256": {"type": "string", "pattern": "^[0-9a-f]{64}$"}
+  }
+}

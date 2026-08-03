@@ -1,0 +1,17 @@
+{
+  "schema_version": "voice_coach.d07_reviewer_attestation_manifest.v1",
+  "status": "TBD_EXTERNAL_ATTESTATION",
+  "d07_institutional_approval_sha256": "TBD_EXTERNAL_ATTESTATION",
+  "reviewer_count": 3,
+  "primary_reviewer_count": 2,
+  "adjudicator_count": 1,
+  "qualification_evidence_policy": "TBD_ATTESTATION",
+  "rubric_training_policy_sha256": "TBD_ATTESTATION",
+  "reviewers": [],
+  "every_reviewer_has_korean_phonetics_pronunciation_education_or_alignment_experience": false,
+  "primary_reviewers_mutually_blind": false,
+  "all_reviewers_model_blind": false,
+  "adjudicator_restricted_to_disagreements": false,
+  "reviewer_identity_mapping_stored_separately": true,
+  "privacy_zone": "C1_public_template_only"
+}

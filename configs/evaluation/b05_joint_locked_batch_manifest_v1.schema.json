@@ -1,0 +1,190 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://voice-coach.local/schemas/b05_joint_locked_batch_manifest_v1.schema.json",
+  "title": "Immutable B05 and S108 joint locked batch manifest",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_version",
+    "batch_id",
+    "status",
+    "preregistration_sha256",
+    "g04_completion_sha256",
+    "d07_completion_sha256",
+    "locked_split_manifest_sha256",
+    "locked_set_identity_sha256",
+    "locked_utterance_count",
+    "b03_config_sha256",
+    "b03_report_sha256",
+    "b03_registry_sha256",
+    "b03_checkpoint_set_sha256",
+    "b03_feature_allowlist_sha256",
+    "b03_phone_decision_threshold",
+    "b03_seed_ensemble_definition",
+    "s107_commit_sha256",
+    "s108_arm_freeze_sha256",
+    "arm_execution_specs",
+    "execution_order",
+    "both_arms_immutable_before_access",
+    "result_visibility_embargo_until_both_sealed",
+    "prior_joint_locked_access_count",
+    "maximum_joint_locked_access_count",
+    "rerun_after_success_allowed",
+    "rerun_after_failure_allowed",
+    "new_independent_test_set_required_for_any_new_run",
+    "contains_locked_rows",
+    "contains_audio_or_locator",
+    "contains_labels",
+    "contains_predictions",
+    "privacy_zone",
+    "binding_sha256"
+  ],
+  "properties": {
+    "schema_version": {
+      "const": "voice_coach.b05_joint_locked_batch_manifest.v1"
+    },
+    "batch_id": {
+      "type": "string",
+      "pattern": "^b05batch_[0-9a-f]{32}$"
+    },
+    "status": {
+      "const": "frozen_authorized_not_opened"
+    },
+    "preregistration_sha256": {
+      "$ref": "#/$defs/sha256"
+    },
+    "g04_completion_sha256": {
+      "$ref": "#/$defs/sha256"
+    },
+    "d07_completion_sha256": {
+      "$ref": "#/$defs/sha256"
+    },
+    "locked_split_manifest_sha256": {
+      "$ref": "#/$defs/sha256"
+    },
+    "locked_set_identity_sha256": {
+      "$ref": "#/$defs/sha256"
+    },
+    "locked_utterance_count": {
+      "type": "integer",
+      "minimum": 1
+    },
+    "b03_config_sha256": {
+      "$ref": "#/$defs/sha256"
+    },
+    "b03_report_sha256": {
+      "$ref": "#/$defs/sha256"
+    },
+    "b03_registry_sha256": {
+      "$ref": "#/$defs/sha256"
+    },
+    "b03_checkpoint_set_sha256": {
+      "$ref": "#/$defs/sha256"
+    },
+    "b03_feature_allowlist_sha256": {
+      "$ref": "#/$defs/sha256"
+    },
+    "b03_phone_decision_threshold": {
+      "const": 0.5
+    },
+    "b03_seed_ensemble_definition": {
+      "const": "no_prediction_ensemble_independent_seed_metrics_then_arithmetic_mean"
+    },
+    "s107_commit_sha256": {
+      "$ref": "#/$defs/sha256"
+    },
+    "s108_arm_freeze_sha256": {
+      "$ref": "#/$defs/sha256"
+    },
+    "arm_execution_specs": {
+      "type": "array",
+      "minItems": 2,
+      "maxItems": 2,
+      "items": {
+        "$ref": "#/$defs/armSpec"
+      }
+    },
+    "execution_order": {
+      "const": [
+        "b05_explicit_baseline",
+        "s108_final_s1"
+      ]
+    },
+    "both_arms_immutable_before_access": {
+      "const": true
+    },
+    "result_visibility_embargo_until_both_sealed": {
+      "const": true
+    },
+    "prior_joint_locked_access_count": {
+      "const": 0
+    },
+    "maximum_joint_locked_access_count": {
+      "const": 1
+    },
+    "rerun_after_success_allowed": {
+      "const": false
+    },
+    "rerun_after_failure_allowed": {
+      "const": false
+    },
+    "new_independent_test_set_required_for_any_new_run": {
+      "const": true
+    },
+    "contains_locked_rows": {
+      "const": false
+    },
+    "contains_audio_or_locator": {
+      "const": false
+    },
+    "contains_labels": {
+      "const": false
+    },
+    "contains_predictions": {
+      "const": false
+    },
+    "privacy_zone": {
+      "const": "D1_access_controlled_batch_control_no_locator"
+    },
+    "binding_sha256": {
+      "$ref": "#/$defs/sha256"
+    }
+  },
+  "$defs": {
+    "sha256": {
+      "type": "string",
+      "pattern": "^[0-9a-f]{64}$"
+    },
+    "armSpec": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "arm_id",
+        "immutable_spec_sha256",
+        "checkpoint_set_or_model_sha256",
+        "decision_policy_sha256",
+        "result_based_mutation_allowed"
+      ],
+      "properties": {
+        "arm_id": {
+          "enum": [
+            "b05_explicit_baseline",
+            "s108_final_s1"
+          ]
+        },
+        "immutable_spec_sha256": {
+          "$ref": "#/$defs/sha256"
+        },
+        "checkpoint_set_or_model_sha256": {
+          "$ref": "#/$defs/sha256"
+        },
+        "decision_policy_sha256": {
+          "$ref": "#/$defs/sha256"
+        },
+        "result_based_mutation_allowed": {
+          "const": false
+        }
+      }
+    }
+  }
+}

@@ -1,0 +1,277 @@
+schema_version: 1
+
+experiment:
+  id: e01_metamorphic_robustness_v1
+  stage: wp8_e01_phase3_non_holdout_metamorphic_robustness
+  implementation_status: production_static_preflight_only
+  actual_audio_access_allowed: false
+  actual_perturbation_execution_allowed: false
+  actual_model_access_allowed: false
+  actual_model_inference_allowed: false
+  actual_metric_computation_allowed: false
+  actual_decision_allowed: false
+  actual_network_access_allowed: false
+  actual_gpu_access_allowed: false
+  locked_test_access_allowed: false
+  s203_expert_holdout_access_allowed: false
+  actual_output_write_allowed: false
+  publication_allowed: false
+  completion_claim_allowed: false
+
+canonical_sources:
+  access_scope: C1_code_config_docs_only
+  pins:
+    - path: configs/reference/e01_metamorphic_input_manifest_v1.schema.json
+      sha256: 4b3459751aacb225a2637f80a90562809c8de840ab4e520dc07180b5c070d73d
+    - path: configs/reference/e01_metamorphic_report_v1.schema.json
+      sha256: 7e7e4e7be86f06b800de108c0744156b5b7db469efb99b19430ef4b4b77ee577
+    - path: configs/reference/e01_metamorphic_preregistration_v1.template.json
+      sha256: 1e364ac47061e27d7bd82e76df9302e26ff85ca15258f2d017d492cef28aa2f7
+    - path: src/voice_coach/evaluation/e01_metamorphic_contract.py
+      sha256: 0b4e6decf6b6da63baa6939a44ae2b39e0d7a18d8d6c79c7e037ef7ac9236e43
+    - path: scripts/prepare_e01_metamorphic_robustness.py
+      sha256: 591153fe7812ca4e32a027e2da277483dcc4938b21cb77ed2a1fa9f22a437863
+    - path: configs/experiments/wavlm_s108_no_locked_dry_run_v1.yaml
+      sha256: 038947cc9ee77840870cc0df31a6d66e9384f89908a7d91a8706cda0757e65aa
+    - path: configs/experiments/s2_s202_independent_auditor_v1.yaml
+      sha256: d401ab5466971e02adb706379eaa01a9e116b232a86eca396dfd2348be22aa65
+    - path: src/voice_coach/training/s2_s202_auditor_contract.py
+      sha256: 0ba78271b3d4d99ec3fff865e65bbe992428edfb587785021632677bc46fdaac
+    - path: configs/experiments/s2_s203_expert_holdout_audit_v1.yaml
+      sha256: d06d056181b032325170789b05dadc8bfcf5227ba5ccc9aa4472ae51b65abeaa
+    - path: src/voice_coach/training/s2_s203_holdout_contract.py
+      sha256: 35ee786e59b247c28eb2cd06e5e58c11096cb4ad7944b74c0ab6950b5d2f578b
+    - path: docs/IMPLEMENTATION_PLAN_KO.md
+      sha256: 12ce84cd7f4f3e34b332dcd1f9a7ded276a367c0339792d1ed74ca8ceb217acf
+    - path: docs/EXECUTION_LOG_2026-07-28_KO.md
+      sha256: 9313a0196a02ced826c71421686c323eadbf5b209879071ed1f325f5d1de40bf
+    - path: docs/paper/EXPERIMENTAL_MANUSCRIPT_KO.md
+      sha256: dea994728ae8c73be098a29e9a70af2ab4730a651063e64687b40c07433b17eb
+    - path: docs/paper/CLAIM_GAP_MAP_KO.md
+      sha256: 2168233b459bbe0b2aac411de94d57720408be2479c96e589b14388ff3d5d7a1
+
+predecessor_s108:
+  validation_order: 1
+  deep_validation_required: true
+  delegate_config_path: configs/experiments/s2_s202_independent_auditor_v1.yaml
+  delegate_config_sha256: d401ab5466971e02adb706379eaa01a9e116b232a86eca396dfd2348be22aa65
+  delegate_contract_path: src/voice_coach/training/s2_s202_auditor_contract.py
+  delegate_contract_sha256: 0ba78271b3d4d99ec3fff865e65bbe992428edfb587785021632677bc46fdaac
+  completion_commit_path: artifacts/experiments/aihub71490_wavlm_s108_final_s1_v1/commit.json
+  completion_commit_sha256: TBD_S108_COMPLETION
+  registry_path: artifacts/experiment_registry/aihub71490-wavlm-s108-final-s1-v1/metadata.json
+  required_schema_version: voice_coach.wavlm_s108_final_s1_commit.v1
+  required_status: committed
+  required_decision: research_candidate_passed
+  selected_model_identity_sha256: TBD_S108_COMPLETION
+  selected_checkpoint_sha256: TBD_S108_COMPLETION
+  selected_calibrator_sha256: TBD_S108_COMPLETION
+  selected_threshold_policy_sha256: TBD_S108_COMPLETION
+  aggregate_deep_validation_only: true
+  locked_rows_or_audio_may_be_read_by_e01: false
+
+evaluation_scope:
+  role: phase3_non_holdout_e01_only
+  s203_holdout_primary_metric: false
+  locked_test_allowed: false
+  s203_expert_holdout_allowed: false
+  train_or_calibration_reuse_allowed: false
+  source_population_pointer: TBD_PREREGISTRATION
+  source_population_sha256: TBD_PREREGISTRATION
+  sampling_frame: TBD_PREREGISTRATION
+  sampling_algorithm: TBD_PREREGISTRATION
+  sample_size: TBD_PREREGISTRATION
+  minimum_cases_per_perturbation: TBD_PREREGISTRATION
+  speaker_disjointness_policy: TBD_PREREGISTRATION
+  prompt_balance_policy: TBD_PREREGISTRATION
+  l1_proficiency_gender_slice_policy: TBD_PREREGISTRATION
+
+perturbation_contract:
+  fixed_perturbation_ids:
+    - silence
+    - gain
+    - duration
+    - f0
+    - phone
+  silence:
+    operation: add_leading_and_trailing_silence
+    exact_magnitude:
+      unit: TBD_PREREGISTRATION
+      leading_levels: TBD_PREREGISTRATION
+      trailing_levels: TBD_PREREGISTRATION
+      waveform_fill_rule: TBD_PREREGISTRATION
+      fade_rule: TBD_PREREGISTRATION
+    expected_relation:
+      type: TBD_PREREGISTRATION
+      output_metric_ids: TBD_PREREGISTRATION
+      tolerance_or_margin: TBD_PREREGISTRATION
+      comparison_rule: TBD_PREREGISTRATION
+  gain:
+    operation: change_global_gain
+    exact_magnitude:
+      unit: TBD_PREREGISTRATION
+      gain_levels: TBD_PREREGISTRATION
+      clipping_policy: TBD_PREREGISTRATION
+      normalization_policy: TBD_PREREGISTRATION
+    expected_relation:
+      type: TBD_PREREGISTRATION
+      output_metric_ids: TBD_PREREGISTRATION
+      tolerance_or_margin: TBD_PREREGISTRATION
+      comparison_rule: TBD_PREREGISTRATION
+  duration:
+    operation: change_one_syllable_duration
+    exact_magnitude:
+      unit: TBD_PREREGISTRATION
+      scale_levels: TBD_PREREGISTRATION
+      target_syllable_selection: TBD_PREREGISTRATION
+      time_stretch_algorithm: TBD_PREREGISTRATION
+      pitch_preservation_rule: TBD_PREREGISTRATION
+    expected_relation:
+      type: TBD_PREREGISTRATION
+      output_metric_ids: TBD_PREREGISTRATION
+      tolerance_or_margin: TBD_PREREGISTRATION
+      comparison_rule: TBD_PREREGISTRATION
+  f0:
+    operation: scale_global_f0
+    exact_magnitude:
+      unit: TBD_PREREGISTRATION
+      scale_levels: TBD_PREREGISTRATION
+      voicing_policy: TBD_PREREGISTRATION
+      duration_preservation_rule: TBD_PREREGISTRATION
+      resynthesis_algorithm: TBD_PREREGISTRATION
+    expected_relation:
+      type: TBD_PREREGISTRATION
+      output_metric_ids: TBD_PREREGISTRATION
+      tolerance_or_margin: TBD_PREREGISTRATION
+      comparison_rule: TBD_PREREGISTRATION
+  phone:
+    operation: synthesize_specific_phone_replacement
+    exact_magnitude:
+      unit: TBD_PREREGISTRATION
+      source_target_phone_policy: TBD_PREREGISTRATION
+      replacement_count: TBD_PREREGISTRATION
+      target_region_selection: TBD_PREREGISTRATION
+      synthesis_algorithm: TBD_PREREGISTRATION
+      content_preservation_rule: TBD_PREREGISTRATION
+    expected_relation:
+      type: TBD_PREREGISTRATION
+      output_metric_ids: TBD_PREREGISTRATION
+      tolerance_or_margin: TBD_PREREGISTRATION
+      comparison_rule: TBD_PREREGISTRATION
+  background_noise_in_scope: false
+  undocumented_sixth_perturbation_allowed: false
+
+pass_gate:
+  source_backed: true
+  source_scope: phase3_non_holdout
+  metric: metamorphic_expectation_pass_rate
+  operator: greater_than_or_equal
+  threshold: 0.95
+  numerator_definition: TBD_PREREGISTRATION
+  denominator_definition: TBD_PREREGISTRATION
+  gate_statistic: TBD_PREREGISTRATION
+  aggregation_scope: TBD_PREREGISTRATION
+  case_weighting: TBD_PREREGISTRATION
+  perturbation_weighting: TBD_PREREGISTRATION
+  minimum_support: TBD_PREREGISTRATION
+  invalid_case_policy: TBD_PREREGISTRATION
+  missing_case_policy: TBD_PREREGISTRATION
+  confidence_interval_method: TBD_PREREGISTRATION
+  confidence_level: TBD_PREREGISTRATION
+  multiplicity_control: TBD_PREREGISTRATION
+  blocked_or_failed_rule: TBD_PREREGISTRATION
+  pass_may_not_be_inferred_from_missing: true
+  posthoc_threshold_change_allowed: false
+
+preregistration:
+  validation_order: 2
+  placeholder: TBD_PREREGISTRATION
+  template_path: configs/reference/e01_metamorphic_preregistration_v1.template.json
+  template_sha256: 1e364ac47061e27d7bd82e76df9302e26ff85ca15258f2d017d492cef28aa2f7
+  approved_artifact_path: artifacts/preregistration/e01_metamorphic_robustness_v1.json
+  approved_artifact_sha256: TBD_PREREGISTRATION
+  required_schema_version: voice_coach.e01_metamorphic_preregistration.v1
+  required_status: approved_and_frozen
+  must_bind_s108_model_and_checkpoint: true
+  must_resolve_all_magnitudes_and_expectations_before_input_access: true
+  unresolved_fields_must_fail_closed: true
+
+input_contract:
+  schema_path: configs/reference/e01_metamorphic_input_manifest_v1.schema.json
+  schema_sha256: 4b3459751aacb225a2637f80a90562809c8de840ab4e520dc07180b5c070d73d
+  manifest_path: data/processed/evaluation/e01/e01_metamorphic_input_manifest_v1.json
+  manifest_sha256: TBD_PREREGISTRATION
+  privacy_zone: D1_pseudonymized_restricted_non_locked
+  raw_audio_embedded_allowed: false
+  audio_or_model_path_allowed: false
+  locked_test_rows_allowed: false
+  s203_expert_holdout_rows_allowed: false
+  actual_read_enabled_in_this_package: false
+
+privacy_and_safety:
+  input_zone: D1_pseudonymized_restricted_non_locked
+  report_zone: A1_aggregate_only
+  raw_audio_allowed_in_manifest_or_report: false
+  audio_path_allowed_in_manifest_or_report: false
+  model_path_allowed_in_manifest_or_report: false
+  direct_identifiers_allowed: false
+  free_text_allowed: false
+  row_or_pseudonymous_ids_allowed_in_report: false
+  locked_test_access_allowed: false
+  s203_expert_holdout_access_allowed: false
+  network_fallback_allowed: false
+  result_based_case_exclusion_allowed: false
+  posthoc_magnitude_or_expectation_change_allowed: false
+  actual_perturbed_audio_publication_allowed: false
+  model_promotion_requires_separate_review: true
+
+execution_order:
+  - validate_e01_c1_config_sources_schemas_and_template
+  - deep_validate_s108_final_selected_model_completion
+  - validate_frozen_e01_preregistration_without_tbd
+  - stop_before_input_manifest_audio_model_or_output_path_resolution
+
+outputs:
+  report_schema_path: configs/reference/e01_metamorphic_report_v1.schema.json
+  aggregate_report_path: artifacts/experiments/e01_metamorphic_robustness_v1/report.json
+  commit_path: artifacts/experiments/e01_metamorphic_robustness_v1/commit.json
+  registry_path: artifacts/experiment_registry/e01-metamorphic-robustness-v1/metadata.json
+  failure_report_path: artifacts/experiments/e01_metamorphic_robustness_v1/failure.json
+  no_overwrite: true
+  atomic_completed_bundle_required: true
+  no_symlink: true
+  write_enabled_in_this_package: false
+  current_output_count: 0
+  completion_claim_allowed: false
+
+runtime:
+  config_only_required_counts:
+    predecessor_path_resolution_count: 0
+    predecessor_read_attempt_count: 0
+    predecessor_read_count: 0
+    preregistration_path_resolution_count: 0
+    preregistration_read_attempt_count: 0
+    preregistration_read_count: 0
+    input_path_resolution_count: 0
+    input_manifest_read_count: 0
+    input_case_read_count: 0
+    raw_audio_read_count: 0
+    perturbed_audio_write_count: 0
+    model_path_resolution_count: 0
+    model_weight_read_count: 0
+    model_inference_count: 0
+    network_access_count: 0
+    gpu_access_count: 0
+    metric_computation_count: 0
+    decision_count: 0
+    locked_test_read_count: 0
+    s203_expert_holdout_read_count: 0
+    output_path_resolution_count: 0
+    output_count: 0
+    publication_count: 0
+  cpu_only_static_validation: true
+  environment_file_read_allowed: false
+  network_allowed: false
+  model_allowed: false
+  gpu_allowed: false
+  actual_execution_allowed: false

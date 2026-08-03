@@ -1,0 +1,60 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://voice-coach.local/schemas/d09_h02_h03_phase_separation_receipt_v1.schema.json",
+  "title": "D09 H02-H03 feasibility-confirmatory separation receipt",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_version",
+    "receipt_id",
+    "status",
+    "feasibility_completion_sha256",
+    "h01_final_sample_size_lock_sha256",
+    "frozen_sap_sha256",
+    "confirmatory_randomization_receipt_sha256",
+    "confirmatory_data_lock_receipt_sha256",
+    "feasibility_participant_set_sha256",
+    "confirmatory_participant_set_sha256",
+    "feasibility_audio_set_sha256",
+    "confirmatory_audio_set_sha256",
+    "feasibility_rating_set_sha256",
+    "confirmatory_rating_set_sha256",
+    "participant_intersection_count",
+    "audio_intersection_count",
+    "rating_intersection_count",
+    "copied_or_cloned_row_count",
+    "independent_confirmatory_recruitment_completed",
+    "participant_audio_rating_reuse_allowed",
+    "privacy_zone",
+    "binding_sha256"
+  ],
+  "properties": {
+    "schema_version": {
+      "const": "voice_coach.d09_h02_h03_phase_separation_receipt.v1"
+    },
+    "receipt_id": {"type": "string", "pattern": "^d09separation_[0-9a-f]{32}$"},
+    "status": {"const": "zero_overlap_independently_recruited_confirmatory"},
+    "feasibility_completion_sha256": {"$ref": "#/$defs/sha256"},
+    "h01_final_sample_size_lock_sha256": {"$ref": "#/$defs/sha256"},
+    "frozen_sap_sha256": {"$ref": "#/$defs/sha256"},
+    "confirmatory_randomization_receipt_sha256": {"$ref": "#/$defs/sha256"},
+    "confirmatory_data_lock_receipt_sha256": {"$ref": "#/$defs/sha256"},
+    "feasibility_participant_set_sha256": {"$ref": "#/$defs/sha256"},
+    "confirmatory_participant_set_sha256": {"$ref": "#/$defs/sha256"},
+    "feasibility_audio_set_sha256": {"$ref": "#/$defs/sha256"},
+    "confirmatory_audio_set_sha256": {"$ref": "#/$defs/sha256"},
+    "feasibility_rating_set_sha256": {"$ref": "#/$defs/sha256"},
+    "confirmatory_rating_set_sha256": {"$ref": "#/$defs/sha256"},
+    "participant_intersection_count": {"const": 0},
+    "audio_intersection_count": {"const": 0},
+    "rating_intersection_count": {"const": 0},
+    "copied_or_cloned_row_count": {"const": 0},
+    "independent_confirmatory_recruitment_completed": {"const": true},
+    "participant_audio_rating_reuse_allowed": {"const": false},
+    "privacy_zone": {"const": "A1_aggregate_phase_separation"},
+    "binding_sha256": {"$ref": "#/$defs/sha256"}
+  },
+  "$defs": {
+    "sha256": {"type": "string", "pattern": "^[0-9a-f]{64}$"}
+  }
+}

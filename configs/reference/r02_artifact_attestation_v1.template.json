@@ -1,0 +1,62 @@
+{
+  "schema_version": "voice_coach.r02_artifact_attestation.v1",
+  "attestation_id": "TBD_ATTESTATION",
+  "status": "TBD_ATTESTATION",
+  "acoustic_artifact": {
+    "plan_backed_model_family": "UTMOSv2",
+    "exact_model_id": "TBD_ATTESTATION",
+    "exact_checkpoint_revision": "TBD_ATTESTATION",
+    "checkpoint_manifest_sha256": "TBD_ATTESTATION",
+    "code_revision": "TBD_ATTESTATION",
+    "code_license_spdx": "TBD_ATTESTATION",
+    "code_license_evidence_sha256": "TBD_ATTESTATION",
+    "checkpoint_license_spdx": "TBD_ATTESTATION",
+    "checkpoint_license_evidence_sha256": "TBD_ATTESTATION",
+    "normalization_id": "TBD_ATTESTATION",
+    "normalization_spec_sha256": "TBD_ATTESTATION",
+    "segmentation_id": "TBD_ATTESTATION",
+    "segmentation_spec_sha256": "TBD_ATTESTATION",
+    "research_use_authorized": false
+  },
+  "pause_rhythm_pipeline": {
+    "implementation_id": "TBD_ATTESTATION",
+    "implementation_revision": "TBD_ATTESTATION",
+    "implementation_sha256": "TBD_ATTESTATION",
+    "license_spdx": "TBD_ATTESTATION",
+    "license_evidence_sha256": "TBD_ATTESTATION",
+    "normalization_id": "TBD_ATTESTATION",
+    "normalization_spec_sha256": "TBD_ATTESTATION",
+    "segmentation_id": "TBD_ATTESTATION",
+    "segmentation_spec_sha256": "TBD_ATTESTATION",
+    "research_use_authorized": false
+  },
+  "target_phone_pipeline": {
+    "implementation_id": "TBD_ATTESTATION",
+    "implementation_revision": "TBD_ATTESTATION",
+    "implementation_sha256": "TBD_ATTESTATION",
+    "model_checkpoint_revision": "TBD_ATTESTATION",
+    "model_checkpoint_manifest_sha256": "TBD_ATTESTATION",
+    "code_license_spdx": "TBD_ATTESTATION",
+    "checkpoint_license_spdx": "TBD_ATTESTATION",
+    "license_evidence_sha256": "TBD_ATTESTATION",
+    "normalization_id": "TBD_ATTESTATION",
+    "normalization_spec_sha256": "TBD_ATTESTATION",
+    "segmentation_id": "TBD_ATTESTATION",
+    "segmentation_spec_sha256": "TBD_ATTESTATION",
+    "r00_target_rules_are_audit_targets_only": true,
+    "s1_prediction_or_score_used": false,
+    "s2_prediction_or_score_used": false,
+    "gold_or_locked_test_artifact_used": false,
+    "research_use_authorized": false
+  },
+  "runtime": {
+    "local_files_only": true,
+    "network_download_allowed": false,
+    "local_bundle_manifest_sha256": "TBD_ATTESTATION",
+    "runtime_environment_lock_sha256": "TBD_ATTESTATION"
+  },
+  "same_pipeline_for_human_and_tts": true,
+  "source_conditioned_normalization_allowed": false,
+  "approved_by_external_human": false,
+  "completion_claim_allowed": false
+}

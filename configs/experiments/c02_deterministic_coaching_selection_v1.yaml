@@ -1,0 +1,235 @@
+schema_version: 1
+
+experiment:
+  id: c02_deterministic_coaching_selection_v1
+  stage: wp6_c02_deterministic_top1_top3_coaching
+  implementation_status: production_static_preflight_only
+  actual_diagnostic_input_access_allowed: false
+  actual_coaching_generation_allowed: false
+  actual_effect_estimation_allowed: false
+  actual_model_access_allowed: false
+  actual_gpu_access_allowed: false
+  actual_network_access_allowed: false
+  actual_llm_access_allowed: false
+  actual_output_write_allowed: false
+  actual_registry_or_commit_write_allowed: false
+  production_release_allowed: false
+  completion_claim_allowed: false
+
+canonical_sources:
+  access_scope: C1_public_or_aggregate_static_pins_only
+  pins:
+    - path: artifacts/coaching/c01_korean_error_advice_ontology_v1.validation.json
+      sha256: f81b31fe35ae7fc84d80ae1be2f965d35147066b985916f38f0d1e45638723cc
+    - path: configs/coaching/korean_error_advice_ontology_v1.json
+      sha256: 1ba0c0198533abd51a3caa4b176f17aae17aa48d08899f6e7ced634a1eef0d60
+    - path: configs/coaching/korean_error_advice_ontology_v1.schema.json
+      sha256: aea001bca187af90f6aece0eebbfd8e2cd28304f054be11c7a170cac7efb6bb7
+    - path: configs/coaching/c02_coaching_selection_preregistration_v1.template.json
+      sha256: 6d34fd0feb2af5ab0a1b0d08560883be39ae4d55fca89f4f9f42484eeb05040b
+    - path: configs/coaching/c02_diagnostic_issues_input_v1.schema.json
+      sha256: cd2588ffac9ff10870977e125969c7709ecde25c050c4845ab0c9b9f1f1d7742
+    - path: configs/coaching/c02_coaching_selection_output_v1.schema.json
+      sha256: 935db571a2371e96b082a59979af7b24a508318f5385f62032d4ce735ed6c643
+    - path: configs/experiments/wavlm_s107_calibration_v1.yaml
+      sha256: 6702ea196481784319c03e413d8ee6844a060e83407aed204f9344cb0230909f
+    - path: data/processed/aihub71490/manifests/aihub71490_data_card.json
+      sha256: 4ab53c6837b1a28fbf153dd3a351a195f6931a43694467114cea6c21b8a57b13
+    - path: docs/C01_KOREAN_ERROR_ADVICE_ONTOLOGY_DATA_CARD_KO.md
+      sha256: 14d5e61bc671cc781fc711a2bfb589271ea9b87b3c8f5a8585840b23e19204b7
+    - path: docs/IMPLEMENTATION_PLAN_KO.md
+      sha256: 12ce84cd7f4f3e34b332dcd1f9a7ded276a367c0339792d1ed74ca8ceb217acf
+    - path: docs/WAVLM_S107_CALIBRATION_READINESS_KO.md
+      sha256: c1abb3bc1960e78b768ba07e4d0a02712cee3b781f971eb6a97a53db2665e1c7
+    - path: docs/paper/EXPERIMENTAL_MANUSCRIPT_KO.md
+      sha256: dea994728ae8c73be098a29e9a70af2ab4730a651063e64687b40c07433b17eb
+    - path: scripts/prepare_wavlm_s107_calibration.py
+      sha256: 6afe337409b16f2072809dc9de164d371fad9cc94851aa5a621936d0ea572d46
+    - path: scripts/run_wavlm_s107_calibration.py
+      sha256: 8fbee41b5676207fc59686744aa4ddd789a39c038c04a17dce77544ca73133cd
+    - path: scripts/validate_korean_error_advice_ontology.py
+      sha256: 144f83db469af5781f22421bcea8959f319ae8a5f5ce56978ba293c7b45018b9
+    - path: src/voice_coach/coaching/ontology.py
+      sha256: 7debfdb76e3e8c2f92b2c9b2aacb66b44a6dbd5f433d0276c78b1ae1b6550ff9
+    - path: src/voice_coach/coaching/prioritizer.py
+      sha256: b05f8ce48a5c2c8d86d77f476340cda24612d69bc2945cd74d50ce2381eccadf
+    - path: src/voice_coach/training/wavlm_s107_calibration_contract.py
+      sha256: 04909937b7b8eb4a135a0f7e44c7ec0afc8a438c29aae2d2cbe3de4dcdafac1e
+    - path: src/voice_coach/training/wavlm_s107_calibration_training.py
+      sha256: 201973a25e75da77ec86468a60094c22ac3d3376d936d5e2d089531d52b5d6d3
+
+predecessor_c01:
+  deep_validation_required: true
+  catalog_path: configs/coaching/korean_error_advice_ontology_v1.json
+  catalog_sha256: 1ba0c0198533abd51a3caa4b176f17aae17aa48d08899f6e7ced634a1eef0d60
+  schema_path: configs/coaching/korean_error_advice_ontology_v1.schema.json
+  schema_sha256: aea001bca187af90f6aece0eebbfd8e2cd28304f054be11c7a170cac7efb6bb7
+  validator_path: src/voice_coach/coaching/ontology.py
+  validator_sha256: 7debfdb76e3e8c2f92b2c9b2aacb66b44a6dbd5f433d0276c78b1ae1b6550ff9
+  prioritizer_path: src/voice_coach/coaching/prioritizer.py
+  prioritizer_sha256: b05f8ce48a5c2c8d86d77f476340cda24612d69bc2945cd74d50ce2381eccadf
+  validation_report_path: artifacts/coaching/c01_korean_error_advice_ontology_v1.validation.json
+  validation_report_sha256: f81b31fe35ae7fc84d80ae1be2f965d35147066b985916f38f0d1e45638723cc
+  aggregate_source_path: data/processed/aihub71490/manifests/aihub71490_data_card.json
+  aggregate_source_sha256: 4ab53c6837b1a28fbf153dd3a351a195f6931a43694467114cea6c21b8a57b13
+  required_status: valid
+  required_ontology_id: aihub71490-korean-error-advice-v1
+  required_tag_count: 17
+  required_engineering_contract_valid: true
+  research_completion_claim_must_be_false: true
+  advice_status: engineering_draft
+  production_release_allowed_must_be_false: true
+  privacy_safe_aggregate_read_count: 1
+  row_raw_locator_environment_identifier_read_count: 0
+
+predecessor_s107:
+  deep_validation_required: true
+  actual_completed_output_required: true
+  config_path: configs/experiments/wavlm_s107_calibration_v1.yaml
+  config_sha256: 6702ea196481784319c03e413d8ee6844a060e83407aed204f9344cb0230909f
+  contract_path: src/voice_coach/training/wavlm_s107_calibration_contract.py
+  contract_sha256: 04909937b7b8eb4a135a0f7e44c7ec0afc8a438c29aae2d2cbe3de4dcdafac1e
+  completion_validator_path: src/voice_coach/training/wavlm_s107_calibration_training.py
+  completion_validator_sha256: 201973a25e75da77ec86468a60094c22ac3d3376d936d5e2d089531d52b5d6d3
+  completion_validator_symbol: validate_s107_commit
+  completion_commit_path: artifacts/experiments/aihub71490_wavlm_s107_calibration_v1/commit.json
+  completion_commit_sha256: TBD_S107_COMPLETION
+  required_commit_schema_version: voice_coach.wavlm_s107_calibration_commit.v1
+  registry_path: artifacts/experiment_registry/aihub71490-wavlm-s107-calibration-v1/metadata.json
+  required_registry_status: completed
+  threshold_artifact_name: threshold_policy_report
+  threshold_artifact_relative_path: threshold_policy_report.json
+  threshold_artifact_schema_version: voice_coach.wavlm_s107_threshold_policy.v1
+  threshold_artifact_sha256: TBD_S107_COMPLETION
+  required_threshold_selection_status: selected_provisional_engineering
+  required_deep_status: valid
+  required_label_status: silver_oracle_provisional
+  required_calibration_only: true
+  calibration_accessed_by_deep_validator: true
+  train_dev_stack_locked_test_access_must_be_false: true
+  raw_audio_access_must_be_false: true
+  gpu_initialized_must_be_false: true
+  promotion_decision_allowed_must_be_false: true
+  s108_ready_must_be_false: true
+  threshold_policy_status: provisional_engineering_not_promotion
+  coaching_claim_allowed_by_s107: false
+
+preregistration:
+  placeholder: TBD_PREREGISTRATION
+  template_path: configs/coaching/c02_coaching_selection_preregistration_v1.template.json
+  template_sha256: 6d34fd0feb2af5ab0a1b0d08560883be39ae4d55fca89f4f9f42484eeb05040b
+  approved_artifact_path: artifacts/external_attestations/c02/c02_coaching_selection_preregistration_v1.json
+  approved_artifact_sha256: TBD_PREREGISTRATION
+  required_schema_version: voice_coach.c02_coaching_selection_preregistration.v1
+  required_status: approved_and_frozen
+  must_be_frozen_before_diagnostic_issue_or_output_access: true
+  unresolved_fields_must_fail_closed: true
+
+selection_contract:
+  priority_formula: severity*calibrated_confidence*comprehensibility_impact*trainability
+  allowed_top_k:
+    - 1
+    - 3
+  default_top_k: 1
+  ranking_tie_breakers:
+    - start_ms
+    - end_ms
+    - issue_type
+    - target
+    - observed
+    - evidence_ids
+    - issue_id_sha256
+  blocked_top_k_backfill_allowed: false
+  priority_arithmetic: base10_decimal_from_canonical_json_numbers
+  priority_output_scale: 12
+  priority_rounding: decimal_round_half_even
+  confidence_semantics: TBD_PREREGISTRATION
+  issue_confidence_aggregation_from_s107_phone_probabilities: TBD_PREREGISTRATION
+  exact_confidence_threshold: TBD_PREREGISTRATION
+  threshold_comparison: greater_than_or_equal
+  threshold_authorization_rule: TBD_PREREGISTRATION
+  low_confidence_action: rerecord
+  unsupported_claim_action: expert_review
+  empty_issue_action: none
+
+evidence_and_ontology_contract:
+  allowed_evidence_ids:
+    - gold_label
+    - ctc_competing_phone
+    - gop_low
+    - duration_short
+    - duration_long
+    - alignment_low
+    - content_mismatch
+    - prosody_outlier
+  issue_type_to_supported_evidence_ids: TBD_PREREGISTRATION
+  minimum_supported_evidence_count: TBD_PREREGISTRATION
+  phone_localized_claim_requires_positive_overlap_receipt: true
+  no_target_phone_claim_policy_must_be_preserved: true
+  other_and_unknown_always_unsupported: true
+  catalog_advice_id_and_message_exact_match_required: true
+
+generation_safety:
+  mode: deterministic_c01_ontology_allowlist_only
+  free_generation_llm_allowed: false
+  prompt_or_completion_field_allowed: false
+  network_access_allowed: false
+  runtime_model_access_allowed: false
+  catalog_message_rewrite_allowed: false
+  catalog_advice_id_rewrite_allowed: false
+  fallback_generated_text_allowed: false
+  production_release_allowed_before_c03: false
+
+privacy_and_access:
+  diagnostic_input_zone: D1_pseudonymized_restricted_experiment
+  selection_output_zone: D1_pseudonymized_restricted_experiment
+  aggregate_report_zone: A1_aggregate_only
+  raw_audio_allowed: false
+  raw_text_or_transcript_allowed: false
+  direct_identifier_allowed: false
+  free_text_allowed: false
+  source_or_model_path_allowed_in_payloads: false
+  prompt_or_completion_allowed: false
+  individual_issue_rows_allowed_in_a1: false
+  request_or_issue_ids_allowed_in_a1: false
+  forbidden_recursive_fields:
+    - name
+    - email
+    - phone
+    - address
+    - legal_name
+    - raw_user_id
+    - raw_attempt_id
+    - target_text
+    - transcript
+    - audio_path
+    - source_path
+    - model_path
+    - filename
+    - file_name
+    - free_text
+    - comment
+    - prompt
+    - completion
+    - generated_text
+    - llm_response
+
+execution_order:
+  - validate_c02_static_config_sources_prereg_and_schemas
+  - deep_validate_c01_engineering_ontology_and_immutable_report
+  - require_exact_s107_completed_commit_pin_before_path_resolution
+  - deep_validate_actual_s107_completion_and_threshold_report
+  - validate_frozen_c02_preregistration_without_tbd
+  - stop_before_diagnostic_input_coaching_model_network_or_output_path
+
+outputs:
+  input_schema_path: configs/coaching/c02_diagnostic_issues_input_v1.schema.json
+  output_schema_path: configs/coaching/c02_coaching_selection_output_v1.schema.json
+  selection_manifest_path: data/processed/coaching/c02/c02_coaching_selection_manifest_v1.json
+  aggregate_report_path: artifacts/coaching/c02/c02_coaching_selection_report_v1.json
+  commit_path: artifacts/coaching/c02/commit.json
+  registry_path: artifacts/experiment_registry/c02-deterministic-coaching-selection-v1/metadata.json
+  failure_report_path: artifacts/coaching/c02/failure.json
+  no_overwrite: true
+  atomic_publish_required: true
+  write_enabled_in_this_package: false

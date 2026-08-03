@@ -1,0 +1,161 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://voice-coach.local/schemas/c03_expert_audit_item_manifest_v1.schema.json",
+  "title": "C03 blinded expert coaching audit item manifest",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_version",
+    "manifest_id",
+    "c02_completion_commit_sha256",
+    "c02_d1_bundle_manifest_sha256",
+    "c03_preregistration_sha256",
+    "privacy_zone",
+    "primary_item_count",
+    "abstention_referral_item_count",
+    "items"
+  ],
+  "properties": {
+    "schema_version": {
+      "const": "voice_coach.c03_expert_audit_item_manifest.v1"
+    },
+    "manifest_id": {
+      "type": "string",
+      "pattern": "^c03items_[0-9a-f]{32}$"
+    },
+    "c02_completion_commit_sha256": {
+      "$ref": "#/$defs/sha256"
+    },
+    "c02_d1_bundle_manifest_sha256": {
+      "$ref": "#/$defs/sha256"
+    },
+    "c03_preregistration_sha256": {
+      "$ref": "#/$defs/sha256"
+    },
+    "privacy_zone": {
+      "const": "D1_pseudonymized_restricted_experiment"
+    },
+    "primary_item_count": {
+      "const": 200
+    },
+    "abstention_referral_item_count": {
+      "type": "integer",
+      "minimum": 0
+    },
+    "items": {
+      "type": "array",
+      "minItems": 200,
+      "items": {
+        "$ref": "#/$defs/item"
+      }
+    }
+  },
+  "$defs": {
+    "sha256": {
+      "type": "string",
+      "pattern": "^[0-9a-f]{64}$"
+    },
+    "safeId": {
+      "type": "string",
+      "pattern": "^[A-Za-z0-9][A-Za-z0-9_.:-]{0,63}$"
+    },
+    "item": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "audit_item_id",
+        "sample_role",
+        "c02_input_manifest_sha256",
+        "c02_output_manifest_sha256",
+        "audio_object_id_sha256",
+        "target_sentence_object_id_sha256",
+        "top1_advice_object_id_sha256",
+        "l1_stratum_id",
+        "error_type_stratum_id",
+        "confidence_bin_id",
+        "coaching_action",
+        "review_packet_sha256",
+        "reviewer_visible_fields",
+        "model_score_exposed_to_reviewer",
+        "source_condition_exposed_to_reviewer"
+      ],
+      "properties": {
+        "audit_item_id": {
+          "type": "string",
+          "pattern": "^c03item_[0-9a-f]{32}$"
+        },
+        "sample_role": {
+          "enum": [
+            "primary",
+            "abstention_referral"
+          ]
+        },
+        "c02_input_manifest_sha256": {
+          "$ref": "#/$defs/sha256"
+        },
+        "c02_output_manifest_sha256": {
+          "$ref": "#/$defs/sha256"
+        },
+        "audio_object_id_sha256": {
+          "$ref": "#/$defs/sha256"
+        },
+        "target_sentence_object_id_sha256": {
+          "$ref": "#/$defs/sha256"
+        },
+        "top1_advice_object_id_sha256": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/sha256"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "l1_stratum_id": {
+          "$ref": "#/$defs/safeId"
+        },
+        "error_type_stratum_id": {
+          "$ref": "#/$defs/safeId"
+        },
+        "confidence_bin_id": {
+          "$ref": "#/$defs/safeId"
+        },
+        "coaching_action": {
+          "enum": [
+            "coach",
+            "rerecord",
+            "expert_review",
+            "none"
+          ]
+        },
+        "review_packet_sha256": {
+          "$ref": "#/$defs/sha256"
+        },
+        "reviewer_visible_fields": {
+          "type": "array",
+          "prefixItems": [
+            {
+              "const": "audio"
+            },
+            {
+              "const": "target_sentence"
+            },
+            {
+              "const": "top1_advice"
+            }
+          ],
+          "items": false,
+          "minItems": 3,
+          "maxItems": 3
+        },
+        "model_score_exposed_to_reviewer": {
+          "const": false
+        },
+        "source_condition_exposed_to_reviewer": {
+          "const": false
+        }
+      }
+    }
+  }
+}

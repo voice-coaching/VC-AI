@@ -1,0 +1,674 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://voice-coach.local/schemas/h04_learning_effect_statistical_report_v1.schema.json",
+  "title": "H04 aggregate learning-effect statistical report",
+  "description": "A strict A1 report for ITT likelihood mixed-model contrasts, family-wise Holm adjustment, missing-data sensitivities, per-protocol sensitivity, and aggregate safety/disposition reporting. No participant row, individual rating, recording, locator, or free text is allowed.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_version",
+    "report_id",
+    "status",
+    "privacy_zone",
+    "lineage",
+    "analysis_contract",
+    "primary_and_retention_results",
+    "secondary_family_results",
+    "sensitivity_analyses",
+    "model_diagnostics",
+    "missingness_and_safety",
+    "reporting_assurance",
+    "binding_sha256"
+  ],
+  "properties": {
+    "schema_version": {
+      "const": "voice_coach.h04_learning_effect_statistical_report.v1"
+    },
+    "report_id": {
+      "type": "string",
+      "pattern": "^h04report_[0-9a-f]{32}$"
+    },
+    "status": {
+      "const": "completed_aggregate_statistical_analysis"
+    },
+    "privacy_zone": {
+      "const": "A1_aggregate_statistical_report"
+    },
+    "lineage": {
+      "$ref": "#/$defs/lineage"
+    },
+    "analysis_contract": {
+      "$ref": "#/$defs/analysisContract"
+    },
+    "primary_and_retention_results": {
+      "type": "array",
+      "minItems": 4,
+      "maxItems": 4,
+      "items": {
+        "$ref": "#/$defs/confirmatoryResult"
+      }
+    },
+    "secondary_family_results": {
+      "type": "array",
+      "minItems": 1,
+      "maxItems": 16,
+      "items": {
+        "$ref": "#/$defs/secondaryResult"
+      }
+    },
+    "sensitivity_analyses": {
+      "type": "array",
+      "minItems": 4,
+      "maxItems": 4,
+      "items": {
+        "$ref": "#/$defs/sensitivityAnalysis"
+      }
+    },
+    "model_diagnostics": {
+      "$ref": "#/$defs/modelDiagnostics"
+    },
+    "missingness_and_safety": {
+      "$ref": "#/$defs/missingnessAndSafety"
+    },
+    "reporting_assurance": {
+      "$ref": "#/$defs/reportingAssurance"
+    },
+    "binding_sha256": {
+      "$ref": "#/$defs/sha256"
+    }
+  },
+  "$defs": {
+    "sha256": {
+      "type": "string",
+      "pattern": "^[0-9a-f]{64}$"
+    },
+    "probability": {
+      "type": "number",
+      "minimum": 0,
+      "maximum": 1
+    },
+    "finiteNumber": {
+      "type": "number"
+    },
+    "lineage": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "aggregate_input_sha256",
+        "h00_approval_sha256",
+        "h00_attestation_sha256",
+        "h01_final_sample_size_lock_sha256",
+        "h02_h03_completion_sha256",
+        "frozen_sap_sha256",
+        "analyst_attestation_sha256",
+        "analysis_code_sha256",
+        "software_environment_lock_sha256"
+      ],
+      "properties": {
+        "aggregate_input_sha256": {
+          "$ref": "#/$defs/sha256"
+        },
+        "h00_approval_sha256": {
+          "$ref": "#/$defs/sha256"
+        },
+        "h00_attestation_sha256": {
+          "$ref": "#/$defs/sha256"
+        },
+        "h01_final_sample_size_lock_sha256": {
+          "$ref": "#/$defs/sha256"
+        },
+        "h02_h03_completion_sha256": {
+          "$ref": "#/$defs/sha256"
+        },
+        "frozen_sap_sha256": {
+          "$ref": "#/$defs/sha256"
+        },
+        "analyst_attestation_sha256": {
+          "$ref": "#/$defs/sha256"
+        },
+        "analysis_code_sha256": {
+          "$ref": "#/$defs/sha256"
+        },
+        "software_environment_lock_sha256": {
+          "$ref": "#/$defs/sha256"
+        }
+      }
+    },
+    "analysisContract": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "primary_population",
+        "primary_estimator",
+        "fixed_effect_formula",
+        "random_intercepts",
+        "model_family_id",
+        "ordinal_or_linear_choice_id",
+        "outcome_support_id",
+        "software_id",
+        "optimizer_id",
+        "convergence_rule_id",
+        "ci_method_id",
+        "multiplicity_method",
+        "alpha_two_sided"
+      ],
+      "properties": {
+        "primary_population": {
+          "const": "intention_to_treat_as_randomized"
+        },
+        "primary_estimator": {
+          "const": "likelihood_based_mixed_model_all_observed_itt"
+        },
+        "fixed_effect_formula": {
+          "const": "score~condition*time+l1+baseline"
+        },
+        "random_intercepts": {
+          "const": [
+            "participant",
+            "sentence",
+            "rater"
+          ]
+        },
+        "model_family_id": {
+          "type": "string",
+          "pattern": "^[a-z][a-z0-9_]{2,127}$"
+        },
+        "ordinal_or_linear_choice_id": {
+          "type": "string",
+          "pattern": "^[a-z][a-z0-9_]{2,127}$"
+        },
+        "outcome_support_id": {
+          "type": "string",
+          "pattern": "^[a-z][a-z0-9_]{2,127}$"
+        },
+        "software_id": {
+          "type": "string",
+          "pattern": "^[a-z0-9][a-z0-9_.:-]{2,127}$"
+        },
+        "optimizer_id": {
+          "type": "string",
+          "pattern": "^[a-z0-9][a-z0-9_.:-]{2,127}$"
+        },
+        "convergence_rule_id": {
+          "type": "string",
+          "pattern": "^[a-z0-9][a-z0-9_.:-]{2,127}$"
+        },
+        "ci_method_id": {
+          "type": "string",
+          "pattern": "^[a-z0-9][a-z0-9_.:-]{2,127}$"
+        },
+        "multiplicity_method": {
+          "const": "holm_within_each_registered_family"
+        },
+        "alpha_two_sided": {
+          "const": 0.05
+        }
+      }
+    },
+    "interval": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "estimate",
+        "ci_lower",
+        "ci_upper"
+      ],
+      "properties": {
+        "estimate": {
+          "$ref": "#/$defs/finiteNumber"
+        },
+        "ci_lower": {
+          "$ref": "#/$defs/finiteNumber"
+        },
+        "ci_upper": {
+          "$ref": "#/$defs/finiteNumber"
+        }
+      }
+    },
+    "hypothesis": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "two_sided",
+        "unadjusted_p_value",
+        "holm_adjusted_p_value",
+        "reject_at_familywise_0_05"
+      ],
+      "properties": {
+        "two_sided": {
+          "const": true
+        },
+        "unadjusted_p_value": {
+          "$ref": "#/$defs/probability"
+        },
+        "holm_adjusted_p_value": {
+          "$ref": "#/$defs/probability"
+        },
+        "reject_at_familywise_0_05": {
+          "type": "boolean"
+        }
+      }
+    },
+    "confirmatoryResult": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "contrast_id",
+        "family",
+        "comparison",
+        "time_comparison",
+        "outcome",
+        "raw_1_to_5_difference",
+        "standardized_effect",
+        "hypothesis"
+      ],
+      "properties": {
+        "contrast_id": {
+          "enum": [
+            "c3_minus_c0_pre_to_post",
+            "c5_minus_c3_pre_to_post",
+            "c3_minus_c0_pre_to_retention",
+            "c5_minus_c3_pre_to_retention"
+          ]
+        },
+        "family": {
+          "enum": [
+            "primary_post",
+            "key_retention"
+          ]
+        },
+        "comparison": {
+          "enum": [
+            "c3_minus_c0",
+            "c5_minus_c3"
+          ]
+        },
+        "time_comparison": {
+          "enum": [
+            "pre_to_post",
+            "pre_to_retention"
+          ]
+        },
+        "outcome": {
+          "const": "blind_expert_comprehensibility_1_to_5"
+        },
+        "raw_1_to_5_difference": {
+          "$ref": "#/$defs/interval"
+        },
+        "standardized_effect": {
+          "$ref": "#/$defs/interval"
+        },
+        "hypothesis": {
+          "$ref": "#/$defs/hypothesis"
+        }
+      }
+    },
+    "secondaryResult": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "test_id",
+        "family",
+        "comparison",
+        "outcome",
+        "timepoint",
+        "effect",
+        "hypothesis"
+      ],
+      "properties": {
+        "test_id": {
+          "type": "string",
+          "pattern": "^[a-z][a-z0-9_]{2,127}$"
+        },
+        "family": {
+          "const": "secondary"
+        },
+        "comparison": {
+          "enum": [
+            "c3_minus_c0",
+            "c5_minus_c3"
+          ]
+        },
+        "outcome": {
+          "enum": [
+            "blind_expert_phone_accuracy",
+            "blind_expert_fluency"
+          ]
+        },
+        "timepoint": {
+          "enum": [
+            "post",
+            "retention"
+          ]
+        },
+        "effect": {
+          "$ref": "#/$defs/interval"
+        },
+        "hypothesis": {
+          "$ref": "#/$defs/hypothesis"
+        }
+      }
+    },
+    "sensitivityEstimate": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "contrast_id",
+        "estimate",
+        "ci_lower",
+        "ci_upper"
+      ],
+      "properties": {
+        "contrast_id": {
+          "enum": [
+            "c3_minus_c0_pre_to_post",
+            "c5_minus_c3_pre_to_post",
+            "c3_minus_c0_pre_to_retention",
+            "c5_minus_c3_pre_to_retention"
+          ]
+        },
+        "estimate": {
+          "$ref": "#/$defs/finiteNumber"
+        },
+        "ci_lower": {
+          "$ref": "#/$defs/finiteNumber"
+        },
+        "ci_upper": {
+          "$ref": "#/$defs/finiteNumber"
+        }
+      }
+    },
+    "sensitivityAnalysis": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "method",
+        "parameters_sha256",
+        "analysis_population",
+        "results"
+      ],
+      "properties": {
+        "method": {
+          "enum": [
+            "mar_multilevel_multiple_imputation",
+            "mnar_delta_adjusted_pattern_mixture",
+            "complete_case",
+            "per_protocol_at_least_80_percent_exposure"
+          ]
+        },
+        "parameters_sha256": {
+          "$ref": "#/$defs/sha256"
+        },
+        "analysis_population": {
+          "enum": [
+            "itt_sensitivity",
+            "per_protocol_sensitivity_only"
+          ]
+        },
+        "results": {
+          "type": "array",
+          "minItems": 4,
+          "maxItems": 4,
+          "items": {
+            "$ref": "#/$defs/sensitivityEstimate"
+          }
+        }
+      }
+    },
+    "modelDiagnostics": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "primary_model_converged",
+        "optimizer_converged",
+        "singular_or_boundary_fit",
+        "support_violations",
+        "fallback_model_used",
+        "convergence_diagnostics_sha256",
+        "bootstrap_or_ci_diagnostics_sha256"
+      ],
+      "properties": {
+        "primary_model_converged": {
+          "type": "boolean"
+        },
+        "optimizer_converged": {
+          "type": "boolean"
+        },
+        "singular_or_boundary_fit": {
+          "type": "boolean"
+        },
+        "support_violations": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "fallback_model_used": {
+          "type": "boolean"
+        },
+        "convergence_diagnostics_sha256": {
+          "$ref": "#/$defs/sha256"
+        },
+        "bootstrap_or_ci_diagnostics_sha256": {
+          "$ref": "#/$defs/sha256"
+        }
+      }
+    },
+    "missingnessCell": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "comparison",
+        "condition",
+        "timepoint",
+        "denominator",
+        "missing_count",
+        "missing_fraction",
+        "coded_reason_summary_sha256"
+      ],
+      "properties": {
+        "comparison": {
+          "enum": [
+            "c3_minus_c0",
+            "c5_minus_c3"
+          ]
+        },
+        "condition": {
+          "enum": [
+            "C0",
+            "C3",
+            "C5"
+          ]
+        },
+        "timepoint": {
+          "enum": [
+            "pre",
+            "post",
+            "retention"
+          ]
+        },
+        "denominator": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "missing_count": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "missing_fraction": {
+          "$ref": "#/$defs/probability"
+        },
+        "coded_reason_summary_sha256": {
+          "$ref": "#/$defs/sha256"
+        }
+      }
+    },
+    "countCell": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "comparison",
+        "condition",
+        "count",
+        "denominator",
+        "fraction"
+      ],
+      "properties": {
+        "comparison": {
+          "enum": [
+            "c3_minus_c0",
+            "c5_minus_c3"
+          ]
+        },
+        "condition": {
+          "enum": [
+            "C0",
+            "C3",
+            "C5"
+          ]
+        },
+        "count": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "denominator": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "fraction": {
+          "$ref": "#/$defs/probability"
+        }
+      }
+    },
+    "missingnessAndSafety": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "missingness_by_arm_and_time",
+        "withdrawal_by_arm",
+        "adverse_feedback_by_arm",
+        "ceiling_by_arm",
+        "floor_by_arm"
+      ],
+      "properties": {
+        "missingness_by_arm_and_time": {
+          "type": "array",
+          "minItems": 1,
+          "items": {
+            "$ref": "#/$defs/missingnessCell"
+          }
+        },
+        "withdrawal_by_arm": {
+          "type": "array",
+          "minItems": 1,
+          "items": {
+            "$ref": "#/$defs/countCell"
+          }
+        },
+        "adverse_feedback_by_arm": {
+          "type": "array",
+          "minItems": 1,
+          "items": {
+            "$ref": "#/$defs/countCell"
+          }
+        },
+        "ceiling_by_arm": {
+          "type": "array",
+          "minItems": 1,
+          "items": {
+            "$ref": "#/$defs/countCell"
+          }
+        },
+        "floor_by_arm": {
+          "type": "array",
+          "minItems": 1,
+          "items": {
+            "$ref": "#/$defs/countCell"
+          }
+        }
+      }
+    },
+    "reportingAssurance": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "actual_statistics_computed",
+        "actual_effect_estimates_reported",
+        "actual_report_completed",
+        "itt_primary",
+        "likelihood_mixed_model_primary",
+        "holm_applied_within_primary_retention_secondary_families",
+        "mar_mi_reported",
+        "mnar_pattern_mixture_reported",
+        "complete_case_reported",
+        "per_protocol_is_sensitivity_only",
+        "last_observation_carried_forward_used",
+        "post_randomization_exclusion_used",
+        "participant_rows_present",
+        "individual_scores_present",
+        "audio_or_transcript_present",
+        "raw_locator_present",
+        "free_text_present",
+        "aggregate_only",
+        "publication_allowed"
+      ],
+      "properties": {
+        "actual_statistics_computed": {
+          "const": true
+        },
+        "actual_effect_estimates_reported": {
+          "const": true
+        },
+        "actual_report_completed": {
+          "const": true
+        },
+        "itt_primary": {
+          "const": true
+        },
+        "likelihood_mixed_model_primary": {
+          "const": true
+        },
+        "holm_applied_within_primary_retention_secondary_families": {
+          "const": true
+        },
+        "mar_mi_reported": {
+          "const": true
+        },
+        "mnar_pattern_mixture_reported": {
+          "const": true
+        },
+        "complete_case_reported": {
+          "const": true
+        },
+        "per_protocol_is_sensitivity_only": {
+          "const": true
+        },
+        "last_observation_carried_forward_used": {
+          "const": false
+        },
+        "post_randomization_exclusion_used": {
+          "const": false
+        },
+        "participant_rows_present": {
+          "const": false
+        },
+        "individual_scores_present": {
+          "const": false
+        },
+        "audio_or_transcript_present": {
+          "const": false
+        },
+        "raw_locator_present": {
+          "const": false
+        },
+        "free_text_present": {
+          "const": false
+        },
+        "aggregate_only": {
+          "const": true
+        },
+        "publication_allowed": {
+          "const": false
+        }
+      }
+    }
+  }
+}

@@ -1,0 +1,203 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://voice-coach.local/schemas/r03_reference_bank_manifest_v1.schema.json",
+  "title": "R03 private multi-reference bank manifest",
+  "description": "D1-only post-selection bank. Selection is source-blind and outcome-blind; source kind is joined back only to verify balance and immutable lineage. Nothing in this schema authorizes publication before R04.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_version",
+    "bank_id",
+    "status",
+    "r00_card_sha256",
+    "r01_commit_sha256",
+    "r02_commit_sha256",
+    "r03_config_sha256",
+    "r03_preregistration_sha256",
+    "privacy_zone",
+    "publication_allowed",
+    "r04_blind_evaluation_completed",
+    "selection_blinded_to_source_kind",
+    "selection_blinded_to_r04_and_outcomes",
+    "sentences"
+  ],
+  "properties": {
+    "schema_version": {
+      "const": "voice_coach.r03_reference_bank_manifest.v1"
+    },
+    "bank_id": {
+      "type": "string",
+      "pattern": "^r03-private-reference-bank-[0-9a-f]{32}$"
+    },
+    "status": {
+      "const": "r03_selected_pending_r04"
+    },
+    "r00_card_sha256": {
+      "$ref": "#/$defs/sha256"
+    },
+    "r01_commit_sha256": {
+      "$ref": "#/$defs/sha256"
+    },
+    "r02_commit_sha256": {
+      "$ref": "#/$defs/sha256"
+    },
+    "r03_config_sha256": {
+      "$ref": "#/$defs/sha256"
+    },
+    "r03_preregistration_sha256": {
+      "$ref": "#/$defs/sha256"
+    },
+    "privacy_zone": {
+      "const": "D1_pseudonymized_restricted_experiment"
+    },
+    "publication_allowed": {
+      "const": false
+    },
+    "r04_blind_evaluation_completed": {
+      "const": false
+    },
+    "selection_blinded_to_source_kind": {
+      "const": true
+    },
+    "selection_blinded_to_r04_and_outcomes": {
+      "const": true
+    },
+    "sentences": {
+      "type": "array",
+      "minItems": 20,
+      "maxItems": 20,
+      "items": {
+        "$ref": "#/$defs/sentenceBank"
+      }
+    }
+  },
+  "$defs": {
+    "sha256": {
+      "type": "string",
+      "pattern": "^[0-9a-f]{64}$"
+    },
+    "sentenceBank": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "sentence_id",
+        "eligible_candidate_count",
+        "selected_count",
+        "source_balance_verified_after_blind_selection",
+        "speaker_diversity_verified",
+        "speed_diversity_verified",
+        "pitch_diversity_verified",
+        "selected_candidates"
+      ],
+      "properties": {
+        "sentence_id": {
+          "type": "string",
+          "pattern": "^R00-(0[1-9]|1[0-9]|20)$"
+        },
+        "eligible_candidate_count": {
+          "type": "integer",
+          "minimum": 3,
+          "maximum": 16
+        },
+        "selected_count": {
+          "type": "integer",
+          "minimum": 3,
+          "maximum": 5
+        },
+        "source_balance_verified_after_blind_selection": {
+          "const": true
+        },
+        "speaker_diversity_verified": {
+          "const": true
+        },
+        "speed_diversity_verified": {
+          "const": true
+        },
+        "pitch_diversity_verified": {
+          "const": true
+        },
+        "selected_candidates": {
+          "type": "array",
+          "minItems": 3,
+          "maxItems": 5,
+          "items": {
+            "$ref": "#/$defs/selectedCandidate"
+          }
+        }
+      }
+    },
+    "selectedCandidate": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "candidate_id",
+        "target_text_sha256",
+        "audio_object_id_sha256",
+        "audio_sha256",
+        "source_kind",
+        "source_attestation_sha256",
+        "speaker_id_sha256",
+        "speed_bucket",
+        "pitch_bucket",
+        "r02_eligible_row_sha256",
+        "objective_vector_sha256",
+        "pareto_member",
+        "immutable_lineage_verified"
+      ],
+      "properties": {
+        "candidate_id": {
+          "type": "string",
+          "pattern": "^r01c_[0-9a-f]{32}$"
+        },
+        "target_text_sha256": {
+          "$ref": "#/$defs/sha256"
+        },
+        "audio_object_id_sha256": {
+          "$ref": "#/$defs/sha256"
+        },
+        "audio_sha256": {
+          "$ref": "#/$defs/sha256"
+        },
+        "source_kind": {
+          "description": "Joined only after blind selection for balance and lineage validation.",
+          "enum": [
+            "human_recording",
+            "cosyvoice_tts"
+          ]
+        },
+        "source_attestation_sha256": {
+          "$ref": "#/$defs/sha256"
+        },
+        "speaker_id_sha256": {
+          "$ref": "#/$defs/sha256"
+        },
+        "speed_bucket": {
+          "enum": [
+            "slow",
+            "neutral",
+            "fast"
+          ]
+        },
+        "pitch_bucket": {
+          "enum": [
+            "low",
+            "neutral",
+            "high"
+          ]
+        },
+        "r02_eligible_row_sha256": {
+          "$ref": "#/$defs/sha256"
+        },
+        "objective_vector_sha256": {
+          "$ref": "#/$defs/sha256"
+        },
+        "pareto_member": {
+          "const": true
+        },
+        "immutable_lineage_verified": {
+          "const": true
+        }
+      }
+    }
+  }
+}

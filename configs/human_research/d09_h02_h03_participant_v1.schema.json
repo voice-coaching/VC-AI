@@ -1,0 +1,41 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://voice-coach.local/schemas/d09_h02_h03_participant_v1.schema.json",
+  "title": "D09 H02-H03 restricted participant record",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_version",
+    "record_id_sha256",
+    "phase",
+    "comparison",
+    "assigned_condition",
+    "participant_key_sha256",
+    "consent_receipt_sha256",
+    "l1_stratum_id",
+    "baseline_stratum_id",
+    "randomized",
+    "participant_blinding_claimed",
+    "direct_identifiers_present",
+    "privacy_zone"
+  ],
+  "properties": {
+    "schema_version": {"const": "voice_coach.d09_h02_h03_participant.v1"},
+    "record_id_sha256": {"$ref": "#/$defs/sha256"},
+    "phase": {"enum": ["feasibility", "confirmatory"]},
+    "comparison": {"enum": ["c3_minus_c0", "c5_minus_c3"]},
+    "assigned_condition": {"enum": ["C0", "C3", "C5"]},
+    "participant_key_sha256": {"$ref": "#/$defs/sha256"},
+    "consent_receipt_sha256": {"$ref": "#/$defs/sha256"},
+    "l1_stratum_id": {"$ref": "#/$defs/safeId"},
+    "baseline_stratum_id": {"$ref": "#/$defs/safeId"},
+    "randomized": {"const": true},
+    "participant_blinding_claimed": {"const": false},
+    "direct_identifiers_present": {"const": false},
+    "privacy_zone": {"const": "D1_pseudonymized_restricted_human_research"}
+  },
+  "$defs": {
+    "sha256": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
+    "safeId": {"type": "string", "pattern": "^[a-z0-9][a-z0-9_.:-]{0,127}$"}
+  }
+}

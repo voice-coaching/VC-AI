@@ -1,0 +1,102 @@
+schema_version: voice_coach.adversarial_tts.v1
+
+experiment:
+  id: adversarial_tts_feedback_v1
+  status: prototype
+  production_ready: false
+  research_only: true
+  description: >-
+    Source-conditioned Korean pronunciation correction with a generator,
+    evaluator 1, and an independent training-internal progression meta-critic.
+
+data:
+  learner:
+    manifest: data/processed/aihub71490/manifests/aihub71490_modeling.parquet
+    sha256: 32f439ba10a035541f53b8a44f5d150b307e89f97387f09748704c3c78e85ef1
+    allowed_splits: [train]
+    qc_clean_only: true
+    exclude_reserved_prompts: true
+    target_mode: phone_labels_and_soft_human_scores
+    treat_all_as_incorrect: false
+    text_condition: canonical_phone_ids
+  native:
+    manifest: data/processed/native-korean/manifests/native_korean_v1.parquet
+    sha256: 2562b52c31de9bd1c85e8d9cc446c9ceaaebe53a3a7f8679834f8a39c251d5a6
+    allowed_source_ids: [kss]
+    required_intended_role: research_only_native_korean_tts_baseline
+    noncommercial_only: true
+    paired_reconstruction_allowed: false
+    multi_speaker_required_before_promotion: true
+  sampling:
+    strategy: unpaired_conditional
+    duration_bucketed: true
+    shared_audio_preprocessing: true
+    nuisance_balanced: true
+
+model:
+  vocabulary_size: 512
+  aspect_count: 4
+  feedback_dim: 8
+  max_meta_adjustment: 0.25
+  generator:
+    hidden_dim: 128
+    acoustic_dim: 80
+    hop_length: 4
+    residual_blocks: 4
+    dropout: 0.10
+    max_edit_amplitude: 0.35
+  evaluator1:
+    hidden_dim: 128
+    embedding_dim: 128
+  evaluator2_meta_critic:
+    hidden_dim: 128
+    embedding_dim: 128
+    consumes_evaluator1_outputs: false
+    direct_gradient_to_generator: false
+    production_s2: false
+
+training:
+  seed: 42
+  update_order:
+    - evaluator1_core
+    - evaluator2_meta_critic
+    - evaluator1_meta_reward
+    - generator
+  learning_rates:
+    generator: 0.0001
+    evaluator1_core: 0.0002
+    evaluator2_meta_critic: 0.0002
+    evaluator1_meta_reward: 0.00005
+  loss_weights:
+    primary_adversarial: 1.0
+    primary_content: 1.0
+    primary_aspects: 1.0
+    primary_meta: 0.25
+    meta_domain: 1.0
+    meta_progress: 1.0
+    meta_adjustment_regularization: 0.01
+    generator_adversarial: 1.0
+    generator_content: 1.0
+    generator_reward: 1.0
+    generator_monotonic: 0.5
+    generator_identity: 1.0
+    generator_minimal_edit: 0.1
+    generator_native_identity: 1.0
+  monotonic_margin: 0.02
+  max_gradient_norm: 5.0
+
+safety:
+  preserve_speaker_identity: true
+  identity_mode_requires_consent: true
+  preserve_content: true
+  bounded_edits: true
+  generated_audio_label_required: true
+  production_s2_remains_independent: true
+  forbid_nationality_as_model_input: true
+
+outputs:
+  artifact_root: artifacts/experiments/adversarial_tts_feedback_v1
+  checkpoint_format: safetensors
+  store_raw_audio_in_report: false
+  store_transcript_in_report: false
+  store_source_paths_in_report: false

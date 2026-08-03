@@ -1,0 +1,154 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://voice-coach.local/schemas/d07_locked_evaluation_report_v1.schema.json",
+  "title": "D07 sealed locked-test expert gold aggregate report",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_version",
+    "report_id",
+    "item_manifest_sha256",
+    "rating_manifest_sha256",
+    "calibration_report_sha256",
+    "g04_completion_attestation_sha256",
+    "locked_access_authorization_sha256",
+    "preregistration_sha256",
+    "privacy_zone",
+    "locked_test_item_count",
+    "expert_locked_access_transaction_count",
+    "developer_locked_access_count",
+    "rubric_unchanged_after_locked_start",
+    "primary_definition_unchanged_after_locked_start",
+    "two_original_ratings_retained",
+    "disagreements_only_adjudicated",
+    "model_results_unseen",
+    "sensitivity_analyses",
+    "statistical_contract"
+  ],
+  "properties": {
+    "schema_version": {
+      "const": "voice_coach.d07_locked_evaluation_report.v1"
+    },
+    "report_id": {
+      "type": "string",
+      "pattern": "^d07locked_[0-9a-f]{32}$"
+    },
+    "item_manifest_sha256": {
+      "$ref": "#/$defs/sha256"
+    },
+    "rating_manifest_sha256": {
+      "$ref": "#/$defs/sha256"
+    },
+    "calibration_report_sha256": {
+      "$ref": "#/$defs/sha256"
+    },
+    "g04_completion_attestation_sha256": {
+      "$ref": "#/$defs/sha256"
+    },
+    "locked_access_authorization_sha256": {
+      "$ref": "#/$defs/sha256"
+    },
+    "preregistration_sha256": {
+      "$ref": "#/$defs/sha256"
+    },
+    "privacy_zone": {
+      "const": "A1_aggregate_only"
+    },
+    "locked_test_item_count": {
+      "type": "integer",
+      "minimum": 200,
+      "maximum": 1200
+    },
+    "expert_locked_access_transaction_count": {
+      "const": 1
+    },
+    "developer_locked_access_count": {
+      "const": 0
+    },
+    "rubric_unchanged_after_locked_start": {
+      "const": true
+    },
+    "primary_definition_unchanged_after_locked_start": {
+      "const": true
+    },
+    "two_original_ratings_retained": {
+      "const": true
+    },
+    "disagreements_only_adjudicated": {
+      "const": true
+    },
+    "model_results_unseen": {
+      "const": true
+    },
+    "sensitivity_analyses": {
+      "type": "array",
+      "minItems": 3,
+      "maxItems": 3,
+      "items": {
+        "$ref": "#/$defs/sensitivity"
+      }
+    },
+    "statistical_contract": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "confidence_interval_method_sha256",
+        "multiplicity_method_sha256",
+        "minimum_support_rule_sha256",
+        "cluster_unit_sha256",
+        "slice_allocation_weighting_sha256"
+      ],
+      "properties": {
+        "confidence_interval_method_sha256": {
+          "$ref": "#/$defs/sha256"
+        },
+        "multiplicity_method_sha256": {
+          "$ref": "#/$defs/sha256"
+        },
+        "minimum_support_rule_sha256": {
+          "$ref": "#/$defs/sha256"
+        },
+        "cluster_unit_sha256": {
+          "$ref": "#/$defs/sha256"
+        },
+        "slice_allocation_weighting_sha256": {
+          "$ref": "#/$defs/sha256"
+        }
+      }
+    }
+  },
+  "$defs": {
+    "sha256": {
+      "type": "string",
+      "pattern": "^[0-9a-f]{64}$"
+    },
+    "safeId": {
+      "type": "string",
+      "pattern": "^[A-Za-z0-9][A-Za-z0-9_.:-]{0,63}$"
+    },
+    "sensitivity": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "analysis_basis",
+        "metric_definition_sha256",
+        "aggregate_result_sha256"
+      ],
+      "properties": {
+        "analysis_basis": {
+          "enum": [
+            "primary_reviewer_1_original",
+            "primary_reviewer_2_original",
+            "adjudicated_gold"
+          ]
+        },
+        "metric_definition_sha256": {
+          "$ref": "#/$defs/sha256"
+        },
+        "aggregate_result_sha256": {
+          "$ref": "#/$defs/sha256"
+        }
+      }
+    }
+  }
+}

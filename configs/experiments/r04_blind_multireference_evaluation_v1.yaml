@@ -1,0 +1,356 @@
+schema_version: 1
+
+experiment:
+  id: r04_blind_multireference_evaluation_v1
+  stage: wp7_r04_blind_multireference_human_evaluation
+  implementation_status: production_static_preflight_only
+  actual_listener_recruitment_allowed: false
+  actual_audio_read_allowed: false
+  actual_audio_write_allowed: false
+  actual_rating_read_allowed: false
+  actual_rating_write_allowed: false
+  actual_model_access_allowed: false
+  actual_gpu_access_allowed: false
+  actual_randomization_execution_allowed: false
+  actual_metric_or_statistics_computation_allowed: false
+  actual_result_generation_allowed: false
+  actual_registry_or_commit_write_allowed: false
+  publication_allowed: false
+  completion_claim_allowed: false
+
+canonical_sources:
+  access_scope: C1_public_or_aggregate_static_pins_only
+  pins:
+    - path: artifacts/reference/r00/r00_sentence_card_v1.validation.json
+      sha256: 95b4fd861a3c21222ff13859cfbc9c196e3fd06493852bca823d8a63dc2816dd
+    - path: configs/experiments/r01_human_cosyvoice_candidates_v1.yaml
+      sha256: 7a7167574b083af8d90653199411ee2ecdf3937bd75a89c53d63224923cb6cb8
+    - path: configs/experiments/r02_candidate_hard_gate_v1.yaml
+      sha256: e43c3fd5b3f54b5d9d11e29a5bb2b6d77a9ec91776516581bca3601f44a8282f
+    - path: configs/experiments/r03_reference_bank_selection_v1.yaml
+      sha256: 235b1f979850bbbd2c987e5445c2bd43a5a826189c3354540749049e96298c6c
+    - path: configs/reference/r00_sentence_card_v1.schema.json
+      sha256: 1f8bcf0325414e1923cda0def9a973ac2f7be7bd85cca4ee869743ef862a7b92
+    - path: configs/reference/r01_candidate_manifest_v1.schema.json
+      sha256: 7ffe1b152276b12621575680d022d9b87cd9c19e7fe36374a3186cf7449e1470
+    - path: configs/reference/r02_hard_gate_report_v1.schema.json
+      sha256: 60525a3b685574a3dce193a7423d77a811050c9c38d36b2c3ba947b71f06a92b
+    - path: configs/reference/r03_reference_bank_manifest_v1.schema.json
+      sha256: 2e6c4728943fbfb5519f7e961fca68da816b82e44fc65f003938644ade68ca83
+    - path: configs/reference/r04_human_research_approval_v1.template.json
+      sha256: 8908faa1fca5b57967429e540367b863c322d9969d887c45df1f5415ef28e961
+    - path: configs/reference/r04_blind_evaluation_preregistration_v1.template.json
+      sha256: 34e89b372a1bd1de662cebcefae635655dc47722d4813372f02db8e30bcdbc80
+    - path: configs/reference/r04_pilot_nuisance_attestation_v1.template.json
+      sha256: 6b0d8cea7732a49cc12ae233c89a8500f540cc3dec0a70aae2d620fbf73c84e8
+    - path: configs/reference/r04_statistical_analysis_plan_v1.template.json
+      sha256: 0c937ed0798f90f9dc415b342a3f6d28e4eccf5917eba94c511a6f4ceddf96b1
+    - path: configs/reference/r04_listener_attestation_v1.template.json
+      sha256: 991ff3626d89a19930f22bda38763df2f42148345c77ce797ab7e9214d46432a
+    - path: configs/reference/r04_randomization_manifest_v1.schema.json
+      sha256: 1d76bfac83317eea307740f0d137f1e6fd1b926cb2e3d40187b30402caef1a32
+    - path: configs/reference/r04_randomization_manifest_v1.template.json
+      sha256: 6651e7fc3c65aaa89aa8a924053bdfa19456f72a03e7d05a6c47ac3703fa2eae
+    - path: configs/reference/r04_rating_manifest_v1.schema.json
+      sha256: 510f0063048a5cbb0da6312d06949c4c059f0c8d39415a5a7063213c61d3b09f
+    - path: configs/reference/r04_rating_manifest_v1.template.json
+      sha256: c7a2919ab1b5f091a0cec27b4895fc24df57c7c48066d639e9edfb6ba3fad008
+    - path: docs/EXTERNAL_EVALUATION_EXECUTION_PACK_KO.md
+      sha256: bd8c38b48072a373803fccdc73bc812bcfd6d6750bcdbf50ac2896ef81aa71c3
+    - path: docs/IMPLEMENTATION_PLAN_KO.md
+      sha256: 12ce84cd7f4f3e34b332dcd1f9a7ded276a367c0339792d1ed74ca8ceb217acf
+    - path: docs/paper/EXPERIMENTAL_MANUSCRIPT_KO.md
+      sha256: dea994728ae8c73be098a29e9a70af2ab4730a651063e64687b40c07433b17eb
+    - path: docs/한국어 AI 보이스 코칭을 위한 폐쇄루프 TTS 아키텍처.pdf
+      sha256: eb403f04e9df77932baba9c671c4e7ee6b2adc2a7eb31bbdc43970e321907ebb
+    - path: scripts/validate_r00_sentence_card.py
+      sha256: 967517e74194936c91dad1eed4fcfb0c059b5480af32b8adfc9725fdb7d6e7d0
+    - path: src/voice_coach/references/r01_candidate_contract.py
+      sha256: e70bd5ed2fcf678537ef8ec41ceb2b76bfba3037cd40a2fc4b617dee31619a95
+    - path: src/voice_coach/references/r02_hard_gate_contract.py
+      sha256: a50e6287ffdb56c9ec2f22859a9be800cc3fb787b7c3390f4330052412eaf5bf
+    - path: src/voice_coach/references/r03_selection_contract.py
+      sha256: 626e5641e86c19fdac2582d3d1f62e006a2f12ba448dad5127936c241fd00bb8
+
+predecessor_r00:
+  deep_validation_required: true
+  card_path: data/reference/r00/r00_sentence_card_v1.json
+  card_sha256: 08dc149ccf10006a587e6216dda0471c19b5c55eab6b320b4348587527d82c4d
+  schema_path: configs/reference/r00_sentence_card_v1.schema.json
+  schema_sha256: 1f8bcf0325414e1923cda0def9a973ac2f7be7bd85cca4ee869743ef862a7b92
+  validator_path: scripts/validate_r00_sentence_card.py
+  validator_sha256: 967517e74194936c91dad1eed4fcfb0c059b5480af32b8adfc9725fdb7d6e7d0
+  validation_report_path: artifacts/reference/r00/r00_sentence_card_v1.validation.json
+  validation_report_sha256: 95b4fd861a3c21222ff13859cfbc9c196e3fd06493852bca823d8a63dc2816dd
+  required_status: valid
+  required_sentence_count: 20
+  required_completion_claim_allowed: true
+  raw_audio_or_row_read_allowed: false
+
+predecessor_r01:
+  deep_validation_required: true
+  config_path: configs/experiments/r01_human_cosyvoice_candidates_v1.yaml
+  config_sha256: 7a7167574b083af8d90653199411ee2ecdf3937bd75a89c53d63224923cb6cb8
+  contract_path: src/voice_coach/references/r01_candidate_contract.py
+  contract_sha256: e70bd5ed2fcf678537ef8ec41ceb2b76bfba3037cd40a2fc4b617dee31619a95
+  completion_commit_path: artifacts/experiments/r01_human_cosyvoice_candidates_v1/commit.json
+  completion_commit_sha256: TBD_R01_COMPLETION
+  registry_path: artifacts/experiment_registry/r01-human-cosyvoice-candidates-v1/metadata.json
+  candidate_manifest_path: data/processed/references/r01/r01_candidate_manifest_v1.json
+  required_status: completed
+
+predecessor_r02:
+  deep_validation_required: true
+  config_path: configs/experiments/r02_candidate_hard_gate_v1.yaml
+  config_sha256: e43c3fd5b3f54b5d9d11e29a5bb2b6d77a9ec91776516581bca3601f44a8282f
+  contract_path: src/voice_coach/references/r02_hard_gate_contract.py
+  contract_sha256: a50e6287ffdb56c9ec2f22859a9be800cc3fb787b7c3390f4330052412eaf5bf
+  completion_commit_path: artifacts/experiments/r02_candidate_hard_gate_v1/commit.json
+  completion_commit_sha256: TBD_R02_COMPLETION
+  registry_path: artifacts/experiment_registry/r02-candidate-hard-gate-v1/metadata.json
+  gate_report_path: artifacts/experiments/r02_candidate_hard_gate_v1/report.json
+  eligible_manifest_path: artifacts/experiments/r02_candidate_hard_gate_v1/eligible_for_r03.json
+  quarantine_manifest_path: artifacts/experiments/r02_candidate_hard_gate_v1/quarantined.json
+  required_status: completed
+  eligible_only_for_r03_and_r04: true
+  hard_gate_failure_rescue_by_r04_allowed: false
+
+predecessor_r03:
+  deep_validation_required: true
+  config_path: configs/experiments/r03_reference_bank_selection_v1.yaml
+  config_sha256: 235b1f979850bbbd2c987e5445c2bd43a5a826189c3354540749049e96298c6c
+  contract_path: src/voice_coach/references/r03_selection_contract.py
+  contract_sha256: 626e5641e86c19fdac2582d3d1f62e006a2f12ba448dad5127936c241fd00bb8
+  bank_schema_path: configs/reference/r03_reference_bank_manifest_v1.schema.json
+  bank_schema_sha256: 2e6c4728943fbfb5519f7e961fca68da816b82e44fc65f003938644ade68ca83
+  completion_commit_path: artifacts/experiments/r03_reference_bank_selection_v1/commit.json
+  completion_commit_sha256: TBD_R03_COMPLETION
+  completion_commit_schema_version: TBD_R03_COMPLETION
+  registry_path: artifacts/experiment_registry/r03-reference-bank-selection-v1/metadata.json
+  registry_schema_version: TBD_R03_COMPLETION
+  bank_manifest_path: data/processed/references/r03/r03_reference_bank_manifest_v1.json
+  selection_trace_path: artifacts/experiments/r03_reference_bank_selection_v1/r03_selection_trace_v1.json
+  aggregate_report_path: artifacts/experiments/r03_reference_bank_selection_v1/r03_reference_bank_aggregate_v1.json
+  required_status: completed
+  required_sentence_count: 20
+  selected_per_sentence_minimum: 3
+  selected_per_sentence_maximum: 5
+  required_sources:
+    - human_recording
+    - cosyvoice_tts
+  publication_allowed_must_be_false: true
+
+human_research_approval:
+  placeholder: TBD_EXTERNAL
+  template_path: configs/reference/r04_human_research_approval_v1.template.json
+  template_sha256: 8908faa1fca5b57967429e540367b863c322d9969d887c45df1f5415ef28e961
+  approved_artifact_path: artifacts/external_attestations/r04/r04_human_research_approval_v1.json
+  approved_artifact_sha256: TBD_EXTERNAL
+  required_schema_version: voice_coach.r04_human_research_approval.v1
+  required_status: approved_and_active
+  must_precede_listener_recruitment_and_d1_access: true
+  unresolved_fields_must_fail_closed: true
+
+preregistration:
+  placeholder: TBD_PREREGISTRATION
+  template_path: configs/reference/r04_blind_evaluation_preregistration_v1.template.json
+  template_sha256: 34e89b372a1bd1de662cebcefae635655dc47722d4813372f02db8e30bcdbc80
+  approved_artifact_path: artifacts/external_attestations/r04/r04_blind_evaluation_preregistration_v1.json
+  approved_artifact_sha256: TBD_PREREGISTRATION
+  required_schema_version: voice_coach.r04_blind_evaluation_preregistration.v1
+  required_status: approved_and_frozen
+  must_be_frozen_before_pilot_or_audio_or_rating_access: true
+  unresolved_fields_must_fail_closed: true
+
+pilot_nuisance_attestation:
+  placeholder: TBD_EXTERNAL
+  template_path: configs/reference/r04_pilot_nuisance_attestation_v1.template.json
+  template_sha256: 6b0d8cea7732a49cc12ae233c89a8500f540cc3dec0a70aae2d620fbf73c84e8
+  approved_artifact_path: artifacts/external_attestations/r04/r04_pilot_nuisance_attestation_v1.json
+  approved_artifact_sha256: TBD_EXTERNAL
+  required_schema_version: voice_coach.r04_pilot_nuisance_attestation.v1
+  required_status: approved_aggregate_nuisance_estimates
+  pilot_variance_required: true
+  intra_listener_correlation_required: true
+  individual_pilot_ratings_allowed: false
+  unresolved_fields_must_fail_closed: true
+
+statistical_analysis_plan:
+  placeholder: TBD_PREREGISTRATION
+  template_path: configs/reference/r04_statistical_analysis_plan_v1.template.json
+  template_sha256: 0c937ed0798f90f9dc415b342a3f6d28e4eccf5917eba94c511a6f4ceddf96b1
+  approved_artifact_path: artifacts/external_attestations/r04/r04_statistical_analysis_plan_v1.json
+  approved_artifact_sha256: TBD_PREREGISTRATION
+  required_schema_version: voice_coach.r04_statistical_analysis_plan.v1
+  required_status: approved_and_frozen
+  must_be_frozen_before_confirmatory_audio_or_rating_access: true
+  unresolved_fields_must_fail_closed: true
+
+listener_attestations:
+  placeholder: TBD_EXTERNAL
+  template_path: configs/reference/r04_listener_attestation_v1.template.json
+  template_sha256: 991ff3626d89a19930f22bda38763df2f42148345c77ce797ab7e9214d46432a
+  approved_artifact_path: artifacts/external_attestations/r04/r04_listener_attestation_manifest_v1.json
+  approved_artifact_sha256: TBD_EXTERNAL
+  required_schema_version: voice_coach.r04_listener_attestation_manifest.v1
+  required_status: approved_for_confirmatory_rating
+  every_rating_listener_must_have_attestation: true
+  direct_identifiers_and_free_text_allowed: false
+  unresolved_fields_must_fail_closed: true
+
+evaluation_contract:
+  sentence_ids:
+    - R00-01
+    - R00-02
+    - R00-03
+    - R00-04
+    - R00-05
+    - R00-06
+    - R00-07
+    - R00-08
+    - R00-09
+    - R00-10
+    - R00-11
+    - R00-12
+    - R00-13
+    - R00-14
+    - R00-15
+    - R00-16
+    - R00-17
+    - R00-18
+    - R00-19
+    - R00-20
+  candidate_sources_required:
+    - human_recording
+    - cosyvoice_tts
+  r02_hard_gate_failures_excluded_without_rescue: true
+  mos:
+    unit: listener_x_sentence_x_candidate
+    scale_minimum: 1
+    scale_maximum: 5
+    integer_only: true
+    dimensions:
+      - naturalness
+      - clarity
+      - target_phone_accuracy
+      - pedagogical_suitability
+  cmos:
+    unit: listener_x_sentence_x_same_sentence_pair
+    scale_minimum: -3
+    scale_maximum: 3
+    integer_only: true
+    pair_construction_policy: TBD_PREREGISTRATION
+  blindness:
+    conceal_system_names: true
+    conceal_filenames_and_paths: true
+    conceal_synthesis_status: true
+    conceal_source_labels: true
+    opaque_stimulus_ids_only: true
+  randomization:
+    scope: per_listener_within_sentence
+    fatigue_blocks_required: true
+    algorithm: TBD_PREREGISTRATION
+    seed_commitment: TBD_PREREGISTRATION
+    maximum_assignments_per_block: TBD_PREREGISTRATION
+    maximum_consecutive_same_sentence_assignments: TBD_PREREGISTRATION
+    break_policy: TBD_PREREGISTRATION
+
+statistics_contract:
+  target_power: 0.8
+  two_sided_alpha: 0.05
+  pilot_variance: TBD_EXTERNAL
+  pilot_intra_listener_correlation: TBD_EXTERNAL
+  listener_count_n: TBD_PREREGISTRATION
+  primary:
+    model_family: ordinal_mixed_effects
+    listener_random_effect_required: true
+    sentence_random_effect_required: true
+    exact_estimand: TBD_PREREGISTRATION
+    ordinal_link_function: TBD_PREREGISTRATION
+    confidence_interval_definition: TBD_PREREGISTRATION
+  secondary:
+    bootstrap_only: true
+    resampling_unit: TBD_PREREGISTRATION
+    replicates: TBD_PREREGISTRATION
+    seed_commitment: TBD_PREREGISTRATION
+    confidence_interval_method: TBD_PREREGISTRATION
+  multiplicity_strategy: TBD_PREREGISTRATION
+  superiority_margin: TBD_PREREGISTRATION
+  superiority_comparator: TBD_PREREGISTRATION
+  rater_policy: TBD_PREREGISTRATION
+  adjudication_policy: TBD_PREREGISTRATION
+
+privacy_and_blindness:
+  r03_bank_zone: D1_pseudonymized_restricted_experiment
+  randomization_manifest_zone: D1_pseudonymized_restricted_experiment
+  raw_rating_manifest_zone: D1_pseudonymized_restricted_experiment
+  aggregate_analysis_zone: A1_aggregate_only
+  pii_allowed: false
+  direct_identifiers_allowed: false
+  free_text_allowed: false
+  identity_fields_allowed: false
+  audio_or_source_paths_allowed_in_manifests: false
+  source_labels_allowed_in_blinded_manifests: false
+  system_names_allowed_in_blinded_manifests: false
+  synthesis_status_allowed_in_blinded_manifests: false
+  individual_ratings_allowed_in_a1: false
+  listener_ids_allowed_in_a1: false
+  stimulus_ids_allowed_in_a1: false
+  publication_requires_separate_promotion: true
+  forbidden_recursive_fields:
+    - name
+    - email
+    - phone
+    - address
+    - legal_name
+    - listener_name
+    - raw_listener_id
+    - free_text
+    - free_text_note
+    - comment
+    - source_path
+    - audio_path
+    - recording_path
+    - filename
+    - file_name
+    - system_name
+    - model_name
+    - source_kind
+    - human_or_tts
+    - synthesis_status
+    - synthesized
+    - candidate_id
+
+runtime_inputs:
+  d1_audio_access_attestation_path: artifacts/external_attestations/r04/r04_d1_audio_access_attestation_v1.json
+  d1_audio_access_attestation_sha256: TBD_EXTERNAL
+  rating_collection_attestation_path: artifacts/external_attestations/r04/r04_rating_collection_attestation_v1.json
+  rating_collection_attestation_sha256: TBD_EXTERNAL
+  path_or_endpoint_values_must_not_appear_in_blinded_manifests: true
+  read_enabled_in_this_package: false
+
+execution_order:
+  - validate_r04_static_config_sources_templates_and_schemas
+  - deep_validate_r00_valid_completion
+  - deep_validate_r01_completed_candidate_generation
+  - deep_validate_r02_completed_hard_gate_without_failure_rescue
+  - deep_validate_r03_completed_reference_bank
+  - validate_human_research_approval
+  - validate_frozen_r04_preregistration
+  - validate_approved_pilot_variance_and_intra_listener_correlation
+  - validate_frozen_statistical_analysis_plan
+  - validate_listener_attestations
+  - stop_before_d1_audio_randomization_or_rating_path
+
+outputs:
+  randomization_schema_path: configs/reference/r04_randomization_manifest_v1.schema.json
+  randomization_manifest_path: artifacts/experiments/r04_blind_multireference_evaluation_v1/randomization_manifest.json
+  rating_schema_path: configs/reference/r04_rating_manifest_v1.schema.json
+  raw_rating_manifest_path: data/processed/evaluation/r04/r04_rating_manifest_v1.json
+  aggregate_analysis_path: artifacts/experiments/r04_blind_multireference_evaluation_v1/r04_aggregate_analysis_v1.json
+  commit_path: artifacts/experiments/r04_blind_multireference_evaluation_v1/commit.json
+  registry_path: artifacts/experiment_registry/r04-blind-multireference-evaluation-v1/metadata.json
+  failure_report_path: artifacts/experiments/r04_blind_multireference_evaluation_v1/failure.json
+  no_overwrite: true
+  atomic_publish_required: true
+  write_enabled_in_this_package: false

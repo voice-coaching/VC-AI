@@ -1,0 +1,54 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://voice-coach.local/schemas/d09_h02_h03_disposition_v1.schema.json",
+  "title": "D09 H02-H03 restricted disposition and safety record",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_version",
+    "disposition_record_id_sha256",
+    "participant_key_sha256",
+    "phase",
+    "comparison",
+    "assigned_condition",
+    "randomized",
+    "withdrawn",
+    "withdrawal_coded_receipt_sha256",
+    "followup_status",
+    "missingness_coded_receipt_sha256",
+    "protocol_deviation_present",
+    "protocol_deviation_receipt_sha256",
+    "adverse_feedback_present",
+    "adverse_feedback_receipt_sha256",
+    "retained_in_itt",
+    "postrandomization_exclusion_used",
+    "free_text_present",
+    "privacy_zone"
+  ],
+  "properties": {
+    "schema_version": {"const": "voice_coach.d09_h02_h03_disposition.v1"},
+    "disposition_record_id_sha256": {"$ref": "#/$defs/sha256"},
+    "participant_key_sha256": {"$ref": "#/$defs/sha256"},
+    "phase": {"enum": ["feasibility", "confirmatory"]},
+    "comparison": {"enum": ["c3_minus_c0", "c5_minus_c3"]},
+    "assigned_condition": {"enum": ["C0", "C3", "C5"]},
+    "randomized": {"const": true},
+    "withdrawn": {"type": "boolean"},
+    "withdrawal_coded_receipt_sha256": {"$ref": "#/$defs/sha256"},
+    "followup_status": {
+      "enum": ["complete", "post_missing", "retention_missing", "withdrawn"]
+    },
+    "missingness_coded_receipt_sha256": {"$ref": "#/$defs/sha256"},
+    "protocol_deviation_present": {"type": "boolean"},
+    "protocol_deviation_receipt_sha256": {"$ref": "#/$defs/sha256"},
+    "adverse_feedback_present": {"type": "boolean"},
+    "adverse_feedback_receipt_sha256": {"$ref": "#/$defs/sha256"},
+    "retained_in_itt": {"const": true},
+    "postrandomization_exclusion_used": {"const": false},
+    "free_text_present": {"const": false},
+    "privacy_zone": {"const": "D1_pseudonymized_restricted_human_research"}
+  },
+  "$defs": {
+    "sha256": {"type": "string", "pattern": "^[0-9a-f]{64}$"}
+  }
+}

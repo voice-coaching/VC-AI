@@ -1,0 +1,354 @@
+schema_version: 1
+
+experiment:
+  id: b05_explicit_locked_evaluation_v1
+  stage: wp3_b05_joint_one_shot_locked_evaluation
+  implementation_status: production_static_readiness_only
+  actual_locked_access_count: 0
+  actual_locked_row_read_count: 0
+  actual_locked_audio_read_count: 0
+  actual_model_deserialize_count: 0
+  actual_model_inference_count: 0
+  actual_gpu_access_count: 0
+  actual_metric_count: 0
+  actual_output_count: 0
+  b05_score_awarded: 0
+  b05_completion_claim_allowed: false
+  s108_completion_claim_allowed: false
+  deployment_claim_allowed: false
+
+canonical_sources:
+  access_scope: C1_static_and_A1_aggregate_only
+  mutable_tracker_self_pin_allowed: false
+  pins:
+    - path: configs/evaluation/b05_joint_locked_batch_manifest_v1.schema.json
+      sha256: 3bd2a6f49c1bd81e4423dfc09223f91454eb4b466221eb0a69eeaee85c7001d9
+    - path: configs/evaluation/b05_joint_locked_batch_receipt_v1.schema.json
+      sha256: 087d469adeba23373ff62ca07c9c51eb003f31b6e3afec9f29ba68374419de5b
+    - path: configs/evaluation/b05_joint_locked_preregistration_v1.schema.json
+      sha256: 90ae2553c3df0519fb1e3c5b6399af22be886077f933c6042901aa98a672785f
+    - path: configs/evaluation/b05_joint_locked_preregistration_v1.template.json
+      sha256: 0c1497bc8dd323ca31b56da727fb41eaf90f3b2fcd558afa9b65966e15326ed0
+    - path: configs/evaluation/b05_locked_aggregate_report_v1.schema.json
+      sha256: a2b46cde541ed54229408e6c7770c37c534e74adedc04aae25cd71076443100d
+    - path: configs/evaluation/b05_locked_commit_v1.schema.json
+      sha256: e25f84fb1ce9c307a7c7bce583e88048a81c6bfa57ef4daf10160a2a0789cf75
+    - path: configs/evaluation/b05_locked_registry_v1.schema.json
+      sha256: 050dcdcb5347b35fa3fe1586b8253a8e257e0cc103ce4c62170244489246a4d6
+    - path: configs/evaluation/b05_locked_row_predictions_v1.schema.json
+      sha256: 53a5b6cf451c08efd1a1e088dd80dfea10d173735c258a933c9497260434999c
+    - path: configs/evaluation/b05_one_shot_authorization_v1.schema.json
+      sha256: b3042c4ddfb0e8a87794670e16859929b05a421800ece8183420e7a8b70872cc
+    - path: configs/evaluation/b05_one_shot_authorization_v1.template.json
+      sha256: 09bd52a279592620ee0b0789a9aaddd09241395c710d864b2fcbb6837edcc7fd
+    - path: configs/evaluation/b05_s108_arm_freeze_v1.schema.json
+      sha256: 40030913d4014d298223ab6d785a021dac32181e74bf175183811fb29fe454c9
+    - path: scripts/prepare_b05_explicit_locked_evaluation.py
+      sha256: 9a89ee3179178091f1fdc6f7ff5f5e44114f750e6594b74ed064ebb03a56d8f9
+    - path: src/voice_coach/evaluation/b05_locked_contract.py
+      sha256: ddedb16ffa9fe1da12e4ce8b527d6ae23f95d1bd110c2c06595eb9fe54e834ce
+    - path: configs/experiments/explicit_baseline_v1.yaml
+      sha256: cff6439e6b99b5f725c4214dfe1dda64b20892e8b59fbd064d88d3542c2615bd
+    - path: artifacts/experiments/aihub71490_explicit_oracle_boundary_v1/report.json
+      sha256: a5c3ade0738777409bb57956b088e025081cb63886808c6d6fc87724d0875519
+    - path: artifacts/experiment_registry/aihub71490-explicit-v1-dev-primary-20260729/metadata.json
+      sha256: 0445d69cb18fd9105a531a4e5d342d60c7cad94050c6a031c0d7ee3ef6e2141e
+    - path: configs/experiments/explicit_threshold_ablation_v1.yaml
+      sha256: 62323455d80807ed9ad534bc53f6b21b41feb66836038699cefedc4b8fdedb10
+    - path: artifacts/experiments/aihub71490_explicit_threshold_ablation_v1/report.json
+      sha256: ef16c405ad01d1c5add4c05ce077072b218836ee683e626e12a0e24f4637a7e1
+    - path: artifacts/experiment_registry/aihub71490-explicit-threshold-ablation-v1-20260729/metadata.json
+      sha256: e9c6ba64729f0b4a8bab577f569444f0a1e5689795fde71fc28544d1bdb43c99
+    - path: configs/experiments/d07_independent_expert_gold_v1.yaml
+      sha256: fe42656dbb2c9ad521dc6d66f063e535262b25410cf66514ad1f457cf0f68318
+    - path: configs/expert_evaluation/d07_gold_completion_attestation_v1.schema.json
+      sha256: 1b9dcb492531cbdd305d13c3e79a87027cd297ba0d41fe0f04bb05683e2a910f
+    - path: src/voice_coach/evaluation/d07_expert_gold_contract.py
+      sha256: 77ad2f1acb1d2dff06b5d010248c83260f1eca9eab815b897047dba96bbc1a95
+    - path: configs/experiments/wavlm_s107_calibration_v1.yaml
+      sha256: 6702ea196481784319c03e413d8ee6844a060e83407aed204f9344cb0230909f
+    - path: src/voice_coach/training/wavlm_s107_calibration_training.py
+      sha256: 201973a25e75da77ec86468a60094c22ac3d3376d936d5e2d089531d52b5d6d3
+    - path: configs/experiments/wavlm_s108_no_locked_dry_run_v1.yaml
+      sha256: 038947cc9ee77840870cc0df31a6d66e9384f89908a7d91a8706cda0757e65aa
+    - path: src/voice_coach/training/wavlm_s108_dry_run.py
+      sha256: 38002184f5a48924c79eab88ef3ce9cc9b29beebe3474ab2408c8cdeb31b2ba2
+    - path: docs/WP4_POST_S103_EXECUTION_CONTRACT_KO.md
+      sha256: 46ebafeb48bba95f8de04553dfe2c13c5466a03e5dfc8d6e3bc42e8d81f4a3e7
+    - path: docs/DATA_PRIVACY_BOUNDARY_KO.md
+      sha256: 52ad56a726d3d97574f1f55a36935b18fc0d808f2023611f37cb17c0c812dbc0
+    - path: docs/AIHUB71490_MANUAL_ALIGNMENT_AUDIT_KO.md
+      sha256: 615dbb7b95de11208d3d438315892e26505f68c613c16f10b0ee65482cae5be3
+    - path: docs/D07_INDEPENDENT_EXPERT_GOLD_READINESS_KO.md
+      sha256: 45130ecbd454433a3a4febfdb33db45b91eb3296f60ce0e0617b094ad5a81c83
+    - path: docs/WAVLM_S108_NO_LOCKED_DRY_RUN_READINESS_KO.md
+      sha256: 542aabfaba3c13817671e925f8340eb2e7553d4849201f26cdd41caa312d1566
+    - path: docs/paper/CLAIM_GAP_MAP_KO.md
+      sha256: 2168233b459bbe0b2aac411de94d57720408be2479c96e589b14388ff3d5d7a1
+    - path: docs/paper/METHODS_ETHICS_REPRODUCIBILITY_GAP_KO.md
+      sha256: 50847eb7eea13f5819a07d1aea3202ae40b2f528a9ea8c07d6d3661e6879a90c
+    - path: docs/paper/EXPERIMENTAL_MANUSCRIPT_KO.md
+      sha256: dea994728ae8c73be098a29e9a70af2ab4730a651063e64687b40c07433b17eb
+    - path: pyproject.toml
+      sha256: c33af395f4f3a3c23b625219d4f0911de2c35b08d6ffecc2710a118766f17328
+
+b03_canonical_baseline:
+  config_path: configs/experiments/explicit_baseline_v1.yaml
+  config_sha256: cff6439e6b99b5f725c4214dfe1dda64b20892e8b59fbd064d88d3542c2615bd
+  report_path: artifacts/experiments/aihub71490_explicit_oracle_boundary_v1/report.json
+  report_sha256: a5c3ade0738777409bb57956b088e025081cb63886808c6d6fc87724d0875519
+  registry_path: artifacts/experiment_registry/aihub71490-explicit-v1-dev-primary-20260729/metadata.json
+  registry_sha256: 0445d69cb18fd9105a531a4e5d342d60c7cad94050c6a031c0d7ee3ef6e2141e
+  required_report_schema_version: voice_coach.explicit_baseline_report.v1
+  required_report_status: completed
+  required_registry_status: completed
+  required_run_id: aihub71490-explicit-v1-dev-primary-20260729
+  seeds: [42, 43, 44]
+  checkpoints:
+    - seed: 42
+      path: artifacts/experiments/aihub71490_explicit_oracle_boundary_v1/seed_42/checkpoint.pkl
+      sha256: baa5dadb9de6ef78bd27b48013a645482b64a0f896ab1823646eb16c8db9c302
+    - seed: 43
+      path: artifacts/experiments/aihub71490_explicit_oracle_boundary_v1/seed_43/checkpoint.pkl
+      sha256: b3295e5fd24dde4d73921c5ca58297a262bcb16d3f1fffe5ee429c75f0469770
+    - seed: 44
+      path: artifacts/experiments/aihub71490_explicit_oracle_boundary_v1/seed_44/checkpoint.pkl
+      sha256: 859047bd4a9c3783258397fe4f018a0c4b6859887c750da1c4b7ce9611e7e75c
+  checkpoint_set_sha256: 5a94575da57dfd936bced3eb0068ee5fe803cba1c69ee69b68377b21b67fefda
+  phone_feature_allowlist:
+    - target_label
+    - previous_target_label
+    - next_target_label
+    - oracle_duration_seconds
+    - segment_rms
+    - segment_zero_crossing_rate
+  utterance_feature_allowlist:
+    - audio_duration_seconds
+    - rms
+    - peak
+    - clipping_ratio
+    - zero_crossing_rate
+    - pause_count
+    - pause_ratio
+    - voiced_ratio
+    - f0_median_hz
+    - f0_range_hz
+    - word_count
+    - target_phone_count
+    - speech_rate_phones_per_second
+    - articulation_rate_phones_per_second
+    - target_phone_label_duration_npvi
+  feature_allowlist_sha256: 6a0ac985f61c3208680780962741be7d084752e720e911522827d92366e20f2f
+  phone_decision_threshold: 0.5
+  threshold_origin: b03_sklearn_predict_default_not_b06_posthoc
+  seed_ensemble_definition: no_prediction_ensemble_independent_seed_metrics_then_arithmetic_mean
+  locked_test_evaluation_allowed_in_b03_config: false
+  checkpoint_hash_verification_stage: after_batch_manifest_before_one_shot_authorization
+  checkpoint_deserialization_allowed_in_preflight: false
+  result_based_change_allowed: false
+
+b06_posthoc_exclusion:
+  config_path: configs/experiments/explicit_threshold_ablation_v1.yaml
+  config_sha256: 62323455d80807ed9ad534bc53f6b21b41feb66836038699cefedc4b8fdedb10
+  report_path: artifacts/experiments/aihub71490_explicit_threshold_ablation_v1/report.json
+  report_sha256: ef16c405ad01d1c5add4c05ce077072b218836ee683e626e12a0e24f4637a7e1
+  registry_path: artifacts/experiment_registry/aihub71490-explicit-threshold-ablation-v1-20260729/metadata.json
+  registry_sha256: e9c6ba64729f0b4a8bab577f569444f0a1e5689795fde71fc28544d1bdb43c99
+  required_status: completed
+  required_b06_status: failed_unchanged
+  required_post_hoc_exploratory: true
+  promotion_decision_allowed: false
+  locked_test_remains_unread: true
+  may_replace_b03_config_checkpoint_threshold_or_feature_contract: false
+
+g04_gate:
+  validation_order: 1
+  completion_path: artifacts/external_evaluation/g04_alignment_completion_attestation_v1.json
+  completion_sha256: TBD_G04_COMPLETION
+  required_schema_version: voice_coach.g04_alignment_completion_attestation.v1
+  required_status: passed
+  expected_count: 240
+  required_completed_count: 240
+  minimum_correct_count: 228
+  minimum_accuracy: 0.95
+
+d07_gate:
+  validation_order: 2
+  config_path: configs/experiments/d07_independent_expert_gold_v1.yaml
+  config_sha256: fe42656dbb2c9ad521dc6d66f063e535262b25410cf66514ad1f457cf0f68318
+  contract_path: src/voice_coach/evaluation/d07_expert_gold_contract.py
+  contract_sha256: 77ad2f1acb1d2dff06b5d010248c83260f1eca9eab815b897047dba96bbc1a95
+  completion_path: artifacts/external_evaluation/d07_gold_completion_attestation_v1.json
+  completion_sha256: TBD_D07_COMPLETION
+  required_schema_version: voice_coach.d07_gold_completion_attestation.v1
+  required_status: completed
+  calibration_count: 800
+  minimum_locked_gold_count: 200
+  maximum_locked_gold_count: 1200
+  independent_rater_count: 2
+  adjudicator_count: 1
+  completion_deep_validation_required: true
+
+s107_gate:
+  validation_order: 3
+  config_path: configs/experiments/wavlm_s107_calibration_v1.yaml
+  config_sha256: 6702ea196481784319c03e413d8ee6844a060e83407aed204f9344cb0230909f
+  contract_path: src/voice_coach/training/wavlm_s107_calibration_training.py
+  contract_sha256: 201973a25e75da77ec86468a60094c22ac3d3376d936d5e2d089531d52b5d6d3
+  commit_path: artifacts/experiments/aihub71490_wavlm_s107_calibration_v1/commit.json
+  commit_sha256: TBD_S107_COMPLETION
+  required_schema_version: voice_coach.wavlm_s107_calibration_commit.v1
+  required_status: committed
+  aggregate_commit_validation_only: true
+  calibration_row_or_prediction_read_allowed: false
+
+s108_arm_gate:
+  validation_order: 4
+  no_locked_config_path: configs/experiments/wavlm_s108_no_locked_dry_run_v1.yaml
+  no_locked_config_sha256: 038947cc9ee77840870cc0df31a6d66e9384f89908a7d91a8706cda0757e65aa
+  no_locked_contract_path: src/voice_coach/training/wavlm_s108_dry_run.py
+  no_locked_contract_sha256: 38002184f5a48924c79eab88ef3ce9cc9b29beebe3474ab2408c8cdeb31b2ba2
+  freeze_path: artifacts/external_evaluation/b05/b05_s108_arm_freeze_v1.json
+  freeze_sha256: TBD_S108_ARM_FREEZE
+  required_schema_version: voice_coach.b05_s108_arm_freeze.v1
+  required_status: immutable_ready_for_joint_locked_batch
+
+joint_preregistration:
+  validation_order: 5
+  schema_path: configs/evaluation/b05_joint_locked_preregistration_v1.schema.json
+  schema_sha256: 90ae2553c3df0519fb1e3c5b6399af22be886077f933c6042901aa98a672785f
+  template_path: configs/evaluation/b05_joint_locked_preregistration_v1.template.json
+  template_sha256: 0c1497bc8dd323ca31b56da727fb41eaf90f3b2fcd558afa9b65966e15326ed0
+  artifact_path: artifacts/preregistration/b05/b05_joint_locked_preregistration_v1.json
+  artifact_sha256: TBD_B05_PREREGISTRATION
+  required_schema_version: voice_coach.b05_joint_locked_preregistration.v1
+  required_status: approved_and_frozen
+  no_tbd_allowed: true
+
+joint_batch_manifest:
+  validation_order: 6
+  schema_path: configs/evaluation/b05_joint_locked_batch_manifest_v1.schema.json
+  schema_sha256: 3bd2a6f49c1bd81e4423dfc09223f91454eb4b466221eb0a69eeaee85c7001d9
+  artifact_path: data/processed/evaluation/b05/b05_joint_locked_batch_manifest_v1.json
+  artifact_sha256: TBD_B05_BATCH_MANIFEST
+  required_schema_version: voice_coach.b05_joint_locked_batch_manifest.v1
+  required_status: frozen_authorized_not_opened
+
+one_shot_authorization:
+  validation_order: 7
+  schema_path: configs/evaluation/b05_one_shot_authorization_v1.schema.json
+  schema_sha256: b3042c4ddfb0e8a87794670e16859929b05a421800ece8183420e7a8b70872cc
+  template_path: configs/evaluation/b05_one_shot_authorization_v1.template.json
+  template_sha256: 09bd52a279592620ee0b0789a9aaddd09241395c710d864b2fcbb6837edcc7fd
+  artifact_path: artifacts/external_attestations/b05/b05_one_shot_authorization_v1.json
+  artifact_sha256: TBD_B05_AUTHORIZATION
+  required_schema_version: voice_coach.b05_one_shot_authorization.v1
+  required_status: authorized_one_shot_joint_batch
+
+schema_contract:
+  s108_arm_freeze:
+    path: configs/evaluation/b05_s108_arm_freeze_v1.schema.json
+    sha256: 40030913d4014d298223ab6d785a021dac32181e74bf175183811fb29fe454c9
+    schema_version: voice_coach.b05_s108_arm_freeze.v1
+  batch_receipt:
+    path: configs/evaluation/b05_joint_locked_batch_receipt_v1.schema.json
+    sha256: 087d469adeba23373ff62ca07c9c51eb003f31b6e3afec9f29ba68374419de5b
+    schema_version: voice_coach.b05_joint_locked_batch_receipt.v1
+  locked_predictions:
+    path: configs/evaluation/b05_locked_row_predictions_v1.schema.json
+    sha256: 53a5b6cf451c08efd1a1e088dd80dfea10d173735c258a933c9497260434999c
+    schema_version: voice_coach.b05_locked_row_predictions.v1
+  aggregate_report:
+    path: configs/evaluation/b05_locked_aggregate_report_v1.schema.json
+    sha256: a2b46cde541ed54229408e6c7770c37c534e74adedc04aae25cd71076443100d
+    schema_version: voice_coach.b05_locked_aggregate_report.v1
+  registry:
+    path: configs/evaluation/b05_locked_registry_v1.schema.json
+    sha256: 050dcdcb5347b35fa3fe1586b8253a8e257e0cc103ce4c62170244489246a4d6
+    schema_version: voice_coach.b05_locked_registry.v1
+  commit:
+    path: configs/evaluation/b05_locked_commit_v1.schema.json
+    sha256: e25f84fb1ce9c307a7c7bce583e88048a81c6bfa57ef4daf10160a2a0789cf75
+    schema_version: voice_coach.b05_locked_commit.v1
+
+flow_contract:
+  included_arms: [b05_explicit_baseline, s108_final_s1]
+  same_preregistered_batch_manifest_required: true
+  both_arms_immutable_before_locked_access: true
+  first_arm_result_visibility_before_both_sealed: false
+  result_based_second_arm_change_allowed: false
+  authorized_joint_locked_access_count: 1
+  rerun_after_success_allowed: false
+  rerun_after_failure_allowed: false
+  new_independent_test_set_required_for_any_new_run: true
+  b05_and_s108_joint_publication_required: true
+  b03_config_locked_test_flag_may_be_mutated: false
+  output_back_reference_to_consumed_receipt_allowed: false
+  arm_report_cross_reference_allowed: false
+  child_commit_back_reference_to_joint_root_allowed: false
+  hash_dag_order:
+    - preregistration_freeze_manifest_authorization
+    - arm_prediction_manifests
+    - independent_arm_reports
+    - consumed_joint_receipt
+    - independent_arm_registries
+    - single_joint_root_commit
+
+statistics_contract:
+  phone_confusion_policy: TBD_PREREGISTRATION
+  utterance_ordinal_confusion_policy: TBD_PREREGISTRATION
+  slice_family: TBD_PREREGISTRATION
+  slice_axes: [l1, gender, proficiency, duration_bucket, target_phone, error_tag]
+  cluster_unit: speaker_id_sha256
+  speaker_cluster_bootstrap_method: TBD_PREREGISTRATION
+  bootstrap_repetitions: 5000
+  confidence_level: 0.95
+  multiple_comparison_correction: holm
+  holm_family_definition: TBD_PREREGISTRATION
+  missing_data_policy: TBD_PREREGISTRATION
+  undefined_metric_policy: TBD_PREREGISTRATION
+  minimum_support_policy: TBD_PREREGISTRATION
+  concrete_minimum_support_thresholds_required: true
+  nonempty_exact_slice_result_keys_required: true
+  nonempty_exact_bootstrap_result_keys_required: true
+  nonempty_exact_holm_hypotheses_required: true
+  numeric_result_in_static_package_allowed: false
+
+execution_order:
+  - validate_static_sources_schemas_templates_b03_and_b06_boundary
+  - validate_g04_240_of_240_and_at_least_228_before_path_to_any_later_gate
+  - validate_d07_actual_gold_calibration_locked_completion
+  - validate_s107_aggregate_commit_without_calibration_rows
+  - validate_s108_immutable_arm_freeze
+  - validate_joint_preregistration_without_tbd
+  - validate_single_shared_locked_batch_manifest
+  - hash_verify_three_b03_checkpoint_files_without_deserialization
+  - validate_separate_one_shot_joint_authorization
+  - stop_before_locked_locator_row_audio_label_prediction_model_gpu_metric_or_output
+
+outputs:
+  batch_receipt_path: artifacts/evaluation/b05/b05_joint_locked_batch_receipt_v1.json
+  locked_predictions_path: data/restricted/evaluation/b05/b05_locked_row_predictions_manifest_v1.json
+  locked_prediction_shard_root: data/restricted/evaluation/b05/prediction_shards
+  aggregate_report_path: artifacts/evaluation/b05/b05_locked_aggregate_report_v1.json
+  registry_path: artifacts/experiment_registry/b05-explicit-locked-evaluation-v1/metadata.json
+  commit_path: artifacts/evaluation/b05/commit.json
+  failure_receipt_path: artifacts/evaluation/b05/failure.json
+  no_overwrite: true
+  atomic_joint_publish_required: true
+  write_enabled_in_this_package: false
+
+runtime:
+  locked_locator_resolution_allowed: false
+  locked_row_read_allowed: false
+  locked_audio_read_allowed: false
+  locked_label_read_allowed: false
+  locked_prediction_read_allowed: false
+  checkpoint_deserialization_allowed: false
+  model_inference_allowed: false
+  gpu_access_allowed: false
+  metric_computation_allowed: false
+  bootstrap_computation_allowed: false
+  holm_computation_allowed: false
+  output_or_commit_write_allowed: false
+  network_access_allowed: false

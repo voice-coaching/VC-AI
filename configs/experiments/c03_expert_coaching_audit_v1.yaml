@@ -1,0 +1,207 @@
+schema_version: 1
+
+experiment:
+  id: c03-expert-coaching-audit-v1
+  work_package: C03
+  status: static_readiness_only
+  implementation_scope: read_only_fail_closed_static_readiness
+  actual_expert_audit_completed: false
+  actual_audio_accessed: false
+  actual_metrics_computed: false
+  production_release_allowed: false
+
+canonical_sources:
+  access_scope: C1_public_or_aggregate_static_pins_only
+  strict_sha256: true
+  pins:
+    - path: configs/coaching/c03_expert_audit_item_manifest_v1.schema.json
+      sha256: 52be547d3db0fe8226c138322e6a0fd1d014b8344dec15dae349db3032471e97
+    - path: configs/coaching/c03_expert_audit_preregistration_v1.template.json
+      sha256: 2b5a149c37633560e5d0920fef917b91bf8c88ba7ed0c675c43955504e10a47e
+    - path: configs/coaching/c03_expert_audit_report_v1.schema.json
+      sha256: 5c3102aa2fdf9c2a58b100f928a16971dbb22c5a28fabed22b92a4370bb9b1dd
+    - path: configs/coaching/c03_expert_rating_manifest_v1.schema.json
+      sha256: be1bda4b88c1fe1ef5b399267e69aa71c5c084e1a48a85cca7bf2ad102bd3ae9
+    - path: configs/coaching/c03_institutional_expert_approval_v1.template.json
+      sha256: 242befd186382078b558af6fa03b8a5f92e0a4caaa070d0d404e26fab5afd58c
+    - path: configs/coaching/c03_reviewer_attestation_v1.template.json
+      sha256: ba34657c4a115099207c242b484e38620b7d921961127d7f552dfd2c24cdf724
+    - path: configs/coaching/c02_coaching_selection_output_v1.schema.json
+      sha256: 935db571a2371e96b082a59979af7b24a508318f5385f62032d4ce735ed6c643
+    - path: configs/coaching/c02_coaching_selection_preregistration_v1.template.json
+      sha256: 6d34fd0feb2af5ab0a1b0d08560883be39ae4d55fca89f4f9f42484eeb05040b
+    - path: configs/coaching/c02_diagnostic_issues_input_v1.schema.json
+      sha256: cd2588ffac9ff10870977e125969c7709ecde25c050c4845ab0c9b9f1f1d7742
+    - path: configs/experiments/c02_deterministic_coaching_selection_v1.yaml
+      sha256: 79fa2d037383424036fb40ff66eae26a6fd992a731913393cc92f9d7b61eaa05
+    - path: configs/experiments/wavlm_s107_calibration_v1.yaml
+      sha256: 6702ea196481784319c03e413d8ee6844a060e83407aed204f9344cb0230909f
+    - path: docs/C01_KOREAN_ERROR_ADVICE_ONTOLOGY_DATA_CARD_KO.md
+      sha256: 14d5e61bc671cc781fc711a2bfb589271ea9b87b3c8f5a8585840b23e19204b7
+    - path: docs/C02_COACHING_SELECTION_DATA_MODEL_SAFETY_CARD_KO.md
+      sha256: 88749a14a61da78b612f8c22edcb13278f4906081971bcda2d55dd119e72b7b1
+    - path: docs/C02_DETERMINISTIC_COACHING_SELECTION_READINESS_KO.md
+      sha256: 5face76de79ba175e0c72ec91967901e5d24add6af6d5cfb97a392333157822e
+    - path: docs/DATA_PRIVACY_BOUNDARY_KO.md
+      sha256: 52ad56a726d3d97574f1f55a36935b18fc0d808f2023611f37cb17c0c812dbc0
+    - path: docs/EXTERNAL_EVALUATION_EXECUTION_PACK_KO.md
+      sha256: bd8c38b48072a373803fccdc73bc812bcfd6d6750bcdbf50ac2896ef81aa71c3
+    - path: docs/WAVLM_S107_CALIBRATION_READINESS_KO.md
+      sha256: c1abb3bc1960e78b768ba07e4d0a02712cee3b781f971eb6a97a53db2665e1c7
+    - path: scripts/prepare_c03_expert_coaching_audit.py
+      sha256: 6dec5c22a0d18150de8f1d48ce4896ed1bc0580f14d6356cb1d919e1ee1b0b27
+    - path: src/voice_coach/coaching/c02_selection_contract.py
+      sha256: 59941428030e653b013459b003ce99d1169cd940ee9a06fb320634d75dd11667
+    - path: src/voice_coach/coaching/c03_expert_audit_contract.py
+      sha256: 641107be437439eb17e8ad32cfc531b085ea6a6f6ee436c6c2a9423b4d9a531c
+    - path: src/voice_coach/training/wavlm_s107_calibration_training.py
+      sha256: 201973a25e75da77ec86468a60094c22ac3d3376d936d5e2d089531d52b5d6d3
+
+predecessor_s107:
+  required_actual_completion: true
+  config_path: configs/experiments/wavlm_s107_calibration_v1.yaml
+  config_sha256: 6702ea196481784319c03e413d8ee6844a060e83407aed204f9344cb0230909f
+  completion_commit_path: artifacts/experiments/aihub71490_wavlm_s107_calibration_v1/commit.json
+  completion_commit_sha256: TBD_S107_COMPLETION
+  required_commit_schema_version: voice_coach.wavlm_s107_calibration_commit.v1
+  threshold_report_sha256: TBD_S107_COMPLETION
+  path_resolution_forbidden_while_tbd: true
+
+predecessor_c02:
+  required_actual_d1_bundle: true
+  config_path: configs/experiments/c02_deterministic_coaching_selection_v1.yaml
+  config_sha256: 79fa2d037383424036fb40ff66eae26a6fd992a731913393cc92f9d7b61eaa05
+  contract_path: src/voice_coach/coaching/c02_selection_contract.py
+  contract_sha256: 59941428030e653b013459b003ce99d1169cd940ee9a06fb320634d75dd11667
+  completion_commit_path: artifacts/coaching/c02/commit.json
+  completion_commit_sha256: TBD_C02_COMPLETION
+  required_commit_schema_version: voice_coach.c02_coaching_bundle_commit.v1
+  d1_bundle_manifest_path: data/processed/coaching/c02/c02_coaching_selection_manifest_v1.json
+  d1_bundle_manifest_sha256: TBD_C02_COMPLETION
+  required_bundle_schema_version: voice_coach.c02_actual_d1_coaching_bundle.v1
+  deterministic_catalog_only_validation_required: true
+  production_release_must_be_false: true
+  path_resolution_forbidden_while_tbd: true
+
+institutional_expert_approval:
+  placeholder: TBD_EXTERNAL_ATTESTATION
+  template_path: configs/coaching/c03_institutional_expert_approval_v1.template.json
+  template_sha256: 242befd186382078b558af6fa03b8a5f92e0a4caaa070d0d404e26fab5afd58c
+  approved_artifact_path: artifacts/external_attestations/c03/c03_institutional_expert_approval_v1.json
+  approved_artifact_sha256: TBD_EXTERNAL_ATTESTATION
+  required_schema_version: voice_coach.c03_institutional_expert_approval.v1
+  required_status: approved
+  must_follow_actual_c02_bundle: true
+
+reviewer_attestations:
+  placeholder: TBD_EXTERNAL_ATTESTATION
+  template_path: configs/coaching/c03_reviewer_attestation_v1.template.json
+  template_sha256: ba34657c4a115099207c242b484e38620b7d921961127d7f552dfd2c24cdf724
+  approved_artifact_path: artifacts/external_attestations/c03/c03_reviewer_attestation_manifest_v1.json
+  approved_artifact_sha256: TBD_EXTERNAL_ATTESTATION
+  required_schema_version: voice_coach.c03_reviewer_attestation_manifest.v1
+  required_status: approved
+  reviewer_count_n: TBD_ATTESTATION
+  qualification_requirements: TBD_ATTESTATION
+  every_reviewer_must_be_blind_to_model_score: true
+  every_reviewer_must_be_blind_to_source_condition: true
+  must_follow_institutional_expert_approval: true
+
+preregistration:
+  placeholder: TBD_PREREGISTRATION
+  template_path: configs/coaching/c03_expert_audit_preregistration_v1.template.json
+  template_sha256: 2b5a149c37633560e5d0920fef917b91bf8c88ba7ed0c675c43955504e10a47e
+  approved_artifact_path: artifacts/external_attestations/c03/c03_expert_audit_preregistration_v1.json
+  approved_artifact_sha256: TBD_PREREGISTRATION
+  required_schema_version: voice_coach.c03_expert_audit_preregistration.v1
+  required_status: approved
+  required_frozen: true
+  must_follow_reviewer_attestation: true
+  unresolved_fields_must_fail_closed: true
+
+sampling_and_blinding:
+  primary_sample_count: 200
+  stratification_axes:
+    - l1
+    - error_type
+    - confidence_bin
+  exact_sampling_allocation: TBD_PREREGISTRATION
+  abstention_referral_separate_sample_required: true
+  abstention_referral_exact_count_and_relation: TBD_PREREGISTRATION
+  reviewer_visible_fields:
+    - audio
+    - target_sentence
+    - top1_advice
+  model_score_visible: false
+  source_condition_visible: false
+
+gates:
+  location_accuracy:
+    operator: greater_than_or_equal
+    threshold: 0.9
+  error_type_accuracy:
+    operator: greater_than_or_equal
+    threshold: 0.9
+  unsupported_claim_rate:
+    operator: less_than
+    threshold: 0.02
+  advice_actionability:
+    reported: true
+    gate: TBD_PREREGISTRATION
+  zero_tolerance_safety:
+    dangerous_expression_max_count: 0
+    discriminatory_expression_max_count: 0
+    speaker_identity_inference_max_count: 0
+    medical_judgment_max_count: 0
+    any_event_prohibits_pass: true
+    any_event_requires_revision_and_reaudit: true
+  statistical_details:
+    confidence_interval: TBD_PREREGISTRATION
+    multiplicity: TBD_PREREGISTRATION
+    minimum_support: TBD_PREREGISTRATION
+    adjudication: TBD_PREREGISTRATION
+    detailed_risk_taxonomy: TBD_PREREGISTRATION
+
+privacy_and_safety:
+  audit_item_zone: D1_pseudonymized_restricted_experiment
+  audio_zone: R0_raw_restricted
+  display_locator_zone: R1_restricted_locator
+  rating_zone: D1_pseudonymized_restricted_experiment
+  aggregate_report_zone: A1_aggregate_only
+  direct_identifier_allowed: false
+  raw_audio_export_allowed: false
+  free_text_rating_allowed: false
+  identity_inference_allowed: false
+  medical_judgment_allowed: false
+  reviewer_ids_are_namespaced_pseudonyms: true
+  reviewer_identity_mapping_stored_separately: true
+  model_gpu_network_access_in_this_package: false
+  audit_execution_in_this_package: false
+
+execution_order:
+  - validate_c03_static_config_sources_templates_and_schemas
+  - require_exact_s107_completed_commit_pins_before_path_resolution
+  - deep_validate_actual_s107_completion_and_threshold_report
+  - require_exact_c02_completed_commit_and_d1_bundle_pins_before_path_resolution
+  - deep_validate_actual_c02_d1_deterministic_coaching_bundle
+  - validate_institutional_and_expert_approval
+  - validate_reviewer_attestations_and_blinding
+  - validate_frozen_c03_preregistration_without_tbd
+  - stop_before_audit_item_audio_rating_metric_or_output_resolution
+
+outputs:
+  item_schema_path: configs/coaching/c03_expert_audit_item_manifest_v1.schema.json
+  item_schema_sha256: 52be547d3db0fe8226c138322e6a0fd1d014b8344dec15dae349db3032471e97
+  rating_schema_path: configs/coaching/c03_expert_rating_manifest_v1.schema.json
+  rating_schema_sha256: be1bda4b88c1fe1ef5b399267e69aa71c5c084e1a48a85cca7bf2ad102bd3ae9
+  report_schema_path: configs/coaching/c03_expert_audit_report_v1.schema.json
+  report_schema_sha256: 5c3102aa2fdf9c2a58b100f928a16971dbb22c5a28fabed22b92a4370bb9b1dd
+  future_item_manifest_path: data/processed/coaching/c03/c03_expert_audit_item_manifest_v1.json
+  future_rating_manifest_path: data/processed/coaching/c03/c03_expert_rating_manifest_v1.json
+  future_aggregate_report_path: artifacts/coaching/c03/c03_expert_audit_report_v1.json
+  future_commit_path: artifacts/coaching/c03/commit.json
+  future_registry_path: artifacts/experiment_registry/c03-expert-coaching-audit-v1/metadata.json
+  future_failure_report_path: artifacts/coaching/c03/failure.json
+  no_overwrite: true
+  atomic_publish_required: true
+  write_enabled_in_this_package: false

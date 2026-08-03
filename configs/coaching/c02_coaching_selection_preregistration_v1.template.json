@@ -1,0 +1,74 @@
+{
+  "schema_version": "voice_coach.c02_coaching_selection_preregistration.v1",
+  "preregistration_id": "TBD_PREREGISTRATION",
+  "status": "TBD_PREREGISTRATION",
+  "registered_at_utc": "TBD_PREREGISTRATION",
+  "registered_by_role": "TBD_PREREGISTRATION",
+  "frozen_before_diagnostic_issue_or_coaching_output_access": true,
+  "c01_validation_report_sha256": "f81b31fe35ae7fc84d80ae1be2f965d35147066b985916f38f0d1e45638723cc",
+  "s107_completion_commit_sha256": "TBD_S107_COMPLETION",
+  "s107_threshold_policy_report_sha256": "TBD_S107_COMPLETION",
+  "selection_policy": {
+    "priority_formula": "severity*calibrated_confidence*comprehensibility_impact*trainability",
+    "allowed_top_k": [
+      1,
+      3
+    ],
+    "default_top_k": 1,
+    "ranking_tie_breakers": [
+      "start_ms",
+      "end_ms",
+      "issue_type",
+      "target",
+      "observed",
+      "evidence_ids",
+      "issue_id_sha256"
+    ],
+    "blocked_top_k_backfill_allowed": false,
+    "priority_arithmetic": "base10_decimal_from_canonical_json_numbers",
+    "priority_output_scale": 12,
+    "priority_rounding": "decimal_round_half_even"
+  },
+  "calibration_policy": {
+    "confidence_semantics": "TBD_PREREGISTRATION",
+    "issue_confidence_aggregation_from_s107_phone_probabilities": "TBD_PREREGISTRATION",
+    "exact_confidence_threshold": "TBD_PREREGISTRATION",
+    "threshold_comparison": "greater_than_or_equal",
+    "threshold_authorization_rule": "TBD_PREREGISTRATION",
+    "low_confidence_action": "rerecord",
+    "s107_provisional_threshold_accepted_without_preregistration": false
+  },
+  "evidence_policy": {
+    "allowed_evidence_ids": [
+      "gold_label",
+      "ctc_competing_phone",
+      "gop_low",
+      "duration_short",
+      "duration_long",
+      "alignment_low",
+      "content_mismatch",
+      "prosody_outlier"
+    ],
+    "issue_type_to_supported_evidence_ids": "TBD_PREREGISTRATION",
+    "minimum_supported_evidence_count": "TBD_PREREGISTRATION",
+    "positive_target_overlap_receipt_required_for_phone_localized_claim": true,
+    "unsupported_claim_action": "expert_review",
+    "unknown_issue_type_action": "expert_review",
+    "other_issue_type_action": "expert_review"
+  },
+  "generation_safety": {
+    "message_source": "exact_c01_catalog_entry_only",
+    "free_generation_llm_allowed": false,
+    "prompt_or_completion_field_allowed": false,
+    "network_access_allowed": false,
+    "runtime_model_access_allowed": false,
+    "catalog_message_rewrite_allowed": false,
+    "catalog_advice_id_rewrite_allowed": false,
+    "production_release_allowed_before_c03": false
+  },
+  "approval": {
+    "decision": "TBD_PREREGISTRATION",
+    "protocol_sha256": "TBD_PREREGISTRATION",
+    "signed_receipt_sha256": "TBD_PREREGISTRATION"
+  }
+}

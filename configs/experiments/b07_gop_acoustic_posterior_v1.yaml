@@ -1,0 +1,475 @@
+schema_version: 1
+
+experiment:
+  id: aihub71490_b07_gop_acoustic_posterior_v1
+  stage: b07_realized_free_gop_acoustic_posterior
+  task: phone_binary_error
+  status: approved_for_canonical_execution
+  development_only: true
+  oracle_alignment: true
+  deployable: false
+  realized_phone_independent: true
+  canonical_execution_allowed_by_preflight: true
+
+canonical_sources:
+  readiness:
+    path: docs/GOP_ACOUSTIC_POSTERIOR_READINESS_KO.md
+    sha256: 78d25dc6dcb75413a30c5221599722b93d88ec26a9f18a93e426672e873126a6
+  explicit_baseline_config:
+    path: configs/experiments/explicit_baseline_v1.yaml
+    sha256: cff6439e6b99b5f725c4214dfe1dda64b20892e8b59fbd064d88d3542c2615bd
+  wavlm_cache_contract:
+    path: src/voice_coach/reproducibility/wavlm_cache.py
+    sha256: 72efc68a7a07018b619761f9a530e1f127de29062d0545829ea4a21d3773b8a2
+  gop_feature_implementation:
+    path: src/voice_coach/features/gop.py
+    sha256: dcc0a2f163e7ddeccca39490a48c14c668be775131167e46051bc97143ddefc6
+  b07_static_contract:
+    path: src/voice_coach/training/b07_gop_contract.py
+    sha256: 355be8c18492b1f3b462f2436c810b15d7cdc4cd0428a3c72ef7b19ee94d704d
+  b07_training_implementation:
+    path: src/voice_coach/training/b07_gop_training.py
+    sha256: 891389afb3bcaca18ec13d077d4ecf193e3876a04e25f96cc034e7db54b387ea
+  experiment_registry_implementation:
+    path: src/voice_coach/experiments/registry.py
+    sha256: 6929389771711b9d104b299ee540c93777f32e0be3fa7d720228f549296b998b
+  b07_prepare_cli:
+    path: scripts/prepare_b07_gop_acoustic_posterior.py
+    sha256: 259445b1cd690ea2f475c697396b152aeac58b70e71cc500a4a55a5b12b129b7
+  b07_train_cli:
+    path: scripts/train_b07_gop_acoustic_posterior.py
+    sha256: ab76bc149d3f37eb5745c389110ab92ea08ec650e0631d304321cb933a12f192
+  project_metadata:
+    path: pyproject.toml
+    sha256: c33af395f4f3a3c23b625219d4f0911de2c35b08d6ffecc2710a118766f17328
+  scorer_dependency_lock:
+    path: requirements/scorer-lock-linux-aarch64-cu130.txt
+    sha256: f6c5b10c1028506d7361c83ad1e9aae0b1fafcf34f4e918e5b7123c51fac8cf2
+
+data:
+  allowed_splits: [train, dev]
+  fit_splits: [train]
+  metric_splits: [dev]
+  forbidden_splits: [stack, calibration, locked_test]
+  environment_files_allowed: false
+  raw_manifest_access_allowed: false
+  stack_access_allowed: false
+  calibration_access_allowed: false
+  locked_test_access_allowed: false
+  wavlm_phone_cache:
+    path: data/processed/aihub71490/features/wavlm_base_plus_frozen_v1/phone
+    report_path: data/processed/aihub71490/features/wavlm_base_plus_frozen_v1_report.json
+    report_sha256: 34da4c3ec48088b88e1e44763868cd15a21b7baaa06a2cb253338866262ef41d
+    content_sha256: af210e324fd941ee636b7abcb6ecbd604ebc7cedf16c5caa97a59ab0aade1b2c
+    content_hash_rule: sha256_canonical_name_row_count_shard_sha256_records
+    embedding_model: microsoft/wavlm-base-plus
+    embedding_dimension: 768
+    exact_columns:
+      - utterance_id_sha256
+      - speaker_id_sha256
+      - split
+      - phone_index
+      - target_label
+      - embedding_mean
+      - binary_error_label
+      - l1
+      - gender
+      - proficiency
+    feature_read_allowlist:
+      - target_label
+      - embedding_mean
+      - l1
+      - gender
+      - proficiency
+    supervision_read_allowlist: [binary_error_label]
+    supervision_as_feature_forbidden: true
+  explicit_phone_cache:
+    path: data/processed/aihub71490/features/explicit_phone_train_dev_oracle_v1
+    report_path: data/processed/aihub71490/features/explicit_phone_train_dev_oracle_v1_report.json
+    report_sha256: c11e7ed85461d9c623aad390ff65b94981c686aaa859494c07a7f569ed29e53a
+    content_sha256: c7356b43f95991ae7c6df7c92b9f2e7cdc3f6b29f951a43cc4297bed29d047e1
+    content_hash_rule: sha256_canonical_name_row_count_shard_sha256_records
+    exact_columns:
+      - utterance_id_sha256
+      - speaker_id_sha256
+      - split
+      - phone_index
+      - target_label
+      - binary_error_label
+      - previous_target_label
+      - next_target_label
+      - oracle_duration_seconds
+      - segment_rms
+      - segment_zero_crossing_rate
+      - l1
+      - gender
+      - proficiency
+  expected_rows:
+    train:
+      total: 1808724
+      match: 1701622
+      error: 107102
+      primary_total: 1776049
+      primary_match: 1671012
+      primary_error: 105037
+    dev:
+      total: 424315
+      match: 387203
+      error: 37112
+      primary_total: 423820
+      primary_match: 386747
+      primary_error: 37073
+  exact_phone_inventory:
+    - spn
+    - ㄱ
+    - ㄲ
+    - ㄴ
+    - ㄷ
+    - ㄸ
+    - ㄹ
+    - ㅁ
+    - ㅂ
+    - ㅃ
+    - ㅅ
+    - ㅆ
+    - ㅇ
+    - ㅈ
+    - ㅉ
+    - ㅊ
+    - ㅋ
+    - ㅌ
+    - ㅍ
+    - ㅎ
+    - ㅏ
+    - ㅐ
+    - ㅑ
+    - ㅓ
+    - ㅔ
+    - ㅕ
+    - ㅖ
+    - ㅗ
+    - ㅘ
+    - ㅚ
+    - ㅛ
+    - ㅜ
+    - ㅝ
+    - ㅟ
+    - ㅠ
+    - ㅡ
+    - ㅢ
+    - ㅣ
+  join:
+    exact_key: [utterance_id_sha256, phone_index]
+    exact_universe_required: true
+    order_only_join_forbidden: true
+    key_arrays_must_match_exactly_in_each_streamed_batch: true
+    row_order_mismatch_policy: fail_closed_before_embedding_feature_use
+    duplicate_key_policy: fail
+    exact_match_columns:
+      - speaker_id_sha256
+      - split
+      - target_label
+      - binary_error_label
+    label_source: explicit_phone_cache
+  forbidden_columns:
+    - realized_phone
+    - realized_phone_identity
+    - realized_phone_id
+    - realized_phoneme
+    - realized_label
+    - phone_alignment_operation
+    - alignment_operation
+    - error_tag
+    - error_type
+    - substitution_tag
+    - deletion_tag
+    - insertion_tag
+    - raw_audio_path
+    - raw_locator
+    - source_path
+    - audio_path
+    - label_path
+
+posterior:
+  class_count: 38
+  prototype_fit_rows: binary_error_label_equals_zero_only
+  prototype_fit_scope: primary_train_only
+  row_normalization: l2
+  prototype_formula: l2_normalize_mean_of_l2_normalized_rows
+  similarity: cosine
+  prior: uniform
+  logits: cosine_divided_by_temperature
+  fold_count: 5
+  fold_unit: speaker_id_sha256
+  fold_namespace: voice-coach.aihub71490.b07-gop-speaker-fold.v1
+  fold_assignment_rule: sha256(namespace_colon_seed_colon_speaker)_first_8_bytes_big_endian_mod_5
+  seed_binding: each_evaluation_seed_binds_its_own_five_fold_assignment
+  inner_validation_rule: each_fold_exactly_once_as_validation_other_four_as_training
+  train_validation_speaker_overlap_maximum: 0
+  nonempty_training_and_validation_required_per_fold: true
+  every_train_row_exactly_one_oof_feature: true
+  every_class_required_in_each_training_complement: true
+  temperature_grid: [0.05, 0.1, 0.2, 0.5, 1.0, 2.0, 5.0]
+  temperature_selection:
+    split: primary_train_inner_speaker_validation
+    validation_fold_ids: [0]
+    training_fold_ids: [1, 2, 3, 4]
+    evidence: fold_0_oof_match_rows_only
+    rows: match_only
+    metric: multiclass_negative_log_likelihood
+    direction: minimize
+    tie_break: smaller_temperature
+    final_dev_temperature:
+      validation_fold_ids: [0]
+      prototype_training_fold_ids: [1, 2, 3, 4]
+    detector_outer_validation_nested_temperature:
+      for_outer_fold_ids: [1, 2, 3, 4]
+      validation_fold_ids: [0]
+      prototype_training_rule: all_folds_except_temperature_fold_0_and_outer_validation_fold
+      outer_validation_embedding_label_or_speaker_access: forbidden
+  exact_features:
+    - target_log_posterior
+    - gop_margin
+    - posterior_entropy
+    - target_is_top1
+  final_refit:
+    prototypes: all_primary_train_match_rows
+    dev_projection: selected_temperature_and_full_train_prototypes
+
+detector:
+  estimator: balanced_l2_logistic_regression
+  solver: lbfgs
+  maximum_iterations: 2000
+  tolerance: 0.00000001
+  categorical_features:
+    - target_label
+    - previous_target_label
+    - next_target_label
+  explicit_numeric_features:
+    - oracle_duration_seconds
+    - segment_rms
+    - segment_zero_crossing_rate
+  gop_numeric_features:
+    - target_log_posterior
+    - gop_margin
+    - posterior_entropy
+    - target_is_top1
+  preprocessing:
+    numeric_imputation: median
+    numeric_imputation_fit_scope: fold_training_rows_only
+    numeric_standardization: population_mean_and_scale
+    numeric_standardization_fit_scope: fold_training_rows_only
+    zero_scale_replacement: 1.0
+    categorical_missing_token: __MISSING__
+    categorical_unknown_token: __UNKNOWN__
+    categorical_vocabulary_fit_scope: fold_training_rows_only
+    category_order: sorted_utf8
+  regularization_c_grid: [0.01, 0.1, 1.0, 10.0]
+  threshold_grid:
+    start: 0.20
+    stop: 0.80
+    step: 0.05
+    stop_inclusive: true
+  selection:
+    split: primary_train_inner_speaker_validation
+    validation_fold_ids: [1, 2, 3, 4]
+    upstream_temperature_selection_fold_ids: [0]
+    upstream_temperature_selection_is_disjoint_from_detector_validation: true
+    nested_acoustic_feature_rule:
+      outer_validation_rows: prototype_fit_on_all_primary_match_train_except_outer_fold
+      detector_training_row: prototype_fit_on_primary_match_train_except_outer_fold_and_that_rows_acoustic_fold
+      detector_training_row_fold_equals_temperature_fold: prototype_fit_on_primary_match_train_except_outer_fold_and_temperature_fold
+      temperature: outer_fold_specific_selected_on_fold_0_with_outer_fold_excluded
+      every_prototype_class_nonempty_required: true
+      outer_validation_speaker_embedding_target_and_binary_label_in_upstream_fit: forbidden
+      outer_validation_speaker_in_preprocessing_or_detector_fit: forbidden
+    per_outer_fold_candidate_fit:
+      fold_1: [0, 2, 3, 4]
+      fold_2: [0, 1, 3, 4]
+      fold_3: [0, 1, 2, 4]
+      fold_4: [0, 1, 2, 3]
+    candidate_probability_aggregation: row_pooled_outer_oof_folds_1_through_4
+    candidate_metric_scope: all_primary_train_rows_in_outer_validation_folds_1_through_4
+    candidate_fits_per_c: 4
+    class_weight: balanced
+    class_weight_fit_scope: each_outer_fold_detector_training_labels_only
+    threshold_application: pooled_outer_oof_probabilities
+    fold_rule: same_seed_bound_five_folds_as_acoustic_cross_fit
+    each_detector_validation_fold_exactly_once: true
+    temperature_role_fold_excluded_from_detector_metric: true
+    train_validation_speaker_overlap_maximum: 0
+    metric: phone_macro_f1
+    metric_zero_division: 0.0
+    direction: maximize
+    tie_break_order:
+      - smaller_c
+      - threshold_closest_to_0.5
+      - smaller_threshold
+  paired_control:
+    id: within_run_explicit_feature_refit_control
+    role: b03_feature_family_control_not_canonical_b03_checkpoint_or_metric
+    canonical_b03_claim_allowed: false
+    canonical_b03_predictions_read: false
+    same_train_dev_universe: true
+    same_seed_folds_and_selection_contract: true
+    features: categorical_plus_explicit_numeric
+  final_refit:
+    feature_rows: all_primary_train_cross_fit_rows
+    preprocessing_fit_scope: all_primary_train_cross_fit_rows
+    estimator_fit_scope: all_primary_train_cross_fit_rows
+    class_weight_fit_scope: all_primary_train_labels
+  serialized_checkpoint_exact_fields:
+    acoustic:
+      - inventory
+      - embedding_dimension
+      - selected_temperature
+      - full_primary_train_match_prototypes
+      - fold_namespace
+      - seed
+      - input_column_contract
+    error:
+      - feature_order
+      - categorical_feature_order
+      - categorical_vocabularies
+      - categorical_missing_token
+      - categorical_unknown_token
+      - numeric_feature_order
+      - numeric_imputation_medians
+      - numeric_standardization_means
+      - numeric_standardization_scales
+      - class_order
+      - coefficients
+      - intercept
+      - selected_c
+      - selected_threshold
+      - solver
+      - seed
+      - explicit_refit_control
+
+evaluation:
+  seeds: [42, 43, 44]
+  primary_scope:
+    l1: [Chinese, Japanese]
+    gender: [F, M]
+  primary_metric: phone_macro_f1
+  secondary_metric: error_auprc
+  seed_summary:
+    center: arithmetic_mean
+    dispersion: sample_standard_deviation
+    ddof: 1
+  slices: [l1, gender, proficiency, target_label]
+  slice_phone_macro_f1_zero_division: 0.0
+  adoption_gate:
+    metric: mean_seed_phone_macro_f1
+    operator: greater_than_or_equal
+    value: 0.60
+  dev_access:
+    hyperparameter_selection_count: 0
+    metric_open_count_per_seed: 1
+    predict_call_count_per_seed: 1
+    fit_on_dev_forbidden: true
+    one_prediction_pass_outputs:
+      all_dev_audit_rows: 424315
+      primary_metric_rows: 423820
+
+resource_contract:
+  parquet_access: deterministic_sorted_shards_and_streamed_record_batches
+  record_batch_rows: 8192
+  embedding_arrow_access: fixed_size_list_values_buffer_to_numpy_reshape
+  embedding_to_pylist_forbidden: true
+  embedding_compute_dtype: float32
+  prototype_accumulator_dtype: float64
+  posterior_score_dtype: float64
+  full_embedding_matrix_materialization_forbidden: true
+  maximum_embedding_rows_resident: 8192
+  canonical_peak_rss_gate_gib: 8.0
+  deep_validator_uses_same_bounded_runner: true
+  accelerator: none
+  cuda_initialization_forbidden: true
+  accelerator_probe_forbidden: true
+  torch_import_forbidden: true
+  cuda_visible_devices_required: empty_string
+  deterministic_cpu_thread_cap: 4
+  blas_openmp_thread_cap: 4
+  thread_cap_semantics: per_native_threadpool_active_limit_not_process_thread_object_count
+  sklearn_n_jobs: not_applicable_lbfgs_single_process
+  oversubscription_forbidden: true
+  registry_observations:
+    - elapsed_seconds
+    - peak_rss_bytes
+    - configured_cpu_thread_cap
+    - observed_process_thread_count_at_start
+    - observed_process_thread_count_at_finish
+
+artifacts:
+  scope: D1_restricted_internal
+  generation_root: artifacts/experiments/aihub71490_b07_gop_acoustic_posterior_v1/generations
+  registry_path: artifacts/experiment_registry/aihub71490-b07-gop-acoustic-posterior-v1/metadata.json
+  commit_path: artifacts/experiments/aihub71490_b07_gop_acoustic_posterior_v1/commit.json
+  generation_id_rule: sha256_canonical_records
+  immutable_generation: true
+  completed_registry_before_commit: true
+  failure_writes_registry_only: true
+  commit_overwrite_forbidden: true
+  exact_generation_layout:
+    - execution_lock.json
+    - seed_42/acoustic_checkpoint.json
+    - seed_42/error_checkpoint.json
+    - seed_42/inner_selection_trace.json
+    - seed_42/dev_predictions.parquet
+    - seed_42/metrics.json
+    - seed_42/slices.json
+    - seed_43/acoustic_checkpoint.json
+    - seed_43/error_checkpoint.json
+    - seed_43/inner_selection_trace.json
+    - seed_43/dev_predictions.parquet
+    - seed_43/metrics.json
+    - seed_43/slices.json
+    - seed_44/acoustic_checkpoint.json
+    - seed_44/error_checkpoint.json
+    - seed_44/inner_selection_trace.json
+    - seed_44/dev_predictions.parquet
+    - seed_44/metrics.json
+    - seed_44/slices.json
+    - aggregate_report.json
+    - paired_explicit_refit_control_comparison.json
+  schema_versions:
+    execution_lock: voice_coach.b07_gop_execution_lock.v1
+    acoustic_checkpoint: voice_coach.b07_gop_acoustic_checkpoint.v1
+    error_checkpoint: voice_coach.b07_gop_error_checkpoint.v1
+    selection_trace: voice_coach.b07_gop_selection_trace.v1
+    predictions: voice_coach.b07_gop_dev_predictions.v1
+    metrics: voice_coach.b07_gop_metrics.v1
+    slices: voice_coach.b07_gop_slices.v1
+    aggregate: voice_coach.b07_gop_aggregate.v1
+    paired: voice_coach.b07_gop_paired_explicit_refit_control.v1
+    registry: voice_coach.b07_gop_registry.v1
+    commit: voice_coach.b07_gop_commit.v1
+  deep_validation:
+    cli_flag: --validate-commit-only
+    recompute_from_input_caches: true
+    recompute_selection: true
+    recompute_metrics_from_raw_predictions: true
+    verify_all_artifact_hashes: true
+    verify_registry_hash: true
+    verify_commit_chain: true
+
+execution:
+  prepare_mode: config_only
+  train_requires_flag: --execute-canonical
+  validate_commit_only_reads_no_environment_files: true
+  canonical_run_permitted_in_this_change: true
+  permission_transition:
+    static_mode: both_permission_flags_false
+    actual_mode: both_permission_flags_true_and_status_approved_for_canonical_execution
+    mixed_mode: forbidden
+    config_rehash_and_source_revalidation_required: true
+  precommit_validation:
+    raw_prediction_metric_recompute: true
+    selection_rule_recompute: true
+    serialized_error_checkpoint_replay: true
+    additional_dev_embedding_scan: false
+  commit_only_validation:
+    full_bounded_train_selection_dev_recomputation: true
+    serialized_acoustic_and_error_checkpoint_replay: true
+    read_only: true

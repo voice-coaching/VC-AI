@@ -1,0 +1,370 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://voice-coach.local/schemas/e00_closed_loop_trace_v1.schema.json",
+  "title": "E00 score-free aggregate closed-loop trace",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_version",
+    "trace_id",
+    "status",
+    "execution_mode",
+    "privacy_zone",
+    "session_manifest_sha256",
+    "event_order",
+    "attempt_1",
+    "diagnostic",
+    "guard",
+    "coaching",
+    "reference",
+    "attempt_2",
+    "comparison",
+    "safety",
+    "claims",
+    "binding_sha256"
+  ],
+  "properties": {
+    "schema_version": {
+      "const": "voice_coach.e00_closed_loop_trace.v1"
+    },
+    "trace_id": {
+      "type": "string",
+      "pattern": "^e00trace_[0-9a-f]{32}$"
+    },
+    "status": {
+      "enum": [
+        "completed_eligible_loop",
+        "blocked_safe_exit",
+        "no_correction_safe_exit"
+      ]
+    },
+    "execution_mode": {
+      "enum": [
+        "human_authorized_demo",
+        "nonhuman_test_fixture"
+      ]
+    },
+    "privacy_zone": {
+      "const": "A1_aggregate_score_free_demo_trace"
+    },
+    "session_manifest_sha256": {
+      "$ref": "#/$defs/sha256"
+    },
+    "event_order": {
+      "type": "array",
+      "minItems": 7,
+      "maxItems": 7,
+      "prefixItems": [
+        {
+          "const": "attempt_1"
+        },
+        {
+          "const": "s108_diagnostic_1"
+        },
+        {
+          "const": "e02_guard"
+        },
+        {
+          "const": "c02_top1_coaching"
+        },
+        {
+          "const": "r03_d08_reference"
+        },
+        {
+          "const": "attempt_2"
+        },
+        {
+          "const": "same_scorer_comparison"
+        }
+      ],
+      "items": false
+    },
+    "attempt_1": {
+      "$ref": "#/$defs/attemptState"
+    },
+    "diagnostic": {
+      "$ref": "#/$defs/diagnostic"
+    },
+    "guard": {
+      "$ref": "#/$defs/guard"
+    },
+    "coaching": {
+      "$ref": "#/$defs/coaching"
+    },
+    "reference": {
+      "$ref": "#/$defs/reference"
+    },
+    "attempt_2": {
+      "$ref": "#/$defs/attemptState"
+    },
+    "comparison": {
+      "$ref": "#/$defs/comparison"
+    },
+    "safety": {
+      "$ref": "#/$defs/safety"
+    },
+    "claims": {
+      "$ref": "#/$defs/claims"
+    },
+    "binding_sha256": {
+      "$ref": "#/$defs/sha256"
+    }
+  },
+  "$defs": {
+    "sha256": {
+      "type": "string",
+      "pattern": "^[0-9a-f]{64}$"
+    },
+    "nullableSha256": {
+      "oneOf": [
+        {
+          "$ref": "#/$defs/sha256"
+        },
+        {
+          "type": "null"
+        }
+      ]
+    },
+    "attemptState": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "completed",
+        "attempt_receipt_sha256"
+      ],
+      "properties": {
+        "completed": {
+          "type": "boolean"
+        },
+        "attempt_receipt_sha256": {
+          "$ref": "#/$defs/nullableSha256"
+        }
+      }
+    },
+    "diagnostic": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "s108_actual_production_handoff_used",
+        "s108_handoff_sha256",
+        "locked_result_copied_or_replayed",
+        "diagnostic_receipt_sha256"
+      ],
+      "properties": {
+        "s108_actual_production_handoff_used": {
+          "const": true
+        },
+        "s108_handoff_sha256": {
+          "$ref": "#/$defs/sha256"
+        },
+        "locked_result_copied_or_replayed": {
+          "const": false
+        },
+        "diagnostic_receipt_sha256": {
+          "$ref": "#/$defs/sha256"
+        }
+      }
+    },
+    "guard": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "decision",
+        "blocked_reasons",
+        "safe_next_action",
+        "e02_response_sha256"
+      ],
+      "properties": {
+        "decision": {
+          "enum": [
+            "allowed_for_separate_renderer",
+            "blocked",
+            "no_correction"
+          ]
+        },
+        "blocked_reasons": {
+          "type": "array",
+          "uniqueItems": true,
+          "items": {
+            "enum": [
+              "out_of_domain",
+              "low_confidence",
+              "unsupported",
+              "abstain_all"
+            ]
+          }
+        },
+        "safe_next_action": {
+          "oneOf": [
+            {
+              "enum": [
+                "rerecord",
+                "expert_review"
+              ]
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "e02_response_sha256": {
+          "$ref": "#/$defs/sha256"
+        }
+      }
+    },
+    "coaching": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "delivered",
+        "selected_count",
+        "top1_catalog_advice_id_sha256",
+        "catalog_only",
+        "free_generation_used",
+        "llm_used",
+        "blocked_top_k_backfill_used"
+      ],
+      "properties": {
+        "delivered": {
+          "type": "boolean"
+        },
+        "selected_count": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 1
+        },
+        "top1_catalog_advice_id_sha256": {
+          "$ref": "#/$defs/nullableSha256"
+        },
+        "catalog_only": {
+          "const": true
+        },
+        "free_generation_used": {
+          "const": false
+        },
+        "llm_used": {
+          "const": false
+        },
+        "blocked_top_k_backfill_used": {
+          "const": false
+        }
+      }
+    },
+    "reference": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "delivered",
+        "handoff_sha256",
+        "licensed_r03_d08_handoff",
+        "source_or_locator_exposed",
+        "score_exposed"
+      ],
+      "properties": {
+        "delivered": {
+          "type": "boolean"
+        },
+        "handoff_sha256": {
+          "$ref": "#/$defs/nullableSha256"
+        },
+        "licensed_r03_d08_handoff": {
+          "type": "boolean"
+        },
+        "source_or_locator_exposed": {
+          "const": false
+        },
+        "score_exposed": {
+          "const": false
+        }
+      }
+    },
+    "comparison": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "completed",
+        "same_scorer_verified",
+        "paired_metric_definition_sha256",
+        "comparison_receipt_sha256",
+        "numeric_scores_embedded",
+        "direction_or_effect_embedded"
+      ],
+      "properties": {
+        "completed": {
+          "type": "boolean"
+        },
+        "same_scorer_verified": {
+          "type": "boolean"
+        },
+        "paired_metric_definition_sha256": {
+          "$ref": "#/$defs/nullableSha256"
+        },
+        "comparison_receipt_sha256": {
+          "$ref": "#/$defs/nullableSha256"
+        },
+        "numeric_scores_embedded": {
+          "const": false
+        },
+        "direction_or_effect_embedded": {
+          "const": false
+        }
+      }
+    },
+    "safety": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "user_or_participant_data_fabricated",
+        "model_score_or_threshold_leaked",
+        "source_identity_or_condition_leaked",
+        "raw_audio_or_locator_leaked",
+        "free_text_or_generated_advice_present",
+        "blocked_capability_override_used"
+      ],
+      "properties": {
+        "user_or_participant_data_fabricated": {
+          "const": false
+        },
+        "model_score_or_threshold_leaked": {
+          "const": false
+        },
+        "source_identity_or_condition_leaked": {
+          "const": false
+        },
+        "raw_audio_or_locator_leaked": {
+          "const": false
+        },
+        "free_text_or_generated_advice_present": {
+          "const": false
+        },
+        "blocked_capability_override_used": {
+          "const": false
+        }
+      }
+    },
+    "claims": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "noninferential_demo_only",
+        "pedagogical_effect_claim_allowed",
+        "clinical_claim_allowed",
+        "deployment_claim_allowed"
+      ],
+      "properties": {
+        "noninferential_demo_only": {
+          "const": true
+        },
+        "pedagogical_effect_claim_allowed": {
+          "const": false
+        },
+        "clinical_claim_allowed": {
+          "const": false
+        },
+        "deployment_claim_allowed": {
+          "const": false
+        }
+      }
+    }
+  }
+}

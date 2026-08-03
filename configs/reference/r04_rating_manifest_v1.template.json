@@ -1,0 +1,21 @@
+{
+  "schema_version": "voice_coach.r04_rating_manifest.v1",
+  "rating_manifest_id": "TBD_EXTERNAL",
+  "status": "TBD_EXTERNAL",
+  "randomization_manifest_sha256": "TBD_EXTERNAL",
+  "human_research_approval_sha256": "TBD_EXTERNAL",
+  "r04_preregistration_sha256": "TBD_PREREGISTRATION",
+  "statistical_analysis_plan_sha256": "TBD_PREREGISTRATION",
+  "listener_attestation_manifest_sha256": "TBD_EXTERNAL",
+  "privacy_zone": "D1_pseudonymized_restricted_experiment",
+  "system_names_present": false,
+  "filenames_or_paths_present": false,
+  "synthesis_status_present": false,
+  "source_labels_present": false,
+  "direct_identifiers_present": false,
+  "free_text_present": false,
+  "mos_unit": "listener_x_sentence_x_candidate",
+  "cmos_unit": "listener_x_sentence_x_same_sentence_pair",
+  "mos_ratings": [],
+  "cmos_ratings": []
+}

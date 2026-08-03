@@ -1,0 +1,207 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://voice-coach.local/schemas/r04_rating_manifest_v1.schema.json",
+  "title": "R04 blinded MOS and CMOS rating manifest",
+  "description": "D1-only raw ratings. The manifest contains no direct identifiers, free text, file or source labels, system names, synthesis status, or unblinded candidate identities.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_version",
+    "rating_manifest_id",
+    "status",
+    "randomization_manifest_sha256",
+    "human_research_approval_sha256",
+    "r04_preregistration_sha256",
+    "statistical_analysis_plan_sha256",
+    "listener_attestation_manifest_sha256",
+    "privacy_zone",
+    "system_names_present",
+    "filenames_or_paths_present",
+    "synthesis_status_present",
+    "source_labels_present",
+    "direct_identifiers_present",
+    "free_text_present",
+    "mos_unit",
+    "cmos_unit",
+    "mos_ratings",
+    "cmos_ratings"
+  ],
+  "properties": {
+    "schema_version": {
+      "const": "voice_coach.r04_rating_manifest.v1"
+    },
+    "rating_manifest_id": {
+      "type": "string",
+      "pattern": "^r04ratings_[0-9a-f]{32}$"
+    },
+    "status": {
+      "const": "ratings_locked_blinded"
+    },
+    "randomization_manifest_sha256": {
+      "$ref": "#/$defs/sha256"
+    },
+    "human_research_approval_sha256": {
+      "$ref": "#/$defs/sha256"
+    },
+    "r04_preregistration_sha256": {
+      "$ref": "#/$defs/sha256"
+    },
+    "statistical_analysis_plan_sha256": {
+      "$ref": "#/$defs/sha256"
+    },
+    "listener_attestation_manifest_sha256": {
+      "$ref": "#/$defs/sha256"
+    },
+    "privacy_zone": {
+      "const": "D1_pseudonymized_restricted_experiment"
+    },
+    "system_names_present": {
+      "const": false
+    },
+    "filenames_or_paths_present": {
+      "const": false
+    },
+    "synthesis_status_present": {
+      "const": false
+    },
+    "source_labels_present": {
+      "const": false
+    },
+    "direct_identifiers_present": {
+      "const": false
+    },
+    "free_text_present": {
+      "const": false
+    },
+    "mos_unit": {
+      "const": "listener_x_sentence_x_candidate"
+    },
+    "cmos_unit": {
+      "const": "listener_x_sentence_x_same_sentence_pair"
+    },
+    "mos_ratings": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "$ref": "#/$defs/mosRating"
+      }
+    },
+    "cmos_ratings": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "$ref": "#/$defs/cmosRating"
+      }
+    }
+  },
+  "$defs": {
+    "sha256": {
+      "type": "string",
+      "pattern": "^[0-9a-f]{64}$"
+    },
+    "sentenceId": {
+      "type": "string",
+      "pattern": "^R00-(0[1-9]|1[0-9]|20)$"
+    },
+    "blindStimulusId": {
+      "type": "string",
+      "pattern": "^r04stim_[0-9a-f]{32}$"
+    },
+    "mosRating": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "listener_id_sha256",
+        "assignment_id",
+        "sentence_id",
+        "stimulus_blind_id",
+        "submission_sequence",
+        "naturalness",
+        "clarity",
+        "target_phone_accuracy",
+        "pedagogical_suitability"
+      ],
+      "properties": {
+        "listener_id_sha256": {
+          "$ref": "#/$defs/sha256"
+        },
+        "assignment_id": {
+          "type": "string",
+          "pattern": "^r04assign_[0-9a-f]{32}$"
+        },
+        "sentence_id": {
+          "$ref": "#/$defs/sentenceId"
+        },
+        "stimulus_blind_id": {
+          "$ref": "#/$defs/blindStimulusId"
+        },
+        "submission_sequence": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "naturalness": {
+          "$ref": "#/$defs/mosScore"
+        },
+        "clarity": {
+          "$ref": "#/$defs/mosScore"
+        },
+        "target_phone_accuracy": {
+          "$ref": "#/$defs/mosScore"
+        },
+        "pedagogical_suitability": {
+          "$ref": "#/$defs/mosScore"
+        }
+      }
+    },
+    "mosScore": {
+      "type": "integer",
+      "minimum": 1,
+      "maximum": 5
+    },
+    "cmosRating": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "listener_id_sha256",
+        "assignment_id",
+        "pair_blind_id",
+        "sentence_id",
+        "left_stimulus_blind_id",
+        "right_stimulus_blind_id",
+        "submission_sequence",
+        "cmos"
+      ],
+      "properties": {
+        "listener_id_sha256": {
+          "$ref": "#/$defs/sha256"
+        },
+        "assignment_id": {
+          "type": "string",
+          "pattern": "^r04assign_[0-9a-f]{32}$"
+        },
+        "pair_blind_id": {
+          "type": "string",
+          "pattern": "^r04pair_[0-9a-f]{32}$"
+        },
+        "sentence_id": {
+          "$ref": "#/$defs/sentenceId"
+        },
+        "left_stimulus_blind_id": {
+          "$ref": "#/$defs/blindStimulusId"
+        },
+        "right_stimulus_blind_id": {
+          "$ref": "#/$defs/blindStimulusId"
+        },
+        "submission_sequence": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "cmos": {
+          "type": "integer",
+          "minimum": -3,
+          "maximum": 3
+        }
+      }
+    }
+  }
+}

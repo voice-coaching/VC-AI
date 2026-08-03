@@ -1,0 +1,215 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://voice-coach.local/schemas/h00_official_document_attestation_v1.schema.json",
+  "title": "H00 restricted official-document custody attestation",
+  "description": "A1/C1-safe attestation that an authorized custodian verified the restricted official document. Only a locator SHA-256 is allowed; the locator, path, URL, document content, names, and approval number are prohibited.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_version",
+    "attestation_id",
+    "status",
+    "privacy_zone",
+    "public_summary_only",
+    "institution_id_sha256",
+    "protocol_version",
+    "protocol_sha256",
+    "official_determination_id_sha256",
+    "official_determination_document_sha256",
+    "restricted_official_document_locator_sha256",
+    "restricted_archive_receipt_sha256",
+    "custodian_role_id",
+    "verification",
+    "lifecycle",
+    "binding_sha256"
+  ],
+  "properties": {
+    "schema_version": {
+      "const": "voice_coach.h00_official_document_attestation.v1"
+    },
+    "attestation_id": {
+      "type": "string",
+      "pattern": "^h00attest_[0-9a-f]{32}$"
+    },
+    "status": {
+      "enum": [
+        "attested_and_active",
+        "inactive_attestation"
+      ]
+    },
+    "privacy_zone": {
+      "const": "A1_C1_public_summary_only"
+    },
+    "public_summary_only": {
+      "type": "boolean"
+    },
+    "institution_id_sha256": {
+      "$ref": "#/$defs/sha256"
+    },
+    "protocol_version": {
+      "$ref": "#/$defs/versionId"
+    },
+    "protocol_sha256": {
+      "$ref": "#/$defs/sha256"
+    },
+    "official_determination_id_sha256": {
+      "$ref": "#/$defs/sha256"
+    },
+    "official_determination_document_sha256": {
+      "$ref": "#/$defs/sha256"
+    },
+    "restricted_official_document_locator_sha256": {
+      "$ref": "#/$defs/sha256"
+    },
+    "restricted_archive_receipt_sha256": {
+      "$ref": "#/$defs/sha256"
+    },
+    "custodian_role_id": {
+      "$ref": "#/$defs/boundedId"
+    },
+    "verification": {
+      "$ref": "#/$defs/verification"
+    },
+    "lifecycle": {
+      "$ref": "#/$defs/lifecycle"
+    },
+    "binding_sha256": {
+      "$ref": "#/$defs/sha256"
+    }
+  },
+  "$defs": {
+    "sha256": {
+      "type": "string",
+      "pattern": "^[0-9a-f]{64}$"
+    },
+    "boundedId": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 128,
+      "pattern": "^[a-z0-9][a-z0-9_.:-]*$"
+    },
+    "versionId": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 64,
+      "pattern": "^[A-Za-z0-9][A-Za-z0-9_.:-]*$"
+    },
+    "utcTimestamp": {
+      "type": "string",
+      "pattern": "^20[0-9]{2}-(0[1-9]|1[0-2])-([0-2][0-9]|3[01])T([01][0-9]|2[0-3]):[0-5][0-9]:[0-5][0-9]Z$"
+    },
+    "verification": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "institution_official_source_verified",
+        "official_document_opened_by_authorized_custodian",
+        "document_hash_matches",
+        "protocol_version_matches",
+        "determination_id_matches_hashed_public_summary",
+        "signature_or_seal_verified",
+        "current_status_verified",
+        "scope_covers_participant_recruitment",
+        "scope_covers_informed_consent",
+        "scope_covers_audio_recording",
+        "scope_covers_randomized_intervention",
+        "scope_covers_pre_post_retention",
+        "pii_copied_to_attestation",
+        "participant_rows_copied_to_attestation",
+        "raw_locator_path_or_url_copied_to_attestation"
+      ],
+      "properties": {
+        "institution_official_source_verified": {
+          "type": "boolean"
+        },
+        "official_document_opened_by_authorized_custodian": {
+          "type": "boolean"
+        },
+        "document_hash_matches": {
+          "type": "boolean"
+        },
+        "protocol_version_matches": {
+          "type": "boolean"
+        },
+        "determination_id_matches_hashed_public_summary": {
+          "type": "boolean"
+        },
+        "signature_or_seal_verified": {
+          "type": "boolean"
+        },
+        "current_status_verified": {
+          "type": "boolean"
+        },
+        "scope_covers_participant_recruitment": {
+          "type": "boolean"
+        },
+        "scope_covers_informed_consent": {
+          "type": "boolean"
+        },
+        "scope_covers_audio_recording": {
+          "type": "boolean"
+        },
+        "scope_covers_randomized_intervention": {
+          "type": "boolean"
+        },
+        "scope_covers_pre_post_retention": {
+          "type": "boolean"
+        },
+        "pii_copied_to_attestation": {
+          "type": "boolean"
+        },
+        "participant_rows_copied_to_attestation": {
+          "type": "boolean"
+        },
+        "raw_locator_path_or_url_copied_to_attestation": {
+          "type": "boolean"
+        }
+      }
+    },
+    "lifecycle": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "attested_at_utc",
+        "official_status_verified_at_utc",
+        "expires_at_utc_or_status_code",
+        "amendment_status",
+        "current_amendment_sha256",
+        "attestation_current"
+      ],
+      "properties": {
+        "attested_at_utc": {
+          "$ref": "#/$defs/utcTimestamp"
+        },
+        "official_status_verified_at_utc": {
+          "$ref": "#/$defs/utcTimestamp"
+        },
+        "expires_at_utc_or_status_code": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 64,
+          "pattern": "^(20[0-9]{2}-(0[1-9]|1[0-2])-([0-2][0-9]|3[01])T([01][0-9]|2[0-3]):[0-5][0-9]:[0-5][0-9]Z|no_expiry_stated_by_official_body)$"
+        },
+        "amendment_status": {
+          "enum": [
+            "no_amendment",
+            "approved_amendment_active"
+          ]
+        },
+        "current_amendment_sha256": {
+          "oneOf": [
+            {
+              "$ref": "#/$defs/sha256"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "attestation_current": {
+          "type": "boolean"
+        }
+      }
+    }
+  }
+}

@@ -1,0 +1,34 @@
+{
+  "schema_version": "voice_coach.e00_execution_authorization.v1",
+  "authorization_id": "TBD_AUTHORIZATION",
+  "status": "draft_not_active",
+  "execution_mode": "TBD_PREREGISTRATION",
+  "preregistration_sha256": "TBD_PREREGISTRATION",
+  "human_authorization": {
+    "h00_approval_sha256": "TBD_H00_APPROVAL",
+    "h00_official_document_attestation_sha256": "TBD_H00_ATTESTATION",
+    "e00_scope_or_amendment_sha256": "TBD_EXTERNAL_ATTESTATION",
+    "individual_consent_manifest_sha256": "TBD_EXTERNAL_ATTESTATION",
+    "consent_active_for_recording_diagnostic_coaching_reference_rerecord": false,
+    "withdrawal_and_deletion_policy_active": false,
+    "human_escalation_available": false,
+    "authorization_current": false
+  },
+  "fixture_authorization": {
+    "fixture_provenance_sha256": "TBD_FIXTURE_ATTESTATION",
+    "fixture_license_sha256": "TBD_FIXTURE_ATTESTATION",
+    "scope": "learner_attempt_input_fixture_only",
+    "contains_human_voice": false,
+    "contains_participant_or_user_data": false,
+    "represents_a_real_learner": false,
+    "human_user_data_fabricated": false,
+    "synthetic_or_nonhuman_label_explicit": false,
+    "licensed_d08_human_reference_outside_fixture_scope": true,
+    "pedagogical_or_clinical_claim_allowed": false
+  },
+  "privacy_zone": "A1_C1_public_summary_only",
+  "contains_direct_identifiers": false,
+  "contains_audio_or_locators": false,
+  "contains_free_text": false,
+  "binding_sha256": "TBD_AUTHORIZATION"
+}

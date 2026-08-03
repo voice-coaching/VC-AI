@@ -1,0 +1,122 @@
+{
+  "schema_version": "voice_coach.d07_preregistration.v1",
+  "status": "TBD_PREREGISTRATION",
+  "frozen": false,
+  "h00_approval_sha256": "TBD_PREREGISTRATION",
+  "h00_attestation_sha256": "TBD_PREREGISTRATION",
+  "d07_institutional_approval_sha256": "TBD_PREREGISTRATION",
+  "reviewer_attestation_sha256": "TBD_PREREGISTRATION",
+  "g04_progress_aggregate_sha256": "TBD_PREREGISTRATION",
+  "sampling": {
+    "total_item_count": "TBD_PREREGISTRATION",
+    "calibration_item_count": 800,
+    "locked_test_item_count": "TBD_PREREGISTRATION",
+    "stratification_axes": [
+      "l1",
+      "gender",
+      "proficiency",
+      "utterance_length",
+      "target_phone",
+      "existing_error"
+    ],
+    "exact_allocation": "TBD_PREREGISTRATION",
+    "small_group_minimum_allocation": "TBD_PREREGISTRATION",
+    "population_weighting": "TBD_PREREGISTRATION",
+    "unweighted_slice_reporting": true,
+    "split_assignment_frozen_before_first_rating": true,
+    "g04_item_reuse_allowed": false,
+    "s203_item_reuse_allowed": false
+  },
+  "reviewer_design": {
+    "primary_reviewer_count": 2,
+    "adjudicator_count": 1,
+    "qualification_evidence": "TBD_ATTESTATION",
+    "all_items_independently_rated_by_both_primary_reviewers": true,
+    "primary_reviewers_mutually_blind": true,
+    "all_reviewers_model_blind": true,
+    "adjudication_trigger": "TBD_PREREGISTRATION",
+    "adjudication_protocol": "TBD_PREREGISTRATION",
+    "original_ratings_preserved": true,
+    "adjudication_note_max_characters": "TBD_PREREGISTRATION",
+    "adjudication_reason_taxonomy": "TBD_PREREGISTRATION"
+  },
+  "rubric_and_labels": {
+    "rubric_version": "TBD_PREREGISTRATION",
+    "rubric_sha256": "TBD_PREREGISTRATION",
+    "primary_definition_sha256": "TBD_PREREGISTRATION",
+    "phone_realization_values": [
+      "correct",
+      "substitution",
+      "deletion",
+      "uncertain"
+    ],
+    "error_type_ontology_sha256": "TBD_PREREGISTRATION",
+    "boundary_values": [
+      "yes",
+      "no",
+      "uncertain"
+    ],
+    "boundary_reference_ms": 50,
+    "score_range": [
+      1,
+      5
+    ],
+    "confidence_range": [
+      1,
+      4
+    ]
+  },
+  "calibration_agreement": {
+    "phone_reports": [
+      "macro_f1",
+      "cohens_kappa",
+      "prevalence"
+    ],
+    "score_reports": [
+      "qwk",
+      "icc_2_1",
+      "mae",
+      "score_distribution"
+    ],
+    "ontology_reports": [
+      "macro_agreement",
+      "krippendorff_alpha"
+    ],
+    "scalar_gate_statistic": "TBD_PREREGISTRATION",
+    "scalar_gate_threshold": 0.7,
+    "taxonomy_gate_statistic": "TBD_PREREGISTRATION",
+    "taxonomy_gate_threshold": 0.65,
+    "gate_combination": "scalar_gte_0_70_or_taxonomy_gte_0_65",
+    "failed_gate_requires_retraining": true,
+    "failed_gate_requires_separate_resample": true,
+    "adjudication_may_mask_low_agreement": false
+  },
+  "statistics": {
+    "confidence_interval_method": "TBD_PREREGISTRATION",
+    "confidence_level": "TBD_PREREGISTRATION",
+    "cluster_unit": "TBD_PREREGISTRATION",
+    "multiplicity_control": "TBD_PREREGISTRATION",
+    "minimum_support_rule": "TBD_PREREGISTRATION",
+    "small_support_policy": "TBD_PREREGISTRATION",
+    "weighted_and_unweighted_slice_estimands": "TBD_PREREGISTRATION"
+  },
+  "locked_test": {
+    "g04_completion_required_before_access": true,
+    "expert_access_transaction_count": 1,
+    "developer_model_result_access_before_final_gate": false,
+    "rubric_change_after_start_allowed": false,
+    "primary_change_after_start_allowed": false,
+    "sensitivity_bases": [
+      "primary_reviewer_1_original",
+      "primary_reviewer_2_original",
+      "adjudicated_gold"
+    ],
+    "one_shot_transaction_protocol": "TBD_PREREGISTRATION",
+    "recovery_and_failure_policy": "TBD_PREREGISTRATION"
+  },
+  "approval": {
+    "decision": "TBD_PREREGISTRATION",
+    "signed_receipt_sha256": "TBD_PREREGISTRATION"
+  },
+  "privacy_zone": "C1_public_template_only"
+}

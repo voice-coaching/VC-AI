@@ -1,0 +1,272 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "voice_coach.e01.phone_paired_aggregate_report.v2",
+  "title": "E01 aggregate-only paired phone-relation report v2",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_version",
+    "status",
+    "privacy_zone",
+    "leakage_guard",
+    "private_receipt_bundle_sha256",
+    "case_count",
+    "relation_results",
+    "overall",
+    "publication_allowed",
+    "paper_complete"
+  ],
+  "properties": {
+    "schema_version": {
+      "const": "voice_coach.e01.phone_paired_aggregate_report.v2"
+    },
+    "status": {
+      "const": "aggregate_only_completed"
+    },
+    "privacy_zone": {
+      "const": "A1_aggregate_only"
+    },
+    "leakage_guard": {
+      "$ref": "#/$defs/leakageGuard"
+    },
+    "private_receipt_bundle_sha256": {
+      "$ref": "#/$defs/sha256"
+    },
+    "case_count": {
+      "type": "integer",
+      "minimum": 1,
+      "maximum": 1000000000
+    },
+    "relation_results": {
+      "type": "array",
+      "prefixItems": [
+        {
+          "$ref": "#/$defs/relationAggregate",
+          "properties": {
+            "relation_role": {
+              "const": "U_to_I"
+            }
+          }
+        },
+        {
+          "$ref": "#/$defs/relationAggregate",
+          "properties": {
+            "relation_role": {
+              "const": "U_to_T"
+            }
+          }
+        },
+        {
+          "$ref": "#/$defs/relationAggregate",
+          "properties": {
+            "relation_role": {
+              "const": "I_to_T"
+            }
+          }
+        }
+      ],
+      "items": false,
+      "minItems": 3,
+      "maxItems": 3
+    },
+    "overall": {
+      "$ref": "#/$defs/overallAggregate"
+    },
+    "publication_allowed": {
+      "const": false
+    },
+    "paper_complete": {
+      "const": false
+    }
+  },
+  "$defs": {
+    "sha256": {
+      "type": "string",
+      "pattern": "^(?!0{64}$)[0-9a-f]{64}$"
+    },
+    "leakageGuard": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "contains_row_or_case_data",
+        "contains_audio_or_path_data",
+        "contains_speaker_or_session_data",
+        "contains_phone_or_transcript_data",
+        "contains_boundary_or_mask_data",
+        "contains_restricted_hashes_other_than_bundle_digest",
+        "contains_free_text"
+      ],
+      "properties": {
+        "contains_row_or_case_data": {
+          "const": false
+        },
+        "contains_audio_or_path_data": {
+          "const": false
+        },
+        "contains_speaker_or_session_data": {
+          "const": false
+        },
+        "contains_phone_or_transcript_data": {
+          "const": false
+        },
+        "contains_boundary_or_mask_data": {
+          "const": false
+        },
+        "contains_restricted_hashes_other_than_bundle_digest": {
+          "const": false
+        },
+        "contains_free_text": {
+          "const": false
+        }
+      }
+    },
+    "relationAggregate": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "relation_role",
+        "case_count",
+        "evaluable_count",
+        "passed_count",
+        "failed_count",
+        "invalid_count",
+        "minimum_support_required_count",
+        "required_pass_count",
+        "pass_rate",
+        "decision"
+      ],
+      "properties": {
+        "relation_role": {
+          "enum": [
+            "U_to_I",
+            "U_to_T",
+            "I_to_T"
+          ]
+        },
+        "case_count": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 1000000000
+        },
+        "evaluable_count": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 1000000000
+        },
+        "passed_count": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 1000000000
+        },
+        "failed_count": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 1000000000
+        },
+        "invalid_count": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 1000000000
+        },
+        "minimum_support_required_count": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 1000000000
+        },
+        "required_pass_count": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 1000000000
+        },
+        "pass_rate": {
+          "type": [
+            "number",
+            "null"
+          ],
+          "minimum": 0,
+          "maximum": 1
+        },
+        "decision": {
+          "enum": [
+            "passed",
+            "failed",
+            "blocked"
+          ]
+        }
+      }
+    },
+    "overallAggregate": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "case_count",
+        "relation_count",
+        "evaluable_relation_count",
+        "passed_relation_count",
+        "failed_relation_count",
+        "invalid_relation_count",
+        "all_three_relations_passed_case_count",
+        "any_invalid_relation_case_count",
+        "pass_rate",
+        "decision"
+      ],
+      "properties": {
+        "case_count": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 1000000000
+        },
+        "relation_count": {
+          "type": "integer",
+          "minimum": 3,
+          "maximum": 3000000000
+        },
+        "evaluable_relation_count": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 3000000000
+        },
+        "passed_relation_count": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 3000000000
+        },
+        "failed_relation_count": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 3000000000
+        },
+        "invalid_relation_count": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 3000000000
+        },
+        "all_three_relations_passed_case_count": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 1000000000
+        },
+        "any_invalid_relation_case_count": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 1000000000
+        },
+        "pass_rate": {
+          "type": [
+            "number",
+            "null"
+          ],
+          "minimum": 0,
+          "maximum": 1
+        },
+        "decision": {
+          "enum": [
+            "passed",
+            "failed",
+            "blocked"
+          ]
+        }
+      }
+    }
+  }
+}

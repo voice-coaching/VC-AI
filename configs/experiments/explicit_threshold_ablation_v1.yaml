@@ -1,0 +1,53 @@
+experiment:
+  id: aihub71490_explicit_threshold_ablation_v1
+  status: post_hoc_exploratory_b06_remains_failed
+  seeds: [42, 43, 44]
+  purpose: isolate_inner_validation_decision_threshold_effect
+
+data:
+  modeling_manifest_sha256: 32f439ba10a035541f53b8a44f5d150b307e89f97387f09748704c3c78e85ef1
+  training_splits: [train]
+  tuning_splits: [inner_val]
+  evaluation_splits: [dev]
+  forbidden_splits: [stack, calibration, locked_test]
+  primary_analysis_scope:
+    l1: ["Chinese", "Japanese"]
+    gender: ["F", "M"]
+
+features:
+  phone:
+    categorical:
+      - target_label
+      - previous_target_label
+      - next_target_label
+    numeric:
+      - oracle_duration_seconds
+      - segment_rms
+      - segment_zero_crossing_rate
+
+model:
+  family: logistic_regression
+  class_weight: balanced
+  c_grid: [0.1, 1.0, 10.0]
+  max_iter: 1000
+  inner_validation_speaker_fraction: 0.20
+  inner_split_hash_namespace: voice-coach.explicit-threshold-ablation.v1
+  threshold_grid:
+    start: 0.05
+    stop: 0.95
+    step: 0.01
+  selection_metric: macro_f1
+  refit_selected_c_on_full_primary_train: true
+  transfer_inner_validation_threshold_after_refit: true
+
+evaluation:
+  primary_dev_evaluation_passes: 1
+  all_dev_audit_separate: true
+  slices: [l1, gender, proficiency, target_phone]
+  b06_status_must_remain: failed
+  post_hoc_exploratory: true
+  promotion_decision_allowed: false
+
+outputs:
+  artifact_root: artifacts/experiments/aihub71490_explicit_threshold_ablation_v1
+  registry_root: artifacts/experiment_registry

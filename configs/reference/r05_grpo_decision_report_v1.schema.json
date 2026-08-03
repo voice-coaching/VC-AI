@@ -1,0 +1,267 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "voice_coach.r05_grpo_decision_report.v1",
+  "title": "R05 aggregate-only GRPO entry decision report",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_version",
+    "report_id",
+    "status",
+    "privacy_zone",
+    "contains_row_level_data",
+    "contains_direct_identifiers",
+    "contains_free_text",
+    "training_or_download_executed",
+    "config_sha256",
+    "preregistration_sha256",
+    "human_authorization_sha256",
+    "evidence_bindings",
+    "gate_results",
+    "assurance_results",
+    "overall_decision",
+    "grpo_entry_authorized",
+    "publication_allowed"
+  ],
+  "properties": {
+    "schema_version": {
+      "const": "voice_coach.r05_grpo_decision_report.v1"
+    },
+    "report_id": {
+      "type": "string",
+      "pattern": "^r05_[0-9a-f]{32}$"
+    },
+    "status": {
+      "const": "completed"
+    },
+    "privacy_zone": {
+      "const": "A1_aggregate_only"
+    },
+    "contains_row_level_data": {
+      "const": false
+    },
+    "contains_direct_identifiers": {
+      "const": false
+    },
+    "contains_free_text": {
+      "const": false
+    },
+    "training_or_download_executed": {
+      "const": false
+    },
+    "config_sha256": {
+      "$ref": "#/$defs/sha256"
+    },
+    "preregistration_sha256": {
+      "$ref": "#/$defs/sha256"
+    },
+    "human_authorization_sha256": {
+      "$ref": "#/$defs/sha256"
+    },
+    "evidence_bindings": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "s108_commit_sha256",
+        "s203_commit_sha256",
+        "r04_commit_sha256",
+        "h00_approval_sha256",
+        "h04_report_sha256"
+      ],
+      "properties": {
+        "s108_commit_sha256": {
+          "$ref": "#/$defs/sha256"
+        },
+        "s203_commit_sha256": {
+          "$ref": "#/$defs/sha256"
+        },
+        "r04_commit_sha256": {
+          "$ref": "#/$defs/sha256"
+        },
+        "h00_approval_sha256": {
+          "$ref": "#/$defs/sha256"
+        },
+        "h04_report_sha256": {
+          "$ref": "#/$defs/sha256"
+        }
+      }
+    },
+    "gate_results": {
+      "type": "array",
+      "minItems": 5,
+      "maxItems": 5,
+      "items": {
+        "$ref": "#/$defs/gateResult"
+      }
+    },
+    "assurance_results": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "exact_model_identity_verified",
+        "code_license_verified",
+        "weight_license_verified",
+        "training_data_license_verified",
+        "reward_directionality_verified",
+        "reward_hacking_audit_passed",
+        "safety_review_passed",
+        "human_authorization_valid"
+      ],
+      "properties": {
+        "exact_model_identity_verified": {
+          "type": "boolean"
+        },
+        "code_license_verified": {
+          "type": "boolean"
+        },
+        "weight_license_verified": {
+          "type": "boolean"
+        },
+        "training_data_license_verified": {
+          "type": "boolean"
+        },
+        "reward_directionality_verified": {
+          "type": "boolean"
+        },
+        "reward_hacking_audit_passed": {
+          "type": "boolean"
+        },
+        "safety_review_passed": {
+          "type": "boolean"
+        },
+        "human_authorization_valid": {
+          "type": "boolean"
+        }
+      }
+    },
+    "overall_decision": {
+      "enum": [
+        "GO",
+        "NO_GO",
+        "BLOCKED"
+      ]
+    },
+    "grpo_entry_authorized": {
+      "type": "boolean"
+    },
+    "publication_allowed": {
+      "const": false
+    }
+  },
+  "$defs": {
+    "sha256": {
+      "type": "string",
+      "pattern": "^[0-9a-f]{64}$"
+    },
+    "nullableFiniteNumber": {
+      "type": [
+        "number",
+        "null"
+      ]
+    },
+    "gateResult": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "gate_id",
+        "evidence_sha256",
+        "metric_or_estimand_id",
+        "population_id",
+        "alignment_id",
+        "confidence_interval_method",
+        "decision_rule_id",
+        "operator",
+        "threshold",
+        "point_estimate",
+        "confidence_interval_lower",
+        "confidence_interval_upper",
+        "superiority_margin",
+        "effect_size",
+        "decision"
+      ],
+      "properties": {
+        "gate_id": {
+          "enum": [
+            "s1_phone_f1",
+            "s1_utterance_icc",
+            "s2_severe_error_recall",
+            "multi_reference_blind_superiority",
+            "actual_pilot_learning_effect_signal"
+          ]
+        },
+        "evidence_sha256": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/sha256"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "metric_or_estimand_id": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "population_id": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "alignment_id": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "confidence_interval_method": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "decision_rule_id": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "operator": {
+          "enum": [
+            "greater_than_or_equal",
+            "preregistered_superiority",
+            "preregistered_signal"
+          ]
+        },
+        "threshold": {
+          "$ref": "#/$defs/nullableFiniteNumber"
+        },
+        "point_estimate": {
+          "$ref": "#/$defs/nullableFiniteNumber"
+        },
+        "confidence_interval_lower": {
+          "$ref": "#/$defs/nullableFiniteNumber"
+        },
+        "confidence_interval_upper": {
+          "$ref": "#/$defs/nullableFiniteNumber"
+        },
+        "superiority_margin": {
+          "$ref": "#/$defs/nullableFiniteNumber"
+        },
+        "effect_size": {
+          "$ref": "#/$defs/nullableFiniteNumber"
+        },
+        "decision": {
+          "enum": [
+            "passed",
+            "failed",
+            "missing"
+          ]
+        }
+      }
+    }
+  }
+}

@@ -1,0 +1,315 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://voice-coach.local/schemas/h04_feasibility_pilot_completion_v1.schema.json",
+  "title": "H04 predecessor completed H02-H03 feasibility pilot",
+  "description": "A privacy-safe aggregate receipt for the H00-authorized 15-20-per-arm feasibility pilot that precedes the H01 final sample-size lock. It proves collection of nuisance parameters and blind-rating reliability without exposing participant rows or using an observed treatment effect for power.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_version",
+    "pilot_id",
+    "status",
+    "privacy_zone",
+    "lineage",
+    "completion",
+    "counts",
+    "receipts",
+    "privacy_safety",
+    "binding_sha256"
+  ],
+  "properties": {
+    "schema_version": {
+      "const": "voice_coach.h04_feasibility_pilot_completion.v1"
+    },
+    "pilot_id": {
+      "type": "string",
+      "pattern": "^h04feaspilot_[0-9a-f]{32}$"
+    },
+    "status": {
+      "const": "completed_feasibility_pilot_before_h01_lock"
+    },
+    "privacy_zone": {
+      "const": "A1_aggregate_feasibility_pilot_receipt"
+    },
+    "lineage": {
+      "$ref": "#/$defs/lineage"
+    },
+    "completion": {
+      "$ref": "#/$defs/completion"
+    },
+    "counts": {
+      "$ref": "#/$defs/counts"
+    },
+    "receipts": {
+      "$ref": "#/$defs/receipts"
+    },
+    "privacy_safety": {
+      "$ref": "#/$defs/privacy"
+    },
+    "binding_sha256": {
+      "$ref": "#/$defs/sha256"
+    }
+  },
+  "$defs": {
+    "sha256": {
+      "type": "string",
+      "pattern": "^[0-9a-f]{64}$"
+    },
+    "lineage": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "h00_approval_sha256",
+        "h00_attestation_sha256",
+        "protocol_sha256",
+        "feasibility_preregistration_sha256",
+        "allocation_contract_sha256",
+        "c0_manual_sha256",
+        "c3_manual_sha256",
+        "c5_manual_sha256"
+      ],
+      "properties": {
+        "h00_approval_sha256": {
+          "$ref": "#/$defs/sha256"
+        },
+        "h00_attestation_sha256": {
+          "$ref": "#/$defs/sha256"
+        },
+        "protocol_sha256": {
+          "$ref": "#/$defs/sha256"
+        },
+        "feasibility_preregistration_sha256": {
+          "$ref": "#/$defs/sha256"
+        },
+        "allocation_contract_sha256": {
+          "$ref": "#/$defs/sha256"
+        },
+        "c0_manual_sha256": {
+          "$ref": "#/$defs/sha256"
+        },
+        "c3_manual_sha256": {
+          "$ref": "#/$defs/sha256"
+        },
+        "c5_manual_sha256": {
+          "$ref": "#/$defs/sha256"
+        }
+      }
+    },
+    "completion": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "actual_participants_enrolled_and_randomized",
+        "approved_consent_and_audio_scope_confirmed",
+        "two_week_feasibility_intervention_completed",
+        "pre_post_retention_collection_completed",
+        "blind_independent_ratings_completed",
+        "minimum_independent_raters",
+        "raters_blinded_to_condition_timepoint_and_identity",
+        "participant_blinding_claimed",
+        "feasibility_only_not_confirmatory_efficacy",
+        "observed_treatment_effect_used_for_power",
+        "aggregate_nuisance_parameters_completed",
+        "withdrawal_handled_under_approved_consent"
+      ],
+      "properties": {
+        "actual_participants_enrolled_and_randomized": {
+          "const": true
+        },
+        "approved_consent_and_audio_scope_confirmed": {
+          "const": true
+        },
+        "two_week_feasibility_intervention_completed": {
+          "const": true
+        },
+        "pre_post_retention_collection_completed": {
+          "const": true
+        },
+        "blind_independent_ratings_completed": {
+          "const": true
+        },
+        "minimum_independent_raters": {
+          "type": "integer",
+          "minimum": 2
+        },
+        "raters_blinded_to_condition_timepoint_and_identity": {
+          "const": true
+        },
+        "participant_blinding_claimed": {
+          "const": false
+        },
+        "feasibility_only_not_confirmatory_efficacy": {
+          "const": true
+        },
+        "observed_treatment_effect_used_for_power": {
+          "const": false
+        },
+        "aggregate_nuisance_parameters_completed": {
+          "const": true
+        },
+        "withdrawal_handled_under_approved_consent": {
+          "const": true
+        }
+      }
+    },
+    "stage_count": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "comparison_id",
+        "arm_a",
+        "arm_b",
+        "arm_a_randomized",
+        "arm_b_randomized",
+        "randomized_total",
+        "pre_observed_participants",
+        "post_observed_participants",
+        "retention_observed_participants",
+        "blind_rating_count"
+      ],
+      "properties": {
+        "comparison_id": {
+          "enum": [
+            "c3_minus_c0",
+            "c5_minus_c3"
+          ]
+        },
+        "arm_a": {
+          "enum": [
+            "C0",
+            "C3"
+          ]
+        },
+        "arm_b": {
+          "enum": [
+            "C3",
+            "C5"
+          ]
+        },
+        "arm_a_randomized": {
+          "type": "integer",
+          "minimum": 15,
+          "maximum": 20
+        },
+        "arm_b_randomized": {
+          "type": "integer",
+          "minimum": 15,
+          "maximum": 20
+        },
+        "randomized_total": {
+          "type": "integer",
+          "minimum": 30,
+          "maximum": 40
+        },
+        "pre_observed_participants": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "post_observed_participants": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "retention_observed_participants": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "blind_rating_count": {
+          "type": "integer",
+          "minimum": 1
+        }
+      }
+    },
+    "counts": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "stage_1_c0_vs_c3",
+        "stage_2_c3_vs_c5"
+      ],
+      "properties": {
+        "stage_1_c0_vs_c3": {
+          "$ref": "#/$defs/stage_count"
+        },
+        "stage_2_c3_vs_c5": {
+          "$ref": "#/$defs/stage_count"
+        }
+      }
+    },
+    "receipts": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "aggregate_nuisance_parameter_report_sha256",
+        "blind_rater_reliability_report_sha256",
+        "randomization_receipt_sha256",
+        "delivery_fidelity_report_sha256",
+        "missingness_attrition_report_sha256",
+        "adverse_feedback_report_sha256",
+        "data_lock_receipt_sha256"
+      ],
+      "properties": {
+        "aggregate_nuisance_parameter_report_sha256": {
+          "$ref": "#/$defs/sha256"
+        },
+        "blind_rater_reliability_report_sha256": {
+          "$ref": "#/$defs/sha256"
+        },
+        "randomization_receipt_sha256": {
+          "$ref": "#/$defs/sha256"
+        },
+        "delivery_fidelity_report_sha256": {
+          "$ref": "#/$defs/sha256"
+        },
+        "missingness_attrition_report_sha256": {
+          "$ref": "#/$defs/sha256"
+        },
+        "adverse_feedback_report_sha256": {
+          "$ref": "#/$defs/sha256"
+        },
+        "data_lock_receipt_sha256": {
+          "$ref": "#/$defs/sha256"
+        }
+      }
+    },
+    "privacy": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "participant_rows_present",
+        "participant_identifiers_present",
+        "audio_or_transcript_present",
+        "raw_locator_present",
+        "free_text_present",
+        "individual_scores_present",
+        "observed_effect_estimates_present",
+        "aggregate_only"
+      ],
+      "properties": {
+        "participant_rows_present": {
+          "const": false
+        },
+        "participant_identifiers_present": {
+          "const": false
+        },
+        "audio_or_transcript_present": {
+          "const": false
+        },
+        "raw_locator_present": {
+          "const": false
+        },
+        "free_text_present": {
+          "const": false
+        },
+        "individual_scores_present": {
+          "const": false
+        },
+        "observed_effect_estimates_present": {
+          "const": false
+        },
+        "aggregate_only": {
+          "const": true
+        }
+      }
+    }
+  }
+}

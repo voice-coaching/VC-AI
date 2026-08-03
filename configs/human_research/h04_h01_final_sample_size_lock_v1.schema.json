@@ -1,0 +1,175 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://voice-coach.local/schemas/h04_h01_final_sample_size_lock_v1.schema.json",
+  "title": "H04 predecessor H01 pilot-informed final sample-size lock",
+  "description": "A privacy-safe H01 completion receipt. It binds a separately completed H00-authorized feasibility-pilot aggregate receipt, full simulation, independent target-effect justification, and manual statistician/PI sample-size lock before confirmatory recruitment. It contains no participant rows or observed treatment effect.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_version",
+    "lock_id",
+    "status",
+    "privacy_zone",
+    "h00_approval_sha256",
+    "h00_attestation_sha256",
+    "source_planning_config_sha256",
+    "source_planning_artifact_sha256",
+    "feasibility_pilot_completion_sha256",
+    "pilot_nuisance_report_sha256",
+    "full_simulation_report_sha256",
+    "public_preregistration_sha256",
+    "minimum_relevant_difference_receipt_sha256",
+    "statistician_approval_receipt_sha256",
+    "principal_investigator_approval_receipt_sha256",
+    "locked_at_utc",
+    "locked_before_confirmatory_recruitment",
+    "actual_empirical_pilot_used",
+    "pilot_observed_treatment_effect_used",
+    "full_mixed_or_cluster_simulation_completed",
+    "final_sample_size_auto_locked",
+    "final_sample_size_manually_locked",
+    "comparisons",
+    "binding_sha256"
+  ],
+  "properties": {
+    "schema_version": {
+      "const": "voice_coach.h04_h01_final_sample_size_lock.v1"
+    },
+    "lock_id": {
+      "type": "string",
+      "pattern": "^h01lock_[0-9a-f]{32}$"
+    },
+    "status": {
+      "const": "completed_and_locked_before_confirmatory_recruitment"
+    },
+    "privacy_zone": {
+      "const": "A1_aggregate_sample_size_lock"
+    },
+    "h00_approval_sha256": {
+      "$ref": "#/$defs/sha256"
+    },
+    "h00_attestation_sha256": {
+      "$ref": "#/$defs/sha256"
+    },
+    "source_planning_config_sha256": {
+      "$ref": "#/$defs/sha256"
+    },
+    "source_planning_artifact_sha256": {
+      "$ref": "#/$defs/sha256"
+    },
+    "feasibility_pilot_completion_sha256": {
+      "$ref": "#/$defs/sha256"
+    },
+    "pilot_nuisance_report_sha256": {
+      "$ref": "#/$defs/sha256"
+    },
+    "full_simulation_report_sha256": {
+      "$ref": "#/$defs/sha256"
+    },
+    "public_preregistration_sha256": {
+      "$ref": "#/$defs/sha256"
+    },
+    "minimum_relevant_difference_receipt_sha256": {
+      "$ref": "#/$defs/sha256"
+    },
+    "statistician_approval_receipt_sha256": {
+      "$ref": "#/$defs/sha256"
+    },
+    "principal_investigator_approval_receipt_sha256": {
+      "$ref": "#/$defs/sha256"
+    },
+    "locked_at_utc": {
+      "type": "string",
+      "pattern": "^[0-9]{4}-[0-9]{2}-[0-9]{2}T[0-9]{2}:[0-9]{2}:[0-9]{2}Z$"
+    },
+    "locked_before_confirmatory_recruitment": {
+      "const": true
+    },
+    "actual_empirical_pilot_used": {
+      "const": true
+    },
+    "pilot_observed_treatment_effect_used": {
+      "const": false
+    },
+    "full_mixed_or_cluster_simulation_completed": {
+      "const": true
+    },
+    "final_sample_size_auto_locked": {
+      "const": false
+    },
+    "final_sample_size_manually_locked": {
+      "const": true
+    },
+    "comparisons": {
+      "$ref": "#/$defs/comparisons"
+    },
+    "binding_sha256": {
+      "$ref": "#/$defs/sha256"
+    }
+  },
+  "$defs": {
+    "sha256": {
+      "type": "string",
+      "pattern": "^[0-9a-f]{64}$"
+    },
+    "comparison": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "comparison_id",
+        "arms",
+        "allocation_ratio",
+        "final_enrollment_per_arm",
+        "total_final_enrollment"
+      ],
+      "properties": {
+        "comparison_id": {
+          "enum": [
+            "c3_minus_c0",
+            "c5_minus_c3"
+          ]
+        },
+        "arms": {
+          "type": "array",
+          "minItems": 2,
+          "maxItems": 2,
+          "uniqueItems": true,
+          "items": {
+            "enum": [
+              "C0",
+              "C3",
+              "C5"
+            ]
+          }
+        },
+        "allocation_ratio": {
+          "const": "1:1"
+        },
+        "final_enrollment_per_arm": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "total_final_enrollment": {
+          "type": "integer",
+          "minimum": 2
+        }
+      }
+    },
+    "comparisons": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "stage_1_c0_vs_c3",
+        "stage_2_c3_vs_c5"
+      ],
+      "properties": {
+        "stage_1_c0_vs_c3": {
+          "$ref": "#/$defs/comparison"
+        },
+        "stage_2_c3_vs_c5": {
+          "$ref": "#/$defs/comparison"
+        }
+      }
+    }
+  }
+}

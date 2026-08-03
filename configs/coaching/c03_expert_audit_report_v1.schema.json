@@ -1,0 +1,338 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://voice-coach.local/schemas/c03_expert_audit_report_v1.schema.json",
+  "title": "C03 aggregate expert coaching audit report",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_version",
+    "report_id",
+    "item_manifest_sha256",
+    "rating_manifest_sha256",
+    "preregistration_sha256",
+    "reviewer_attestation_manifest_sha256",
+    "privacy_zone",
+    "primary_sample_count",
+    "reviewer_count",
+    "original_rating_count",
+    "adjudication_rating_count",
+    "primary_metrics",
+    "actionability",
+    "abstention_referral_audit",
+    "statistical_contract",
+    "zero_tolerance_safety",
+    "decision"
+  ],
+  "properties": {
+    "schema_version": {
+      "const": "voice_coach.c03_expert_audit_report.v1"
+    },
+    "report_id": {
+      "type": "string",
+      "pattern": "^c03report_[0-9a-f]{32}$"
+    },
+    "item_manifest_sha256": {
+      "$ref": "#/$defs/sha256"
+    },
+    "rating_manifest_sha256": {
+      "$ref": "#/$defs/sha256"
+    },
+    "preregistration_sha256": {
+      "$ref": "#/$defs/sha256"
+    },
+    "reviewer_attestation_manifest_sha256": {
+      "$ref": "#/$defs/sha256"
+    },
+    "privacy_zone": {
+      "const": "A1_aggregate_only"
+    },
+    "primary_sample_count": {
+      "const": 200
+    },
+    "reviewer_count": {
+      "type": "integer",
+      "minimum": 1
+    },
+    "original_rating_count": {
+      "type": "integer",
+      "minimum": 1
+    },
+    "adjudication_rating_count": {
+      "type": "integer",
+      "minimum": 0
+    },
+    "primary_metrics": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "location_accuracy",
+        "error_type_accuracy",
+        "unsupported_claim_rate"
+      ],
+      "properties": {
+        "location_accuracy": {
+          "$ref": "#/$defs/metric"
+        },
+        "error_type_accuracy": {
+          "$ref": "#/$defs/metric"
+        },
+        "unsupported_claim_rate": {
+          "$ref": "#/$defs/metric"
+        }
+      }
+    },
+    "actionability": {
+      "$ref": "#/$defs/metric"
+    },
+    "abstention_referral_audit": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "sample_count",
+        "metric_definition_sha256",
+        "numerator",
+        "denominator",
+        "rate",
+        "gate_applied"
+      ],
+      "properties": {
+        "sample_count": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "metric_definition_sha256": {
+          "$ref": "#/$defs/sha256"
+        },
+        "numerator": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "denominator": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "rate": {
+          "$ref": "#/$defs/rate"
+        },
+        "gate_applied": {
+          "const": false
+        }
+      }
+    },
+    "statistical_contract": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "confidence_interval_method_sha256",
+        "multiplicity_method_sha256",
+        "support_rule_sha256",
+        "adjudication_rule_sha256",
+        "risk_taxonomy_sha256",
+        "confidence_intervals",
+        "multiplicity_results",
+        "support_results"
+      ],
+      "properties": {
+        "confidence_interval_method_sha256": {
+          "$ref": "#/$defs/sha256"
+        },
+        "multiplicity_method_sha256": {
+          "$ref": "#/$defs/sha256"
+        },
+        "support_rule_sha256": {
+          "$ref": "#/$defs/sha256"
+        },
+        "adjudication_rule_sha256": {
+          "$ref": "#/$defs/sha256"
+        },
+        "risk_taxonomy_sha256": {
+          "$ref": "#/$defs/sha256"
+        },
+        "confidence_intervals": {
+          "type": "array",
+          "minItems": 3,
+          "items": {
+            "$ref": "#/$defs/ci"
+          }
+        },
+        "multiplicity_results": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/aggregateResult"
+          }
+        },
+        "support_results": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/aggregateResult"
+          }
+        }
+      }
+    },
+    "zero_tolerance_safety": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "dangerous_expression_count",
+        "discriminatory_expression_count",
+        "speaker_identity_inference_count",
+        "medical_judgment_count",
+        "any_event",
+        "pass_allowed"
+      ],
+      "properties": {
+        "dangerous_expression_count": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "discriminatory_expression_count": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "speaker_identity_inference_count": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "medical_judgment_count": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "any_event": {
+          "type": "boolean"
+        },
+        "pass_allowed": {
+          "type": "boolean"
+        }
+      }
+    },
+    "decision": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "location_gate_passed",
+        "error_type_gate_passed",
+        "unsupported_claim_gate_passed",
+        "zero_tolerance_gate_passed",
+        "overall_passed",
+        "status",
+        "revision_required",
+        "reaudit_required",
+        "production_release_allowed"
+      ],
+      "properties": {
+        "location_gate_passed": {
+          "type": "boolean"
+        },
+        "error_type_gate_passed": {
+          "type": "boolean"
+        },
+        "unsupported_claim_gate_passed": {
+          "type": "boolean"
+        },
+        "zero_tolerance_gate_passed": {
+          "type": "boolean"
+        },
+        "overall_passed": {
+          "type": "boolean"
+        },
+        "status": {
+          "enum": [
+            "passed",
+            "failed_metric_gate",
+            "failed_safety_revise_and_reaudit"
+          ]
+        },
+        "revision_required": {
+          "type": "boolean"
+        },
+        "reaudit_required": {
+          "type": "boolean"
+        },
+        "production_release_allowed": {
+          "type": "boolean"
+        }
+      }
+    }
+  },
+  "$defs": {
+    "sha256": {
+      "type": "string",
+      "pattern": "^[0-9a-f]{64}$"
+    },
+    "rate": {
+      "type": "number",
+      "minimum": 0,
+      "maximum": 1
+    },
+    "metric": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "numerator",
+        "denominator",
+        "rate"
+      ],
+      "properties": {
+        "numerator": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "denominator": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "rate": {
+          "$ref": "#/$defs/rate"
+        }
+      }
+    },
+    "ci": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "metric_id",
+        "lower",
+        "upper"
+      ],
+      "properties": {
+        "metric_id": {
+          "enum": [
+            "location_accuracy",
+            "error_type_accuracy",
+            "unsupported_claim_rate",
+            "actionability",
+            "abstention_referral"
+          ]
+        },
+        "lower": {
+          "$ref": "#/$defs/rate"
+        },
+        "upper": {
+          "$ref": "#/$defs/rate"
+        }
+      }
+    },
+    "aggregateResult": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "result_id",
+        "value"
+      ],
+      "properties": {
+        "result_id": {
+          "type": "string",
+          "pattern": "^[A-Za-z0-9][A-Za-z0-9_.:-]{0,63}$"
+        },
+        "value": {
+          "type": [
+            "number",
+            "integer",
+            "boolean",
+            "string"
+          ]
+        }
+      }
+    }
+  }
+}

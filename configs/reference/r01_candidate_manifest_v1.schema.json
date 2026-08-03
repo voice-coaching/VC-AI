@@ -1,0 +1,146 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://voice-coach.local/schemas/r01_candidate_manifest_v1.schema.json",
+  "title": "R01 private human and CosyVoice candidate manifest",
+  "description": "D1-only manifest schema. It is not a publication manifest and it carries no plaintext prompt, path, personal identity, metric, or R02 decision.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_version",
+    "manifest_id",
+    "status",
+    "r00_card_sha256",
+    "human_attestation_sha256",
+    "cosyvoice_attestation_sha256",
+    "privacy_zone",
+    "publication_allowed",
+    "r02_hard_gate_passed",
+    "candidate_rows"
+  ],
+  "properties": {
+    "schema_version": {
+      "const": "voice_coach.r01_candidate_manifest.v1"
+    },
+    "manifest_id": {
+      "type": "string",
+      "pattern": "^r01-private-candidates-[0-9a-f]{32}$"
+    },
+    "status": {
+      "const": "r01_private_candidates_pending_r02"
+    },
+    "r00_card_sha256": {
+      "$ref": "#/$defs/sha256"
+    },
+    "human_attestation_sha256": {
+      "$ref": "#/$defs/sha256"
+    },
+    "cosyvoice_attestation_sha256": {
+      "$ref": "#/$defs/sha256"
+    },
+    "privacy_zone": {
+      "const": "D1_pseudonymized_restricted_experiment"
+    },
+    "publication_allowed": {
+      "const": false
+    },
+    "r02_hard_gate_passed": {
+      "const": false
+    },
+    "candidate_rows": {
+      "type": "array",
+      "minItems": 160,
+      "maxItems": 320,
+      "items": {
+        "$ref": "#/$defs/candidateRow"
+      }
+    }
+  },
+  "$defs": {
+    "sha256": {
+      "type": "string",
+      "pattern": "^[0-9a-f]{64}$"
+    },
+    "candidateRow": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "candidate_id",
+        "sentence_id",
+        "target_text_sha256",
+        "source_kind",
+        "source_attestation_sha256",
+        "speaker_id_sha256",
+        "audio_object_id_sha256",
+        "audio_sha256",
+        "privacy_zone",
+        "consent_or_model_use_verified",
+        "speed_bucket",
+        "pitch_bucket",
+        "preservation_group_id_sha256",
+        "r02_hard_gate_status",
+        "publication_allowed"
+      ],
+      "properties": {
+        "candidate_id": {
+          "description": "Random UUIDv4 bytes without hyphens; sentence, source, speaker, and ordering must not be encoded.",
+          "type": "string",
+          "pattern": "^r01c_[0-9a-f]{32}$"
+        },
+        "sentence_id": {
+          "type": "string",
+          "pattern": "^R00-(0[1-9]|1[0-9]|20)$"
+        },
+        "target_text_sha256": {
+          "$ref": "#/$defs/sha256"
+        },
+        "source_kind": {
+          "enum": [
+            "human_recording",
+            "cosyvoice_tts"
+          ]
+        },
+        "source_attestation_sha256": {
+          "$ref": "#/$defs/sha256"
+        },
+        "speaker_id_sha256": {
+          "$ref": "#/$defs/sha256"
+        },
+        "audio_object_id_sha256": {
+          "$ref": "#/$defs/sha256"
+        },
+        "audio_sha256": {
+          "$ref": "#/$defs/sha256"
+        },
+        "privacy_zone": {
+          "const": "D1_pseudonymized_restricted_experiment"
+        },
+        "consent_or_model_use_verified": {
+          "const": true
+        },
+        "speed_bucket": {
+          "enum": [
+            "slow",
+            "neutral",
+            "fast"
+          ]
+        },
+        "pitch_bucket": {
+          "enum": [
+            "low",
+            "neutral",
+            "high"
+          ]
+        },
+        "preservation_group_id_sha256": {
+          "$ref": "#/$defs/sha256"
+        },
+        "r02_hard_gate_status": {
+          "const": "not_run"
+        },
+        "publication_allowed": {
+          "const": false
+        }
+      }
+    }
+  }
+}

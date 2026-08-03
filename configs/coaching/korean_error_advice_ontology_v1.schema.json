@@ -1,0 +1,361 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://voice-coach.local/schemas/korean_error_advice_ontology_v1.schema.json",
+  "title": "Korean error taxonomy and draft advice ontology",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_version",
+    "ontology_id",
+    "source",
+    "feature_separation",
+    "target_phone_mapping",
+    "coaching_policy",
+    "human_validation",
+    "tags"
+  ],
+  "properties": {
+    "schema_version": {
+      "const": "voice_coach.korean_error_advice_ontology.v1"
+    },
+    "ontology_id": {
+      "const": "aihub71490-korean-error-advice-v1"
+    },
+    "source": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "dataset",
+        "aggregate_report_path",
+        "aggregate_report_sha256",
+        "aggregate_schema_version",
+        "access_scope",
+        "observed_error_interval_count",
+        "observed_unknown_error_tag_count"
+      ],
+      "properties": {
+        "dataset": {
+          "const": "AI Hub 71490"
+        },
+        "aggregate_report_path": {
+          "const": "data/processed/aihub71490/manifests/aihub71490_data_card.json"
+        },
+        "aggregate_report_sha256": {
+          "type": "string",
+          "pattern": "^[0-9a-f]{64}$"
+        },
+        "aggregate_schema_version": {
+          "const": "aihub71490.data_card.v1"
+        },
+        "access_scope": {
+          "const": "privacy_safe_aggregate_only"
+        },
+        "observed_error_interval_count": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "observed_unknown_error_tag_count": {
+          "type": "integer",
+          "minimum": 0
+        }
+      }
+    },
+    "feature_separation": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "allowed_label_roles",
+        "prohibited_model_input_fields",
+        "rule"
+      ],
+      "properties": {
+        "allowed_label_roles": {
+          "type": "array",
+          "minItems": 3,
+          "maxItems": 3,
+          "uniqueItems": true,
+          "items": {
+            "type": "string"
+          }
+        },
+        "prohibited_model_input_fields": {
+          "type": "array",
+          "minItems": 6,
+          "maxItems": 6,
+          "uniqueItems": true,
+          "items": {
+            "type": "string"
+          }
+        },
+        "rule": {
+          "type": "string",
+          "minLength": 1
+        }
+      }
+    },
+    "target_phone_mapping": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "empirical_status",
+        "available_aggregate_evidence",
+        "unavailable_evidence",
+        "automatic_target_claim",
+        "interval_rules"
+      ],
+      "properties": {
+        "empirical_status": {
+          "const": "pending_privacy_safe_joint_aggregate"
+        },
+        "available_aggregate_evidence": {
+          "type": "array",
+          "minItems": 3,
+          "maxItems": 3,
+          "uniqueItems": true,
+          "items": {
+            "type": "string"
+          }
+        },
+        "unavailable_evidence": {
+          "type": "array",
+          "minItems": 3,
+          "maxItems": 3,
+          "uniqueItems": true,
+          "items": {
+            "type": "string"
+          }
+        },
+        "automatic_target_claim": {
+          "const": "prohibited_without_positive_interval_overlap"
+        },
+        "interval_rules": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "interval_semantics",
+            "overlap_requirement",
+            "primary_match",
+            "tie_breakers",
+            "multi_tag_rule",
+            "unmatched_rule",
+            "other_rule",
+            "unknown_rule"
+          ],
+          "properties": {
+            "interval_semantics": {
+              "const": "half_open"
+            },
+            "overlap_requirement": {
+              "const": "strictly_positive_duration"
+            },
+            "primary_match": {
+              "const": "maximum_overlap_duration"
+            },
+            "tie_breakers": {
+              "type": "array",
+              "minItems": 2,
+              "maxItems": 2,
+              "items": {
+                "type": "string"
+              }
+            },
+            "multi_tag_rule": {
+              "const": "preserve_each_source_error_interval_without_collapsing"
+            },
+            "unmatched_rule": {
+              "const": "preserve_tag_with_null_target_and_abstain_from_target_phone_claim"
+            },
+            "other_rule": {
+              "const": "preserve_other_and_route_to_expert_review"
+            },
+            "unknown_rule": {
+              "const": "preserve_unknown_and_route_to_expert_review"
+            }
+          }
+        }
+      }
+    },
+    "coaching_policy": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "priority_formula",
+        "allowed_top_k",
+        "default_top_k",
+        "ranking_tie_breakers",
+        "ranking_window_rule",
+        "confidence_threshold",
+        "confidence_threshold_status",
+        "below_confidence_action",
+        "unsupported_claim_action",
+        "empty_issue_action",
+        "production_release"
+      ],
+      "properties": {
+        "priority_formula": {
+          "const": "severity*confidence*comprehensibility_impact*trainability"
+        },
+        "allowed_top_k": {
+          "const": [
+            1,
+            3
+          ]
+        },
+        "default_top_k": {
+          "const": 1
+        },
+        "ranking_tie_breakers": {
+          "type": "array",
+          "minItems": 6,
+          "maxItems": 6,
+          "items": {
+            "type": "string"
+          }
+        },
+        "ranking_window_rule": {
+          "const": "do_not_replace_blocked_top_k_items_with_lower_ranked_items"
+        },
+        "confidence_threshold": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 1
+        },
+        "confidence_threshold_status": {
+          "const": "provisional_until_s107_calibration"
+        },
+        "below_confidence_action": {
+          "const": "rerecord"
+        },
+        "unsupported_claim_action": {
+          "const": "expert_review"
+        },
+        "empty_issue_action": {
+          "const": "none"
+        },
+        "production_release": {
+          "const": "prohibited_until_c03_expert_audit"
+        }
+      }
+    },
+    "human_validation": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "expert_review_status",
+        "c03_completed",
+        "required_sample_count",
+        "location_accuracy_gate",
+        "type_accuracy_gate",
+        "unsupported_claim_rate_gate"
+      ],
+      "properties": {
+        "expert_review_status": {
+          "const": "pending"
+        },
+        "c03_completed": {
+          "const": false
+        },
+        "required_sample_count": {
+          "const": 200
+        },
+        "location_accuracy_gate": {
+          "const": 0.9
+        },
+        "type_accuracy_gate": {
+          "const": 0.9
+        },
+        "unsupported_claim_rate_gate": {
+          "const": 0.02
+        }
+      }
+    },
+    "tags": {
+      "type": "array",
+      "minItems": 17,
+      "maxItems": 17,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "id",
+          "raw_label",
+          "observed_interval_count",
+          "target_scope",
+          "localization_policy",
+          "empirical_target_phone_support",
+          "advice"
+        ],
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "raw_label": {
+            "type": "string",
+            "minLength": 1
+          },
+          "observed_interval_count": {
+            "type": "integer",
+            "minimum": 0
+          },
+          "target_scope": {
+            "enum": [
+              "onset_consonant",
+              "coda_consonant",
+              "vowel",
+              "contextual_phone_sequence",
+              "prosodic_region",
+              "non_target_fluency_event",
+              "unknown"
+            ]
+          },
+          "localization_policy": {
+            "enum": [
+              "phone_overlap_required",
+              "prosodic_span_only",
+              "no_target_phone_claim"
+            ]
+          },
+          "empirical_target_phone_support": {
+            "type": "null"
+          },
+          "advice": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+              "advice_id",
+              "action",
+              "message_ko",
+              "review_status"
+            ],
+            "properties": {
+              "advice_id": {
+                "type": [
+                  "string",
+                  "null"
+                ]
+              },
+              "action": {
+                "enum": [
+                  "draft_coach",
+                  "abstain_expert_review"
+                ]
+              },
+              "message_ko": {
+                "type": [
+                  "string",
+                  "null"
+                ]
+              },
+              "review_status": {
+                "enum": [
+                  "engineering_draft",
+                  "not_applicable"
+                ]
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+}

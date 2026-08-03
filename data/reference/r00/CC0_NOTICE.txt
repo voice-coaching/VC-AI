@@ -1,0 +1,9 @@
+SPDX-License-Identifier: CC0-1.0
+
+The exact twenty Korean sentence texts in r00_sentence_card_v1.json are
+made available under the CC0 1.0 Universal Public Domain Dedication.
+This notice does not change the license or access terms of any corpus,
+audio, annotation, model, source code, or other project artifact.
+
+Canonical legal code:
+https://creativecommons.org/publicdomain/zero/1.0/legalcode

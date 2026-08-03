@@ -1,0 +1,65 @@
+{
+  "schema_version": "voice_coach.e02_confidence_guard_preregistration.v1",
+  "preregistration_id": "TBD_E02_PREREGISTRATION",
+  "status": "TBD_PREREGISTRATION",
+  "registered_at_utc": "TBD_PREREGISTRATION",
+  "registered_by_role": "TBD_PREREGISTRATION",
+  "frozen_before_guard_input_or_api_access": false,
+  "lineage": {
+    "s107_completion_commit_sha256": "TBD_S107_COMPLETION",
+    "s107_threshold_policy_report_sha256": "TBD_S107_COMPLETION",
+    "c02_completion_commit_sha256": "TBD_C02_COMPLETION",
+    "c02_preregistration_sha256": "TBD_C02_COMPLETION"
+  },
+  "domain_policy": {
+    "ood_definition_id": "TBD_PREREGISTRATION",
+    "ood_definition_policy_sha256": "TBD_PREREGISTRATION",
+    "ood_threshold_or_rule_policy_sha256": "TBD_PREREGISTRATION",
+    "domain_assessment_receipt_required": true,
+    "out_of_domain_blocks_all_automatic_correction": true
+  },
+  "confidence_policy": {
+    "threshold_source": "deep_validated_actual_s107_threshold_policy_only",
+    "numeric_threshold_copied_into_e02": false,
+    "threshold_policy_report_sha256": "TBD_S107_COMPLETION",
+    "confidence_assessment_contract_sha256": "TBD_PREREGISTRATION",
+    "below_threshold_blocks_all_automatic_correction": true
+  },
+  "support_and_abstention_policy": {
+    "unsupported_definition_id": "TBD_PREREGISTRATION",
+    "unsupported_policy_sha256": "TBD_PREREGISTRATION",
+    "abstain_all_definition_id": "TBD_PREREGISTRATION",
+    "abstain_all_policy_sha256": "TBD_PREREGISTRATION",
+    "unsupported_blocks_all_automatic_correction": true,
+    "abstain_all_blocks_all_automatic_correction": true,
+    "c02_blocked_top_k_backfill_allowed": false,
+    "c02_free_generation_allowed": false
+  },
+  "combination_policy": {
+    "blocked_reason_precedence": "TBD_PREREGISTRATION",
+    "safe_next_action_by_reason": "TBD_PREREGISTRATION",
+    "mixed_reason_resolution_id": "TBD_PREREGISTRATION",
+    "allowed_blocked_safe_next_actions": [
+      "rerecord",
+      "expert_review"
+    ]
+  },
+  "api_privacy_policy": {
+    "blocked_reason_codes_allowed": true,
+    "evidence_provenance_hashes_allowed": true,
+    "safe_next_action_code_allowed": true,
+    "model_score_allowed": false,
+    "pii_allowed": false,
+    "raw_path_allowed": false,
+    "free_text_allowed": false,
+    "advice_payload_allowed_when_blocked": false,
+    "reference_payload_allowed_when_blocked": false,
+    "corrective_action_payload_allowed_when_blocked": false
+  },
+  "approval": {
+    "decision": "TBD_PREREGISTRATION",
+    "protocol_sha256": "TBD_PREREGISTRATION",
+    "signed_receipt_sha256": "TBD_PREREGISTRATION"
+  },
+  "binding_sha256": "TBD_E02_PREREGISTRATION"
+}

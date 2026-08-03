@@ -3,53 +3,38 @@ param(
 )
 
 $ErrorActionPreference = 'Stop'
-$tarCommand = Get-Command tar -ErrorAction Stop
-$tar = $tarCommand.Source
-$logRoot = Join-Path $DatasetRoot 'extraction-logs'
-New-Item -ItemType Directory -Force -Path $logRoot | Out-Null
+$datasetPath = [System.IO.Path]::GetFullPath($DatasetRoot)
+if (-not (Test-Path -LiteralPath $datasetPath -PathType Container)) {
+    throw "Dataset root does not exist: $datasetPath"
+}
 
-$archives = Get-ChildItem -LiteralPath $DatasetRoot -Recurse -File -Filter '*.zip' |
-    Where-Object {
-        $_.BaseName -match '(?i)(lab|tag)'
-    } |
+$pythonCommand = Get-Command python -ErrorAction Stop
+$python = $pythonCommand.Source
+$extractor = Join-Path $PSScriptRoot 'extract_verified_zip.py'
+if (-not (Test-Path -LiteralPath $extractor -PathType Leaf)) {
+    throw "Safe ZIP extractor does not exist: $extractor"
+}
+
+$archives = Get-ChildItem -LiteralPath $datasetPath -Recurse -File -Filter '*.zip' |
+    Where-Object { $_.BaseName -match '(?i)(lab|tag)' } |
     Sort-Object FullName
 
 foreach ($archive in $archives) {
     $destination = Join-Path $archive.DirectoryName (Join-Path 'extracted' $archive.BaseName)
-    $completeMarker = Join-Path $destination '.extraction-complete'
-    if (Test-Path -LiteralPath $completeMarker) {
+    $completeMarker = Join-Path $destination '.verified-zip-extraction-complete.json'
+    if (Test-Path -LiteralPath $completeMarker -PathType Leaf) {
         Write-Output "SKIP completed: $($archive.Name)"
         continue
     }
 
-    New-Item -ItemType Directory -Force -Path $destination | Out-Null
-    Add-Type -AssemblyName System.IO.Compression.FileSystem
-    $zipFile = [System.IO.Compression.ZipFile]::OpenRead($archive.FullName)
-    try {
-        $expectedFiles = $zipFile.Entries.Count
-    }
-    finally {
-        $zipFile.Dispose()
-    }
-    $actualFiles = @(Get-ChildItem -LiteralPath $destination -Recurse -File -ErrorAction SilentlyContinue |
-        Where-Object { $_.Name -ne '.extraction-complete' }).Count
-    if ($actualFiles -eq $expectedFiles) {
-        Set-Content -LiteralPath $completeMarker -Value (Get-Date -Format o) -NoNewline
-        Write-Output "RECOVERED completed: $($archive.Name)"
-        continue
-    }
-
-    $stderr = Join-Path $logRoot ($archive.BaseName + '.stderr.log')
     Write-Output "EXTRACTING: $($archive.FullName)"
-    $previousErrorActionPreference = $ErrorActionPreference
-    $ErrorActionPreference = 'Continue'
-    & $tar -xf $archive.FullName -C $destination 2>> $stderr
-    $tarExitCode = $LASTEXITCODE
-    $ErrorActionPreference = $previousErrorActionPreference
-    if ($tarExitCode -ne 0) {
-        throw "Extraction failed for $($archive.Name), exit code $tarExitCode"
+    & $python $extractor $archive.FullName $destination `
+        --strip-leading-separators --no-fsync
+    if ($LASTEXITCODE -ne 0) {
+        throw "Extraction failed for $($archive.Name), exit code $LASTEXITCODE"
     }
-
-    Set-Content -LiteralPath $completeMarker -Value (Get-Date -Format o) -NoNewline
+    if (-not (Test-Path -LiteralPath $completeMarker -PathType Leaf)) {
+        throw "Completion marker was not created for $($archive.Name)"
+    }
     Write-Output "COMPLETE: $($archive.Name)"
 }

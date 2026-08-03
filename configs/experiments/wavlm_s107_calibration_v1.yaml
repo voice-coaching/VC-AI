@@ -1,0 +1,256 @@
+schema_version: 1
+
+experiment:
+  id: aihub71490_wavlm_s107_calibration_v1
+  stage: s107_calibration_only_frozen_scorer
+  task: phone_binary_error
+  calibration_only: true
+  development_only: true
+  oracle_alignment: true
+  default_label_status: silver_oracle_provisional
+  promotion_decision_allowed: false
+  s108_readiness_claim_allowed: false
+  gpu_allowed: false
+
+predecessor:
+  stage: s106_stack_only_confidence_aware_fusion
+  validation_must_complete_before_calibration_path_resolution: true
+  config:
+    path: configs/experiments/wavlm_s106_stack_fusion_v1.yaml
+    sha256: 196ed40aa59c77af1f7d4d975941b90229d21a9de16f4109e7621b4c3fbcaabb
+  commit_manifest: artifacts/experiments/aihub71490_wavlm_s106_stack_fusion_v1/commit.json
+  commit_schema_version: voice_coach.wavlm_s106_stack_fusion_commit.v2
+  required_commit_status: committed
+  validator:
+    symbol: voice_coach.training.wavlm_s106_fusion_training.validate_s106_commit
+    module:
+      path: src/voice_coach/training/wavlm_s106_fusion_training.py
+      sha256: e8366b150f507b12a48a7608fbbb2f9af619fcdd7eb10ffaceda4c9952d88097
+    required_status: valid
+  final_checkpoint:
+    artifact_name: final_fusion_checkpoint
+    relative_path: final_fusion_checkpoint.json
+    schema_version: voice_coach.wavlm_s106_fusion_checkpoint.v1
+    required_status: completed
+    required_family: standardized_l2_logistic_regression
+
+inputs:
+  calibration_bundle_commit: artifacts/experiments/aihub71490_wavlm_s107_calibration_v1/calibration_prediction_bundle_commit.json
+  bundle_schema_version: voice_coach.wavlm_s107_calibration_bundle.v1
+  required_bundle_status: committed
+  prediction_matrix:
+    format: parquet
+    schema_version: voice_coach.wavlm_s107_calibration_input.v1
+    exact_columns:
+      - utterance_id_sha256
+      - speaker_id_sha256
+      - phone_index
+      - split
+      - uncalibrated_probability
+      - reference_binary_error_label
+      - l1_group
+      - gender_group
+      - proficiency_group
+      - duration_bucket
+      - error_type_group
+      - qc_flagged
+      - reserved_prompt
+    row_key: [utterance_id_sha256, phone_index]
+    probability_column: uncalibrated_probability
+    label_column: reference_binary_error_label
+
+data:
+  allowed_splits: [calibration]
+  forbidden_splits: [train, dev, stack, locked_test]
+  calibration_path_resolution_requires_valid_s106: true
+  calibration_row_read_requires_valid_s106: true
+  preflight_semantic_row_read: false
+  runner_filter_pushdown_required: true
+  reject_non_calibration_rows: true
+  exclude_qc_flagged: true
+  exclude_reserved_prompts: true
+  require_namespaced_sha256_ids: true
+  duplicate_row_key_policy: fail
+  environment_files_allowed: false
+  raw_audio_access_allowed: false
+
+frozen_model_policy:
+  encoder_retraining_allowed: false
+  head_retraining_allowed: false
+  fusion_retraining_allowed: false
+  fusion_feature_change_allowed: false
+  loss_change_allowed: false
+  permitted_fitted_parameters:
+    - binary_temperature
+    - issue_threshold
+
+calibrator:
+  family: binary_logit_temperature_scaling
+  input: uncalibrated_error_probability
+  probability_clip: [0.000001, 0.999999]
+  objective: binary_negative_log_likelihood
+  temperature_bounds: [0.05, 20.0]
+  optimizer: scipy_bounded_scalar
+  intercept_fitted: false
+  family_search_allowed: false
+  fit_count: 1
+
+threshold_policy:
+  status: provisional_engineering_not_promotion
+  issue_definition: calibrated_error_probability_gte_issue_threshold
+  abstention_definition: every_eligible_phone_not_issued
+  target_point_precision: 0.90
+  grid:
+    start: 0.50
+    stop: 0.99
+    step: 0.01
+  provisional_minimum_issued_phone_count: 30
+  provisional_minimum_issued_coverage: 0.01
+  selection: maximum_coverage_among_point_precision_eligible
+  tie_break:
+    - lower_issue_threshold
+  no_eligible_candidate: abstain_all
+  promotion_gate_use_allowed: false
+  unresolved_final_preregistration:
+    - minimum_issued_phone_count
+    - minimum_issued_coverage
+    - ci_method_and_confidence_level
+    - point_estimate_or_ci_lower_bound_gate
+    - within_utterance_cluster_uncertainty
+
+uncertainty:
+  status: provisional_engineering_not_promotion
+  method: percentile_cluster_bootstrap
+  cluster_unit: speaker_id_sha256
+  confidence_level: 0.95
+  replicates: 2000
+  seed: 107
+  used_for_threshold_selection: false
+  used_for_promotion_gate: false
+
+ece:
+  bins: 15
+  binning: equal_width
+  interval_policy: left_closed_right_open_last_closed
+  empty_bin_policy: retain_with_count_zero_null_statistics_zero_contribution
+  primary_probability: calibrated_error_probability
+  event: reference_binary_error_label_equals_one
+  gate_pass_maximum: 0.10
+  gray_zone_maximum: 0.15
+  silver_result_is_promotion_evidence: false
+
+risk_coverage:
+  ranking: descending_calibrated_error_probability
+  risk: one_minus_issued_precision
+  target_coverages: [0.01, 0.02, 0.05, 0.10, 0.20, 0.40, 0.60, 0.80, 1.00]
+  include_selected_issue_policy_point: true
+
+slices:
+  axes:
+    - l1_group
+    - gender_group
+    - proficiency_group
+    - duration_bucket
+    - error_type_group
+  provisional_minimum_phone_rows: 30
+  small_cell_policy: aggregate_suppressed_without_group_names
+  promotion_gap_gate_allowed: false
+  final_minimum_speaker_positive_negative_support: TBD_PREREGISTRATION
+
+label_evidence:
+  allowed_statuses:
+    - silver_oracle_provisional
+    - expert_gold_d07
+  canonical_run_required_status: silver_oracle_provisional
+  silver:
+    engineering_analysis_allowed: true
+    expert_valid_claim_allowed: false
+    promotion_evidence_allowed: false
+  expert_gold:
+    d07_completed_evidence_required: true
+    two_independent_raters_and_adjudication_required: true
+    agreement_gate_required: true
+    evidence_schema: TBD_PREREGISTRATION
+  final_promotion_without_expert_gold: fail_closed
+
+reporting:
+  result_status: provisional_engineering
+  ece_brier_reliability_risk_slices_required: true
+  word_calibration_status: not_evaluable
+  utterance_calibration_status: not_evaluable
+  error_type_claim_allowed: false
+  coaching_claim_allowed: false
+  expert_valid_claim_allowed: false
+  s108_ready_status: blocked_preregistration_and_d07
+
+runtime:
+  device: cpu
+  cuda_allowed: false
+  deterministic: true
+  thread_count: 1
+  environment_files_forbidden: true
+  temporary_generation_cleanup_required: true
+
+implementation:
+  preflight_script:
+    path: scripts/prepare_wavlm_s107_calibration.py
+    sha256: 6afe337409b16f2072809dc9de164d371fad9cc94851aa5a621936d0ea572d46
+  calibration_script:
+    path: scripts/run_wavlm_s107_calibration.py
+    sha256: 8fbee41b5676207fc59686744aa4ddd789a39c038c04a17dce77544ca73133cd
+  contract_module:
+    path: src/voice_coach/training/wavlm_s107_calibration_contract.py
+    sha256: 04909937b7b8eb4a135a0f7e44c7ec0afc8a438c29aae2d2cbe3de4dcdafac1e
+  calibration_module:
+    path: src/voice_coach/training/wavlm_s107_calibration_training.py
+    sha256: 201973a25e75da77ec86468a60094c22ac3d3376d936d5e2d089531d52b5d6d3
+  project_manifest:
+    path: pyproject.toml
+    sha256: c33af395f4f3a3c23b625219d4f0911de2c35b08d6ffecc2710a118766f17328
+  scorer_lock:
+    path: requirements/scorer-lock-linux-aarch64-cu130.txt
+    sha256: f6c5b10c1028506d7361c83ad1e9aae0b1fafcf34f4e918e5b7123c51fac8cf2
+
+outputs:
+  execution_lock: artifacts/experiments/aihub71490_wavlm_s107_calibration_v1/execution_lock.json
+  generation_root: artifacts/experiments/aihub71490_wavlm_s107_calibration_v1/generations
+  commit_manifest: artifacts/experiments/aihub71490_wavlm_s107_calibration_v1/commit.json
+  registry_root: artifacts/experiment_registry
+  planned_registry_run_id: aihub71490-wavlm-s107-calibration-v1
+  atomic_publish: true
+  content_addressed_generation: true
+  unexpected_artifacts_allowed: false
+  row_level_outputs_access_scope: D1_restricted_internal
+  aggregate_report_access_scope: A1_aggregate
+  expected_artifact_count: 7
+  artifact_contract:
+    - name: calibration_predictions
+      relative_path: calibration_predictions.parquet
+      format: parquet
+      access_scope: D1_restricted_internal
+    - name: calibrator_parameters
+      relative_path: calibrator_parameters.json
+      format: json
+      access_scope: D1_restricted_internal
+    - name: threshold_policy_report
+      relative_path: threshold_policy_report.json
+      format: json
+      access_scope: A1_aggregate
+    - name: reliability_report
+      relative_path: reliability_report.json
+      format: json
+      access_scope: A1_aggregate
+    - name: risk_coverage_report
+      relative_path: risk_coverage_report.json
+      format: json
+      access_scope: A1_aggregate
+    - name: slice_report
+      relative_path: slice_report.json
+      format: json
+      access_scope: A1_aggregate
+    - name: calibration_only_report
+      relative_path: calibration_only_report.json
+      format: json
+      access_scope: A1_aggregate
+  registry_schema_version: 1
+  commit_schema_version: voice_coach.wavlm_s107_calibration_commit.v1

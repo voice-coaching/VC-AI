@@ -1,0 +1,245 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://voice-coach.local/schemas/c02_coaching_selection_output_v1.schema.json",
+  "title": "C02 deterministic ontology-only coaching selection output",
+  "description": "D1 output containing only exact C01 catalog messages or explicit abstentions. Free-generated LLM text, prompts, completions, paths, and direct identifiers are prohibited.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_version",
+    "output_id",
+    "status",
+    "input_manifest_sha256",
+    "c02_config_sha256",
+    "c02_preregistration_sha256",
+    "c01_validation_report_sha256",
+    "s107_completion_commit_sha256",
+    "s107_threshold_policy_report_sha256",
+    "top_k",
+    "confidence_threshold",
+    "priority_formula",
+    "ranking_tie_breakers",
+    "ranked_window_count",
+    "selected_count",
+    "blocked_count",
+    "action",
+    "ranked_window",
+    "generation_contract",
+    "privacy_zone",
+    "production_release_allowed"
+  ],
+  "properties": {
+    "schema_version": {
+      "const": "voice_coach.c02_coaching_selection_output.v1"
+    },
+    "output_id": {
+      "type": "string",
+      "pattern": "^c02out_[0-9a-f]{32}$"
+    },
+    "status": {
+      "enum": [
+        "selected",
+        "abstained",
+        "no_issues"
+      ]
+    },
+    "input_manifest_sha256": {
+      "$ref": "#/$defs/sha256"
+    },
+    "c02_config_sha256": {
+      "$ref": "#/$defs/sha256"
+    },
+    "c02_preregistration_sha256": {
+      "$ref": "#/$defs/sha256"
+    },
+    "c01_validation_report_sha256": {
+      "$ref": "#/$defs/sha256"
+    },
+    "s107_completion_commit_sha256": {
+      "$ref": "#/$defs/sha256"
+    },
+    "s107_threshold_policy_report_sha256": {
+      "$ref": "#/$defs/sha256"
+    },
+    "top_k": {
+      "enum": [
+        1,
+        3
+      ]
+    },
+    "confidence_threshold": {
+      "$ref": "#/$defs/probability"
+    },
+    "priority_formula": {
+      "const": "severity*calibrated_confidence*comprehensibility_impact*trainability"
+    },
+    "ranking_tie_breakers": {
+      "const": [
+        "start_ms",
+        "end_ms",
+        "issue_type",
+        "target",
+        "observed",
+        "evidence_ids",
+        "issue_id_sha256"
+      ]
+    },
+    "ranked_window_count": {
+      "type": "integer",
+      "minimum": 0,
+      "maximum": 3
+    },
+    "selected_count": {
+      "type": "integer",
+      "minimum": 0,
+      "maximum": 3
+    },
+    "blocked_count": {
+      "type": "integer",
+      "minimum": 0,
+      "maximum": 3
+    },
+    "action": {
+      "enum": [
+        "coach",
+        "rerecord",
+        "expert_review",
+        "none"
+      ]
+    },
+    "ranked_window": {
+      "type": "array",
+      "maxItems": 3,
+      "items": {
+        "$ref": "#/$defs/decision"
+      }
+    },
+    "generation_contract": {
+      "$ref": "#/$defs/generationContract"
+    },
+    "privacy_zone": {
+      "const": "D1_pseudonymized_restricted_experiment"
+    },
+    "production_release_allowed": {
+      "const": false
+    }
+  },
+  "$defs": {
+    "sha256": {
+      "type": "string",
+      "pattern": "^[0-9a-f]{64}$"
+    },
+    "probability": {
+      "type": "number",
+      "minimum": 0,
+      "maximum": 1
+    },
+    "decision": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "rank",
+        "issue_id_sha256",
+        "issue_type",
+        "priority_score_decimal",
+        "action",
+        "abstention_reason",
+        "advice_id",
+        "message_ko",
+        "message_sha256",
+        "claim_evidence_sha256"
+      ],
+      "properties": {
+        "rank": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 3
+        },
+        "issue_id_sha256": {
+          "$ref": "#/$defs/sha256"
+        },
+        "issue_type": {
+          "type": "string",
+          "pattern": "^[a-z][a-z0-9_]*$"
+        },
+        "priority_score_decimal": {
+          "type": "string",
+          "pattern": "^(0|1)\\.[0-9]{12}$"
+        },
+        "action": {
+          "enum": [
+            "coach",
+            "rerecord",
+            "expert_review"
+          ]
+        },
+        "abstention_reason": {
+          "enum": [
+            null,
+            "low_confidence",
+            "unsupported_claim"
+          ]
+        },
+        "advice_id": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "maxLength": 128
+        },
+        "message_ko": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "maxLength": 512
+        },
+        "message_sha256": {
+          "oneOf": [
+            {
+              "$ref": "#/$defs/sha256"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "claim_evidence_sha256": {
+          "$ref": "#/$defs/sha256"
+        }
+      }
+    },
+    "generationContract": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "mode",
+        "exact_catalog_message_only",
+        "free_generation_llm_used",
+        "prompt_or_completion_present",
+        "network_accessed",
+        "runtime_model_accessed"
+      ],
+      "properties": {
+        "mode": {
+          "const": "deterministic_c01_ontology_allowlist_only"
+        },
+        "exact_catalog_message_only": {
+          "const": true
+        },
+        "free_generation_llm_used": {
+          "const": false
+        },
+        "prompt_or_completion_present": {
+          "const": false
+        },
+        "network_accessed": {
+          "const": false
+        },
+        "runtime_model_accessed": {
+          "const": false
+        }
+      }
+    }
+  }
+}

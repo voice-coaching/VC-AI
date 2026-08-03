@@ -1,0 +1,83 @@
+{
+  "schema_version": "voice_coach.e00_closed_loop_preregistration.v1",
+  "preregistration_id": "TBD_PREREGISTRATION",
+  "status": "draft_not_approved",
+  "execution_mode": "TBD_PREREGISTRATION",
+  "frozen_before_session_or_audio_access": false,
+  "predecessor_bindings": {
+    "s108_completion_commit_sha256": "TBD_PREDECESSOR",
+    "e01_completion_commit_sha256": "TBD_PREDECESSOR",
+    "c02_bundle_commit_sha256": "TBD_PREDECESSOR",
+    "c03_report_sha256": "TBD_PREDECESSOR",
+    "e02_preregistration_sha256": "TBD_PREDECESSOR",
+    "r03_bank_manifest_sha256": "TBD_PREDECESSOR",
+    "d08_completion_sha256": "TBD_PREDECESSOR"
+  },
+  "execution_population": {
+    "demo_trace_count": "TBD_PREREGISTRATION",
+    "target_sentence_selection_policy_sha256": "TBD_PREREGISTRATION",
+    "human_eligibility_policy_sha256": "TBD_PREREGISTRATION",
+    "fixture_provenance_policy_sha256": "TBD_PREREGISTRATION",
+    "human_and_fixture_results_mixed": false
+  },
+  "closed_loop_contract": {
+    "attempt_count_per_eligible_loop": 2,
+    "s108_actual_production_handoff_required": true,
+    "locked_result_copy_or_replay_allowed": false,
+    "e02_guard_before_any_delivery_required": true,
+    "c02_selected_count": 1,
+    "catalog_only": true,
+    "free_generation_allowed": false,
+    "r03_d08_licensed_reference_required": true,
+    "same_scorer_pre_post_required": true,
+    "result_based_scorer_change_allowed": false
+  },
+  "blocked_policy": {
+    "blocked_reasons": [
+      "out_of_domain",
+      "low_confidence",
+      "unsupported",
+      "abstain_all"
+    ],
+    "automatic_coaching_allowed": false,
+    "automatic_reference_allowed": false,
+    "automatic_corrective_action_allowed": false,
+    "safe_next_actions": [
+      "rerecord",
+      "expert_review"
+    ],
+    "reason_precedence_sha256": "TBD_PREREGISTRATION",
+    "reason_to_action_policy_sha256": "TBD_PREREGISTRATION"
+  },
+  "comparison": {
+    "paired_metric_family": "TBD_PREREGISTRATION",
+    "paired_metric_definition_sha256": "TBD_PREREGISTRATION",
+    "attempt_qc_policy_sha256": "TBD_PREREGISTRATION",
+    "missing_or_failed_attempt_policy_sha256": "TBD_PREREGISTRATION",
+    "exact_effect_estimand": "TBD_PREREGISTRATION",
+    "confidence_interval_method": "TBD_PREREGISTRATION",
+    "confidence_level": "TBD_PREREGISTRATION",
+    "multiplicity_method": "TBD_PREREGISTRATION",
+    "minimum_support": "TBD_PREREGISTRATION",
+    "inferential_analysis_enabled_for_e00_demo": false
+  },
+  "claims": {
+    "noninferential_demo_only": true,
+    "pedagogical_effect_claim_allowed": false,
+    "clinical_claim_allowed": false,
+    "production_deployment_claim_allowed": false
+  },
+  "privacy_and_safety": {
+    "user_or_participant_data_fabrication_allowed": false,
+    "raw_audio_or_locator_in_public_trace_allowed": false,
+    "numeric_score_or_threshold_in_public_trace_allowed": false,
+    "source_identity_or_condition_in_public_trace_allowed": false,
+    "free_text_in_public_trace_allowed": false,
+    "human_mode_requires_h00_and_individual_consent": true,
+    "fixture_mode_requires_no_human_voice_or_user_data": true
+  },
+  "approved_by_protocol_owner": false,
+  "approved_by_privacy_owner": false,
+  "approved_by_statistics_owner": false,
+  "binding_sha256": "TBD_PREREGISTRATION"
+}

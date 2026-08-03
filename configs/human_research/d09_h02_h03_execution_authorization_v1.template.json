@@ -1,0 +1,53 @@
+{
+  "schema_version": "voice_coach.d09_h02_h03_execution_authorization.v1",
+  "authorization_id": "TBD_AUTHORIZATION",
+  "phase": "TBD_AUTHORIZATION",
+  "status": "draft_inactive",
+  "valid_from_utc": "TBD_AUTHORIZATION",
+  "valid_until_utc": "TBD_AUTHORIZATION",
+  "lineage": {
+    "h00_approval_sha256": "TBD_H00_APPROVAL",
+    "h00_attestation_sha256": "TBD_H00_ATTESTATION",
+    "operational_preregistration_sha256": "TBD_PREREGISTRATION",
+    "intervention_manual_bundle_sha256": "TBD_MANUAL",
+    "delivery_predecessor_receipt_sha256": "TBD_DELIVERY_PREDECESSORS",
+    "feasibility_completion_sha256": "TBD_PHASE_DEPENDENT",
+    "h01_final_sample_size_lock_sha256": "TBD_PHASE_DEPENDENT",
+    "frozen_sap_sha256": "TBD_PHASE_DEPENDENT"
+  },
+  "authorized_operations": {
+    "recruitment": false,
+    "consent": false,
+    "participant_randomization": false,
+    "audio_recording": false,
+    "intervention_delivery": false,
+    "blind_rating": false,
+    "restricted_d1_processing": false,
+    "statistics_or_effect_analysis": false,
+    "publication": false
+  },
+  "operational_assurance": {
+    "h00_scope_current": false,
+    "consent_withdrawal_retention_deletion_ready": false,
+    "compensation_and_minor_policy_ready": false,
+    "pseudonym_key_separation_ready": false,
+    "incident_and_pause_stop_ready": false,
+    "manuals_and_preregistration_frozen": false,
+    "delivery_predecessors_actual_and_validated": false,
+    "stage_randomization_receipts_separate": false,
+    "comparison_participant_audio_rating_sets_disjoint": false,
+    "comparison_c3_participants_not_shared": false,
+    "stage_2_effect_independent_activation": false,
+    "feasibility_and_confirmatory_sets_must_be_disjoint": false,
+    "participant_blinding_claimed": false
+  },
+  "approval": {
+    "decision": "TBD_AUTHORIZATION",
+    "principal_investigator_receipt_sha256": "TBD_AUTHORIZATION",
+    "data_custodian_receipt_sha256": "TBD_AUTHORIZATION",
+    "operations_lead_receipt_sha256": "TBD_AUTHORIZATION",
+    "active": false
+  },
+  "privacy_zone": "A1_C1_public_authorization_no_identity",
+  "binding_sha256": "TBD_AUTHORIZATION"
+}

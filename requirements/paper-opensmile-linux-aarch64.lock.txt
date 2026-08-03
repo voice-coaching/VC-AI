@@ -1,0 +1,27 @@
+# Exact successful freeze from .venv-paper-acoustics on 2026-07-29.
+# Platform: Ubuntu 24.04, Linux aarch64, Python 3.12.3.
+# Scope: openSMILE eGeMAPSv02 research-only smoke; Parselmouth is not present.
+asttokens==3.0.2
+audeer==2.4.0
+audformat==1.4.2
+audinterface==1.4.0
+audiofile==1.6.1
+audmath==1.4.4
+audobject==0.7.13
+audresample==1.3.6
+cffi==2.1.0
+iso3166==2.1.1
+iso639-lang==2.6.3
+numpy==2.5.1
+opensmile==2.6.0
+oyaml==1.0
+packaging==26.2
+pandas==3.0.5
+pyarrow==25.0.0
+pycparser==3.0
+python-dateutil==2.9.0.post0
+PyYAML==6.0.3
+six==1.17.0
+soundfile==0.14.0
+tqdm==4.70.0
+typing_extensions==4.16.0

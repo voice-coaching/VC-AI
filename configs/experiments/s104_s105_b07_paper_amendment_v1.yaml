@@ -1,0 +1,119 @@
+schema_version: voice_coach.s104_s105_b07_paper_amendment_manifest.v1
+status: config_only
+
+# Config-only validation must leave every counter at zero.  A separate reviewed
+# ready manifest must retain this pre-execution record while replacing every TBD.
+actual_state:
+  metric_values_read: 0
+  artifact_or_registry_files_read: 0
+  canonical_files_read: 0
+  outputs_written: 0
+
+contract:
+  pending_marker_count: 18
+  pending_markers_sha256: 1d0cce59025c86879d0a9972f0da31e45e87169b41f5b8fadd427c111e6d7673
+  null_input: null
+  null_manuscript_token: NA
+  candidate_only: true
+  canonical_write_allowed: false
+  validator_timeout_seconds: 21600
+
+validators:
+  s104:
+    path: scripts/train_wavlm_s104_adapter.py
+    sha256: TBD
+    size_bytes: 0
+  s105:
+    path: scripts/train_wavlm_s105_hierarchy.py
+    sha256: TBD
+    size_bytes: 0
+  b07:
+    path: scripts/train_b07_gop_acoustic_posterior.py
+    sha256: TBD
+    size_bytes: 0
+
+inputs:
+  s104_config:
+    path: configs/experiments/wavlm_s104_adapter_v1.yaml
+    sha256: TBD
+    size_bytes: 0
+  s104_commit: &tbd
+    path: TBD
+    sha256: TBD
+    size_bytes: 0
+  s104_report: *tbd
+  s104_registry: *tbd
+  s104_execution_lock: *tbd
+
+  s105_config:
+    path: configs/experiments/wavlm_s105_hierarchy_v1.yaml
+    sha256: TBD
+    size_bytes: 0
+  s105_commit: *tbd
+  s105_comparison_report: *tbd
+  s105_ablation_table: *tbd
+  s105_execution_lock: *tbd
+  s105_variant_simple_head_control_report: *tbd
+  s105_variant_flat_shared_multitask_report: *tbd
+  s105_variant_final_layer_hierarchy_report: *tbd
+  s105_variant_layerwise_weighted_hierarchy_report: *tbd
+  s105_variant_levelwise_multi_aspect_hierarchy_report: *tbd
+  s105_variant_simple_head_control_registry: *tbd
+  s105_variant_flat_shared_multitask_registry: *tbd
+  s105_variant_final_layer_hierarchy_registry: *tbd
+  s105_variant_layerwise_weighted_hierarchy_registry: *tbd
+  s105_variant_levelwise_multi_aspect_hierarchy_registry: *tbd
+
+  b07_config:
+    path: configs/experiments/b07_gop_acoustic_posterior_v1.yaml
+    sha256: TBD
+    size_bytes: 0
+  b07_commit: *tbd
+  b07_aggregate_report: *tbd
+  b07_paired_control_report: *tbd
+  b07_registry: *tbd
+  b07_execution_lock: *tbd
+  b07_seed_42_metrics: *tbd
+  b07_seed_43_metrics: *tbd
+  b07_seed_44_metrics: *tbd
+  b07_seed_42_selection_trace: *tbd
+  b07_seed_43_selection_trace: *tbd
+  b07_seed_44_selection_trace: *tbd
+
+targets:
+  manuscript:
+    path: docs/paper/EXPERIMENTAL_MANUSCRIPT_KO.md
+    sha256: TBD
+    size_bytes: 0
+  evidence_map:
+    path: docs/paper/evidence-map.yaml
+    sha256: TBD
+    size_bytes: 0
+
+# Each anchor must be copied exactly from the independently reviewed, hash-locked
+# canonical manuscript only after all three commits pass deep validation.
+edits:
+  methods:
+    operation: insert_before
+    anchor: TBD_METHODS_UNIQUE_ANCHOR
+    expected_matches: 1
+  analysis_status:
+    operation: insert_before
+    anchor: TBD_ANALYSIS_STATUS_UNIQUE_ANCHOR
+    expected_matches: 1
+  results:
+    operation: insert_before
+    anchor: "[PENDING: S101–S108 — explicit/Base+/Large/adapter/HiPAMA/fusion 표]"
+    expected_matches: 1
+  discussion:
+    operation: replace_exact
+    anchor: TBD_DISCUSSION_EXACT_SENTENCE
+    expected_matches: 1
+  reproducibility:
+    operation: insert_before
+    anchor: TBD_REPRODUCIBILITY_UNIQUE_ANCHOR
+    expected_matches: 1
+  appendix:
+    operation: insert_before
+    anchor: TBD_APPENDIX_UNIQUE_ANCHOR
+    expected_matches: 1

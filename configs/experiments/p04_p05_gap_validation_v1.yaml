@@ -1,0 +1,171 @@
+schema_version: voice_coach.p04_p05_gap_validation_config.v1
+status: ready
+
+# Config-only validation reads this file and nothing declared below.
+actual_state:
+  canonical_files_read: 0
+  aggregate_sources_read: 0
+  locked_test_files_read: 0
+  raw_or_restricted_files_read: 0
+  external_human_records_read: 0
+  outputs_written: 0
+
+contract:
+  expected_status: integrity_pass_semantic_update_pending
+  gap:
+    total_rows: 40
+    domain_rows: {M: 8, S: 8, F: 8, E: 8, R: 8}
+    status_counts: {A: 33, B: 0, C: 7}
+    domain_status:
+      M: {A: 7, B: 0, C: 1}
+      S: {A: 7, B: 0, C: 1}
+      F: {A: 6, B: 0, C: 2}
+      E: {A: 6, B: 0, C: 2}
+      R: {A: 7, B: 0, C: 1}
+  evidence:
+    artifact_count: 36
+    artifact_passed: 36
+    claim_count: 475
+    claim_passed: 475
+  pending:
+    marker_count: 18
+    markers_sha256: 1d0cce59025c86879d0a9972f0da31e45e87169b41f5b8fadd427c111e6d7673
+  locked_guard:
+    entry_count: 16
+    expected_true_count: 0
+    status: passed
+  registry_metric_splits: [dev, dev_exploratory, inner_val]
+  output_root: artifacts/reproducibility/p04_p05_gap_validation
+  canonical_write_allowed: false
+  p04_complete_claim_allowed: false
+  p05_complete_claim_allowed: false
+  manuscript_stale_resolved_claim_allowed: false
+
+sources:
+  methods_gap:
+    path: docs/paper/METHODS_ETHICS_REPRODUCIBILITY_GAP_KO.md
+    sha256: 50847eb7eea13f5819a07d1aea3202ae40b2f528a9ea8c07d6d3661e6879a90c
+    size_bytes: 22900
+    aggregate_only: true
+  manuscript:
+    path: docs/paper/EXPERIMENTAL_MANUSCRIPT_KO.md
+    sha256: dea994728ae8c73be098a29e9a70af2ab4730a651063e64687b40c07433b17eb
+    size_bytes: 41262
+    aggregate_only: true
+  claim_gap:
+    path: docs/paper/CLAIM_GAP_MAP_KO.md
+    sha256: 2168233b459bbe0b2aac411de94d57720408be2479c96e589b14388ff3d5d7a1
+    size_bytes: 21867
+    aggregate_only: true
+  evidence_map:
+    path: docs/paper/evidence-map.yaml
+    sha256: 1a4d897f3872a3a685be73667ac1e5676cd085711420f790e950f1b7af9e28be
+    size_bytes: 189898
+    aggregate_only: true
+  validation_doc:
+    path: docs/MANUSCRIPT_EVIDENCE_VALIDATION_KO.md
+    sha256: c40075548b70eac32efed6fe012db1ae8435652532858a0c49829ab9c07ee051
+    size_bytes: 5449
+    aggregate_only: true
+  validation_report:
+    path: artifacts/reproducibility/manuscript_evidence_validation.json
+    sha256: 026799ab9ceb3d93128cc7c4558dcbe8d5ed4f0be3afefe19db198bb5e48b7bd
+    size_bytes: 139628
+    aggregate_only: true
+  tracker:
+    path: docs/RESEARCH_COMPLETION_TRACKER_KO.md
+    sha256: 7edddb0ad54fcf81ff36a12dd2fe878e9fabd02709444b4f5405203138dd4e20
+    size_bytes: 201741
+    aggregate_only: true
+  b07_config:
+    path: configs/experiments/b07_gop_acoustic_posterior_v1.yaml
+    sha256: 9a2070ab1fa7e00009657d824cf41fae8adfde4654516419951855322413bdb0
+    size_bytes: 16401
+    aggregate_only: true
+  b07_commit:
+    path: artifacts/experiments/aihub71490_b07_gop_acoustic_posterior_v1/commit.json
+    sha256: ff31a88e694d23c89996193646d7c062069c9e776b5ed72ef7fc354950f3907c
+    size_bytes: 11822
+    aggregate_only: true
+  b07_registry:
+    path: artifacts/experiment_registry/aihub71490-b07-gop-acoustic-posterior-v1/metadata.json
+    sha256: 5db35282cab879b3a05fa5a6b5cd9a5cac00c5469215ffc77a6dc34abf95eb12
+    size_bytes: 23916
+    aggregate_only: true
+  b07_aggregate_report:
+    path: artifacts/experiments/aihub71490_b07_gop_acoustic_posterior_v1/generations/bc1a7eb174c6a8f69627292f30c9229235dcde8e10e69a7e07899847986d6e09/aggregate_report.json
+    sha256: 842d414609dba5220212edc0caf9c0a554bd753877535475617fc785f300085b
+    size_bytes: 990
+    aggregate_only: true
+  b07_paired_report:
+    path: artifacts/experiments/aihub71490_b07_gop_acoustic_posterior_v1/generations/bc1a7eb174c6a8f69627292f30c9229235dcde8e10e69a7e07899847986d6e09/paired_explicit_refit_control_comparison.json
+    sha256: fc7820072d542104d36d29769cc8d7b569c118980ef6b1b77801546df947b7ac
+    size_bytes: 1990
+    aggregate_only: true
+  license_ledger:
+    path: docs/DATA_LICENSE_SOURCE_LEDGER_KO.md
+    sha256: b6ceeb1f874de3071462e98c3526136302ab54d3ea9ecc109400d1a3f03f7cd4
+    size_bytes: 4136
+    aggregate_only: true
+  license_matrix:
+    path: docs/DATA_LICENSE_AND_ROLE_MATRIX_KO.md
+    sha256: 3257b0dcdb511b79576ffd99329bcde0754e477b6215b5ae81f2c609684dcf58
+    size_bytes: 2647
+    aggregate_only: true
+
+implementation_sources:
+  module:
+    path: src/voice_coach/reproducibility/p04_p05_gap_validation.py
+    sha256: 619562e6ff65176cc86512beb39f02bfed45f74cc0c433fb28e923283bc14a51
+    size_bytes: 108249
+    aggregate_only: true
+  cli:
+    path: scripts/validate_p04_p05_gap.py
+    sha256: b7f2d51f58c701d9617f52ebba2358ed4011fa3d1a1c3c67b679bddfad57b0dc
+    size_bytes: 2929
+    aggregate_only: true
+
+semantic_contract:
+  expected_finding_codes:
+    - B07_COMPLETED_EVIDENCE_NOT_PROMOTED
+  expected_resolution_codes:
+    - CLAIM_GAP_P04_C_COUNT_RESOLVED
+    - DATA_LICENSE_LEDGER_EVIDENCE_MAPPING_RESOLVED
+  b07:
+    generation_id: bc1a7eb174c6a8f69627292f30c9229235dcde8e10e69a7e07899847986d6e09
+    artifact_count: 21
+    seeds: [42, 43, 44]
+    mean_phone_macro_f1: 0.6304424500285749
+    sample_std_phone_macro_f1: 0.0002218332425636882
+    mean_error_auprc: 0.2645733385270365
+    sample_std_error_auprc: 0.00022841133796295214
+    explicit_refit_phone_macro_f1: 0.5644327426652991
+    mean_phone_macro_f1_delta: 0.06600970736327587
+    manuscript_future_gop_anchors:
+      - "frozen WavLM과 GOP 보강을 후속 비교한다."
+      - "후속 adapter·GOP·fusion"
+    required_absent_token: B07
+    claim_gap_legacy_scope_anchor: "S101–S103와 R00 관측값 반영,"
+  claim_gap_resolution:
+    expected_c_count: 7
+    current_anchor: "후속·외부 artifact가 필요한 P04 C 등급 7개 갱신"
+    forbidden_stale_anchor: "후속·외부 artifact가 필요한 P04 C 등급 9개 갱신"
+  license:
+    ledger_path_token: docs/DATA_LICENSE_SOURCE_LEDGER_KO.md
+    ledger_sha256: b6ceeb1f874de3071462e98c3526136302ab54d3ea9ecc109400d1a3f03f7cd4
+    evidence_alias: data_license_source_ledger
+    required_ledger_anchors:
+      - "공식 링크 12개는 redirect 이후 HTTP 200이었다."
+      - "`needs-original-license-review` (재배포·파생 공개)"
+  external_pending_anchors:
+    claim_gap:
+      - "| X01 | G04 수동 정렬 정확도 ≥95% | 외부 의존, 0/240 |"
+    tracker:
+      - "| G04 | 외부 의존 | 240건 수동 정렬 정확도≥95% |"
+      - "- 실제 전문가 완료: 0/240"
+    manuscript:
+      - "현재 IRB·모집·녹음·empirical pilot은 없고 최종"
+    methods_gap:
+      - |-
+        P04는
+        `진행 중`이며, 외부 task 상태와 PENDING marker를 변경하지 않는다.

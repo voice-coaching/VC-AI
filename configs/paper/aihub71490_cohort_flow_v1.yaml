@@ -1,0 +1,34 @@
+schema_version: voice_coach.paper.cohort_flow_svg_config.v2
+title: AI Hub 71490 학습·개발 cohort 흐름
+description: >-
+  322,380건의 집계 메타데이터에서 평가 split, QC 오류, 예약 prompt를
+  순서대로 제외해 169,837건의 train/dev cache를 구성한 흐름이다.
+  자동 G0는 통과했지만 외부 전문가 정렬 감사는 PENDING이다.
+canvas:
+  width: 1440
+  height: 900
+source_mmd:
+  path: docs/paper/figures/aihub71490_cohort_flow.mmd
+  sha256: 78ea599bfd2b0a5ba5df78ab66bef45110f555cca0d2630d5e905b56bb6860fd
+sources:
+  data_card:
+    path: data/processed/aihub71490/manifests/aihub71490_data_card.json
+    sha256: 4ab53c6837b1a28fbf153dd3a351a195f6931a43694467114cea6c21b8a57b13
+  g0_audit:
+    path: data/processed/aihub71490/manifests/aihub71490_g0_audit.json
+    sha256: 1a41814f04062c1f1242287e05e34f46673e0e6e2152075c0dd1cf019bce81fd
+  prompt_reservation:
+    path: data/processed/aihub71490/manifests/aihub71490_prompt_challenge.json
+    sha256: 3ea7f12ea76be07a0796d7e62f0c3727ca9858c0278df7c85ac1e08d9b653fa9
+  filter_report:
+    path: data/processed/aihub71490/features/explicit_utterance_train_dev_v1_report.json
+    sha256: 2f7b540b5fb6d2aaad3e2efa29da5f5b23c967645da0eb98d9a6d68ffc5b762e
+implementation:
+  renderer:
+    path: src/voice_coach/reproducibility/cohort_flow_svg.py
+    sha256: cc9ea419740c2acb39b10510d5d48ce3fd6853aaced30da6b7c95836f6e1ed62
+  cli:
+    path: scripts/render_aihub71490_cohort_flow.py
+    sha256: f6052c05e880a75fa1ba14ec169806895b6ec431ea55ca4571ce6e97c65d1b7d
+output_svg: docs/paper/figures/aihub71490_cohort_flow.svg
+receipt: artifacts/reproducibility/paper_figures/aihub71490_cohort_flow_v1.json

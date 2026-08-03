@@ -34,9 +34,13 @@ datasets:
       - 475439 # VL_pronunciation_lab.zip
       - 475440 # VL_pronunciation_tag.zip
     pronunciation_download_size_gb_approx: 69.1
-    current_verified_audio:
-      files: 437841
-      uncompressed_gib: 291.91
+    current_verified_pronunciation_mvp:
+      files: 322380
+      decoded_hours: 344.208
+      uncompressed_gib: 110.93
+      modalities: [wav, json, textgrid]
+      automated_g0: passed
+      manual_g0: pending_240_item_expert_audit
   - id: 71469
     name: 교육용 영어 모국어 사용자의 한국어 음성 데이터
     url: https://aihub.or.kr/aihubdata/data/view.do?dataSetSn=71469

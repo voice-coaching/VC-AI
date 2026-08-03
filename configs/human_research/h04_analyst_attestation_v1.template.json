@@ -1,0 +1,54 @@
+{
+  "schema_version": "voice_coach.h04_analyst_attestation.v1",
+  "attestation_id": "TBD_H04_ANALYST_ATTESTATION",
+  "status": "draft_unapproved",
+  "privacy_zone": "A1_C1_public_attestation_no_identity",
+  "analyst_identity_sha256": "TBD_EXTERNAL",
+  "analyst_role_id": "TBD_EXTERNAL",
+  "attested_at_utc": "TBD_EXTERNAL",
+  "lineage": {
+    "h00_approval_sha256": "TBD_H00_APPROVAL",
+    "h00_attestation_sha256": "TBD_H00_ATTESTATION",
+    "h01_final_sample_size_lock_sha256": "TBD_H01_SAMPLE_SIZE_LOCK",
+    "h02_h03_completion_sha256": "TBD_H02_H03_COMPLETION",
+    "frozen_sap_sha256": "TBD_H04_SAP"
+  },
+  "blinding_and_order": {
+    "independent_statistical_analyst": false,
+    "arm_labels_masked_until_data_and_sap_lock": false,
+    "sap_seen_and_accepted_before_authorized_unmask": false,
+    "no_unregistered_effect_driven_model_selection": false
+  },
+  "analysis_commitments": {
+    "statistics_execution_before_full_authorization_allowed": false,
+    "itt_primary_required": true,
+    "likelihood_mixed_model_primary_required": true,
+    "participant_sentence_rater_random_intercepts_required": true,
+    "all_four_comprehensibility_contrasts_required": true,
+    "raw_standardized_and_95_ci_required": true,
+    "mar_multilevel_mi_required": true,
+    "mnar_delta_pattern_mixture_required": true,
+    "complete_case_required": true,
+    "per_protocol_at_least_80_percent_is_sensitivity_only": true,
+    "holm_primary_retention_secondary_families_required": true,
+    "last_observation_carried_forward_used": false,
+    "post_randomization_exclusion_used": false
+  },
+  "reproducibility": {
+    "analysis_code_sha256": "TBD_EXTERNAL",
+    "software_environment_lock_sha256": "TBD_EXTERNAL",
+    "execution_receipt_sha256": "TBD_EXTERNAL",
+    "model_diagnostics_sha256": "TBD_EXTERNAL"
+  },
+  "privacy_assurance": {
+    "public_artifact_contains_participant_rows": false,
+    "public_artifact_contains_identifiers": false,
+    "public_artifact_contains_individual_scores": false,
+    "public_artifact_contains_audio_or_transcript": false,
+    "public_artifact_contains_raw_locator": false,
+    "public_artifact_contains_free_text": false,
+    "aggregate_only": true
+  },
+  "signed_attestation_receipt_sha256": "TBD_EXTERNAL",
+  "binding_sha256": "TBD_EXTERNAL"
+}

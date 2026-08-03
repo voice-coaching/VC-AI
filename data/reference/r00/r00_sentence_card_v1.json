@@ -1,0 +1,1008 @@
+{
+  "schema_version": "voice_coach.r00_sentence_card.v1",
+  "card_id": "voice-coach-r00-fixed-korean-sentences-v1",
+  "status": "fixed_validated_sentence_text_only",
+  "created_date_kst": "2026-07-29",
+  "source_license": {
+    "source_type": "project_original_controlled_sentences",
+    "source_id": "voice-coach-r00-original-v1",
+    "source_uri": "r00://project-original/voice-coach-r00-original-v1",
+    "license_spdx": "CC0-1.0",
+    "license_name": "CC0 1.0 Universal",
+    "license_url": "https://creativecommons.org/publicdomain/zero/1.0/legalcode",
+    "license_notice_path": "data/reference/r00/CC0_NOTICE.txt",
+    "license_applies_to": "the_exact_20_sentence_texts_in_this_card",
+    "attribution_required": false,
+    "noncommercial_only": false,
+    "share_alike_required": false,
+    "redistribution_allowed": true,
+    "adaptation_allowed": true,
+    "corpus_text_derived": false
+  },
+  "native_source_lineage_decisions": [
+    {
+      "source_id": "fleurs-ko-kr",
+      "license_spdx": "CC-BY-4.0",
+      "noncommercial_only": false,
+      "sentence_text_accessed": false,
+      "sentence_selected": false,
+      "decision": "excluded_by_project_policy_prohibiting_native_corpus_transcript_import"
+    },
+    {
+      "source_id": "kss",
+      "license_spdx": "CC-BY-NC-SA-4.0",
+      "noncommercial_only": true,
+      "sentence_text_accessed": false,
+      "sentence_selected": false,
+      "decision": "excluded_noncommercial_sharealike_and_raw_redistribution_boundary"
+    },
+    {
+      "source_id": "seoul-corpus",
+      "license_spdx": "CC-BY-NC-2.0",
+      "noncommercial_only": true,
+      "sentence_text_accessed": false,
+      "sentence_selected": false,
+      "decision": "excluded_noncommercial_and_raw_redistribution_boundary"
+    },
+    {
+      "source_id": "zeroth-korean",
+      "license_spdx": "CC-BY-4.0",
+      "noncommercial_only": false,
+      "sentence_text_accessed": false,
+      "sentence_selected": false,
+      "decision": "excluded_by_project_policy_prohibiting_native_corpus_transcript_import"
+    }
+  ],
+  "evidence_pins": [
+    {
+      "path": "data/processed/native-korean/manifests/native_korean_v1.report.json",
+      "sha256": "d50e6f788f6e631c37b54631325dfe840c0460ecf342af71f5e38b6f638037b4",
+      "access_class": "aggregate_metadata",
+      "values_read": "source_count_duration_license_role_and_privacy_boundary"
+    },
+    {
+      "path": "data/manifests/fleurs-ko-kr.yaml",
+      "sha256": "34759caacfd56e2feb08d56f70f31fb8c89cbcf90c54f86812d0399c0e0ccb84",
+      "access_class": "public_metadata",
+      "values_read": "source_revision_license_and_role_only"
+    },
+    {
+      "path": "data/manifests/kss.yaml",
+      "sha256": "409d4de4777900400adadf59a72372d202049f26f54fae0d8e5a84c9a0a9bd1a",
+      "access_class": "public_metadata",
+      "values_read": "source_revision_license_and_restrictions_only"
+    },
+    {
+      "path": "data/manifests/seoul-corpus.yaml",
+      "sha256": "d099f0c1cba51055152d47ebff4314eef4dfbda1093f48732f6e7f40bcdf3d7e",
+      "access_class": "public_metadata",
+      "values_read": "source_url_license_and_restrictions_only"
+    },
+    {
+      "path": "data/manifests/zeroth-korean.yaml",
+      "sha256": "bc8a004272029f5c116c0efd345255f9ddb3295f4a36b8e0bf9bf049c801be51",
+      "access_class": "public_metadata",
+      "values_read": "source_url_license_and_role_only"
+    },
+    {
+      "path": "data/processed/aihub71490/manifests/aihub71490_data_card.json",
+      "sha256": "4ab53c6837b1a28fbf153dd3a351a195f6931a43694467114cea6c21b8a57b13",
+      "access_class": "aggregate_metadata",
+      "values_read": "target_phone_count_error_tag_counts_and_no_row_values"
+    },
+    {
+      "path": "data/processed/aihub71490/manifests/aihub71490_prompt_challenge.json",
+      "sha256": "3ea7f12ea76be07a0796d7e62f0c3727ca9858c0278df7c85ac1e08d9b653fa9",
+      "access_class": "aggregate_metadata",
+      "values_read": "twenty_reserved_prompt_hashes_and_counts_only"
+    },
+    {
+      "path": "configs/coaching/korean_error_advice_ontology_v1.json",
+      "sha256": "1ba0c0198533abd51a3caa4b176f17aae17aa48d08899f6e7ced634a1eef0d60",
+      "access_class": "aggregate_metadata",
+      "values_read": "stable_error_ids_localization_policy_and_no_row_values"
+    },
+    {
+      "path": "artifacts/experiments/aihub71490_wavlm_large_frozen_head_v1/report.json",
+      "sha256": "ba869265c6e6c1381677fe922922b68da7df92cbb9cbaf5501fff5dafa3fdd23",
+      "access_class": "aggregate_metadata",
+      "values_read": "aggregate_report_loaded_semantic_use_limited_to_target_label_group_names"
+    },
+    {
+      "path": "src/voice_coach/phonology/phones.py",
+      "sha256": "ad87e6c8edb961dc3b031342f433143d7d1412ac07812a5b7d5fd7741e13ac3b",
+      "access_class": "public_source_code",
+      "values_read": "modern_compatibility_jamo_inventory_only"
+    }
+  ],
+  "selection_rule": {
+    "rule_id": "r00-educational-stratified-selection-v1",
+    "frozen_before_r01": true,
+    "source_gate": "project_original_cc0_only",
+    "normalization": "NFKC_then_collapse_unicode_whitespace",
+    "sentence_count": 20,
+    "syllable_count_range": {
+      "minimum": 10,
+      "maximum": 18
+    },
+    "word_count_range": {
+      "minimum": 4,
+      "maximum": 8
+    },
+    "difficulty_quota": {
+      "beginner": 7,
+      "intermediate": 7,
+      "advanced": 6
+    },
+    "coverage_requirements": {
+      "all_19_onset_consonants": true,
+      "all_18_observed_korean_vowels": true,
+      "all_7_surface_coda_classes": true,
+      "all_8_localizable_phonological_rules": true,
+      "prosody_target_count_minimum": 4,
+      "exclude_spn_from_instruction": true,
+      "supplemental_medials": [
+        "ㅒ",
+        "ㅙ",
+        "ㅞ"
+      ]
+    },
+    "duplicate_rule": {
+      "within_card": "normalized_text_sha256_must_be_unique",
+      "aihub_reserved_prompt_hashes": "exact_hash_intersection_must_be_zero",
+      "native_plaintext": "must_not_be_opened_for_overlap_search"
+    },
+    "privacy_and_content_rule": {
+      "pii_matches_must_be_zero": true,
+      "forbidden_terms_must_be_zero": true,
+      "ascii_letters_must_be_zero": true,
+      "decimal_digits_must_be_zero": true,
+      "urls_must_be_zero": true
+    },
+    "ordering_rule": "fixed_sentence_id_ascending_after_stratum_matrix"
+  },
+  "phone_inventory": {
+    "observed_target_label_count": 38,
+    "observed_target_labels": [
+      "spn",
+      "ㄱ",
+      "ㄲ",
+      "ㄴ",
+      "ㄷ",
+      "ㄸ",
+      "ㄹ",
+      "ㅁ",
+      "ㅂ",
+      "ㅃ",
+      "ㅅ",
+      "ㅆ",
+      "ㅇ",
+      "ㅈ",
+      "ㅉ",
+      "ㅊ",
+      "ㅋ",
+      "ㅌ",
+      "ㅍ",
+      "ㅎ",
+      "ㅏ",
+      "ㅐ",
+      "ㅑ",
+      "ㅓ",
+      "ㅔ",
+      "ㅕ",
+      "ㅖ",
+      "ㅗ",
+      "ㅘ",
+      "ㅚ",
+      "ㅛ",
+      "ㅜ",
+      "ㅝ",
+      "ㅟ",
+      "ㅠ",
+      "ㅡ",
+      "ㅢ",
+      "ㅣ"
+    ],
+    "instructional_target_labels": [
+      "ㄱ",
+      "ㄲ",
+      "ㄴ",
+      "ㄷ",
+      "ㄸ",
+      "ㄹ",
+      "ㅁ",
+      "ㅂ",
+      "ㅃ",
+      "ㅅ",
+      "ㅆ",
+      "ㅇ",
+      "ㅈ",
+      "ㅉ",
+      "ㅊ",
+      "ㅋ",
+      "ㅌ",
+      "ㅍ",
+      "ㅎ",
+      "ㅏ",
+      "ㅐ",
+      "ㅑ",
+      "ㅓ",
+      "ㅔ",
+      "ㅕ",
+      "ㅖ",
+      "ㅗ",
+      "ㅘ",
+      "ㅚ",
+      "ㅛ",
+      "ㅜ",
+      "ㅝ",
+      "ㅟ",
+      "ㅠ",
+      "ㅡ",
+      "ㅢ",
+      "ㅣ"
+    ],
+    "excluded_non_instructional_labels": [
+      "spn"
+    ],
+    "onset_consonants": [
+      "ㄱ",
+      "ㄲ",
+      "ㄴ",
+      "ㄷ",
+      "ㄸ",
+      "ㄹ",
+      "ㅁ",
+      "ㅂ",
+      "ㅃ",
+      "ㅅ",
+      "ㅆ",
+      "ㅇ",
+      "ㅈ",
+      "ㅉ",
+      "ㅊ",
+      "ㅋ",
+      "ㅌ",
+      "ㅍ",
+      "ㅎ"
+    ],
+    "observed_korean_vowels": [
+      "ㅏ",
+      "ㅐ",
+      "ㅑ",
+      "ㅓ",
+      "ㅔ",
+      "ㅕ",
+      "ㅖ",
+      "ㅗ",
+      "ㅘ",
+      "ㅚ",
+      "ㅛ",
+      "ㅜ",
+      "ㅝ",
+      "ㅟ",
+      "ㅠ",
+      "ㅡ",
+      "ㅢ",
+      "ㅣ"
+    ],
+    "surface_coda_classes": [
+      "ㄱ",
+      "ㄴ",
+      "ㄷ",
+      "ㄹ",
+      "ㅁ",
+      "ㅂ",
+      "ㅇ"
+    ],
+    "supplemental_orthographic_medials": [
+      "ㅒ",
+      "ㅙ",
+      "ㅞ"
+    ],
+    "interpretation": "The observed aggregate has 38 target labels: spn plus 37 Korean jamo. spn is a noise label, not an instructional phone. Orthographic decomposition is a deterministic sentence-selection proxy and not a human-verified phonetic transcription."
+  },
+  "phonological_rule_inventory": [
+    "tensification",
+    "nasalization",
+    "aspiration",
+    "liquidization",
+    "liaison_rule",
+    "n_insertion",
+    "palatalization",
+    "phoneme_deletion"
+  ],
+  "tts_usage_policy": {
+    "policy_id": "r00-research-reference-text-only-v1",
+    "license_noncommercial_only": false,
+    "allowed": [
+      "r01_isolated_research_tts_candidate_text_input",
+      "d08_consented_human_reference_recording_prompt",
+      "r02_asr_content_match_reference_text",
+      "r04_blinded_evaluation_sentence_label"
+    ],
+    "prohibited_until_later_gates": [
+      "tts_model_training_or_finetuning",
+      "production_reference_bank_release",
+      "automatic_pronunciation_correctness_claim",
+      "human_reference_claim_without_d08_recording",
+      "blind_quality_claim_without_r04_evaluation",
+      "native_corpus_audio_or_transcript_attachment"
+    ],
+    "audio_or_model_created_by_r00": false
+  },
+  "sentences": [
+    {
+      "sentence_id": "R00-01",
+      "selection_order": 1,
+      "text": "쌀과 콩을 깨끗한 그릇에 담아요.",
+      "normalized_text": "쌀과 콩을 깨끗한 그릇에 담아요.",
+      "normalized_text_sha256": "7731a3516838b4f487fc15764130238a6552323b19d7cb3460fd889d239ef7da",
+      "source_id": "voice-coach-r00-original-v1",
+      "license_spdx": "CC0-1.0",
+      "syllable_count": 13,
+      "word_count": 5,
+      "difficulty": "beginner",
+      "difficulty_reason": "단순 명사구와 기본 종결형 안에서 된소리 초성 및 받침을 연습한다.",
+      "target_phones": ["ㄱ", "ㄲ", "ㄴ", "ㄷ", "ㄹ", "ㅁ", "ㅆ", "ㅇ", "ㅋ", "ㅎ", "ㅏ", "ㅐ", "ㅔ", "ㅗ", "ㅘ", "ㅛ", "ㅡ"],
+      "target_onsets": ["ㄱ", "ㄲ", "ㄷ", "ㄹ", "ㅆ", "ㅇ", "ㅋ", "ㅎ"],
+      "target_vowels": ["ㅏ", "ㅐ", "ㅔ", "ㅗ", "ㅘ", "ㅛ", "ㅡ"],
+      "target_surface_codas": ["ㄴ", "ㄷ", "ㄹ", "ㅁ", "ㅇ"],
+      "supplemental_medials": [],
+      "phonological_rule_targets": [],
+      "prosody_targets": ["list_rhythm", "neutral_declarative_fall"],
+      "duplicate_checks": {
+        "within_card_unique": true,
+        "aihub_reserved_prompt_hash_collision": false,
+        "native_plaintext_overlap": "not_checked_prohibited_input"
+      },
+      "pii_check": {"status": "passed", "matched_categories": []},
+      "prohibited_content_check": {"status": "passed", "matched_categories": []},
+      "tts_usage_policy_id": "r00-research-reference-text-only-v1"
+    },
+    {
+      "sentence_id": "R00-02",
+      "selection_order": 2,
+      "text": "노란 나비가 맑은 하늘을 날아요.",
+      "normalized_text": "노란 나비가 맑은 하늘을 날아요.",
+      "normalized_text_sha256": "46aebe96eb9be52b10f545ff6b4690c693432b59146aa8ded8182a088af77bd6",
+      "source_id": "voice-coach-r00-original-v1",
+      "license_spdx": "CC0-1.0",
+      "syllable_count": 13,
+      "word_count": 5,
+      "difficulty": "beginner",
+      "difficulty_reason": "짧은 주어-목적어 구조에서 유음과 비음을 연습한다.",
+      "target_phones": ["ㄱ", "ㄴ", "ㄹ", "ㅁ", "ㅂ", "ㅇ", "ㅎ", "ㅏ", "ㅗ", "ㅛ", "ㅡ", "ㅣ"],
+      "target_onsets": ["ㄱ", "ㄴ", "ㄹ", "ㅁ", "ㅂ", "ㅇ", "ㅎ"],
+      "target_vowels": ["ㅏ", "ㅗ", "ㅛ", "ㅡ", "ㅣ"],
+      "target_surface_codas": ["ㄱ", "ㄴ", "ㄹ"],
+      "supplemental_medials": [],
+      "phonological_rule_targets": [],
+      "prosody_targets": ["neutral_declarative_fall"],
+      "duplicate_checks": {
+        "within_card_unique": true,
+        "aihub_reserved_prompt_hash_collision": false,
+        "native_plaintext_overlap": "not_checked_prohibited_input"
+      },
+      "pii_check": {"status": "passed", "matched_categories": []},
+      "prohibited_content_check": {"status": "passed", "matched_categories": []},
+      "tts_usage_policy_id": "r00-research-reference-text-only-v1"
+    },
+    {
+      "sentence_id": "R00-03",
+      "selection_order": 3,
+      "text": "따뜻한 물을 천천히 마셔요.",
+      "normalized_text": "따뜻한 물을 천천히 마셔요.",
+      "normalized_text_sha256": "d23e5814aa8f52db260b996593c207a725a4d47cbab98bc8330a9f7cc454c7f6",
+      "source_id": "voice-coach-r00-original-v1",
+      "license_spdx": "CC0-1.0",
+      "syllable_count": 11,
+      "word_count": 4,
+      "difficulty": "beginner",
+      "difficulty_reason": "짧은 요청문에서 된소리와 명료한 속도를 연습한다.",
+      "target_phones": ["ㄴ", "ㄷ", "ㄸ", "ㄹ", "ㅁ", "ㅅ", "ㅇ", "ㅊ", "ㅎ", "ㅏ", "ㅓ", "ㅕ", "ㅛ", "ㅜ", "ㅡ", "ㅣ"],
+      "target_onsets": ["ㄸ", "ㅁ", "ㅅ", "ㅇ", "ㅊ", "ㅎ"],
+      "target_vowels": ["ㅏ", "ㅓ", "ㅕ", "ㅛ", "ㅜ", "ㅡ", "ㅣ"],
+      "target_surface_codas": ["ㄴ", "ㄷ", "ㄹ"],
+      "supplemental_medials": [],
+      "phonological_rule_targets": [],
+      "prosody_targets": ["slow_clear_pacing", "instructional_request_boundary"],
+      "duplicate_checks": {
+        "within_card_unique": true,
+        "aihub_reserved_prompt_hash_collision": false,
+        "native_plaintext_overlap": "not_checked_prohibited_input"
+      },
+      "pii_check": {"status": "passed", "matched_categories": []},
+      "prohibited_content_check": {"status": "passed", "matched_categories": []},
+      "tts_usage_policy_id": "r00-research-reference-text-only-v1"
+    },
+    {
+      "sentence_id": "R00-04",
+      "selection_order": 4,
+      "text": "빨간 꽃과 파란 풍선을 골라요.",
+      "normalized_text": "빨간 꽃과 파란 풍선을 골라요.",
+      "normalized_text_sha256": "3c366af28f699a49ff63acb51bae6e6269cfa20f2b26bcd4a14fa4dba716909d",
+      "source_id": "voice-coach-r00-original-v1",
+      "license_spdx": "CC0-1.0",
+      "syllable_count": 12,
+      "word_count": 5,
+      "difficulty": "beginner",
+      "difficulty_reason": "색상 명사구에서 된소리·격음과 원순 모음을 연습한다.",
+      "target_phones": ["ㄱ", "ㄲ", "ㄴ", "ㄷ", "ㄹ", "ㅃ", "ㅅ", "ㅇ", "ㅍ", "ㅏ", "ㅓ", "ㅗ", "ㅘ", "ㅛ", "ㅜ", "ㅡ"],
+      "target_onsets": ["ㄱ", "ㄲ", "ㄹ", "ㅃ", "ㅅ", "ㅇ", "ㅍ"],
+      "target_vowels": ["ㅏ", "ㅓ", "ㅗ", "ㅘ", "ㅛ", "ㅜ", "ㅡ"],
+      "target_surface_codas": ["ㄴ", "ㄷ", "ㄹ", "ㅇ"],
+      "supplemental_medials": [],
+      "phonological_rule_targets": [],
+      "prosody_targets": ["neutral_declarative_fall"],
+      "duplicate_checks": {
+        "within_card_unique": true,
+        "aihub_reserved_prompt_hash_collision": false,
+        "native_plaintext_overlap": "not_checked_prohibited_input"
+      },
+      "pii_check": {"status": "passed", "matched_categories": []},
+      "prohibited_content_check": {"status": "passed", "matched_categories": []},
+      "tts_usage_policy_id": "r00-research-reference-text-only-v1"
+    },
+    {
+      "sentence_id": "R00-05",
+      "selection_order": 5,
+      "text": "짧은 치마를 입고 뛰어 보세요.",
+      "normalized_text": "짧은 치마를 입고 뛰어 보세요.",
+      "normalized_text_sha256": "8b336972e402e19d945c7cb4336ce6f4e07073f0a6c8c489f5a95b6209607d9c",
+      "source_id": "voice-coach-r00-original-v1",
+      "license_spdx": "CC0-1.0",
+      "syllable_count": 12,
+      "word_count": 5,
+      "difficulty": "intermediate",
+      "difficulty_reason": "겹받침과 이중 모음이 함께 있어 중간 난이도로 둔다.",
+      "target_phones": ["ㄱ", "ㄴ", "ㄸ", "ㄹ", "ㅁ", "ㅂ", "ㅅ", "ㅇ", "ㅉ", "ㅊ", "ㅏ", "ㅓ", "ㅔ", "ㅗ", "ㅛ", "ㅟ", "ㅡ", "ㅣ"],
+      "target_onsets": ["ㄱ", "ㄸ", "ㄹ", "ㅁ", "ㅂ", "ㅅ", "ㅇ", "ㅉ", "ㅊ"],
+      "target_vowels": ["ㅏ", "ㅓ", "ㅔ", "ㅗ", "ㅛ", "ㅟ", "ㅡ", "ㅣ"],
+      "target_surface_codas": ["ㄴ", "ㄹ", "ㅂ"],
+      "supplemental_medials": [],
+      "phonological_rule_targets": [],
+      "prosody_targets": ["instructional_request_boundary"],
+      "duplicate_checks": {
+        "within_card_unique": true,
+        "aihub_reserved_prompt_hash_collision": false,
+        "native_plaintext_overlap": "not_checked_prohibited_input"
+      },
+      "pii_check": {"status": "passed", "matched_categories": []},
+      "prohibited_content_check": {"status": "passed", "matched_categories": []},
+      "tts_usage_policy_id": "r00-research-reference-text-only-v1"
+    },
+    {
+      "sentence_id": "R00-06",
+      "selection_order": 6,
+      "text": "야외에서 예쁜 유리병을 찾아요.",
+      "normalized_text": "야외에서 예쁜 유리병을 찾아요.",
+      "normalized_text_sha256": "f76da1650515b98d19f808863645a9921b0ee32dd4c1651b08d1ca7d64c5dcc4",
+      "source_id": "voice-coach-r00-original-v1",
+      "license_spdx": "CC0-1.0",
+      "syllable_count": 13,
+      "word_count": 4,
+      "difficulty": "beginner",
+      "difficulty_reason": "희소 모음과 격음이 있으나 문장 구조는 단순하다.",
+      "target_phones": ["ㄴ", "ㄷ", "ㄹ", "ㅂ", "ㅃ", "ㅅ", "ㅇ", "ㅊ", "ㅏ", "ㅑ", "ㅓ", "ㅔ", "ㅕ", "ㅖ", "ㅚ", "ㅛ", "ㅠ", "ㅡ", "ㅣ"],
+      "target_onsets": ["ㄹ", "ㅂ", "ㅃ", "ㅅ", "ㅇ", "ㅊ"],
+      "target_vowels": ["ㅏ", "ㅑ", "ㅓ", "ㅔ", "ㅕ", "ㅖ", "ㅚ", "ㅛ", "ㅠ", "ㅡ", "ㅣ"],
+      "target_surface_codas": ["ㄴ", "ㄷ", "ㄹ", "ㅇ"],
+      "supplemental_medials": [],
+      "phonological_rule_targets": [],
+      "prosody_targets": ["neutral_declarative_fall"],
+      "duplicate_checks": {
+        "within_card_unique": true,
+        "aihub_reserved_prompt_hash_collision": false,
+        "native_plaintext_overlap": "not_checked_prohibited_input"
+      },
+      "pii_check": {"status": "passed", "matched_categories": []},
+      "prohibited_content_check": {"status": "passed", "matched_categories": []},
+      "tts_usage_policy_id": "r00-research-reference-text-only-v1"
+    },
+    {
+      "sentence_id": "R00-07",
+      "selection_order": 7,
+      "text": "왜 웨이터가 예약 얘기를 먼저 꺼냈나요?",
+      "normalized_text": "왜 웨이터가 예약 얘기를 먼저 꺼냈나요?",
+      "normalized_text_sha256": "cc260d1b06c73fec8d2feff9be862bce9acaa0590fed6ac762349d5cc2e90d88",
+      "source_id": "voice-coach-r00-original-v1",
+      "license_spdx": "CC0-1.0",
+      "syllable_count": 16,
+      "word_count": 6,
+      "difficulty": "intermediate",
+      "difficulty_reason": "희소 보충 모음 세 개와 의문문 경계가 함께 있다.",
+      "target_phones": ["ㄱ", "ㄲ", "ㄴ", "ㄷ", "ㄹ", "ㅁ", "ㅇ", "ㅈ", "ㅌ", "ㅏ", "ㅐ", "ㅑ", "ㅓ", "ㅖ", "ㅛ", "ㅡ", "ㅣ"],
+      "target_onsets": ["ㄱ", "ㄲ", "ㄴ", "ㄹ", "ㅁ", "ㅇ", "ㅈ", "ㅌ"],
+      "target_vowels": ["ㅏ", "ㅐ", "ㅑ", "ㅓ", "ㅖ", "ㅛ", "ㅡ", "ㅣ"],
+      "target_surface_codas": ["ㄱ", "ㄴ", "ㄷ", "ㄹ"],
+      "supplemental_medials": ["ㅒ", "ㅙ", "ㅞ"],
+      "phonological_rule_targets": [],
+      "prosody_targets": ["wh_question_boundary"],
+      "duplicate_checks": {
+        "within_card_unique": true,
+        "aihub_reserved_prompt_hash_collision": false,
+        "native_plaintext_overlap": "not_checked_prohibited_input"
+      },
+      "pii_check": {"status": "passed", "matched_categories": []},
+      "prohibited_content_check": {"status": "passed", "matched_categories": []},
+      "tts_usage_policy_id": "r00-research-reference-text-only-v1"
+    },
+    {
+      "sentence_id": "R00-08",
+      "selection_order": 8,
+      "text": "회의 뒤에 위층 정원으로 올라오세요.",
+      "normalized_text": "회의 뒤에 위층 정원으로 올라오세요.",
+      "normalized_text_sha256": "916734d236d0d9a9e1deb15a20734c80e9ef6445f79e4480d393d624fb42e0a4",
+      "source_id": "voice-coach-r00-original-v1",
+      "license_spdx": "CC0-1.0",
+      "syllable_count": 15,
+      "word_count": 5,
+      "difficulty": "intermediate",
+      "difficulty_reason": "긴 장소구와 복합 모음이 있어 중간 난이도로 둔다.",
+      "target_phones": ["ㄴ", "ㄷ", "ㄹ", "ㅅ", "ㅇ", "ㅈ", "ㅊ", "ㅎ", "ㅏ", "ㅓ", "ㅔ", "ㅗ", "ㅚ", "ㅛ", "ㅝ", "ㅟ", "ㅡ", "ㅢ"],
+      "target_onsets": ["ㄷ", "ㄹ", "ㅅ", "ㅇ", "ㅈ", "ㅊ", "ㅎ"],
+      "target_vowels": ["ㅏ", "ㅓ", "ㅔ", "ㅗ", "ㅚ", "ㅛ", "ㅝ", "ㅟ", "ㅡ", "ㅢ"],
+      "target_surface_codas": ["ㄴ", "ㄹ", "ㅇ"],
+      "supplemental_medials": [],
+      "phonological_rule_targets": [],
+      "prosody_targets": ["long_phrase_chunking", "instructional_request_boundary"],
+      "duplicate_checks": {
+        "within_card_unique": true,
+        "aihub_reserved_prompt_hash_collision": false,
+        "native_plaintext_overlap": "not_checked_prohibited_input"
+      },
+      "pii_check": {"status": "passed", "matched_categories": []},
+      "prohibited_content_check": {"status": "passed", "matched_categories": []},
+      "tts_usage_policy_id": "r00-research-reference-text-only-v1"
+    },
+    {
+      "sentence_id": "R00-09",
+      "selection_order": 9,
+      "text": "국물 냄새가 정말 구수해요.",
+      "normalized_text": "국물 냄새가 정말 구수해요.",
+      "normalized_text_sha256": "22152368d2ca33dd329a3330ade4f2ca4494f1ab3c17c0be189e9f83a5e0efed",
+      "source_id": "voice-coach-r00-original-v1",
+      "license_spdx": "CC0-1.0",
+      "syllable_count": 11,
+      "word_count": 4,
+      "difficulty": "beginner",
+      "difficulty_reason": "짧은 문장에서 비음화 환경을 분리해 연습한다.",
+      "target_phones": ["ㄱ", "ㄴ", "ㄹ", "ㅁ", "ㅅ", "ㅇ", "ㅈ", "ㅎ", "ㅏ", "ㅐ", "ㅓ", "ㅛ", "ㅜ"],
+      "target_onsets": ["ㄱ", "ㄴ", "ㅁ", "ㅅ", "ㅇ", "ㅈ", "ㅎ"],
+      "target_vowels": ["ㅏ", "ㅐ", "ㅓ", "ㅛ", "ㅜ"],
+      "target_surface_codas": ["ㄱ", "ㄹ", "ㅁ", "ㅇ"],
+      "supplemental_medials": [],
+      "phonological_rule_targets": [
+        {
+          "taxonomy_stable_id": "nasalization",
+          "trigger_text": "국물",
+          "expected_realization_hangul": "궁물",
+          "annotation_status": "engineering_target_pending_human_pronunciation_review"
+        }
+      ],
+      "prosody_targets": ["neutral_declarative_fall"],
+      "duplicate_checks": {
+        "within_card_unique": true,
+        "aihub_reserved_prompt_hash_collision": false,
+        "native_plaintext_overlap": "not_checked_prohibited_input"
+      },
+      "pii_check": {"status": "passed", "matched_categories": []},
+      "prohibited_content_check": {"status": "passed", "matched_categories": []},
+      "tts_usage_policy_id": "r00-research-reference-text-only-v1"
+    },
+    {
+      "sentence_id": "R00-10",
+      "selection_order": 10,
+      "text": "신라의 달빛은 유난히 밝아요.",
+      "normalized_text": "신라의 달빛은 유난히 밝아요.",
+      "normalized_text_sha256": "ec564efd2b3a12dd6ac037f2ce9d87eecc5300f401dec72655054fa43f7a5f1b",
+      "source_id": "voice-coach-r00-original-v1",
+      "license_spdx": "CC0-1.0",
+      "syllable_count": 12,
+      "word_count": 4,
+      "difficulty": "advanced",
+      "difficulty_reason": "유음화와 겹받침이 함께 있어 고급으로 둔다.",
+      "target_phones": ["ㄱ", "ㄴ", "ㄷ", "ㄹ", "ㅂ", "ㅅ", "ㅇ", "ㅎ", "ㅏ", "ㅛ", "ㅠ", "ㅡ", "ㅢ", "ㅣ"],
+      "target_onsets": ["ㄴ", "ㄷ", "ㄹ", "ㅂ", "ㅅ", "ㅇ", "ㅎ"],
+      "target_vowels": ["ㅏ", "ㅛ", "ㅠ", "ㅡ", "ㅢ", "ㅣ"],
+      "target_surface_codas": ["ㄱ", "ㄴ", "ㄷ", "ㄹ"],
+      "supplemental_medials": [],
+      "phonological_rule_targets": [
+        {
+          "taxonomy_stable_id": "liquidization",
+          "trigger_text": "신라",
+          "expected_realization_hangul": "실라",
+          "annotation_status": "engineering_target_pending_human_pronunciation_review"
+        }
+      ],
+      "prosody_targets": ["neutral_declarative_fall"],
+      "duplicate_checks": {
+        "within_card_unique": true,
+        "aihub_reserved_prompt_hash_collision": false,
+        "native_plaintext_overlap": "not_checked_prohibited_input"
+      },
+      "pii_check": {"status": "passed", "matched_categories": []},
+      "prohibited_content_check": {"status": "passed", "matched_categories": []},
+      "tts_usage_policy_id": "r00-research-reference-text-only-v1"
+    },
+    {
+      "sentence_id": "R00-11",
+      "selection_order": 11,
+      "text": "모두 날씨가 좋다며 활짝 웃었어요.",
+      "normalized_text": "모두 날씨가 좋다며 활짝 웃었어요.",
+      "normalized_text_sha256": "2f748e16bc2b49c8d08bcc6e173b973cdae5ad0f29413e8dc1b7e512e7051340",
+      "source_id": "voice-coach-r00-original-v1",
+      "license_spdx": "CC0-1.0",
+      "syllable_count": 14,
+      "word_count": 5,
+      "difficulty": "intermediate",
+      "difficulty_reason": "격음화와 복수의 경계 음운 환경이 함께 있다.",
+      "target_phones": ["ㄱ", "ㄴ", "ㄷ", "ㄹ", "ㅁ", "ㅆ", "ㅇ", "ㅈ", "ㅉ", "ㅎ", "ㅏ", "ㅓ", "ㅕ", "ㅗ", "ㅘ", "ㅛ", "ㅜ", "ㅣ"],
+      "target_onsets": ["ㄱ", "ㄴ", "ㄷ", "ㅁ", "ㅆ", "ㅇ", "ㅈ", "ㅉ", "ㅎ"],
+      "target_vowels": ["ㅏ", "ㅓ", "ㅕ", "ㅗ", "ㅘ", "ㅛ", "ㅜ", "ㅣ"],
+      "target_surface_codas": ["ㄱ", "ㄷ", "ㄹ"],
+      "supplemental_medials": [],
+      "phonological_rule_targets": [
+        {
+          "taxonomy_stable_id": "aspiration",
+          "trigger_text": "좋다",
+          "expected_realization_hangul": "조타",
+          "annotation_status": "engineering_target_pending_human_pronunciation_review"
+        }
+      ],
+      "prosody_targets": ["narrow_focus", "neutral_declarative_fall"],
+      "duplicate_checks": {
+        "within_card_unique": true,
+        "aihub_reserved_prompt_hash_collision": false,
+        "native_plaintext_overlap": "not_checked_prohibited_input"
+      },
+      "pii_check": {"status": "passed", "matched_categories": []},
+      "prohibited_content_check": {"status": "passed", "matched_categories": []},
+      "tts_usage_policy_id": "r00-research-reference-text-only-v1"
+    },
+    {
+      "sentence_id": "R00-12",
+      "selection_order": 12,
+      "text": "같이 밭일을 마치고 쉬어요.",
+      "normalized_text": "같이 밭일을 마치고 쉬어요.",
+      "normalized_text_sha256": "2b1ef1163119467be887e1ee543e9c6e3e8fa1637a3c312dc9f71033f626de74",
+      "source_id": "voice-coach-r00-original-v1",
+      "license_spdx": "CC0-1.0",
+      "syllable_count": 11,
+      "word_count": 4,
+      "difficulty": "advanced",
+      "difficulty_reason": "구개음화와 연속 받침 환경이 함께 있다.",
+      "target_phones": ["ㄱ", "ㄷ", "ㄹ", "ㅁ", "ㅂ", "ㅅ", "ㅇ", "ㅊ", "ㅏ", "ㅓ", "ㅗ", "ㅛ", "ㅟ", "ㅡ", "ㅣ"],
+      "target_onsets": ["ㄱ", "ㅁ", "ㅂ", "ㅅ", "ㅇ", "ㅊ"],
+      "target_vowels": ["ㅏ", "ㅓ", "ㅗ", "ㅛ", "ㅟ", "ㅡ", "ㅣ"],
+      "target_surface_codas": ["ㄷ", "ㄹ"],
+      "supplemental_medials": [],
+      "phonological_rule_targets": [
+        {
+          "taxonomy_stable_id": "palatalization",
+          "trigger_text": "같이",
+          "expected_realization_hangul": "가치",
+          "annotation_status": "engineering_target_pending_human_pronunciation_review"
+        }
+      ],
+      "prosody_targets": ["neutral_declarative_fall"],
+      "duplicate_checks": {
+        "within_card_unique": true,
+        "aihub_reserved_prompt_hash_collision": false,
+        "native_plaintext_overlap": "not_checked_prohibited_input"
+      },
+      "pii_check": {"status": "passed", "matched_categories": []},
+      "prohibited_content_check": {"status": "passed", "matched_categories": []},
+      "tts_usage_policy_id": "r00-research-reference-text-only-v1"
+    },
+    {
+      "sentence_id": "R00-13",
+      "selection_order": 13,
+      "text": "옷이 젖어도 끝까지 걸어요.",
+      "normalized_text": "옷이 젖어도 끝까지 걸어요.",
+      "normalized_text_sha256": "a441b804a473d780e4a07fc4907dd9a30edde069da76d14c7740f2a424d5d261",
+      "source_id": "voice-coach-r00-original-v1",
+      "license_spdx": "CC0-1.0",
+      "syllable_count": 11,
+      "word_count": 4,
+      "difficulty": "intermediate",
+      "difficulty_reason": "연음과 경음 환경을 한 문장 안에서 구분한다.",
+      "target_phones": ["ㄱ", "ㄲ", "ㄷ", "ㄹ", "ㅇ", "ㅈ", "ㅏ", "ㅓ", "ㅗ", "ㅛ", "ㅡ", "ㅣ"],
+      "target_onsets": ["ㄱ", "ㄲ", "ㄷ", "ㅇ", "ㅈ"],
+      "target_vowels": ["ㅏ", "ㅓ", "ㅗ", "ㅛ", "ㅡ", "ㅣ"],
+      "target_surface_codas": ["ㄷ", "ㄹ"],
+      "supplemental_medials": [],
+      "phonological_rule_targets": [
+        {
+          "taxonomy_stable_id": "liaison_rule",
+          "trigger_text": "옷이",
+          "expected_realization_hangul": "오시",
+          "annotation_status": "engineering_target_pending_human_pronunciation_review"
+        }
+      ],
+      "prosody_targets": ["neutral_declarative_fall"],
+      "duplicate_checks": {
+        "within_card_unique": true,
+        "aihub_reserved_prompt_hash_collision": false,
+        "native_plaintext_overlap": "not_checked_prohibited_input"
+      },
+      "pii_check": {"status": "passed", "matched_categories": []},
+      "prohibited_content_check": {"status": "passed", "matched_categories": []},
+      "tts_usage_policy_id": "r00-research-reference-text-only-v1"
+    },
+    {
+      "sentence_id": "R00-14",
+      "selection_order": 14,
+      "text": "국밥 한 그릇을 꼭 먹어요.",
+      "normalized_text": "국밥 한 그릇을 꼭 먹어요.",
+      "normalized_text_sha256": "d1687bc8d5aa55c7737414d214d254d150e0e5db188ce111df3ad01f6673e588",
+      "source_id": "voice-coach-r00-original-v1",
+      "license_spdx": "CC0-1.0",
+      "syllable_count": 10,
+      "word_count": 5,
+      "difficulty": "beginner",
+      "difficulty_reason": "짧은 문장에서 경음화를 집중해 연습한다.",
+      "target_phones": ["ㄱ", "ㄲ", "ㄴ", "ㄷ", "ㄹ", "ㅁ", "ㅂ", "ㅇ", "ㅎ", "ㅏ", "ㅓ", "ㅗ", "ㅛ", "ㅜ", "ㅡ"],
+      "target_onsets": ["ㄱ", "ㄲ", "ㄹ", "ㅁ", "ㅂ", "ㅇ", "ㅎ"],
+      "target_vowels": ["ㅏ", "ㅓ", "ㅗ", "ㅛ", "ㅜ", "ㅡ"],
+      "target_surface_codas": ["ㄱ", "ㄴ", "ㄷ", "ㄹ", "ㅂ"],
+      "supplemental_medials": [],
+      "phonological_rule_targets": [
+        {
+          "taxonomy_stable_id": "tensification",
+          "trigger_text": "국밥",
+          "expected_realization_hangul": "국빱",
+          "annotation_status": "engineering_target_pending_human_pronunciation_review"
+        }
+      ],
+      "prosody_targets": ["narrow_focus", "neutral_declarative_fall"],
+      "duplicate_checks": {
+        "within_card_unique": true,
+        "aihub_reserved_prompt_hash_collision": false,
+        "native_plaintext_overlap": "not_checked_prohibited_input"
+      },
+      "pii_check": {"status": "passed", "matched_categories": []},
+      "prohibited_content_check": {"status": "passed", "matched_categories": []},
+      "tts_usage_policy_id": "r00-research-reference-text-only-v1"
+    },
+    {
+      "sentence_id": "R00-15",
+      "selection_order": 15,
+      "text": "담요를 덮고 편히 쉬세요.",
+      "normalized_text": "담요를 덮고 편히 쉬세요.",
+      "normalized_text_sha256": "f3515d0b3fbdaf7bc89f23545988f532cbfeb6fc980afa2a089d24d7fcfbdbaa",
+      "source_id": "voice-coach-r00-original-v1",
+      "license_spdx": "CC0-1.0",
+      "syllable_count": 10,
+      "word_count": 4,
+      "difficulty": "intermediate",
+      "difficulty_reason": "ㄴ 첨가와 격음 환경이 함께 있어 중간 난이도로 둔다.",
+      "target_phones": ["ㄱ", "ㄴ", "ㄷ", "ㄹ", "ㅁ", "ㅂ", "ㅅ", "ㅇ", "ㅍ", "ㅎ", "ㅏ", "ㅓ", "ㅔ", "ㅕ", "ㅗ", "ㅛ", "ㅟ", "ㅡ", "ㅣ"],
+      "target_onsets": ["ㄱ", "ㄷ", "ㄹ", "ㅅ", "ㅇ", "ㅍ", "ㅎ"],
+      "target_vowels": ["ㅏ", "ㅓ", "ㅔ", "ㅕ", "ㅗ", "ㅛ", "ㅟ", "ㅡ", "ㅣ"],
+      "target_surface_codas": ["ㄴ", "ㄹ", "ㅁ", "ㅂ"],
+      "supplemental_medials": [],
+      "phonological_rule_targets": [
+        {
+          "taxonomy_stable_id": "n_insertion",
+          "trigger_text": "담요",
+          "expected_realization_hangul": "담뇨",
+          "annotation_status": "engineering_target_pending_human_pronunciation_review"
+        }
+      ],
+      "prosody_targets": ["instructional_request_boundary"],
+      "duplicate_checks": {
+        "within_card_unique": true,
+        "aihub_reserved_prompt_hash_collision": false,
+        "native_plaintext_overlap": "not_checked_prohibited_input"
+      },
+      "pii_check": {"status": "passed", "matched_categories": []},
+      "prohibited_content_check": {"status": "passed", "matched_categories": []},
+      "tts_usage_policy_id": "r00-research-reference-text-only-v1"
+    },
+    {
+      "sentence_id": "R00-16",
+      "selection_order": 16,
+      "text": "놓아 둔 꽃병을 조심히 옮겨요.",
+      "normalized_text": "놓아 둔 꽃병을 조심히 옮겨요.",
+      "normalized_text_sha256": "dfcb8c0ea4b02855d23821f15a1fbb68b226b8723038477aff30e9c6b410cbf9",
+      "source_id": "voice-coach-r00-original-v1",
+      "license_spdx": "CC0-1.0",
+      "syllable_count": 12,
+      "word_count": 5,
+      "difficulty": "advanced",
+      "difficulty_reason": "ㅎ 탈락과 된소리 환경이 함께 있어 고급으로 둔다.",
+      "target_phones": ["ㄱ", "ㄲ", "ㄴ", "ㄷ", "ㄹ", "ㅁ", "ㅂ", "ㅅ", "ㅇ", "ㅈ", "ㅎ", "ㅏ", "ㅕ", "ㅗ", "ㅛ", "ㅜ", "ㅡ", "ㅣ"],
+      "target_onsets": ["ㄱ", "ㄲ", "ㄴ", "ㄷ", "ㅂ", "ㅅ", "ㅇ", "ㅈ", "ㅎ"],
+      "target_vowels": ["ㅏ", "ㅕ", "ㅗ", "ㅛ", "ㅜ", "ㅡ", "ㅣ"],
+      "target_surface_codas": ["ㄴ", "ㄷ", "ㄹ", "ㅁ", "ㅇ"],
+      "supplemental_medials": [],
+      "phonological_rule_targets": [
+        {
+          "taxonomy_stable_id": "phoneme_deletion",
+          "trigger_text": "놓아",
+          "expected_realization_hangul": "노아",
+          "annotation_status": "engineering_target_pending_human_pronunciation_review"
+        }
+      ],
+      "prosody_targets": ["neutral_declarative_fall"],
+      "duplicate_checks": {
+        "within_card_unique": true,
+        "aihub_reserved_prompt_hash_collision": false,
+        "native_plaintext_overlap": "not_checked_prohibited_input"
+      },
+      "pii_check": {"status": "passed", "matched_categories": []},
+      "prohibited_content_check": {"status": "passed", "matched_categories": []},
+      "tts_usage_policy_id": "r00-research-reference-text-only-v1"
+    },
+    {
+      "sentence_id": "R00-17",
+      "selection_order": 17,
+      "text": "앞문을 닫는 동안 잠깐 기다려요.",
+      "normalized_text": "앞문을 닫는 동안 잠깐 기다려요.",
+      "normalized_text_sha256": "dcb50d91c55829d4074d7771ddf4f2e8bcfaeed543e88f00c9190a366d07854c",
+      "source_id": "voice-coach-r00-original-v1",
+      "license_spdx": "CC0-1.0",
+      "syllable_count": 13,
+      "word_count": 5,
+      "difficulty": "advanced",
+      "difficulty_reason": "비음화·받침 중화가 연속되어 고급으로 둔다.",
+      "target_phones": ["ㄱ", "ㄲ", "ㄴ", "ㄷ", "ㄹ", "ㅁ", "ㅂ", "ㅇ", "ㅈ", "ㅏ", "ㅕ", "ㅗ", "ㅛ", "ㅜ", "ㅡ", "ㅣ"],
+      "target_onsets": ["ㄱ", "ㄲ", "ㄴ", "ㄷ", "ㄹ", "ㅁ", "ㅇ", "ㅈ"],
+      "target_vowels": ["ㅏ", "ㅕ", "ㅗ", "ㅛ", "ㅜ", "ㅡ", "ㅣ"],
+      "target_surface_codas": ["ㄴ", "ㄷ", "ㄹ", "ㅁ", "ㅂ", "ㅇ"],
+      "supplemental_medials": [],
+      "phonological_rule_targets": [],
+      "prosody_targets": ["phrase_boundary_chunking", "neutral_declarative_fall"],
+      "duplicate_checks": {
+        "within_card_unique": true,
+        "aihub_reserved_prompt_hash_collision": false,
+        "native_plaintext_overlap": "not_checked_prohibited_input"
+      },
+      "pii_check": {"status": "passed", "matched_categories": []},
+      "prohibited_content_check": {"status": "passed", "matched_categories": []},
+      "tts_usage_policy_id": "r00-research-reference-text-only-v1"
+    },
+    {
+      "sentence_id": "R00-18",
+      "selection_order": 18,
+      "text": "책상 위 연필 세 자루를 천천히 세어 보세요.",
+      "normalized_text": "책상 위 연필 세 자루를 천천히 세어 보세요.",
+      "normalized_text_sha256": "9de318dfb723a63d451bb3b3fd54371d4afa33e1a5662b534069cec3d41b3c0a",
+      "source_id": "voice-coach-r00-original-v1",
+      "license_spdx": "CC0-1.0",
+      "syllable_count": 17,
+      "word_count": 8,
+      "difficulty": "intermediate",
+      "difficulty_reason": "목록 리듬과 긴 요청문 호흡을 함께 연습한다.",
+      "target_phones": ["ㄱ", "ㄴ", "ㄹ", "ㅂ", "ㅅ", "ㅇ", "ㅈ", "ㅊ", "ㅍ", "ㅎ", "ㅏ", "ㅐ", "ㅓ", "ㅔ", "ㅕ", "ㅗ", "ㅛ", "ㅜ", "ㅟ", "ㅡ", "ㅣ"],
+      "target_onsets": ["ㄹ", "ㅂ", "ㅅ", "ㅇ", "ㅈ", "ㅊ", "ㅍ", "ㅎ"],
+      "target_vowels": ["ㅏ", "ㅐ", "ㅓ", "ㅔ", "ㅕ", "ㅗ", "ㅛ", "ㅜ", "ㅟ", "ㅡ", "ㅣ"],
+      "target_surface_codas": ["ㄱ", "ㄴ", "ㄹ", "ㅇ"],
+      "supplemental_medials": [],
+      "phonological_rule_targets": [],
+      "prosody_targets": ["list_rhythm", "instructional_request_boundary"],
+      "duplicate_checks": {
+        "within_card_unique": true,
+        "aihub_reserved_prompt_hash_collision": false,
+        "native_plaintext_overlap": "not_checked_prohibited_input"
+      },
+      "pii_check": {"status": "passed", "matched_categories": []},
+      "prohibited_content_check": {"status": "passed", "matched_categories": []},
+      "tts_usage_policy_id": "r00-research-reference-text-only-v1"
+    },
+    {
+      "sentence_id": "R00-19",
+      "selection_order": 19,
+      "text": "오늘은 비가 오지만 내일은 맑을까요?",
+      "normalized_text": "오늘은 비가 오지만 내일은 맑을까요?",
+      "normalized_text_sha256": "42a5bb910543d81ae4cc645813d5b2e0c7fb3832d02f16989fd51635290fe668",
+      "source_id": "voice-coach-r00-original-v1",
+      "license_spdx": "CC0-1.0",
+      "syllable_count": 15,
+      "word_count": 5,
+      "difficulty": "advanced",
+      "difficulty_reason": "대조 초점과 예-아니요 의문문 경계를 함께 연습한다.",
+      "target_phones": ["ㄱ", "ㄲ", "ㄴ", "ㄹ", "ㅁ", "ㅂ", "ㅇ", "ㅈ", "ㅏ", "ㅐ", "ㅗ", "ㅛ", "ㅡ", "ㅣ"],
+      "target_onsets": ["ㄱ", "ㄲ", "ㄴ", "ㅁ", "ㅂ", "ㅇ", "ㅈ"],
+      "target_vowels": ["ㅏ", "ㅐ", "ㅗ", "ㅛ", "ㅡ", "ㅣ"],
+      "target_surface_codas": ["ㄱ", "ㄴ", "ㄹ"],
+      "supplemental_medials": [],
+      "phonological_rule_targets": [],
+      "prosody_targets": ["contrastive_focus", "yes_no_question_boundary"],
+      "duplicate_checks": {
+        "within_card_unique": true,
+        "aihub_reserved_prompt_hash_collision": false,
+        "native_plaintext_overlap": "not_checked_prohibited_input"
+      },
+      "pii_check": {"status": "passed", "matched_categories": []},
+      "prohibited_content_check": {"status": "passed", "matched_categories": []},
+      "tts_usage_policy_id": "r00-research-reference-text-only-v1"
+    },
+    {
+      "sentence_id": "R00-20",
+      "selection_order": 20,
+      "text": "조용히 듣고 핵심 낱말을 또박또박 말해요.",
+      "normalized_text": "조용히 듣고 핵심 낱말을 또박또박 말해요.",
+      "normalized_text_sha256": "6fe58458af1a9093096d1500cb9192072360260384d6dd8f4047a6eeebade01e",
+      "source_id": "voice-coach-r00-original-v1",
+      "license_spdx": "CC0-1.0",
+      "syllable_count": 17,
+      "word_count": 6,
+      "difficulty": "advanced",
+      "difficulty_reason": "낱말 초점과 반복 리듬을 긴 문장에서 연습한다.",
+      "target_phones": ["ㄱ", "ㄴ", "ㄷ", "ㄸ", "ㄹ", "ㅁ", "ㅂ", "ㅅ", "ㅇ", "ㅈ", "ㅎ", "ㅏ", "ㅐ", "ㅗ", "ㅛ", "ㅡ", "ㅣ"],
+      "target_onsets": ["ㄱ", "ㄴ", "ㄷ", "ㄸ", "ㅁ", "ㅂ", "ㅅ", "ㅇ", "ㅈ", "ㅎ"],
+      "target_vowels": ["ㅏ", "ㅐ", "ㅗ", "ㅛ", "ㅡ", "ㅣ"],
+      "target_surface_codas": ["ㄱ", "ㄷ", "ㄹ", "ㅁ", "ㅇ"],
+      "supplemental_medials": [],
+      "phonological_rule_targets": [],
+      "prosody_targets": ["rhythmic_repetition", "narrow_focus", "neutral_declarative_fall"],
+      "duplicate_checks": {
+        "within_card_unique": true,
+        "aihub_reserved_prompt_hash_collision": false,
+        "native_plaintext_overlap": "not_checked_prohibited_input"
+      },
+      "pii_check": {"status": "passed", "matched_categories": []},
+      "prohibited_content_check": {"status": "passed", "matched_categories": []},
+      "tts_usage_policy_id": "r00-research-reference-text-only-v1"
+    }
+  ],
+  "aggregate_checks": {
+    "sentence_count": 20,
+    "unique_normalized_hash_count": 20,
+    "aihub_reserved_prompt_hash_overlap_count": 0,
+    "native_plaintext_files_read": 0,
+    "pii_match_count": 0,
+    "forbidden_content_match_count": 0,
+    "difficulty_counts": {
+      "beginner": 7,
+      "intermediate": 7,
+      "advanced": 6
+    },
+    "covered_instructional_target_labels": [
+      "ㄱ", "ㄲ", "ㄴ", "ㄷ", "ㄸ", "ㄹ", "ㅁ", "ㅂ", "ㅃ", "ㅅ", "ㅆ", "ㅇ", "ㅈ", "ㅉ", "ㅊ", "ㅋ", "ㅌ", "ㅍ", "ㅎ",
+      "ㅏ", "ㅐ", "ㅑ", "ㅓ", "ㅔ", "ㅕ", "ㅖ", "ㅗ", "ㅘ", "ㅚ", "ㅛ", "ㅜ", "ㅝ", "ㅟ", "ㅠ", "ㅡ", "ㅢ", "ㅣ"
+    ],
+    "covered_onset_consonants": [
+      "ㄱ", "ㄲ", "ㄴ", "ㄷ", "ㄸ", "ㄹ", "ㅁ", "ㅂ", "ㅃ", "ㅅ", "ㅆ", "ㅇ", "ㅈ", "ㅉ", "ㅊ", "ㅋ", "ㅌ", "ㅍ", "ㅎ"
+    ],
+    "covered_observed_korean_vowels": [
+      "ㅏ", "ㅐ", "ㅑ", "ㅓ", "ㅔ", "ㅕ", "ㅖ", "ㅗ", "ㅘ", "ㅚ", "ㅛ", "ㅜ", "ㅝ", "ㅟ", "ㅠ", "ㅡ", "ㅢ", "ㅣ"
+    ],
+    "covered_surface_coda_classes": ["ㄱ", "ㄴ", "ㄷ", "ㄹ", "ㅁ", "ㅂ", "ㅇ"],
+    "covered_supplemental_medials": ["ㅒ", "ㅙ", "ㅞ"],
+    "covered_phonological_rules": [
+      "tensification",
+      "nasalization",
+      "aspiration",
+      "liquidization",
+      "liaison_rule",
+      "n_insertion",
+      "palatalization",
+      "phoneme_deletion"
+    ],
+    "covered_prosody_targets": [
+      "contrastive_focus",
+      "instructional_request_boundary",
+      "list_rhythm",
+      "long_phrase_chunking",
+      "narrow_focus",
+      "neutral_declarative_fall",
+      "phrase_boundary_chunking",
+      "rhythmic_repetition",
+      "slow_clear_pacing",
+      "wh_question_boundary",
+      "yes_no_question_boundary"
+    ]
+  },
+  "completion_boundary": {
+    "r00_completion_claim_allowed_after_validator_pass": true,
+    "r01_completed": false,
+    "tts_generated": false,
+    "human_reference_recorded": false,
+    "human_evaluation_completed": false,
+    "model_trained": false
+  }
+}

@@ -1,0 +1,315 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://voice-coach.local/schemas/h04_learning_effect_aggregate_input_v1.schema.json",
+  "title": "H04 learning-effect aggregate analysis input manifest",
+  "description": "A score-free A1 manifest that authorizes a separate restricted D1 statistical executor. It binds completed H00-H03 evidence, a frozen SAP, and an analyst attestation without containing participant rows, recordings, ratings, outcomes, raw locators, or effect estimates.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_version",
+    "input_id",
+    "status",
+    "privacy_zone",
+    "lineage",
+    "design_contract",
+    "counts",
+    "receipt_hashes",
+    "analysis_authorization",
+    "privacy_safety",
+    "binding_sha256"
+  ],
+  "properties": {
+    "schema_version": {
+      "const": "voice_coach.h04_learning_effect_aggregate_input.v1"
+    },
+    "input_id": {
+      "type": "string",
+      "pattern": "^h04input_[0-9a-f]{32}$"
+    },
+    "status": {
+      "const": "locked_aggregate_manifest_for_authorized_analysis"
+    },
+    "privacy_zone": {
+      "const": "A1_aggregate_manifest_no_participant_rows"
+    },
+    "lineage": {
+      "$ref": "#/$defs/lineage"
+    },
+    "design_contract": {
+      "$ref": "#/$defs/designContract"
+    },
+    "counts": {
+      "$ref": "#/$defs/counts"
+    },
+    "receipt_hashes": {
+      "$ref": "#/$defs/receiptHashes"
+    },
+    "analysis_authorization": {
+      "$ref": "#/$defs/analysisAuthorization"
+    },
+    "privacy_safety": {
+      "$ref": "#/$defs/privacySafety"
+    },
+    "binding_sha256": {
+      "$ref": "#/$defs/sha256"
+    }
+  },
+  "$defs": {
+    "sha256": {
+      "type": "string",
+      "pattern": "^[0-9a-f]{64}$"
+    },
+    "lineage": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "h00_approval_sha256",
+        "h00_attestation_sha256",
+        "h01_final_sample_size_lock_sha256",
+        "h02_h03_completion_sha256",
+        "frozen_sap_sha256",
+        "analyst_attestation_sha256"
+      ],
+      "properties": {
+        "h00_approval_sha256": {
+          "$ref": "#/$defs/sha256"
+        },
+        "h00_attestation_sha256": {
+          "$ref": "#/$defs/sha256"
+        },
+        "h01_final_sample_size_lock_sha256": {
+          "$ref": "#/$defs/sha256"
+        },
+        "h02_h03_completion_sha256": {
+          "$ref": "#/$defs/sha256"
+        },
+        "frozen_sap_sha256": {
+          "$ref": "#/$defs/sha256"
+        },
+        "analyst_attestation_sha256": {
+          "$ref": "#/$defs/sha256"
+        }
+      }
+    },
+    "designContract": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "comparisons",
+        "timepoints",
+        "primary_outcome",
+        "primary_population",
+        "fixed_effect_formula",
+        "random_intercepts"
+      ],
+      "properties": {
+        "comparisons": {
+          "const": [
+            "c3_minus_c0",
+            "c5_minus_c3"
+          ]
+        },
+        "timepoints": {
+          "const": [
+            "pre",
+            "post_at_2_weeks",
+            "retention_4_weeks_after_post"
+          ]
+        },
+        "primary_outcome": {
+          "const": "blind_expert_comprehensibility_1_to_5"
+        },
+        "primary_population": {
+          "const": "intention_to_treat_as_randomized"
+        },
+        "fixed_effect_formula": {
+          "const": "score~condition*time+l1+baseline"
+        },
+        "random_intercepts": {
+          "const": [
+            "participant",
+            "sentence",
+            "rater"
+          ]
+        }
+      }
+    },
+    "stageCounts": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "randomized_total",
+        "pre_observed_participants",
+        "post_observed_participants",
+        "retention_observed_participants",
+        "blind_rating_count"
+      ],
+      "properties": {
+        "randomized_total": {
+          "type": "integer",
+          "minimum": 2
+        },
+        "pre_observed_participants": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "post_observed_participants": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "retention_observed_participants": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "blind_rating_count": {
+          "type": "integer",
+          "minimum": 1
+        }
+      }
+    },
+    "counts": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "stage_1_c0_vs_c3",
+        "stage_2_c3_vs_c5"
+      ],
+      "properties": {
+        "stage_1_c0_vs_c3": {
+          "$ref": "#/$defs/stageCounts"
+        },
+        "stage_2_c3_vs_c5": {
+          "$ref": "#/$defs/stageCounts"
+        }
+      }
+    },
+    "receiptHashes": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "restricted_d1_analysis_dataset_sha256",
+        "blind_rating_dataset_sha256",
+        "data_lock_receipt_sha256",
+        "randomization_receipt_sha256",
+        "delivery_fidelity_report_sha256",
+        "missingness_report_sha256",
+        "withdrawal_report_sha256",
+        "adverse_feedback_report_sha256",
+        "ceiling_floor_report_sha256",
+        "analysis_code_sha256",
+        "software_environment_lock_sha256"
+      ],
+      "properties": {
+        "restricted_d1_analysis_dataset_sha256": {
+          "$ref": "#/$defs/sha256"
+        },
+        "blind_rating_dataset_sha256": {
+          "$ref": "#/$defs/sha256"
+        },
+        "data_lock_receipt_sha256": {
+          "$ref": "#/$defs/sha256"
+        },
+        "randomization_receipt_sha256": {
+          "$ref": "#/$defs/sha256"
+        },
+        "delivery_fidelity_report_sha256": {
+          "$ref": "#/$defs/sha256"
+        },
+        "missingness_report_sha256": {
+          "$ref": "#/$defs/sha256"
+        },
+        "withdrawal_report_sha256": {
+          "$ref": "#/$defs/sha256"
+        },
+        "adverse_feedback_report_sha256": {
+          "$ref": "#/$defs/sha256"
+        },
+        "ceiling_floor_report_sha256": {
+          "$ref": "#/$defs/sha256"
+        },
+        "analysis_code_sha256": {
+          "$ref": "#/$defs/sha256"
+        },
+        "software_environment_lock_sha256": {
+          "$ref": "#/$defs/sha256"
+        }
+      }
+    },
+    "analysisAuthorization": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "h00_scope_current",
+        "h01_final_sample_size_locked",
+        "h02_h03_bundle_completed",
+        "sap_frozen_before_unmask_and_analysis",
+        "analyst_attested",
+        "restricted_d1_row_access_allowed_by_this_static_package",
+        "statistics_execution_allowed_by_this_static_package"
+      ],
+      "properties": {
+        "h00_scope_current": {
+          "const": true
+        },
+        "h01_final_sample_size_locked": {
+          "const": true
+        },
+        "h02_h03_bundle_completed": {
+          "const": true
+        },
+        "sap_frozen_before_unmask_and_analysis": {
+          "const": true
+        },
+        "analyst_attested": {
+          "const": true
+        },
+        "restricted_d1_row_access_allowed_by_this_static_package": {
+          "const": false
+        },
+        "statistics_execution_allowed_by_this_static_package": {
+          "const": false
+        }
+      }
+    },
+    "privacySafety": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "participant_rows_present",
+        "participant_identifiers_present",
+        "individual_ratings_present",
+        "audio_or_transcript_present",
+        "raw_locator_present",
+        "free_text_present",
+        "effect_estimates_present",
+        "aggregate_only"
+      ],
+      "properties": {
+        "participant_rows_present": {
+          "const": false
+        },
+        "participant_identifiers_present": {
+          "const": false
+        },
+        "individual_ratings_present": {
+          "const": false
+        },
+        "audio_or_transcript_present": {
+          "const": false
+        },
+        "raw_locator_present": {
+          "const": false
+        },
+        "free_text_present": {
+          "const": false
+        },
+        "effect_estimates_present": {
+          "const": false
+        },
+        "aggregate_only": {
+          "const": true
+        }
+      }
+    }
+  }
+}

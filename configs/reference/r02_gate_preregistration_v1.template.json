@@ -1,0 +1,85 @@
+{
+  "schema_version": "voice_coach.r02_gate_preregistration.v1",
+  "preregistration_id": "TBD_PREREGISTRATION",
+  "status": "TBD_PREREGISTRATION",
+  "approved_document_sha256": "TBD_PREREGISTRATION",
+  "approved_by_external_human": false,
+  "locked_before_r02_audio_access": false,
+  "candidate_policy": {
+    "input_candidates_per_sentence_minimum": 8,
+    "input_candidates_per_sentence_maximum": 16,
+    "same_gate_for_human_and_tts": true,
+    "source_conditioned_thresholds_allowed": false,
+    "minimum_eligible_candidates_per_sentence": "TBD_PREREGISTRATION",
+    "aggregate_transcript_error_metric_id": "TBD_PREREGISTRATION",
+    "aggregate_transcript_error_metric_definition_sha256": "TBD_PREREGISTRATION",
+    "aggregate_transcript_error_aggregation": "TBD_PREREGISTRATION",
+    "aggregate_transcript_error_threshold_operator": "le",
+    "aggregate_transcript_error_completion_boundary": 0.02,
+    "aggregate_boundary_is_not_a_candidate_threshold": true
+  },
+  "gates": {
+    "asr_content_match": {
+      "metric_id": "TBD_PREREGISTRATION",
+      "metric_definition_sha256": "TBD_PREREGISTRATION",
+      "threshold_operator": "TBD_PREREGISTRATION",
+      "threshold_value": "TBD_PREREGISTRATION",
+      "normalization_id": "TBD_PREREGISTRATION",
+      "segmentation_id": "TBD_PREREGISTRATION",
+      "minimum_support": "TBD_PREREGISTRATION"
+    },
+    "acoustic_artifact": {
+      "metric_id": "TBD_PREREGISTRATION",
+      "metric_definition_sha256": "TBD_PREREGISTRATION",
+      "threshold_operator": "TBD_PREREGISTRATION",
+      "threshold_value": "TBD_PREREGISTRATION",
+      "normalization_id": "TBD_PREREGISTRATION",
+      "segmentation_id": "TBD_PREREGISTRATION",
+      "minimum_support": "TBD_PREREGISTRATION"
+    },
+    "pause_rhythm": {
+      "metric_id": "TBD_PREREGISTRATION",
+      "metric_definition_sha256": "TBD_PREREGISTRATION",
+      "threshold_operator": "TBD_PREREGISTRATION",
+      "threshold_value": "TBD_PREREGISTRATION",
+      "normalization_id": "TBD_PREREGISTRATION",
+      "segmentation_id": "TBD_PREREGISTRATION",
+      "minimum_support": "TBD_PREREGISTRATION"
+    },
+    "target_phone_coverage": {
+      "metric_id": "TBD_PREREGISTRATION",
+      "metric_definition_sha256": "TBD_PREREGISTRATION",
+      "threshold_operator": "TBD_PREREGISTRATION",
+      "threshold_value": "TBD_PREREGISTRATION",
+      "normalization_id": "TBD_PREREGISTRATION",
+      "segmentation_id": "TBD_PREREGISTRATION",
+      "minimum_support": "TBD_PREREGISTRATION"
+    }
+  },
+  "multiplicity_and_missingness": {
+    "missing_metric_decision": "fail",
+    "nonfinite_metric_decision": "fail",
+    "insufficient_support_decision": "fail",
+    "all_four_gates_must_pass": true,
+    "posthoc_threshold_change_allowed": false
+  },
+  "blindness_and_leakage": {
+    "gate_input_contains_source_kind": false,
+    "source_labels_available_to_gate_implementation": false,
+    "human_and_tts_exception_allowed": false,
+    "s1_prediction_or_score_allowed": false,
+    "s2_prediction_or_score_allowed": false,
+    "gold_test_or_locked_split_allowed": false,
+    "r00_target_rules_for_coverage_audit_only": true
+  },
+  "license_decisions": {
+    "asr_code_license": "TBD_ATTESTATION",
+    "asr_checkpoint_license": "TBD_ATTESTATION",
+    "artifact_code_license": "TBD_ATTESTATION",
+    "artifact_checkpoint_license": "TBD_ATTESTATION",
+    "pause_rhythm_pipeline_license": "TBD_ATTESTATION",
+    "target_phone_code_license": "TBD_ATTESTATION",
+    "target_phone_checkpoint_license": "TBD_ATTESTATION"
+  },
+  "completion_claim_allowed": false
+}

@@ -1,0 +1,243 @@
+schema_version: 1
+
+experiment:
+  id: e02_confidence_guard_v1
+  stage: wp8_e02_confidence_outside_automatic_correction_guard
+  implementation_status: production_static_preflight_only
+  actual_request_access_allowed: false
+  actual_api_execution_allowed: false
+  actual_coaching_or_reference_delivery_allowed: false
+  actual_model_or_metric_execution_allowed: false
+  actual_output_write_allowed: false
+  production_release_allowed: false
+  completion_claim_allowed: false
+
+canonical_sources:
+  access_scope: C1_public_or_static_contract_pins_only
+  pins:
+    - path: configs/coaching/e02_confidence_guard_input_v1.schema.json
+      sha256: 2382601910d088ed3fb0b8d839bc38c6f992cf60fc592a8043ea586e76807e73
+    - path: configs/coaching/e02_confidence_guard_api_response_v1.schema.json
+      sha256: e15d55e2f2db1efdd82ed98436272df124ea6631d9f7eb0e28b1f832d4270cd8
+    - path: configs/coaching/e02_c02_coaching_bundle_commit_v1.schema.json
+      sha256: 611d6c4fc1cc4e1f1fd15a9bcc185deba781c145b23e2ed7432affbe5ae496ca
+    - path: configs/coaching/e02_confidence_guard_preregistration_v1.template.json
+      sha256: 8b1e0490e3fbad3efe2f3ac8624187e32a386d35428bcd21a2c82f832bf0d4f9
+    - path: configs/experiments/c02_deterministic_coaching_selection_v1.yaml
+      sha256: 79fa2d037383424036fb40ff66eae26a6fd992a731913393cc92f9d7b61eaa05
+    - path: configs/coaching/c02_diagnostic_issues_input_v1.schema.json
+      sha256: cd2588ffac9ff10870977e125969c7709ecde25c050c4845ab0c9b9f1f1d7742
+    - path: configs/coaching/c02_coaching_selection_output_v1.schema.json
+      sha256: 935db571a2371e96b082a59979af7b24a508318f5385f62032d4ce735ed6c643
+    - path: src/voice_coach/coaching/c02_selection_contract.py
+      sha256: 59941428030e653b013459b003ce99d1169cd940ee9a06fb320634d75dd11667
+    - path: configs/experiments/wavlm_s107_calibration_v1.yaml
+      sha256: 6702ea196481784319c03e413d8ee6844a060e83407aed204f9344cb0230909f
+    - path: src/voice_coach/training/wavlm_s107_calibration_contract.py
+      sha256: 04909937b7b8eb4a135a0f7e44c7ec0afc8a438c29aae2d2cbe3de4dcdafac1e
+    - path: src/voice_coach/training/wavlm_s107_calibration_training.py
+      sha256: 201973a25e75da77ec86468a60094c22ac3d3376d936d5e2d089531d52b5d6d3
+    - path: docs/IMPLEMENTATION_PLAN_KO.md
+      sha256: 12ce84cd7f4f3e34b332dcd1f9a7ded276a367c0339792d1ed74ca8ceb217acf
+    - path: docs/WP4_POST_S103_EXECUTION_CONTRACT_KO.md
+      sha256: 46ebafeb48bba95f8de04553dfe2c13c5466a03e5dfc8d6e3bc42e8d81f4a3e7
+    - path: docs/WAVLM_S107_CALIBRATION_READINESS_KO.md
+      sha256: c1abb3bc1960e78b768ba07e4d0a02712cee3b781f971eb6a97a53db2665e1c7
+    - path: docs/C02_COACHING_SELECTION_DATA_MODEL_SAFETY_CARD_KO.md
+      sha256: 88749a14a61da78b612f8c22edcb13278f4906081971bcda2d55dd119e72b7b1
+    - path: docs/C02_DETERMINISTIC_COACHING_SELECTION_READINESS_KO.md
+      sha256: 5face76de79ba175e0c72ec91967901e5d24add6af6d5cfb97a392333157822e
+    - path: docs/E01_METAMORPHIC_DATA_MODEL_SAFETY_CARD_KO.md
+      sha256: bef7b09317ceb82e9eb5c0de0c20990cb111f9aa5bcede2c822a3fd267cb0eae
+    - path: docs/E01_METAMORPHIC_READINESS_KO.md
+      sha256: 54064f3608e4c0b678c4a16d4e4579bdcca9e4b213e0f9efec769ddca15e5140
+    - path: docs/api/endpoints.md
+      sha256: 61280c3d2a9d3f8212fb0cf93abda3709d4508b205130701554e1410a84f05d7
+    - path: docs/api/specification.md
+      sha256: b504763d73f42fe5408a51e9df729fb9c7dac3abc6598fb87afef8409b585256
+    - path: docs/architecture/architecture.md
+      sha256: bc30d771ffe6cefdc342601958c03e28210b4f33474e7e400666709d8c793086
+    - path: docs/architecture/component.md
+      sha256: 7a82c430ff815be1cb99c8144d674fd1a916feabacbdcefaca7ce451cfb31416
+    - path: docs/architecture/directory.md
+      sha256: db88f140013af2d979d3b8541ba53917f998e7367fd891346dc769ff3f583688
+    - path: docs/architecture/flow.md
+      sha256: f35de9e60fe8784e6316e8da0e6fb36c5deb98ed345258732fb56f558c349a86
+    - path: docs/architecture/state.md
+      sha256: 8b3bb0008ce9ef668405dd79ed3b3dc93e52230ad56e7dec1c93288ebcbcfc9e
+
+predecessor_s107:
+  deep_validation_required: true
+  actual_completed_output_required: true
+  config_path: configs/experiments/wavlm_s107_calibration_v1.yaml
+  config_sha256: 6702ea196481784319c03e413d8ee6844a060e83407aed204f9344cb0230909f
+  contract_path: src/voice_coach/training/wavlm_s107_calibration_contract.py
+  contract_sha256: 04909937b7b8eb4a135a0f7e44c7ec0afc8a438c29aae2d2cbe3de4dcdafac1e
+  completion_validator_path: src/voice_coach/training/wavlm_s107_calibration_training.py
+  completion_validator_sha256: 201973a25e75da77ec86468a60094c22ac3d3376d936d5e2d089531d52b5d6d3
+  completion_validator_symbol: validate_s107_commit
+  completion_commit_path: artifacts/experiments/aihub71490_wavlm_s107_calibration_v1/commit.json
+  completion_commit_sha256: TBD_S107_COMPLETION
+  required_commit_schema_version: voice_coach.wavlm_s107_calibration_commit.v1
+  required_commit_status: committed
+  required_deep_status: valid
+  required_label_status: silver_oracle_provisional
+  required_registry_status: completed
+  threshold_artifact_name: threshold_policy_report
+  threshold_artifact_relative_path: threshold_policy_report.json
+  threshold_artifact_schema_version: voice_coach.wavlm_s107_threshold_policy.v1
+  threshold_artifact_sha256: TBD_S107_COMPLETION
+  threshold_policy_status: provisional_engineering_not_promotion
+  required_threshold_selection_status: selected_provisional_engineering
+  numeric_threshold_copied_into_e02_config: false
+  threshold_source: deep_validated_actual_s107_threshold_policy_only
+  abstain_all_selection_status_prohibited: true
+
+predecessor_c02:
+  deep_validation_required: true
+  actual_completed_bundle_required: true
+  config_path: configs/experiments/c02_deterministic_coaching_selection_v1.yaml
+  config_sha256: 79fa2d037383424036fb40ff66eae26a6fd992a731913393cc92f9d7b61eaa05
+  contract_path: src/voice_coach/coaching/c02_selection_contract.py
+  contract_sha256: 59941428030e653b013459b003ce99d1169cd940ee9a06fb320634d75dd11667
+  bundle_schema_path: configs/coaching/e02_c02_coaching_bundle_commit_v1.schema.json
+  bundle_schema_sha256: 611d6c4fc1cc4e1f1fd15a9bcc185deba781c145b23e2ed7432affbe5ae496ca
+  completion_commit_path: artifacts/coaching/c02/commit.json
+  completion_commit_sha256: TBD_C02_COMPLETION
+  required_commit_schema_version: voice_coach.e02_c02_coaching_bundle_commit.v1
+  required_commit_status: committed
+  required_registry_schema_version: voice_coach.e02_c02_coaching_bundle_registry.v1
+  required_registry_status: completed
+  required_diagnostic_input_schema_version: voice_coach.c02_diagnostic_issues_input.v1
+  required_selection_output_schema_version: voice_coach.c02_coaching_selection_output.v1
+  deterministic_recomputation_required: true
+  blocked_top_k_backfill_allowed: false
+  free_generation_llm_allowed: false
+  prompt_or_completion_allowed: false
+  network_access_allowed: false
+  runtime_model_access_allowed: false
+  gpu_access_allowed: false
+  reference_generation_allowed: false
+  production_release_allowed: false
+
+preregistration:
+  placeholder: TBD_E02_PREREGISTRATION
+  template_path: configs/coaching/e02_confidence_guard_preregistration_v1.template.json
+  template_sha256: 8b1e0490e3fbad3efe2f3ac8624187e32a386d35428bcd21a2c82f832bf0d4f9
+  approved_artifact_path: artifacts/external_attestations/e02/e02_confidence_guard_preregistration_v1.json
+  approved_artifact_sha256: TBD_E02_PREREGISTRATION
+  required_schema_version: voice_coach.e02_confidence_guard_preregistration.v1
+  required_status: approved_and_frozen
+  must_be_frozen_before_guard_input_or_api_access: true
+  unresolved_fields_must_fail_closed: true
+
+guard_contract:
+  automatic_block_conditions:
+    - out_of_domain
+    - low_confidence
+    - unsupported
+    - abstain_all
+  blocked_reason_precedence: TBD_PREREGISTRATION
+  mixed_reason_resolution_id: TBD_PREREGISTRATION
+  allowed_blocked_safe_next_actions:
+    - rerecord
+    - expert_review
+  threshold_source: deep_validated_actual_s107_threshold_policy_only
+  numeric_threshold_in_config_allowed: false
+  ood_definition_id: TBD_PREREGISTRATION
+  ood_threshold_or_rule_policy_sha256: TBD_PREREGISTRATION
+  unsupported_definition_id: TBD_PREREGISTRATION
+  abstain_all_definition_id: TBD_PREREGISTRATION
+  blocked_automatic_coaching_advice_allowed: false
+  blocked_automatic_reference_allowed: false
+  blocked_automatic_corrective_action_allowed: false
+  c02_blocked_top_k_backfill_allowed: false
+  c02_free_generation_allowed: false
+  pass_through_requires_all_registered_gates: true
+
+api_privacy:
+  response_schema_path: configs/coaching/e02_confidence_guard_api_response_v1.schema.json
+  response_schema_sha256: e15d55e2f2db1efdd82ed98436272df124ea6631d9f7eb0e28b1f832d4270cd8
+  input_schema_path: configs/coaching/e02_confidence_guard_input_v1.schema.json
+  input_schema_sha256: 2382601910d088ed3fb0b8d839bc38c6f992cf60fc592a8043ea586e76807e73
+  blocked_reason_codes_allowed: true
+  evidence_provenance_hashes_allowed: true
+  safe_next_action_code_allowed: true
+  model_score_allowed: false
+  pii_allowed: false
+  raw_path_allowed: false
+  free_text_allowed: false
+  advice_reference_or_corrective_payload_allowed_when_blocked: false
+  forbidden_recursive_fields:
+    - name
+    - email
+    - phone
+    - address
+    - legal_name
+    - learner_id
+    - participant_id
+    - raw_attempt_id
+    - target_text
+    - transcript
+    - audio_path
+    - source_path
+    - model_path
+    - filename
+    - file_name
+    - free_text
+    - comment
+    - prompt
+    - completion
+    - generated_text
+    - llm_response
+    - score
+    - model_score
+    - confidence
+    - confidence_score
+    - probability
+    - logit
+    - threshold
+    - ece
+    - brier
+    - message
+    - message_ko
+    - advice
+    - reference
+    - corrective_action
+
+non_execution:
+  request_or_row_access_allowed: false
+  api_invocation_allowed: false
+  coaching_advice_delivery_allowed: false
+  reference_delivery_allowed: false
+  corrective_action_delivery_allowed: false
+  model_access_allowed: false
+  gpu_access_allowed: false
+  metric_computation_allowed: false
+  network_access_allowed: false
+  llm_access_allowed: false
+  free_generation_allowed: false
+  output_write_allowed: false
+  registry_or_commit_write_allowed: false
+  production_or_publication_allowed: false
+
+execution_order:
+  - validate_e02_static_config_sources_schemas_and_fail_closed_template
+  - require_exact_s107_completion_and_threshold_pins_before_path_resolution
+  - deep_validate_actual_s107_completion_and_threshold_without_copying_numeric_threshold
+  - require_exact_c02_completed_bundle_pin_before_path_resolution
+  - deep_recompute_actual_c02_deterministic_bundle_and_no_backfill_free_generation_guards
+  - validate_frozen_e02_ood_threshold_support_abstain_combination_policy
+  - stop_before_guard_input_request_api_coaching_reference_model_metric_or_output
+
+outputs:
+  guard_input_schema_path: configs/coaching/e02_confidence_guard_input_v1.schema.json
+  api_response_schema_path: configs/coaching/e02_confidence_guard_api_response_v1.schema.json
+  guard_decision_path: data/processed/evaluation/e02/e02_confidence_guard_decision_v1.json
+  aggregate_report_path: artifacts/evaluation/e02/e02_confidence_guard_report_v1.json
+  registry_path: artifacts/experiment_registry/e02-confidence-guard-v1/metadata.json
+  commit_path: artifacts/evaluation/e02/commit.json
+  failure_report_path: artifacts/evaluation/e02/failure.json
+  no_overwrite: true
+  atomic_publish_required: true
+  write_enabled_in_this_package: false

@@ -1,0 +1,276 @@
+schema_version: 1
+
+experiment:
+  id: h04_learning_effect_analysis_v1
+  stage: wp9_h04_learning_effect_statistical_analysis
+  implementation_status: production_static_preflight_only
+  actual_participant_or_rating_access_allowed: false
+  actual_audio_or_transcript_access_allowed: false
+  actual_statistics_or_effect_computation_allowed: false
+  actual_model_or_gpu_access_allowed: false
+  actual_network_access_allowed: false
+  actual_report_or_output_write_allowed: false
+  publication_allowed: false
+  completion_claim_allowed: false
+
+canonical_sources:
+  access_scope: C1_public_or_A1_aggregate_static_pins_only
+  pins:
+    - path: configs/human_research/h04_feasibility_pilot_completion_v1.schema.json
+      sha256: 45de774d546c010bdc84d3f2d7645bb17a706bfe16506a2fef66469072f998f3
+    - path: configs/human_research/h04_h01_final_sample_size_lock_v1.schema.json
+      sha256: 4dac929f65defcd3d74f4f0b6cfacdf21ae9474f2294c105ca4b9b3b1c7138b3
+    - path: configs/human_research/h04_h02_h03_blind_bundle_completion_v1.schema.json
+      sha256: 4850e106b7048b5b233a08838c0ad2dd5f169567bf02d5b0124b21bc64cdbf59
+    - path: configs/human_research/h04_learning_effect_aggregate_input_v1.schema.json
+      sha256: 96ad0b59d642d52e131be1ca05b797469711cd8bf9f7e0c2dd2de01cfe73527a
+    - path: configs/human_research/h04_learning_effect_statistical_report_v1.schema.json
+      sha256: fc2dd9e830a9484efb0ba8308545b320dfc0afe3c614f3891881533a2f8eee5b
+    - path: configs/human_research/h04_learning_effect_completion_v1.schema.json
+      sha256: 01d33475bf490f85e0362c29511c6bfd7742c581a0b0b98d981a5eb74afb3316
+    - path: configs/human_research/h04_statistical_analysis_plan_v1.template.json
+      sha256: f693ed86b2a4a6e3650de7ea6c149ad77355cd97976d9df23a514c2f48fbe775
+    - path: configs/human_research/h04_analyst_attestation_v1.template.json
+      sha256: f3fe61c3ed5b3adb2d6d1fb9603e6316b885ff70757207b5e163247911cae1f0
+    - path: configs/experiments/h00_human_research_approval_v1.yaml
+      sha256: 7128d30304bd3d1c8784ad79e14485a9bbca52fed9d90c878370d549e45f9698
+    - path: src/voice_coach/human_research/h00_approval_contract.py
+      sha256: 1ef2c62b8c654bb409a2717061292548dd48d79fbae2e88b1b6ab93c224985cd
+    - path: configs/experiments/learning_effect_power_v1.yaml
+      sha256: 67737548ce1a22b7716fb5c58635f55a216ff7059fd709476198df3d5fb75c86
+    - path: artifacts/planning/learning_effect_power_sensitivity_v1.json
+      sha256: d63dc95bb4df4967775781def0386beb7ec959c396d847ae6b6e8c982dbce66d
+    - path: docs/LEARNING_EFFECT_PREREGISTRATION_KO.md
+      sha256: a125b655eecc358cb00f15d6b1ea38c0c4f19700f3503f328aa0753a493cd503
+    - path: docs/EXTERNAL_EVALUATION_EXECUTION_PACK_KO.md
+      sha256: bd8c38b48072a373803fccdc73bc812bcfd6d6750bcdbf50ac2896ef81aa71c3
+    - path: docs/H00_HUMAN_RESEARCH_APPROVAL_READINESS_KO.md
+      sha256: 52261068d25b34d92608ea25e3fee7ae725cfe749edf6c4373ebee6aa405e020
+    - path: docs/H00_HUMAN_RESEARCH_ETHICS_PRIVACY_CARD_KO.md
+      sha256: 4b5c5ed6beca0d703e1bd746ef9a4e317a5fd84ab1c682c428bf30b8e96c30ee
+    - path: docs/paper/EXPERIMENTAL_MANUSCRIPT_KO.md
+      sha256: dea994728ae8c73be098a29e9a70af2ab4730a651063e64687b40c07433b17eb
+    - path: docs/paper/CLAIM_GAP_MAP_KO.md
+      sha256: 2168233b459bbe0b2aac411de94d57720408be2479c96e589b14388ff3d5d7a1
+    - path: docs/paper/METHODS_ETHICS_REPRODUCIBILITY_GAP_KO.md
+      sha256: 50847eb7eea13f5819a07d1aea3202ae40b2f528a9ea8c07d6d3661e6879a90c
+
+predecessor_h00:
+  deep_validation_required: true
+  actual_official_authorization_required: true
+  config_path: configs/experiments/h00_human_research_approval_v1.yaml
+  config_sha256: 7128d30304bd3d1c8784ad79e14485a9bbca52fed9d90c878370d549e45f9698
+  contract_path: src/voice_coach/human_research/h00_approval_contract.py
+  contract_sha256: 1ef2c62b8c654bb409a2717061292548dd48d79fbae2e88b1b6ab93c224985cd
+  approval_path: artifacts/external_attestations/h00/h00_human_research_approval_public_v1.json
+  approval_sha256: TBD_H00_APPROVAL
+  attestation_path: artifacts/external_attestations/h00/h00_official_document_attestation_v1.json
+  attestation_sha256: TBD_H00_ATTESTATION
+  required_preflight_status: ready_for_separately_authorized_h00_human_operations
+  required_actual_pilot_scope: true
+  required_analysis_scope: true
+  restricted_official_document_resolution_allowed: false
+
+predecessor_h01:
+  actual_pilot_informed_final_sample_size_lock_required: true
+  completion_path: artifacts/human_research/h01/h01_final_sample_size_lock_v1.json
+  completion_sha256: TBD_H01_SAMPLE_SIZE_LOCK
+  schema_path: configs/human_research/h04_h01_final_sample_size_lock_v1.schema.json
+  schema_sha256: 4dac929f65defcd3d74f4f0b6cfacdf21ae9474f2294c105ca4b9b3b1c7138b3
+  source_planning_config_path: configs/experiments/learning_effect_power_v1.yaml
+  source_planning_config_sha256: 67737548ce1a22b7716fb5c58635f55a216ff7059fd709476198df3d5fb75c86
+  source_planning_artifact_path: artifacts/planning/learning_effect_power_sensitivity_v1.json
+  source_planning_artifact_sha256: d63dc95bb4df4967775781def0386beb7ec959c396d847ae6b6e8c982dbce66d
+  required_schema_version: voice_coach.h04_h01_final_sample_size_lock.v1
+  required_status: completed_and_locked_before_confirmatory_recruitment
+  actual_empirical_pilot_required: true
+  observed_pilot_treatment_effect_for_power_allowed: false
+  full_mixed_or_cluster_simulation_required: true
+  automatic_final_sample_size_lock_allowed: false
+  statistician_and_principal_investigator_manual_lock_required: true
+  public_preregistration_before_confirmatory_recruitment_required: true
+
+predecessor_feasibility_pilot:
+  actual_h00_authorized_feasibility_pilot_required: true
+  completion_path: artifacts/human_research/h02_h03/feasibility/h04_feasibility_pilot_completion_v1.json
+  completion_sha256: TBD_H02_H03_FEASIBILITY_PILOT
+  schema_path: configs/human_research/h04_feasibility_pilot_completion_v1.schema.json
+  schema_sha256: 45de774d546c010bdc84d3f2d7645bb17a706bfe16506a2fef66469072f998f3
+  required_schema_version: voice_coach.h04_feasibility_pilot_completion.v1
+  required_status: completed_feasibility_pilot_before_h01_lock
+  minimum_randomized_per_arm: 15
+  maximum_randomized_per_arm: 20
+  blind_rating_reliability_required: true
+  aggregate_nuisance_parameters_required: true
+  observed_treatment_effect_for_power_allowed: false
+  confirmatory_efficacy_claim_allowed: false
+  restricted_d1_data_resolution_allowed_by_static_package: false
+
+predecessor_h02_h03:
+  actual_completed_confirmatory_blind_longitudinal_bundle_required: true
+  completion_path: artifacts/human_research/h02_h03/h02_h03_blind_bundle_completion_v1.json
+  completion_sha256: TBD_H02_H03_COMPLETION
+  schema_path: configs/human_research/h04_h02_h03_blind_bundle_completion_v1.schema.json
+  schema_sha256: 4850e106b7048b5b233a08838c0ad2dd5f169567bf02d5b0124b21bc64cdbf59
+  required_schema_version: voice_coach.h04_h02_h03_blind_bundle_completion.v1
+  required_status: completed_locked_blind_pre_post_retention
+  actual_h02_two_week_intervention_required: true
+  actual_h03_pre_post_retention_required: true
+  minimum_independent_raters: 2
+  blind_condition_timepoint_identity_required: true
+  participant_blinding_claim_allowed: false
+  powered_final_sample_sizes_must_match_h01_lock: true
+  feasibility_pilot_receipt_must_not_be_reused_as_confirmatory_bundle: true
+  restricted_d1_data_resolution_allowed_by_static_package: false
+
+statistical_analysis_plan:
+  template_path: configs/human_research/h04_statistical_analysis_plan_v1.template.json
+  template_sha256: f693ed86b2a4a6e3650de7ea6c149ad77355cd97976d9df23a514c2f48fbe775
+  approved_path: artifacts/external_attestations/h04/h04_statistical_analysis_plan_v1.json
+  approved_sha256: TBD_H04_SAP
+  required_schema_version: voice_coach.h04_statistical_analysis_plan.v1
+  required_status: approved_and_frozen
+  must_be_frozen_before_h02_h03_data_lock_condition_unmask_or_analysis: true
+  unresolved_fields_must_fail_closed: true
+
+analyst_attestation:
+  template_path: configs/human_research/h04_analyst_attestation_v1.template.json
+  template_sha256: f3fe61c3ed5b3adb2d6d1fb9603e6316b885ff70757207b5e163247911cae1f0
+  approved_path: artifacts/external_attestations/h04/h04_analyst_attestation_v1.json
+  approved_sha256: TBD_H04_ANALYST_ATTESTATION
+  required_schema_version: voice_coach.h04_analyst_attestation.v1
+  required_status: attested_for_locked_h04_analysis
+  independent_analyst_required: true
+  blind_until_data_and_sap_lock_required: true
+  unresolved_fields_must_fail_closed: true
+
+schemas:
+  aggregate_input_path: configs/human_research/h04_learning_effect_aggregate_input_v1.schema.json
+  aggregate_input_sha256: 96ad0b59d642d52e131be1ca05b797469711cd8bf9f7e0c2dd2de01cfe73527a
+  statistical_report_path: configs/human_research/h04_learning_effect_statistical_report_v1.schema.json
+  statistical_report_sha256: fc2dd9e830a9484efb0ba8308545b320dfc0afe3c614f3891881533a2f8eee5b
+  completion_path: configs/human_research/h04_learning_effect_completion_v1.schema.json
+  completion_sha256: 01d33475bf490f85e0362c29511c6bfd7742c581a0b0b98d981a5eb74afb3316
+
+analysis_contract:
+  primary_population: intention_to_treat_as_randomized
+  primary_estimator: likelihood_based_mixed_model_all_observed_itt
+  fixed_effect_formula: score~condition*time+l1+baseline
+  random_intercepts:
+    - participant
+    - sentence
+    - rater
+  primary_post_contrasts:
+    - c3_minus_c0_pre_to_post
+    - c5_minus_c3_pre_to_post
+  key_retention_contrasts:
+    - c3_minus_c0_pre_to_retention
+    - c5_minus_c3_pre_to_retention
+  required_effect_reporting:
+    - raw_1_to_5_difference
+    - standardized_effect
+    - 95_percent_confidence_interval
+  missingness_primary: likelihood_based_mixed_model_using_all_observed_itt_data
+  missingness_sensitivity:
+    - mar_multilevel_multiple_imputation
+    - mnar_delta_adjusted_pattern_mixture
+    - complete_case
+  forbidden_missingness_or_population_methods:
+    - last_observation_carried_forward
+    - post_randomization_exclusion
+  per_protocol_minimum_assigned_exposure_fraction: 0.80
+  per_protocol_primary_claim_allowed: false
+  multiplicity_method: holm
+  alpha_two_sided: 0.05
+  multiplicity_families:
+    - primary_post
+    - key_retention
+    - secondary
+  required_disposition_and_safety_reporting:
+    - missingness_by_arm_time_and_coded_reason
+    - withdrawal_by_arm
+    - adverse_feedback_by_arm
+    - ceiling_by_arm
+    - floor_by_arm
+
+unresolved_preregistration:
+  exact_software_and_version_id: TBD_PREREGISTRATION
+  exact_model_family_id: TBD_PREREGISTRATION
+  exact_ordinal_or_linear_choice_id: TBD_PREREGISTRATION
+  exact_outcome_support_id: TBD_PREREGISTRATION
+  exact_mnar_delta_grid: TBD_PREREGISTRATION
+  exact_mi_imputation_count: TBD_PREREGISTRATION
+  exact_optimizer_id: TBD_PREREGISTRATION
+  exact_convergence_rule_id: TBD_PREREGISTRATION
+  exact_ci_method_id: TBD_PREREGISTRATION
+  exact_bootstrap_or_resampling_support_id: TBD_PREREGISTRATION
+
+privacy_and_access:
+  aggregate_input_zone: A1_aggregate_manifest_no_participant_rows
+  statistical_report_zone: A1_aggregate_statistical_report
+  restricted_analysis_data_zone: D1_pseudonymized_restricted_human_research
+  participant_or_rating_row_access_allowed_by_static_package: false
+  audio_or_transcript_access_allowed_by_static_package: false
+  restricted_locator_resolution_allowed_by_static_package: false
+  aggregate_publication_allowed_by_static_package: false
+  forbidden_recursive_fields:
+    - name
+    - email
+    - phone
+    - address
+    - legal_name
+    - participant_id
+    - participant_rows
+    - rater_id
+    - reviewer_id
+    - individual_score
+    - individual_rating
+    - audio_path
+    - recording_path
+    - transcript
+    - source_path
+    - raw_path
+    - restricted_path
+    - locator
+    - url
+    - filename
+    - file_name
+    - free_text
+    - comment
+    - note
+
+non_execution:
+  participant_access_allowed: false
+  rating_row_access_allowed: false
+  audio_or_transcript_access_allowed: false
+  restricted_d1_data_access_allowed: false
+  model_access_allowed: false
+  gpu_access_allowed: false
+  network_access_allowed: false
+  statistics_computation_allowed: false
+  effect_estimation_allowed: false
+  report_generation_allowed: false
+  output_write_allowed: false
+  registry_or_commit_write_allowed: false
+  publication_or_completion_claim_allowed: false
+
+execution_order:
+  - validate_h04_static_config_sources_schemas_and_fail_closed_templates
+  - require_exact_h00_approval_and_attestation_pins_before_path_resolution
+  - deep_validate_actual_h00_official_authorization
+  - require_and_validate_completed_h00_authorized_feasibility_pilot_aggregate
+  - require_and_validate_actual_h01_pilot_informed_final_sample_size_lock
+  - require_and_validate_frozen_h04_statistical_analysis_plan
+  - require_and_validate_actual_h02_h03_completed_confirmatory_blind_longitudinal_bundle
+  - require_and_validate_independent_blind_analyst_attestation
+  - stop_before_participant_rating_audio_restricted_data_statistics_effect_report_or_output
+
+outputs:
+  aggregate_input_path: data/processed/human_research/h04/h04_learning_effect_aggregate_input_v1.json
+  statistical_report_path: artifacts/human_research/h04/h04_learning_effect_statistical_report_v1.json
+  completion_path: artifacts/human_research/h04/h04_learning_effect_completion_v1.json
+  registry_path: artifacts/experiment_registry/h04-learning-effect-analysis-v1/metadata.json
+  failure_report_path: artifacts/human_research/h04/failure.json
+  no_overwrite: true
+  atomic_publish_required: true
+  write_enabled_in_this_package: false

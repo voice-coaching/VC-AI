@@ -32,10 +32,10 @@ parsing:
   target_phone_source: pronunciation_json
   realized_phone_source: pronunciation_textgrid
   interval_match:
-    method: max_temporal_overlap
+    method: strongest_unused_temporal_overlap
     tolerance_ms: 30
     min_overlap_ratio: 0.50
-    preserve_one_to_many: true
+    preserve_one_to_many: false
     unmatched_target_as_deletion: true
     unmatched_realized_as_insertion: true
 

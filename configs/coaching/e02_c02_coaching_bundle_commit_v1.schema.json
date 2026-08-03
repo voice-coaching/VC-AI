@@ -1,0 +1,183 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://voice-coach.local/schemas/e02_c02_coaching_bundle_commit_v1.schema.json",
+  "title": "E02 predecessor C02 completed coaching bundle commit",
+  "description": "Restricted immutable handoff for one actual deterministic C02 input/output pair. E02 deep-recomputes the C02 result with its pinned contract before accepting this commit.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_version",
+    "bundle_id",
+    "status",
+    "privacy_zone",
+    "c02_config",
+    "s107",
+    "preregistration",
+    "diagnostic_input",
+    "selection_output",
+    "registry",
+    "assurance",
+    "binding_sha256"
+  ],
+  "properties": {
+    "schema_version": {
+      "const": "voice_coach.e02_c02_coaching_bundle_commit.v1"
+    },
+    "bundle_id": {
+      "type": "string",
+      "pattern": "^e02c02bundle_[0-9a-f]{32}$"
+    },
+    "status": {
+      "const": "committed"
+    },
+    "privacy_zone": {
+      "const": "D1_pseudonymized_restricted_experiment"
+    },
+    "c02_config": {
+      "$ref": "#/$defs/fileRecord"
+    },
+    "s107": {
+      "$ref": "#/$defs/s107"
+    },
+    "preregistration": {
+      "$ref": "#/$defs/fileRecord"
+    },
+    "diagnostic_input": {
+      "$ref": "#/$defs/fileRecord"
+    },
+    "selection_output": {
+      "$ref": "#/$defs/fileRecord"
+    },
+    "registry": {
+      "$ref": "#/$defs/registryRecord"
+    },
+    "assurance": {
+      "$ref": "#/$defs/assurance"
+    },
+    "binding_sha256": {
+      "$ref": "#/$defs/sha256"
+    }
+  },
+  "$defs": {
+    "sha256": {
+      "type": "string",
+      "pattern": "^[0-9a-f]{64}$"
+    },
+    "safePath": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 512,
+      "pattern": "^(?!/)(?!.*(?:^|/)\\.\\.(?:/|$))(?!.*\\\\).+$"
+    },
+    "fileRecord": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "path",
+        "sha256",
+        "size_bytes"
+      ],
+      "properties": {
+        "path": {
+          "$ref": "#/$defs/safePath"
+        },
+        "sha256": {
+          "$ref": "#/$defs/sha256"
+        },
+        "size_bytes": {
+          "type": "integer",
+          "minimum": 1
+        }
+      }
+    },
+    "registryRecord": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "path",
+        "sha256",
+        "size_bytes",
+        "status"
+      ],
+      "properties": {
+        "path": {
+          "$ref": "#/$defs/safePath"
+        },
+        "sha256": {
+          "$ref": "#/$defs/sha256"
+        },
+        "size_bytes": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "status": {
+          "const": "completed"
+        }
+      }
+    },
+    "s107": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "completion_commit_sha256",
+        "threshold_policy_report_sha256"
+      ],
+      "properties": {
+        "completion_commit_sha256": {
+          "$ref": "#/$defs/sha256"
+        },
+        "threshold_policy_report_sha256": {
+          "$ref": "#/$defs/sha256"
+        }
+      }
+    },
+    "assurance": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "actual_c02_selection_completed",
+        "deterministic_recomputation_required",
+        "blocked_top_k_backfill_allowed",
+        "free_generation_llm_used",
+        "prompt_or_completion_present",
+        "network_accessed",
+        "runtime_model_accessed",
+        "gpu_accessed",
+        "reference_generation_executed",
+        "production_release_allowed"
+      ],
+      "properties": {
+        "actual_c02_selection_completed": {
+          "const": true
+        },
+        "deterministic_recomputation_required": {
+          "const": true
+        },
+        "blocked_top_k_backfill_allowed": {
+          "const": false
+        },
+        "free_generation_llm_used": {
+          "const": false
+        },
+        "prompt_or_completion_present": {
+          "const": false
+        },
+        "network_accessed": {
+          "const": false
+        },
+        "runtime_model_accessed": {
+          "const": false
+        },
+        "gpu_accessed": {
+          "const": false
+        },
+        "reference_generation_executed": {
+          "const": false
+        },
+        "production_release_allowed": {
+          "const": false
+        }
+      }
+    }
+  }
+}

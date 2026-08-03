@@ -1,0 +1,176 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://voice-coach.local/schemas/b05_joint_locked_batch_receipt_v1.schema.json",
+  "title": "Consumed one-shot B05 and S108 joint locked batch receipt",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_version",
+    "receipt_id",
+    "status",
+    "preregistration_sha256",
+    "batch_manifest_sha256",
+    "authorization_sha256",
+    "one_shot_transaction_id_sha256",
+    "joint_locked_access_count",
+    "b05_execution_count",
+    "s108_execution_count",
+    "b05_predictions_sha256",
+    "s108_predictions_sha256",
+    "b05_report_sha256",
+    "s108_promotion_report_sha256",
+    "failure_receipt_sha256",
+    "both_arms_sealed_before_result_release",
+    "first_arm_result_visible_before_second_arm_sealed",
+    "b05_arm_mutated_after_access",
+    "s108_arm_mutated_after_access",
+    "rerun_count",
+    "authorization_consumed",
+    "rerun_allowed",
+    "new_independent_test_set_required_for_any_new_run",
+    "contains_rows",
+    "contains_audio_or_locator",
+    "contains_labels",
+    "contains_predictions",
+    "privacy_zone",
+    "binding_sha256"
+  ],
+  "properties": {
+    "schema_version": {
+      "const": "voice_coach.b05_joint_locked_batch_receipt.v1"
+    },
+    "receipt_id": {
+      "type": "string",
+      "pattern": "^b05receipt_[0-9a-f]{32}$"
+    },
+    "status": {
+      "enum": [
+        "completed_both_arms_sealed",
+        "failed_irrecoverably_no_rerun"
+      ]
+    },
+    "preregistration_sha256": {
+      "$ref": "#/$defs/sha256"
+    },
+    "batch_manifest_sha256": {
+      "$ref": "#/$defs/sha256"
+    },
+    "authorization_sha256": {
+      "$ref": "#/$defs/sha256"
+    },
+    "one_shot_transaction_id_sha256": {
+      "$ref": "#/$defs/sha256"
+    },
+    "joint_locked_access_count": {
+      "const": 1
+    },
+    "b05_execution_count": {
+      "type": "integer",
+      "minimum": 0,
+      "maximum": 1
+    },
+    "s108_execution_count": {
+      "type": "integer",
+      "minimum": 0,
+      "maximum": 1
+    },
+    "b05_predictions_sha256": {
+      "oneOf": [
+        {
+          "$ref": "#/$defs/sha256"
+        },
+        {
+          "type": "null"
+        }
+      ]
+    },
+    "s108_predictions_sha256": {
+      "oneOf": [
+        {
+          "$ref": "#/$defs/sha256"
+        },
+        {
+          "type": "null"
+        }
+      ]
+    },
+    "b05_report_sha256": {
+      "oneOf": [
+        {
+          "$ref": "#/$defs/sha256"
+        },
+        {
+          "type": "null"
+        }
+      ]
+    },
+    "s108_promotion_report_sha256": {
+      "oneOf": [
+        {
+          "$ref": "#/$defs/sha256"
+        },
+        {
+          "type": "null"
+        }
+      ]
+    },
+    "failure_receipt_sha256": {
+      "oneOf": [
+        {
+          "$ref": "#/$defs/sha256"
+        },
+        {
+          "type": "null"
+        }
+      ]
+    },
+    "both_arms_sealed_before_result_release": {
+      "type": "boolean"
+    },
+    "first_arm_result_visible_before_second_arm_sealed": {
+      "const": false
+    },
+    "b05_arm_mutated_after_access": {
+      "const": false
+    },
+    "s108_arm_mutated_after_access": {
+      "const": false
+    },
+    "rerun_count": {
+      "const": 0
+    },
+    "authorization_consumed": {
+      "const": true
+    },
+    "rerun_allowed": {
+      "const": false
+    },
+    "new_independent_test_set_required_for_any_new_run": {
+      "const": true
+    },
+    "contains_rows": {
+      "const": false
+    },
+    "contains_audio_or_locator": {
+      "const": false
+    },
+    "contains_labels": {
+      "const": false
+    },
+    "contains_predictions": {
+      "const": false
+    },
+    "privacy_zone": {
+      "const": "A1_aggregate_one_shot_receipt"
+    },
+    "binding_sha256": {
+      "$ref": "#/$defs/sha256"
+    }
+  },
+  "$defs": {
+    "sha256": {
+      "type": "string",
+      "pattern": "^[0-9a-f]{64}$"
+    }
+  }
+}

@@ -1,0 +1,117 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://voice-coach.local/schemas/b05_locked_registry_v1.schema.json",
+  "title": "B05 one-shot locked evaluation registry",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_version",
+    "run_id",
+    "status",
+    "failure",
+    "config_sha256",
+    "preregistration_sha256",
+    "batch_manifest_sha256",
+    "authorization_sha256",
+    "batch_receipt_sha256",
+    "b03_config_sha256",
+    "b03_report_sha256",
+    "b03_registry_sha256",
+    "b03_checkpoint_set_sha256",
+    "s108_arm_freeze_sha256",
+    "locked_predictions_sha256",
+    "aggregate_report_sha256",
+    "joint_locked_access_count",
+    "b05_execution_count",
+    "s108_execution_count",
+    "rerun_count",
+    "artifact_count",
+    "result_based_mutation_detected",
+    "posthoc_b06_substitution_used",
+    "privacy_zone",
+    "binding_sha256"
+  ],
+  "properties": {
+    "schema_version": {
+      "const": "voice_coach.b05_locked_registry.v1"
+    },
+    "run_id": {
+      "const": "b05-explicit-locked-evaluation-v1"
+    },
+    "status": {
+      "const": "completed"
+    },
+    "failure": {
+      "type": "null"
+    },
+    "config_sha256": {
+      "$ref": "#/$defs/sha256"
+    },
+    "preregistration_sha256": {
+      "$ref": "#/$defs/sha256"
+    },
+    "batch_manifest_sha256": {
+      "$ref": "#/$defs/sha256"
+    },
+    "authorization_sha256": {
+      "$ref": "#/$defs/sha256"
+    },
+    "batch_receipt_sha256": {
+      "$ref": "#/$defs/sha256"
+    },
+    "b03_config_sha256": {
+      "$ref": "#/$defs/sha256"
+    },
+    "b03_report_sha256": {
+      "$ref": "#/$defs/sha256"
+    },
+    "b03_registry_sha256": {
+      "$ref": "#/$defs/sha256"
+    },
+    "b03_checkpoint_set_sha256": {
+      "$ref": "#/$defs/sha256"
+    },
+    "s108_arm_freeze_sha256": {
+      "$ref": "#/$defs/sha256"
+    },
+    "locked_predictions_sha256": {
+      "$ref": "#/$defs/sha256"
+    },
+    "aggregate_report_sha256": {
+      "$ref": "#/$defs/sha256"
+    },
+    "joint_locked_access_count": {
+      "const": 1
+    },
+    "b05_execution_count": {
+      "const": 1
+    },
+    "s108_execution_count": {
+      "const": 1
+    },
+    "rerun_count": {
+      "const": 0
+    },
+    "artifact_count": {
+      "const": 2
+    },
+    "result_based_mutation_detected": {
+      "const": false
+    },
+    "posthoc_b06_substitution_used": {
+      "const": false
+    },
+    "privacy_zone": {
+      "const": "A1_aggregate_registry"
+    },
+    "binding_sha256": {
+      "$ref": "#/$defs/sha256"
+    }
+  },
+  "$defs": {
+    "sha256": {
+      "type": "string",
+      "pattern": "^[0-9a-f]{64}$"
+    }
+  }
+}

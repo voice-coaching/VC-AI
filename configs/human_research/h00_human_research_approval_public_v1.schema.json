@@ -1,0 +1,852 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://voice-coach.local/schemas/h00_human_research_approval_public_v1.schema.json",
+  "title": "H00 public human-research official-determination summary",
+  "description": "C1/A1-safe summary of an institution/IRB or equivalent official determination. It contains hashes and role IDs only, never the full official document, locator, PII, participant rows, or raw paths.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_version",
+    "approval_artifact_id",
+    "status",
+    "privacy_zone",
+    "public_summary_only",
+    "actual_pilot_covered",
+    "consent_approved",
+    "privacy_approved",
+    "retention_approved",
+    "deletion_approved",
+    "institution_evidence",
+    "protocol",
+    "study_scope",
+    "intervention_manuals",
+    "randomization_and_concealment",
+    "data_governance",
+    "consent_withdrawal_and_participant_rights",
+    "recruitment_compensation_and_minors",
+    "ai_feedback_and_safety",
+    "pseudonymization_and_transfer",
+    "incident_pause_stop",
+    "lifecycle",
+    "authorization",
+    "binding_sha256"
+  ],
+  "properties": {
+    "schema_version": {
+      "const": "voice_coach.h00_human_research_approval_public.v1"
+    },
+    "approval_artifact_id": {
+      "type": "string",
+      "pattern": "^h00approval_[0-9a-f]{32}$"
+    },
+    "status": {
+      "enum": [
+        "active_official_determination",
+        "inactive_official_determination"
+      ]
+    },
+    "privacy_zone": {
+      "const": "A1_C1_public_summary_only"
+    },
+    "public_summary_only": {
+      "type": "boolean"
+    },
+    "actual_pilot_covered": {
+      "type": "boolean"
+    },
+    "consent_approved": {
+      "type": "boolean"
+    },
+    "privacy_approved": {
+      "type": "boolean"
+    },
+    "retention_approved": {
+      "type": "boolean"
+    },
+    "deletion_approved": {
+      "type": "boolean"
+    },
+    "institution_evidence": {
+      "$ref": "#/$defs/institutionEvidence"
+    },
+    "protocol": {
+      "$ref": "#/$defs/protocol"
+    },
+    "study_scope": {
+      "$ref": "#/$defs/studyScope"
+    },
+    "intervention_manuals": {
+      "$ref": "#/$defs/interventionManuals"
+    },
+    "randomization_and_concealment": {
+      "$ref": "#/$defs/randomization"
+    },
+    "data_governance": {
+      "$ref": "#/$defs/dataGovernance"
+    },
+    "consent_withdrawal_and_participant_rights": {
+      "$ref": "#/$defs/participantRights"
+    },
+    "recruitment_compensation_and_minors": {
+      "$ref": "#/$defs/recruitment"
+    },
+    "ai_feedback_and_safety": {
+      "$ref": "#/$defs/aiSafety"
+    },
+    "pseudonymization_and_transfer": {
+      "$ref": "#/$defs/pseudonymizationTransfer"
+    },
+    "incident_pause_stop": {
+      "$ref": "#/$defs/incidentPauseStop"
+    },
+    "lifecycle": {
+      "$ref": "#/$defs/lifecycle"
+    },
+    "authorization": {
+      "$ref": "#/$defs/authorization"
+    },
+    "binding_sha256": {
+      "$ref": "#/$defs/sha256"
+    }
+  },
+  "$defs": {
+    "sha256": {
+      "type": "string",
+      "pattern": "^[0-9a-f]{64}$"
+    },
+    "boundedId": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 128,
+      "pattern": "^[a-z0-9][a-z0-9_.:-]*$"
+    },
+    "versionId": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 64,
+      "pattern": "^[A-Za-z0-9][A-Za-z0-9_.:-]*$"
+    },
+    "utcTimestamp": {
+      "type": "string",
+      "pattern": "^20[0-9]{2}-(0[1-9]|1[0-2])-([0-2][0-9]|3[01])T([01][0-9]|2[0-3]):[0-5][0-9]:[0-5][0-9]Z$"
+    },
+    "manual": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "condition",
+        "version",
+        "manual_sha256",
+        "frozen_before_recruitment"
+      ],
+      "properties": {
+        "condition": {
+          "enum": [
+            "c0",
+            "c3",
+            "c5"
+          ]
+        },
+        "version": {
+          "$ref": "#/$defs/versionId"
+        },
+        "manual_sha256": {
+          "$ref": "#/$defs/sha256"
+        },
+        "frozen_before_recruitment": {
+          "type": "boolean"
+        }
+      }
+    },
+    "institutionEvidence": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "institution_id_sha256",
+        "approving_body_role",
+        "official_determination_category",
+        "official_determination_id_sha256",
+        "institution_form_sha256",
+        "official_determination_document_sha256",
+        "restricted_document_attestation_sha256",
+        "official_source_verified"
+      ],
+      "properties": {
+        "institution_id_sha256": {
+          "$ref": "#/$defs/sha256"
+        },
+        "approving_body_role": {
+          "enum": [
+            "institutional_review_board",
+            "research_ethics_committee",
+            "equivalent_official_research_governance_body"
+          ]
+        },
+        "official_determination_category": {
+          "enum": [
+            "approved",
+            "exempt_or_waived_with_explicit_authorization",
+            "equivalent_official_authorization",
+            "modifications_required",
+            "denied",
+            "suspended",
+            "expired",
+            "withdrawn"
+          ]
+        },
+        "official_determination_id_sha256": {
+          "$ref": "#/$defs/sha256"
+        },
+        "institution_form_sha256": {
+          "$ref": "#/$defs/sha256"
+        },
+        "official_determination_document_sha256": {
+          "$ref": "#/$defs/sha256"
+        },
+        "restricted_document_attestation_sha256": {
+          "$ref": "#/$defs/sha256"
+        },
+        "official_source_verified": {
+          "type": "boolean"
+        }
+      }
+    },
+    "protocol": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "protocol_id_sha256",
+        "protocol_version",
+        "protocol_sha256",
+        "application_bundle_sha256",
+        "consent_form_version",
+        "consent_form_sha256",
+        "privacy_impact_assessment_sha256",
+        "data_management_plan_sha256"
+      ],
+      "properties": {
+        "protocol_id_sha256": {
+          "$ref": "#/$defs/sha256"
+        },
+        "protocol_version": {
+          "$ref": "#/$defs/versionId"
+        },
+        "protocol_sha256": {
+          "$ref": "#/$defs/sha256"
+        },
+        "application_bundle_sha256": {
+          "$ref": "#/$defs/sha256"
+        },
+        "consent_form_version": {
+          "$ref": "#/$defs/versionId"
+        },
+        "consent_form_sha256": {
+          "$ref": "#/$defs/sha256"
+        },
+        "privacy_impact_assessment_sha256": {
+          "$ref": "#/$defs/sha256"
+        },
+        "data_management_plan_sha256": {
+          "$ref": "#/$defs/sha256"
+        }
+      }
+    },
+    "studyScope": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "comparisons",
+        "design",
+        "intervention_duration",
+        "timepoints",
+        "c0_covered",
+        "c3_covered",
+        "c5_covered",
+        "participant_recruitment_authorized",
+        "informed_consent_authorized",
+        "audio_recording_authorized",
+        "randomized_intervention_authorized",
+        "blind_rating_authorized",
+        "d1_pseudonymized_processing_authorized",
+        "a1_aggregate_analysis_authorized",
+        "confirmatory_study_covered"
+      ],
+      "properties": {
+        "comparisons": {
+          "const": [
+            "c3_minus_c0",
+            "c5_minus_c3"
+          ]
+        },
+        "design": {
+          "const": "participant_level_parallel_1_to_1_randomized"
+        },
+        "intervention_duration": {
+          "const": "P2W"
+        },
+        "timepoints": {
+          "const": [
+            "pre",
+            "post_at_2_weeks",
+            "retention_4_weeks_after_post"
+          ]
+        },
+        "c0_covered": {
+          "type": "boolean"
+        },
+        "c3_covered": {
+          "type": "boolean"
+        },
+        "c5_covered": {
+          "type": "boolean"
+        },
+        "participant_recruitment_authorized": {
+          "type": "boolean"
+        },
+        "informed_consent_authorized": {
+          "type": "boolean"
+        },
+        "audio_recording_authorized": {
+          "type": "boolean"
+        },
+        "randomized_intervention_authorized": {
+          "type": "boolean"
+        },
+        "blind_rating_authorized": {
+          "type": "boolean"
+        },
+        "d1_pseudonymized_processing_authorized": {
+          "type": "boolean"
+        },
+        "a1_aggregate_analysis_authorized": {
+          "type": "boolean"
+        },
+        "confirmatory_study_covered": {
+          "type": "boolean"
+        }
+      }
+    },
+    "interventionManuals": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "c0",
+        "c3",
+        "c5"
+      ],
+      "properties": {
+        "c0": {
+          "$ref": "#/$defs/manual"
+        },
+        "c3": {
+          "$ref": "#/$defs/manual"
+        },
+        "c5": {
+          "$ref": "#/$defs/manual"
+        }
+      }
+    },
+    "randomization": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "unit",
+        "allocation_ratio",
+        "parallel_design",
+        "stratification_factors",
+        "allocation_concealment_required",
+        "allocation_method_id",
+        "allocation_implementation_receipt_sha256",
+        "randomization_seed_custody_receipt_sha256",
+        "independent_allocation_role_id",
+        "blind_outcome_raters",
+        "participant_blinding_claimed"
+      ],
+      "properties": {
+        "unit": {
+          "const": "participant"
+        },
+        "allocation_ratio": {
+          "const": "1:1"
+        },
+        "parallel_design": {
+          "const": true
+        },
+        "stratification_factors": {
+          "const": [
+            "l1",
+            "baseline_comprehensibility_band"
+          ]
+        },
+        "allocation_concealment_required": {
+          "type": "boolean"
+        },
+        "allocation_method_id": {
+          "$ref": "#/$defs/boundedId"
+        },
+        "allocation_implementation_receipt_sha256": {
+          "$ref": "#/$defs/sha256"
+        },
+        "randomization_seed_custody_receipt_sha256": {
+          "$ref": "#/$defs/sha256"
+        },
+        "independent_allocation_role_id": {
+          "$ref": "#/$defs/boundedId"
+        },
+        "blind_outcome_raters": {
+          "type": "boolean"
+        },
+        "participant_blinding_claimed": {
+          "type": "boolean"
+        }
+      }
+    },
+    "dataGovernance": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "audio_recording_in_scope",
+        "personal_data_in_scope",
+        "sensitive_or_special_category_review_completed",
+        "approved_purpose_ids",
+        "purpose_limitation_required",
+        "personal_data_categories_sha256",
+        "sensitive_data_categories_sha256",
+        "retention_duration_or_trigger_code",
+        "retention_policy_sha256",
+        "authorized_role_matrix_sha256",
+        "access_logging_required",
+        "deletion_method_id",
+        "deletion_protocol_sha256",
+        "backup_deletion_covered",
+        "data_zones",
+        "raw_or_identifiable_data_publication_allowed"
+      ],
+      "properties": {
+        "audio_recording_in_scope": {
+          "type": "boolean"
+        },
+        "personal_data_in_scope": {
+          "type": "boolean"
+        },
+        "sensitive_or_special_category_review_completed": {
+          "type": "boolean"
+        },
+        "approved_purpose_ids": {
+          "const": [
+            "learning_effect_evaluation",
+            "blind_pronunciation_rating",
+            "retention_analysis"
+          ]
+        },
+        "purpose_limitation_required": {
+          "type": "boolean"
+        },
+        "personal_data_categories_sha256": {
+          "$ref": "#/$defs/sha256"
+        },
+        "sensitive_data_categories_sha256": {
+          "$ref": "#/$defs/sha256"
+        },
+        "retention_duration_or_trigger_code": {
+          "$ref": "#/$defs/boundedId"
+        },
+        "retention_policy_sha256": {
+          "$ref": "#/$defs/sha256"
+        },
+        "authorized_role_matrix_sha256": {
+          "$ref": "#/$defs/sha256"
+        },
+        "access_logging_required": {
+          "type": "boolean"
+        },
+        "deletion_method_id": {
+          "$ref": "#/$defs/boundedId"
+        },
+        "deletion_protocol_sha256": {
+          "$ref": "#/$defs/sha256"
+        },
+        "backup_deletion_covered": {
+          "type": "boolean"
+        },
+        "data_zones": {
+          "const": [
+            "R0_restricted_raw",
+            "R1_restricted_operations",
+            "D1_pseudonymized_experiment",
+            "A1_aggregate"
+          ]
+        },
+        "raw_or_identifiable_data_publication_allowed": {
+          "type": "boolean"
+        }
+      }
+    },
+    "participantRights": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "informed_consent_required",
+        "explicit_audio_recording_consent_required",
+        "ai_incorrect_feedback_risk_disclosed",
+        "withdrawal_without_penalty_allowed",
+        "withdrawal_protocol_sha256",
+        "withdrawal_existing_data_handling_code",
+        "deletion_request_route_sha256",
+        "human_contact_and_escalation_route_sha256",
+        "consent_language_accessibility_reviewed"
+      ],
+      "properties": {
+        "informed_consent_required": {
+          "type": "boolean"
+        },
+        "explicit_audio_recording_consent_required": {
+          "type": "boolean"
+        },
+        "ai_incorrect_feedback_risk_disclosed": {
+          "type": "boolean"
+        },
+        "withdrawal_without_penalty_allowed": {
+          "type": "boolean"
+        },
+        "withdrawal_protocol_sha256": {
+          "$ref": "#/$defs/sha256"
+        },
+        "withdrawal_existing_data_handling_code": {
+          "$ref": "#/$defs/boundedId"
+        },
+        "deletion_request_route_sha256": {
+          "$ref": "#/$defs/sha256"
+        },
+        "human_contact_and_escalation_route_sha256": {
+          "$ref": "#/$defs/sha256"
+        },
+        "consent_language_accessibility_reviewed": {
+          "type": "boolean"
+        }
+      }
+    },
+    "recruitment": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "recruitment_materials_sha256",
+        "eligibility_protocol_sha256",
+        "undue_influence_review_completed",
+        "compensation_terms_code",
+        "compensation_protocol_sha256",
+        "compensation_withdrawal_treatment_code",
+        "minors_policy",
+        "guardian_consent_protocol_sha256",
+        "minor_assent_protocol_sha256"
+      ],
+      "properties": {
+        "recruitment_materials_sha256": {
+          "$ref": "#/$defs/sha256"
+        },
+        "eligibility_protocol_sha256": {
+          "$ref": "#/$defs/sha256"
+        },
+        "undue_influence_review_completed": {
+          "type": "boolean"
+        },
+        "compensation_terms_code": {
+          "$ref": "#/$defs/boundedId"
+        },
+        "compensation_protocol_sha256": {
+          "$ref": "#/$defs/sha256"
+        },
+        "compensation_withdrawal_treatment_code": {
+          "$ref": "#/$defs/boundedId"
+        },
+        "minors_policy": {
+          "enum": [
+            "excluded",
+            "included_only_under_separately_approved_protections"
+          ]
+        },
+        "guardian_consent_protocol_sha256": {
+          "oneOf": [
+            {
+              "$ref": "#/$defs/sha256"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "minor_assent_protocol_sha256": {
+          "oneOf": [
+            {
+              "$ref": "#/$defs/sha256"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        }
+      }
+    },
+    "aiSafety": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "incorrect_feedback_risk_documented",
+        "human_escalation_available",
+        "unsupported_claim_abstention_required",
+        "identity_inference_prohibited",
+        "medical_judgment_prohibited",
+        "feedback_safety_protocol_sha256",
+        "human_escalation_protocol_sha256",
+        "adverse_feedback_monitoring_protocol_sha256"
+      ],
+      "properties": {
+        "incorrect_feedback_risk_documented": {
+          "type": "boolean"
+        },
+        "human_escalation_available": {
+          "type": "boolean"
+        },
+        "unsupported_claim_abstention_required": {
+          "type": "boolean"
+        },
+        "identity_inference_prohibited": {
+          "type": "boolean"
+        },
+        "medical_judgment_prohibited": {
+          "type": "boolean"
+        },
+        "feedback_safety_protocol_sha256": {
+          "$ref": "#/$defs/sha256"
+        },
+        "human_escalation_protocol_sha256": {
+          "$ref": "#/$defs/sha256"
+        },
+        "adverse_feedback_monitoring_protocol_sha256": {
+          "$ref": "#/$defs/sha256"
+        }
+      }
+    },
+    "pseudonymizationTransfer": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "study_namespaced_pseudonymous_ids_required",
+        "pseudonym_key_mapping_separated",
+        "pseudonym_key_mapping_zone",
+        "key_custodian_role_receipt_sha256",
+        "direct_identifiers_in_public_artifact_allowed",
+        "external_service_transfer_allowed",
+        "tts_service_transfer_allowed",
+        "cross_border_transfer_allowed",
+        "transfer_policy_sha256",
+        "approved_provider_scope_sha256",
+        "minimum_necessary_transfer_required",
+        "separate_transfer_consent_required",
+        "separate_transfer_consent_approved"
+      ],
+      "properties": {
+        "study_namespaced_pseudonymous_ids_required": {
+          "type": "boolean"
+        },
+        "pseudonym_key_mapping_separated": {
+          "type": "boolean"
+        },
+        "pseudonym_key_mapping_zone": {
+          "const": "R1_restricted_separate_key_store"
+        },
+        "key_custodian_role_receipt_sha256": {
+          "$ref": "#/$defs/sha256"
+        },
+        "direct_identifiers_in_public_artifact_allowed": {
+          "type": "boolean"
+        },
+        "external_service_transfer_allowed": {
+          "type": "boolean"
+        },
+        "tts_service_transfer_allowed": {
+          "type": "boolean"
+        },
+        "cross_border_transfer_allowed": {
+          "type": "boolean"
+        },
+        "transfer_policy_sha256": {
+          "$ref": "#/$defs/sha256"
+        },
+        "approved_provider_scope_sha256": {
+          "$ref": "#/$defs/sha256"
+        },
+        "minimum_necessary_transfer_required": {
+          "type": "boolean"
+        },
+        "separate_transfer_consent_required": {
+          "type": "boolean"
+        },
+        "separate_transfer_consent_approved": {
+          "type": "boolean"
+        }
+      }
+    },
+    "incidentPauseStop": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "incident_response_protocol_sha256",
+        "breach_notification_protocol_sha256",
+        "pause_stop_triggers",
+        "pause_on_trigger_required",
+        "stop_protocol_sha256",
+        "resume_requires_official_body_and_principal_investigator",
+        "resume_protocol_sha256"
+      ],
+      "properties": {
+        "incident_response_protocol_sha256": {
+          "$ref": "#/$defs/sha256"
+        },
+        "breach_notification_protocol_sha256": {
+          "$ref": "#/$defs/sha256"
+        },
+        "pause_stop_triggers": {
+          "const": [
+            "official_body_stop_or_pause_order",
+            "consent_or_privacy_breach",
+            "unexpected_serious_intervention_related_harm",
+            "randomization_or_data_integrity_failure",
+            "registered_intervention_cannot_be_delivered"
+          ]
+        },
+        "pause_on_trigger_required": {
+          "type": "boolean"
+        },
+        "stop_protocol_sha256": {
+          "$ref": "#/$defs/sha256"
+        },
+        "resume_requires_official_body_and_principal_investigator": {
+          "type": "boolean"
+        },
+        "resume_protocol_sha256": {
+          "$ref": "#/$defs/sha256"
+        }
+      }
+    },
+    "lifecycle": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "approved_at_utc",
+        "effective_at_utc",
+        "expires_at_utc_or_status_code",
+        "status_verified_at_utc",
+        "amendment_status",
+        "current_amendment_version",
+        "current_amendment_sha256",
+        "scope_change_requires_prior_amendment",
+        "expiration_action",
+        "suspended",
+        "withdrawn",
+        "current_and_active"
+      ],
+      "properties": {
+        "approved_at_utc": {
+          "$ref": "#/$defs/utcTimestamp"
+        },
+        "effective_at_utc": {
+          "$ref": "#/$defs/utcTimestamp"
+        },
+        "expires_at_utc_or_status_code": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 64,
+          "pattern": "^(20[0-9]{2}-(0[1-9]|1[0-2])-([0-2][0-9]|3[01])T([01][0-9]|2[0-3]):[0-5][0-9]:[0-5][0-9]Z|no_expiry_stated_by_official_body)$"
+        },
+        "status_verified_at_utc": {
+          "$ref": "#/$defs/utcTimestamp"
+        },
+        "amendment_status": {
+          "enum": [
+            "no_amendment",
+            "approved_amendment_active"
+          ]
+        },
+        "current_amendment_version": {
+          "oneOf": [
+            {
+              "$ref": "#/$defs/versionId"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "current_amendment_sha256": {
+          "oneOf": [
+            {
+              "$ref": "#/$defs/sha256"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "scope_change_requires_prior_amendment": {
+          "type": "boolean"
+        },
+        "expiration_action": {
+          "const": "stop_recruitment_intervention_and_recording"
+        },
+        "suspended": {
+          "type": "boolean"
+        },
+        "withdrawn": {
+          "type": "boolean"
+        },
+        "current_and_active": {
+          "type": "boolean"
+        }
+      }
+    },
+    "authorization": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "decision",
+        "official_determination_verified",
+        "signed_receipt_sha256",
+        "immutable_archive_receipt_sha256",
+        "independent_verification_receipt_sha256",
+        "recruitment_execution_authorized",
+        "consent_execution_authorized",
+        "recording_execution_authorized"
+      ],
+      "properties": {
+        "decision": {
+          "enum": [
+            "officially_authorized",
+            "not_authorized"
+          ]
+        },
+        "official_determination_verified": {
+          "type": "boolean"
+        },
+        "signed_receipt_sha256": {
+          "$ref": "#/$defs/sha256"
+        },
+        "immutable_archive_receipt_sha256": {
+          "$ref": "#/$defs/sha256"
+        },
+        "independent_verification_receipt_sha256": {
+          "$ref": "#/$defs/sha256"
+        },
+        "recruitment_execution_authorized": {
+          "type": "boolean"
+        },
+        "consent_execution_authorized": {
+          "type": "boolean"
+        },
+        "recording_execution_authorized": {
+          "type": "boolean"
+        }
+      }
+    }
+  }
+}

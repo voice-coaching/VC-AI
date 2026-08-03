@@ -1,0 +1,163 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://voice-coach.local/schemas/d07_gold_item_manifest_v1.schema.json",
+  "title": "D07 prefixed independent expert gold item manifest",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_version",
+    "manifest_id",
+    "h00_approval_sha256",
+    "h00_attestation_sha256",
+    "d07_institutional_approval_sha256",
+    "reviewer_attestation_sha256",
+    "preregistration_sha256",
+    "g04_progress_aggregate_sha256",
+    "privacy_zone",
+    "split_assignment_frozen_before_first_rating",
+    "total_item_count",
+    "calibration_item_count",
+    "locked_test_item_count",
+    "items"
+  ],
+  "properties": {
+    "schema_version": {
+      "const": "voice_coach.d07_gold_item_manifest.v1"
+    },
+    "manifest_id": {
+      "type": "string",
+      "pattern": "^d07items_[0-9a-f]{32}$"
+    },
+    "h00_approval_sha256": {
+      "$ref": "#/$defs/sha256"
+    },
+    "h00_attestation_sha256": {
+      "$ref": "#/$defs/sha256"
+    },
+    "d07_institutional_approval_sha256": {
+      "$ref": "#/$defs/sha256"
+    },
+    "reviewer_attestation_sha256": {
+      "$ref": "#/$defs/sha256"
+    },
+    "preregistration_sha256": {
+      "$ref": "#/$defs/sha256"
+    },
+    "g04_progress_aggregate_sha256": {
+      "$ref": "#/$defs/sha256"
+    },
+    "privacy_zone": {
+      "const": "D1_pseudonymized_restricted_experiment"
+    },
+    "split_assignment_frozen_before_first_rating": {
+      "const": true
+    },
+    "total_item_count": {
+      "type": "integer",
+      "minimum": 1000,
+      "maximum": 2000
+    },
+    "calibration_item_count": {
+      "const": 800
+    },
+    "locked_test_item_count": {
+      "type": "integer",
+      "minimum": 200,
+      "maximum": 1200
+    },
+    "items": {
+      "type": "array",
+      "minItems": 1000,
+      "maxItems": 2000,
+      "items": {
+        "$ref": "#/$defs/item"
+      }
+    }
+  },
+  "$defs": {
+    "sha256": {
+      "type": "string",
+      "pattern": "^[0-9a-f]{64}$"
+    },
+    "safeId": {
+      "type": "string",
+      "pattern": "^[A-Za-z0-9][A-Za-z0-9_.:-]{0,63}$"
+    },
+    "item": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "item_id_sha256",
+        "speaker_id_sha256",
+        "split",
+        "audio_object_id_sha256",
+        "l1_stratum_id",
+        "gender_stratum_id",
+        "proficiency_stratum_id",
+        "utterance_length_bin_id",
+        "target_phone_stratum_id",
+        "existing_error_present",
+        "target_phone_count",
+        "review_order_commitment_sha256",
+        "model_output_exposed",
+        "system_condition_exposed",
+        "g04_item_reused",
+        "s203_item_reused"
+      ],
+      "properties": {
+        "item_id_sha256": {
+          "$ref": "#/$defs/sha256"
+        },
+        "speaker_id_sha256": {
+          "$ref": "#/$defs/sha256"
+        },
+        "split": {
+          "enum": [
+            "calibration",
+            "locked_test"
+          ]
+        },
+        "audio_object_id_sha256": {
+          "$ref": "#/$defs/sha256"
+        },
+        "l1_stratum_id": {
+          "$ref": "#/$defs/safeId"
+        },
+        "gender_stratum_id": {
+          "$ref": "#/$defs/safeId"
+        },
+        "proficiency_stratum_id": {
+          "$ref": "#/$defs/safeId"
+        },
+        "utterance_length_bin_id": {
+          "$ref": "#/$defs/safeId"
+        },
+        "target_phone_stratum_id": {
+          "$ref": "#/$defs/safeId"
+        },
+        "existing_error_present": {
+          "type": "boolean"
+        },
+        "target_phone_count": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "review_order_commitment_sha256": {
+          "$ref": "#/$defs/sha256"
+        },
+        "model_output_exposed": {
+          "const": false
+        },
+        "system_condition_exposed": {
+          "const": false
+        },
+        "g04_item_reused": {
+          "const": false
+        },
+        "s203_item_reused": {
+          "const": false
+        }
+      }
+    }
+  }
+}

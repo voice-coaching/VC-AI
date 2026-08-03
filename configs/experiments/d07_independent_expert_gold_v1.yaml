@@ -1,0 +1,277 @@
+schema_version: 1
+
+experiment:
+  id: d07-independent-expert-gold-v1
+  work_package: D07
+  status: static_readiness_only
+  implementation_scope: read_only_fail_closed_static_readiness
+  actual_expert_count: 0
+  actual_rating_count: 0
+  actual_locked_access_count: 0
+  actual_metric_count: 0
+  actual_result_count: 0
+  completion_claim_allowed: false
+
+canonical_sources:
+  access_scope: C1_public_or_A1_aggregate_static_pins_only
+  strict_sha256: true
+  pins:
+    - path: configs/expert_evaluation/d07_calibration_agreement_report_v1.schema.json
+      sha256: fe7ae40123f5d70bd5a99af7e8597656bcb6a6bd9813adcc26a3529e7eff29ce
+    - path: configs/expert_evaluation/d07_expert_rating_manifest_v1.schema.json
+      sha256: e9c233837d9693ba5de04d4ad86fb10b12dacbc36c496571f23115fd58a0b42f
+    - path: configs/expert_evaluation/d07_gold_completion_attestation_v1.schema.json
+      sha256: 1b9dcb492531cbdd305d13c3e79a87027cd297ba0d41fe0f04bb05683e2a910f
+    - path: configs/expert_evaluation/d07_gold_item_manifest_v1.schema.json
+      sha256: 756d8e954077800e5b3de975b8839796b375c5d29d7ce343832d45fdfc994546
+    - path: configs/expert_evaluation/d07_institutional_expert_approval_v1.template.json
+      sha256: 3e8a0c6314e42ce6fa9ae36cea4bf568f618957d99769592679c7218194abc4d
+    - path: configs/expert_evaluation/d07_locked_access_authorization_v1.template.json
+      sha256: 8479443a2d181e8a8190af81eacd8c51e2353cd1b1e095a5f21b1d2eb65aa3e6
+    - path: configs/expert_evaluation/d07_locked_evaluation_report_v1.schema.json
+      sha256: c5a352fa3d08631b09c2ec183779e2300a8d075ea9be2db78f0b2b1f79256a2e
+    - path: configs/expert_evaluation/d07_preregistration_v1.template.json
+      sha256: 2e1bc517b8651f9aed09697fffcfaa8361074efdaedd66317cdd4af7fae82c79
+    - path: configs/expert_evaluation/d07_reviewer_attestation_v1.template.json
+      sha256: fddc578c52392a3e5c72c35ce9eda1fcc59e8080c2f914403d782cc1788d53c2
+    - path: configs/coaching/korean_error_advice_ontology_v1.json
+      sha256: 1ba0c0198533abd51a3caa4b176f17aae17aa48d08899f6e7ced634a1eef0d60
+    - path: configs/experiments/h00_human_research_approval_v1.yaml
+      sha256: 7128d30304bd3d1c8784ad79e14485a9bbca52fed9d90c878370d549e45f9698
+    - path: configs/experiments/wavlm_s108_no_locked_dry_run_v1.yaml
+      sha256: 038947cc9ee77840870cc0df31a6d66e9384f89908a7d91a8706cda0757e65aa
+    - path: data/processed/aihub71490/manifests/aihub71490_manual_alignment_review_progress.json
+      sha256: 04b9de68d31dbdd3d3d77efc2f9ec710378043eb82840772321c9c0a338b7ca5
+    - path: docs/AIHUB71490_MANUAL_ALIGNMENT_AUDIT_KO.md
+      sha256: 615dbb7b95de11208d3d438315892e26505f68c613c16f10b0ee65482cae5be3
+    - path: docs/DATA_PRIVACY_BOUNDARY_KO.md
+      sha256: 52ad56a726d3d97574f1f55a36935b18fc0d808f2023611f37cb17c0c812dbc0
+    - path: docs/EXTERNAL_EVALUATION_EXECUTION_PACK_KO.md
+      sha256: bd8c38b48072a373803fccdc73bc812bcfd6d6750bcdbf50ac2896ef81aa71c3
+    - path: docs/LOCAL_ALIGNMENT_REVIEW_UI_KO.md
+      sha256: 3bd3dce21186e2fcb19ad51f55cf891f3916351928c7c058de9fb60646bcaa83
+    - path: docs/S2_S200_DATA_CARD_KO.md
+      sha256: fb362153895cd5021cd7e066faee28dc0d3137a5d58c9af906f6788ee0d14256
+    - path: docs/S2_S201_WHISPER_CONTENT_DATA_CARD_KO.md
+      sha256: 189e0eca2828bdd9fc53802e91f6dab0cd0df89d4e3f686b047c4cb5ac51b594
+    - path: docs/S2_S202_INDEPENDENT_AUDITOR_DATA_MODEL_CARD_KO.md
+      sha256: cadafe868cda02955134a5d89f9d94aa4b6b881e812f0732a2e7d30cc2729c3d
+    - path: docs/S2_S203_EXPERT_HOLDOUT_EVALUATION_CARD_KO.md
+      sha256: a9fb81d3d4d5e4b9e6eab5c80e86b056a494e3ef6d52ad61af7aa3e4f59b2a8f
+    - path: scripts/prepare_d07_independent_expert_gold.py
+      sha256: 869f952f84c2f9aec463e5edf43ed1a134a750429ca3cbc5ba0fe9225292d98b
+    - path: src/voice_coach/evaluation/d07_expert_gold_contract.py
+      sha256: 77ad2f1acb1d2dff06b5d010248c83260f1eca9eab815b897047dba96bbc1a95
+    - path: src/voice_coach/human_research/h00_approval_contract.py
+      sha256: 1ef2c62b8c654bb409a2717061292548dd48d79fbae2e88b1b6ab93c224985cd
+    - path: src/voice_coach/training/wavlm_s108_dry_run.py
+      sha256: 38002184f5a48924c79eab88ef3ce9cc9b29beebe3474ab2408c8cdeb31b2ba2
+
+g04_separation:
+  stage: G04_distinct_alignment_review
+  progress_aggregate_path: data/processed/aihub71490/manifests/aihub71490_manual_alignment_review_progress.json
+  progress_aggregate_sha256: 04b9de68d31dbdd3d3d77efc2f9ec710378043eb82840772321c9c0a338b7ca5
+  expected_schema_version: voice_coach.alignment_review_report.v1
+  expected_count: 240
+  current_completed_count: 0
+  current_status: incomplete
+  completion_attestation_path: artifacts/external_evaluation/g04_alignment_completion_attestation_v1.json
+  completion_attestation_sha256: TBD_G04_COMPLETION
+  completion_attestation_schema_version: voice_coach.g04_alignment_completion_attestation.v1
+  d07_item_or_rating_reuse_allowed: false
+  restricted_ui_state_access_allowed: false
+  g04_completion_required_only_before_d07_locked_access: true
+
+predecessor_h00:
+  config_path: configs/experiments/h00_human_research_approval_v1.yaml
+  config_sha256: 7128d30304bd3d1c8784ad79e14485a9bbca52fed9d90c878370d549e45f9698
+  contract_path: src/voice_coach/human_research/h00_approval_contract.py
+  contract_sha256: 1ef2c62b8c654bb409a2717061292548dd48d79fbae2e88b1b6ab93c224985cd
+  approval_path: artifacts/external_attestations/h00/h00_human_research_approval_public_v1.json
+  approval_sha256: TBD_H00_APPROVAL
+  attestation_path: artifacts/external_attestations/h00/h00_official_document_attestation_v1.json
+  attestation_sha256: TBD_H00_ATTESTATION
+  actual_active_official_determination_required: true
+  restricted_official_document_resolution_allowed: false
+  fail_before_module_or_path_while_tbd: true
+
+institutional_expert_approval:
+  placeholder: TBD_EXTERNAL_ATTESTATION
+  template_path: configs/expert_evaluation/d07_institutional_expert_approval_v1.template.json
+  template_sha256: 3e8a0c6314e42ce6fa9ae36cea4bf568f618957d99769592679c7218194abc4d
+  approved_artifact_path: artifacts/external_attestations/d07/d07_institutional_expert_approval_v1.json
+  approved_artifact_sha256: TBD_EXTERNAL_ATTESTATION
+  required_schema_version: voice_coach.d07_institutional_expert_approval.v1
+  required_status: approved
+  must_bind_actual_h00: true
+
+reviewer_attestations:
+  placeholder: TBD_EXTERNAL_ATTESTATION
+  template_path: configs/expert_evaluation/d07_reviewer_attestation_v1.template.json
+  template_sha256: fddc578c52392a3e5c72c35ce9eda1fcc59e8080c2f914403d782cc1788d53c2
+  approved_artifact_path: artifacts/external_attestations/d07/d07_reviewer_attestation_manifest_v1.json
+  approved_artifact_sha256: TBD_EXTERNAL_ATTESTATION
+  required_schema_version: voice_coach.d07_reviewer_attestation_manifest.v1
+  primary_reviewer_count: 2
+  adjudicator_count: 1
+  qualification_evidence: TBD_ATTESTATION
+  primary_mutual_and_model_blinding_required: true
+  adjudicator_disagreement_only_required: true
+
+preregistration:
+  placeholder: TBD_PREREGISTRATION
+  template_path: configs/expert_evaluation/d07_preregistration_v1.template.json
+  template_sha256: 2e1bc517b8651f9aed09697fffcfaa8361074efdaedd66317cdd4af7fae82c79
+  approved_artifact_path: artifacts/external_attestations/d07/d07_preregistration_v1.json
+  approved_artifact_sha256: TBD_PREREGISTRATION
+  required_schema_version: voice_coach.d07_preregistration.v1
+  required_status: approved
+  required_frozen: true
+  no_tbd_allowed: true
+
+sampling_contract:
+  minimum_total_count: 1000
+  maximum_total_count: 2000
+  calibration_count: 800
+  minimum_locked_test_count: 200
+  maximum_locked_test_count: 1200
+  split_assignment_frozen_before_first_rating: true
+  stratification_axes:
+    - l1
+    - gender
+    - proficiency
+    - utterance_length
+    - target_phone
+    - existing_error
+  exact_allocation: TBD_PREREGISTRATION
+  small_group_minimum_allocation: TBD_PREREGISTRATION
+  population_and_unweighted_slice_reporting_required: true
+  g04_or_s203_item_reuse_allowed: false
+
+rating_contract:
+  item_id_format: namespaced_sha256
+  reviewer_id_format: namespaced_sha256
+  reviewer_mapping_zone: R1_restricted_locator
+  phone_realization:
+    - correct
+    - substitution
+    - deletion
+    - uncertain
+  error_type_ontology_path: configs/coaching/korean_error_advice_ontology_v1.json
+  error_type_ontology_sha256: 1ba0c0198533abd51a3caa4b176f17aae17aa48d08899f6e7ced634a1eef0d60
+  error_type_uncertain_is_separate_state: true
+  boundary_acceptable:
+    - "yes"
+    - "no"
+    - uncertain
+  boundary_reference_ms: 50
+  score_range:
+    - 1
+    - 5
+  confidence_range:
+    - 1
+    - 4
+  primary_reviewers_mutually_and_model_blind: true
+  adjudicator_only_disagreements: true
+  original_ratings_preserved: true
+  adjudication_trigger: TBD_PREREGISTRATION
+  note_max_characters: TBD_PREREGISTRATION
+  pii_in_note_allowed: false
+
+calibration_agreement:
+  calibration_count: 800
+  phone_reports:
+    - macro_f1
+    - cohens_kappa
+    - prevalence
+  score_reports:
+    - qwk
+    - icc_2_1
+    - mae
+    - score_distribution
+  ontology_reports:
+    - macro_agreement
+    - krippendorff_alpha
+  scalar_gate_statistic: TBD_PREREGISTRATION
+  scalar_threshold: 0.70
+  taxonomy_gate_statistic: TBD_PREREGISTRATION
+  taxonomy_threshold: 0.65
+  combination: scalar_gte_0_70_or_taxonomy_gte_0_65
+  failure_requires_retraining_and_separate_resample: true
+  adjudication_may_hide_low_agreement: false
+
+locked_test_contract:
+  g04_completion_required: true
+  authorization_template_path: configs/expert_evaluation/d07_locked_access_authorization_v1.template.json
+  authorization_template_sha256: 8479443a2d181e8a8190af81eacd8c51e2353cd1b1e095a5f21b1d2eb65aa3e6
+  authorization_artifact_path: artifacts/external_attestations/d07/d07_locked_access_authorization_v1.json
+  authorization_artifact_sha256: TBD_EXTERNAL_AUTHORIZATION
+  expert_access_transaction_count: 1
+  developer_locked_access_count: 0
+  model_results_must_remain_unseen: true
+  rubric_change_after_start_allowed: false
+  primary_change_after_start_allowed: false
+  sensitivity_bases:
+    - primary_reviewer_1_original
+    - primary_reviewer_2_original
+    - adjudicated_gold
+  one_shot_transaction_protocol: TBD_PREREGISTRATION
+  recovery_and_failure_policy: TBD_PREREGISTRATION
+
+privacy_and_non_execution:
+  raw_audio_zone: R0_raw_restricted
+  locator_and_reviewer_mapping_zone: R1_restricted_locator
+  item_and_rating_zone: D1_pseudonymized_restricted_experiment
+  aggregate_report_zone: A1_aggregate_only
+  code_schema_document_zone: C1_public
+  r0_audio_access_allowed_in_this_package: false
+  r1_locator_access_allowed_in_this_package: false
+  d1_item_or_rating_access_allowed_in_this_package: false
+  g04_ui_state_access_allowed: false
+  locked_audio_access_allowed_in_this_package: false
+  reviewer_recruitment_or_rating_allowed: false
+  model_gpu_network_access_allowed: false
+  output_write_allowed: false
+  direct_identifier_or_path_in_payload_allowed: false
+  pii_in_note_allowed: false
+  reviewer_mapping_stored_separately: true
+
+execution_order:
+  - validate_d07_static_sources_schemas_templates_and_g04_aggregate_separation
+  - require_exact_h00_approval_and_attestation_sha_before_path_resolution
+  - deep_validate_actual_h00_approval_without_restricted_document_resolution
+  - validate_d07_specific_institutional_approval
+  - validate_two_primary_reviewers_and_one_adjudicator_attestations
+  - validate_frozen_d07_preregistration_without_tbd
+  - stop_before_d1_item_r1_locator_r0_audio_rating_or_output_resolution
+  - separate_executor_calibration_800_independent_ratings_only
+  - validate_calibration_agreement_gate_or_require_retraining_and_separate_resample
+  - validate_g04_completion_as_distinct_240_item_stage
+  - validate_one_shot_locked_expert_access_authorization
+  - separate_executor_locked_test_up_to_1200_without_rubric_or_primary_change
+  - validate_two_original_and_adjudicated_sensitivity_reports
+  - publish_aggregate_completion_attestation_only_after_independent_validation
+
+outputs:
+  item_schema_path: configs/expert_evaluation/d07_gold_item_manifest_v1.schema.json
+  item_schema_sha256: 756d8e954077800e5b3de975b8839796b375c5d29d7ce343832d45fdfc994546
+  rating_schema_path: configs/expert_evaluation/d07_expert_rating_manifest_v1.schema.json
+  rating_schema_sha256: e9c233837d9693ba5de04d4ad86fb10b12dacbc36c496571f23115fd58a0b42f
+  calibration_report_schema_path: configs/expert_evaluation/d07_calibration_agreement_report_v1.schema.json
+  calibration_report_schema_sha256: fe7ae40123f5d70bd5a99af7e8597656bcb6a6bd9813adcc26a3529e7eff29ce
+  locked_report_schema_path: configs/expert_evaluation/d07_locked_evaluation_report_v1.schema.json
+  locked_report_schema_sha256: c5a352fa3d08631b09c2ec183779e2300a8d075ea9be2db78f0b2b1f79256a2e
+  completion_schema_path: configs/expert_evaluation/d07_gold_completion_attestation_v1.schema.json
+  completion_schema_sha256: 1b9dcb492531cbdd305d13c3e79a87027cd297ba0d41fe0f04bb05683e2a910f
+  future_item_manifest_path: data/processed/expert_evaluation/d07/d07_gold_item_manifest_v1.json
+  future_calibration_rating_manifest_path: data/restricted/expert_evaluation/d07/d07_calibration_ratings_v1.json
+  future_calibration_report_path: artifacts/expert_evaluation/d07/d07_calibration_agreement_report_v1.json
+  future_locked_rating_manifest_path: data/restricted/expert_evaluation/d07/d07_locked_ratings_v1.json
+  future_locked_report_path: artifacts/expert_evaluation/d07/d07_locked_evaluation_report_v1.json
+  future_completion_attestation_path: artifacts/external_evaluation/d07_gold_completion_attestation_v1.json
+  future_registry_path: artifacts/experiment_registry/d07-independent-expert-gold-v1/metadata.json
+  future_commit_path: artifacts/expert_evaluation/d07/commit.json
+  future_failure_report_path: artifacts/expert_evaluation/d07/failure.json
+  no_overwrite: true
+  atomic_publish_required: true
+  write_enabled_in_this_package: false
