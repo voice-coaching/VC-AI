@@ -2590,3 +2590,22 @@ inner validation만으로 선택하고, full primary train refit 뒤 dev를
 P05는 수치 cross-check 기반을 확보했으므로 `진행 중`으로 바꿨다. 최종
 완료에는 아직 S104 이후 S1·S2·TTS·학습효과 artifact 연결, 인용·그림
 렌더링 검사와 최종 PDF 독립 감사가 필요하다.
+
+## 17. Claude Opus 위임 상태 (2026-08-04)
+
+사용자 승인에 따라 Claude Code 2.1.221의 `opus` 모델(자동 압축 상한 1M)에
+인간 직접 평가 관련 후속 작업의 준비·계약·fail-closed 검토를 위임했다.
+상세 기록은 [`docs/governance/AI_DELEGATION_RECORD_KO.md`](governance/AI_DELEGATION_RECORD_KO.md)에 둔다.
+
+- Opus는 정적 `docs/`와 거버넌스 문서만 읽었다.
+- `data/restricted/`, raw audio, 제한 manifest/locator, 상세 annotation,
+  checkpoint, token, `.env*`, 사람 평가 payload 접근은 0이다.
+- Claude 파일 수정과 실험 실행은 0이다.
+- Opus 반환 상태: `claude_preparation_completed`
+- 인간 청취·전문가 판정·동의·참여자 평가 상태: `human_completed`가 아님
+- G04/D07/D08/C03/R04/S2 실제 평가와 tracker 점수는 변경하지 않음
+
+Opus는 S104 terminal commit·독립 validator 전 후속 실행 금지, G04 30건의
+240건 gate 대체 금지, D07/D08/C03/R04/S2의 실제 인간 판단 필요,
+`TBD_PREREGISTRATION`·one-shot·locked 접근의 fail-closed 처리를 재확인했다.
+이는 준비·계약 감사 결과이며 인간 평가 완료나 연구 결과가 아니다.

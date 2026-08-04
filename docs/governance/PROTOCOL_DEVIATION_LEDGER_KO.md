@@ -195,3 +195,28 @@ DEV-S104-001은 첫 시도의 결과를 사후 수용하는 근거로 사용하�
   않는다.
 - 이 항목은 v1을 성공으로 인정하거나 v2 실행이 완료됐다는 증거가
   아니다. 현재 완료된 것은 v2 contract와 CPU/static full preflight뿐이다.
+
+## DEV-CLAUDE-001 — Claude Opus 준비·계약 검토 위임
+
+현재 판정: **MINOR_ACCEPTED**  
+발견 시각: 2026-08-04 KST  
+대상: S104/G04/D07/S105–S108/B05/S2/coaching/reference/closed-loop 준비 검토
+
+### 확인된 사실
+
+1. 사용자의 명시적 승인 후 Claude Code 2.1.221 `opus` 모델과 1M 자동 압축
+   설정으로 읽기 전용 계획·계약 검토를 실행했다.
+2. Claude는 정적 `docs/`와 거버넌스 문서만 읽었고, 제한 데이터·raw audio·
+   상세 annotation·checkpoint·사람 평가 payload를 읽지 않았다.
+3. Claude는 파일을 수정하거나 실험·학습·인간 청취·전문가 판정·동의·
+   참여자 평가를 수행하지 않았다.
+4. 반환된 메모는 S104 terminal 선행, G04 표본의 gate 대체 금지, D07/D08/
+   C03/R04/S2 인간 필수 판단, TBD/one-shot/locked fail-closed를 확인했다.
+
+### 영향과 판정
+
+- 연구 지표·registry·사람 평가·배점·PENDING marker에는 영향이 없다.
+- `MINOR_ACCEPTED`는 준비·계약 검토의 무영향 범위에만 적용한다.
+- Claude 출력은 인간 평가 완료나 연구 결과로 승격하지 않는다.
+- 실제 평가를 시작하려면 별도 scope attestation, 동의·license, preregistration,
+  reviewer 자격, one-shot authorization과 인간 원자료가 필요하다.
