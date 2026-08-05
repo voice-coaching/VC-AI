@@ -563,7 +563,7 @@ README/Hugging Face card 선언은 CC-BY-NC-4.0이며 weight repository에는
 standalone LICENSE 파일이 없다. 이 조건을 모든 F5 계열, 제3자 fine-tune
 또는 새로 학습한 weight에 일반화하지 않는다.
 자료별 공식 원문·역할·재배포 경계의 관측 ledger는
-`docs/DATA_LICENSE_SOURCE_LEDGER_KO.md`에 고정했다. 이 ledger의
+`docs/constraints/DATA_LICENSE_SOURCE_LEDGER_KO.md`에 고정했다. 이 ledger의
 미해결 original-license·model-artifact·재배포 검토를 완료 증거로
 바꾸지 않으며, 원고의 license `PENDING`도 해제하지 않는다.
 

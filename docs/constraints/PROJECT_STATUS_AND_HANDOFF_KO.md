@@ -3,7 +3,7 @@
 기준 시각: 2026-07-28 KST
 
 > 2026-07-29 이후의 장기 실험 진행률과 현재 실행 큐는
-> [연구 완성 하위 작업 추적기](../RESEARCH_COMPLETION_TRACKER_KO.md)를
+> [연구 완성 하위 작업 추적기](RESEARCH_COMPLETION_TRACKER_KO.md)를
 > 기준으로 한다.
 
 ## 0. 고성능 GPU 머신 실행 현황
@@ -99,9 +99,9 @@ revision과 SHA-256, OpenSLR 파일은 바이트·gzip CRC32·tar 전체 순회�
 | `docs/HIGH_PERFORMANCE_GPU_EXECUTION_PLAN_KO.md` | 고성능 GPU 전용 실험·중단 기준 |
 | `docs/CLI_ONLY_GPU_DATA_SETUP_KO.md` | Linux CLI 머신 재다운로드·추가 데이터 절차 |
 | `docs/EXECUTION_LOG_2026-07-28_KO.md` | 실제 완료 내역·수치·다음 실행 순서 |
-| `docs/AIHUB71490_MANUAL_ALIGNMENT_AUDIT_KO.md` | 240건 G0 전문가 감사 절차 |
-| `docs/DATA_CARD_AIHUB71490_KO.md` | 전체 데이터·label coverage·QC 집계 |
-| `docs/RESEARCH_COMPLETION_TRACKER_KO.md` | 최종 논문까지 하위 작업·gate·진행률 |
+| `docs/constraints/AIHUB71490_MANUAL_ALIGNMENT_AUDIT_KO.md` | 240건 G0 전문가 감사 절차 |
+| `docs/constraints/DATA_CARD_AIHUB71490_KO.md` | 전체 데이터·label coverage·QC 집계 |
+| `docs/constraints/RESEARCH_COMPLETION_TRACKER_KO.md` | 최종 논문까지 하위 작업·gate·진행률 |
 | `configs/data/aihub71490_mvp.yaml` | AI Hub join·split·privacy 규칙 |
 | `configs/experiments/high_performance_gpu.yaml` | 고성능 GPU 모델·평가 gate |
 | `scripts/extract_aihub_audio.ps1` | 재개 가능한 음성 검증·추출·정리 |

@@ -447,8 +447,8 @@ def _validate_config(document: Mapping[str, Any]) -> None:
     if {
         key: _integer(evidence.get(key), f"contract_evidence_{key}") for key in evidence
     } != {
-        "artifact_count": 36,
-        "artifact_passed": 36,
+        "artifact_count":  35,
+        "artifact_passed":  35,
         "claim_count": 475,
         "claim_passed": 475,
     }:
@@ -1296,7 +1296,7 @@ def _validate_recorded_hashes(
         tracker_token = _short_sha(sha_value)
         if tracker_token not in p05_row:
             _fail(f"tracker_p05_{name}_record")
-    if "36/36·475/475" not in p05_row or "PENDING 18" not in p05_row:
+    if "35/35·475/475" not in p05_row or "PENDING 18" not in p05_row:
         _fail("tracker_p05_counts")
     ledger_sha = source_records["license_ledger"]["sha256"]
     if f"{ledger_sha[:8]}…{ledger_sha[-5:]}" not in p05_row:

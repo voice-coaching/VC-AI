@@ -35,14 +35,14 @@ canonical_sources:
       sha256: 6702ea196481784319c03e413d8ee6844a060e83407aed204f9344cb0230909f
     - path: data/processed/aihub71490/manifests/aihub71490_data_card.json
       sha256: 4ab53c6837b1a28fbf153dd3a351a195f6931a43694467114cea6c21b8a57b13
-    - path: docs/C01_KOREAN_ERROR_ADVICE_ONTOLOGY_DATA_CARD_KO.md
+    - path: docs/constraints/C01_KOREAN_ERROR_ADVICE_ONTOLOGY_DATA_CARD_KO.md
       sha256: 14d5e61bc671cc781fc711a2bfb589271ea9b87b3c8f5a8585840b23e19204b7
     - path: docs/IMPLEMENTATION_PLAN_KO.md
-      sha256: 12ce84cd7f4f3e34b332dcd1f9a7ded276a367c0339792d1ed74ca8ceb217acf
-    - path: docs/WAVLM_S107_CALIBRATION_READINESS_KO.md
-      sha256: c1abb3bc1960e78b768ba07e4d0a02712cee3b781f971eb6a97a53db2665e1c7
+      sha256: 836ea2b5a2db2bf3dcfb6ea4003c73c5240ae24bea9ea9af8531519f6a57e07a
+    - path: docs/constraints/WAVLM_S107_CALIBRATION_READINESS_KO.md
+      sha256: 7bc4f1335c21c016103c26b4819bd7d416638198e61eb0017b15b47cce88d975
     - path: docs/paper/EXPERIMENTAL_MANUSCRIPT_KO.md
-      sha256: dea994728ae8c73be098a29e9a70af2ab4730a651063e64687b40c07433b17eb
+      sha256: c21e6d86570eb74069df104295aafe7cf78af02ce51398335c50133a5d1304f2
     - path: scripts/prepare_wavlm_s107_calibration.py
       sha256: 6afe337409b16f2072809dc9de164d371fad9cc94851aa5a621936d0ea572d46
     - path: scripts/run_wavlm_s107_calibration.py

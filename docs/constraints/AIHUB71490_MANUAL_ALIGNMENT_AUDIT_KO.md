@@ -28,7 +28,7 @@
 ## 검수 절차
 
 직접 worksheet에 원본 ID와 경로를 노출하는 방식보다
-[`LOCAL_ALIGNMENT_REVIEW_UI_KO.md`](LOCAL_ALIGNMENT_REVIEW_UI_KO.md)의
+[`../LOCAL_ALIGNMENT_REVIEW_UI_KO.md`](../LOCAL_ALIGNMENT_REVIEW_UI_KO.md)의
 token 보호 로컬 UI를 기본 검수 경로로 사용한다. worksheet와 상세
 JSONL은 제한 입력이며 브라우저·review state·최종 scorer TSV에는
 namespaced item/reviewer SHA-256만 남긴다.

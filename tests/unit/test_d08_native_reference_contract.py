@@ -497,8 +497,8 @@ def test_canonical_static_config_is_valid_and_runtime_is_zero() -> None:
         audit=audit,
     )
 
-    assert len(static.source_snapshots) == 19
-    assert audit.source_pin_read_count == 19
+    assert len(static.source_snapshots) == 18
+    assert audit.source_pin_read_count == 18
     assert all(audit.as_dict()[field] == 0 for field in contract.RUNTIME_FIELDS)
 
 

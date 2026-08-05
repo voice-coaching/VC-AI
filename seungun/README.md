@@ -18,15 +18,15 @@ XLS-R-300M CTC smoke training으로 넘어가기 위한 독립 작업 디렉터�
 수동 정렬 감사와 데이터 취급은 이 디렉터리만의 도구가 아니라 저장소
 루트에 이미 구현·문서화된 자산을 그대로 따른다.
 
-- [수동 정렬 감사 절차](../docs/AIHUB71490_MANUAL_ALIGNMENT_AUDIT_KO.md) —
+- [수동 정렬 감사 절차](../docs/constraints/AIHUB71490_MANUAL_ALIGNMENT_AUDIT_KO.md) —
   240건 판정 기준과 채점 gate
 - [토큰 보호 로컬 검수 UI/tkinter 클라이언트](../docs/LOCAL_ALIGNMENT_REVIEW_UI_KO.md) —
   `scripts/review_alignment_audit.py`, `scripts/review_alignment_audit_gui.py`
-- [전문가 worksheet·음성 경로 안내](../docs/AIHUB71490_EXPERT_AUDIT_WORKSHEET_GUIDE_KO.md)
-- [AI Hub 71490 데이터 카드](../docs/DATA_CARD_AIHUB71490_KO.md) — 발화·화자
+- [전문가 worksheet·음성 경로 안내](../docs/constraints/AIHUB71490_EXPERT_AUDIT_WORKSHEET_GUIDE_KO.md)
+- [AI Hub 71490 데이터 카드](../docs/constraints/DATA_CARD_AIHUB71490_KO.md) — 발화·화자
   규모, 길이 분포, 이 디렉터리의 CTC 3-way split과는 별도인 5-way split
   집계 참고용
-- [연구 데이터 개인정보·반출 경계](../docs/DATA_PRIVACY_BOUNDARY_KO.md) —
+- [연구 데이터 개인정보·반출 경계](../docs/constraints/DATA_PRIVACY_BOUNDARY_KO.md) —
   `manifest/`, `processor/`, `checkpoints/`는 R1 운영 제한구역 기준을
   따른다
 

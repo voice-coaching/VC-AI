@@ -33,27 +33,27 @@ canonical_sources:
     - path: configs/human_research/h04_analyst_attestation_v1.template.json
       sha256: f3fe61c3ed5b3adb2d6d1fb9603e6316b885ff70757207b5e163247911cae1f0
     - path: configs/experiments/h00_human_research_approval_v1.yaml
-      sha256: 25f1925cc987ffade5e2f75e14c55fadd4d0b1e244b69a6da3b90fb818970933
+      sha256: efd05a09f8fc3ccdd49e75a15ae9a7556ce32298cb1b15ac873d48d7ec92a3db
     - path: src/voice_coach/human_research/h00_approval_contract.py
-      sha256: 1d45356f6aab3a5ebcc2f8268bce2a698dd5eaa2c555a8e22e6e0c9ffd0fc701
+      sha256: 142a2b23b8b79dc6535a275ba643db76ab611502be54d7ac93c55fe427043462
     - path: configs/experiments/learning_effect_power_v1.yaml
       sha256: 67737548ce1a22b7716fb5c58635f55a216ff7059fd709476198df3d5fb75c86
     - path: artifacts/planning/learning_effect_power_sensitivity_v1.json
       sha256: d63dc95bb4df4967775781def0386beb7ec959c396d847ae6b6e8c982dbce66d
     - path: docs/paper/EXPERIMENTAL_MANUSCRIPT_KO.md
-      sha256: dea994728ae8c73be098a29e9a70af2ab4730a651063e64687b40c07433b17eb
+      sha256: c21e6d86570eb74069df104295aafe7cf78af02ce51398335c50133a5d1304f2
     - path: docs/paper/CLAIM_GAP_MAP_KO.md
-      sha256: 2168233b459bbe0b2aac411de94d57720408be2479c96e589b14388ff3d5d7a1
+      sha256: d2c70053cab43de6e55929f688ba7fcb20ea9444ca054d5eebeaa8fe23dbf3a7
     - path: docs/paper/METHODS_ETHICS_REPRODUCIBILITY_GAP_KO.md
-      sha256: 05f44e0f7fd7faa44601e0ab8073b29efa87712a0423d04a9ce08652dc57d575
+      sha256: 604e0b74d575b81912e04277393ec309199ffa83b2f3a6faae0a7692aad402a4
 
 predecessor_h00:
   deep_validation_required: true
   actual_official_authorization_required: true
   config_path: configs/experiments/h00_human_research_approval_v1.yaml
-  config_sha256: 25f1925cc987ffade5e2f75e14c55fadd4d0b1e244b69a6da3b90fb818970933
+  config_sha256: efd05a09f8fc3ccdd49e75a15ae9a7556ce32298cb1b15ac873d48d7ec92a3db
   contract_path: src/voice_coach/human_research/h00_approval_contract.py
-  contract_sha256: 1d45356f6aab3a5ebcc2f8268bce2a698dd5eaa2c555a8e22e6e0c9ffd0fc701
+  contract_sha256: 142a2b23b8b79dc6535a275ba643db76ab611502be54d7ac93c55fe427043462
   approval_path: artifacts/external_attestations/h00/h00_human_research_approval_public_v1.json
   approval_sha256: TBD_H00_APPROVAL
   attestation_path: artifacts/external_attestations/h00/h00_official_document_attestation_v1.json

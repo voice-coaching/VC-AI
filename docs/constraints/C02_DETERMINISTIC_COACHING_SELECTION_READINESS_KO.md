@@ -28,9 +28,9 @@ matrix를 추정하지 않고, 첫 미완료 predecessor 전에 중단하는 rea
 
 검토 근거:
 
-- `docs/C01_KOREAN_ERROR_ADVICE_ONTOLOGY_DATA_CARD_KO.md`
+- `docs/constraints/C01_KOREAN_ERROR_ADVICE_ONTOLOGY_DATA_CARD_KO.md`
 - `docs/IMPLEMENTATION_PLAN_KO.md` Phase 4
-- `docs/WAVLM_S107_CALIBRATION_READINESS_KO.md`
+- `docs/constraints/WAVLM_S107_CALIBRATION_READINESS_KO.md`
 - `docs/paper/EXPERIMENTAL_MANUSCRIPT_KO.md`
 - C01 immutable validation report
 - S107 static config와 completion deep-validator contract
@@ -66,7 +66,7 @@ support matrix와 최소 evidence 수는 모두 `TBD_PREREGISTRATION`으로 남�
 | `scripts/prepare_c02_coaching_selection.py` | config-only/full read-only CLI | `4dbbd04b408922808f622011dffba06297540c9a917589c4e21e73333a1f292f` |
 | `tests/unit/test_c02_selection_contract.py` | synthetic selection/safety/path tests | `b59708c6c5f49e7a75ccc93fc5c64a145740f14b97d98fac401934e10299ae26` |
 | `tests/integration/test_prepare_c02_coaching_selection.py` | CLI access-counter tests | `27eae98cac4a146ef701de259a03c380ef88794818ec4babc1c48c78a04ca4d0` |
-| `docs/C02_COACHING_SELECTION_DATA_MODEL_SAFETY_CARD_KO.md` | 데이터·모델·개인정보·안전 카드 | `88749a14a61da78b612f8c22edcb13278f4906081971bcda2d55dd119e72b7b1` |
+| `docs/constraints/C02_COACHING_SELECTION_DATA_MODEL_SAFETY_CARD_KO.md` | 데이터·모델·개인정보·안전 카드 | `88749a14a61da78b612f8c22edcb13278f4906081971bcda2d55dd119e72b7b1` |
 
 ## 4. 강제 실행 순서
 
@@ -209,7 +209,7 @@ PYTHONPATH=src .venv-scorer/bin/python \
 
 ## 9. tracker 정책
 
-이 package 작업에서는 `docs/RESEARCH_COMPLETION_TRACKER_KO.md`를 수정하지
+이 package 작업에서는 `docs/constraints/RESEARCH_COMPLETION_TRACKER_KO.md`를 수정하지
 않았다. 상위 작업자는 최종 파일 hash, targeted/regression test evidence,
 그리고 현재 S107 blocker를 확인한 뒤 tracker에 C02 static readiness만
 기록해야 한다. 실제 C02 완료로 표기하면 안 된다.

@@ -66,7 +66,7 @@ S104, S105, S106 구현, 공통 registry, tracker, 논문과 evidence-map은
 | calibrator·publisher·deep validator | `src/voice_coach/training/wavlm_s107_calibration_training.py` |
 | 정책·metric 단위 테스트 | `tests/unit/test_wavlm_s107_calibration_contract.py` |
 | 합성 E2E·fault 통합 테스트 | `tests/integration/test_train_wavlm_s107_calibration.py` |
-| 구현·실행 준비 기록 | `docs/WAVLM_S107_CALIBRATION_READINESS_KO.md` |
+| 구현·실행 준비 기록 | `docs/constraints/WAVLM_S107_CALIBRATION_READINESS_KO.md` |
 
 S106는 다음 interface로 동결했다.
 

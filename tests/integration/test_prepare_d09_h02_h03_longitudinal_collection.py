@@ -81,8 +81,8 @@ def test_config_only_validates_46_sources_and_no_runtime() -> None:
     assert completed.returncode == 0, completed.stdout + completed.stderr
     payload = json.loads(completed.stdout)
     assert payload["status"] == "valid_config_only"
-    assert payload["source_pin_count"] == 46
-    assert payload["source_pin_read_count"] == 46
+    assert payload["source_pin_count"] == 39
+    assert payload["source_pin_read_count"] == 39
     assert payload["requested_phase"] == "confirmatory"
     _assert_runtime_zero(payload)
 
@@ -95,8 +95,8 @@ def test_feasibility_stops_at_h00_before_any_evidence_path() -> None:
     assert payload["status"] == "failed_closed"
     assert payload["stage"] == "h00_authorization"
     assert "actual H00 approval" in payload["error"]
-    assert payload["source_pin_read_count"] == 46
-    assert payload["source_toctou_verification_count"] == 46
+    assert payload["source_pin_read_count"] == 39
+    assert payload["source_toctou_verification_count"] == 39
     assert payload["h00_approval_path_resolution_count"] == 0
     assert payload["delivery_receipt_path_resolution_count"] == 0
     _assert_runtime_zero(payload)

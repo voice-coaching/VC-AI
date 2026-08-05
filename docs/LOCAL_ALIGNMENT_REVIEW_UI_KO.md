@@ -144,7 +144,7 @@ python scripts\review_alignment_audit_gui.py --url "http://127.0.0.1:8765/#token
 판단한 항목을 자동으로 구분할 수 없으므로, 자동 채점 통과만으로 G04
 완료를 주장하지 않고 연구책임자가 검수자의 실제 청취 이행을 별도
 확인한다
-([`AIHUB71490_EXPERT_AUDIT_WORKSHEET_GUIDE_KO.md`](AIHUB71490_EXPERT_AUDIT_WORKSHEET_GUIDE_KO.md)
+([`constraints/AIHUB71490_EXPERT_AUDIT_WORKSHEET_GUIDE_KO.md`](constraints/AIHUB71490_EXPERT_AUDIT_WORKSHEET_GUIDE_KO.md)
 1.2절 참고).
 
 클라이언트의 네트워크 계층은 실서버(240항목)에 대해 status/item/audio

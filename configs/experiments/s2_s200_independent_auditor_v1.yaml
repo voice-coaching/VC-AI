@@ -23,15 +23,15 @@ canonical_sources:
     - path: docs/한국어 AI 보이스 코칭을 위한 폐쇄루프 TTS 아키텍처.pdf
       sha256: eb403f04e9df77932baba9c671c4e7ee6b2adc2a7eb31bbdc43970e321907ebb
     - path: docs/IMPLEMENTATION_PLAN_KO.md
-      sha256: 12ce84cd7f4f3e34b332dcd1f9a7ded276a367c0339792d1ed74ca8ceb217acf
-    - path: docs/WP4_POST_S103_EXECUTION_CONTRACT_KO.md
-      sha256: 0b0664065ee481e636c1715977925ed1f2b46705a5cd1a072bcac7ac72dfc84a
-    - path: docs/DATA_PRIVACY_BOUNDARY_KO.md
-      sha256: 52ad56a726d3d97574f1f55a36935b18fc0d808f2023611f37cb17c0c812dbc0
-    - path: docs/DATA_LICENSE_AND_ROLE_MATRIX_KO.md
-      sha256: 3257b0dcdb511b79576ffd99329bcde0754e477b6215b5ae81f2c609684dcf58
+      sha256: 836ea2b5a2db2bf3dcfb6ea4003c73c5240ae24bea9ea9af8531519f6a57e07a
+    - path: docs/constraints/WP4_POST_S103_EXECUTION_CONTRACT_KO.md
+      sha256: 908c26bc7f3de3ccf1e6daa9eb70b09537f16d32571c0dc1259bba6668ed0a0f
+    - path: docs/constraints/DATA_PRIVACY_BOUNDARY_KO.md
+      sha256: 8934384f1c570cf1a086fd08c18b26f577c0a22c3bd69ae1b5064eb34f8b1309
+    - path: docs/constraints/DATA_LICENSE_AND_ROLE_MATRIX_KO.md
+      sha256: 3480b342675c22590aec3f800e252bb967edb6be69c5e6a969766c2bd9f37119
     - path: docs/paper/EXPERIMENTAL_MANUSCRIPT_KO.md
-      sha256: dea994728ae8c73be098a29e9a70af2ab4730a651063e64687b40c07433b17eb
+      sha256: c21e6d86570eb74069df104295aafe7cf78af02ce51398335c50133a5d1304f2
     - path: docs/paper/RELATED_WORK_SOURCE_LEDGER_KO.md
       sha256: d37bf2ab5564c55f03dbb9e1974e9bf421274df9971b30d31bb54ff4909e44b6
     - path: pyproject.toml

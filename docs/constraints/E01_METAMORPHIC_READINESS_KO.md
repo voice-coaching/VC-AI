@@ -16,8 +16,8 @@
 | `scripts/prepare_e01_metamorphic_robustness.py` | config-only와 read-only full preflight CLI |
 | `tests/unit/test_e01_metamorphic_contract.py` | policy/schema/privacy/integrity synthetic tests |
 | `tests/integration/test_prepare_e01_metamorphic_robustness.py` | canonical runtime0와 earliest-S108 failure |
-| `docs/E01_METAMORPHIC_DATA_MODEL_SAFETY_CARD_KO.md` | data/model/license/safety 경계 |
-| `docs/E01_METAMORPHIC_READINESS_KO.md` | 본 증거 문서 |
+| `docs/constraints/E01_METAMORPHIC_DATA_MODEL_SAFETY_CARD_KO.md` | data/model/license/safety 경계 |
+| `docs/constraints/E01_METAMORPHIC_READINESS_KO.md` | 본 증거 문서 |
 
 Tracker, S108/S2 기존 파일과 원고는 수정하지 않았다. Actual perturbation,
 audio/model loader, inference/metric executor와 publisher는 만들지 않았다.

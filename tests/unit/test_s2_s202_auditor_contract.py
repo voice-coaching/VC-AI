@@ -27,7 +27,7 @@ def test_repository_static_config_is_valid_and_runtime_access_is_zero() -> None:
     )
     result = contract.config_only_result(static)
     assert result["status"] == "valid_config_only"
-    assert result["source_pin_read_count"] == 15
+    assert result["source_pin_read_count"] == 12
     for name, value in result.items():
         if name.endswith("_count") and name != "source_pin_read_count":
             assert value == 0

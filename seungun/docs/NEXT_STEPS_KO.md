@@ -20,8 +20,8 @@
 `alignment_accuracy=0.7417`, `status=failed`(기준 0.95). 실패 62건
 분석과 후속 조치(phone-level accuracy 지표 도입, duration 5초 이상
 30건 재감사 표본 생성)는 저장소 루트
-`docs/AIHUB71490_EXPERT_AUDIT_WORKSHEET_GUIDE_KO.md` 6절과
-`docs/RESEARCH_COMPLETION_TRACKER_KO.md`(G04, 즉시 실행 큐 91번
+`docs/constraints/AIHUB71490_EXPERT_AUDIT_WORKSHEET_GUIDE_KO.md` 6절과
+`docs/constraints/RESEARCH_COMPLETION_TRACKER_KO.md`(G04, 즉시 실행 큐 91번
 항목)를 따른다. 현재 상태는 여전히
 `MANUAL_ALIGNMENT_AUDIT_REQUIRED`(gate 통과분 없음)이며, smoke와 전체
 학습은 시작하지 않았다.
@@ -77,12 +77,12 @@ scripts/review_alignment_audit_gui.py   # Windows 검수자용 tkinter 클라이
 검수자는 `audio_path`, `textgrid_path`, `alignment_detail_line`을 이용해
 실제 음성과 TextGrid phone tier, 자동 alignment를 함께 확인한다. 상세
 판정 절차는 저장소 루트의
-`docs/AIHUB71490_MANUAL_ALIGNMENT_AUDIT_KO.md`를, 검수 도구 실행법과
+`docs/constraints/AIHUB71490_MANUAL_ALIGNMENT_AUDIT_KO.md`를, 검수 도구 실행법과
 보안·개인정보 경계는
 `docs/LOCAL_ALIGNMENT_REVIEW_UI_KO.md`를, worksheet 열 구성과 SSH 터널
 경유 Windows 실행 순서는
-`docs/AIHUB71490_EXPERT_AUDIT_WORKSHEET_GUIDE_KO.md`를 따른다. 검수 결과가
-저장소 데이터 구역 정책(`docs/DATA_PRIVACY_BOUNDARY_KO.md`)의 R1 운영
+`docs/constraints/AIHUB71490_EXPERT_AUDIT_WORKSHEET_GUIDE_KO.md`를 따른다. 검수 결과가
+저장소 데이터 구역 정책(`docs/constraints/DATA_PRIVACY_BOUNDARY_KO.md`)의 R1 운영
 제한구역을 벗어나지 않도록 export는 반드시 위 도구의 `export` 명령으로만
 수행한다.
 

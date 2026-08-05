@@ -43,7 +43,7 @@ VRAM으로 결정한다.
 ## 4. 실험 순서
 
 > WP4 S103 이후 S104–S108의 순서·split·label·승격 gate는
-> [WP4 S103 이후 실행 계약](./WP4_POST_S103_EXECUTION_CONTRACT_KO.md)이
+> [WP4 S103 이후 실행 계약](constraints/WP4_POST_S103_EXECUTION_CONTRACT_KO.md)이
 > 아래 G1–G3 요약보다 우선한다. 아래의 “동일 seed와 locked test” 중
 > seed 고정만 유효하며, locked test는 G04 240건 수동 정렬과 후속
 > 외부·사전등록 gate 전에는 열지 않는다.

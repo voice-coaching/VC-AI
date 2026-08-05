@@ -29,10 +29,10 @@ canonical_sources:
       sha256: 67737548ce1a22b7716fb5c58635f55a216ff7059fd709476198df3d5fb75c86
     - path: artifacts/planning/learning_effect_power_sensitivity_v1.json
       sha256: d63dc95bb4df4967775781def0386beb7ec959c396d847ae6b6e8c982dbce66d
-    - path: docs/DATA_PRIVACY_BOUNDARY_KO.md
-      sha256: 52ad56a726d3d97574f1f55a36935b18fc0d808f2023611f37cb17c0c812dbc0
-    - path: docs/DATA_LICENSE_AND_ROLE_MATRIX_KO.md
-      sha256: 3257b0dcdb511b79576ffd99329bcde0754e477b6215b5ae81f2c609684dcf58
+    - path: docs/constraints/DATA_PRIVACY_BOUNDARY_KO.md
+      sha256: 8934384f1c570cf1a086fd08c18b26f577c0a22c3bd69ae1b5064eb34f8b1309
+    - path: docs/constraints/DATA_LICENSE_AND_ROLE_MATRIX_KO.md
+      sha256: 3480b342675c22590aec3f800e252bb967edb6be69c5e6a969766c2bd9f37119
 
 official_approval:
   approval_path: artifacts/external_attestations/h00/h00_human_research_approval_public_v1.json

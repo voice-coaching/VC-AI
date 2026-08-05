@@ -64,8 +64,8 @@ def test_config_only_reads_50_static_sources_and_nothing_protected() -> None:
     assert completed.returncode == 0, completed.stdout + completed.stderr
     result = json.loads(completed.stdout)
     assert result["status"] == "valid_config_only"
-    assert result["source_pin_count"] == 50
-    assert result["source_pin_read_count"] == 50
+    assert result["source_pin_count"] == 49
+    assert result["source_pin_read_count"] == 49
     assert result["source_toctou_verification_count"] == 0
     _assert_zero_protected_runtime_and_output(result)
     assert before == after
@@ -82,8 +82,8 @@ def test_full_preflight_stops_before_unresolved_s108_or_any_demo_path() -> None:
     assert result["status"] == "failed_closed"
     assert result["stage"] == "s108_final"
     assert result["error"] == "S108 completion commit SHA is TBD_S108_COMPLETION"
-    assert result["source_pin_read_count"] == 50
-    assert result["source_toctou_verification_count"] == 50
+    assert result["source_pin_read_count"] == 49
+    assert result["source_toctou_verification_count"] == 49
     _assert_zero_protected_runtime_and_output(result)
     assert before == after
 

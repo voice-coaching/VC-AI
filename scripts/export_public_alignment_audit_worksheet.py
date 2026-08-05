@@ -53,7 +53,7 @@ FORBIDDEN_COLUMNS = {
 # a deliberate accuracy/throughput trade-off: an untouched row is
 # indistinguishable from a row a reviewer actually listened to and judged
 # correct, so it weakens the audit's evidentiary value versus an
-# all-blank worksheet. See docs/AIHUB71490_EXPERT_AUDIT_WORKSHEET_GUIDE_KO.md
+# all-blank worksheet. See docs/constraints/AIHUB71490_EXPERT_AUDIT_WORKSHEET_GUIDE_KO.md
 # for the accepted-risk note.
 DEFAULT_ALIGNMENT_CORRECT = "correct"
 DEFAULT_MAXIMUM_BOUNDARY_ERROR_MS = "0"

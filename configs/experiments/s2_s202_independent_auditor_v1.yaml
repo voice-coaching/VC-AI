@@ -20,21 +20,21 @@ canonical_sources:
   access_scope: C1_code_config_docs_only
   pins:
     - path: configs/experiments/s2_s200_independent_auditor_v1.yaml
-      sha256: d5cdab23dc9f8e36cc26ee6b6f7c63f7f76e826b9ab0220d34bd07369969466b
-    - path: docs/S2_S200_INDEPENDENT_AUDITOR_READINESS_KO.md
-      sha256: 9b44ecd60de659a1431533e4c4823d264d2a67f3d39f34ec952f6ea6aa8d147c
+      sha256: 4805da97c6f2272f29f488480923e4ff57e3e73ac200b2abcd4ae0ff2d45ff06
+    - path: docs/constraints/S2_S200_INDEPENDENT_AUDITOR_READINESS_KO.md
+      sha256: ab264ba837ef81b9b8ddac5635b36856f5d927e6a71a708d3c9fd9d697f1a66b
     - path: configs/experiments/s2_s201_whisper_content_gate_v1.yaml
-      sha256: 00c35e2141e2dd857db2d58d05bcf850627e56f61a56cecafad7c1b9e96e27cc
+      sha256: 54512f1223b862e3b08a2ff35f1b80cedbfa1c06ab18c9b2f096f6c2d50e230f
     - path: src/voice_coach/training/s2_s201_whisper_contract.py
       sha256: 88f0cd148129fd880b8af4322b30d21715e9aea26eea4d48bb2f64f130ad7667
     - path: scripts/prepare_s2_s201_whisper_content.py
       sha256: 0f10c1d9104e80152baba94e1764ffcc1af2b2c2f0147d20af656586ef22d2b2
-    - path: docs/S2_S201_WHISPER_CONTENT_READINESS_KO.md
-      sha256: 99fb7b7963a1092113fbab6dce5da385ec8bdf17ec2d86e333801f6d6f2c6fc3
+    - path: docs/constraints/S2_S201_WHISPER_CONTENT_READINESS_KO.md
+      sha256: ebedb1a879cf2370ab664163f7e00ff5a3e9e55ad92a5e6cc633babd6408ef45
     - path: docs/IMPLEMENTATION_PLAN_KO.md
-      sha256: 12ce84cd7f4f3e34b332dcd1f9a7ded276a367c0339792d1ed74ca8ceb217acf
+      sha256: 836ea2b5a2db2bf3dcfb6ea4003c73c5240ae24bea9ea9af8531519f6a57e07a
     - path: docs/paper/EXPERIMENTAL_MANUSCRIPT_KO.md
-      sha256: dea994728ae8c73be098a29e9a70af2ab4730a651063e64687b40c07433b17eb
+      sha256: c21e6d86570eb74069df104295aafe7cf78af02ce51398335c50133a5d1304f2
     - path: docs/paper/RELATED_WORK_SOURCE_LEDGER_KO.md
       sha256: d37bf2ab5564c55f03dbb9e1974e9bf421274df9971b30d31bb54ff4909e44b6
     - path: src/voice_coach/training/s2_s202_auditor_contract.py

@@ -34,14 +34,14 @@ canonical_sources:
       sha256: ffd86dc89cf0957dccc61f6ecb7af1c7ebbbdbff2bd87c951e54c40afc1262c9
     - path: data/reference/r00/r00_sentence_card_v1.json
       sha256: 08dc149ccf10006a587e6216dda0471c19b5c55eab6b320b4348587527d82c4d
-    - path: docs/DATA_LICENSE_AND_ROLE_MATRIX_KO.md
-      sha256: 3257b0dcdb511b79576ffd99329bcde0754e477b6215b5ae81f2c609684dcf58
-    - path: docs/DATA_PRIVACY_BOUNDARY_KO.md
-      sha256: 52ad56a726d3d97574f1f55a36935b18fc0d808f2023611f37cb17c0c812dbc0
+    - path: docs/constraints/DATA_LICENSE_AND_ROLE_MATRIX_KO.md
+      sha256: 3480b342675c22590aec3f800e252bb967edb6be69c5e6a969766c2bd9f37119
+    - path: docs/constraints/DATA_PRIVACY_BOUNDARY_KO.md
+      sha256: 8934384f1c570cf1a086fd08c18b26f577c0a22c3bd69ae1b5064eb34f8b1309
     - path: docs/IMPLEMENTATION_PLAN_KO.md
-      sha256: 12ce84cd7f4f3e34b332dcd1f9a7ded276a367c0339792d1ed74ca8ceb217acf
+      sha256: 836ea2b5a2db2bf3dcfb6ea4003c73c5240ae24bea9ea9af8531519f6a57e07a
     - path: docs/paper/EXPERIMENTAL_MANUSCRIPT_KO.md
-      sha256: dea994728ae8c73be098a29e9a70af2ab4730a651063e64687b40c07433b17eb
+      sha256: c21e6d86570eb74069df104295aafe7cf78af02ce51398335c50133a5d1304f2
     - path: docs/paper/RELATED_WORK_SOURCE_LEDGER_KO.md
       sha256: d37bf2ab5564c55f03dbb9e1974e9bf421274df9971b30d31bb54ff4909e44b6
     - path: scripts/validate_r00_sentence_card.py

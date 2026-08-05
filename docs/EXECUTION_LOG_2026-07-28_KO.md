@@ -208,7 +208,7 @@ L1·성별·숙련도·오류 유무 50개 층을 모두 포함하는 240건 수
 - worksheet SHA-256:
   `7e70e1d4d5742688bd1e6544f97527f8362712efdc28827df8f0e7503c1a237c`
 
-검수 방법과 판정 규칙은 `docs/AIHUB71490_MANUAL_ALIGNMENT_AUDIT_KO.md`에
+검수 방법과 판정 규칙은 `docs/constraints/AIHUB71490_MANUAL_ALIGNMENT_AUDIT_KO.md`에
 기록했다. 실제 청취·경계 판정은 한국어 음성학/강제정렬 검수 역량이 있는
 사람이 수행해야 한다.
 

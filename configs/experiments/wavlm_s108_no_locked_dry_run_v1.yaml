@@ -67,7 +67,7 @@ predecessors:
   s104:
     config:
       path: configs/experiments/wavlm_s104_adapter_v1.yaml
-      sha256: aa9a19fa1bf2b706d2c692498055795284364d2cfab13774fddb2ad77e1ba8e9
+      sha256: 0b633fa93de9ed0e7952893a2221ee5fdaaf1968255bc83c02fd031ae08bde70
     commit:
       path: artifacts/experiments/aihub71490_wavlm_s104_adapter_v1/commit.json
       schema_version: voice_coach.wavlm_s104_adapter_commit.v1

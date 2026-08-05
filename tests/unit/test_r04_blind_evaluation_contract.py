@@ -224,8 +224,8 @@ def test_canonical_static_config_is_valid_without_runtime_access() -> None:
     )
 
     assert result.config_sha256 == _sha(CANONICAL_CONFIG.read_text())
-    assert len(result.source_snapshots) == 25
-    assert audit.source_pin_read_count == 25
+    assert len(result.source_snapshots) == 24
+    assert audit.source_pin_read_count == 24
     assert audit.r00_deep_validation_count == 0
     assert audit.d1_audio_path_resolution_count == 0
     assert audit.d1_rating_path_resolution_count == 0

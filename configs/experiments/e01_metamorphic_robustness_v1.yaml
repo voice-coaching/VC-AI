@@ -32,29 +32,29 @@ canonical_sources:
     - path: scripts/prepare_e01_metamorphic_robustness.py
       sha256: 591153fe7812ca4e32a027e2da277483dcc4938b21cb77ed2a1fa9f22a437863
     - path: configs/experiments/wavlm_s108_no_locked_dry_run_v1.yaml
-      sha256: 038947cc9ee77840870cc0df31a6d66e9384f89908a7d91a8706cda0757e65aa
+      sha256: 341ae126eb4bb8edb5ff21e9db86dc5d932aee5fc7815c39764dac53386e4dfc
     - path: configs/experiments/s2_s202_independent_auditor_v1.yaml
-      sha256: d0b9859845b5d0f56102b23b2431017a9bd8c60c1cf95a03f6aedd79197145f6
+      sha256: ca24a8814d4be1f716ede947e2aa725cb141db0a5db10d75aa3096022bad3031
     - path: src/voice_coach/training/s2_s202_auditor_contract.py
       sha256: 0ba78271b3d4d99ec3fff865e65bbe992428edfb587785021632677bc46fdaac
     - path: configs/experiments/s2_s203_expert_holdout_audit_v1.yaml
-      sha256: 8292ebd6afb9667d9123deaa51be9794ee10ba66d5153361e0c7da6733561de5
+      sha256: f6b4ee6dde2fe30761b7f48947e09d112a91f352b643421bd20f738d64815cd9
     - path: src/voice_coach/training/s2_s203_holdout_contract.py
       sha256: 35ee786e59b247c28eb2cd06e5e58c11096cb4ad7944b74c0ab6950b5d2f578b
     - path: docs/IMPLEMENTATION_PLAN_KO.md
-      sha256: 12ce84cd7f4f3e34b332dcd1f9a7ded276a367c0339792d1ed74ca8ceb217acf
+      sha256: 836ea2b5a2db2bf3dcfb6ea4003c73c5240ae24bea9ea9af8531519f6a57e07a
     - path: docs/EXECUTION_LOG_2026-07-28_KO.md
-      sha256: 9313a0196a02ced826c71421686c323eadbf5b209879071ed1f325f5d1de40bf
+      sha256: f1628f8ab7e1f2104c9ea6a6b8cafad500501f6dce73082d19cbab44f8478bf1
     - path: docs/paper/EXPERIMENTAL_MANUSCRIPT_KO.md
-      sha256: dea994728ae8c73be098a29e9a70af2ab4730a651063e64687b40c07433b17eb
+      sha256: c21e6d86570eb74069df104295aafe7cf78af02ce51398335c50133a5d1304f2
     - path: docs/paper/CLAIM_GAP_MAP_KO.md
-      sha256: 2168233b459bbe0b2aac411de94d57720408be2479c96e589b14388ff3d5d7a1
+      sha256: d2c70053cab43de6e55929f688ba7fcb20ea9444ca054d5eebeaa8fe23dbf3a7
 
 predecessor_s108:
   validation_order: 1
   deep_validation_required: true
   delegate_config_path: configs/experiments/s2_s202_independent_auditor_v1.yaml
-  delegate_config_sha256: d0b9859845b5d0f56102b23b2431017a9bd8c60c1cf95a03f6aedd79197145f6
+  delegate_config_sha256: ca24a8814d4be1f716ede947e2aa725cb141db0a5db10d75aa3096022bad3031
   delegate_contract_path: src/voice_coach/training/s2_s202_auditor_contract.py
   delegate_contract_sha256: 0ba78271b3d4d99ec3fff865e65bbe992428edfb587785021632677bc46fdaac
   completion_commit_path: artifacts/experiments/aihub71490_wavlm_s108_final_s1_v1/commit.json

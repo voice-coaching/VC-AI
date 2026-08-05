@@ -384,8 +384,8 @@ def test_static_contract_reads_exactly_46_sources() -> None:
         config=load_config(CONFIG_PATH),
         audit=audit,
     )
-    assert len(static.source_snapshots) == 46
-    assert audit.source_pin_read_count == 46
+    assert len(static.source_snapshots) == 39
+    assert audit.source_pin_read_count == 39
     assert audit.recruitment_count == 0
     assert audit.audio_read_count == 0
     assert audit.output_count == 0

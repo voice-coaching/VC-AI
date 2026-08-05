@@ -30,7 +30,7 @@ S201 Whisper trainer나 S202 HuBERT trainer를 이 패키지에 가짜로 추가
 | `scripts/prepare_s2_s200_auditor.py` | config-only와 full fail-closed CLI |
 | `tests/unit/test_s2_s200_auditor_contract.py` | bounded 합성 policy·fault·TOCTOU test |
 | `tests/integration/test_prepare_s2_s200_auditor.py` | 실제 workspace zero-access·선행자 우선 실패 검사 |
-| [retired contract 통합 안내](README.md#retired-contracts) | 사람 판독용 데이터 카드의 이전 위치와 통합 안내 |
+| [retired contract 통합 안내](../README.md#retired-contracts) | 사람 판독용 데이터 카드의 이전 위치와 통합 안내 |
 | 이 문서 | 구현·검증·실행 인계 |
 
 기존 tracker, 원고, S104–S108 파일은 이 작업에서 수정하지 않았다.

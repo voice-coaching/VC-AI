@@ -207,7 +207,7 @@ implementation:
     sha256: 654d7b6c258801a02f2361c3d547eafb6dbb08d847bb1863b0aa24c84af57aef
   interval_module:
     path: src/voice_coach/data/intervals.py
-    sha256: 60b430cc421920f2f7907b93391d18a80b9f9f47fa83e669ba3a5aa07fed2b9e
+    sha256: 0fc28d734951ca300bb208d2b76b89a9207093886853a0ce65adf30705c247cf
   ssl_module:
     path: src/voice_coach/features/ssl.py
     sha256: 3d3d69a56c8f36ae3c16680c5bde25dad30658af4850104f51646a38b9140739

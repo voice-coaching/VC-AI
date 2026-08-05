@@ -484,6 +484,6 @@ status=failed (minimum_accuracy=0.95, 228/240 필요)
 표본을 생성했다(`aihub71490_manual_alignment_audit_long30_v2.tsv`).
 이 재감사 결과와 최종 gate 지표 확정은 아직 진행 중이며, 통과 전까지
 `configs/xlsr300m_full.yaml`의 `enabled: false`를 유지한다. 상세는
-저장소 루트 `docs/AIHUB71490_EXPERT_AUDIT_WORKSHEET_GUIDE_KO.md` 6절과
-`docs/RESEARCH_COMPLETION_TRACKER_KO.md`(즉시 실행 큐 91번 항목)를
+저장소 루트 `docs/constraints/AIHUB71490_EXPERT_AUDIT_WORKSHEET_GUIDE_KO.md` 6절과
+`docs/constraints/RESEARCH_COMPLETION_TRACKER_KO.md`(즉시 실행 큐 91번 항목)를
 따른다.

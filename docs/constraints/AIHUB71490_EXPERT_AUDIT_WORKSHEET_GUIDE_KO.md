@@ -9,7 +9,7 @@ worksheet 위치, 채워야 하는 항목, 음성·라벨 파일 경로 구조�
 상세 판정 절차는
 [`AIHUB71490_MANUAL_ALIGNMENT_AUDIT_KO.md`](AIHUB71490_MANUAL_ALIGNMENT_AUDIT_KO.md)를,
 기본 검수 경로인 token 보호 로컬 UI는
-[`LOCAL_ALIGNMENT_REVIEW_UI_KO.md`](LOCAL_ALIGNMENT_REVIEW_UI_KO.md)를 따른다.
+[`../LOCAL_ALIGNMENT_REVIEW_UI_KO.md`](../LOCAL_ALIGNMENT_REVIEW_UI_KO.md)를 따른다.
 
 ## 1. 왜 worksheet 원본이 GitHub에 없는가
 
@@ -42,7 +42,7 @@ docs/audit/aihub71490_manual_alignment_audit_public.tsv
   공개 사본에 기록된 판정은 실행 서버 안에서만 `item_id`로 원본
   worksheet와 결합해 채점한다.
 - 음성 청취는 4절의 서버 내 경로 또는
-  [`LOCAL_ALIGNMENT_REVIEW_UI_KO.md`](LOCAL_ALIGNMENT_REVIEW_UI_KO.md)의
+  [`../LOCAL_ALIGNMENT_REVIEW_UI_KO.md`](../LOCAL_ALIGNMENT_REVIEW_UI_KO.md)의
   token 보호 로컬 UI(항목별 WAV stream)로만 수행한다.
 
 ## 1.2 판정 기본값과 감사 신뢰성 위험 (수용된 트레이드오프)
@@ -157,7 +157,7 @@ dataset root: data/restricted/aihub/dataset-71490
    원자적으로 저장한다. Windows 검수자는 브라우저 대신
    `scripts/review_alignment_audit_gui.py` tkinter 클라이언트를 SSH 터널
    위에서 실행하는 것을 기본으로 한다
-   ([`LOCAL_ALIGNMENT_REVIEW_UI_KO.md`](LOCAL_ALIGNMENT_REVIEW_UI_KO.md)
+   ([`../LOCAL_ALIGNMENT_REVIEW_UI_KO.md`](../LOCAL_ALIGNMENT_REVIEW_UI_KO.md)
    참조).
 2. 240건 완료 후 UI의 `export`로 privacy-safe scorer TSV를 만든다.
 3. 저장소 루트에서 채점한다.
@@ -196,7 +196,7 @@ dataset root: data/restricted/aihub/dataset-71490
   이항분포 효과로 확인됐다 — phone 단위 오류율은 길이와 무관하게
   5~8%로 일정하다. tolerance_seconds/min_overlap_ratio 완화도 효과가
   없었다(자세한 내용은
-  [`LOCAL_ALIGNMENT_REVIEW_UI_KO.md`](LOCAL_ALIGNMENT_REVIEW_UI_KO.md)
+  [`../LOCAL_ALIGNMENT_REVIEW_UI_KO.md`](../LOCAL_ALIGNMENT_REVIEW_UI_KO.md)
   "발화 단위 대신 phone 단위 정확도" 절 참고).
 - 이 발견에 따라 발화 단위 대신 phone 단위 정확도(`incorrect_interval_count`
   기반 `phone_level_accuracy`)를 병행 지표로 도입했고, duration 5초 이상

@@ -24,13 +24,13 @@ canonical_sources:
     - path: configs/coaching/e02_confidence_guard_preregistration_v1.template.json
       sha256: 8b1e0490e3fbad3efe2f3ac8624187e32a386d35428bcd21a2c82f832bf0d4f9
     - path: configs/experiments/c02_deterministic_coaching_selection_v1.yaml
-      sha256: 79fa2d037383424036fb40ff66eae26a6fd992a731913393cc92f9d7b61eaa05
+      sha256: 2bdfe83ddeebd815694f3f1140fafaff567de38985d7871bc1d0a1506f9539b0
     - path: configs/coaching/c02_diagnostic_issues_input_v1.schema.json
       sha256: cd2588ffac9ff10870977e125969c7709ecde25c050c4845ab0c9b9f1f1d7742
     - path: configs/coaching/c02_coaching_selection_output_v1.schema.json
       sha256: 935db571a2371e96b082a59979af7b24a508318f5385f62032d4ce735ed6c643
     - path: src/voice_coach/coaching/c02_selection_contract.py
-      sha256: 59941428030e653b013459b003ce99d1169cd940ee9a06fb320634d75dd11667
+      sha256: 76dd68786e0d9fdd1bf03d34f20b1d9d5b3cefa4c55a3ae864770c227cfd4970
     - path: configs/experiments/wavlm_s107_calibration_v1.yaml
       sha256: 6702ea196481784319c03e413d8ee6844a060e83407aed204f9344cb0230909f
     - path: src/voice_coach/training/wavlm_s107_calibration_contract.py
@@ -38,19 +38,19 @@ canonical_sources:
     - path: src/voice_coach/training/wavlm_s107_calibration_training.py
       sha256: 201973a25e75da77ec86468a60094c22ac3d3376d936d5e2d089531d52b5d6d3
     - path: docs/IMPLEMENTATION_PLAN_KO.md
-      sha256: 12ce84cd7f4f3e34b332dcd1f9a7ded276a367c0339792d1ed74ca8ceb217acf
-    - path: docs/WP4_POST_S103_EXECUTION_CONTRACT_KO.md
-      sha256: 0b0664065ee481e636c1715977925ed1f2b46705a5cd1a072bcac7ac72dfc84a
-    - path: docs/WAVLM_S107_CALIBRATION_READINESS_KO.md
-      sha256: c1abb3bc1960e78b768ba07e4d0a02712cee3b781f971eb6a97a53db2665e1c7
-    - path: docs/C02_COACHING_SELECTION_DATA_MODEL_SAFETY_CARD_KO.md
+      sha256: 836ea2b5a2db2bf3dcfb6ea4003c73c5240ae24bea9ea9af8531519f6a57e07a
+    - path: docs/constraints/WP4_POST_S103_EXECUTION_CONTRACT_KO.md
+      sha256: 908c26bc7f3de3ccf1e6daa9eb70b09537f16d32571c0dc1259bba6668ed0a0f
+    - path: docs/constraints/WAVLM_S107_CALIBRATION_READINESS_KO.md
+      sha256: 7bc4f1335c21c016103c26b4819bd7d416638198e61eb0017b15b47cce88d975
+    - path: docs/constraints/C02_COACHING_SELECTION_DATA_MODEL_SAFETY_CARD_KO.md
       sha256: 88749a14a61da78b612f8c22edcb13278f4906081971bcda2d55dd119e72b7b1
-    - path: docs/C02_DETERMINISTIC_COACHING_SELECTION_READINESS_KO.md
-      sha256: 5face76de79ba175e0c72ec91967901e5d24add6af6d5cfb97a392333157822e
-    - path: docs/E01_METAMORPHIC_DATA_MODEL_SAFETY_CARD_KO.md
+    - path: docs/constraints/C02_DETERMINISTIC_COACHING_SELECTION_READINESS_KO.md
+      sha256: 779c0633fdb80656e8c5f348f2e6c3a466741d2e83389639508fcca5024c11e8
+    - path: docs/constraints/E01_METAMORPHIC_DATA_MODEL_SAFETY_CARD_KO.md
       sha256: bef7b09317ceb82e9eb5c0de0c20990cb111f9aa5bcede2c822a3fd267cb0eae
-    - path: docs/E01_METAMORPHIC_READINESS_KO.md
-      sha256: 54064f3608e4c0b678c4a16d4e4579bdcca9e4b213e0f9efec769ddca15e5140
+    - path: docs/constraints/E01_METAMORPHIC_READINESS_KO.md
+      sha256: 9844d2969ac4f923b449834d72c198cf27e00121d20269666094a342e9bb97f2
     - path: docs/api/endpoints.md
       sha256: 61280c3d2a9d3f8212fb0cf93abda3709d4508b205130701554e1410a84f05d7
     - path: docs/api/specification.md
@@ -97,9 +97,9 @@ predecessor_c02:
   deep_validation_required: true
   actual_completed_bundle_required: true
   config_path: configs/experiments/c02_deterministic_coaching_selection_v1.yaml
-  config_sha256: 79fa2d037383424036fb40ff66eae26a6fd992a731913393cc92f9d7b61eaa05
+  config_sha256: 2bdfe83ddeebd815694f3f1140fafaff567de38985d7871bc1d0a1506f9539b0
   contract_path: src/voice_coach/coaching/c02_selection_contract.py
-  contract_sha256: 59941428030e653b013459b003ce99d1169cd940ee9a06fb320634d75dd11667
+  contract_sha256: 76dd68786e0d9fdd1bf03d34f20b1d9d5b3cefa4c55a3ae864770c227cfd4970
   bundle_schema_path: configs/coaching/e02_c02_coaching_bundle_commit_v1.schema.json
   bundle_schema_sha256: 611d6c4fc1cc4e1f1fd15a9bcc185deba781c145b23e2ed7432affbe5ae496ca
   completion_commit_path: artifacts/coaching/c02/commit.json

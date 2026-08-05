@@ -24,14 +24,14 @@ S104–S108을 완료 처리하거나 승격 점수를 부여하지 않는다.
 - G04 수동 정렬:
   [AI Hub 71490 수동 정렬 감사 절차](AIHUB71490_MANUAL_ALIGNMENT_AUDIT_KO.md)
 - D07 전문가 gold:
-  [retired contract 통합 안내](README.md#retired-contracts)
+  [retired contract 통합 안내](../README.md#retired-contracts)
 - 현재 원고의 결과·계획 경계:
-  [방법·윤리·재현성 독립 갭 감사](paper/METHODS_ETHICS_REPRODUCIBILITY_GAP_KO.md)
+  [방법·윤리·재현성 독립 갭 감사](../paper/METHODS_ETHICS_REPRODUCIBILITY_GAP_KO.md)
 
 ## 2. 용어와 식별자
 
 이 문서에서 plain `G04`는 tracker의 **240건 수동 정렬 감사**만 뜻한다.
-[P00 주장 맵](paper/CLAIM_GAP_MAP_KO.md)의 gate 표에 있는 동명 `G04`는
+[P00 주장 맵](../paper/CLAIM_GAP_MAP_KO.md)의 gate 표에 있는 동명 `G04`는
 후속 모델의 seed·bootstrap·Holm 분석 계약이므로 `CLAIM-G04`라고 부른다.
 두 항목을 같은 gate로 취급하지 않는다.
 

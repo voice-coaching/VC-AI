@@ -29,7 +29,7 @@ result·output은 모두 0이다. 따라서 S201 완료나 WP5 배점 근거가 
 | `scripts/prepare_s2_s201_whisper_content.py` | config-only/full fail-closed CLI |
 | `tests/unit/test_s2_s201_whisper_contract.py` | 합성 전 경로와 tamper/symlink/order/TOCTOU fault test |
 | `tests/integration/test_prepare_s2_s201_whisper_content.py` | 실제 workspace config-only·현재 full failure 검사 |
-| [retired contract 통합 안내](README.md#retired-contracts) | 역할·privacy·license·normalization·blocker 카드의 이전 위치와 통합 안내 |
+| [retired contract 통합 안내](../README.md#retired-contracts) | 역할·privacy·license·normalization·blocker 카드의 이전 위치와 통합 안내 |
 | `docs/paper/S2_S201_WHISPER_CONTENT_AMENDMENT_TEMPLATE_KO.md` | 실제 commit 전에는 승격할 수 없는 논문 PENDING 표·문장 |
 
 기존 tracker, 정본 원고, S104–S200, C01 파일은 수정하지 않았다.

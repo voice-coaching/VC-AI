@@ -437,8 +437,8 @@ def test_static_config_reads_50_sources_and_no_runtime() -> None:
         config=config,
         audit=audit,
     )
-    assert len(static.source_snapshots) == 50
-    assert audit.source_pin_read_count == 50
+    assert len(static.source_snapshots) == 49
+    assert audit.source_pin_read_count == 49
     assert audit.source_toctou_verification_count == 0
     assert audit.s108_path_resolution_count == 0
     assert audit.raw_audio_read_count == 0

@@ -478,8 +478,8 @@ def test_repository_config_only_reads_only_c1_and_g04_a1_aggregate() -> None:
     )
     result = contract.config_only_result(static, audit)
     assert result["status"] == "valid_config_only"
-    assert result["source_pin_count"] == 25
-    assert result["source_pin_read_count"] == 25
+    assert result["source_pin_count"] == 20
+    assert result["source_pin_read_count"] == 20
     assert result["g04_progress_aggregate_read_count"] == 1
     assert result["g04_current_completed_count"] == 0
     for field, value in result.items():
@@ -503,8 +503,8 @@ def test_full_stops_at_h00_tbd_before_module_or_external_path() -> None:
     assert caught.value.stage == "h00_approval"
     assert caught.value.audit is not None
     audit = caught.value.audit
-    assert audit.source_pin_read_count == 25
-    assert audit.source_toctou_verification_count == 25
+    assert audit.source_pin_read_count == 20
+    assert audit.source_toctou_verification_count == 20
     assert audit.g04_progress_aggregate_read_count == 1
     for field in (
         "h00_module_load_count",

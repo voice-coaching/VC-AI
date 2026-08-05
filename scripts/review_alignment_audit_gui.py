@@ -39,7 +39,7 @@ except ImportError:  # headless machine; the GUI needs a desktop Python
 # Trade-off: an item left untouched is indistinguishable from one actually
 # listened to and judged correct, which weakens the audit's evidentiary
 # value versus requiring an explicit choice per item. See
-# docs/AIHUB71490_EXPERT_AUDIT_WORKSHEET_GUIDE_KO.md for the accepted-risk
+# docs/constraints/AIHUB71490_EXPERT_AUDIT_WORKSHEET_GUIDE_KO.md for the accepted-risk
 # note.
 DEFAULT_ALIGNMENT_CORRECT = "correct"
 DEFAULT_MAXIMUM_BOUNDARY_ERROR_MS = "0"

@@ -24,8 +24,8 @@ evidence_gate:
   # This completed report is the first referenced source opened by the audit.
   report:
     path: artifacts/reproducibility/manuscript_evidence_validation.json
-    sha256: 026799ab9ceb3d93128cc7c4558dcbe8d5ed4f0be3afefe19db198bb5e48b7bd
-    size_bytes: 139628
+    sha256: af4a8566050f83c1c5e4cfc5de21ad2e84fceaee0f9a5870d5d10f77c400e92d
+    size_bytes: 139174
   validator_script:
     path: scripts/validate_manuscript_evidence.py
     sha256: 21d02f78a1c3a7aebc9762934876de1fd122a2c0f8835061b08e11574f961362
@@ -36,11 +36,11 @@ evidence_gate:
     size_bytes: 30260
   validation_document:
     path: docs/MANUSCRIPT_EVIDENCE_VALIDATION_KO.md
-    sha256: c40075548b70eac32efed6fe012db1ae8435652532858a0c49829ab9c07ee051
-    size_bytes: 5449
+    sha256: 882f125e12bcb4c932c66535c9e00fde162a266f4a0d41e943a1220e58a1c35f
+    size_bytes: 5447
   expected:
     status: passed
-    artifact_count: 36
+    artifact_count: 35
     claim_count: 475
     pending_count: 18
     pending_markers_sha256: 1d0cce59025c86879d0a9972f0da31e45e87169b41f5b8fadd427c111e6d7673
@@ -50,12 +50,12 @@ evidence_gate:
 canonical:
   manuscript:
     path: docs/paper/EXPERIMENTAL_MANUSCRIPT_KO.md
-    sha256: dea994728ae8c73be098a29e9a70af2ab4730a651063e64687b40c07433b17eb
-    size_bytes: 41262
+    sha256: c21e6d86570eb74069df104295aafe7cf78af02ce51398335c50133a5d1304f2
+    size_bytes: 41392
   evidence_map:
     path: docs/paper/evidence-map.yaml
-    sha256: 5e6833270081e1d2944041fe4dc57e7fed8da357a2ebc03eaa541dd8b79a6fb0
-    size_bytes: 189647
+    sha256: edf548f9b439b0c423a2ff15b1d2dc8b22fb6590ef679958a81af306ebb7c1fb
+    size_bytes: 189659
   source_ledger:
     path: docs/paper/RELATED_WORK_SOURCE_LEDGER_KO.md
     sha256: d37bf2ab5564c55f03dbb9e1974e9bf421274df9971b30d31bb54ff4909e44b6

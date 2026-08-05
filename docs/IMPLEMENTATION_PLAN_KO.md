@@ -7,11 +7,11 @@
 > 상태 주의(2026-07-29): 이 문서의 2장은 최초 계획 당시의 스냅샷이라
 > ZIP 미해제, 코드 미구현 등 일부 설명이 현재와 다르다. 실제 완료 상태,
 > 충돌 해소 결정과 계속 갱신되는 하위 작업은
-> [연구 완성 추적기](./RESEARCH_COMPLETION_TRACKER_KO.md)와
+> [연구 완성 추적기](constraints/RESEARCH_COMPLETION_TRACKER_KO.md)와
 > [실행 로그](./EXECUTION_LOG_2026-07-28_KO.md)를 기준으로 한다.
 
 > WP4 S103 이후 S104–S108의 정본 실행 순서와 split·label·artifact·gate는
-> [WP4 S103 이후 실행 계약](./WP4_POST_S103_EXECUTION_CONTRACT_KO.md)을
+> [WP4 S103 이후 실행 계약](constraints/WP4_POST_S103_EXECUTION_CONTRACT_KO.md)을
 > 따른다. 아래 초기 Phase 2 순서와 충돌할 때만 새 계약을 우선하며,
 > 현재 상태·배점은 tracker, 완료 사실은 고정 artifact·registry를
 > 계속 정본으로 사용한다.

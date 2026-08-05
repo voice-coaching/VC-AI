@@ -65,7 +65,7 @@ production 형태로 구현했다.
 | 상태기계·aggregate validator·publisher·deep validator | `src/voice_coach/training/wavlm_s108_dry_run.py` |
 | 순수 정책·bounded E2E·fault 단위 테스트 | `tests/unit/test_wavlm_s108_dry_run.py` |
 | 실제 config-only와 발행 receipt CLI 통합 테스트 | `tests/integration/test_prepare_wavlm_s108_no_locked_dry_run.py` |
-| 이 기록 | `docs/WAVLM_S108_NO_LOCKED_DRY_RUN_READINESS_KO.md` |
+| 이 기록 | `docs/constraints/WAVLM_S108_NO_LOCKED_DRY_RUN_READINESS_KO.md` |
 
 ## 3. frozen predecessor interface
 

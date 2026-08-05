@@ -32,7 +32,7 @@ O21–O24로 분류하되 development-only·oracle/silver·no-promotion 제한�
 
 1. 해시가 고정된 aggregate artifact와 experiment registry
 2. `docs/paper/evidence-map.yaml` 및 evidence validator
-3. `docs/RESEARCH_COMPLETION_TRACKER_KO.md`의 현재 task 상태
+3. `docs/constraints/RESEARCH_COMPLETION_TRACKER_KO.md`의 현재 task 상태
 4. `docs/IMPLEMENTATION_PLAN_KO.md`의 gate·프로토콜
 
 실행계획 2장은 문서 자체가 “최초 계획 당시의 스냅샷”이라고 경고한다.
@@ -44,7 +44,7 @@ synthetic/unit test 개수는 프로젝트 관리·코드 검증 상태이지 �
 
 감사 기준선은 다음과 같다.
 
-- hashed aggregate artifact: 36개
+- hashed aggregate artifact: 35개
 - evidence-map claim: 475개
 - unresolved `[PENDING: ...]` marker: 18개
 - marker multiset SHA-256:
@@ -53,13 +53,13 @@ synthetic/unit test 개수는 프로젝트 관리·코드 검증 상태이지 �
   stack/calibration/locked-test 접근: 모두 `false`
 - registry metric split: `dev`, `inner_val`, `dev_exploratory`
 - manuscript SHA-256:
-  `dea994728ae8c73be098a29e9a70af2ab4730a651063e64687b40c07433b17eb`
+  `c21e6d86570eb74069df104295aafe7cf78af02ce51398335c50133a5d1304f2`
 - evidence-map SHA-256:
-  `1a4d897f3872a3a685be73667ac1e5676cd085711420f790e950f1b7af9e28be`
+  `edf548f9b439b0c423a2ff15b1d2dc8b22fb6590ef679958a81af306ebb7c1fb`
 - validation 문서 SHA-256:
-  `c40075548b70eac32efed6fe012db1ae8435652532858a0c49829ab9c07ee051`
+  `882f125e12bcb4c932c66535c9e00fde162a266f4a0d41e943a1220e58a1c35f`
 - validation report SHA-256:
-  `026799ab9ceb3d93128cc7c4558dcbe8d5ed4f0be3afefe19db198bb5e48b7bd`
+  `af4a8566050f83c1c5e4cfc5de21ad2e84fceaee0f9a5870d5d10f77c400e92d`
 - evidence validation/locked-test guard status: `passed`/`passed`
 
 475개 claim의 개별 JSON Pointer·Parquet aggregate·반올림 규칙은

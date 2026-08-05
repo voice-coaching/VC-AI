@@ -37,23 +37,23 @@ canonical_sources:
     - path: configs/coaching/korean_error_advice_ontology_v1.json
       sha256: 1ba0c0198533abd51a3caa4b176f17aae17aa48d08899f6e7ced634a1eef0d60
     - path: configs/experiments/h00_human_research_approval_v1.yaml
-      sha256: 25f1925cc987ffade5e2f75e14c55fadd4d0b1e244b69a6da3b90fb818970933
+      sha256: efd05a09f8fc3ccdd49e75a15ae9a7556ce32298cb1b15ac873d48d7ec92a3db
     - path: configs/experiments/wavlm_s108_no_locked_dry_run_v1.yaml
-      sha256: 038947cc9ee77840870cc0df31a6d66e9384f89908a7d91a8706cda0757e65aa
+      sha256: 341ae126eb4bb8edb5ff21e9db86dc5d932aee5fc7815c39764dac53386e4dfc
     - path: data/processed/aihub71490/manifests/aihub71490_manual_alignment_review_progress.json
       sha256: 04b9de68d31dbdd3d3d77efc2f9ec710378043eb82840772321c9c0a338b7ca5
-    - path: docs/AIHUB71490_MANUAL_ALIGNMENT_AUDIT_KO.md
-      sha256: 615dbb7b95de11208d3d438315892e26505f68c613c16f10b0ee65482cae5be3
-    - path: docs/DATA_PRIVACY_BOUNDARY_KO.md
-      sha256: 52ad56a726d3d97574f1f55a36935b18fc0d808f2023611f37cb17c0c812dbc0
+    - path: docs/constraints/AIHUB71490_MANUAL_ALIGNMENT_AUDIT_KO.md
+      sha256: 4e18b58dc8159ad560b62496e8dc4241b69667a361d4c5d0b4178d1cd8d6fc8d
+    - path: docs/constraints/DATA_PRIVACY_BOUNDARY_KO.md
+      sha256: 8934384f1c570cf1a086fd08c18b26f577c0a22c3bd69ae1b5064eb34f8b1309
     - path: docs/LOCAL_ALIGNMENT_REVIEW_UI_KO.md
-      sha256: 6221ab24222896b196e72bf06da4660e0afe2200a038cf1d0d0ffe61cfe1e71d
+      sha256: 733e01b52c58370f4d07752de3e58aaefb204e1eda7e96ea223e792e193c5f6d
     - path: scripts/prepare_d07_independent_expert_gold.py
       sha256: 869f952f84c2f9aec463e5edf43ed1a134a750429ca3cbc5ba0fe9225292d98b
     - path: src/voice_coach/evaluation/d07_expert_gold_contract.py
-      sha256: 8483a5bc57ea7737b64ec32a048fb8a5fa0f770a931a19303796faed4b430d8c
+      sha256: b5f0920cdde610dd2b79b3a2067a5991f72f25f142d4c5a3e66a0db8017dbbd2
     - path: src/voice_coach/human_research/h00_approval_contract.py
-      sha256: 1d45356f6aab3a5ebcc2f8268bce2a698dd5eaa2c555a8e22e6e0c9ffd0fc701
+      sha256: 142a2b23b8b79dc6535a275ba643db76ab611502be54d7ac93c55fe427043462
     - path: src/voice_coach/training/wavlm_s108_dry_run.py
       sha256: 38002184f5a48924c79eab88ef3ce9cc9b29beebe3474ab2408c8cdeb31b2ba2
 
@@ -74,9 +74,9 @@ g04_separation:
 
 predecessor_h00:
   config_path: configs/experiments/h00_human_research_approval_v1.yaml
-  config_sha256: 25f1925cc987ffade5e2f75e14c55fadd4d0b1e244b69a6da3b90fb818970933
+  config_sha256: efd05a09f8fc3ccdd49e75a15ae9a7556ce32298cb1b15ac873d48d7ec92a3db
   contract_path: src/voice_coach/human_research/h00_approval_contract.py
-  contract_sha256: 1d45356f6aab3a5ebcc2f8268bce2a698dd5eaa2c555a8e22e6e0c9ffd0fc701
+  contract_sha256: 142a2b23b8b79dc6535a275ba643db76ab611502be54d7ac93c55fe427043462
   approval_path: artifacts/external_attestations/h00/h00_human_research_approval_public_v1.json
   approval_sha256: TBD_H00_APPROVAL
   attestation_path: artifacts/external_attestations/h00/h00_official_document_attestation_v1.json

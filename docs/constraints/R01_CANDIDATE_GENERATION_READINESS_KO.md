@@ -46,8 +46,8 @@ metric, R02 결과, publication과 R01 completion artifact는 모두 0이다.
 | `scripts/prepare_r01_human_cosyvoice_candidates.py` | config-only/full read-only CLI |
 | `tests/unit/test_r01_candidate_contract.py` | policy·schema·TBD·hash·order·symlink·TOCTOU·no-overwrite fault test |
 | `tests/integration/test_prepare_r01_human_cosyvoice_candidates.py` | 실제 workspace의 zero-runtime config-only와 R00-first full failure |
-| `docs/R01_CANDIDATE_DATA_MODEL_LICENSE_CARD_KO.md` | human/CosyVoice/data/audio/license/privacy/publication 경계 |
-| `docs/R01_CANDIDATE_GENERATION_READINESS_KO.md` | 본 실행 준비 증거 |
+| `docs/constraints/R01_CANDIDATE_DATA_MODEL_LICENSE_CARD_KO.md` | human/CosyVoice/data/audio/license/privacy/publication 경계 |
+| `docs/constraints/R01_CANDIDATE_GENERATION_READINESS_KO.md` | 본 실행 준비 증거 |
 
 기존 tracker, 정본 원고/evidence-map, S104–S203과 R00 파일은 수정하지
 않았다. Recorder, downloader, TTS inference, GPU query, candidate builder,

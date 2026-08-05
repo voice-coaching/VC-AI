@@ -1,6 +1,6 @@
 # 논문 수치 증거 검증
 
-최종 갱신: 2026-07-29 KST  
+최종 갱신: 2026-08-04 KST
 대상: `docs/paper/EXPERIMENTAL_MANUSCRIPT_KO.md`
 
 ## 목적
@@ -54,7 +54,7 @@ PYTHONPATH=src ./.venv-scorer/bin/python \
 ledger를 canonical 원고/evidence-map에 반영한 뒤의 실제 결과는 다음과
 같다.
 
-- artifact: 36/36
+- artifact: 35/35
 - manuscript claim: 475/475
 - unresolved PENDING marker: 18개, 고정 marker multiset hash 일치
 - locked-test access: explicit dev `false`, threshold ablation `false`,
@@ -64,10 +64,10 @@ ledger를 canonical 원고/evidence-map에 반영한 뒤의 실제 결과는 다
 - registry metric split: `dev`, `inner_val`, `dev_exploratory`만 존재
 - 전체 상태: `passed`
 - report SHA-256:
-  `026799ab9ceb3d93128cc7c4558dcbe8d5ed4f0be3afefe19db198bb5e48b7bd`
+  `af4a8566050f83c1c5e4cfc5de21ad2e84fceaee0f9a5870d5d10f77c400e92d`
 - canonical 원고/evidence-map SHA-256:
-  `dea994728ae8c73be098a29e9a70af2ab4730a651063e64687b40c07433b17eb`,
-  `1a4d897f3872a3a685be73667ac1e5676cd085711420f790e950f1b7af9e28be`
+  `c21e6d86570eb74069df104295aafe7cf78af02ce51398335c50133a5d1304f2`,
+  `edf548f9b439b0c423a2ff15b1d2dc8b22fb6590ef679958a81af306ebb7c1fb`
 
 ## Evidence-map 계약
 

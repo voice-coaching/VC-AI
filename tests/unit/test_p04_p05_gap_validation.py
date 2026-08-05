@@ -244,13 +244,13 @@ def test_current_fixture_publishes_expected_pending_status_and_deep_validates(
     assert report["semantic_resolutions"][0]["claim_gap_c_count"] == 7
     assert report["semantic_resolutions"][0]["forbidden_stale_anchor_mentions"] == 0
     assert report["semantic_resolutions"][1]["ledger"]["path"] == (
-        "docs/DATA_LICENSE_SOURCE_LEDGER_KO.md"
+        "docs/constraints/DATA_LICENSE_SOURCE_LEDGER_KO.md"
     )
     assert report["semantic_resolutions"][1]["evidence_alias"] == (
         "data_license_source_ledger"
     )
-    assert report["integrity"]["evidence_validation"]["artifact_count"] == 36
-    assert report["integrity"]["evidence_validation"]["artifact_passed"] == 36
+    assert report["integrity"]["evidence_validation"]["artifact_count"] ==  35
+    assert report["integrity"]["evidence_validation"]["artifact_passed"] ==  35
     assert report["completion_claims"]["p04_complete"] is False
     assert report["completion_claims"]["p05_complete"] is False
     assert report["completion_claims"]["manuscript_semantic_stale_resolved"] is False
@@ -342,7 +342,7 @@ def test_external_false_completion_mutation_fails_closed(tmp_path: Path) -> None
         config_path,
         config,
         "tracker",
-        "| G04 | 외부 의존 | 240건 수동 정렬 정확도≥95% |",
+        "| G04 | 실패(1차 감사 완료·95% 미달) | 240건 수동 정렬 정확도≥95% |",
         "| G04 | 완료 | 240건 수동 정렬 정확도≥95% |",
     )
 
@@ -462,13 +462,13 @@ def test_license_manuscript_path_mention_drift_fails_closed(tmp_path: Path) -> N
             name: gap._record(root, source) for name, source in sources.items()
         },
     )
-    ledger_path = "docs/DATA_LICENSE_SOURCE_LEDGER_KO.md"
+    ledger_path = "docs/constraints/DATA_LICENSE_SOURCE_LEDGER_KO.md"
     assert texts["manuscript"].count(ledger_path) == 1
     mutated_texts = {
         **texts,
         "manuscript": texts["manuscript"].replace(
             ledger_path,
-            "docs/DATA_LICENSE_SOURCE_LEDGER_KO.missing",
+            "docs/constraints/DATA_LICENSE_SOURCE_LEDGER_KO.missing",
             1,
         ),
     }

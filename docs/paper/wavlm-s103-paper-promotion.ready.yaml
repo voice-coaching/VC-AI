@@ -30,10 +30,10 @@ inputs:
 targets:
   manuscript:
     path: docs/paper/EXPERIMENTAL_MANUSCRIPT_KO.md
-    sha256: da36092c0080a066670ca84753cec010614de5552c8b321b6af8a838b372ccd3
-    size_bytes: 34171
+    sha256: c21e6d86570eb74069df104295aafe7cf78af02ce51398335c50133a5d1304f2
+    size_bytes: 41392
   evidence_map:
     path: docs/paper/evidence-map.yaml
-    sha256: a283d92348970698c3421c3d7857adda3da30df1d03a591352ef17ae90aeb9f3
-    size_bytes: 72532
+    sha256: edf548f9b439b0c423a2ff15b1d2dc8b22fb6590ef679958a81af306ebb7c1fb
+    size_bytes: 189659
   insert_before_pending_marker: "[PENDING: S101–S108 — explicit/Base+/Large/adapter/HiPAMA/fusion 표]"

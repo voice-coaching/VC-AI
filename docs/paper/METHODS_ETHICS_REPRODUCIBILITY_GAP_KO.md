@@ -25,7 +25,7 @@ A는 대체로 O, protocol 시제의 B는 G, 외부·후속 결과인 C는 X에
 대응한다. 관련연구 source 확인은 별도 P04/P05 gap으로 남는다.
 
 > 후속 WP4 S104–S108의 계획·해제 순서는
-> [WP4 S103 이후 실행 계약](../WP4_POST_S103_EXECUTION_CONTRACT_KO.md)을
+> [WP4 S103 이후 실행 계약](../constraints/WP4_POST_S103_EXECUTION_CONTRACT_KO.md)을
 > 따른다. 이 링크는 아래 A/B/C/D 판정, 완료 artifact와 당시 검증 수치를
 > 소급 변경하지 않으며 실제 결과는 기존 증거 우선순위를 계속 따른다.
 
@@ -35,16 +35,16 @@ A는 대체로 O, protocol 시제의 B는 G, 외부·후속 결과인 C는 X에
 
 1. [현재 원고](EXPERIMENTAL_MANUSCRIPT_KO.md)
 2. [P00 주장·증거 갭 맵](CLAIM_GAP_MAP_KO.md)
-3. [연구 완성 추적기](../RESEARCH_COMPLETION_TRACKER_KO.md)
-4. [개인정보·반출 경계](../DATA_PRIVACY_BOUNDARY_KO.md)
-5. [데이터 라이선스·역할 매트릭스](../DATA_LICENSE_AND_ROLE_MATRIX_KO.md)
+3. [연구 완성 추적기](../constraints/RESEARCH_COMPLETION_TRACKER_KO.md)
+4. [개인정보·반출 경계](../constraints/DATA_PRIVACY_BOUNDARY_KO.md)
+5. [데이터 라이선스·역할 매트릭스](../constraints/DATA_LICENSE_AND_ROLE_MATRIX_KO.md)
 6. [논문 수치 evidence validation](../MANUSCRIPT_EVIDENCE_VALIDATION_KO.md)
-7. [G04 수동 정렬 감사 절차](../AIHUB71490_MANUAL_ALIGNMENT_AUDIT_KO.md)
+7. [G04 수동 정렬 감사 절차](../constraints/AIHUB71490_MANUAL_ALIGNMENT_AUDIT_KO.md)
 8. [퇴역 계약 통합 안내](../README.md#retired-contracts)
-9. [WP4 S103 이후 실행 계약](../WP4_POST_S103_EXECUTION_CONTRACT_KO.md)
-10. [WavLM cache 독립 검증 계약](../WAVLM_FEATURE_CACHE_VALIDATION_KO.md)
+9. [WP4 S103 이후 실행 계약](../constraints/WP4_POST_S103_EXECUTION_CONTRACT_KO.md)
+10. [WavLM cache 독립 검증 계약](../constraints/WAVLM_FEATURE_CACHE_VALIDATION_KO.md)
 11. [관련연구 source ledger](RELATED_WORK_SOURCE_LEDGER_KO.md)
-12. [자료 라이선스 원문·역할 ledger](../DATA_LICENSE_SOURCE_LEDGER_KO.md)
+12. [자료 라이선스 원문·역할 ledger](../constraints/DATA_LICENSE_SOURCE_LEDGER_KO.md)
 
 상태 충돌 시 고정 aggregate artifact와 registry, evidence validator,
 tracker, 최신 세부 protocol, 오래된 실행계획 순으로 우선한다. 계획 문서의
@@ -53,13 +53,13 @@ tracker, 최신 세부 protocol, 오래된 실행계획 순으로 우선한다. 
 S103·R00 관측값과 검증 cohort SVG·자료 license ledger까지 반영한 현재
 evidence report는 다음 계약을 통과한다.
 
-- artifact `36/36`, manuscript claim `475/475`
+- artifact `35/35`, manuscript claim `475/475`
 - PENDING marker `18개`, marker multiset hash 일치
 - explicit dev, threshold ablation, WavLM cache, Base+/Large head와
   S103의 stack/calibration/locked-test 접근 모두 `false`
 - registry metric split은 `dev`, `dev_exploratory`, `inner_val`
 - report SHA-256:
-  `026799ab9ceb3d93128cc7c4558dcbe8d5ed4f0be3afefe19db198bb5e48b7bd`
+  `af4a8566050f83c1c5e4cfc5de21ad2e84fceaee0f9a5870d5d10f77c400e92d`
 
 ## 3. 현재 충족률
 
@@ -179,7 +179,7 @@ comparator test 통과만으로는 실제 통계 결과가 아니다.
 | 대상 | 확인 결과 | P04에서의 처리 |
 |---|---|---|
 | 원고 ↔ P00 주장 맵 | observed/gate/related/PENDING 경계가 일치 | 유지 |
-| 원고 ↔ evidence validation | 36/36, 475/475, PENDING 18개, locked guard 통과 | 새 편집마다 재검증 |
+| 원고 ↔ evidence validation | 35/35, 475/475, PENDING 18개, locked guard 통과 | 새 편집마다 재검증 |
 | tracker P04 | `진행 중`; 첫 편집 묶음과 S103/R00 증거 반영은 완료했지만 C 7개와 최종 감사가 남음 | 이 편집으로 완료 변경 금지 |
 | H01 사전등록 ↔ tracker | planning-only, IRB/participant/pilot/effect 없음으로 일치 | protocol 시제 유지 |
 | 외부평가 패킷 ↔ H01 사전등록 | **해결(2026-07-29)**: participant 1:1 병렬 C0↔C3/C3↔C5, 2주 post·post 4주 후 retention, participant/sentence/rater random intercept, ITT·결측 sensitivity·family별 Holm으로 일치 | planning-only, `final N=null`, 외부 flag 전부 false를 유지 |
@@ -212,7 +212,7 @@ Base+ cache builder report SHA-256은
 2. **S104–S108**: S101–S103의 Base+/Large 3-seed head와 paired
    comparison·renderer는 완료됐다. 이후에는 S104–S106을 건너뛰지
    않으며, 현재 실행은
-   [후속 실행 계약](../WP4_POST_S103_EXECUTION_CONTRACT_KO.md)의
+   [후속 실행 계약](../constraints/WP4_POST_S103_EXECUTION_CONTRACT_KO.md)의
    S103→S104→S105→S106→S107→S108 순서를 따른다.
 3. **S2/E01/C03/R04**: 독립 holdout, 전문가 판정, perturbation report,
    coaching 200건, blind MOS/CMOS 원본과 통계를 각각 완료해야 한다.
@@ -244,7 +244,7 @@ Base+ cache builder report SHA-256은
 묶음의 blocker가 아니었다. 편집 뒤 evidence validator는 artifact
 `20/20`, claim `183/183`, PENDING `18개`와 locked-test guard를 통과했다.
 이는 당시 첫 편집 묶음의 역사적 수치다. 이후 Base+/Large/S103와 R00을
-반영한 현재 값은 2절의 `36/36`, `475/475`이며 PENDING 18개와
+반영한 현재 값은 2절의 `35/35`, `475/475`이며 PENDING 18개와
 locked-test guard는 그대로 통과한다.
 
 다음 결과 편집은 C 항목의 실제 artifact가 생긴 뒤에만 시작한다.

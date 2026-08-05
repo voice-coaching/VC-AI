@@ -95,8 +95,8 @@ def test_config_only_reads_12_static_sources_and_nothing_external() -> None:
     assert completed.returncode == 0, completed.stdout + completed.stderr
     result = json.loads(completed.stdout)
     assert result["status"] == "valid_config_only"
-    assert result["source_pin_count"] == 12
-    assert result["source_pin_read_count"] == 12
+    assert result["source_pin_count"] == 8
+    assert result["source_pin_read_count"] == 8
     assert result["source_toctou_verification_count"] == 0
     _assert_zero_external_human_runtime_and_output(result)
     assert before == after
@@ -113,8 +113,8 @@ def test_full_preflight_stops_before_tbd_approval_path_resolution() -> None:
     assert result["status"] == "failed_closed"
     assert result["stage"] == "h00_approval"
     assert result["error"] == "H00 approval is TBD_H00_APPROVAL"
-    assert result["source_pin_read_count"] == 12
-    assert result["source_toctou_verification_count"] == 12
+    assert result["source_pin_read_count"] == 8
+    assert result["source_toctou_verification_count"] == 8
     _assert_zero_external_human_runtime_and_output(result)
     assert before == after
 
