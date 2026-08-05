@@ -27,3 +27,8 @@
 - 느슨한 dictionary 대신 dataclass, typed dict, 명시적 class로 domain model을 표현한다.
 - 순수 domain object는 filesystem, environment, network, process args에 의존하지 않는다.
 - CLI 입력은 domain/service logic에 전달하기 전에 별도 input model로 변환한다.
+
+[연구 도메인 추가 규칙]
+- experiment, gate, artifact, review, coaching 상태는 명시적 enum과 typed model로 표현한다. `completed`, `static_ready`, `failed_closed`, `blocked`, `invalidating` 같은 상태를 boolean 하나로 축약하지 않는다.
+- 기대 음소, 실현 음소, 정답 label, 모델 입력 feature, 예측, coaching evidence는 역할이 다른 모델이다. 필드가 비슷해도 한 DTO/entity에 합치거나 학습 입력에 정답·누수 필드를 넣지 않는다.
+- `TBD`, 미승인 consent, 미확인 license, 미검증 checksum은 유효한 도메인 값이 아니라 gate를 차단하는 미해결 조건으로 모델링한다.

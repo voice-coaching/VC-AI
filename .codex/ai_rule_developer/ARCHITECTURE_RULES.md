@@ -41,3 +41,9 @@
 - 외부 HTTP/SDK 연동은 client 또는 adapter 모듈 뒤에 둔다.
 - Service는 비즈니스 의도를 드러내는 좁은 메서드로 adapter를 호출한다.
 - Upstream DTO와 내부 DTO를 분리한다.
+
+## 연구 실행 경계
+- data preparation, training, evaluation, artifact publish, 사람 평가 실행은 각각 별도 use case와 명시적 input/result 계약을 둔다. CLI는 실행 인자 검증과 결과 표시만 맡기고 gate 판정은 application/domain 정책으로 위임한다.
+- domain 정책은 파일 경로, 환경 변수, GPU, subprocess, model runtime, dataset portal에 직접 의존하지 않는다. 이러한 I/O는 adapter 또는 infrastructure 경계에 둔다.
+- privacy 검사, split 권한, label allowlist, immutable input hash, artifact atomic publish는 우회 가능한 UI/CLI 관례가 아니라 service/domain에서 호출하는 명시적 gate로 구현한다.
+- 실제 모델 endpoint, Oracle 계약 검증 endpoint, static/config-only preflight는 서로 다른 adapter와 result state로 표현한다. 한 경로의 성공을 다른 경로의 production readiness로 승격하지 않는다.

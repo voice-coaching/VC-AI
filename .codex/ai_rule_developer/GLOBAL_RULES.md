@@ -15,6 +15,14 @@
 - 외부 API 호출은 반드시 전용 client/adapter 계층을 통해 수행한다.
 - 외부 연동은 인증 정보, 계약, schema, 실패 처리를 실제 구현과 함께 관리한다.
 
+## 연구·데이터 거버넌스
+- 이 저장소는 한국어 L2 발음 진단과 폐루프 보이스 코칭을 검증하는 연구 프로젝트다. 계획, static readiness, dry-run, 개발 결과, 실제 실행, 독립 검증, 사람 평가 완료를 절대 혼용하지 않는다.
+- 실험 또는 모델 작업은 해당 단계의 data audit, split/label/QC, smoke, 평가, 사람 검증 gate를 확인한 뒤에만 진행한다. 미해결 gate, `TBD`, 실패 상태, stale registry, partial output을 성공 또는 승인으로 해석하지 않는다.
+- 제한 데이터, raw identifier, 원천 경로, 음성·전사·상세 annotation, checkpoint와 비밀정보를 Git·공개 문서·공개 API 응답에 포함하지 않는다. 공개 가능한 집계 결과도 라이선스와 개인정보 검토를 통과해야 한다.
+- 데이터 역할과 label 의미를 보존한다. 원어민 자료를 L2 오류 감독 label로 대체하거나 expected/realized phone, train/dev/calibration/locked-test 역할을 임의로 섞지 않는다.
+- 실제 실행·실패·편차가 생기면 증거를 덮어쓰거나 수동으로 registry를 고치지 않는다. 정본 실행 계약과 deviation ledger가 정한 보존·rollover·재실행 절차를 따른다.
+- 프로젝트 맥락의 빠른 참고는 `.codex/ref_docs/PROJECT_CONTEXT_AND_GOVERNANCE_KO.md`에서 제공한다. 상태·계약의 정본은 루트 `docs/`이며 충돌 시 루트 `docs/`의 해당 정본 문서를 다시 확인한다.
+
 ## 적용 프로필
 - Python: 일반 Python 프로젝트는 프레임워크 전제 없이 기능/도메인 폴더를 우선하고, 각 기능 내부에서 service, adapter, CLI 경계를 명확히 분리한다.
   - import 시점에 파일 생성, 네트워크 호출, 프로세스 실행 같은 부수효과가 발생하지 않게 한다.

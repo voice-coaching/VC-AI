@@ -7,6 +7,7 @@
 [문서 위치]
 - `.codex/ai_rule_developer`: 코딩할 때 지켜야 하는 규칙.
 - `.codex/ref_docs`: 외부/사용자 추가 참고자료 전용. 디렉토리만 생성하고 프로젝트 명세 파일은 생성하지 않는다.
+- `.codex/ref_docs/PROJECT_CONTEXT_AND_GOVERNANCE_KO.md`: 사용자의 명시 요청으로 루트 `docs/`를 요약해 둔 작업 참고 문서. 정본 프로젝트 명세·상태·실행 근거는 계속 루트 `docs/`에 둔다.
 - `docs/architecture`: 프로젝트 아키텍처와 흐름 문서.
 - `docs/api`: 엔드포인트 목록과 API 계약 문서.
 - `docs/database`: DB schema 문서.
@@ -79,3 +80,8 @@
 - 프로젝트 명세를 `.codex/ref_docs`에 작성
 - `docs/api/endpoints.md`에 endpoint 상세 내용 작성
 - enum 값이나 optional/null 동작을 문서에서 생략
+
+[연구 문서화 추가 규칙]
+- 계획, static readiness, config-only 결과, dry-run, 개발 지표, 실제 실행, 독립 검증, 사람 평가 완료를 문서 제목·상태·결론에서 구분한다.
+- 실제 실행 결과를 기록할 때는 실행 ID, 고정 config/data/model 또는 source hash, 환경, seed, 완료/실패 상태, metric 범위와 제한을 함께 기록한다. 실패·편차·미해결 gate를 삭제하거나 성공으로 재서술하지 않는다.
+- privacy, license, consent, split 권한, label 역할, artifact 공개 가능성에 영향이 있는 변경은 관련 data card·boundary·readiness 문서를 함께 검토한다.

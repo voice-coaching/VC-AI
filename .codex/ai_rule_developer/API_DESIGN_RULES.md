@@ -25,3 +25,9 @@
 - 내부 API 계약과 외부 API 계약을 분리한다.
 - 외부 응답 형태는 내부 DTO로 변환한 뒤 호출자에게 반환한다.
 - 계약이 확인된 경우 timeout, retry, fallback, failure mapping 규칙을 문서화한다.
+
+[연구 API 안전 경계]
+- 연구용 Oracle, static preflight, 실제 모델 추론, 자동 교정과 사람 대상 delivery는 서로 다른 목적의 계약이다. route·response·문서에서 이들을 같은 production capability처럼 표현하지 않는다.
+- 진단 응답은 persistence entity, raw audio/annotation/path/raw identifier, 내부 gate 우회 정보, 비밀정보를 포함하지 않는다. evidence와 confidence의 공개 범위는 privacy·license 정책과 API 명세에 맞춘다.
+- low-confidence, OOD, content mismatch, unsupported state는 명시적 안전 응답으로 계약한다. 모델 또는 코칭을 임의로 보정·생성·재시도하는 숨은 부수효과를 추가하지 않는다.
+- 실제 사람 데이터, 녹음, reference delivery, closed-loop session을 받거나 내보내는 API는 해당 동의·권리·gate가 실제로 승인되기 전에는 구현 준비 계약과 실행 계약을 분리한다.

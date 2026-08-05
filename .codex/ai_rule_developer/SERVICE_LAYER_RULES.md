@@ -32,3 +32,9 @@ Service/Application 계층은 비즈니스 로직의 중심이다.
 - 표준 라이브러리로 충분한 문제에 불필요한 dependency를 추가하지 않는다.
 - 공개 함수와 클래스에는 의미 있는 타입 힌트를 유지하고, 입력/출력 모델은 명확한 자료 구조로 표현한다.
 - 순수 계산 로직과 I/O 로직을 분리해 테스트와 재사용이 가능하게 한다.
+
+[연구 use-case 추가 규칙]
+- 학습·평가 service는 실행 전 immutable config/data/model hash, split 접근 역할, label/QC/privacy allowlist, 선행 gate를 검증하고 하나라도 충족하지 않으면 fail-closed 결과를 반환하거나 명시적 예외를 낸다.
+- service result는 `completed`, `failed`, `failed_closed`, `blocked`, `static_ready`처럼 관찰된 상태를 명시적으로 표현한다. static 검증 또는 artifact 생성만으로 실제 실험 완료를 반환하지 않는다.
+- 장기 실행의 시작·종료·실패·artifact publish는 adapter와 registry를 통해 기록한다. 부분 산출물의 덮어쓰기, 수동 registry 수정, 성공으로 보이는 빈 결과 반환을 금지한다.
+- coaching service는 evidence, confidence, content-match와 allowlist를 확인한 뒤에만 조언을 선택한다. OOD·저신뢰·미지원 입력은 자동 교정 대신 abstain/rerecord/expert-review 정책으로 귀결한다.
