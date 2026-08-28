@@ -27,6 +27,12 @@ from voice_coach.visual_feedback.models.integrity import sha256_document
 from voice_coach.visual_feedback.services.handoff import SeungunAttemptBindingFacade
 
 from .adapters.ffmpeg_av_container import FfmpegAvContainerAdapter
+from .adapters.calibrated_runtime_decisions import (
+    CalibratedAvSyncDecisionAdapter,
+    CalibratedAvSyncDecisionPolicy,
+    CalibratedVideoQcDecisionAdapter,
+    CalibratedVideoQcDecisionPolicy,
+)
 from .adapters.lip_audio_av_sync import (
     LipAudioAvSyncAdapter,
     LipAudioAvSyncPolicy,
@@ -48,6 +54,7 @@ from .adapters.runtime import (
     SeungunVisualHandoffAdapter,
 )
 from .models import AvContainerPolicy, VideoAdmissionPolicy
+from .phone_window import PhoneWindowDecodePolicy
 from .services.video_attempt_facade import (
     VideoAttemptFacade,
     VisualDetection,
@@ -63,6 +70,8 @@ _RETENTION_POLICY_ID = "delete_on_completion_v1"
 _SEUNGUN_UPSTREAM_POLICY_REVISION = (
     "seungun_final_pronunciation_detector_v1_locked_test_v1"
 )
+_CAPTURE_CONTRACT_ID = "local_allowlisted_video_aac_mp4_v2"
+_CONTEXT_ID = "internal_video_cli"
 
 
 class _UnavailableLipLandmarkDetector:
@@ -106,6 +115,8 @@ def build_local_video_attempt_facade(
     card_path: str | Path | None = None,
     clock: Callable[[], datetime] = _utc_now,
     attempt_nonce: Callable[[], bytes] = _attempt_nonce,
+    video_qc_decision_policy: CalibratedVideoQcDecisionPolicy | None = None,
+    av_sync_decision_policy: CalibratedAvSyncDecisionPolicy | None = None,
 ) -> VideoAttemptFacade:
     """Build the current internal loop with visual publication locked off.
 
@@ -120,6 +131,10 @@ def build_local_video_attempt_facade(
     root = Path(repository_root)
     if not root.is_absolute():
         raise ValueError("repository_root must be absolute")
+    if (video_qc_decision_policy is None) != (av_sync_decision_policy is None):
+        raise ValueError(
+            "calibrated QC and A/V sync decision policies must be paired"
+        )
 
     media_store = LocalRestrictedVideoAdmissionAdapter(
         restricted_root=restricted_media_root,
@@ -161,11 +176,11 @@ def build_local_video_attempt_facade(
         consent_receipts=consent,
         reliability_receipt=upstream_reliability,
         clock=clock,
-        capture_contract_id="local_h264_aac_mp4_v1",
+        capture_contract_id=_CAPTURE_CONTRACT_ID,
         population_id_sha256=sha256_document(
             {"population": "unscoped_internal_video_attempt"}
         ),
-        context_id="internal_video_cli",
+        context_id=_CONTEXT_ID,
     )
 
     if landmark_model_path is None:
@@ -178,13 +193,95 @@ def build_local_video_attempt_facade(
                 minimum_face_detection_confidence=0.5,
                 minimum_face_presence_confidence=0.5,
                 minimum_tracking_confidence=0.5,
-                maximum_frame_count=8,
-                maximum_total_rgb_bytes=24 * 1024 * 1024,
+                maximum_frame_count=12,
+                maximum_total_rgb_bytes=80 * 1024 * 1024,
                 subprocess_timeout_seconds=120.0,
                 maximum_subprocess_output_bytes=2 * 1024 * 1024,
             ),
             repository_root=root,
         )
+
+    sync_policy = LipAudioAvSyncPolicy(
+        maximum_absolute_offset_ms=300,
+        offset_step_ms=20,
+        energy_window_ms=40,
+        minimum_landmark_frames=6,
+        maximum_anchor_count=4,
+    )
+    sync_policy_sha256 = sha256_document(
+        {
+            "schema_version": "voice_coach.lip_audio_av_sync_policy.v1",
+            **sync_policy.to_json_object(),
+        }
+    )
+    qc_policy = VideoQcPolicy(
+        # These define measurement bins and minimum evidence only;
+        # they are not P6 pass/reliability thresholds.
+        underexposed_luma_max_8bit=16,
+        overexposed_luma_min_8bit=239,
+        lip_roi_padding_fraction=0.05,
+        minimum_single_face_frames=6,
+        maximum_total_rgb_bytes=64 * 1024 * 1024,
+    )
+    if video_qc_decision_policy is not None and (
+        video_qc_decision_policy.expected_measurement_policy_sha256
+        != qc_policy.receipt_sha256
+        or av_sync_decision_policy is None
+        or av_sync_decision_policy.expected_measurement_policy_sha256
+        != sync_policy_sha256
+    ):
+        raise ValueError(
+            "calibrated decisions do not bind composition measurement policies"
+        )
+    visual_detector = MediaPipeVisualDetectorBridge(
+        landmark_detector,
+        qc_detector=VideoQcCandidateAdapter(policy=qc_policy),
+        sync_detector=LipAudioAvSyncAdapter(
+            media_store=media_store,
+            policy=sync_policy,
+        ),
+        qc_decision_adapter=(
+            CalibratedVideoQcDecisionAdapter(
+                policy=video_qc_decision_policy
+            )
+            if video_qc_decision_policy is not None
+            else None
+        ),
+        sync_decision_adapter=(
+            CalibratedAvSyncDecisionAdapter(policy=av_sync_decision_policy)
+            if av_sync_decision_policy is not None
+            else None
+        ),
+        expected_video_qc_decision_policy_sha256=(
+            video_qc_decision_policy.policy_sha256
+            if video_qc_decision_policy is not None
+            else None
+        ),
+        expected_av_sync_decision_policy_sha256=(
+            av_sync_decision_policy.policy_sha256
+            if av_sync_decision_policy is not None
+            else None
+        ),
+        phone_window_policy=PhoneWindowDecodePolicy(
+            policy_revision="selected_phone_rgb24_v1",
+            expected_av_sync_policy_sha256=sync_policy_sha256,
+            context_contract_sha256=sha256_document(
+                {
+                    "capture_contract_id": _CAPTURE_CONTRACT_ID,
+                    "context_id": _CONTEXT_ID,
+                    "video_codecs": ["h264", "hevc"],
+                    "audio_codec": "aac",
+                }
+            ),
+            maximum_absolute_offset_ms=sync_policy.maximum_absolute_offset_ms,
+            padding_before_ms=100,
+            padding_after_ms=100,
+            minimum_frame_count=2,
+            maximum_frame_count=12,
+            maximum_window_duration_ms=1_000,
+            maximum_rgb_bytes=80 * 1024 * 1024,
+        ),
+    )
 
     return VideoAttemptFacade(
         consent_port=consent,
@@ -200,15 +297,15 @@ def build_local_video_attempt_facade(
             minimum_duration_ms=500,
             maximum_duration_ms=30_000,
             minimum_width=160,
-            maximum_width=1280,
+            maximum_width=1920,
             minimum_height=120,
-            maximum_height=720,
+            maximum_height=1920,
             minimum_frames_per_second=15.0,
             maximum_frames_per_second=60.0,
             minimum_frame_count=8,
             maximum_frame_count=1_800,
             maximum_rgb_sample_frames=8,
-            maximum_rgb_sample_bytes=24 * 1024 * 1024,
+            maximum_rgb_sample_bytes=64 * 1024 * 1024,
             maximum_pcm_bytes=2 * 1024 * 1024,
             subprocess_timeout_seconds=120.0,
             maximum_subprocess_output_bytes=4 * 1024 * 1024,
@@ -217,32 +314,11 @@ def build_local_video_attempt_facade(
         prompt_port=prompt,
         seungun_port=seungun,
         handoff_port=handoff,
-        detector_port=MediaPipeVisualDetectorBridge(
-            landmark_detector,
-            qc_detector=VideoQcCandidateAdapter(
-                policy=VideoQcPolicy(
-                    # These define measurement bins and minimum evidence only;
-                    # they are not P6 pass/reliability thresholds.
-                    underexposed_luma_max_8bit=16,
-                    overexposed_luma_min_8bit=239,
-                    lip_roi_padding_fraction=0.05,
-                    minimum_single_face_frames=6,
-                    maximum_total_rgb_bytes=24 * 1024 * 1024,
-                )
-            ),
-            sync_detector=LipAudioAvSyncAdapter(
-                media_store=media_store,
-                policy=LipAudioAvSyncPolicy(
-                    maximum_absolute_offset_ms=300,
-                    offset_step_ms=20,
-                    energy_window_ms=40,
-                    minimum_landmark_frames=6,
-                    maximum_anchor_count=4,
-                ),
-            ),
-        ),
+        detector_port=visual_detector,
         reliability_port=BlockedVisualReliabilityAdapter(),
         visual_port=_NeverPublishVisualSupplement(),
+        phone_window_decoder_port=container,
+        phone_window_detector_port=visual_detector,
     )
 
 

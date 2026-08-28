@@ -43,8 +43,8 @@ def test_config_only_reads_sources_and_has_zero_runtime_or_output() -> None:
     assert completed.returncode == 0, completed.stdout + completed.stderr
     result = json.loads(completed.stdout)
     assert result["status"] == "valid_config_only"
-    assert result["source_pin_count"] == 13
-    assert result["source_pin_read_count"] == 13
+    assert result["source_pin_count"] == 12
+    assert result["source_pin_read_count"] == 12
     assert result["r00_deep_validation_count"] == 0
     assert result["human_attestation_read_attempt_count"] == 0
     assert result["cosyvoice_attestation_read_attempt_count"] == 0
@@ -87,7 +87,7 @@ def test_full_preflight_deep_validates_r00_then_stops_before_human_path() -> Non
     assert result["status"] == "failed_closed"
     assert result["stage"] == "human_attestation"
     assert result["error"] == ("human attestation is TBD_EXTERNAL_ATTESTATION")
-    assert result["source_pin_read_count"] == 13
+    assert result["source_pin_read_count"] == 12
     assert result["r00_validator_load_count"] == 1
     assert result["r00_deep_validation_count"] == 1
     assert result["r00_public_or_aggregate_evidence_read_count"] > 0

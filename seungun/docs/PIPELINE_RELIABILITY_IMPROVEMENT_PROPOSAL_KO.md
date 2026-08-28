@@ -61,17 +61,16 @@
 | [WORK_LOG_AND_FINDINGS_KO.md](WORK_LOG_AND_FINDINGS_KO.md) | 실험 이력 | 과거 시점의 관측과 실패를 보존하며 최신 상태로 소급 수정하지 않음 |
 | [NEXT_STEPS_KO.md](NEXT_STEPS_KO.md) | 당시 실행 계획 | 완료된 artifact가 확인되면 계획과 현재 상태를 분리해 갱신 필요 |
 | [HYPERCLOVAX_INTEGRATION_STATUS_KO.md](HYPERCLOVAX_INTEGRATION_STATUS_KO.md) | 2026-08-23 온라인 경로 보충 | frozen detector, bridge, 표현 계층의 현재 구현 근거 |
-| [detector_config.json](../artifacts/error_detector/final_pronunciation_detector_v1/detector_config.json) | 동결 artifact | architecture·threshold freeze와 hash 근거 |
-| [locked_test_results.json](../artifacts/error_detector/locked_test_evaluation_stage1_v1/locked_test_results.json) | 로컬 locked 결과 artifact | one-shot 결과가 존재하나 정본 문서 승격과 독립 재검증은 별도 과제 |
+| `artifacts/error_detector/final_pronunciation_detector_v1/detector_config.json` | 로컬-only 동결 artifact | architecture·threshold freeze와 hash 근거; 새 clone에는 포함되지 않음 |
+| `artifacts/error_detector/locked_test_evaluation_stage1_v1/locked_test_results.json` | 로컬-only locked 결과 artifact | one-shot 결과가 존재하나 정본 문서 승격과 독립 재검증은 별도 과제; 새 clone에는 포함되지 않음 |
 | [frozen_detector.py](../src/korean_phone_ctc/frozen_detector.py) | 실제 detector runtime | 점수 의미와 출력 evidence 계약 확인 |
 | [seungun_bridge.py](../../src/voice_coach/pronunciation_feedback/seungun_bridge.py) | 실제 feedback bridge | top-1 generic claim과 LLM fallback 동작 확인 |
 
-루트의
-[C02 정적 준비도](../../docs/constraints/C02_DETERMINISTIC_COACHING_SELECTION_READINESS_KO.md)와
-[E02 정적 준비도](../../docs/constraints/E02_CONFIDENCE_GUARD_READINESS_KO.md)는
-상태명과 fail-closed 의미를 참고할 수 있다. 그러나 두 문서는 실제 C02/E02 실행
-0과 미해결 predecessor를 명시하므로, 해당 threshold나 완료 상태를 `seungun`
-runtime에 복사하거나 승격하지 않는다.
+루트의 C02/E02 static-readiness 문서는 현재 tracked tree에서
+퇴역했다. 당시 문서가 기록한 실제 C02/E02 실행 0과 미해결
+predecessor라는 제한은 보수적으로 유지하되, 퇴역한 문서를 live source
+pin으로 사용하거나 해당 threshold/완료 상태를 `seungun` runtime으로
+복사·승격하지 않는다.
 
 ### 3.2 확인된 구현 및 artifact
 

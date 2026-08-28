@@ -18,38 +18,28 @@ experiment:
 canonical_sources:
   access_scope: C1_code_config_docs_only
   pins:
-    - path: docs/IMPLEMENTATION_PLAN_KO.md
-      sha256: 836ea2b5a2db2bf3dcfb6ea4003c73c5240ae24bea9ea9af8531519f6a57e07a
     - path: docs/paper/EXPERIMENTAL_MANUSCRIPT_KO.md
-      sha256: c21e6d86570eb74069df104295aafe7cf78af02ce51398335c50133a5d1304f2
+      sha256: 3f10f7f05ff89b0c7f6e7a1dfaf48216a5b0dec8f1ab51bbadd2c809f443afef
     - path: configs/experiments/wavlm_s108_no_locked_dry_run_v1.yaml
-      sha256: cb852db3bb805167a6fd797f90424470fe01403f2b8af7fda5bb8c8282a4b55c
+      sha256: 7803feb6121568cf78a582cbacd7a848893a0655bdfc211bac9d35ecc1dd40cc
     - path: src/voice_coach/training/wavlm_s108_dry_run.py
       sha256: 78444cdf5fd89dae71186028fcdf1a9771488937d698417f0ac1d84cd1aeeb32
     - path: scripts/prepare_wavlm_s108_no_locked_dry_run.py
       sha256: 467ef6011338ec48ef1485ce118466f5e440b4f7828f57e1bf6767622703b6b6
-    - path: docs/constraints/WAVLM_S108_NO_LOCKED_DRY_RUN_READINESS_KO.md
-      sha256: 358f49ab836dff3c3f27ca0de3c1828d933be7896f7ec7350deacea366925ef0
     - path: configs/experiments/s2_s200_independent_auditor_v1.yaml
-      sha256: 6cb1dd0e11ecaf24247443552f92d2a3ecf106469912b591c9bee4f3f613a370
-    - path: docs/constraints/S2_S200_INDEPENDENT_AUDITOR_READINESS_KO.md
-      sha256: ab264ba837ef81b9b8ddac5635b36856f5d927e6a71a708d3c9fd9d697f1a66b
+      sha256: 270dab9a14d3ef58ffa39bab0ebad624ca0ff54b2ad8703dcbc8042a6195b739
     - path: configs/experiments/s2_s201_whisper_content_gate_v1.yaml
-      sha256: cbba7af10f03ceb2bbf815e3d6796c518add39100e8b6f77eba27d89665e4aee
+      sha256: 18fe3a4ea169bf78f9828c5d81704a7a304552e8baf000d92db1cacb96818a16
     - path: src/voice_coach/training/s2_s201_whisper_contract.py
       sha256: 88f0cd148129fd880b8af4322b30d21715e9aea26eea4d48bb2f64f130ad7667
     - path: scripts/prepare_s2_s201_whisper_content.py
       sha256: 0f10c1d9104e80152baba94e1764ffcc1af2b2c2f0147d20af656586ef22d2b2
-    - path: docs/constraints/S2_S201_WHISPER_CONTENT_READINESS_KO.md
-      sha256: ebedb1a879cf2370ab664163f7e00ff5a3e9e55ad92a5e6cc633babd6408ef45
     - path: configs/experiments/s2_s202_independent_auditor_v1.yaml
-      sha256: b70197a2a8ec8d9dcdded7ad1bec55d5810a151e67fa9de907a845a53828ec3c
+      sha256: 7b5fd5019074dc2f719fc10dda2885f1c75a05b7ea27c09dcb9a4095fbf5aa03
     - path: src/voice_coach/training/s2_s202_auditor_contract.py
       sha256: 0ba78271b3d4d99ec3fff865e65bbe992428edfb587785021632677bc46fdaac
     - path: scripts/prepare_s2_s202_independent_auditor.py
       sha256: 05cddea0070d146a43f830c3e0c767163bc913530bace8dbd61d53b37ec7c97d
-    - path: docs/constraints/S2_S202_INDEPENDENT_AUDITOR_READINESS_KO.md
-      sha256: 23e91cd4452a4d427c2ca842adebd06c89cee9b5fea7e94a003cd41a691a0dc7
     - path: docs/paper/S2_S202_INDEPENDENT_AUDITOR_AMENDMENT_TEMPLATE_KO.md
       sha256: 62da51dbe9289acf349f177f69c4585ef08c48d2b363055c36874bd235935417
     - path: src/voice_coach/training/s2_s203_holdout_contract.py

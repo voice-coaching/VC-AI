@@ -12,9 +12,6 @@ experiment:
   canonical_execution_allowed_by_preflight: true
 
 canonical_sources:
-  readiness:
-    path: docs/GOP_ACOUSTIC_POSTERIOR_READINESS_KO.md
-    sha256: 78d25dc6dcb75413a30c5221599722b93d88ec26a9f18a93e426672e873126a6
   explicit_baseline_config:
     path: configs/experiments/explicit_baseline_v1.yaml
     sha256: cff6439e6b99b5f725c4214dfe1dda64b20892e8b59fbd064d88d3542c2615bd
@@ -26,7 +23,7 @@ canonical_sources:
     sha256: dcc0a2f163e7ddeccca39490a48c14c668be775131167e46051bc97143ddefc6
   b07_static_contract:
     path: src/voice_coach/training/b07_gop_contract.py
-    sha256: 355be8c18492b1f3b462f2436c810b15d7cdc4cd0428a3c72ef7b19ee94d704d
+    sha256: 9c84d2983ca11af04c2e6ab398a62b301ca145190618ec4d99067dacd55d671e
   b07_training_implementation:
     path: src/voice_coach/training/b07_gop_training.py
     sha256: 891389afb3bcaca18ec13d077d4ecf193e3876a04e25f96cc034e7db54b387ea
@@ -41,7 +38,7 @@ canonical_sources:
     sha256: ab76bc149d3f37eb5745c389110ab92ea08ec650e0631d304321cb933a12f192
   project_metadata:
     path: pyproject.toml
-    sha256: 20ede7c9fbd4eb047fdcd81a2732588756278842b757a1b9b44794befdc4d1da
+    sha256: 87fbe75e3df2ad7f64494cafb3744e7cfb815cfe1b8e9ea8d774d8b990c35e71
   scorer_dependency_lock:
     path: requirements/scorer-lock-linux-aarch64-cu130.txt
     sha256: f6c5b10c1028506d7361c83ad1e9aae0b1fafcf34f4e918e5b7123c51fac8cf2

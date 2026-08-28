@@ -200,8 +200,16 @@ def _write_receipt_commit(
     receipt_bytes = deviation.canonical_json_bytes(receipt)
     receipt_sha256 = hashlib.sha256(receipt_bytes).hexdigest()
     receipt_path = commit_path.parent / "generations" / receipt_sha256 / "receipt.json"
-    receipt_path.parent.mkdir(parents=True, exist_ok=True)
+    for directory in (
+        root / "artifacts/protocol_deviations",
+        commit_path.parent,
+        commit_path.parent / "generations",
+        receipt_path.parent,
+    ):
+        directory.mkdir(parents=True, exist_ok=True)
+        directory.chmod(deviation._CANONICAL_DIRECTORY_MODE)
     receipt_path.write_bytes(receipt_bytes)
+    receipt_path.chmod(deviation._CANONICAL_FILE_MODE)
     unsigned_commit = {
         "schema_version": deviation.RECEIPT_COMMIT_SCHEMA_VERSION,
         "status": "committed",
@@ -216,8 +224,8 @@ def _write_receipt_commit(
             deviation.canonical_json_bytes(unsigned_commit),
         ).hexdigest(),
     }
-    commit_path.parent.mkdir(parents=True, exist_ok=True)
     commit_path.write_bytes(deviation.canonical_json_bytes(commit))
+    commit_path.chmod(deviation._CANONICAL_FILE_MODE)
     return commit_path, receipt_path
 
 
@@ -287,21 +295,24 @@ def test_schema_identity_and_closed_top_level() -> None:
     assert schema["properties"]["invalidating_conditions"]["maxItems"] == 17
 
 
-def test_transient_bytes_reconstruct_from_recovered_manifest() -> None:
+def test_historical_transient_constants_are_not_retargeted_to_live_manifest() -> None:
     root = Path(__file__).resolve().parents[2]
-    recovered = (root / deviation.TARGET_RELATIVE).read_bytes()
-    reconstructed = (
-        recovered[: deviation.INSERT_OFFSET]
-        + deviation.INSERTED_LINE
-        + recovered[deviation.INSERT_OFFSET :]
-    )
+    live_manifest = (root / deviation.TARGET_RELATIVE).read_bytes()
+    historical_config = deviation._load_config(root / deviation.S104_CONFIG_RELATIVE)
 
-    assert hashlib.sha256(recovered).hexdigest() == deviation.EXPECTED_TARGET_SHA256
-    assert len(recovered) == deviation.EXPECTED_TARGET_SIZE
-    assert (
-        hashlib.sha256(reconstructed).hexdigest() == deviation.EXPECTED_TRANSIENT_SHA256
+    # The manifest is an implementation file and is allowed to evolve after the
+    # adjudicated run.  Its historical recovery/transient hashes must not be
+    # silently rewritten to make today's tree look like the 2026-07-29 event.
+    assert hashlib.sha256(live_manifest).hexdigest() != deviation.EXPECTED_TARGET_SHA256
+    assert historical_config["implementation"]["project_manifest"]["sha256"] == (
+        deviation.EXPECTED_TARGET_SHA256
     )
-    assert len(reconstructed) == deviation.EXPECTED_TRANSIENT_SIZE
+    assert hashlib.sha256(deviation.INSERTED_LINE).hexdigest() == (
+        deviation.INSERTED_LINE_SHA256
+    )
+    assert len(deviation.INSERTED_LINE) == (
+        deviation.EXPECTED_TRANSIENT_SIZE - deviation.EXPECTED_TARGET_SIZE
+    )
 
 
 def test_canonical_scorer_lock_has_79_exact_requirements() -> None:
@@ -509,26 +520,24 @@ def test_terminal_run_describes_the_repository_v2_contract() -> None:
     assert record["event_transient_edit_occurred_in_this_run"] is False
 
 
-def test_event_config_binding_comes_from_the_immutable_lock() -> None:
-    """The v1 config file drifted after the run, so the lock is the anchor."""
+def test_event_config_binding_comes_from_lock_and_live_validation_fails_closed() -> None:
+    """The v1 lock remains the anchor while today's manifest is not backdated."""
 
     root = Path(__file__).resolve().parents[2]
     config_path = root / deviation.EVENT_S104_CONFIG_RELATIVE
+    config = deviation._load_config(config_path)
+    lock_path = root / config["outputs"]["execution_lock"]
+    lock = deviation.load_json_strict(lock_path, "S104 execution lock")
 
     assert (
         deviation.sha256_file(config_path) != deviation.EVENT_EXPECTED_CONFIG_SHA256
     ), "if the file no longer drifts, this evidence path should be revisited"
-
-    experiment, _event, start_bindings = deviation._derive_experiment_event_start(
-        root=root,
-    )
-
-    assert experiment["experiment_id"] == deviation.EVENT_EXPERIMENT_ID
-    assert experiment["run_result"] == "invalidated"
-    config_record = start_bindings["config"]
-    assert config_record["sha256"] == deviation.EVENT_EXPECTED_CONFIG_SHA256
-    assert config_record["sha256_evidence_source"] == "v1_execution_lock_config_sha256"
-    assert config_record["current_file_differs_from_run_binding"] is True
+    assert lock["config_sha256"] == deviation.EVENT_EXPECTED_CONFIG_SHA256
+    with pytest.raises(
+        deviation.S104ProtocolDeviationError,
+        match="recovered project manifest differs",
+    ):
+        deviation._derive_experiment_event_start(root=root)
 
 
 def test_the_reissued_inode_evidence_keeps_the_original_recovery_time() -> None:

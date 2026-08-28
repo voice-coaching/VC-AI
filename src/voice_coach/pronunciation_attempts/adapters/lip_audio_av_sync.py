@@ -11,11 +11,25 @@ from dataclasses import dataclass
 import hashlib
 import json
 import math
+from pathlib import Path
 import struct
 
 from ..models import MediaProbe, RestrictedPcmAudio
 from ..ports import RestrictedMediaStorePort
 from .mediapipe_lip_landmarks import MediaPipeLandmarkBatch
+
+
+MEASUREMENT_REVISION = "lip_audio_cross_correlation_v1"
+_SCHEMA_VERSION = "voice_coach.lip_audio_av_sync_candidate.v2"
+_LINEAGE_SCHEMA_VERSION = "voice_coach.lip_audio_av_sync_lineage.v2"
+_REASON_CODES = frozenset(
+    {
+        "av_sync_landmark_coverage_insufficient",
+        "av_sync_lip_motion_flat",
+        "av_sync_audio_window_unavailable",
+        "av_sync_anchor_candidates_absent",
+    }
+)
 
 
 class AvSyncRuntimeError(RuntimeError):
@@ -57,6 +71,15 @@ class LipAudioAvSyncPolicy:
             "maximum_anchor_count": self.maximum_anchor_count,
         }
 
+    @property
+    def policy_sha256(self) -> str:
+        return _sha256_document(
+            {
+                "schema_version": "voice_coach.lip_audio_av_sync_policy.v1",
+                **self.to_json_object(),
+            }
+        )
+
 
 @dataclass(frozen=True, slots=True)
 class AvSyncAnchorCandidate:
@@ -80,6 +103,19 @@ class AvSyncAnchorCandidate:
 
 @dataclass(frozen=True, slots=True)
 class AvSyncCandidateEvidence:
+    asset_handle_id: str
+    audio_derivation_receipt_sha256: str
+    audio_source_sha256: str
+    video_source_sha256: str
+    audio_stream_index: int
+    audio_start_time_us: int
+    video_stream_index: int
+    video_start_time_us: int
+    landmark_evidence_sha256: str
+    landmark_model_sha256: str
+    measurement_policy_sha256: str
+    measurement_revision: str
+    measurement_adapter_code_sha256: str
     status: str
     candidate_offset_ms: int | None
     correlation: float | None
@@ -87,9 +123,36 @@ class AvSyncCandidateEvidence:
     reason_codes: tuple[str, ...]
     lineage_receipt_sha256: str
     receipt_sha256: str
-    schema_version: str = "voice_coach.lip_audio_av_sync_candidate.v1"
+    schema_version: str = _SCHEMA_VERSION
 
     def __post_init__(self) -> None:
+        if self.schema_version != _SCHEMA_VERSION:
+            raise ValueError("A/V sync candidate schema differs")
+        for name in (
+            "asset_handle_id",
+            "audio_derivation_receipt_sha256",
+            "audio_source_sha256",
+            "video_source_sha256",
+            "landmark_evidence_sha256",
+            "landmark_model_sha256",
+            "measurement_policy_sha256",
+            "measurement_adapter_code_sha256",
+            "lineage_receipt_sha256",
+            "receipt_sha256",
+        ):
+            if not _is_sha256(getattr(self, name)):
+                raise ValueError(f"{name} must be lowercase SHA-256")
+        if self.measurement_revision != MEASUREMENT_REVISION:
+            raise ValueError("A/V sync measurement revision differs")
+        for name in (
+            "audio_stream_index",
+            "audio_start_time_us",
+            "video_stream_index",
+            "video_start_time_us",
+        ):
+            value = getattr(self, name)
+            if isinstance(value, bool) or not isinstance(value, int) or value < 0:
+                raise ValueError(f"{name} must be non-negative")
         if self.status not in {"candidate_unvalidated", "unavailable"}:
             raise ValueError("A/V sync candidate status differs")
         if self.status == "candidate_unvalidated":
@@ -106,16 +169,48 @@ class AvSyncCandidateEvidence:
             or not self.reason_codes
         ):
             raise ValueError("unavailable sync evidence must be value-free")
-        if not _is_sha256(self.lineage_receipt_sha256) or not _is_sha256(
-            self.receipt_sha256
+        if (
+            len(set(self.reason_codes)) != len(self.reason_codes)
+            or any(reason not in _REASON_CODES for reason in self.reason_codes)
         ):
-            raise ValueError("sync lineage and receipt must be SHA-256")
+            raise ValueError("A/V sync reason code differs")
+        if self.lineage_receipt_sha256 != _sha256_document(
+            self.lineage_json_object()
+        ):
+            raise ValueError("sync lineage receipt differs")
         if self.receipt_sha256 != _sha256_document(self.unsigned_json_object()):
             raise ValueError("sync receipt digest differs")
+
+    def lineage_json_object(self) -> dict[str, object]:
+        return {
+            "schema_version": _LINEAGE_SCHEMA_VERSION,
+            "asset_handle_id": self.asset_handle_id,
+            "audio_derivation_receipt_sha256": (
+                self.audio_derivation_receipt_sha256
+            ),
+            "audio_source_sha256": self.audio_source_sha256,
+            "video_source_sha256": self.video_source_sha256,
+            "audio_stream_index": self.audio_stream_index,
+            "audio_start_time_us": self.audio_start_time_us,
+            "video_stream_index": self.video_stream_index,
+            "video_start_time_us": self.video_start_time_us,
+            "landmark_evidence_sha256": self.landmark_evidence_sha256,
+            "landmark_model_sha256": self.landmark_model_sha256,
+            "measurement_policy_sha256": self.measurement_policy_sha256,
+            "measurement_revision": self.measurement_revision,
+            "measurement_adapter_code_sha256": (
+                self.measurement_adapter_code_sha256
+            ),
+        }
 
     def unsigned_json_object(self) -> dict[str, object]:
         return {
             "schema_version": self.schema_version,
+            **{
+                key: value
+                for key, value in self.lineage_json_object().items()
+                if key != "schema_version"
+            },
             "status": self.status,
             "candidate_offset_ms": self.candidate_offset_ms,
             "correlation": self.correlation,
@@ -123,6 +218,9 @@ class AvSyncCandidateEvidence:
             "reason_codes": list(self.reason_codes),
             "lineage_receipt_sha256": self.lineage_receipt_sha256,
         }
+
+    def to_json_object(self) -> dict[str, object]:
+        return {**self.unsigned_json_object(), "receipt_sha256": self.receipt_sha256}
 
 
 class LipAudioAvSyncAdapter:
@@ -158,16 +256,24 @@ class LipAudioAvSyncAdapter:
             if frame.lip_geometry is not None
         )
         receipt_context = {
+            "schema_version": _LINEAGE_SCHEMA_VERSION,
+            "asset_handle_id": probe.asset_handle_id,
             "audio_derivation_receipt_sha256": (
                 audio.derivation_receipt.receipt_sha256
             ),
-            "landmark_evidence_sha256": landmarks.evidence_sha256,
-            "container_sha256": probe.container_sha256,
+            "audio_source_sha256": audio.derivation_receipt.pcm_sha256,
+            "video_source_sha256": probe.container_sha256,
             "audio_stream_index": probe.audio_stream.stream_index,
             "audio_start_time_us": probe.audio_stream.start_time_us,
             "video_stream_index": probe.video_stream.stream_index,
             "video_start_time_us": probe.video_stream.start_time_us,
-            "policy": self._policy.to_json_object(),
+            "landmark_evidence_sha256": landmarks.evidence_sha256,
+            "landmark_model_sha256": landmarks.model_sha256,
+            "measurement_policy_sha256": self._policy.policy_sha256,
+            "measurement_revision": MEASUREMENT_REVISION,
+            "measurement_adapter_code_sha256": (
+                av_sync_measurement_code_sha256()
+            ),
         }
         if len(visible) < self._policy.minimum_landmark_frames:
             return self._unavailable(
@@ -229,7 +335,12 @@ class LipAudioAvSyncAdapter:
                 receipt_context=receipt_context,
             )
         unsigned = {
-            "schema_version": "voice_coach.lip_audio_av_sync_candidate.v1",
+            "schema_version": _SCHEMA_VERSION,
+            **{
+                key: value
+                for key, value in receipt_context.items()
+                if key != "schema_version"
+            },
             "status": "candidate_unvalidated",
             "candidate_offset_ms": offset_ms,
             "correlation": correlation,
@@ -238,6 +349,21 @@ class LipAudioAvSyncAdapter:
             "lineage_receipt_sha256": _sha256_document(receipt_context),
         }
         return AvSyncCandidateEvidence(
+            asset_handle_id=probe.asset_handle_id,
+            audio_derivation_receipt_sha256=(
+                audio.derivation_receipt.receipt_sha256
+            ),
+            audio_source_sha256=audio.derivation_receipt.pcm_sha256,
+            video_source_sha256=probe.container_sha256,
+            audio_stream_index=probe.audio_stream.stream_index,
+            audio_start_time_us=probe.audio_stream.start_time_us,
+            video_stream_index=probe.video_stream.stream_index,
+            video_start_time_us=probe.video_stream.start_time_us,
+            landmark_evidence_sha256=landmarks.evidence_sha256,
+            landmark_model_sha256=landmarks.model_sha256,
+            measurement_policy_sha256=self._policy.policy_sha256,
+            measurement_revision=MEASUREMENT_REVISION,
+            measurement_adapter_code_sha256=av_sync_measurement_code_sha256(),
             status="candidate_unvalidated",
             candidate_offset_ms=offset_ms,
             correlation=correlation,
@@ -294,7 +420,12 @@ class LipAudioAvSyncAdapter:
         *, reason: str, receipt_context: dict[str, object]
     ) -> AvSyncCandidateEvidence:
         unsigned = {
-            "schema_version": "voice_coach.lip_audio_av_sync_candidate.v1",
+            "schema_version": _SCHEMA_VERSION,
+            **{
+                key: value
+                for key, value in receipt_context.items()
+                if key != "schema_version"
+            },
             "status": "unavailable",
             "candidate_offset_ms": None,
             "correlation": None,
@@ -303,6 +434,29 @@ class LipAudioAvSyncAdapter:
             "lineage_receipt_sha256": _sha256_document(receipt_context),
         }
         return AvSyncCandidateEvidence(
+            asset_handle_id=str(receipt_context["asset_handle_id"]),
+            audio_derivation_receipt_sha256=str(
+                receipt_context["audio_derivation_receipt_sha256"]
+            ),
+            audio_source_sha256=str(receipt_context["audio_source_sha256"]),
+            video_source_sha256=str(receipt_context["video_source_sha256"]),
+            audio_stream_index=int(receipt_context["audio_stream_index"]),
+            audio_start_time_us=int(receipt_context["audio_start_time_us"]),
+            video_stream_index=int(receipt_context["video_stream_index"]),
+            video_start_time_us=int(receipt_context["video_start_time_us"]),
+            landmark_evidence_sha256=str(
+                receipt_context["landmark_evidence_sha256"]
+            ),
+            landmark_model_sha256=str(
+                receipt_context["landmark_model_sha256"]
+            ),
+            measurement_policy_sha256=str(
+                receipt_context["measurement_policy_sha256"]
+            ),
+            measurement_revision=str(receipt_context["measurement_revision"]),
+            measurement_adapter_code_sha256=str(
+                receipt_context["measurement_adapter_code_sha256"]
+            ),
             status="unavailable",
             candidate_offset_ms=None,
             correlation=None,
@@ -404,10 +558,21 @@ def _is_sha256(value: object) -> bool:
     )
 
 
+def av_sync_measurement_code_sha256() -> str:
+    """Return the exact loaded measurement-adapter source digest."""
+
+    try:
+        return hashlib.sha256(Path(__file__).read_bytes()).hexdigest()
+    except OSError:
+        raise ValueError("A/V sync measurement source is unavailable") from None
+
+
 __all__ = [
     "AvSyncAnchorCandidate",
     "AvSyncCandidateEvidence",
     "AvSyncRuntimeError",
     "LipAudioAvSyncAdapter",
     "LipAudioAvSyncPolicy",
+    "MEASUREMENT_REVISION",
+    "av_sync_measurement_code_sha256",
 ]

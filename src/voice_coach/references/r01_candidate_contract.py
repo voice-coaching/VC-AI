@@ -75,16 +75,15 @@ EXPECTED_EXECUTION_ORDER = (
 )
 
 SOURCE_PATHS = (
+    ".codex/ai_rule_developer/GLOBAL_RULES.md",
     "artifacts/reference/r00/r00_sentence_card_v1.validation.json",
     "configs/reference/r00_sentence_card_v1.schema.json",
     "configs/reference/r01_candidate_manifest_v1.schema.json",
     "configs/reference/r01_cosyvoice_model_attestation_v1.template.json",
     "configs/reference/r01_human_recording_attestation_v1.template.json",
+    "data/README.md",
     "data/reference/r00/CC0_NOTICE.txt",
     "data/reference/r00/r00_sentence_card_v1.json",
-    "docs/IMPLEMENTATION_PLAN_KO.md",
-    "docs/constraints/DATA_LICENSE_AND_ROLE_MATRIX_KO.md",
-    "docs/constraints/DATA_PRIVACY_BOUNDARY_KO.md",
     "docs/paper/EXPERIMENTAL_MANUSCRIPT_KO.md",
     "docs/paper/RELATED_WORK_SOURCE_LEDGER_KO.md",
     "scripts/validate_r00_sentence_card.py",

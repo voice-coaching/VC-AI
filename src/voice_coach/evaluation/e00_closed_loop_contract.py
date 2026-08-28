@@ -55,7 +55,7 @@ EVENT_ORDER = (
     "same_scorer_comparison",
 )
 
-EXPECTED_SOURCE_PATHS = {
+E00_STATIC_CONTRACT_SOURCE_PATHS = {
     "configs/demo/e00_closed_loop_completion_v1.schema.json",
     "configs/demo/e00_closed_loop_preregistration_v1.template.json",
     "configs/demo/e00_closed_loop_session_v1.schema.json",
@@ -88,24 +88,50 @@ EXPECTED_SOURCE_PATHS = {
     "src/voice_coach/references/d08_native_reference_contract.py",
     "configs/experiments/h00_human_research_approval_v1.yaml",
     "src/voice_coach/human_research/h00_approval_contract.py",
-    "docs/IMPLEMENTATION_PLAN_KO.md",
-    "docs/HIGH_PERFORMANCE_GPU_EXECUTION_PLAN_KO.md",
-    "docs/constraints/DATA_PRIVACY_BOUNDARY_KO.md",
+}
+
+SEUNGUN_AUDIO_CANONICAL_SOURCE_PATHS = {
+    "seungun/README.md",
+    "seungun/docs/CURRENT_PIPELINE_KO.md.md",
+    "seungun/docs/WORK_LOG_AND_FINDINGS_KO.md",
+    "seungun/docs/PIPELINE_RELIABILITY_IMPROVEMENT_PROPOSAL_KO.md",
+    "seungun/configs/textgrid_target_policy.yaml",
+    "seungun/configs/xlsr300m_full.yaml",
+    "seungun/src/korean_phone_ctc/frozen_detector.py",
+}
+
+DATA_PRIVACY_BOUNDARY_SOURCE_PATHS = {"data/README.md"}
+
+EVALUATION_BOUNDARY_SOURCE_PATHS = {
+    "docs/evaluation/C03_EXPERT_COACHING_AUDIT_DATA_MODEL_PRIVACY_SAFETY_STATISTICS_CARD_KO.md",
+}
+
+API_CONTRACT_SOURCE_PATHS = {
+    "docs/api/endpoints.md",
+    "docs/api/specification.md",
+}
+
+VISUAL_SIDECAR_ONLY_SOURCE_PATHS = {
+    "docs/architecture/README_KO.md",
     "docs/architecture/architecture.md",
     "docs/architecture/component.md",
     "docs/architecture/directory.md",
     "docs/architecture/flow.md",
     "docs/architecture/state.md",
-    "docs/api/endpoints.md",
-    "docs/api/specification.md",
-    "docs/constraints/WAVLM_S108_NO_LOCKED_DRY_RUN_READINESS_KO.md",
-    "docs/constraints/C02_DETERMINISTIC_COACHING_SELECTION_READINESS_KO.md",
-    "docs/constraints/C03_EXPERT_COACHING_AUDIT_READINESS_KO.md",
-    "docs/constraints/E01_METAMORPHIC_READINESS_KO.md",
-    "docs/constraints/E02_CONFIDENCE_GUARD_READINESS_KO.md",
-    "docs/constraints/R03_REFERENCE_BANK_SELECTION_READINESS_KO.md",
-    "docs/constraints/D08_NATIVE_MULTI_SPEAKER_REFERENCE_READINESS_KO.md",
 }
+
+EXPECTED_SOURCE_SCOPES = {
+    **dict.fromkeys(E00_STATIC_CONTRACT_SOURCE_PATHS, "e00_static_contract"),
+    **dict.fromkeys(
+        SEUNGUN_AUDIO_CANONICAL_SOURCE_PATHS,
+        "seungun_audio_canonical",
+    ),
+    **dict.fromkeys(DATA_PRIVACY_BOUNDARY_SOURCE_PATHS, "data_privacy_boundary"),
+    **dict.fromkeys(EVALUATION_BOUNDARY_SOURCE_PATHS, "evaluation_boundary"),
+    **dict.fromkeys(API_CONTRACT_SOURCE_PATHS, "api_contract"),
+    **dict.fromkeys(VISUAL_SIDECAR_ONLY_SOURCE_PATHS, "visual_sidecar_only"),
+}
+EXPECTED_SOURCE_PATHS = set(EXPECTED_SOURCE_SCOPES)
 
 SCHEMA_PATHS = {
     "configs/demo/e00_closed_loop_completion_v1.schema.json": (
@@ -902,11 +928,16 @@ def _validate_config_values(config: Mapping[str, Any]) -> None:
     seen: set[str] = set()
     for index, raw in enumerate(pins):
         pin = _mapping(raw, f"source pin {index}")
-        _expect_keys(pin, {"path", "sha256"}, f"source pin {index}")
+        _expect_keys(pin, {"path", "scope", "sha256"}, f"source pin {index}")
         relative = _relative_string(pin.get("path"), f"source pin {index} path")
         if relative in seen:
             raise E00ContractError(f"duplicate source pin: {relative}")
         seen.add(relative)
+        _expect(
+            pin.get("scope"),
+            EXPECTED_SOURCE_SCOPES.get(relative),
+            f"source pin {index} scope",
+        )
         _sha256(pin.get("sha256"), f"source pin {index} SHA")
     if seen != EXPECTED_SOURCE_PATHS:
         raise E00ContractError(

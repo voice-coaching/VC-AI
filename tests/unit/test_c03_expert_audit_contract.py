@@ -302,8 +302,8 @@ def test_repository_config_only_has_zero_runtime_access() -> None:
     )
     result = contract.config_only_result(static, audit)
     assert result["status"] == "valid_config_only"
-    assert result["source_pin_count"] == 20
-    assert result["source_pin_read_count"] == 20
+    assert result["source_pin_count"] == 16
+    assert result["source_pin_read_count"] == 16
     for field, value in result.items():
         if field.endswith("_count") and field != "source_pin_count":
             if field != "source_pin_read_count":
@@ -324,8 +324,8 @@ def test_full_preflight_stops_at_first_s107_marker_before_any_runtime_path() -> 
     assert error.stage == "s107_completion"
     assert error.audit is not None
     audit = error.audit.as_dict()
-    assert audit["source_pin_read_count"] == 20
-    assert audit["source_toctou_verification_count"] == 20
+    assert audit["source_pin_read_count"] == 16
+    assert audit["source_toctou_verification_count"] == 16
     for field, value in audit.items():
         if field not in ("source_pin_read_count", "source_toctou_verification_count"):
             assert value == 0, field

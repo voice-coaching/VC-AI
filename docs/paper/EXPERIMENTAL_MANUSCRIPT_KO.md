@@ -562,10 +562,10 @@ MIT이고
 README/Hugging Face card 선언은 CC-BY-NC-4.0이며 weight repository에는
 standalone LICENSE 파일이 없다. 이 조건을 모든 F5 계열, 제3자 fine-tune
 또는 새로 학습한 weight에 일반화하지 않는다.
-자료별 공식 원문·역할·재배포 경계의 관측 ledger는
-`docs/constraints/DATA_LICENSE_SOURCE_LEDGER_KO.md`에 고정했다. 이 ledger의
-미해결 original-license·model-artifact·재배포 검토를 완료 증거로
-바꾸지 않으며, 원고의 license `PENDING`도 해제하지 않는다.
+자료별 공식 원문·역할·재배포 경계를 기록한 당시 data-license
+source ledger는 현재 tracked tree에서 퇴역했다. 따라서 그 ledger를
+현재 라이선스 완료 증거로 인용하지 않으며, original-license·
+model-artifact·재배포 검토와 원고의 license `PENDING`을 그대로 유지한다.
 
 데이터·split·모델·config checksum, git 상태, package lock, seed,
 prediction과 metric report를 run별로 보존한다.

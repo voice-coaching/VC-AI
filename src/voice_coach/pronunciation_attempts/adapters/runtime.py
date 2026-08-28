@@ -8,7 +8,7 @@ would let application wiring silently replace the frozen runtime boundary.
 from __future__ import annotations
 
 from collections.abc import Callable, Mapping, Sequence
-from dataclasses import dataclass, field
+from dataclasses import dataclass, field, replace
 from datetime import datetime, timedelta
 import hashlib
 import json
@@ -49,6 +49,8 @@ from voice_coach.visual_feedback.models.integrity import (
     canonical_json_bytes,
     sha256_document,
 )
+from voice_coach.visual_feedback.adapters.seungun import parse_seungun_analysis
+from voice_coach.visual_feedback.models.evidence import UpstreamPhoneAnchor
 from voice_coach.visual_feedback.services.handoff import (
     SeungunAttemptBindingFacade,
     SeungunVisualHandoff,
@@ -63,6 +65,15 @@ from ..models import (
     VideoConsentDecision,
 )
 from ..ports import RestrictedMediaStorePort
+from ..phone_window import (
+    DensePhoneWindowEvidence,
+    PhoneWindowDecodePolicy,
+    PhoneWindowDecodeRequest,
+    PhoneWindowTrackingReceipt,
+    PolicyValidatedAvSyncOffset,
+    Rgb24PhoneWindow,
+    RuntimePhoneWindowReceipt,
+)
 from ..services.video_attempt_facade import (
     HostVisualHandoff,
     SeungunRuntimeResult,
@@ -74,6 +85,12 @@ from .bounded_isolated_process import (
     IsolatedProcessError,
     run_bounded_isolated_process,
 )
+from .calibrated_runtime_decisions import (
+    RuntimeAvSyncDecision,
+    RuntimeVideoQcDecision,
+)
+from .lip_audio_av_sync import AvSyncCandidateEvidence
+from .video_qc import VideoQcCandidateEvidence
 
 
 _SEUNGUN_WORKER_PROTOCOL_VERSION = "voice_coach.seungun_runtime_worker.v1"
@@ -243,13 +260,37 @@ class AvSyncCandidatePort(Protocol):
         audio: RestrictedPcmAudio,
         landmarks: object,
         probe: MediaProbe,
-    ) -> object: ...
+    ) -> AvSyncCandidateEvidence: ...
 
 
 class VideoQcCandidatePort(Protocol):
     """Measure calibration-pending QC evidence over decoded RGB/landmarks."""
 
-    def measure(self, *, sample: Rgb24Sample, landmarks: object) -> object: ...
+    def measure(
+        self, *, sample: Rgb24Sample, landmarks: object
+    ) -> VideoQcCandidateEvidence: ...
+
+
+class VideoQcDecisionPort(Protocol):
+    """Apply a separately calibrated policy to one exact QC candidate."""
+
+    def decide(
+        self,
+        *,
+        candidate: VideoQcCandidateEvidence,
+        binding_receipt: SameAttemptBindingReceipt,
+    ) -> RuntimeVideoQcDecision: ...
+
+
+class AvSyncDecisionPort(Protocol):
+    """Apply a separately calibrated policy to one exact sync candidate."""
+
+    def decide(
+        self,
+        *,
+        candidate: AvSyncCandidateEvidence,
+        binding_receipt: SameAttemptBindingReceipt,
+    ) -> RuntimeAvSyncDecision: ...
 
 
 @dataclass(frozen=True, slots=True)
@@ -261,15 +302,37 @@ class RuntimeVisualDetectionEvidence:
     sample_timestamps_sha256: str
     landmark_evidence_sha256: str
     model_sha256: str
+    video_qc_candidate_receipt_sha256: str | None
     video_qc_receipt_sha256: str | None
+    av_sync_candidate_receipt_sha256: str | None
     av_sync_receipt_sha256: str | None
+    av_sync_offset_receipt_sha256: str | None
     detection_receipt_sha256: str
     landmark_evidence: object = field(repr=False)
-    video_qc_evidence: object | None = field(default=None, repr=False)
-    av_sync_evidence: object | None = field(default=None, repr=False)
-    schema_version: str = "voice_coach.runtime_visual_detection.v2"
+    video_qc_evidence: VideoQcCandidateEvidence | None = field(
+        default=None, repr=False
+    )
+    video_qc_decision: RuntimeVideoQcDecision | None = field(
+        default=None, repr=False
+    )
+    av_sync_candidate_evidence: AvSyncCandidateEvidence | None = field(
+        default=None, repr=False
+    )
+    av_sync_decision: RuntimeAvSyncDecision | None = field(
+        default=None, repr=False
+    )
+    av_sync_evidence: PolicyValidatedAvSyncOffset | None = field(
+        default=None, repr=False
+    )
+    phone_window_evidence: DensePhoneWindowEvidence | None = field(
+        default=None,
+        repr=False,
+    )
+    schema_version: str = "voice_coach.runtime_visual_detection.v3"
 
     def __post_init__(self) -> None:
+        if self.schema_version != "voice_coach.runtime_visual_detection.v3":
+            raise ValueError("visual detection schema differs")
         for name in (
             "binding_receipt_sha256",
             "container_sha256",
@@ -289,22 +352,78 @@ class RuntimeVisualDetectionEvidence:
             self.unsigned_json_object()
         ):
             raise ValueError("visual detection receipt digest differs")
-        if self.av_sync_receipt_sha256 is not None and not _is_sha256(
-            self.av_sync_receipt_sha256
+        for name in (
+            "video_qc_candidate_receipt_sha256",
+            "video_qc_receipt_sha256",
+            "av_sync_candidate_receipt_sha256",
+            "av_sync_receipt_sha256",
+            "av_sync_offset_receipt_sha256",
         ):
-            raise ValueError("A/V sync receipt must be lowercase SHA-256")
-        if self.video_qc_receipt_sha256 is not None and not _is_sha256(
-            self.video_qc_receipt_sha256
-        ):
-            raise ValueError("video QC receipt must be lowercase SHA-256")
-        if (self.av_sync_receipt_sha256 is None) != (
-            self.av_sync_evidence is None
-        ):
-            raise ValueError("A/V sync evidence and receipt must appear together")
-        if (self.video_qc_receipt_sha256 is None) != (
+            value = getattr(self, name)
+            if value is not None and not _is_sha256(value):
+                raise ValueError(f"{name} must be lowercase SHA-256")
+        if (self.video_qc_candidate_receipt_sha256 is None) != (
             self.video_qc_evidence is None
         ):
-            raise ValueError("video QC evidence and receipt must appear together")
+            raise ValueError("video QC candidate and receipt must appear together")
+        if self.video_qc_evidence is not None and (
+            self.video_qc_candidate_receipt_sha256
+            != self.video_qc_evidence.receipt_sha256
+        ):
+            raise ValueError("video QC candidate receipt differs")
+        if (self.video_qc_receipt_sha256 is None) != (
+            self.video_qc_decision is None
+        ):
+            raise ValueError("video QC decision and receipt must appear together")
+        if self.video_qc_decision is not None and (
+            self.video_qc_evidence is None
+            or self.video_qc_receipt_sha256
+            != self.video_qc_decision.receipt_sha256
+            or self.video_qc_decision.source_candidate_receipt_sha256
+            != self.video_qc_evidence.receipt_sha256
+        ):
+            raise ValueError("video QC decision lineage differs")
+        if (self.av_sync_candidate_receipt_sha256 is None) != (
+            self.av_sync_candidate_evidence is None
+        ):
+            raise ValueError("A/V sync candidate and receipt must appear together")
+        if self.av_sync_candidate_evidence is not None and (
+            self.av_sync_candidate_receipt_sha256
+            != self.av_sync_candidate_evidence.receipt_sha256
+        ):
+            raise ValueError("A/V sync candidate receipt differs")
+        if (self.av_sync_receipt_sha256 is None) != (
+            self.av_sync_decision is None
+        ):
+            raise ValueError("A/V sync decision and receipt must appear together")
+        if self.av_sync_decision is not None and (
+            self.av_sync_candidate_evidence is None
+            or self.av_sync_receipt_sha256
+            != self.av_sync_decision.receipt_sha256
+            or self.av_sync_decision.source_candidate_receipt_sha256
+            != self.av_sync_candidate_evidence.receipt_sha256
+        ):
+            raise ValueError("A/V sync decision lineage differs")
+        if (self.av_sync_offset_receipt_sha256 is None) != (
+            self.av_sync_evidence is None
+        ):
+            raise ValueError("A/V sync offset and receipt must appear together")
+        if self.av_sync_evidence is not None and (
+            self.av_sync_decision is None
+            or self.av_sync_decision.status != "synchronized"
+            or self.av_sync_offset_receipt_sha256
+            != self.av_sync_evidence.receipt_sha256
+            or self.av_sync_evidence.av_sync_decision_receipt_sha256
+            != self.av_sync_decision.receipt_sha256
+        ):
+            raise ValueError("A/V sync offset lineage differs")
+        if self.phone_window_evidence is not None and (
+            self.phone_window_evidence.runtime_receipt.detection_receipt_sha256
+            != self.detection_receipt_sha256
+            or self.phone_window_evidence.runtime_receipt.binding_receipt_sha256
+            != self.binding_receipt_sha256
+        ):
+            raise ValueError("phone-window evidence differs from global detection")
 
     def unsigned_json_object(self) -> dict[str, object]:
         return {
@@ -314,8 +433,17 @@ class RuntimeVisualDetectionEvidence:
             "sample_timestamps_sha256": self.sample_timestamps_sha256,
             "landmark_evidence_sha256": self.landmark_evidence_sha256,
             "model_sha256": self.model_sha256,
+            "video_qc_candidate_receipt_sha256": (
+                self.video_qc_candidate_receipt_sha256
+            ),
             "video_qc_receipt_sha256": self.video_qc_receipt_sha256,
+            "av_sync_candidate_receipt_sha256": (
+                self.av_sync_candidate_receipt_sha256
+            ),
             "av_sync_receipt_sha256": self.av_sync_receipt_sha256,
+            "av_sync_offset_receipt_sha256": (
+                self.av_sync_offset_receipt_sha256
+            ),
         }
 
 
@@ -766,10 +894,42 @@ class MediaPipeVisualDetectorBridge:
         *,
         qc_detector: VideoQcCandidatePort | None = None,
         sync_detector: AvSyncCandidatePort | None = None,
+        qc_decision_adapter: VideoQcDecisionPort | None = None,
+        sync_decision_adapter: AvSyncDecisionPort | None = None,
+        expected_video_qc_decision_policy_sha256: str | None = None,
+        expected_av_sync_decision_policy_sha256: str | None = None,
+        phone_window_policy: PhoneWindowDecodePolicy | None = None,
     ) -> None:
+        if (qc_decision_adapter is None) != (
+            expected_video_qc_decision_policy_sha256 is None
+        ) or (sync_decision_adapter is None) != (
+            expected_av_sync_decision_policy_sha256 is None
+        ):
+            raise ValueError(
+                "decision adapters require exact expected policy digests"
+            )
+        if qc_decision_adapter is not None and qc_detector is None:
+            raise ValueError("video QC decision requires a candidate adapter")
+        if sync_decision_adapter is not None and sync_detector is None:
+            raise ValueError("A/V sync decision requires a candidate adapter")
+        for value in (
+            expected_video_qc_decision_policy_sha256,
+            expected_av_sync_decision_policy_sha256,
+        ):
+            if value is not None and not _is_sha256(value):
+                raise ValueError("expected decision policy must be SHA-256")
         self._detector = detector
         self._qc_detector = qc_detector
         self._sync_detector = sync_detector
+        self._qc_decision_adapter = qc_decision_adapter
+        self._sync_decision_adapter = sync_decision_adapter
+        self._expected_video_qc_decision_policy_sha256 = (
+            expected_video_qc_decision_policy_sha256
+        )
+        self._expected_av_sync_decision_policy_sha256 = (
+            expected_av_sync_decision_policy_sha256
+        )
+        self._phone_window_policy = phone_window_policy
 
     def detect(
         self,
@@ -823,7 +983,9 @@ class MediaPipeVisualDetectorBridge:
             raise PronunciationAttemptRuntimeError(
                 "visual_detection_lineage_mismatch"
             )
-        qc_evidence: object | None = None
+        qc_evidence: VideoQcCandidateEvidence | None = None
+        qc_candidate_receipt_sha256: str | None = None
+        qc_decision: RuntimeVideoQcDecision | None = None
         qc_receipt_sha256: str | None = None
         if self._qc_detector is not None:
             try:
@@ -835,32 +997,62 @@ class MediaPipeVisualDetectorBridge:
                 raise PronunciationAttemptRuntimeError(
                     "video_qc_backend_failed"
                 ) from None
-            qc_receipt_sha256 = getattr(qc_evidence, "receipt_sha256", None)
+            if not isinstance(qc_evidence, VideoQcCandidateEvidence):
+                raise PronunciationAttemptRuntimeError(
+                    "video_qc_evidence_invalid"
+                )
+            qc_candidate_receipt_sha256 = qc_evidence.receipt_sha256
             if (
-                not _is_sha256(qc_receipt_sha256)
-                or getattr(qc_evidence, "asset_handle_id", None)
-                != sample.asset_handle_id
-                or getattr(qc_evidence, "container_sha256", None)
-                != sample.container_sha256
-                or getattr(qc_evidence, "landmark_evidence_sha256", None)
+                qc_evidence.asset_handle_id != sample.asset_handle_id
+                or qc_evidence.container_sha256 != sample.container_sha256
+                or qc_evidence.landmark_evidence_sha256
                 != landmark_evidence_sha256
-                or getattr(qc_evidence, "landmark_model_sha256", None)
-                != model_sha256
-                or tuple(getattr(qc_evidence, "sample_timestamps_us", ()))
-                != actual_timestamps
+                or qc_evidence.landmark_model_sha256 != model_sha256
+                or qc_evidence.sample_timestamps_us != actual_timestamps
             ):
                 raise PronunciationAttemptRuntimeError(
                     "video_qc_evidence_invalid"
                 )
-        sync_evidence: object | None = None
+            if self._qc_decision_adapter is not None:
+                try:
+                    qc_decision = self._qc_decision_adapter.decide(
+                        candidate=qc_evidence,
+                        binding_receipt=binding,
+                    )
+                except Exception:
+                    raise PronunciationAttemptRuntimeError(
+                        "video_qc_decision_failed"
+                    ) from None
+                if (
+                    not isinstance(qc_decision, RuntimeVideoQcDecision)
+                    or qc_decision.source_candidate_receipt_sha256
+                    != qc_evidence.receipt_sha256
+                    or qc_decision.binding_receipt_sha256
+                    != binding.receipt_sha256
+                    or qc_decision.landmark_evidence_sha256
+                    != landmark_evidence_sha256
+                    or qc_decision.landmark_model_sha256 != model_sha256
+                    or qc_decision.observed_metrics != qc_evidence.metrics
+                    or qc_decision.decision_policy_sha256
+                    != self._expected_video_qc_decision_policy_sha256
+                ):
+                    raise PronunciationAttemptRuntimeError(
+                        "video_qc_decision_invalid"
+                    )
+                qc_receipt_sha256 = qc_decision.receipt_sha256
+        sync_candidate: AvSyncCandidateEvidence | None = None
+        sync_candidate_receipt_sha256: str | None = None
+        sync_decision: RuntimeAvSyncDecision | None = None
         sync_receipt_sha256: str | None = None
+        sync_evidence: PolicyValidatedAvSyncOffset | None = None
+        sync_offset_receipt_sha256: str | None = None
         if self._sync_detector is not None:
             if not isinstance(handoff.runtime_context, RestrictedPcmAudio):
                 raise PronunciationAttemptRuntimeError(
                     "av_sync_audio_context_unavailable"
                 )
             try:
-                sync_evidence = self._sync_detector.measure(
+                sync_candidate = self._sync_detector.measure(
                     audio=handoff.runtime_context,
                     landmarks=evidence,
                     probe=probe,
@@ -869,13 +1061,70 @@ class MediaPipeVisualDetectorBridge:
                 raise PronunciationAttemptRuntimeError(
                     "av_sync_backend_failed"
                 ) from None
-            sync_receipt_sha256 = getattr(
-                sync_evidence, "receipt_sha256", None
-            )
-            if not _is_sha256(sync_receipt_sha256):
+            if not isinstance(sync_candidate, AvSyncCandidateEvidence):
                 raise PronunciationAttemptRuntimeError(
                     "av_sync_evidence_invalid"
                 )
+            sync_candidate_receipt_sha256 = sync_candidate.receipt_sha256
+            audio = handoff.runtime_context
+            if (
+                sync_candidate.asset_handle_id != sample.asset_handle_id
+                or sync_candidate.audio_derivation_receipt_sha256
+                != audio.derivation_receipt.receipt_sha256
+                or sync_candidate.audio_source_sha256
+                != binding.audio_source_sha256
+                or sync_candidate.video_source_sha256
+                != binding.video_source_sha256
+                or sync_candidate.landmark_evidence_sha256
+                != landmark_evidence_sha256
+                or sync_candidate.landmark_model_sha256 != model_sha256
+            ):
+                raise PronunciationAttemptRuntimeError(
+                    "av_sync_evidence_invalid"
+                )
+            if self._sync_decision_adapter is not None:
+                try:
+                    sync_decision = self._sync_decision_adapter.decide(
+                        candidate=sync_candidate,
+                        binding_receipt=binding,
+                    )
+                except Exception:
+                    raise PronunciationAttemptRuntimeError(
+                        "av_sync_decision_failed"
+                    ) from None
+                if (
+                    not isinstance(sync_decision, RuntimeAvSyncDecision)
+                    or sync_decision.source_candidate_receipt_sha256
+                    != sync_candidate.receipt_sha256
+                    or sync_decision.binding_receipt_sha256
+                    != binding.receipt_sha256
+                    or sync_decision.landmark_evidence_sha256
+                    != landmark_evidence_sha256
+                    or sync_decision.landmark_model_sha256 != model_sha256
+                    or sync_decision.observed_offset_ms
+                    != sync_candidate.candidate_offset_ms
+                    or sync_decision.observed_correlation
+                    != sync_candidate.correlation
+                    or sync_decision.observed_anchors != sync_candidate.anchors
+                    or sync_decision.decision_policy_sha256
+                    != self._expected_av_sync_decision_policy_sha256
+                ):
+                    raise PronunciationAttemptRuntimeError(
+                        "av_sync_decision_invalid"
+                    )
+                sync_receipt_sha256 = sync_decision.receipt_sha256
+                if sync_decision.status == "synchronized":
+                    try:
+                        sync_evidence = (
+                            PolicyValidatedAvSyncOffset.issue_from_decision(
+                                decision=sync_decision
+                            )
+                        )
+                    except ValueError:
+                        raise PronunciationAttemptRuntimeError(
+                            "av_sync_offset_invalid"
+                        ) from None
+                    sync_offset_receipt_sha256 = sync_evidence.receipt_sha256
         sample_timestamps_sha256 = sha256_document(
             {
                 "video_stream_index": sample.video_stream_index,
@@ -884,14 +1133,21 @@ class MediaPipeVisualDetectorBridge:
             }
         )
         unsigned = {
-            "schema_version": "voice_coach.runtime_visual_detection.v2",
+            "schema_version": "voice_coach.runtime_visual_detection.v3",
             "binding_receipt_sha256": binding.receipt_sha256,
             "container_sha256": sample.container_sha256,
             "sample_timestamps_sha256": sample_timestamps_sha256,
             "landmark_evidence_sha256": landmark_evidence_sha256,
             "model_sha256": model_sha256,
+            "video_qc_candidate_receipt_sha256": (
+                qc_candidate_receipt_sha256
+            ),
             "video_qc_receipt_sha256": qc_receipt_sha256,
+            "av_sync_candidate_receipt_sha256": (
+                sync_candidate_receipt_sha256
+            ),
             "av_sync_receipt_sha256": sync_receipt_sha256,
+            "av_sync_offset_receipt_sha256": sync_offset_receipt_sha256,
         }
         wrapped = RuntimeVisualDetectionEvidence(
             binding_receipt_sha256=binding.receipt_sha256,
@@ -899,14 +1155,279 @@ class MediaPipeVisualDetectorBridge:
             sample_timestamps_sha256=sample_timestamps_sha256,
             landmark_evidence_sha256=landmark_evidence_sha256,
             model_sha256=model_sha256,
+            video_qc_candidate_receipt_sha256=(
+                qc_candidate_receipt_sha256
+            ),
             video_qc_receipt_sha256=qc_receipt_sha256,
+            av_sync_candidate_receipt_sha256=(
+                sync_candidate_receipt_sha256
+            ),
             av_sync_receipt_sha256=sync_receipt_sha256,
+            av_sync_offset_receipt_sha256=sync_offset_receipt_sha256,
             detection_receipt_sha256=sha256_document(unsigned),
             landmark_evidence=evidence,
             video_qc_evidence=qc_evidence,
+            video_qc_decision=qc_decision,
+            av_sync_candidate_evidence=sync_candidate,
+            av_sync_decision=sync_decision,
             av_sync_evidence=sync_evidence,
         )
         return VisualDetection(evidence=wrapped)
+
+    def plan_phone_window(
+        self,
+        *,
+        detection: VisualDetection,
+        probe: MediaProbe,
+        handoff: HostVisualHandoff,
+    ) -> PhoneWindowDecodeRequest | None:
+        """Map only the exact bound Seungun anchor through an approved offset."""
+
+        policy = self._phone_window_policy
+        evidence = detection.evidence
+        binding = handoff.binding_receipt
+        if policy is None:
+            return None
+        if not isinstance(evidence, RuntimeVisualDetectionEvidence) or not isinstance(
+            binding, SameAttemptBindingReceipt
+        ):
+            raise PronunciationAttemptRuntimeError(
+                "phone_window_detection_lineage_invalid"
+            )
+        if evidence.phone_window_evidence is not None:
+            raise PronunciationAttemptRuntimeError(
+                "phone_window_already_observed"
+            )
+        sync_offset = evidence.av_sync_evidence
+        if not isinstance(sync_offset, PolicyValidatedAvSyncOffset):
+            # Raw sync candidates are intentionally insufficient to map a phone.
+            return None
+        qc_decision = evidence.video_qc_decision
+        sync_decision = evidence.av_sync_decision
+        if (
+            not isinstance(qc_decision, RuntimeVideoQcDecision)
+            or qc_decision.status != "passed"
+            or not isinstance(sync_decision, RuntimeAvSyncDecision)
+            or sync_decision.status != "synchronized"
+        ):
+            return None
+        anchor = self._selected_phone_anchor(handoff)
+        if anchor.start_ms is None or anchor.end_ms is None:
+            return None
+        if (
+            sync_offset.attempt_id_sha256 != binding.attempt_id_sha256
+            or sync_offset.binding_receipt_sha256 != binding.receipt_sha256
+            or sync_offset.audio_source_sha256 != binding.audio_source_sha256
+            or sync_offset.video_source_sha256 != binding.video_source_sha256
+            or sync_offset.landmark_evidence_sha256
+            != evidence.landmark_evidence_sha256
+            or sync_offset.policy_sha256
+            != policy.expected_av_sync_policy_sha256
+            or sync_offset.av_sync_receipt_sha256
+            != evidence.av_sync_receipt_sha256
+            or sync_offset.receipt_sha256
+            != evidence.av_sync_offset_receipt_sha256
+            or sync_offset.source_candidate_receipt_sha256
+            != evidence.av_sync_candidate_receipt_sha256
+            or sync_offset.decision_policy_sha256
+            != self._expected_av_sync_decision_policy_sha256
+            or sync_offset.av_sync_decision_receipt_sha256
+            != sync_decision.receipt_sha256
+            or qc_decision.receipt_sha256
+            != evidence.video_qc_receipt_sha256
+            or abs(sync_offset.offset_ms) > policy.maximum_absolute_offset_ms
+            or probe.container_sha256 != binding.video_source_sha256
+        ):
+            raise PronunciationAttemptRuntimeError(
+                "phone_window_sync_lineage_invalid"
+            )
+
+        # Seungun spans are relative to decoded PCM.  The validated offset maps
+        # absolute audio PTS to absolute video PTS, so both bound origins are
+        # accounted for before returning a video-local window.
+        core_start_ms = (
+            binding.audio_timebase.origin_offset_ms
+            + anchor.start_ms
+            + sync_offset.offset_ms
+            - binding.video_timebase.origin_offset_ms
+        )
+        core_end_ms = (
+            binding.audio_timebase.origin_offset_ms
+            + anchor.end_ms
+            + sync_offset.offset_ms
+            - binding.video_timebase.origin_offset_ms
+        )
+        video_duration_ms = binding.video_timebase.duration_ms
+        if (
+            core_start_ms < 0
+            or core_end_ms > video_duration_ms
+            or core_end_ms <= core_start_ms
+        ):
+            return None
+        video_start_ms = max(0, core_start_ms - policy.padding_before_ms)
+        video_end_ms = min(
+            video_duration_ms,
+            core_end_ms + policy.padding_after_ms,
+        )
+        if video_end_ms - video_start_ms > policy.maximum_window_duration_ms:
+            return None
+        try:
+            return PhoneWindowDecodeRequest.issue(
+                attempt_id_sha256=binding.attempt_id_sha256,
+                binding_receipt_sha256=binding.receipt_sha256,
+                container_sha256=binding.video_source_sha256,
+                detection_receipt_sha256=evidence.detection_receipt_sha256,
+                phone_anchor_sha256=anchor.anchor_ref,
+                av_sync_receipt_sha256=sync_offset.av_sync_receipt_sha256,
+                av_sync_offset_receipt_sha256=sync_offset.receipt_sha256,
+                policy=policy,
+                video_start_ms=video_start_ms,
+                video_end_ms=video_end_ms,
+            )
+        except ValueError:
+            raise PronunciationAttemptRuntimeError(
+                "phone_window_request_invalid"
+            ) from None
+
+    def detect_phone_window(
+        self,
+        *,
+        window: Rgb24PhoneWindow,
+        detection: VisualDetection,
+        probe: MediaProbe,
+        handoff: HostVisualHandoff,
+    ) -> VisualDetection:
+        """Track a dense selected-phone sample without changing global QC/sync."""
+
+        evidence = detection.evidence
+        binding = handoff.binding_receipt
+        policy = self._phone_window_policy
+        if not isinstance(evidence, RuntimeVisualDetectionEvidence) or not isinstance(
+            binding, SameAttemptBindingReceipt
+        ):
+            raise PronunciationAttemptRuntimeError(
+                "phone_window_detection_lineage_invalid"
+            )
+        request = window.request
+        anchor = self._selected_phone_anchor(handoff)
+        if (
+            policy is None
+            or evidence.phone_window_evidence is not None
+            or request.binding_receipt_sha256 != binding.receipt_sha256
+            or request.detection_receipt_sha256
+            != evidence.detection_receipt_sha256
+            or request.phone_anchor_sha256 != anchor.anchor_ref
+            or request.container_sha256 != probe.container_sha256
+            or not isinstance(
+                evidence.video_qc_decision, RuntimeVideoQcDecision
+            )
+            or evidence.video_qc_decision.status != "passed"
+            or evidence.av_sync_receipt_sha256
+            != request.av_sync_receipt_sha256
+            or window.sample.asset_handle_id != probe.asset_handle_id
+            or window.sample.container_sha256 != probe.container_sha256
+            or window.sample.video_stream_index
+            != probe.video_stream.stream_index
+        ):
+            raise PronunciationAttemptRuntimeError(
+                "phone_window_detection_lineage_invalid"
+            )
+        try:
+            landmark_evidence = self._detector.detect(window.sample)
+        except Exception:
+            raise PronunciationAttemptRuntimeError(
+                "phone_window_landmark_detector_failed"
+            ) from None
+        landmark_evidence_sha256 = getattr(
+            landmark_evidence, "evidence_sha256", None
+        )
+        model_sha256 = getattr(landmark_evidence, "model_sha256", None)
+        landmark_timestamps_ms = tuple(
+            getattr(frame, "timestamp_ms", None)
+            for frame in getattr(landmark_evidence, "frames", ())
+        )
+        expected_timestamps_ms = tuple(
+            frame.timestamp_us // 1000 for frame in window.sample.frames
+        )
+        if (
+            getattr(landmark_evidence, "asset_handle_id", None)
+            != window.sample.asset_handle_id
+            or getattr(landmark_evidence, "container_sha256", None)
+            != window.sample.container_sha256
+            or landmark_timestamps_ms != expected_timestamps_ms
+            or not _is_sha256(landmark_evidence_sha256)
+            or model_sha256 != evidence.model_sha256
+        ):
+            raise PronunciationAttemptRuntimeError(
+                "phone_window_landmark_lineage_invalid"
+            )
+        try:
+            tracking_receipt = PhoneWindowTrackingReceipt.issue(
+                window=window,
+                landmark_evidence_sha256=landmark_evidence_sha256,
+                model_sha256=model_sha256,
+                tracking_code_sha256=_adapter_code_sha256(),
+            )
+            runtime_receipt = RuntimePhoneWindowReceipt.issue(
+                request=request,
+                video_qc_receipt_sha256=evidence.video_qc_receipt_sha256,
+                tracking_receipt=tracking_receipt,
+                policy=policy,
+            )
+            phone_window_evidence = DensePhoneWindowEvidence(
+                decode_receipt=window.decode_receipt,
+                tracking_receipt=tracking_receipt,
+                runtime_receipt=runtime_receipt,
+                landmark_evidence=landmark_evidence,
+            )
+            return VisualDetection(
+                evidence=replace(
+                    evidence,
+                    phone_window_evidence=phone_window_evidence,
+                )
+            )
+        except ValueError:
+            raise PronunciationAttemptRuntimeError(
+                "phone_window_receipt_invalid"
+            ) from None
+
+    @staticmethod
+    def _selected_phone_anchor(
+        handoff: HostVisualHandoff,
+    ) -> UpstreamPhoneAnchor:
+        payload = handoff.payload
+        if not isinstance(payload, SeungunVisualHandoff):
+            raise PronunciationAttemptRuntimeError(
+                "phone_window_handoff_invalid"
+            )
+        selected_index = handoff.selected_phone_expected_index
+        if (
+            payload.request.upstream_phone_expected_index != selected_index
+            or payload.request.binding_receipt.receipt_sha256
+            != handoff.binding_receipt.receipt_sha256
+        ):
+            raise PronunciationAttemptRuntimeError(
+                "phone_window_handoff_invalid"
+            )
+        try:
+            anchors = parse_seungun_analysis(
+                payload.source_record.analysis,
+                analysis_ref=payload.source_record.reference,
+            )
+        except Exception:
+            raise PronunciationAttemptRuntimeError(
+                "phone_window_anchor_invalid"
+            ) from None
+        if selected_index >= len(anchors):
+            raise PronunciationAttemptRuntimeError(
+                "phone_window_anchor_invalid"
+            )
+        anchor = anchors[selected_index]
+        if anchor.expected_index != selected_index:
+            raise PronunciationAttemptRuntimeError(
+                "phone_window_anchor_invalid"
+            )
+        return anchor
 
 
 class BlockedVisualReliabilityAdapter:
@@ -926,18 +1447,24 @@ class BlockedVisualReliabilityAdapter:
             raise PronunciationAttemptRuntimeError(
                 "visual_reliability_lineage_mismatch"
             )
-        sync_evidence = evidence.av_sync_evidence
-        if sync_evidence is None:
+        sync_candidate = evidence.av_sync_candidate_evidence
+        sync_decision = evidence.av_sync_decision
+        if sync_candidate is None:
             sync_reason = "content_av_sync_backend_not_configured"
-        elif getattr(sync_evidence, "status", None) == "candidate_unvalidated":
+        elif sync_decision is None and sync_candidate.status == "candidate_unvalidated":
             sync_reason = "content_av_sync_candidate_not_calibrated"
+        elif sync_decision is not None and sync_decision.status == "failed":
+            sync_reason = "content_av_sync_decision_failed"
         else:
             sync_reason = "content_av_sync_not_observed"
         qc_evidence = evidence.video_qc_evidence
+        qc_decision = evidence.video_qc_decision
         if qc_evidence is None:
             qc_reason = "video_qc_backend_not_configured"
-        elif getattr(qc_evidence, "status", None) == "candidate_unvalidated":
+        elif qc_decision is None and qc_evidence.status == "candidate_unvalidated":
             qc_reason = "video_qc_candidate_not_calibrated"
+        elif qc_decision is not None and qc_decision.status == "failed":
+            qc_reason = "video_qc_decision_failed"
         else:
             qc_reason = "video_qc_not_observed"
         reasons = [
@@ -1164,9 +1691,19 @@ def _uniform_frame_indices(
     )
 
 
+def _adapter_code_sha256() -> str:
+    """Return the loaded runtime adapter source pin without caller input."""
+
+    try:
+        return hashlib.sha256(Path(__file__).read_bytes()).hexdigest()
+    except OSError:
+        raise ValueError("runtime adapter source code is unavailable") from None
+
+
 __all__ = [
     "AttemptNoncePort",
     "AvSyncCandidatePort",
+    "AvSyncDecisionPort",
     "BlockedVisualReliabilityAdapter",
     "CompletedPronunciationAnalysis",
     "ConsentReceiptResolverPort",
@@ -1181,4 +1718,5 @@ __all__ = [
     "RuntimeVisualDetectionEvidence",
     "SeungunVisualHandoffAdapter",
     "VideoQcCandidatePort",
+    "VideoQcDecisionPort",
 ]

@@ -115,8 +115,8 @@ def test_config_only_has_zero_runtime_predecessor_d1_or_output_access() -> None:
     assert completed.returncode == 0, completed.stdout + completed.stderr
     result = json.loads(completed.stdout)
     assert result["status"] == "valid_config_only"
-    assert result["source_pin_count"] == 24
-    assert result["source_pin_read_count"] == 24
+    assert result["source_pin_count"] == 22
+    assert result["source_pin_read_count"] == 22
     assert result["predecessor_static_source_read_count"] == 0
     assert result["r00_deep_validation_count"] == 0
     assert result["r01_completion_read_attempt_count"] == 0
@@ -136,8 +136,8 @@ def test_full_preflight_deep_validates_r00_then_stops_at_missing_r01() -> None:
     assert result["status"] == "failed_closed"
     assert result["stage"] == "r01_completion"
     assert result["error"] == "R01 completion commit is TBD_R01_COMPLETION"
-    assert result["source_pin_read_count"] == 24
-    assert result["predecessor_static_source_read_count"] == 17
+    assert result["source_pin_read_count"] == 22
+    assert result["predecessor_static_source_read_count"] == 15
     assert result["r00_deep_validation_count"] == 1
     assert result["r00_public_or_aggregate_evidence_read_count"] == 10
     assert result["r00_raw_audio_read_count"] == 0

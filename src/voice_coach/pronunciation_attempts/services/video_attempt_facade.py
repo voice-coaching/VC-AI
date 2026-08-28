@@ -28,7 +28,12 @@ from ..models import (
     VideoConsentAuthorization,
     VideoConsentDecision,
 )
-from ..ports import AvContainerPort, RestrictedMediaStorePort
+from ..phone_window import PhoneWindowDecodeRequest, Rgb24PhoneWindow
+from ..ports import (
+    AvContainerPort,
+    PhoneWindowDecoderPort,
+    RestrictedMediaStorePort,
+)
 
 
 class VideoAttemptStatus(StrEnum):
@@ -48,6 +53,9 @@ class VisualStageStatus(StrEnum):
     HANDOFF_FAILED = "handoff_failed"
     VIDEO_DECODE_FAILED = "video_decode_failed"
     DETECTOR_FAILED = "detector_failed"
+    PHONE_WINDOW_PLAN_FAILED = "phone_window_plan_failed"
+    PHONE_WINDOW_DECODE_FAILED = "phone_window_decode_failed"
+    PHONE_WINDOW_DETECTOR_FAILED = "phone_window_detector_failed"
     BLOCKED_RELIABILITY = "blocked_reliability"
     RELIABILITY_FAILED = "reliability_failed"
     BACKEND_FAILED = "backend_failed"
@@ -216,6 +224,27 @@ class VisualDetectorPort(Protocol):
     ) -> VisualDetection: ...
 
 
+class PhoneWindowVisualDetectorPort(Protocol):
+    """Plan and track a dense window from already-bound global evidence."""
+
+    def plan_phone_window(
+        self,
+        *,
+        detection: VisualDetection,
+        probe: MediaProbe,
+        handoff: HostVisualHandoff,
+    ) -> PhoneWindowDecodeRequest | None: ...
+
+    def detect_phone_window(
+        self,
+        *,
+        window: Rgb24PhoneWindow,
+        detection: VisualDetection,
+        probe: MediaProbe,
+        handoff: HostVisualHandoff,
+    ) -> VisualDetection: ...
+
+
 class VisualReliabilityPort(Protocol):
     """Independently approve or reject detector evidence."""
 
@@ -263,6 +292,8 @@ class VideoAttemptFacade:
         detector_port: VisualDetectorPort,
         reliability_port: VisualReliabilityPort,
         visual_port: VisualSupplementPort,
+        phone_window_decoder_port: PhoneWindowDecoderPort | None = None,
+        phone_window_detector_port: PhoneWindowVisualDetectorPort | None = None,
     ) -> None:
         if (
             isinstance(visual_sample_frame_count, bool)
@@ -272,6 +303,12 @@ class VideoAttemptFacade:
             raise ValueError("visual_sample_frame_count must be a positive integer")
         if visual_sample_frame_count > container_policy.maximum_rgb_sample_frames:
             raise ValueError("visual sample frame count exceeds container policy")
+        if (phone_window_decoder_port is None) != (
+            phone_window_detector_port is None
+        ):
+            raise ValueError(
+                "phone-window decoder and detector must be configured together"
+            )
         self._consent_port = consent_port
         self._media_store_port = media_store_port
         self._container_port = container_port
@@ -284,6 +321,8 @@ class VideoAttemptFacade:
         self._detector_port = detector_port
         self._reliability_port = reliability_port
         self._visual_port = visual_port
+        self._phone_window_decoder_port = phone_window_decoder_port
+        self._phone_window_detector_port = phone_window_detector_port
 
     def run(self, command: VideoAttemptCommand) -> VideoAttemptResult:
         """Run one attempt, deleting every successfully admitted asset."""
@@ -456,6 +495,62 @@ class VideoAttemptFacade:
                 reasons=("visual_detector_failed",),
                 visual_stage=VisualStageStatus.DETECTOR_FAILED,
             )
+
+        if (
+            self._phone_window_decoder_port is not None
+            and self._phone_window_detector_port is not None
+        ):
+            try:
+                phone_window_request = (
+                    self._phone_window_detector_port.plan_phone_window(
+                        detection=detection,
+                        probe=probe,
+                        handoff=handoff,
+                    )
+                )
+            except Exception:
+                return _audio_only(
+                    audio_result=audio_result,
+                    reasons=("phone_window_planning_failed",),
+                    visual_stage=VisualStageStatus.PHONE_WINDOW_PLAN_FAILED,
+                )
+
+            if phone_window_request is not None:
+                try:
+                    phone_window = (
+                        self._phone_window_decoder_port.decode_rgb24_window(
+                            asset,
+                            self._container_policy,
+                            probe=probe,
+                            request=phone_window_request,
+                        )
+                    )
+                except Exception as error:
+                    return _audio_only(
+                        audio_result=audio_result,
+                        reasons=(
+                            _media_reason(error, "phone_window_decode_failed"),
+                        ),
+                        visual_stage=VisualStageStatus.PHONE_WINDOW_DECODE_FAILED,
+                    )
+
+                try:
+                    detection = (
+                        self._phone_window_detector_port.detect_phone_window(
+                            window=phone_window,
+                            detection=detection,
+                            probe=probe,
+                            handoff=handoff,
+                        )
+                    )
+                except Exception:
+                    return _audio_only(
+                        audio_result=audio_result,
+                        reasons=("phone_window_detector_failed",),
+                        visual_stage=(
+                            VisualStageStatus.PHONE_WINDOW_DETECTOR_FAILED
+                        ),
+                    )
 
         try:
             reliability = self._reliability_port.evaluate(

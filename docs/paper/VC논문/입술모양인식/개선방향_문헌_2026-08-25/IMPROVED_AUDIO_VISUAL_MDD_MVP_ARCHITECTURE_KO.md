@@ -808,25 +808,25 @@ issue, score, 위치, 신체 부위, 행동 지시를 생성할 수 없다.
 
 대표적인 직접 연결은 다음과 같다.
 
-- [Park 2026](./00_주장감사/2026_Park_Intent_vs_Surface_ASR_Overcorrection.pdf),
-  [Yan 2020](./01_MDD_음성/2020_Yan_End-to-End_MDD_Anti-Phone.pdf):
+- [Park 2026](https://aclanthology.org/2026.bea-1.23/),
+  [Yan 2020](https://www.isca-archive.org/interspeech_2020/yan20_interspeech.html):
   target-free surface 경로
-- [Wei 2025](./01_MDD_음성/2025_Wei_Articulatory_Information_E2E_MDD.pdf):
+- [Wei 2025](https://doi.org/10.21437/SLaTE.2025-16):
   audio-derived AF baseline
-- [Petridis 2017](./02_시각음성_다중시점/2017_Petridis_End-to-End_Multi-View_Lipreading.pdf),
-  [OLKAVS](../2301.06375v2.pdf): view-specific/paired angle 실험
-- [DECA 2021](./03_3D_4D_얼굴복원/2021_Feng_DECA.pdf),
-  [AVFace 2023](./03_3D_4D_얼굴복원/2023_Chatziagapi_AVFace.pdf),
-  [SPECTRE 2023](./03_3D_4D_얼굴복원/2023_Filntisis_SPECTRE.pdf): 외부
+- [Petridis 2017](https://arxiv.org/abs/1709.00443),
+  [OLKAVS](https://arxiv.org/abs/2301.06375): view-specific/paired angle 실험
+- [DECA 2021](https://arxiv.org/abs/2012.04012),
+  [AVFace 2023](https://openaccess.thecvf.com/content/CVPR2023/html/Chatziagapi_AVFace_Towards_Detailed_Audio-Visual_4D_Face_Reconstruction_CVPR_2023_paper.html),
+  [SPECTRE 2023](https://openaccess.thecvf.com/content/CVPR2023W/ABAW/html/Filntisis_SPECTRE_Visual_Speech-Informed_Perceptual_3D_Facial_Expression_Reconstruction_From_Monocular_CVPRW_2023_paper.html): 외부
   2.5D 후보와 깊이 한계
-- [Birkholz 2013](./04_조음역추정_MRI/2013_Birkholz_CV_Coarticulation_Articulatory_Synthesis.pdf):
+- [Birkholz 2013](https://doi.org/10.1371/journal.pone.0060603):
   공동조음·시간 정규화
-- [McGhee 2023](./04_조음역추정_MRI/2023_McGhee_AAI_for_Pronunciation_Training.pdf),
-  [Hao 2024](./04_조음역추정_MRI/2024_Hao_Cross-lingual_AAI_SSL.pdf):
+- [McGhee 2023](https://doi.org/10.21437/SLaTE.2023-14),
+  [Hao 2024](https://doi.org/10.21437/Interspeech.2024-1740):
   숨은 조음 proxy와 언어·화자 전이 한계
-- [Suzuki 2017](./05_시각피드백/2017_Suzuki_Visual_Learning_2.pdf),
-  [Bu 2020](./05_시각피드백/2020_Bu_Visual-Speech_Synthesis_Exaggerated_Corrective_Feedback.pdf),
-  [Zhong 2024](./05_시각피드백/2024_Zhong_LLM_Articulatory_Feedback_CAPT.pdf):
+- [Suzuki 2017](https://www.isca-archive.org/interspeech_2017/suzuki17_interspeech.html),
+  [Bu 2020](https://arxiv.org/abs/2009.05748),
+  [Zhong 2024](https://doi.org/10.21437/Interspeech.2024-1005):
   feedback UX와 제한형 문장화
 
 ## 16. 실현성·실용성 판정

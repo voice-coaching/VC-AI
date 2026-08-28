@@ -41,21 +41,21 @@ canonical_sources:
     - path: configs/coaching/korean_error_advice_ontology_v1.json
       sha256: 1ba0c0198533abd51a3caa4b176f17aae17aa48d08899f6e7ced634a1eef0d60
     - path: configs/experiments/wavlm_s108_no_locked_dry_run_v1.yaml
-      sha256: cb852db3bb805167a6fd797f90424470fe01403f2b8af7fda5bb8c8282a4b55c
+      sha256: 7803feb6121568cf78a582cbacd7a848893a0655bdfc211bac9d35ecc1dd40cc
     - path: artifacts/evaluation/g04_amended_progress_v1.json
       sha256: f59ab54a5f2dbd9fefb2e061bbc0d4b1f7965272f5ff792750472ba69b36316e
-    - path: docs/constraints/AIHUB71490_MANUAL_ALIGNMENT_AUDIT_KO.md
-      sha256: c53e52a8dfd1dc37369341fcb182e108387b1524ae1c567b397b02dab215e875
-    - path: docs/constraints/DATA_PRIVACY_BOUNDARY_KO.md
-      sha256: 8934384f1c570cf1a086fd08c18b26f577c0a22c3bd69ae1b5064eb34f8b1309
-    - path: docs/constraints/G04_TARGETED_PHONE_AUDIT_AMENDMENT_KO.md
-      sha256: c5cac987ac75baf3727283164ae6fa56ceb8c575bf995c2372136660fc835bdc
-    - path: docs/LOCAL_ALIGNMENT_REVIEW_UI_KO.md
-      sha256: de1ac0d3b40896764dc11509b46d6b2ee8b7115bd35637223966adf72dbadaa1
+    - path: docs/evaluation/G04_AUDIO_AI_PROXY_PROTOCOL_KO.md
+      sha256: df2bdf6dd460e981211f1757a2a4c34119d59ab30818effc405b0497ac348fdb
+    - path: data/README.md
+      sha256: 53cba9ea730b608474086158c610b831f992538b008bc8f4db784383786a26e5
+    - path: docs/evaluation/G04_AUDIO_AI_PROXY_RESULT_2026-08-09_KO.md
+      sha256: 2fd6bdf497d71b166aa006cd452311985101bc49faf27198f6c5856c2d09a81d
+    - path: src/voice_coach/evaluation/g04_amended_review_app.py
+      sha256: bfb8f329477067b4cb43aebed1639532163eeb1256d825c8df4a0a45b398a930
     - path: scripts/prepare_d07_independent_expert_gold.py
       sha256: f8e26a33be5b8e9618ed97396e56863c05ffae8128c2b826d10f787e36c3fde1
     - path: src/voice_coach/evaluation/d07_expert_gold_contract.py
-      sha256: 2ea0b803f606fb5450ee6755d53a25f4a9ff9ad748e8438424f9ef66cb221cc6
+      sha256: 8c3b7a5db8bb5813e7564692386bfe4c6aef670ac3d16c94df4f9a6a33eca0a2
     - path: src/voice_coach/evaluation/g04_amended_contract.py
       sha256: c2afa98092c300ca7a9f87a1e122a4edad311517a188200330575ddae1f56661
     - path: src/voice_coach/training/wavlm_s108_dry_run.py

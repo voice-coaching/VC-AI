@@ -17,26 +17,22 @@ experiment:
 canonical_sources:
   access_scope: C1_code_config_docs_only
   pins:
+    - path: .codex/ai_rule_developer/GLOBAL_RULES.md
+      sha256: 3c928b24640f1204623b9fae7d28e54ba20e77b68d38050b79aeb62c98856584
     - path: configs/experiments/s2_s200_independent_auditor_v1.yaml
-      sha256: 6cb1dd0e11ecaf24247443552f92d2a3ecf106469912b591c9bee4f3f613a370
-    - path: src/voice_coach/training/s2_s200_auditor_contract.py
-      sha256: b9f13b578ef89586c38fd2d80b0d8d985cf735d52e2532c2958888cb1da1a35b
-    - path: docs/constraints/S2_S200_INDEPENDENT_AUDITOR_READINESS_KO.md
-      sha256: ab264ba837ef81b9b8ddac5635b36856f5d927e6a71a708d3c9fd9d697f1a66b
-    - path: docs/IMPLEMENTATION_PLAN_KO.md
-      sha256: 836ea2b5a2db2bf3dcfb6ea4003c73c5240ae24bea9ea9af8531519f6a57e07a
+      sha256: 270dab9a14d3ef58ffa39bab0ebad624ca0ff54b2ad8703dcbc8042a6195b739
     - path: docs/paper/EXPERIMENTAL_MANUSCRIPT_KO.md
-      sha256: c21e6d86570eb74069df104295aafe7cf78af02ce51398335c50133a5d1304f2
+      sha256: 3f10f7f05ff89b0c7f6e7a1dfaf48216a5b0dec8f1ab51bbadd2c809f443afef
     - path: docs/paper/RELATED_WORK_SOURCE_LEDGER_KO.md
       sha256: d37bf2ab5564c55f03dbb9e1974e9bf421274df9971b30d31bb54ff4909e44b6
-    - path: docs/constraints/DATA_LICENSE_AND_ROLE_MATRIX_KO.md
-      sha256: 3480b342675c22590aec3f800e252bb967edb6be69c5e6a969766c2bd9f37119
-    - path: src/voice_coach/training/s2_s201_whisper_contract.py
-      sha256: 88f0cd148129fd880b8af4322b30d21715e9aea26eea4d48bb2f64f130ad7667
-    - path: scripts/prepare_s2_s201_whisper_content.py
-      sha256: 0f10c1d9104e80152baba94e1764ffcc1af2b2c2f0147d20af656586ef22d2b2
     - path: docs/paper/S2_S201_WHISPER_CONTENT_AMENDMENT_TEMPLATE_KO.md
       sha256: dd6a11c6749876d9bae2f92e5f19725602794ff90514f9eada6f72de3ec5ce26
+    - path: scripts/prepare_s2_s201_whisper_content.py
+      sha256: 0f10c1d9104e80152baba94e1764ffcc1af2b2c2f0147d20af656586ef22d2b2
+    - path: src/voice_coach/training/s2_s200_auditor_contract.py
+      sha256: 02a7f8b18a88f83091ea23b86b8386b4f96897907b42100af96bd75cc3d81c62
+    - path: src/voice_coach/training/s2_s201_whisper_contract.py
+      sha256: 88f0cd148129fd880b8af4322b30d21715e9aea26eea4d48bb2f64f130ad7667
 
 predecessors:
   validate_before_threshold_attestation: true

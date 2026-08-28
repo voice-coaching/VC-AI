@@ -1,4 +1,4 @@
-"""Fail-closed ffprobe/ffmpeg adapter for a single H.264/AAC MP4 attempt."""
+"""Fail-closed ffprobe/ffmpeg adapter for allowlisted video/AAC MP4 attempts."""
 
 from __future__ import annotations
 
@@ -32,6 +32,12 @@ from ..models import (
     Rgb24Sample,
     VideoStreamProbe,
 )
+from ..phone_window import (
+    PhoneWindowDecodeReceipt,
+    PhoneWindowDecodeRequest,
+    Rgb24PhoneWindow,
+    decoded_rgb_sha256,
+)
 from ..ports import RestrictedArtifactWriter, RestrictedMediaStorePort
 from .network_isolated_exec import isolated_command
 
@@ -55,6 +61,7 @@ _SUPPORTED_MP4_MAJOR_BRANDS = frozenset(
         "M4V ",
     }
 )
+_SUPPORTED_VIDEO_CODECS = frozenset({"h264", "hevc"})
 
 
 @dataclass(frozen=True, slots=True)
@@ -230,6 +237,162 @@ class FfmpegAvContainerAdapter:
                 video_stream_index=probe.video_stream.stream_index,
                 frames=frames,
                 ffmpeg_revision=ffmpeg_revision,
+            )
+        except ValueError:
+            raise PronunciationAttemptMediaError(
+                MediaErrorCode.VIDEO_DECODE_FAILED
+            ) from None
+
+    def decode_rgb24_window(
+        self,
+        asset: RestrictedVideoAsset,
+        policy: AvContainerPolicy,
+        *,
+        probe: MediaProbe,
+        request: PhoneWindowDecodeRequest,
+    ) -> Rgb24PhoneWindow:
+        """Decode exact PTS-selected frames from one trusted phone window."""
+
+        if (
+            not isinstance(probe, MediaProbe)
+            or not isinstance(request, PhoneWindowDecodeRequest)
+            or asset.handle_id != probe.asset_handle_id
+            or asset.container_sha256 != probe.container_sha256
+            or asset.attempt_id_sha256 != request.attempt_id_sha256
+            or asset.container_sha256 != request.container_sha256
+            or request.video_end_ms > probe.video_stream.duration_ms
+        ):
+            raise PronunciationAttemptMediaError(
+                MediaErrorCode.CONTAINER_POLICY_REJECTED
+            )
+
+        absolute_start_us = (
+            probe.video_stream.start_time_us + request.video_start_ms * 1_000
+        )
+        absolute_end_us = (
+            probe.video_stream.start_time_us + request.video_end_ms * 1_000
+        )
+        candidate_indices = tuple(
+            frame_index
+            for frame_index, timestamp_us in enumerate(
+                probe.video_frame_timestamps_us
+            )
+            if absolute_start_us <= timestamp_us < absolute_end_us
+        )
+        if len(candidate_indices) < request.minimum_frame_count:
+            raise PronunciationAttemptMediaError(
+                MediaErrorCode.CONTAINER_POLICY_REJECTED
+            )
+        if len(candidate_indices) > request.maximum_frame_count:
+            positions = self._uniform_frame_indices(
+                total_frame_count=len(candidate_indices),
+                sample_frame_count=request.maximum_frame_count,
+            )
+            selected_indices = tuple(
+                candidate_indices[position] for position in positions
+            )
+        else:
+            selected_indices = candidate_indices
+
+        frame_byte_count = (
+            probe.video_stream.width * probe.video_stream.height * 3
+        )
+        expected_byte_count = frame_byte_count * len(selected_indices)
+        if expected_byte_count > request.maximum_rgb_bytes:
+            raise PronunciationAttemptMediaError(
+                MediaErrorCode.CONTAINER_POLICY_REJECTED
+            )
+
+        ffmpeg_revision = self._tool_revision(
+            binary=self._ffmpeg_binary,
+            expected_tool="ffmpeg",
+            policy=policy,
+        )
+        select_expression = "+".join(
+            f"eq(n\\,{frame_index})" for frame_index in selected_indices
+        )
+        with self._store.open_container(asset) as input_file:
+            input_fd = input_file.fileno()
+            command = [
+                self._ffmpeg_binary,
+                "-v",
+                "error",
+                "-nostdin",
+                "-protocol_whitelist",
+                "file,pipe",
+                "-i",
+                self._descriptor_locator(input_fd),
+                "-map",
+                f"0:{probe.video_stream.stream_index}",
+                "-an",
+                "-sn",
+                "-dn",
+                "-vf",
+                f"select={select_expression}",
+                "-fps_mode",
+                "passthrough",
+                "-frames:v",
+                str(len(selected_indices)),
+                "-pix_fmt",
+                "rgb24",
+                "-f",
+                "rawvideo",
+                "pipe:1",
+            ]
+            decoded = bytearray()
+            return_code = self._stream_process_stdout(
+                command=command,
+                pass_fds=(input_fd,),
+                timeout_seconds=policy.subprocess_timeout_seconds,
+                maximum_stdout_bytes=expected_byte_count,
+                maximum_stderr_bytes=policy.maximum_subprocess_output_bytes,
+                stdout_limit_error=MediaErrorCode.VIDEO_DECODE_FAILED,
+                consume_stdout=decoded.extend,
+            )
+        if return_code != 0 or len(decoded) != expected_byte_count:
+            raise PronunciationAttemptMediaError(
+                MediaErrorCode.VIDEO_DECODE_FAILED
+            )
+
+        frames = tuple(
+            DecodedRgbFrame(
+                timestamp_us=probe.video_frame_timestamps_us[frame_index],
+                width=probe.video_stream.width,
+                height=probe.video_stream.height,
+                rgb24=bytes(
+                    decoded[
+                        position * frame_byte_count : (position + 1)
+                        * frame_byte_count
+                    ]
+                ),
+            )
+            for position, frame_index in enumerate(selected_indices)
+        )
+        try:
+            sample = Rgb24Sample(
+                asset_handle_id=asset.handle_id,
+                container_sha256=asset.container_sha256,
+                video_stream_index=probe.video_stream.stream_index,
+                frames=frames,
+                ffmpeg_revision=ffmpeg_revision,
+            )
+            receipt = PhoneWindowDecodeReceipt.issue(
+                request=request,
+                video_stream_index=probe.video_stream.stream_index,
+                selected_frame_indices=selected_indices,
+                decoded_timestamps_us=tuple(
+                    frame.timestamp_us for frame in sample.frames
+                ),
+                width=probe.video_stream.width,
+                height=probe.video_stream.height,
+                decoded_rgb_sha256=decoded_rgb_sha256(sample),
+                ffmpeg_revision=ffmpeg_revision,
+                decoder_code_sha256=_adapter_code_sha256(),
+            )
+            return Rgb24PhoneWindow(
+                request=request,
+                sample=sample,
+                decode_receipt=receipt,
             )
         except ValueError:
             raise PronunciationAttemptMediaError(
@@ -484,7 +647,8 @@ class FfmpegAvContainerAdapter:
             )
         video_document = video_candidates[0]
         audio_document = audio_candidates[0]
-        if video_document.get("codec_name") != "h264" or audio_document.get(
+        video_codec = video_document.get("codec_name")
+        if video_codec not in _SUPPORTED_VIDEO_CODECS or audio_document.get(
             "codec_name"
         ) != "aac":
             raise PronunciationAttemptMediaError(
@@ -546,7 +710,7 @@ class FfmpegAvContainerAdapter:
         try:
             video_stream = VideoStreamProbe(
                 stream_index=self._strict_integer(video_document.get("index")),
-                codec_name="h264",
+                codec_name=cast(str, video_codec),
                 width=width,
                 height=height,
                 frames_per_second_numerator=average_fps.numerator,
@@ -859,6 +1023,15 @@ class FfmpegAvContainerAdapter:
             selector.close()
             process.stdout.close()
             process.stderr.close()
+
+
+def _adapter_code_sha256() -> str:
+    """Return the loaded adapter source pin without accepting caller input."""
+
+    try:
+        return hashlib.sha256(Path(__file__).read_bytes()).hexdigest()
+    except OSError:
+        raise ValueError("FFmpeg adapter source code is unavailable") from None
 
 
 __all__ = ["FfmpegAvContainerAdapter"]

@@ -185,7 +185,7 @@ def _derive(
     )
 
 
-def test_static_config_validates_exactly_19_sources_without_runtime_access() -> None:
+def test_static_config_validates_exactly_16_sources_without_runtime_access() -> None:
     config = load_config(CONFIG)
     audit = AccessAudit()
     result = validate_static_config(
@@ -195,8 +195,8 @@ def test_static_config_validates_exactly_19_sources_without_runtime_access() -> 
         audit=audit,
     )
 
-    assert len(result.source_snapshots) == 19
-    assert audit.source_pin_read_count == 19
+    assert len(result.source_snapshots) == 16
+    assert audit.source_pin_read_count == 16
     assert audit.c01_deep_validation_count == 0
     assert audit.s107_completion_path_resolution_count == 0
     assert audit.diagnostic_input_read_count == 0

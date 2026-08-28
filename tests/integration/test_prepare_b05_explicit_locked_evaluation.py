@@ -28,7 +28,7 @@ def test_config_only_is_static_and_zero_protected_access() -> None:
     assert result.returncode == 0, result.stderr
     payload = json.loads(result.stdout)
     assert payload["status"] == "static_contract_validated_no_locked_execution"
-    assert payload["source_pin_read_count"] == 34
+    assert payload["source_pin_read_count"] == 32
     assert payload["b03_static_validation_count"] == 1
     assert payload["b06_static_validation_count"] == 1
     for field in (

@@ -1,7 +1,8 @@
 # 입술 모양 피드백 Sidecar 컴포넌트
 
 - 문서 상태: `implemented_contract_with_internal_smoke`
-- 구현 상태: `partial_implementation`; 사용자 실영상 runtime은 `not_ready`
+- 구현 상태: `partial_implementation`; 사용자 실영상 media/audio 경로는 smoke 검증,
+  visual feedback runtime은 `not_ready`
 - 상세 설계: [`SEUNGUN_VISUAL_PRONUNCIATION_EVIDENCE_PIPELINE_KO.md`](SEUNGUN_VISUAL_PRONUNCIATION_EVIDENCE_PIPELINE_KO.md)
 
 ## 1. 분리 원칙
@@ -34,6 +35,9 @@ Entrypoint/Composition
 | `VideoQcCandidateEvidence` | decoded RGB+landmark의 얼굴 coverage, luma/exposure, edge sharpness proxy, lip ROI, track continuity와 exact lineage | pose/occlusion 판정, calibrated pass 또는 reliability |
 | `AvSyncCandidateEvidence` | lip aperture와 PCM energy의 교차상관 offset·anchor 후보, exact media/landmark/derivation lineage receipt | P6 threshold, calibrated reliability 또는 사용자 claim |
 | `RuntimeVisualDetectionEvidence v2` | binding/sample/model/landmark와 video-QC/A-V-sync receipt를 한 detection digest에 결합 | QC/sync candidate를 supported로 승격 |
+| `PolicyValidatedAvSyncOffset` | passed sync decision과 attempt/binding/audio/video/landmark/policy lineage가 결합된 measured audio→video offset | raw `candidate_unvalidated`, 기본값 0 ms 또는 caller offset |
+| `PhoneWindowDecodeRequest` / `PhoneWindowDecodeReceipt` | already-bound selected anchor에서 host가 만든 bounded request와 exact FFmpeg frame index/PTS/RGB lineage | caller 선택 span, visual promotion 또는 cue 판정 |
+| `PhoneWindowTrackingReceipt` / `RuntimePhoneWindowReceipt` | dense sample의 landmark/model lineage와 global QC/sync/context를 decode receipt digest에 결합 | P6/P8 reliability 또는 사용자 claim 승인 |
 | `P6EvidenceValidationReceipt` | AI Hub 68 aggregate summary의 rights/admission assertion, disjoint split, pipeline digest, 24-point metric, calibration/reload digest 검증 결과 | dataset 접근·metric 생성 또는 visual reliability 승인 |
 | `P8ClaimConformanceReceipt` | AI Hub 538 frozen replay의 6개 상태 scenario, exact lineage/catalog/policy/금지 fixture 검증 결과 | read-zero seal 생성·인증 또는 사용자 visual claim 승인 |
 
@@ -49,6 +53,8 @@ boolean 하나 또는 `None`만으로 missing/OOD/unsupported 상태를 축약�
 | `VisualFeedbackCoordinator` | dependency → consent → QC → sync/join → tracking → calibration/catalog → cleanup 순서와 상태 우선순위 적용 | detector 직접 import, audio 재분석, 최종 global policy |
 | `VideoAttemptFacade` | consent → 제한 저장 → probe/PCM → Seungun 1회 → optional visual → 삭제를 조율하고 cleanup 실패 시 audio·visual 반환값을 모두 억제 | audio 판정 변경, P6/P8 reliability 합성 |
 | `_map_phone_span` 내부 pure function | 검증된 upstream phone span을 affine video timebase에 연결 | 위치 추정, 없는 span 생성, expected index 변경 |
+| `MediaPipeVisualDetectorBridge.plan_phone_window` | already-bound handoff의 exact selected anchor와 policy-valid measured offset만으로 host decode request 생성 | caller window, raw sync candidate 사용, anchor 재선택 |
+| `MediaPipeVisualDetectorBridge.detect_phone_window` | bounded dense RGB sample을 동일 model로 tracking하고 decode/tracking/runtime receipt DAG를 detection evidence에 추가 | global QC/sync sample 대체, 자체 visual publication |
 | `VisualCalibrationArtifact.calibrate` | exact phone/cue/context rule의 support와 deviation 적용 | visual-only phone/error 판정 |
 | `VisualClaimCatalog.lookup` | frozen action/claim ID를 exact key로 조회 | catalog 밖 문구나 행동 생성 |
 | `VisualFeedbackSupplement` serializer | exact field/enum JSON과 ready 불변식 검증 | raw media/path/landmark 직렬화 |
@@ -63,6 +69,7 @@ service는 HTTP response, CLI args 또는 concrete SDK object를 반환하지 �
 | `SeungunPronunciationEvidencePort` | `seungun` schema, prompt/media/time binding과 reliability를 visual DTO로 변환 | 누락·revision 불일치는 `dependency_unavailable`; audio 결과는 유지 |
 | `ConsentRightsPort` | facial-video 목적, 보존, 삭제와 egress 권리 확인 | decode 전에 `visual_failed_closed` |
 | `RestrictedVideoPort` | locator를 opaque handle로 바꾸고 요청 종료 삭제 receipt 관리 | path를 domain/public output에 노출하지 않음; TTL/orphan 회수는 미구현 |
+| `PhoneWindowDecoderPort` | host-issued request의 `[start,end)` frame만 bounded RGB24로 decode하고 exact PTS/byte receipt 발급 | caller span 수용, unbounded decode 또는 codec gate 우회 |
 | `VideoQualityPort` | codec/timestamp, 얼굴 수, pose, blur, 가림, lip coverage 관찰 | score 0으로 대체하지 않음 |
 | `LipTrackingPort` | frame timestamp별 lip contour와 tracking 품질 반환 | phone 또는 내부 조음 원인을 생성하지 않음 |
 | `AvSyncPort` | upstream audio clock과 video clock의 offset/drift 및 불확실성 반환 | 실패를 0 ms로 가정하지 않음 |
@@ -107,20 +114,30 @@ precomputed adapter는 `src/voice_coach/visual_feedback`에 존재한다. 별도
 strict FFmpeg/ffprobe probe·decode·audio derivation, pinned MediaPipe worker/adapter와
 host-owned `VideoAttemptFacade` 계약이 있다.
 
-제한 저장과 FFmpeg 경로는 합성 비개인 MP4로 실제 실행됐다. commit된 container·PCM과
-Seungun 입력 WAV는 0400이며 FFmpeg RGB sample은 전 구간을 균등하게 고른다.
+제한 저장과 FFmpeg 경로는 H.264/HEVC 합성 media test와 HEVC Main/AAC,
+1080x1920 portrait, 30 fps 사용자 영상 두 건으로 실행됐다. commit된 container·PCM과
+Seungun 입력 WAV는 0400이며 FFmpeg global RGB sample은 전 구간에서 8 frame을
+균등하게 고른다. local composition은 최대 width/height 각각 1920, global sample 64 MiB,
+dense phone-window 12 frame/80 MiB의 압축 해제 byte gate를 유지한다.
 `VideoQcCandidateAdapter`는 decoded RGB+MediaPipe landmark에서 얼굴 coverage,
 luma/exposure bin, edge sharpness proxy, lip ROI와 track continuity를 측정하고 runtime
-detection v2에 receipt를 묶는다. 이는 P6 전 `candidate_unvalidated`/`unavailable`이며
-pose·occlusion 또는 calibrated pass 판정이 아니다.
-`LipAudioAvSyncAdapter`는 합성 lip-aperture/PCM-energy 신호에서 미보정 candidate와
-receipt를 계산하지만 P6 전에는 reliability가 아니다. internal CLI의 권장 `--video-fd`는
+detection v3에 raw candidate receipt를 묶는다. calibrated decision wrapper는 exact
+candidate와 전체 관측값, measurement/decision policy·code SHA를 결합하며 sync decision이
+통과한 뒤에만 validated offset을 발급한다. TS174/TL174 actual-media 정책 evidence가
+없으면 production에서는 `candidate_unvalidated`/`unavailable`이며 calibrated pass가 아니다.
+`LipAudioAvSyncAdapter`는 합성 lip-aperture/PCM-energy 신호와 실제 사용자 두 영상의
+runtime 경로에서 미보정 candidate/unavailable을 계산하지만 P6 전에는 reliability가
+아니다. dense phone-window는 policy-valid offset이 있을 때만 global QC/sync 뒤에
+추가 실행되며 cleanup 소유권을 새로 만들지 않는다. internal CLI의 권장 `--video-fd`는
 pre-opened read-only `fd >= 3`으로 participant path를 argv에 노출하지 않는다. 이를 사용한
-합성 H.264/AAC MP4, 공식 landmark model과 CUDA Seungun은 audio 완료·visual unavailable,
-`video_qc_candidate_not_calibrated`·`content_av_sync_candidate_not_calibrated`, cleanup 완료를 반환했다.
-camera/upload API/UI, 실제 사용자 영상의 pose·blur·가림 QC, P6/P8로 검증된 sync와
+두 HEVC portrait 사용자 영상은 공식 landmark model과 CUDA Seungun에서 audio
+`coaching_ready`·visual unavailable·cleanup 완료를 반환했다. content sync는 각각
+`not_observed`와 `candidate_unvalidated`였고 실제 phone-window 세 receipt는
+`not_issued`다. camera/upload API/UI, 실제 사용자 영상의 calibrated pose·blur·가림 QC,
+P6/P8로 검증된 sync와
 reference/calibration, TTL/orphan scavenger, production cleanup/audit ledger 및 사용자 UI는
 준비되지 않았다. 공개 후보와 역할은
 [`VISUAL_DATASET_EVIDENCE_LEDGER_KO.md`](VISUAL_DATASET_EVIDENCE_LEDGER_KO.md)에
 기록했지만 data admission과 artifact 생성은 시작하지 않았다. 따라서 현재 검증은
-contract 및 합성 media infrastructure 검증이며 사용자 영상 처리 검증이 아니다.
+contract와 두 사용자 파일의 media/audio infrastructure smoke이며 calibrated visual
+성능 또는 사용자 visual feedback 검증이 아니다.

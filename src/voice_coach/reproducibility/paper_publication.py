@@ -42,6 +42,15 @@ CANONICAL_CONFIG_PATH = "configs/paper/publication_v1.yaml"
 CANONICAL_OUTPUT_ROOT = "artifacts/reproducibility/paper_publication"
 CANONICAL_COMMIT_NAME = "commit.json"
 CANONICAL_RECEIPT_NAME = "publication-audit.json"
+BLOCKED_CONFIG_STATUS = "blocked_retired_canonical_sources"
+BLOCKER_CODE = "retired_canonical_sources"
+BLOCKED_BOUNDARY_SOURCES = (
+    "manuscript",
+    "evidence_map",
+    "source_ledger",
+    "data_boundary",
+)
+BLOCKED_RETIRED_SOURCE_ROLES = ("manuscript_evidence_validation_document",)
 PUBLICATION_LOCK_NAME = ".publish.lock"
 NAMESPACE_LOCK_NAME = ".paper_publication.publish.lock"
 GENERATION_MODE = 0o550
@@ -631,7 +640,79 @@ def _assert_canonical_publication_namespace(loaded: _Config) -> None:
         _fail("publication_namespace")
 
 
+def _validate_blocked_config(config: Mapping[str, Any]) -> None:
+    _expect_keys(
+        config,
+        {
+            "schema_version",
+            "status",
+            "blocker",
+            "current_boundaries",
+            "completion_state",
+            "output",
+        },
+        "blocked_config_keys",
+    )
+    blocker = _mapping(config.get("blocker"), "blocker")
+    _expect_keys(
+        blocker,
+        {"code", "retired_source_roles", "evidence_status", "explanation"},
+        "blocker_keys",
+    )
+    if blocker.get("code") != BLOCKER_CODE:
+        _fail("blocker_code")
+    roles = tuple(
+        _string(item, "retired_source_role")
+        for item in _list(blocker.get("retired_source_roles"), "retired_source_roles")
+    )
+    if roles != BLOCKED_RETIRED_SOURCE_ROLES:
+        _fail("retired_source_roles")
+    if blocker.get("evidence_status") != "unresolved":
+        _fail("blocker_evidence_status")
+    _string(blocker.get("explanation"), "blocker_explanation")
+
+    boundaries = _mapping(config.get("current_boundaries"), "current_boundaries")
+    if tuple(boundaries) != BLOCKED_BOUNDARY_SOURCES:
+        _fail("current_boundary_order")
+    for name in BLOCKED_BOUNDARY_SOURCES:
+        _expected_record(boundaries.get(name), f"current_boundary_{name}")
+
+    completion = _mapping(config.get("completion_state"), "completion_state")
+    _expect_keys(
+        completion,
+        {
+            "paper_complete",
+            "submission_status",
+            "manual_approval_required",
+            "manual_approval_status",
+        },
+        "completion_state_keys",
+    )
+    if (
+        completion.get("paper_complete") is not False
+        or completion.get("submission_status") != "not_submitted"
+        or completion.get("manual_approval_required") is not True
+        or completion.get("manual_approval_status") != "not_approved"
+    ):
+        _fail("completion_state")
+
+    output = _mapping(config.get("output"), "output")
+    _expect_keys(output, {"root", "commit_name", "receipt_name"}, "output_keys")
+    if output != {
+        "root": CANONICAL_OUTPUT_ROOT,
+        "commit_name": CANONICAL_COMMIT_NAME,
+        "receipt_name": CANONICAL_RECEIPT_NAME,
+    }:
+        _fail("blocked_output")
+
+
 def _validate_config_document(config: Mapping[str, Any]) -> None:
+    if config.get("schema_version") != CONFIG_SCHEMA:
+        _fail("config_schema")
+    if config.get("status") == BLOCKED_CONFIG_STATUS:
+        _validate_blocked_config(config)
+        return
+
     _expect_keys(
         config,
         {
@@ -647,8 +728,6 @@ def _validate_config_document(config: Mapping[str, Any]) -> None:
         },
         "config_keys",
     )
-    if config.get("schema_version") != CONFIG_SCHEMA:
-        _fail("config_schema")
     if config.get("status") != "ready":
         _fail("config_not_ready")
 
@@ -927,22 +1006,28 @@ def validate_config_only(
     """Validate static configuration without reading any referenced source."""
 
     _, config = _load_config(config_path, workspace_root=workspace_root)
+    blocked = config.document.get("status") == BLOCKED_CONFIG_STATUS
     source_record_count = (
-        2
-        + 4
-        + 3
-        + len(
-            _list(
-                _mapping(config.document.get("canonical"), "canonical").get(
-                    "local_assets"
-                ),
-                "canonical_local_assets",
+        len(BLOCKED_BOUNDARY_SOURCES)
+        if blocked
+        else (
+            2
+            + 4
+            + 3
+            + len(
+                _list(
+                    _mapping(config.document.get("canonical"), "canonical").get(
+                        "local_assets"
+                    ),
+                    "canonical_local_assets",
+                )
             )
         )
     )
     return {
         "schema_version": CONFIG_SCHEMA,
-        "status": "valid_config_only",
+        "status": BLOCKED_CONFIG_STATUS if blocked else "valid_config_only",
+        "blocker": BLOCKER_CODE if blocked else None,
         "config": config.record.as_dict(),
         "source_record_schemas_validated": source_record_count,
         "actual_state": {
@@ -2432,6 +2517,8 @@ def audit_paper_publication(
     """Run the offline audit and atomically publish a content-addressed receipt."""
 
     root, loaded = _load_config(config_path, workspace_root=workspace_root)
+    if loaded.document.get("status") == BLOCKED_CONFIG_STATUS:
+        _fail(BLOCKER_CODE)
     output_root_path, commit_name, receipt_name = _output_paths(root, loaded.document)
     output_relative = output_root_path.relative_to(root)
     output_root = _ensure_safe_output_directory(root, output_relative)

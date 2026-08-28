@@ -50,22 +50,6 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--num-workers", type=int, default=8)
     parser.add_argument("--resume-from-checkpoint")
     parser.add_argument(
-        "--allow-ungated-diagnostic-smoke",
-        action="store_true",
-        help=(
-            "Bypass the pending manual alignment gate for diagnostic smoke only; "
-            "this option is rejected in full mode."
-        ),
-    )
-    parser.add_argument(
-        "--allow-ungated-internal-full",
-        action="store_true",
-        help=(
-            "Bypass the pending manual audit only for explicitly labeled "
-            "internal full-data training."
-        ),
-    )
-    parser.add_argument(
         "--init-model-dir",
         type=Path,
         help=(
@@ -295,19 +279,7 @@ def main() -> int:
     validate_training_gate(
         gate,
         mode=args.mode,
-        allow_ungated_diagnostic_smoke=args.allow_ungated_diagnostic_smoke,
-        allow_ungated_internal_full=args.allow_ungated_internal_full,
     )
-    if args.allow_ungated_diagnostic_smoke:
-        print(
-            "WARNING: manual alignment gate is NOT passed; "
-            "running diagnostic smoke only."
-        )
-    if args.allow_ungated_internal_full:
-        print(
-            "WARNING: manual alignment gate is NOT passed; "
-            "running explicitly labeled internal full-data training."
-        )
     random.seed(args.seed)
     np.random.seed(args.seed)
     torch.manual_seed(args.seed)
@@ -463,12 +435,8 @@ def main() -> int:
         "nan_or_inf_loss": any(not math.isfinite(float(value)) for value in losses),
         "manual_audit_result": str(args.manual_audit_result.resolve()),
         "manual_audit_status": gate.get("status"),
-        "manual_gate_bypassed_for_diagnostic_smoke": bool(
-            args.allow_ungated_diagnostic_smoke
-        ),
-        "manual_gate_bypassed_for_internal_full": bool(
-            args.allow_ungated_internal_full
-        ),
+        "manual_gate_bypassed_for_diagnostic_smoke": False,
+        "manual_gate_bypassed_for_internal_full": False,
         "locked_test_accessed": False,
     }
     atomic_write_json(output_dir / "training_report.json", report)

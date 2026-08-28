@@ -221,7 +221,7 @@ class AvContainerPolicy:
 
 @dataclass(frozen=True, slots=True)
 class VideoStreamProbe:
-    """Strict H.264 video-stream metadata from ffprobe."""
+    """Strict allowlisted video-stream metadata from ffprobe."""
 
     stream_index: int
     codec_name: str
@@ -236,8 +236,8 @@ class VideoStreamProbe:
 
     def __post_init__(self) -> None:
         _require_non_negative_integer(self.stream_index, "stream_index")
-        if self.codec_name != "h264":
-            raise ValueError("video codec must be h264")
+        if self.codec_name not in {"h264", "hevc"}:
+            raise ValueError("video codec must be h264 or hevc")
         _require_positive_integer(self.width, "width")
         _require_positive_integer(self.height, "height")
         _require_positive_integer(

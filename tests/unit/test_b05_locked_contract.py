@@ -487,9 +487,9 @@ def test_static_config_validates_without_protected_access() -> None:
         config=config,
         audit=audit,
     )
-    assert len(result.source_snapshots) == 35
-    assert audit.source_pin_read_count == 34
-    assert audit.source_toctou_verification_count == 34
+    assert len(result.source_snapshots) == 33
+    assert audit.source_pin_read_count == 32
+    assert audit.source_toctou_verification_count == 32
     assert audit.b03_static_validation_count == 1
     assert audit.b06_static_validation_count == 1
     assert audit.locked_row_read_count == 0

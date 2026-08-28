@@ -16,61 +16,92 @@ canonical_sources:
   access_scope: C1_public_or_static_contract_pins_only
   pins:
     - path: configs/coaching/e02_confidence_guard_input_v1.schema.json
+      scope: e02_static_contract
       sha256: 2382601910d088ed3fb0b8d839bc38c6f992cf60fc592a8043ea586e76807e73
     - path: configs/coaching/e02_confidence_guard_api_response_v1.schema.json
+      scope: e02_static_contract
       sha256: e15d55e2f2db1efdd82ed98436272df124ea6631d9f7eb0e28b1f832d4270cd8
     - path: configs/coaching/e02_c02_coaching_bundle_commit_v1.schema.json
+      scope: e02_static_contract
       sha256: 611d6c4fc1cc4e1f1fd15a9bcc185deba781c145b23e2ed7432affbe5ae496ca
     - path: configs/coaching/e02_confidence_guard_preregistration_v1.template.json
+      scope: e02_static_contract
       sha256: 8b1e0490e3fbad3efe2f3ac8624187e32a386d35428bcd21a2c82f832bf0d4f9
     - path: configs/experiments/c02_deterministic_coaching_selection_v1.yaml
-      sha256: 558bd904f55c115ff36ec7bc1e2b29466c2aafbf1afc840984e9574ef5b6ba2a
+      scope: e02_static_contract
+      sha256: d9f0f63343d46f8724cc182ca6e19b2072f6c50935418356347d44f2de13af35
     - path: configs/coaching/c02_diagnostic_issues_input_v1.schema.json
+      scope: e02_static_contract
       sha256: cd2588ffac9ff10870977e125969c7709ecde25c050c4845ab0c9b9f1f1d7742
     - path: configs/coaching/c02_coaching_selection_output_v1.schema.json
+      scope: e02_static_contract
       sha256: 935db571a2371e96b082a59979af7b24a508318f5385f62032d4ce735ed6c643
     - path: src/voice_coach/coaching/c02_selection_contract.py
-      sha256: 76dd68786e0d9fdd1bf03d34f20b1d9d5b3cefa4c55a3ae864770c227cfd4970
+      scope: e02_static_contract
+      sha256: 7f081c0df873f9aa30abbadaa1609a012f66201bc2d8bf2076c5586cccd7c3b2
     - path: configs/experiments/wavlm_s107_calibration_v1.yaml
-      sha256: f85821abece46e8bb6a2a0c49e74e5717b5bdd9b0139c9138b93a446f1497c95
+      scope: e02_static_contract
+      sha256: c606f77b45c44a517ffff3118bba618ce3da7f0f7f571220c7e9ce15ac4e1966
     - path: src/voice_coach/training/wavlm_s107_calibration_contract.py
+      scope: e02_static_contract
       sha256: 04909937b7b8eb4a135a0f7e44c7ec0afc8a438c29aae2d2cbe3de4dcdafac1e
     - path: src/voice_coach/training/wavlm_s107_calibration_training.py
+      scope: e02_static_contract
       sha256: 201973a25e75da77ec86468a60094c22ac3d3376d936d5e2d089531d52b5d6d3
-    - path: docs/IMPLEMENTATION_PLAN_KO.md
-      sha256: 836ea2b5a2db2bf3dcfb6ea4003c73c5240ae24bea9ea9af8531519f6a57e07a
-    - path: docs/constraints/WP4_POST_S103_EXECUTION_CONTRACT_KO.md
-      sha256: 908c26bc7f3de3ccf1e6daa9eb70b09537f16d32571c0dc1259bba6668ed0a0f
-    - path: docs/constraints/WAVLM_S107_CALIBRATION_READINESS_KO.md
-      sha256: 7bc4f1335c21c016103c26b4819bd7d416638198e61eb0017b15b47cce88d975
-    - path: docs/constraints/C02_COACHING_SELECTION_DATA_MODEL_SAFETY_CARD_KO.md
-      sha256: 88749a14a61da78b612f8c22edcb13278f4906081971bcda2d55dd119e72b7b1
-    - path: docs/constraints/C02_DETERMINISTIC_COACHING_SELECTION_READINESS_KO.md
-      sha256: 779c0633fdb80656e8c5f348f2e6c3a466741d2e83389639508fcca5024c11e8
-    - path: docs/constraints/E01_METAMORPHIC_DATA_MODEL_SAFETY_CARD_KO.md
-      sha256: bef7b09317ceb82e9eb5c0de0c20990cb111f9aa5bcede2c822a3fd267cb0eae
-    - path: docs/constraints/E01_METAMORPHIC_READINESS_KO.md
-      sha256: 9844d2969ac4f923b449834d72c198cf27e00121d20269666094a342e9bb97f2
+    - path: seungun/README.md
+      scope: seungun_audio_canonical
+      sha256: bfb5d43869426388626a49b033422fb25f038232d1c31b96ec6331a924455636
+    - path: seungun/docs/CURRENT_PIPELINE_KO.md.md
+      scope: seungun_audio_canonical
+      sha256: fc9ca5126c7f8ce3245188602e2563c40ba3bfa72473cadcd74d80bf91cef495
+    - path: seungun/docs/WORK_LOG_AND_FINDINGS_KO.md
+      scope: seungun_audio_canonical
+      sha256: 516ea58b454b4c1e685e0f29a7acfeef99e0cf6bbdd479c19e3091253201b61c
+    - path: seungun/docs/PIPELINE_RELIABILITY_IMPROVEMENT_PROPOSAL_KO.md
+      scope: seungun_audio_canonical
+      sha256: f8b5026da1530bf650dce61309a80f7cebd3ca89a9ac6aa5dd5cbe69099efd3d
+    - path: seungun/configs/textgrid_target_policy.yaml
+      scope: seungun_audio_canonical
+      sha256: 3da7b9399f3f3120b01825a5fda7111a1147ad35a85c2ceb7f499439a3344954
+    - path: seungun/configs/xlsr300m_full.yaml
+      scope: seungun_audio_canonical
+      sha256: 636fe47b02cbf9f31c4c62f519a603a275c46796fe5fbb8843ddb1d2bed59f10
+    - path: seungun/src/korean_phone_ctc/frozen_detector.py
+      scope: seungun_audio_canonical
+      sha256: 7bf233c8a538ecd5e2c8fea6da3adb9e2f9deb86b6ff13455995de66793f2098
+    - path: data/README.md
+      scope: data_privacy_boundary
+      sha256: 53cba9ea730b608474086158c610b831f992538b008bc8f4db784383786a26e5
     - path: docs/api/endpoints.md
-      sha256: 61280c3d2a9d3f8212fb0cf93abda3709d4508b205130701554e1410a84f05d7
+      scope: api_contract
+      sha256: 5beca1f9b1b06a86596b41229c26a1b48cd72daaad03c6ced0494cef48056b5c
     - path: docs/api/specification.md
-      sha256: b504763d73f42fe5408a51e9df729fb9c7dac3abc6598fb87afef8409b585256
+      scope: api_contract
+      sha256: b6ad172a51a6d6125c5b8fee506514e27e448677fc1a780249930def3e7aafc5
+    - path: docs/architecture/README_KO.md
+      scope: visual_sidecar_only
+      sha256: 1f6d1b901e9c2d1a49be11b835b3679d0076992ae917f296b233dc23d5b50c80
     - path: docs/architecture/architecture.md
-      sha256: 51dbe879889523ab6bc828fb2eee1abc0133abacfd84d0d9732d72e43d9b6fc7
+      scope: visual_sidecar_only
+      sha256: fd17c60e372d3e0b56c85d2dbf877d11318b6d1a012d6413ff7b792b52a7fb0b
     - path: docs/architecture/component.md
-      sha256: 5bd49f66e2a77c2693c21ee190c2daf8913c6222b6457ad8d942c3d50fcd1d5b
+      scope: visual_sidecar_only
+      sha256: 2db210bf4f291e16ab6d94f4ebcff6b6ad625e0e7b997c654e5b34eb6663549c
     - path: docs/architecture/directory.md
-      sha256: cb64358647620abb9129ea95b0bca28a283b34265d54075f1e63fc567a8bb3b0
+      scope: visual_sidecar_only
+      sha256: 153aedbc5149c88910c3d94bb5f992dc2dc4ddfe7130e793c89cae9e653bb6e3
     - path: docs/architecture/flow.md
-      sha256: cca86ef07736ecf703d2853e6100abb090a8a7828049295c45224b9b45d383ea
+      scope: visual_sidecar_only
+      sha256: 3bd40cf7266de90baf9bcf57daa102e86c1e90112a594fbd581b7d4b7bdc9e99
     - path: docs/architecture/state.md
-      sha256: 2dc47996c270ef0b5d1b1a1c00f974c93345f82fce5224b55a91374aeef4ea51
+      scope: visual_sidecar_only
+      sha256: 7bdb518a9580ed65fe11a6e9ec49b29131e5c3d8fe9ae9f31f8a10b56122578e
 
 predecessor_s107:
   deep_validation_required: true
   actual_completed_output_required: true
   config_path: configs/experiments/wavlm_s107_calibration_v1.yaml
-  config_sha256: f85821abece46e8bb6a2a0c49e74e5717b5bdd9b0139c9138b93a446f1497c95
+  config_sha256: c606f77b45c44a517ffff3118bba618ce3da7f0f7f571220c7e9ce15ac4e1966
   contract_path: src/voice_coach/training/wavlm_s107_calibration_contract.py
   contract_sha256: 04909937b7b8eb4a135a0f7e44c7ec0afc8a438c29aae2d2cbe3de4dcdafac1e
   completion_validator_path: src/voice_coach/training/wavlm_s107_calibration_training.py
@@ -97,9 +128,9 @@ predecessor_c02:
   deep_validation_required: true
   actual_completed_bundle_required: true
   config_path: configs/experiments/c02_deterministic_coaching_selection_v1.yaml
-  config_sha256: 558bd904f55c115ff36ec7bc1e2b29466c2aafbf1afc840984e9574ef5b6ba2a
+  config_sha256: d9f0f63343d46f8724cc182ca6e19b2072f6c50935418356347d44f2de13af35
   contract_path: src/voice_coach/coaching/c02_selection_contract.py
-  contract_sha256: 76dd68786e0d9fdd1bf03d34f20b1d9d5b3cefa4c55a3ae864770c227cfd4970
+  contract_sha256: 7f081c0df873f9aa30abbadaa1609a012f66201bc2d8bf2076c5586cccd7c3b2
   bundle_schema_path: configs/coaching/e02_c02_coaching_bundle_commit_v1.schema.json
   bundle_schema_sha256: 611d6c4fc1cc4e1f1fd15a9bcc185deba781c145b23e2ed7432affbe5ae496ca
   completion_commit_path: artifacts/coaching/c02/commit.json

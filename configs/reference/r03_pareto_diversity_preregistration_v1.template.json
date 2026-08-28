@@ -6,8 +6,8 @@
   "registered_by_role": "TBD_PREREGISTRATION",
   "frozen_before_r02_eligible_data_access": true,
   "r00_card_sha256": "08dc149ccf10006a587e6216dda0471c19b5c55eab6b320b4348587527d82c4d",
-  "r01_config_sha256": "bc0ff862f7159c2516a8fa302c21ad8a59975b56b5e9c0b994a585cd8577f718",
-  "r02_config_sha256": "6aae6641915fe3dfe400a1891e54967e46cd33b0452738c98d7a1082ddff4868",
+  "r01_config_sha256": "7cc35e4661abdd68bdbccc4aacb79f50b708dc1ca96db9521ff33c948ecf7f79",
+  "r02_config_sha256": "31eb1690db0f8cdb4591929d051c7aa73947f102aed71c6c2b702c2a807f696f",
   "objective_contract": {
     "objective_ids": [
       "naturalness",

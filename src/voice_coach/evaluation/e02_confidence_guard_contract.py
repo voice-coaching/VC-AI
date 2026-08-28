@@ -46,7 +46,7 @@ BLOCK_REASONS = (
 )
 SAFE_NEXT_ACTIONS = ("rerecord", "expert_review")
 
-SOURCE_PATHS = (
+E02_STATIC_CONTRACT_SOURCE_PATHS = {
     "configs/coaching/e02_confidence_guard_input_v1.schema.json",
     "configs/coaching/e02_confidence_guard_api_response_v1.schema.json",
     "configs/coaching/e02_c02_coaching_bundle_commit_v1.schema.json",
@@ -58,21 +58,45 @@ SOURCE_PATHS = (
     "configs/experiments/wavlm_s107_calibration_v1.yaml",
     "src/voice_coach/training/wavlm_s107_calibration_contract.py",
     "src/voice_coach/training/wavlm_s107_calibration_training.py",
-    "docs/IMPLEMENTATION_PLAN_KO.md",
-    "docs/constraints/WP4_POST_S103_EXECUTION_CONTRACT_KO.md",
-    "docs/constraints/WAVLM_S107_CALIBRATION_READINESS_KO.md",
-    "docs/constraints/C02_COACHING_SELECTION_DATA_MODEL_SAFETY_CARD_KO.md",
-    "docs/constraints/C02_DETERMINISTIC_COACHING_SELECTION_READINESS_KO.md",
-    "docs/constraints/E01_METAMORPHIC_DATA_MODEL_SAFETY_CARD_KO.md",
-    "docs/constraints/E01_METAMORPHIC_READINESS_KO.md",
+}
+
+SEUNGUN_AUDIO_CANONICAL_SOURCE_PATHS = {
+    "seungun/README.md",
+    "seungun/docs/CURRENT_PIPELINE_KO.md.md",
+    "seungun/docs/WORK_LOG_AND_FINDINGS_KO.md",
+    "seungun/docs/PIPELINE_RELIABILITY_IMPROVEMENT_PROPOSAL_KO.md",
+    "seungun/configs/textgrid_target_policy.yaml",
+    "seungun/configs/xlsr300m_full.yaml",
+    "seungun/src/korean_phone_ctc/frozen_detector.py",
+}
+
+DATA_PRIVACY_BOUNDARY_SOURCE_PATHS = {"data/README.md"}
+
+API_CONTRACT_SOURCE_PATHS = {
     "docs/api/endpoints.md",
     "docs/api/specification.md",
+}
+
+VISUAL_SIDECAR_ONLY_SOURCE_PATHS = {
+    "docs/architecture/README_KO.md",
     "docs/architecture/architecture.md",
     "docs/architecture/component.md",
     "docs/architecture/directory.md",
     "docs/architecture/flow.md",
     "docs/architecture/state.md",
-)
+}
+
+EXPECTED_SOURCE_SCOPES = {
+    **dict.fromkeys(E02_STATIC_CONTRACT_SOURCE_PATHS, "e02_static_contract"),
+    **dict.fromkeys(
+        SEUNGUN_AUDIO_CANONICAL_SOURCE_PATHS,
+        "seungun_audio_canonical",
+    ),
+    **dict.fromkeys(DATA_PRIVACY_BOUNDARY_SOURCE_PATHS, "data_privacy_boundary"),
+    **dict.fromkeys(API_CONTRACT_SOURCE_PATHS, "api_contract"),
+    **dict.fromkeys(VISUAL_SIDECAR_ONLY_SOURCE_PATHS, "visual_sidecar_only"),
+}
+SOURCE_PATHS = tuple(EXPECTED_SOURCE_SCOPES)
 
 EXPECTED_EXECUTION_ORDER = (
     "validate_e02_static_config_sources_schemas_and_fail_closed_template",
@@ -1163,6 +1187,25 @@ def _validate_config_values(config: Mapping[str, Any]) -> None:
         "C1_public_or_static_contract_pins_only",
         "canonical source scope",
     )
+    pins = _list(canonical.get("pins"), "canonical source pins")
+    if len(pins) != len(SOURCE_PATHS):
+        raise E02ContractError("canonical source pin count drift")
+    seen: set[str] = set()
+    for index, raw_pin in enumerate(pins):
+        pin = _mapping(raw_pin, f"source pin {index}")
+        _expect_keys(pin, {"path", "scope", "sha256"}, f"source pin {index}")
+        relative = _relative_string(pin.get("path"), f"source pin {index} path")
+        if relative in seen:
+            raise E02ContractError(f"duplicate source pin: {relative}")
+        seen.add(relative)
+        _expect(
+            pin.get("scope"),
+            EXPECTED_SOURCE_SCOPES.get(relative),
+            f"source pin {index} scope",
+        )
+        _sha256(pin.get("sha256"), f"source pin {index} SHA")
+    if seen != set(SOURCE_PATHS):
+        raise E02ContractError("canonical source path set drift")
 
     s107 = _mapping(config.get("predecessor_s107"), "predecessor S107")
     for field in ("deep_validation_required", "actual_completed_output_required"):
@@ -1472,12 +1515,17 @@ def validate_static_config(
     payload_by_path: dict[str, bytes] = {}
     for index, raw_pin in enumerate(pins):
         pin = _mapping(raw_pin, f"source pin {index}")
-        _expect_keys(pin, {"path", "sha256"}, f"source pin {index}")
+        _expect_keys(pin, {"path", "scope", "sha256"}, f"source pin {index}")
         relative = _relative_string(pin.get("path"), f"source pin {index} path")
         expected_sha = _sha256(pin.get("sha256"), f"source pin {index} SHA")
         if relative in seen:
             raise E02ContractError(f"duplicate source pin: {relative}")
         seen.add(relative)
+        _expect(
+            pin.get("scope"),
+            EXPECTED_SOURCE_SCOPES.get(relative),
+            f"source pin {index} scope",
+        )
         data, snapshot = _read_file(root, relative, f"source pin {relative}")
         access.source_pin_read_count += 1
         if snapshot.sha256 != expected_sha:

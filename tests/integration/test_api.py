@@ -1,3 +1,8 @@
+import os
+import subprocess
+import sys
+import textwrap
+from pathlib import Path
 from uuid import uuid4
 
 from fastapi.testclient import TestClient
@@ -5,6 +10,72 @@ from fastapi.testclient import TestClient
 from voice_coach.api.app import app
 
 client = TestClient(app)
+WORKSPACE = Path(__file__).resolve().parents[2]
+
+
+def test_base_api_import_does_not_require_torch() -> None:
+    script = textwrap.dedent(
+        """
+        import builtins
+        import sys
+        from typing import get_type_hints
+
+        original_import = builtins.__import__
+
+        def block_torch(name, *args, **kwargs):
+            if name == "torch" or name.startswith("torch."):
+                raise ModuleNotFoundError(
+                    "torch deliberately blocked for base dependency test",
+                    name="torch",
+                )
+            return original_import(name, *args, **kwargs)
+
+        builtins.__import__ = block_torch
+
+        from voice_coach.api.app import app
+        from voice_coach.application.closed_loop import (
+            ClosedLoopApplicationError,
+            ClosedLoopSession,
+            ClosedLoopTTSService,
+        )
+
+        assert any(route.path == "/health" for route in app.routes)
+        assert "torch" not in sys.modules
+        assert (
+            get_type_hints(ClosedLoopSession.decide)["return"].__name__
+            == "ClosedLoopDecision"
+        )
+
+        class UnusedGeneratorChain:
+            def generate_candidates(self, *args, **kwargs):
+                raise AssertionError(
+                    "generator chain must not run without scorer dependencies"
+                )
+
+        try:
+            ClosedLoopTTSService(UnusedGeneratorChain()).generate_reference(
+                object(), object(), object(), families=()
+            )
+        except ClosedLoopApplicationError as exc:
+            assert "voice-coach[scorer]" in str(exc)
+        else:
+            raise AssertionError(
+                "TTS generation must fail closed when torch is unavailable"
+            )
+        """
+    )
+    env = os.environ.copy()
+    env["PYTHONPATH"] = str(WORKSPACE / "src")
+    completed = subprocess.run(
+        [sys.executable, "-c", script],
+        cwd=WORKSPACE,
+        env=env,
+        check=False,
+        capture_output=True,
+        text=True,
+    )
+
+    assert completed.returncode == 0, completed.stderr
 
 
 def test_health() -> None:

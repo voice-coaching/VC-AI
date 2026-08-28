@@ -38,9 +38,9 @@ except ImportError:  # headless machine; the GUI needs a desktop Python
 # Pre-selected so the reviewer only has to change rows they disagree with.
 # Trade-off: an item left untouched is indistinguishable from one actually
 # listened to and judged correct, which weakens the audit's evidentiary
-# value versus requiring an explicit choice per item. See
-# docs/constraints/AIHUB71490_EXPERT_AUDIT_WORKSHEET_GUIDE_KO.md for the accepted-risk
-# note.
+# value versus requiring an explicit choice per item. No current tracked guide
+# authorizes treating this default as a human decision, so untouched rows must
+# remain evidentially unreviewed.
 DEFAULT_ALIGNMENT_CORRECT = "correct"
 DEFAULT_MAXIMUM_BOUNDARY_ERROR_MS = "0"
 DEFAULT_INCORRECT_INTERVAL_COUNT = "0"

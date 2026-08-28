@@ -33,32 +33,24 @@ canonical_sources:
     - path: configs/coaching/c02_diagnostic_issues_input_v1.schema.json
       sha256: cd2588ffac9ff10870977e125969c7709ecde25c050c4845ab0c9b9f1f1d7742
     - path: configs/experiments/c02_deterministic_coaching_selection_v1.yaml
-      sha256: 558bd904f55c115ff36ec7bc1e2b29466c2aafbf1afc840984e9574ef5b6ba2a
+      sha256: d9f0f63343d46f8724cc182ca6e19b2072f6c50935418356347d44f2de13af35
     - path: configs/experiments/wavlm_s107_calibration_v1.yaml
-      sha256: f85821abece46e8bb6a2a0c49e74e5717b5bdd9b0139c9138b93a446f1497c95
-    - path: docs/constraints/C01_KOREAN_ERROR_ADVICE_ONTOLOGY_DATA_CARD_KO.md
-      sha256: 14d5e61bc671cc781fc711a2bfb589271ea9b87b3c8f5a8585840b23e19204b7
-    - path: docs/constraints/C02_COACHING_SELECTION_DATA_MODEL_SAFETY_CARD_KO.md
-      sha256: 88749a14a61da78b612f8c22edcb13278f4906081971bcda2d55dd119e72b7b1
-    - path: docs/constraints/C02_DETERMINISTIC_COACHING_SELECTION_READINESS_KO.md
-      sha256: 779c0633fdb80656e8c5f348f2e6c3a466741d2e83389639508fcca5024c11e8
-    - path: docs/constraints/DATA_PRIVACY_BOUNDARY_KO.md
-      sha256: 8934384f1c570cf1a086fd08c18b26f577c0a22c3bd69ae1b5064eb34f8b1309
-    - path: docs/constraints/WAVLM_S107_CALIBRATION_READINESS_KO.md
-      sha256: 7bc4f1335c21c016103c26b4819bd7d416638198e61eb0017b15b47cce88d975
+      sha256: c606f77b45c44a517ffff3118bba618ce3da7f0f7f571220c7e9ce15ac4e1966
+    - path: data/README.md
+      sha256: 53cba9ea730b608474086158c610b831f992538b008bc8f4db784383786a26e5
     - path: scripts/prepare_c03_expert_coaching_audit.py
       sha256: 6dec5c22a0d18150de8f1d48ce4896ed1bc0580f14d6356cb1d919e1ee1b0b27
     - path: src/voice_coach/coaching/c02_selection_contract.py
-      sha256: 76dd68786e0d9fdd1bf03d34f20b1d9d5b3cefa4c55a3ae864770c227cfd4970
+      sha256: 7f081c0df873f9aa30abbadaa1609a012f66201bc2d8bf2076c5586cccd7c3b2
     - path: src/voice_coach/coaching/c03_expert_audit_contract.py
-      sha256: 440ea47d2c7af0b79f2d16c77f8e5d4091acfd7aa9d19d30972c47d1e7b00374
+      sha256: c7564b39869e91ff6c91faf95af8343b93c7dec61e9cf25a60f8709406be2322
     - path: src/voice_coach/training/wavlm_s107_calibration_training.py
       sha256: 201973a25e75da77ec86468a60094c22ac3d3376d936d5e2d089531d52b5d6d3
 
 predecessor_s107:
   required_actual_completion: true
   config_path: configs/experiments/wavlm_s107_calibration_v1.yaml
-  config_sha256: f85821abece46e8bb6a2a0c49e74e5717b5bdd9b0139c9138b93a446f1497c95
+  config_sha256: c606f77b45c44a517ffff3118bba618ce3da7f0f7f571220c7e9ce15ac4e1966
   completion_commit_path: artifacts/experiments/aihub71490_wavlm_s107_calibration_v1/commit.json
   completion_commit_sha256: TBD_S107_COMPLETION
   required_commit_schema_version: voice_coach.wavlm_s107_calibration_commit.v1
@@ -68,9 +60,9 @@ predecessor_s107:
 predecessor_c02:
   required_actual_d1_bundle: true
   config_path: configs/experiments/c02_deterministic_coaching_selection_v1.yaml
-  config_sha256: 558bd904f55c115ff36ec7bc1e2b29466c2aafbf1afc840984e9574ef5b6ba2a
+  config_sha256: d9f0f63343d46f8724cc182ca6e19b2072f6c50935418356347d44f2de13af35
   contract_path: src/voice_coach/coaching/c02_selection_contract.py
-  contract_sha256: 76dd68786e0d9fdd1bf03d34f20b1d9d5b3cefa4c55a3ae864770c227cfd4970
+  contract_sha256: 7f081c0df873f9aa30abbadaa1609a012f66201bc2d8bf2076c5586cccd7c3b2
   completion_commit_path: artifacts/coaching/c02/commit.json
   completion_commit_sha256: TBD_C02_COMPLETION
   required_commit_schema_version: voice_coach.c02_coaching_bundle_commit.v1

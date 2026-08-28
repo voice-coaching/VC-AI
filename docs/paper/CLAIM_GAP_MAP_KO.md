@@ -4,6 +4,8 @@
 - 대상 원고: `docs/paper/EXPERIMENTAL_MANUSCRIPT_KO.md`
 - 상태: WP10/P00 분류 감사 완료, S101–S103와 R00 관측값 반영,
   S104 이후 실험·외부 평가는 미완료
+- source availability 재검토: 2026-08-28 KST; 이 문서의 2026-07-29
+  completion tracker·구현계획 의존은 현재 tracked tree에서 퇴역됨
 
 ## 1. 목적과 판정 단위
 
@@ -30,14 +32,15 @@ O21–O24로 분류하되 development-only·oracle/silver·no-promotion 제한�
 
 현재 사실의 우선순위는 다음과 같다.
 
-1. 해시가 고정된 aggregate artifact와 experiment registry
+1. 커밋된 config·schema·source와 해시가 일치하는 aggregate artifact/receipt
 2. `docs/paper/evidence-map.yaml` 및 evidence validator
-3. `docs/constraints/RESEARCH_COMPLETION_TRACKER_KO.md`의 현재 task 상태
-4. `docs/IMPLEMENTATION_PLAN_KO.md`의 gate·프로토콜
+3. 루트 [`README.md`](../../README.md)에서 안내하는 현행 단계별 상태 문서
+4. 2026-07-29 당시 completion tracker·구현 계획의 snapshot 기록
 
-실행계획 2장은 문서 자체가 “최초 계획 당시의 스냅샷”이라고 경고한다.
-따라서 그 장의 ZIP 미해제·코드 미구현 등의 문장은 현재 상태 증거로
-사용하지 않는다. 실행계획의 API JSON에 적힌 `0.96`, `0.93`, `0.72` 등의
+당시 실행계획은 “최초 계획 당시의 스냅샷”이었고 현재 파일은
+tracked tree에 없다. 따라서 그 문서의 ZIP 미해제·코드 미구현 문장은
+현재 상태 증거나 source pin으로 사용하지 않는다. API JSON에 적혀던
+`0.96`, `0.93`, `0.72` 등의
 숫자도 실제 응답이 아니라 출력 계약 예시다. 추적기의 가중 진행률과
 synthetic/unit test 개수는 프로젝트 관리·코드 검증 상태이지 논문 성능
 지표가 아니다.

@@ -25,8 +25,8 @@ def test_repository_config_only_reads_static_sources_and_nothing_runtime() -> No
     assert completed.returncode == 0, completed.stderr
     result = json.loads(completed.stdout)
     assert result["status"] == "valid_config_only"
-    assert result["source_pin_count"] == 20
-    assert result["source_pin_read_count"] == 20
+    assert result["source_pin_count"] == 16
+    assert result["source_pin_read_count"] == 16
     for field, value in result.items():
         if field.endswith("_count") and field not in (
             "source_pin_count",
@@ -45,8 +45,8 @@ def test_repository_full_fails_at_s107_before_path_read_or_runtime_access() -> N
     assert result["status"] == "failed_closed"
     assert result["stage"] == "s107_completion"
     assert "TBD_S107_COMPLETION" in result["error"]
-    assert result["source_pin_read_count"] == 20
-    assert result["source_toctou_verification_count"] == 20
+    assert result["source_pin_read_count"] == 16
+    assert result["source_toctou_verification_count"] == 16
     for field, value in result.items():
         if field.endswith("_count") and field not in (
             "source_pin_read_count",

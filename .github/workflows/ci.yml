@@ -1,0 +1,83 @@
+name: Base clone CI
+
+on:
+  pull_request:
+  push:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: base-ci-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  markdown-links:
+    name: All tracked Markdown relative links
+    runs-on: ubuntu-24.04
+    timeout-minutes: 5
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v7
+        with:
+          persist-credentials: false
+
+      - name: Set up Python 3.12
+        uses: actions/setup-python@v7
+        with:
+          python-version: "3.12"
+
+      - name: Validate relative file destinations
+        run: python scripts/check_markdown_links.py
+
+      - name: Validate repository-current source pins
+        run: python scripts/check_source_pins.py
+
+  base-clone-contract:
+    name: Base install and API contract (no scorer or local artifacts)
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v7
+        with:
+          persist-credentials: false
+
+      - name: Set up Python 3.12
+        uses: actions/setup-python@v7
+        with:
+          python-version: "3.12"
+          cache: pip
+
+      - name: Install base package and test tools
+        run: python -m pip install -e ".[test]"
+
+      - name: Check installed dependency consistency
+        run: python -m pip check
+
+      - name: Confirm scorer runtime stays optional
+        run: >-
+          python -c
+          'import importlib.util;
+          assert importlib.util.find_spec("torch") is None,
+          "base CI unexpectedly installed optional torch"'
+
+      - name: Verify base API and dependency boundary
+        run: >-
+          python -m pytest
+          tests/integration/test_api.py
+          tests/unit/test_contracts.py
+          tests/unit/test_markdown_links.py
+          tests/unit/test_source_pins.py
+
+      - name: Record excluded research-runtime boundary
+        if: always()
+        run: |
+          {
+            echo "### CI scope"
+            echo
+            echo "This job verifies a clean base + test-extra installation and the API contract."
+            echo "It does not claim scorer, visual/GPU, restricted-data, checkpoint, ignored-artifact, or human-gate validation."
+            echo "Those suites require their declared optional dependencies and controlled local evidence."
+          } >> "$GITHUB_STEP_SUMMARY"

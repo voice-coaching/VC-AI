@@ -16,6 +16,7 @@ from .models import (
     VideoAdmissionPolicy,
     VideoConsentAuthorization,
 )
+from .phone_window import PhoneWindowDecodeRequest, Rgb24PhoneWindow
 
 
 class RestrictedArtifactWriter(Protocol):
@@ -84,8 +85,23 @@ class AvContainerPort(Protocol):
     ) -> RestrictedPcmAudio: ...
 
 
+@runtime_checkable
+class PhoneWindowDecoderPort(Protocol):
+    """Decode one trusted host-issued selected-phone window under hard bounds."""
+
+    def decode_rgb24_window(
+        self,
+        asset: RestrictedVideoAsset,
+        policy: AvContainerPolicy,
+        *,
+        probe: MediaProbe,
+        request: PhoneWindowDecodeRequest,
+    ) -> Rgb24PhoneWindow: ...
+
+
 __all__ = [
     "AvContainerPort",
+    "PhoneWindowDecoderPort",
     "RestrictedArtifactWriter",
     "RestrictedMediaStorePort",
 ]

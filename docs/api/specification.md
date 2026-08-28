@@ -30,6 +30,28 @@
   - 0–1 범위를 벗어난 점수
   - 허용되지 않은 evidence ID 또는 추가 필드
 
+## POST /v1/closed-loop/oracle-attempts
+
+- 설명: 한 번의 Oracle `DiagnosticProfile`을 만든 뒤 stateless
+  코칭·재녹음 전이를 계산한다. 역시 정답 오류 라벨을 요청으로 받는
+  연구·계약 검증용이며 음성 업로드, 모델 추론, 사용자 session 저장을
+  제공하지 않는다.
+- 인증: 없음
+- Request body:
+  - `attempt`: `POST /v1/oracle-attempts`와 같은 Oracle request
+  - `attemptIndex`: 1부터 시작하는 현재 attempt 번호, 기본값 1
+  - `maxAttempts`: 1 이상의 최대 attempt 수, 기본값 3
+- Response body:
+  - `profile`: `DiagnosticProfile` schema version `1.0`
+  - `decision.schema_version`: `voice_coach.closed_loop_decision.v1`
+  - `decision`: `action`, `reason`, `attempt_index`, `advice_id`,
+    `next_state`, `reference_family`
+- Status codes:
+  - `200`: profile과 전이 계산 성공
+  - `422`: envelope 또는 내부 Oracle request schema 위반
+- 상태 보존: 없음. 각 요청은 `attemptIndex`로 전달된 현재 순번에서
+  하나의 결정만 반환한다.
+
 ## 외부 API 매핑
 - upstream 계약이 확인된 경우에만 내부 endpoint와 upstream 호출 관계를 기록한다.
 - 현재 외부 API 매핑은 없다.

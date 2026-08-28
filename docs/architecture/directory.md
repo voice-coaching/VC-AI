@@ -1,8 +1,10 @@
 # 입술 모양 피드백 Sidecar 디렉터리
 
 - 문서 상태: `implemented_contract_with_internal_smoke`
-- 구현 상태: `partial_implementation`; 사용자 실영상 runtime은 `not_ready`
-- 공개 데이터 후보 조사: `dataset_candidates_audited`; admission·실행은 `not_started`
+- 구현 상태: `p6_reference_calibrated_runtime_promotion_blocked`; 사용자 실영상
+  media/audio와 AI Hub 68 P6/P6B는 검증, visual feedback runtime은 `not_ready`
+- 공개 데이터 상태: AI Hub 68 admission/calibration 완료; AI Hub 538 TS174/TL174
+  decision calibration과 locked P8 evaluation은 미실행
 
 이 문서는 현재 존재하는 관련 경로만 “현재 구조”로 기록한다. 아래 내부 adapter와
 artifact는 production video backend 또는 실제 데이터로 검증된 calibration을 뜻하지 않는다.
@@ -27,49 +29,64 @@ artifact는 production video backend 또는 실제 데이터로 검증된 calibr
 | `src/voice_coach/visual_feedback/services/coordinator.py` | file | 상태 우선순위, exact anchor join, catalog 선택, fail-closed cleanup | 구현됨 |
 | `src/voice_coach/visual_feedback/testing.py` | file | 단일-use synthetic attempt composition | 내부 contract test 전용 |
 | `src/voice_coach/pronunciation_attempts/models.py` | file | consent/admission policy, opaque video/PCM, strict probe/frame와 audio derivation receipt | path-free attempt media 계약; 구현됨 |
-| `src/voice_coach/pronunciation_attempts/ports.py` | file | restricted media store와 A/V container Protocol | attempt-level dependency inversion; 구현됨 |
+| `src/voice_coach/pronunciation_attempts/phone_window.py` | file | policy-valid A/V offset, host-issued selected-phone window request와 decode/tracking/runtime immutable receipt DAG | exact anchor/PTS/RGB/model/QC/sync lineage; 자체 visual promotion 없음 |
+| `src/voice_coach/pronunciation_attempts/ports.py` | file | restricted media store, A/V container와 bounded `PhoneWindowDecoderPort` Protocol | attempt-level dependency inversion; 구현됨 |
 | `src/voice_coach/pronunciation_attempts/adapters/restricted_local_media.py` | file | consent-before-I/O, no-follow local file admission, 0700 workspace, 0600 생성·commit 후 0400 container/PCM, derived audio lifecycle와 삭제 receipt | 구현됨; 제품 upload/camera intake는 아님 |
-| `src/voice_coach/pronunciation_attempts/adapters/ffmpeg_av_container.py` | file | strict MP4/H.264/AAC probe, monotonic frame timestamp, 전 구간 균등 RGB24 frame sample, 16 kHz mono PCM derivation | 구현됨; 합성 비개인 MP4로 local FFmpeg 실행 검증 |
+| `src/voice_coach/pronunciation_attempts/adapters/ffmpeg_av_container.py` | file | strict MP4/(H.264|HEVC)/AAC probe, monotonic timestamp, 전 구간 균등 RGB24 sample, bounded exact-PTS phone-window RGB24 decode, 16 kHz mono PCM derivation | H.264/HEVC 합성 unit test와 HEVC portrait 사용자 영상 두 건 실행 검증 |
 | `src/voice_coach/pronunciation_attempts/adapters/network_isolated_exec.py` | file | no-new-privs/resource limit, PDEATHSIG parent binding, io_uring·cross-process signal/pidfd/ptrace/process_vm·process/session/group escape 차단, thread-only clone, 제한 CUDA AF_UNIX 정책 | FFmpeg/ffprobe·MediaPipe·Seungun worker에 연결; 전체 sandbox나 NPROC/FSIZE limit은 아님 |
 | `src/voice_coach/pronunciation_attempts/adapters/bounded_isolated_process.py` | file | shell 없는 bounded stdin/stdout, timeout·출력·주소공간 제한과 process-group 종료 | Seungun worker 실행 경계; 구현됨 |
-| `src/voice_coach/pronunciation_attempts/adapters/seungun_runtime_worker.py` | file | seccomp 확인 뒤 frozen Seungun detector를 import·1회 실행하고 strict JSON 반환 | 구현됨; 합성 H.264/AAC CUDA CLI smoke 통과 |
-| `src/voice_coach/pronunciation_attempts/adapters/mediapipe_lip_landmarks.py` | file | pinned model digest와 bounded RGB sample을 worker에 전달하고 얼굴 수·최소 lip geometry만 parse | 공식 공개 test portrait에서 얼굴 landmark candidate 관측; 실제 사용자 영상은 미검증 |
-| `src/voice_coach/pronunciation_attempts/adapters/mediapipe_landmark_worker.py` | file | seccomp network 차단 뒤 MediaPipe Face Landmarker 실행, 최소 geometry만 반환 | worker/security 경계 구현; 실제 사용자 영상 검증 아님 |
+| `src/voice_coach/pronunciation_attempts/adapters/seungun_runtime_worker.py` | file | seccomp 확인 뒤 frozen Seungun detector를 import·1회 실행하고 strict JSON 반환 | 구현됨; 합성 H.264와 실제 HEVC portrait 사용자 영상 두 건 CUDA CLI smoke 통과 |
+| `src/voice_coach/pronunciation_attempts/adapters/mediapipe_lip_landmarks.py` | file | pinned model digest와 bounded RGB sample을 worker에 전달하고 얼굴 수·최소 lip geometry만 parse | 공개 portrait와 실제 HEVC portrait 사용자 영상 두 건에서 landmark/QC candidate 경로 관측; calibrated metric은 미검증 |
+| `src/voice_coach/pronunciation_attempts/adapters/mediapipe_landmark_worker.py` | file | seccomp network 차단 뒤 MediaPipe Face Landmarker 실행, 최소 geometry만 반환 | worker/security 경계 구현; 실제 두 사용자 영상 smoke 관측, population-level tracker 평가는 아님 |
 | `src/voice_coach/pronunciation_attempts/adapters/video_qc.py` | file | decoded RGB+landmark의 single/multiple-face coverage, luma/exposure, edge proxy, lip ROI, continuity와 lineage receipt | `candidate_unvalidated`/`unavailable`; P6 pass/reliability 아님 |
 | `src/voice_coach/pronunciation_attempts/adapters/lip_audio_av_sync.py` | file | lip aperture와 restricted PCM energy에서 offset·anchor candidate 및 lineage receipt 계산 | `code_present/unvalidated`; P6 전 reliability 승격 금지 |
-| `src/voice_coach/pronunciation_attempts/services/video_attempt_facade.py` | file | consent → admission → probe/audio → Seungun 1회 → optional visual → cleanup 순서; cleanup 실패 시 모든 결과 억제 | host-owned orchestration 계약·unit test; 실제 사용자 검증 전 |
-| `src/voice_coach/pronunciation_attempts/adapters/runtime.py` | file | explicit consent, restricted PCM→격리 Seungun, handoff와 QC/sync receipt를 묶는 runtime visual detection v2 | exact lineage·mismatch unit test; P6/P8 reliability는 fail-closed |
-| `src/voice_coach/pronunciation_attempts/composition.py` | file | local concrete adapter를 `VideoAttemptFacade`로 조립하고 visual reliability/publication을 잠금 | 합성 CLI E2E에 사용; 실제 사용자 영상 성공 실행은 미검증 |
+| `src/voice_coach/pronunciation_attempts/adapters/calibrated_runtime_decisions.py` | file | frozen QC/sync decision policy를 exact raw candidate와 관측값에 적용하고 decision v2 receipt 발행 | raw candidate 직접 승격과 임의 pass/synchronized mapping 차단; actual TS174/TL174 정책은 아직 없음 |
+| `src/voice_coach/pronunciation_attempts/services/video_attempt_facade.py` | file | consent → admission → probe/audio → Seungun 1회 → global visual QC/sync → optional dense phone-window decode/tracking → cleanup 1회; cleanup 실패 시 모든 결과 억제 | host-owned orchestration 계약·unit test; 두 사용자 영상 audio-completed smoke 실행 |
+| `src/voice_coach/pronunciation_attempts/adapters/runtime.py` | file | handoff, QC/sync candidate→decision→validated-offset detection v3, exact selected anchor의 phone-window plan과 dense tracking receipt 결합 | decision이 통과하고 offset receipt가 발급된 뒤에만 dense path 실행; exact lineage unit test |
+| `src/voice_coach/pronunciation_attempts/composition.py` | file | codec-neutral `local_allowlisted_video_aac_mp4_v2`, H.264/HEVC+AAC, max 1920x1920과 RGB byte bounds로 local adapter를 조립하고 visual publication 잠금 | 합성 및 두 HEVC portrait 사용자 파일 CLI E2E; visual은 unavailable 유지 |
+| `src/voice_coach/visual_feedback/models/p6_geometry.py` | file | AI Hub 68 24-point geometry split/metric/gate/reload aggregate 계약 | 실제 v2 bundle 0400 보존; raw actor/media 미보존 |
+| `src/voice_coach/visual_feedback/models/p6_phone_reference.py` | file | `어`/`ㅓ` visible-lip reference, runtime parity, calibration/catalog/policy와 aggregate producer bundle | 실제 v2 bundle 통과; 잘못된 v1 `ㅃ`는 runtime 거부 |
+| `src/voice_coach/visual_feedback/models/runtime_policy_artifact.py` | file | measurement, calibrated decision, phone-window semantic policy strict artifact와 TS174/TL174 actual-media evidence 계약 | decision semantic JSON을 production dataclass로 exact conversion; actual evidence 미생성 |
+| `src/voice_coach/visual_feedback/models/runtime_eligibility.py` | file | pipeline identity v3, automated P6 v4/P8 v4, runtime bundle과 typed attempt reliability receipt v3 | media capture와 visual observation contract 분리; QC/sync/phone-window 실행 계보 pin |
+| `src/voice_coach/visual_feedback/services/runtime_eligibility.py` | file | P6 geometry+P6B+production parity+actual decision-policy evidence 및 P8 seal/replay 검증 builder | 임의 calibration artifact나 synthetic decision policy만으로 promotion 발급 금지 |
+| `scripts/calibrate_aihub68_p6_geometry.py` | file | AI Hub 68 actor/attempt-disjoint 24-point geometry calibration producer | 실제 aggregate v2 artifacts 생성 완료 |
+| `scripts/calibrate_aihub68_p6_phone_reference.py` | file | 고정 `word_id=9`, `word=어`, frame 10, phone `ㅓ` reference/calibration/parity producer | 실제 aggregate v2 artifacts 생성 완료 |
+| `scripts/build_visual_runtime_p6_promotion.py` | file | P6/P6B와 0400 actual decision-policy evidence를 strict load하고 identity/promotion/reload를 O_EXCL+fsync+0400으로 발행 | TS174/TL174 evidence 부재 시 출력 전에 fail-closed; 현재 실제 promotion 미발급 |
+| `scripts/manage_p8_locked_evaluation.py` | file | capture-contract 분리, measurement/decision/phone-window pins를 포함한 P8 read-zero seal 및 one-shot aggregate 평가 관리 | synthetic CLI test 완료; 실제 locked source 미개방 |
 | `src/voice_coach/visual_feedback/gate_evidence.py` | file | AI Hub 68 aggregate P6 bundle과 AI Hub 538 frozen P8 replay의 schema/digest/invariant 검증 | receipt는 항상 non-promotional; dataset·rights·seal을 생성하거나 인증하지 않음 |
 | `scripts/fetch_mediapipe_face_landmarker.py` | file | 공식 versioned Face Landmarker model을 bounded download하고 SHA-256 pin 검증 뒤 설치 | runtime implicit download 없음; output은 `/models/` 등 Git 제외 경로 사용 |
-| `scripts/run_pronunciation_video_attempt.py` | file | 권장 `--video-fd` read-only fd와 내부 편의 `--video`, prompt, explicit local consent, optional landmark model을 받는 내부 CLI | 공개 test portrait static H.264/AAC+공식 model+CUDA에서 QC·sync candidate 관측, audio 완료·visual unavailable·cleanup 완료; `--video` path는 argv/history 노출 가능 |
+| `scripts/run_pronunciation_video_attempt.py` | file | 권장 `--video-fd` read-only fd와 내부 편의 `--video`, prompt, explicit local consent, optional landmark model을 받는 내부 CLI | H.264/HEVC+AAC; 두 HEVC Main/AAC 1080x1920 사용자 영상에서 audio coaching-ready·visual unavailable·cleanup 완료; `--video` path는 argv/history 노출 가능 |
 | `scripts/validate_visual_gate_evidence.py` | file | `p6`/`p8`의 `--bundle`/`--bundle-fd` privacy-safe JSON 검증 및 schema 출력 | locator-sensitive 입력에는 read-only `--bundle-fd`; 실패 시 receipt 없이 exit 2 |
 | `configs/visual_feedback/internal_visual_calibration_v1.json` | file | aperture rule과 support 범위 | `synthetic_contract_only`; 사용자용 아님 |
 | `configs/visual_feedback/internal_visual_claim_catalog_v1.json` | file | allowlisted action/claim ID | `synthetic_contract_only`; 사용자용 아님 |
 | `scripts/run_visual_feedback_contract_smoke.py` | file | 6개 deterministic 상태/cleanup/serialization scenario 실행 | 내부 smoke entrypoint |
 | `tests/unit/test_visual_feedback_sidecar.py` | file | binding, consent, adapter, calibration, state, serialization, cleanup test | synthetic unit/contract test |
 | `tests/unit/test_restricted_local_media.py` | file | consent 선행, mode, symlink/FIFO/size, partial artifact cleanup | local 제한 저장 단위 테스트 |
-| `tests/unit/test_ffmpeg_av_container.py` | file | 실제 local ffprobe/ffmpeg의 strict probe, 전 구간 균등 RGB decode, PCM derivation과 fail-closed | 합성 비개인 media infrastructure 테스트 |
+| `tests/unit/test_ffmpeg_av_container.py` | file | 실제 local ffprobe/ffmpeg의 H.264/HEVC strict probe, 전 구간 균등 RGB와 exact-PTS phone-window decode, PCM derivation·fail-closed | 합성 비개인 media infrastructure 테스트 |
+| `tests/unit/test_phone_window_contracts.py` | file | policy-valid offset 및 decode/tracking/runtime receipt self-digest·tamper·DAG 불변식 | synthetic typed-contract test; 사용자 visual promotion 아님 |
 | `tests/unit/test_network_isolated_exec.py` | file | IP/Unix socket, io_uring, process clone/thread clone, timeout/output 경계 | seccomp escape·bounded worker 단위 테스트 |
 | `tests/unit/test_mediapipe_lip_landmarks.py` | file | seccomp socket 차단, model digest와 symlink fail-closed | successful landmark inference test는 없음 |
 | `tests/unit/test_video_qc.py` | file | deterministic QC candidate, no-face unavailable, lineage/resource/tamper failure | 합성 frame/landmark unit test; P6 calibration 아님 |
 | `tests/unit/test_lip_audio_av_sync.py` | file | lip aperture/PCM energy candidate, receipt·lineage와 unavailable 상태 | 합성 신호 unit test; P6 calibration 아님 |
-| `tests/unit/test_video_attempt_facade.py` | file | 순서, Seungun 1회, optional visual, cleanup 완료와 cleanup 실패 시 audio 포함 전체 억제 | fake port orchestration test; 실제 사용자 E2E 아님 |
-| `tests/unit/test_pronunciation_attempt_runtime_adapters.py` | file | consent/prompt/Seungun temp WAV/handoff media lineage와 P6/P8 차단 | concrete bridge unit test; CLI/composition 완료 근거 아님 |
+| `tests/unit/test_video_attempt_facade.py` | file | 순서, Seungun 1회, global-before-dense phone-window, cleanup 정확히 1회와 실패 시 audio 포함 전체 억제 | fake port orchestration test |
+| `tests/unit/test_pronunciation_attempt_runtime_adapters.py` | file | handoff media lineage, exact anchor+validated offset window mapping, raw candidate 차단과 dense receipt 결합 | concrete bridge unit test; P6/P8 승격 아님 |
 | `tests/unit/test_visual_gate_evidence.py` | file | P6 split/label/reload와 P8 lineage/scenario/catalog/forbidden claim, CLI fail-closed 검증 | synthetic privacy-safe fixture만 사용; P6/P8 실실행 아님 |
 | `seungun/src/korean_phone_ctc/frozen_detector.py` | file | 현재 `seungun` phone-level audio 분석 계약 | sidecar가 import·재실행하지 않는 상위 권한 구현 |
 | `seungun/docs/CURRENT_PIPELINE_KO.md.md` | file | `seungun` audio pipeline 책임 문서 | audio 권한의 상위 문서 |
 | `seungun/docs/PIPELINE_RELIABILITY_IMPROVEMENT_PROPOSAL_KO.md` | file | audio reliability 개선 제안 | visual이 대신 구현하거나 완료로 해석하지 않음 |
 
-현재 workspace에는 visual 계약과 내부 smoke 외에도 local 제한 저장, 실제 FFmpeg 기반
-probe/decode/audio derivation, MediaPipe worker/adapter와 lip/PCM content-sync candidate
-extractor 코드가 있다. 공식 공개 test portrait를 static H.264/AAC로 변환한 CLI에서
-Face Landmarker의 얼굴 landmark와 QC·sync candidate 경로, CUDA Seungun audio 완료,
-visual unavailable 및 cleanup 완료를 관측했다. 실제 사용자 영상 QC, P6로 보정된 A/V
-sync reliability와 적격 실제 데이터 reference/calibration threshold는 없다. 실제 사용자
-영상 E2E와 camera/upload API/UI도 없다.
-AI Hub/Hugging Face 후보 조사는 문서화됐지만 원본 dataset access/admission, P6/P8 실행과
-production artifact는 없다. 내부 smoke 또는 합성 media 검증의
+현재 workspace에는 visual 계약과 내부 smoke 외에도 local 제한 저장, H.264/HEVC
+FFmpeg probe/decode/audio derivation, MediaPipe worker/adapter, lip/PCM content-sync
+candidate와 dense selected-phone window 코드가 있다. 공식 공개 test portrait를 static
+H.264/AAC로 변환한 CLI와 HEVC Main/AAC, 1080x1920 portrait, 30 fps 사용자 영상 두 건에서
+Face Landmarker/QC 후보 경로, CUDA Seungun audio 완료, visual unavailable 및 cleanup
+완료를 관측했다. 두 실제 영상의 sync는 각각 `not_observed`와
+`candidate_unvalidated`여서 phone-window receipt는 `not_issued`였다. P6로 보정된 A/V
+sync reliability와 적격 실제 데이터 reference/calibration threshold, camera/upload
+API/UI는 없다.
+AI Hub 68은 승인 source에서 geometry와 `어`/`ㅓ` reference admission/calibration을 실행해
+aggregate-only 0400 P6/P6B artifact를 생성했다. AI Hub 538 TS174/TL174 actual-media
+decision calibration과 locked P8는 아직 실행하지 않았다. 내부 smoke 또는 합성 media 검증의
 `visual_feedback_ready`를 사용자 runtime 준비 상태로 해석하지 않는다.
 
 FFmpeg/ffprobe·MediaPipe·Seungun worker용 OS-level network/resource launcher가 구현됐다.
@@ -78,7 +95,7 @@ message I/O가 불가능하도록 제한한다. FFmpeg pipe는 nonblocking이며
 group을 무조건 종료한다. PDEATHSIG expected-parent binding과 cross-process
 signal/pidfd/ptrace/process_vm 차단도 적용하되 self/native-thread signal은 유지한다.
 decoded sample·probe·binding·model·landmark·QC/sync receipt를
-묶는 detection v2와 mismatch 선행 차단은 unit test됐다. 고정 Seungun v1을 sidecar
+묶는 detection v3와 candidate→decision→offset mismatch 선행 차단은 unit test됐다. 고정 Seungun v1을 sidecar
 anchor로 쓰는 제한된 upstream `supported` receipt는 local composition에 연결됐다.
 사용자 runtime P6/P8 visual reliability, TTL, orphan scavenger, persistent cleanup ledger와
 `RLIMIT_NPROC`/`RLIMIT_FSIZE`는 아직 없다.
@@ -94,10 +111,11 @@ anchor로 쓰는 제한된 upstream `supported` receipt는 local composition에 
 - `ports`: `SeungunPronunciationEvidencePort`와 video/reference/ledger interface
 - `adapters`: seungun DTO mapping, internal precomputed adapter, attempt-level local
   storage/FFmpeg/MediaPipe/Seungun worker/content-sync candidate와 향후 reference adapter
-- `entrypoint`: synthetic smoke와 합성 container E2E를 통과한 internal CLI가 있으며
+- `entrypoint`: synthetic smoke, 합성 container와 두 HEVC portrait 사용자 파일의
+  audio-completed E2E를 통과한 internal CLI가 있으며
   participant-sensitive path에는 pre-opened read-only `--video-fd`를 권장한다. `--video`는
-  argv/shell-history 노출 caveat가 있는 편의 기능이다. 실제 사용자·제품 composition
-  검증은 준비 중; 향후 제품 entrypoint는 인자 파싱,
+  argv/shell-history 노출 caveat가 있는 편의 기능이다. 제품 composition과 calibrated
+  visual feedback 검증은 준비 중; 향후 제품 entrypoint는 인자 파싱,
   dependency 조립과 결과 직렬화만 담당
 
 실제 backend를 추가할 때도 domain/port 계약을 유지하고, internal adapter를

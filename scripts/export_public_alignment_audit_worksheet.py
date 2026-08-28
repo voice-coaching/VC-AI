@@ -54,8 +54,8 @@ FORBIDDEN_COLUMNS = {
 # a deliberate accuracy/throughput trade-off: an untouched row is
 # indistinguishable from a row a reviewer actually listened to and judged
 # correct, so it weakens the audit's evidentiary value versus an
-# all-blank worksheet. See docs/constraints/AIHUB71490_EXPERT_AUDIT_WORKSHEET_GUIDE_KO.md
-# for the accepted-risk note.
+# all-blank worksheet. No current tracked guide authorizes treating this default
+# as a human decision, so untouched rows must remain evidentially unreviewed.
 DEFAULT_ALIGNMENT_CORRECT = "correct"
 DEFAULT_MAXIMUM_BOUNDARY_ERROR_MS = "0"
 DEFAULT_INCORRECT_INTERVAL_COUNT = "0"

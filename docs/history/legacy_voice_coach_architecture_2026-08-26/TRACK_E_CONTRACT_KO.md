@@ -4,7 +4,7 @@
 
 - 문서 상태: `frozen_contract_record`
 - 동결: 2026-08-06 KST
-- artifact: [`configs/pronunciation_feedback/track_e_contract_v1.json`](../../configs/pronunciation_feedback/track_e_contract_v1.json)
+- artifact: [`configs/pronunciation_feedback/track_e_contract_v1.json`](../../../configs/pronunciation_feedback/track_e_contract_v1.json)
 - schema version: `voice_coach.track_e_contract.v1`
 - canonical hash: `301155130ccfec6473289e41fecd5344478967d67452d26b4c319b4e00720154`
 - 검증 명령: `python scripts/validate_track_e_contract.py`

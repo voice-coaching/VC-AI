@@ -45,8 +45,8 @@ SOURCE_PATHS = (
     "configs/human_research/h00_human_research_approval_public_v1.template.json",
     "configs/human_research/h00_official_document_attestation_v1.schema.json",
     "configs/human_research/h00_official_document_attestation_v1.template.json",
-    "docs/constraints/DATA_LICENSE_AND_ROLE_MATRIX_KO.md",
-    "docs/constraints/DATA_PRIVACY_BOUNDARY_KO.md",
+    ".codex/ai_rule_developer/GLOBAL_RULES.md",
+    "data/README.md",
 )
 
 EXPECTED_EXECUTION_ORDER = (

@@ -115,19 +115,16 @@ def validate_training_gate(
     allow_ungated_diagnostic_smoke: bool = False,
     allow_ungated_internal_full: bool = False,
 ) -> None:
-    """Enforce the audit gate unless an explicitly scoped override is used."""
+    """Enforce the independent manual-audit gate for every training mode.
 
-    if allow_ungated_diagnostic_smoke and allow_ungated_internal_full:
-        raise ValueError("choose exactly one ungated training override")
+    The two legacy keyword arguments remain temporarily for callers that need a
+    clear migration error.  Neither diagnostic smoke nor an internal label may
+    bypass the audit gate.
+    """
 
-    if allow_ungated_diagnostic_smoke:
-        if mode != "smoke":
-            raise ValueError("ungated diagnostic override is allowed for smoke only")
-        return
-
-    if allow_ungated_internal_full:
-        if mode != "full":
-            raise ValueError("ungated internal override is allowed for full mode only")
-        return
+    if allow_ungated_diagnostic_smoke or allow_ungated_internal_full:
+        raise ValueError("ungated training overrides are disabled")
+    if mode not in {"smoke", "full"}:
+        raise ValueError("training mode must be smoke or full")
 
     validate_manual_alignment_gate(payload)

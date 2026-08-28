@@ -91,7 +91,7 @@ def _assert_zero_predecessor_runtime_api_and_output(
     assert result["publication_allowed"] is False
 
 
-def test_config_only_reads_25_static_sources_and_nothing_runtime() -> None:
+def test_config_only_reads_27_scoped_sources_and_nothing_runtime() -> None:
     before = tuple(path.exists() for path in DECLARED_OUTPUTS)
     completed = _run("--config-only")
     after = tuple(path.exists() for path in DECLARED_OUTPUTS)
@@ -99,8 +99,8 @@ def test_config_only_reads_25_static_sources_and_nothing_runtime() -> None:
     assert completed.returncode == 0, completed.stdout + completed.stderr
     result = json.loads(completed.stdout)
     assert result["status"] == "valid_config_only"
-    assert result["source_pin_count"] == 25
-    assert result["source_pin_read_count"] == 25
+    assert result["source_pin_count"] == 27
+    assert result["source_pin_read_count"] == 27
     assert result["source_toctou_verification_count"] == 0
     _assert_zero_predecessor_runtime_api_and_output(result)
     assert before == after
@@ -117,8 +117,8 @@ def test_full_preflight_stops_before_unresolved_s107_path_or_c02_access() -> Non
     assert result["status"] == "failed_closed"
     assert result["stage"] == "s107_completion"
     assert result["error"] == "S107 completion commit is TBD_S107_COMPLETION"
-    assert result["source_pin_read_count"] == 25
-    assert result["source_toctou_verification_count"] == 25
+    assert result["source_pin_read_count"] == 27
+    assert result["source_toctou_verification_count"] == 27
     _assert_zero_predecessor_runtime_api_and_output(result)
     assert before == after
 

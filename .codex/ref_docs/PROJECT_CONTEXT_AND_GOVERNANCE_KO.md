@@ -28,18 +28,33 @@
 
 ## 2. 정본 문서와 상태 판정
 
-- 전체 목표·완료 정의·현재 work package 상태:
-  `docs/constraints/RESEARCH_COMPLETION_TRACKER_KO.md`
-- 구현 순서와 제품 범위:
-  `docs/IMPLEMENTATION_PLAN_KO.md`
-- S104--S108 WavLM 후속 실행의 정본 gate:
-  `docs/constraints/WP4_POST_S103_EXECUTION_CONTRACT_KO.md`
-- 실패·오염·실행 편차의 보존과 판정:
-  `docs/constraints/PROTOCOL_DEVIATION_LEDGER_KO.md`
-- 데이터 구역·가명화·반출 검사:
-  `docs/constraints/DATA_PRIVACY_BOUNDARY_KO.md`
-- 데이터별 역할·라이선스·공개 제한:
-  `docs/constraints/DATA_LICENSE_AND_ROLE_MATRIX_KO.md`
+현재 tracked tree에는 저장소 전체를 대표하는 단일 completion tracker,
+전체 구현 계획, protocol-deviation ledger, 데이터 전체 privacy/license
+matrix가 없다. 이전 경로는 문서 이관 과정에서 삭제됐으며 삭제된
+파일명을 현재 정본으로 인용하지 않는다. 이 부재 자체는 해결되지 않은
+거버넌스 갭이므로 상태를 낮추거나 삭제 문서를 추측해 복원하지 않는다.
+
+현재 상태는 다음 소유권별 문서를 함께 읽어 판정한다.
+
+- 저장소 개요와 읽기 순서: [`README.md`](../../README.md)
+- 오디오 `seungun` 설계·실험 이력:
+  [`seungun/README.md`](../../seungun/README.md),
+  [`CURRENT_PIPELINE_KO.md.md`](../../seungun/docs/CURRENT_PIPELINE_KO.md.md),
+  [`WORK_LOG_AND_FINDINGS_KO.md`](../../seungun/docs/WORK_LOG_AND_FINDINGS_KO.md),
+  [`PIPELINE_RELIABILITY_IMPROVEMENT_PROPOSAL_KO.md`](../../seungun/docs/PIPELINE_RELIABILITY_IMPROVEMENT_PROPOSAL_KO.md)
+- HTTP/Oracle 계약: [`docs/api/endpoints.md`](../../docs/api/endpoints.md),
+  [`docs/api/specification.md`](../../docs/api/specification.md)
+- 시각 sidecar 정본: [`docs/architecture/README_KO.md`](../../docs/architecture/README_KO.md)
+  — 전체 음성 코칭 시스템의 정본이 아니다.
+- 현행 평가 경계:
+  [`G04_AUDIO_AI_PROXY_RESULT_2026-08-09_KO.md`](../../docs/evaluation/G04_AUDIO_AI_PROXY_RESULT_2026-08-09_KO.md),
+  [`C03_EXPERT_COACHING_AUDIT_DATA_MODEL_PRIVACY_SAFETY_STATISTICS_CARD_KO.md`](../../docs/evaluation/C03_EXPERT_COACHING_AUDIT_DATA_MODEL_PRIVACY_SAFETY_STATISTICS_CARD_KO.md)
+- 원고 주장·미해결 갭:
+  [`CLAIM_GAP_MAP_KO.md`](../../docs/paper/CLAIM_GAP_MAP_KO.md),
+  [`METHODS_ETHICS_REPRODUCIBILITY_GAP_KO.md`](../../docs/paper/METHODS_ETHICS_REPRODUCIBILITY_GAP_KO.md)
+- 시각 정본 이전 전체 아키텍처 문서:
+  [`legacy_voice_coach_architecture_2026-08-26`](../../docs/history/legacy_voice_coach_architecture_2026-08-26/README_KO.md)
+  — `historical_snapshot`이며 현재 정본이 아니다.
 
 계획, static readiness, config-only 검증, dry-run, 개발 결과, 실제 실행,
 독립 검증, 사람 평가 완료를 서로 바꾸어 말하지 않는다. 완료는 명령·checksum·
@@ -81,15 +96,18 @@ metric report·registry·사람 평가 원본 등 해당 gate가 요구한 재�
 작업으로 모델/데이터 계약, gate, split, artifact schema, privacy·license,
 외부 연동, API, 상태 전이 또는 디렉터리 경계가 바뀌면 관련 루트 `docs/`를
 동시에 갱신한다. 반대로 실제 실행하지 않은 결과를 status 문서에 추가하지
-않는다. 새 연구 실행·편차·실패는 필요한 경우 tracker와 protocol-deviation
-ledger에 사실·영향·다음 조치를 분리해 기록한다.
+않는다. 새 연구 실행·편차·실패는 해당 단계를 소유하는 현행 상태
+문서와 불변 receipt/registry에 사실·영향·다음 조치를 분리해 기록한다.
+저장소 전체 tracker나 deviation ledger가 다시 도입되기 전에는 단계
+문서의 완료 표시를 전체 연구 완료로 확대하지 않는다.
 
 ## 6. 참고한 루트 문서 묶음
 
 | 주제 | 정본 문서 |
 | --- | --- |
-| 전체 아키텍처와 API 경계 | `docs/architecture/`, `docs/api/` |
-| 데이터·개인정보·라이선스 | `docs/DATA_*`, `docs/AIHUB71490_*`, `docs/NATIVE_KOREAN_CORPUS_PIPELINE_KO.md` |
-| 모델·실험·평가 gate | `docs/WAVLM_*`, `docs/constraints/WP4_POST_S103_EXECUTION_CONTRACT_KO.md`, `docs/S2_*`, `docs/GOP_*` |
-| coaching·reference·closed loop | `docs/C0*`, `docs/R0*`, `docs/E0*` |
-| 인간 평가·논문·재현성 | `docs/H0*`, `docs/paper/`, `docs/constraints/PROTOCOL_DEVIATION_LEDGER_KO.md` |
+| 오디오 진단·표현 경로 | `seungun/README.md`, `seungun/docs/` |
+| API·Oracle·stateless closed loop | `docs/api/` |
+| 시각 sidecar | `docs/architecture/` (전체 시스템 정본 아님) |
+| G04/C03 평가 경계 | `docs/evaluation/` |
+| 데이터 저장·반출 기본 경계 | `data/README.md`, `.codex/ai_rule_developer/GLOBAL_RULES.md` |
+| 논문 주장·방법·재현성 갭 | `docs/paper/` |

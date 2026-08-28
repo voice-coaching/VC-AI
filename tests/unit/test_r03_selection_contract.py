@@ -339,7 +339,7 @@ def _copy_static_bundle(tmp_path: Path) -> Path:
 
 def test_static_source_hash_drift_is_rejected(tmp_path: Path) -> None:
     config_path = _copy_static_bundle(tmp_path)
-    source = tmp_path / "docs/IMPLEMENTATION_PLAN_KO.md"
+    source = tmp_path / "docs/paper/EXPERIMENTAL_MANUSCRIPT_KO.md"
     source.write_text(
         source.read_text(encoding="utf-8") + "\ndrift\n", encoding="utf-8"
     )
@@ -459,13 +459,13 @@ def test_r02_absence_fails_before_prereg_candidate_or_output(tmp_path: Path) -> 
 
 
 def test_failure_result_never_claims_execution_or_completion() -> None:
-    audit = contract.AccessAudit(source_pin_read_count=17)
+    audit = contract.AccessAudit(source_pin_read_count=15)
     result = contract.failure_result(
         contract.R03ContractError("stop", stage="test", audit=audit)
     )
 
     assert result["status"] == "failed_closed"
-    assert result["source_pin_read_count"] == 17
+    assert result["source_pin_read_count"] == 15
     assert result["actual_audio_or_model_or_gpu_execution"] is False
     assert result["actual_metric_or_selection_execution"] is False
     assert result["bank_manifest_created"] is False

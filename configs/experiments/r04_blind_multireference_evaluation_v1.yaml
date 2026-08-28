@@ -24,11 +24,11 @@ canonical_sources:
     - path: artifacts/reference/r00/r00_sentence_card_v1.validation.json
       sha256: 95b4fd861a3c21222ff13859cfbc9c196e3fd06493852bca823d8a63dc2816dd
     - path: configs/experiments/r01_human_cosyvoice_candidates_v1.yaml
-      sha256: bc0ff862f7159c2516a8fa302c21ad8a59975b56b5e9c0b994a585cd8577f718
+      sha256: 7cc35e4661abdd68bdbccc4aacb79f50b708dc1ca96db9521ff33c948ecf7f79
     - path: configs/experiments/r02_candidate_hard_gate_v1.yaml
-      sha256: b23a2ae9837f70708a951509430cf6050aabb36f0c6ea697d5677841a54d22cc
+      sha256: 31eb1690db0f8cdb4591929d051c7aa73947f102aed71c6c2b702c2a807f696f
     - path: configs/experiments/r03_reference_bank_selection_v1.yaml
-      sha256: 632262f343f650840715f66f311a893cf69e79d699fd424d2620d2b6717f819c
+      sha256: 94d08dbf1634d7e2ff9ee77ce8f83d47a5b6381ebf9b52de71e7578e951e5776
     - path: configs/reference/r00_sentence_card_v1.schema.json
       sha256: 1f8bcf0325414e1923cda0def9a973ac2f7be7bd85cca4ee869743ef862a7b92
     - path: configs/reference/r01_candidate_manifest_v1.schema.json
@@ -55,20 +55,16 @@ canonical_sources:
       sha256: 510f0063048a5cbb0da6312d06949c4c059f0c8d39415a5a7063213c61d3b09f
     - path: configs/reference/r04_rating_manifest_v1.template.json
       sha256: c7a2919ab1b5f091a0cec27b4895fc24df57c7c48066d639e9edfb6ba3fad008
-    - path: docs/IMPLEMENTATION_PLAN_KO.md
-      sha256: 836ea2b5a2db2bf3dcfb6ea4003c73c5240ae24bea9ea9af8531519f6a57e07a
     - path: docs/paper/EXPERIMENTAL_MANUSCRIPT_KO.md
-      sha256: c21e6d86570eb74069df104295aafe7cf78af02ce51398335c50133a5d1304f2
-    - path: docs/한국어 AI 보이스 코칭을 위한 폐쇄루프 TTS 아키텍처.pdf
-      sha256: 2e60d812290ad0b8d7dc0fd689de6b7cf4a0fbecde7e5a1612f85a2e7a18b4dd
+      sha256: 3f10f7f05ff89b0c7f6e7a1dfaf48216a5b0dec8f1ab51bbadd2c809f443afef
     - path: scripts/validate_r00_sentence_card.py
       sha256: 967517e74194936c91dad1eed4fcfb0c059b5480af32b8adfc9725fdb7d6e7d0
     - path: src/voice_coach/references/r01_candidate_contract.py
-      sha256: c109fc242db42affb371259bdad625ec06d516011b32551d8d8e088fceee7231
+      sha256: c8ac2bf542ff910b3b88f6008e833b4d4887e4cc9cb449313756dc5f6e50adca
     - path: src/voice_coach/references/r02_hard_gate_contract.py
-      sha256: a50e6287ffdb56c9ec2f22859a9be800cc3fb787b7c3390f4330052412eaf5bf
+      sha256: 75c6475f5e3ea93b16245a729a447d1a49f463ecd389dd6b3b54aae9f81f8c20
     - path: src/voice_coach/references/r03_selection_contract.py
-      sha256: 1a15870458a7e12a36460e2c2ba4f92db4facff0da7b3a81059aea78080df167
+      sha256: 17abcf2d0f9894a9aa3486d025a84b58f05fdbe4406009f5b8781c5de2c16353
 
 predecessor_r00:
   deep_validation_required: true
@@ -88,9 +84,9 @@ predecessor_r00:
 predecessor_r01:
   deep_validation_required: true
   config_path: configs/experiments/r01_human_cosyvoice_candidates_v1.yaml
-  config_sha256: bc0ff862f7159c2516a8fa302c21ad8a59975b56b5e9c0b994a585cd8577f718
+  config_sha256: 7cc35e4661abdd68bdbccc4aacb79f50b708dc1ca96db9521ff33c948ecf7f79
   contract_path: src/voice_coach/references/r01_candidate_contract.py
-  contract_sha256: c109fc242db42affb371259bdad625ec06d516011b32551d8d8e088fceee7231
+  contract_sha256: c8ac2bf542ff910b3b88f6008e833b4d4887e4cc9cb449313756dc5f6e50adca
   completion_commit_path: artifacts/experiments/r01_human_cosyvoice_candidates_v1/commit.json
   completion_commit_sha256: TBD_R01_COMPLETION
   registry_path: artifacts/experiment_registry/r01-human-cosyvoice-candidates-v1/metadata.json
@@ -100,9 +96,9 @@ predecessor_r01:
 predecessor_r02:
   deep_validation_required: true
   config_path: configs/experiments/r02_candidate_hard_gate_v1.yaml
-  config_sha256: b23a2ae9837f70708a951509430cf6050aabb36f0c6ea697d5677841a54d22cc
+  config_sha256: 31eb1690db0f8cdb4591929d051c7aa73947f102aed71c6c2b702c2a807f696f
   contract_path: src/voice_coach/references/r02_hard_gate_contract.py
-  contract_sha256: a50e6287ffdb56c9ec2f22859a9be800cc3fb787b7c3390f4330052412eaf5bf
+  contract_sha256: 75c6475f5e3ea93b16245a729a447d1a49f463ecd389dd6b3b54aae9f81f8c20
   completion_commit_path: artifacts/experiments/r02_candidate_hard_gate_v1/commit.json
   completion_commit_sha256: TBD_R02_COMPLETION
   registry_path: artifacts/experiment_registry/r02-candidate-hard-gate-v1/metadata.json
@@ -116,9 +112,9 @@ predecessor_r02:
 predecessor_r03:
   deep_validation_required: true
   config_path: configs/experiments/r03_reference_bank_selection_v1.yaml
-  config_sha256: 632262f343f650840715f66f311a893cf69e79d699fd424d2620d2b6717f819c
+  config_sha256: 94d08dbf1634d7e2ff9ee77ce8f83d47a5b6381ebf9b52de71e7578e951e5776
   contract_path: src/voice_coach/references/r03_selection_contract.py
-  contract_sha256: 1a15870458a7e12a36460e2c2ba4f92db4facff0da7b3a81059aea78080df167
+  contract_sha256: 17abcf2d0f9894a9aa3486d025a84b58f05fdbe4406009f5b8781c5de2c16353
   bank_schema_path: configs/reference/r03_reference_bank_manifest_v1.schema.json
   bank_schema_sha256: 2e6c4728943fbfb5519f7e961fca68da816b82e44fc65f003938644ade68ca83
   completion_commit_path: artifacts/experiments/r03_reference_bank_selection_v1/commit.json

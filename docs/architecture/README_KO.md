@@ -2,7 +2,8 @@
 
 - 최종 갱신: 2026-08-28 (Asia/Seoul)
 - 문서 상태: `implemented_contract_with_internal_smoke`
-- 구현 상태: `partial_implementation`; 사용자 실영상 runtime은 `not_ready`
+- 구현 상태: `partial_implementation`; 사용자 실영상 media/audio 경로는 smoke 검증,
+  visual feedback runtime은 `not_ready`
 - 공개 데이터 후보 조사: `dataset_candidates_audited`; admission·실행은 `not_started`
 - 상위 시스템: [`seungun`](../../seungun/README.md)
 
@@ -32,7 +33,7 @@ S1/S2, TTS, Oracle, HTTP/session, 전체 coaching policy, 학습 효과 평가�
 - consent를 source I/O 전에 검사하고, no-follow regular file만 0700 workspace의
   0600으로 생성한 뒤 commit 시 0400으로 고정하며 opaque handle·삭제 receipt를 발급하는
   local admission adapter; PCM 파생물도 commit 뒤 0400
-- strict MP4/H.264/AAC probe, frame timestamp 검증, 전 구간 균등 RGB24 frame sample과
+- strict MP4/(H.264|HEVC)/AAC probe, frame timestamp 검증, 전 구간 균등 RGB24 frame sample과
   16 kHz mono PCM 파생물·`AudioDerivationReceipt`를 만드는 FFmpeg/ffprobe adapter
 - aggregate-only P6 evidence와 frozen-summary P8 replay를 strict digest/schema로 검사하는
   fail-closed validator 및 `p6|p8 --bundle/--bundle-fd` CLI. synthetic privacy-safe fixture
@@ -44,6 +45,13 @@ S1/S2, TTS, Oracle, HTTP/session, 전체 coaching policy, 학습 효과 평가�
   `VideoQcCandidateAdapter`; P6 전에는 `candidate_unvalidated`/`unavailable`만 허용
 - 최소 입술 aperture와 restricted PCM energy를 교차상관해 계보가 묶인
   `candidate_unvalidated` A/V anchor·receipt를 계산하는 `LipAudioAvSyncAdapter`
+- 기존 전 구간 8-frame sample을 전체 영상 QC/sync에 보존하면서, 이미 binding된
+  `UpstreamPhoneAnchor`의 `start_ms/end_ms`와 policy-valid measured A/V offset만으로
+  선택 음소의 bounded dense RGB24 window를 생성하는 host-controlled 경로
+- exact frame index/PTS/RGB digest와 FFmpeg revision을 묶는
+  `PhoneWindowDecodeReceipt`, 해당 frame의 landmark lineage를 묶는
+  `PhoneWindowTrackingReceipt`, QC/sync/context와 두 receipt를 묶는
+  `RuntimePhoneWindowReceipt`; raw sync candidate나 caller 제공 window는 허용하지 않음
 - consent/QC/precomputed landmark/timestamp sync용 deterministic 내부 adapter
 - synthetic-only calibration artifact와 visual claim catalog의 strict JSON loader
 - 상태 우선순위와 cleanup을 적용하는 `VisualFeedbackCoordinator`
@@ -54,11 +62,14 @@ S1/S2, TTS, Oracle, HTTP/session, 전체 coaching policy, 학습 효과 평가�
 - [`run_visual_feedback_contract_smoke.py`](../../scripts/run_visual_feedback_contract_smoke.py)와
   synthetic contract unit test
 
-위 media adapter는 로컬 FFmpeg/ffprobe를 합성 비개인 MP4에 실행하는 단위 테스트까지
-통과했다. 공식 MediaPipe 공개 test portrait(`portrait.jpg`, upstream SHA-256
-`a6f11e...`)를 로컬 static H.264/AAC MP4로 변환한 실행에서는 실제 얼굴 landmark,
-video-QC candidate와 content A/V-sync candidate 경로까지 관측됐다. 실제 사용자 영상의
-tracker/QC 결과는 아직 검증되지 않았다.
+위 media adapter는 로컬 FFmpeg/ffprobe를 H.264와 HEVC 합성 비개인 MP4에 실행하는
+단위 테스트를 통과했다. 공식 MediaPipe 공개 test portrait(`portrait.jpg`, upstream
+SHA-256 `a6f11e...`)를 로컬 static H.264/AAC MP4로 변환한 실행에서는 실제 얼굴
+landmark, video-QC candidate와 content A/V-sync candidate 경로를 관측했다. 추가로
+HEVC Main/AAC, 1080x1920 portrait, 30 fps인 사용자 영상 두 건을 internal CLI로 실행해
+container admission·전 구간 decode·MediaPipe/QC 후보·Seungun audio
+`coaching_ready`·cleanup 완료까지 확인했다. 이는 두 파일의 infrastructure smoke이며
+calibrated tracker/QC 성능이나 사용자 visual claim 검증은 아니다.
 FFmpeg/ffprobe, MediaPipe와 Seungun worker에는 pre-exec seccomp/resource-limit launcher가
 연결됐다. launcher는 io_uring, 일반 process clone/fork와 session/process-group escape를
 차단하고 `CLONE_THREAD`만 허용한다. CUDA 경로는 AF_UNIX socketpair와 연결되지 않은
@@ -67,33 +78,45 @@ FFmpeg/ffprobe, MediaPipe와 Seungun worker에는 pre-exec seccomp/resource-limi
 수명에 결합되며, 해당 prctl 해제와 cross-process signal/pidfd/ptrace/process_vm escape는
 차단한다. self/native-thread signal은 유지한다. FFmpeg는 nonblocking pipe와 오류 시
 unconditional process-group kill을 쓴다. 이는 전체 sandbox 완료를 뜻하지 않는다.
-runtime visual detection v2는 sample/probe/binding/model/landmark에 QC와 A/V sync receipt를
-함께 묶고 mismatch를 선행 차단한다. 현재 hash-pinned
+runtime visual detection v3는 sample/probe/binding/model/landmark에 raw QC/sync
+candidate v2, calibrated decision v2와 policy-validated offset v2 receipt를 함께 묶고
+mismatch를 선행 차단한다. 현재 hash-pinned
 `final_pronunciation_detector_v1`과 one-shot locked result의 로컬 digest가 receipt와
 일치하므로, local composition은 이 고정 revision을 시각 sidecar의 upstream anchor로
 사용할 수 있다는 `supported` receipt를 발급한다. 이 상태는 schema·artifact 무결성과
 현재 구현 경로의 사용 가능성만 뜻하며 detector score를 correctness confidence로
-보정하거나 개별 판정의 정확성을 보증하지 않는다. 사용자 runtime용 P6 calibration과
-P8 claim-conformance receipt는 여전히 없다.
+보정하거나 개별 판정의 정확성을 보증하지 않는다. AI Hub 68 P6 geometry/P6B artifact는
+실제 실행됐지만, TS174/TL174 actual-media decision-policy evidence와 P8
+claim-conformance receipt는 여전히 없다.
 TTL, orphan scavenger와 persistent cleanup ledger도 아직 구현되지 않았다.
 
-따라서 이는 실제 사용자가 영상을 제출해 피드백을 받는 runtime 완료를 뜻하지 않는다.
+따라서 두 실제 사용자 영상에서 audio coaching을 받은 사실은 확인됐지만, visual
+보조 피드백까지 받은 runtime 완료를 뜻하지 않는다.
 internal CLI의 권장 입력은 사전에 read-only로 연 `fd >= 3`을 넘기는 `--video-fd`로,
 민감한 participant path를 process argv에 넣지 않는다. `--video`는 내부 편의 기능이며
-경로가 argv와 shell history에 남을 수 있다. 합성 H.264/AAC MP4는 `--video-fd`, 공식
-pinned landmark model과 CUDA
-Seungun으로 전체 실행돼 `audio_completed_visual_unavailable`,
-`cleanup_status=completed`, `video_qc_candidate_not_calibrated`와
-`content_av_sync_candidate_not_calibrated` reason을 반환했다. 이는 visual
-reliability를 의도대로 잠근 합성 infrastructure smoke이며 실제 사용자 영상 성공 근거는
-아니다. camera/upload API/UI, 실제 사용자 영상 QC, P6 calibration, P8 locked evaluation,
-claim-policy conformance와 사용자용 visual claim catalog는 `not_started`/`not_ready`다.
-P6/P8 validator 코드는 존재하지만 실제 dataset download/admission, metric 산출과 P8
-실행은 `not_started`다. 입력 rights/reload assertion과 P8 read-zero seal은 validator가
-독립 생성·인증하는 증거가 아니라 caller가 제공한 digest/assertion을 일관성 검사할 뿐이다.
-content A/V sync candidate extractor 코드는 존재하고 합성 신호 unit test를 통과했지만
-실제 사용자 영상과 P6 calibration으로 검증되지 않아 reliability로 승격하지 않는다.
-공개 데이터 후보와 역할은 조사했지만 원본 dataset admission/download도 시작하지 않았다.
+경로가 argv와 shell history에 남을 수 있다. 합성 H.264/AAC smoke에 더해 위 두
+HEVC/AAC portrait 사용자 영상은 `--video-fd`, 공식 pinned landmark model과 CUDA
+Seungun으로 전체 실행돼 각각 audio `coaching_ready`, attempt
+`audio_completed_visual_unavailable`, `cleanup_status=completed`를 반환했다. 첫 영상은
+`content_av_sync_not_observed`, 둘째 영상은
+`content_av_sync_candidate_not_calibrated`였고, 둘 다
+`video_qc_candidate_not_calibrated`, `p6_user_runtime_calibration_not_available`,
+`p8_user_runtime_claim_catalog_not_available`로
+`visual_stage_status=blocked_reliability`에 fail-closed했다. policy-valid measured A/V
+offset이 없었으므로 dense selected-phone
+decode는 시작되지 않았으며 실제 `PhoneWindowDecodeReceipt`,
+`PhoneWindowTrackingReceipt`, `RuntimePhoneWindowReceipt`는 모두 `not_issued`다.
+camera/upload API/UI, TS174/TL174 actual-media QC/sync decision calibration, P8 locked
+evaluation과 claim-policy conformance는 `not_started`/`not_ready`다. AI Hub 68에서는
+actor/attempt-disjoint 24-point geometry와 고정 `어`/`ㅓ` reference, production tracker
+85/85 parity, visible-only calibration/catalog/policy가 통과해 aggregate 0400 v2 artifact가
+생성됐다. 그러나 실제 runtime promotion identity/receipt는 위 decision-policy evidence가
+없어 발급되지 않았다. P8 read-zero seal은 실제 locked source 접근 전 계약이며 아직 실제
+seal/evaluation 기록으로 발급되지 않았다.
+content A/V sync candidate extractor는 합성 신호 unit test를 통과했고 두 실제 영상에서
+각각 `not_observed`와 `candidate_unvalidated` 경로를 관측했지만, population-level P6
+calibration으로 검증되지 않아 reliability로 승격하지 않는다.
+AI Hub 68 admission/calibration은 완료됐고, AI Hub 538의 필요한 두 실행은 시작하지 않았다.
 포함된 calibration/catalog artifact는 digest-pinned immutable fixture이지만 scope는
 `synthetic_contract_only`이며
 `ExecutionScope.USER_RUNTIME`에서는 `visual_feedback_ready`가 되지 않고
@@ -129,7 +152,9 @@ exec 3<&-
 exit `0`이어도 현재 허용된 완료 상태는 Seungun audio 결과와
 `audio_completed_visual_unavailable`이다. Seungun upstream anchor는 현재 고정 revision에
 한해 supported지만, 사용자 runtime P6/P8 gate 전에는 visual claim이 반환되지 않는 것이
-정상이다. 입력은 H.264 video 한 개와 AAC audio 한 개를 가진 MP4여야 한다.
+정상이다. 입력은 allowlist의 H.264 또는 HEVC video 한 개와 AAC audio 한 개를 가진
+MP4여야 하며 현재 local composition의 최대 width/height는 각각 1920이다. codec-neutral
+capture contract ID는 `local_allowlisted_video_aac_mp4_v2`다.
 
 ## 읽는 순서
 
@@ -148,14 +173,17 @@ exit `0`이어도 현재 허용된 완료 상태는 Seungun audio 결과와
 [`docs/history/legacy_voice_coach_architecture_2026-08-26`](../history/legacy_voice_coach_architecture_2026-08-26/README_KO.md)에
 `historical_snapshot`으로 보존되어 있으며 현재 정본이 아니다.
 
-## 기존 평가 계약 호환성 주의
+## E00/E02 source scope 경계
 
 `configs/experiments/e00_closed_loop_demo_v1.yaml`,
-`configs/experiments/e02_confidence_guard_v1.yaml`과 대응 evaluator는 현재도 이
-디렉터리의 다섯 기본 문서를 과거 전체 음성 아키텍처 source/hash로 열거한다. 이번
-범위 변경으로 그 hash와 의미 계약은 더 이상 유효하지 않다.
+`configs/experiments/e02_confidence_guard_v1.yaml`과 대응 evaluator는 source pin마다
+의미 scope를 강제한다. 오디오 정본은 `seungun_audio_canonical`, 데이터 반출 경계는
+`data_privacy_boundary`, API는 `api_contract`, E00 평가 문서는
+`evaluation_boundary`이며, 이 디렉터리 문서는 오직 `visual_sidecar_only`다.
+validator는 path·SHA-256뿐 아니라 path에 지정된 exact scope도 검사하므로 visual
+문서를 오디오 정본으로 바꿔 적는 것을 거부한다.
 
-단순히 새 hash로 다시 고정하면 visual-only 문서를 오디오 시스템의 정본으로
-오인하게 된다. 해당 E00/E02 계약은 별도 변경에서 오디오 source를 `seungun` 정본으로
-이관하고, visual 문서는 시각 track의 source로만 분리해야 한다. 그 전까지 해당
-검증기의 source-pin 성공을 시각 sidecar 준비도 근거로 사용하지 않는다.
+이 분리는 과거 source/hash의 소유권 오류를 고친 것이지 E00/E02 실제 실행이나 visual
+준비도를 승격한 것이 아니다. source-pin 검증 성공은 static contract 일관성만 뜻하며,
+P6 calibration·P8 locked evaluation·claim-policy conformance가 없으면 visual claim은
+계속 fail-closed한다.

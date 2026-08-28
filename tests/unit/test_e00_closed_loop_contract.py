@@ -428,7 +428,7 @@ def _d08_completion() -> dict[str, Any]:
     }
 
 
-def test_static_config_reads_50_sources_and_no_runtime() -> None:
+def test_static_config_reads_49_scoped_sources_and_no_runtime() -> None:
     config = load_config(CONFIG_PATH)
     audit = AccessAudit()
     static = validate_static_config(
@@ -444,6 +444,23 @@ def test_static_config_reads_50_sources_and_no_runtime() -> None:
     assert audit.raw_audio_read_count == 0
     assert audit.model_inference_count == 0
     assert audit.output_write_count == 0
+
+
+def test_static_config_rejects_visual_sidecar_as_audio_authority() -> None:
+    config = deepcopy(load_config(CONFIG_PATH))
+    visual_pin = next(
+        pin
+        for pin in config["canonical_sources"]["pins"]
+        if pin["path"] == "docs/architecture/README_KO.md"
+    )
+    visual_pin["scope"] = "seungun_audio_canonical"
+
+    with pytest.raises(E00ContractError, match="source pin .* scope"):
+        validate_static_config(
+            workspace_root=WORKSPACE,
+            config_path=CONFIG_PATH,
+            config=config,
+        )
 
 
 def test_all_public_schemas_are_strict_at_root() -> None:

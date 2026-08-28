@@ -79,7 +79,7 @@ G04는 S108 locked one-shot의 선행 gate다.
 
 ## 5. 결정이 필요한 지점 (연구책임자)
 
-[`LOCAL_ALIGNMENT_REVIEW_UI_KO.md`](../LOCAL_ALIGNMENT_REVIEW_UI_KO.md)는 이미
+snapshot 당시의 `LOCAL_ALIGNMENT_REVIEW_UI_KO.md`(현재 tracked tree에서 퇴역)는 이미
 "어느 지표를 G04 최종 gate로 쓸지는 연구책임자가 결정한다"고 적어두었다. 위 분석은
 그 결정에 필요한 재료이지 결정 자체가 아니다.
 
@@ -107,7 +107,8 @@ G04는 S108 locked one-shot의 선행 gate다.
 ## 7. 2026-08-09 승인 결정: T43 + I30
 
 연구책임자는 B(phone-level 지표)와 축소된 C(알려진 문제 후보의 원인 분리)를
-결합한 [G04 amendment](../constraints/G04_TARGETED_PHONE_AUDIT_AMENDMENT_KO.md)를 승인했다.
+결합한 snapshot 당시 G04 amendment(현재 tracked tree에서 퇴역)를
+승인했다.
 
 - G04-H240의 `178/240`은 역사적 진단으로 보존한다.
 - T43은 현재 정렬 drift 또는 로컬 AI non-abstain 불일치인 항목만 원인

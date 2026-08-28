@@ -39,24 +39,18 @@ canonical_sources:
       sha256: 87708790d6dafa5f5a61e6836b13d8ba03e9f575058f03250cd46b5cd7a94d6a
     - path: configs/reference/r00_sentence_card_v1.schema.json
       sha256: 1f8bcf0325414e1923cda0def9a973ac2f7be7bd85cca4ee869743ef862a7b92
+    - path: data/README.md
+      sha256: 53cba9ea730b608474086158c610b831f992538b008bc8f4db784383786a26e5
     - path: data/reference/r00/CC0_NOTICE.txt
       sha256: ffd86dc89cf0957dccc61f6ecb7af1c7ebbbdbff2bd87c951e54c40afc1262c9
     - path: data/reference/r00/r00_sentence_card_v1.json
       sha256: 08dc149ccf10006a587e6216dda0471c19b5c55eab6b320b4348587527d82c4d
-    - path: docs/constraints/DATA_PRIVACY_BOUNDARY_KO.md
-      sha256: 8934384f1c570cf1a086fd08c18b26f577c0a22c3bd69ae1b5064eb34f8b1309
-    - path: docs/constraints/R00_FIXED_SENTENCE_CARD_DATA_CARD_KO.md
-      sha256: d48e75ee83d61be9434d0f94c0f4fdda5401450e25a6dac422644c969e02138c
-    - path: docs/constraints/R01_CANDIDATE_DATA_MODEL_LICENSE_CARD_KO.md
-      sha256: 8f84d04460ec5313410ad5cf8e585bc081b77159da766d4a34e0525a9254140f
-    - path: docs/constraints/R01_CANDIDATE_GENERATION_READINESS_KO.md
-      sha256: ff1a11782e96f6e526c1c71711402976104d0c1c5a27efdbda1e7a9a6f1d84b6
     - path: scripts/prepare_d08_native_multispeaker_reference.py
       sha256: f4a711e79f71fffab8b499151055423f6328e055b65f2ccaace97787350bbbf8
     - path: scripts/validate_r00_sentence_card.py
       sha256: 967517e74194936c91dad1eed4fcfb0c059b5480af32b8adfc9725fdb7d6e7d0
     - path: src/voice_coach/references/d08_native_reference_contract.py
-      sha256: e1f3aaea33dfa4046c53fa21f0ab36b8a886fa8b3a789bb95cb5dba9183b2c49
+      sha256: 039aa7978f68a3e20ca5456b8c01bb04d4cb1456aee76190d5813ccbde0b9586
 
 predecessor_r00:
   deep_validation_required: true

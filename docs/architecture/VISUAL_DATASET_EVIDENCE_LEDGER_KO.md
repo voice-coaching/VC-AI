@@ -1,34 +1,46 @@
 # P6·P8 시각 데이터 후보 근거 ledger
 
 - 최종 갱신: 2026-08-28 (Asia/Seoul)
-- 문서 상태: `public_metadata_audit`
-- 조사 범위: AI Hub·Hugging Face·공식 공개 저장소의 카드/메타데이터
-- 원본 데이터 접근·다운로드: `not_started`
+- 문서 상태: `active_dataset_execution_ledger`
+- 조사 범위: AI Hub·Hugging Face·공식 공개 저장소의 카드/메타데이터와 아래 제한 실행 receipt
+- 포털 이용 승인: 사용자가 2026-08-28에 AI Hub 68·538·539 모두 완료했다고 확인함
+- 원본 데이터 접근·다운로드: 68 P6와 539 TL8 라벨은 제한 실행 완료, 538 비잠금 training shard는 진행 중
 - restricted data 또는 원본 영상의 Git 반입: 없음
 
 ```yaml
 dataset_candidate_audit: dataset_candidates_audited
-p6_source_assignment: selected_pending_admission
-p8_source_assignment: selected_pending_admission_and_seal
-data_admission: not_started
-data_access_or_download: not_started
-calibration_execution: not_started
+p6_source_assignment: aihub68_admitted_and_calibrated
+p8_source_assignment: aihub538_locked_partition_unopened
+portal_access_permission: user_attested_approved_for_aihub_68_538_539
+data_admission: partial_by_dataset_and_partition
+data_access_or_download: restricted_execution_in_progress
+calibration_execution: p6_v2_completed_promotion_pending
 independent_automated_evaluation: not_started
 claim_policy_conformance: not_started
 gate_promotion: none
 user_visual_claims: disabled
 ```
 
-위 상태에서 `dataset_candidates_audited`는 공개 페이지에서 후보와 예상 역할을
-조사했다는 뜻뿐이다. 데이터 사용 적격성, P6 calibration 실행, P8 평가 실행,
-사용자 피드백 정확성 또는 claim-policy conformance 완료를 뜻하지 않는다.
+위 `portal_access_permission` 값은 사용자가 AI Hub 포털에서 이용 승인을
+완료했다는 사실을 기록한 것이다. 다운로드 완결, archive 무결성, schema
+admission, 역할 분할, P6 calibration, P8 one-shot 평가 또는 런타임 승격을
+대신하지 않는다. 실패하거나 아직 실행하지 않은 단계는 계속 fail-closed다.
+
+현재 실행 상태는 다음과 같다.
+
+| 데이터·partition | 현재 상태 | 아직 승인하지 않은 것 |
+|---|---|---|
+| AI Hub 68 P6 | restricted admission, actor/attempt-disjoint geometry calibration, `ㅓ` reference v2, fresh-process reload·production cue parity 완료 | 런타임 P6 promotion과 사용자 visual claim |
+| AI Hub 539 TL8 | 13개 label archive aggregate audit 완료; 4-camera·123,658-frame metadata 내 A/V duration delta 0 관측 | 실제 media anchor 동기 정확도와 P8 promotion |
+| AI Hub 538 TS174/TL174 | P8 잠금 결과를 보기 전 QC/sync decision policy를 캘리브레이션하는 training/smoke shard 제한 다운로드 진행 중 | archive admission·actor-disjoint audit·policy calibration/reload |
+| AI Hub 538 VS11/VL11 | 잠금 평가 후보; 원본 미열람 | read-zero seal, one-shot 평가, claim-policy replay |
 
 현재 runtime에는 decoded RGB+landmark video-QC candidate와 lip aperture+PCM energy
 A/V anchor candidate extractor가 있으며 둘 다 lineage receipt와 합성 unit test를 가진다.
 합성 H.264/AAC `--video-fd` CLI도 공식 landmark model과 CUDA Seungun에서 audio 완료·visual
-unavailable, QC·content-sync candidate not calibrated, cleanup 완료로 실행됐다. 이는 AI Hub 자료 admission,
-실제 사용자 영상 측정 또는 P6 calibration은 아니므로 위 `not_started` 상태와 gate를
-변경하지 않는다.
+unavailable, QC·content-sync candidate not calibrated, cleanup 완료로 실행됐다. 이 smoke는
+별도로 완료된 AI Hub 68 P6/P6B evidence를 사용자 영상 QC/sync calibration이나 runtime
+promotion으로 확대하지 않으며, 538 decision/P8 gate 상태를 변경하지 않는다.
 
 ## 1. 이 문서에서 P6와 P8이 뜻하는 것
 
@@ -82,7 +94,7 @@ Engineering reference only
   intrinsic/extrinsic, 성별·연령
 - 배정 역할: `ve2_qc_development_candidate`, `ve3_development_candidate`,
   `ve4_geometry_calibration_candidate`
-- 현재 판정: `selected_pending_admission`
+- 현재 판정: `admitted_calibrated_v2_promotion_pending`
 
 P6에서 검증할 수 있는 것은 tracker의 landmark 오차·coverage, pose별 반복성,
 aperture/width/rounding 같은 직접 가시 geometry와 support 범위다. phone-level timing,
@@ -101,7 +113,7 @@ aperture/width/rounding 같은 직접 가시 geometry와 support 범위다. phon
   음성 1,150시간, 아홉 촬영 각도, 소음 조건, 문장 전사·시간, speaker 정보,
   face/lip bounding box
 - 배정 역할: `ve5_provisional_locked_candidate`
-- 현재 판정: `selected_pending_admission_and_seal`
+- 현재 판정: `portal_permission_confirmed_locked_partition_unopened`
 
 P8에서 처음 열어 tracker coverage, lip ROI 유지, 촬영 각도·소음 slice, A/V 처리 실패,
 latency와 fail-closed 상태를 평가할 수 있다. 2D landmark gold, phone alignment,
@@ -119,7 +131,7 @@ manifest·schema·checksum 감사로 해소하기 전에는 규모를 확정하�
 - 공개 메타데이터: 한국어 audio/video/text/motion, 동기화된 멀티모달 자료
   4,070시간, 음성 1,017시간, 486명, 여러 촬영 각도
 - 배정 역할: `ve5_sync_perturbation_candidate`
-- 현재 판정: `auxiliary_pending_admission`
+- 현재 판정: `tl8_labels_admitted_actual_media_sync_pending`
 
 공개 메타데이터에는 clip별 실제 sync offset ground truth와 lip landmark가 없다.
 그러므로 “원본 sync 절대오차”의 정답 자료로 쓰지 않는다. 적격성 확인 후 원본에
@@ -177,12 +189,14 @@ revision, reference/support/threshold hash, metric report, 실패 slice와 reloa
 있어야 한다. phone-level 발음 오류 label이 없으므로 `pronunciation_correct`,
 `pronunciation_incorrect`, “입을 더 벌리세요” 같은 action truth는 만들지 않는다.
 
-현재 `gate_evidence.py`의 P6 validator는 AI Hub 68 역할로 고정된 aggregate-only bundle에서
+legacy `gate_evidence.py`의 P6 validator는 AI Hub 68 역할로 고정된 aggregate-only bundle에서
 rights/admission assertion, actor+attempt disjoint split, pipeline revision/digest, 24-point
 metric summary, calibrated artifact와 fresh-process reload summary의 exact digest/invariant를
 검사한다. 성공해도 receipt는 항상 `evidence_validated_not_promoted`이며
 `visual_reliability_authorized=false`다. rights와 reload는 제출된 assertion/digest 증거로,
-validator가 실제 권리 상태나 별도 process 실행을 독립 생성·인증하지 않는다.
+validator가 실제 권리 상태나 별도 process 실행을 독립 생성·인증하지 않는다. 별도 P6/P6B
+v2 producer는 실제 제한 실행·fresh reload·production parity를 완료했지만, automated
+runtime promotion v4는 TS174/TL174 actual-media decision-policy evidence가 추가로 있어야 한다.
 
 ## 5. P8 잠금 자동평가 계약
 
@@ -251,7 +265,8 @@ fail-closed 측정에 한정한다. 이 자동 gate는 사용자 효능 연구�
 
 ## 8. 다음 실행 순서
 
-1. AI Hub 68/538/539의 사용자 통제 승인 세션에서 약관·파일 목록·revision을 확인한다.
+1. AI Hub 68/538/539의 포털 이용 승인은 사용자 확인으로 완료 처리하되,
+   약관·파일 목록·revision·파생물 범위는 각 restricted admission receipt에 고정한다.
 2. 원본을 Git 밖 restricted storage에 내려받고 manifest/schema/consent-rights audit을
    수행한다.
 3. blocker가 0인 자료만 `admitted`로 승격하고 68의 P6 split과 538의 P8 seal을

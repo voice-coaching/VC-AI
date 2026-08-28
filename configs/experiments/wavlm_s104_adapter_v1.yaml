@@ -216,7 +216,7 @@ implementation:
     sha256: b80550bf80629382431e1d9a3bf246ac57f17b0544642245ed7c3d7ec0f3c452
   project_manifest:
     path: pyproject.toml
-    sha256: 20ede7c9fbd4eb047fdcd81a2732588756278842b757a1b9b44794befdc4d1da
+    sha256: c33af395f4f3a3c23b625219d4f0911de2c35b08d6ffecc2710a118766f17328
   scorer_lock:
     path: requirements/scorer-lock-linux-aarch64-cu130.txt
     sha256: f6c5b10c1028506d7361c83ad1e9aae0b1fafcf34f4e918e5b7123c51fac8cf2

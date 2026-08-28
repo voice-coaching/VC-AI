@@ -67,7 +67,7 @@ predecessors:
   s104:
     config:
       path: configs/experiments/wavlm_s104_adapter_v1.yaml
-      sha256: 38d428d7e0065493a2024164a8f107f377e80c2ddb9d390bf981737030903e9f
+      sha256: 0b633fa93de9ed0e7952893a2221ee5fdaaf1968255bc83c02fd031ae08bde70
     commit:
       path: artifacts/experiments/aihub71490_wavlm_s104_adapter_v1/commit.json
       schema_version: voice_coach.wavlm_s104_adapter_commit.v1
@@ -99,7 +99,7 @@ predecessors:
   s106:
     config:
       path: configs/experiments/wavlm_s106_stack_fusion_v1.yaml
-      sha256: cb5e10464ff8e227756a8aa6171cfde6e630fedbe37b5dc24e7fb2e16f0af7ea
+      sha256: 72be88ab0507098e292228d98526324afa410c6d16d0304e28ff67f0389d9586
     commit:
       path: artifacts/experiments/aihub71490_wavlm_s106_stack_fusion_v1/commit.json
       schema_version: voice_coach.wavlm_s106_stack_fusion_commit.v2
@@ -113,7 +113,7 @@ predecessors:
   s107:
     config:
       path: configs/experiments/wavlm_s107_calibration_v1.yaml
-      sha256: f85821abece46e8bb6a2a0c49e74e5717b5bdd9b0139c9138b93a446f1497c95
+      sha256: c606f77b45c44a517ffff3118bba618ce3da7f0f7f571220c7e9ce15ac4e1966
     commit:
       path: artifacts/experiments/aihub71490_wavlm_s107_calibration_v1/commit.json
       schema_version: voice_coach.wavlm_s107_calibration_commit.v1
@@ -244,7 +244,7 @@ implementation:
     sha256: c2afa98092c300ca7a9f87a1e122a4edad311517a188200330575ddae1f56661
   project_manifest:
     path: pyproject.toml
-    sha256: 20ede7c9fbd4eb047fdcd81a2732588756278842b757a1b9b44794befdc4d1da
+    sha256: 87fbe75e3df2ad7f64494cafb3744e7cfb815cfe1b8e9ea8d774d8b990c35e71
   scorer_lock:
     path: requirements/scorer-lock-linux-aarch64-cu130.txt
     sha256: f6c5b10c1028506d7361c83ad1e9aae0b1fafcf34f4e918e5b7123c51fac8cf2

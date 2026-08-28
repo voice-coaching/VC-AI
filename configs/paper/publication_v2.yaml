@@ -1,125 +1,40 @@
 schema_version: voice_coach.paper_publication_audit_config.v2
-status: ready
+status: blocked_retired_canonical_sources
 
-# v1 remains an immutable historical publication namespace. v2 reuses only
-# its pinned citation and URL content contract; it never reads v1 receipts.
-base_content_contract:
-  path: configs/paper/publication_v1.yaml
-  sha256: 1ae5f235f2fcc9d213d47ffcefb499d2988c4faa2bf1306ed5e0c3a6e1160b50
-  size_bytes: 8111
+blocker:
+  code: retired_canonical_sources
+  retired_source_roles:
+    - manuscript_evidence_validation_document
+    - publication_v1_ready_contract
+  evidence_status: unresolved
+  explanation: >-
+    The former validation document and ready v1 base contract are retired.
+    Existing ignored local receipts cannot establish a reproducible
+    publication-ready state in a fresh clone.
 
-policy:
-  offline_default: true
-  network_is_completion_evidence: false
-  canonical_write_allowed: false
-  expected_markdown_tables: 13
-  pending_marker_regex: '\[PENDING:[^\]]+\]'
-  expected_pending_count: 18
-  expected_pending_markers_sha256: 1d0cce59025c86879d0a9972f0da31e45e87169b41f5b8fadd427c111e6d7673
+current_boundaries:
+  manuscript:
+    path: docs/paper/EXPERIMENTAL_MANUSCRIPT_KO.md
+    sha256: 3f10f7f05ff89b0c7f6e7a1dfaf48216a5b0dec8f1ab51bbadd2c809f443afef
+    size_bytes: 41417
+  evidence_map:
+    path: docs/paper/evidence-map.yaml
+    sha256: 6f90e19e1215504823d39c5bfaf96c881d540af37929f276b71d847863adc191
+    size_bytes: 189746
+  source_ledger:
+    path: docs/paper/RELATED_WORK_SOURCE_LEDGER_KO.md
+    sha256: d37bf2ab5564c55f03dbb9e1974e9bf421274df9971b30d31bb54ff4909e44b6
+    size_bytes: 24444
+  data_boundary:
+    path: data/README.md
+    sha256: 53cba9ea730b608474086158c610b831f992538b008bc8f4db784383786a26e5
+    size_bytes: 1828
 
 completion_state:
   paper_complete: false
   submission_status: not_submitted
   manual_approval_required: true
   manual_approval_status: not_approved
-
-implementation:
-  module:
-    path: src/voice_coach/reproducibility/paper_publication_v2.py
-    sha256: d71a24ea721a7e1fbb876fbc0a3a2e11cf1278b5204480af4689df53152cae68
-    size_bytes: 77400
-  cli:
-    path: scripts/audit_paper_publication_v2.py
-    sha256: e14eba4b0e745214130e106bce0e74f245bb29e6f6185e9993e820e8e2def437
-    size_bytes: 2420
-  protected_paths:
-    path: src/voice_coach/reproducibility/protected_paths.py
-    sha256: c645417444aa69f7bb54e6804b224e84fc9adc5f25934563fa17d8c87862bbc4
-    size_bytes: 19857
-  content_audit_module:
-    path: src/voice_coach/reproducibility/paper_publication.py
-    sha256: dde43c6f6a8788bc7b85b79e838de569494a7415efc61f87ba93f3cef5612f0d
-    size_bytes: 90182
-
-evidence_gate:
-  report:
-    path: artifacts/reproducibility/manuscript_evidence_validation.json
-    sha256: af4a8566050f83c1c5e4cfc5de21ad2e84fceaee0f9a5870d5d10f77c400e92d
-    size_bytes: 139174
-  validator_script:
-    path: scripts/validate_manuscript_evidence.py
-    sha256: 21d02f78a1c3a7aebc9762934876de1fd122a2c0f8835061b08e11574f961362
-    size_bytes: 2387
-  validator_module:
-    path: src/voice_coach/reproducibility/evidence.py
-    sha256: 183ba32fe3e047c4c97b98ab36d3295673f4dc317af3c8ed59afb65bf615b2a9
-    size_bytes: 30260
-  validation_document:
-    path: docs/MANUSCRIPT_EVIDENCE_VALIDATION_KO.md
-    sha256: 882f125e12bcb4c932c66535c9e00fde162a266f4a0d41e943a1220e58a1c35f
-    size_bytes: 5447
-  expected:
-    status: passed
-    artifact_count: 35
-    claim_count: 475
-    pending_count: 18
-    pending_markers_sha256: 1d0cce59025c86879d0a9972f0da31e45e87169b41f5b8fadd427c111e6d7673
-    locked_guard_status: passed
-    locked_access_entry_count: 16
-    locked_access_keys:
-      - explicit_dev_report
-      - threshold_ablation_report
-      - wavlm_base_cache_report
-      - wavlm_base_head_report
-      - wavlm_base_head_report:4
-      - wavlm_base_head_report:5
-      - wavlm_large_head_report
-      - wavlm_large_head_report:7
-      - wavlm_large_head_report:8
-      - wavlm_s103_comparison_report
-      - wavlm_s103_comparison_report:10
-      - wavlm_s103_comparison_report:11
-      - wavlm_s103_results_json
-      - wavlm_s103_results_json:13
-      - wavlm_s103_results_json:14
-      - wavlm_s103_results_json:15
-    locked_access_keys_sha256: de011d5deb430036e293b3b0b16593508cc22f200a30cdcb314c4996184d2f11
-    registry_metric_splits: [dev, dev_exploratory, inner_val]
-
-canonical:
-  manuscript:
-    path: docs/paper/EXPERIMENTAL_MANUSCRIPT_KO.md
-    sha256: c21e6d86570eb74069df104295aafe7cf78af02ce51398335c50133a5d1304f2
-    size_bytes: 41392
-  evidence_map:
-    path: docs/paper/evidence-map.yaml
-    sha256: edf548f9b439b0c423a2ff15b1d2dc8b22fb6590ef679958a81af306ebb7c1fb
-    size_bytes: 189659
-  source_ledger:
-    path: docs/paper/RELATED_WORK_SOURCE_LEDGER_KO.md
-    sha256: d37bf2ab5564c55f03dbb9e1974e9bf421274df9971b30d31bb54ff4909e44b6
-    size_bytes: 24444
-  local_assets:
-    - link_target: tables/aihub71490_data_qc.md
-      source:
-        path: docs/paper/tables/aihub71490_data_qc.md
-        sha256: fcd60c47415e29eb90a8b2b3ce9be258f817b2b0d201f40aebe11a4d10e240dd
-        size_bytes: 3670
-    - link_target: figures/aihub71490_cohort_flow.mmd
-      source:
-        path: docs/paper/figures/aihub71490_cohort_flow.mmd
-        sha256: 78ea599bfd2b0a5ba5df78ab66bef45110f555cca0d2630d5e905b56bb6860fd
-        size_bytes: 2045
-    - link_target: figures/aihub71490_cohort_flow.svg
-      source:
-        path: docs/paper/figures/aihub71490_cohort_flow.svg
-        sha256: d697e42cea9a820c24c082dd183653bc0a59a9ba4e3406c85eafb8117437ce9e
-        size_bytes: 13542
-    - link_target: tables/explicit_threshold_ablation_dev.md
-      source:
-        path: docs/paper/tables/explicit_threshold_ablation_dev.md
-        sha256: 5b96d10eb2b4b5ad99bda4d17d7c34c8a0a640e3af57aad31e5dd263a1f3deb1
-        size_bytes: 4208
 
 output:
   root: artifacts/reproducibility/paper_publication_v2

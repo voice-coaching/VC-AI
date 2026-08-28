@@ -6,6 +6,12 @@
 - 변경 범위: 원고·최소 evidence-map·이 감사 문서와 evidence validation
   report 갱신, tracker·모델·config·cache·head·registry 미수정
 
+> 정본 이관 주의(2026-08-28): 이 문서는 2026-07-29 감사 snapshot이다.
+> 당시 입력으로 사용한 전체 tracker, privacy/license matrix, WP4/WavLM
+> 계약과 evidence-validation 문서는 현재 tracked tree에서 퇴역했다.
+> 아래 수치와 완료 표현은 당시 snapshot으로만 읽고, 현재 상태는
+> 상위 [`README.md`](../../README.md)의 현행 단계별 문서에서 다시 확인한다.
+
 ## 1. 목적과 감사 기준
 
 이 문서는 [현재 실험 원고](EXPERIMENTAL_MANUSCRIPT_KO.md)의 방법, 통계,
@@ -24,27 +30,25 @@
 A는 대체로 O, protocol 시제의 B는 G, 외부·후속 결과인 C는 X에
 대응한다. 관련연구 source 확인은 별도 P04/P05 gap으로 남는다.
 
-> 후속 WP4 S104–S108의 계획·해제 순서는
-> [WP4 S103 이후 실행 계약](../constraints/WP4_POST_S103_EXECUTION_CONTRACT_KO.md)을
-> 따른다. 이 링크는 아래 A/B/C/D 판정, 완료 artifact와 당시 검증 수치를
-> 소급 변경하지 않으며 실제 결과는 기존 증거 우선순위를 계속 따른다.
+> 후속 WP4 S104–S108의 계획·해제 순서는 2026-07-29 당시
+> 후속 실행 계약을 따랐다. 해당 계약은 현재 tracked tree에서 퇴역했으므로
+> 이 snapshot을 새 실행의 live source pin이나 승인 근거로 사용하지 않는다.
 
 ## 2. 읽은 정본과 우선순위
 
-감사에 사용한 문서는 다음과 같다.
+현재 checkout에서 다시 열 수 있는 감사 입력은 다음과 같다.
 
 1. [현재 원고](EXPERIMENTAL_MANUSCRIPT_KO.md)
 2. [P00 주장·증거 갭 맵](CLAIM_GAP_MAP_KO.md)
-3. [연구 완성 추적기](../constraints/RESEARCH_COMPLETION_TRACKER_KO.md)
-4. [개인정보·반출 경계](../constraints/DATA_PRIVACY_BOUNDARY_KO.md)
-5. [데이터 라이선스·역할 매트릭스](../constraints/DATA_LICENSE_AND_ROLE_MATRIX_KO.md)
-6. [논문 수치 evidence validation](../MANUSCRIPT_EVIDENCE_VALIDATION_KO.md)
-7. [G04 수동 정렬 감사 절차](../constraints/AIHUB71490_MANUAL_ALIGNMENT_AUDIT_KO.md)
-8. [퇴역 계약 통합 안내](../README.md#retired-contracts)
-9. [WP4 S103 이후 실행 계약](../constraints/WP4_POST_S103_EXECUTION_CONTRACT_KO.md)
-10. [WavLM cache 독립 검증 계약](../constraints/WAVLM_FEATURE_CACHE_VALIDATION_KO.md)
-11. [관련연구 source ledger](RELATED_WORK_SOURCE_LEDGER_KO.md)
-12. [자료 라이선스 원문·역할 ledger](../constraints/DATA_LICENSE_SOURCE_LEDGER_KO.md)
+3. [관련연구 source ledger](RELATED_WORK_SOURCE_LEDGER_KO.md)
+4. [G04 현행 AI proxy protocol](../evaluation/G04_AUDIO_AI_PROXY_PROTOCOL_KO.md)
+5. [G04 AI proxy 결과와 한계](../evaluation/G04_AUDIO_AI_PROXY_RESULT_2026-08-09_KO.md)
+6. [C03 현행 static card](../evaluation/C03_EXPERT_COACHING_AUDIT_DATA_MODEL_PRIVACY_SAFETY_STATISTICS_CARD_KO.md)
+
+현재 퇴역한 당시 입력은 전체 완성 tracker, 개인정보·반출 경계,
+데이터 license/role·source ledger, G04 수동 정렬 절차, WP4 후속
+실행 계약, WavLM cache 독립 검증 계약과 manuscript evidence-validation
+report였다. 이 입력의 부재를 다른 현행 문서로 소급 대체하지 않는다.
 
 상태 충돌 시 고정 aggregate artifact와 registry, evidence validator,
 tracker, 최신 세부 protocol, 오래된 실행계획 순으로 우선한다. 계획 문서의
@@ -212,8 +216,9 @@ Base+ cache builder report SHA-256은
 2. **S104–S108**: S101–S103의 Base+/Large 3-seed head와 paired
    comparison·renderer는 완료됐다. 이후에는 S104–S106을 건너뛰지
    않으며, 현재 실행은
-   [후속 실행 계약](../constraints/WP4_POST_S103_EXECUTION_CONTRACT_KO.md)의
-   S103→S104→S105→S106→S107→S108 순서를 따른다.
+   당시 후속 실행 계약의
+   S103→S104→S105→S106→S107→S108 순서를 따랐다.
+   현재 계약 파일이 퇴역했으므로 신규 실행 승인으로 사용하지 않는다.
 3. **S2/E01/C03/R04**: 독립 holdout, 전문가 판정, perturbation report,
    coaching 200건, blind MOS/CMOS 원본과 통계를 각각 완료해야 한다.
 4. **H00–H04 참여자 연구 경로**: 기관 승인, consent, 모집, pre/post/retention, blind

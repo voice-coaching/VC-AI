@@ -3,14 +3,25 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
-from typing import Sequence
-
-import torch
+from importlib import import_module
+from typing import TYPE_CHECKING, Any, Sequence
 
 from voice_coach.coaching.catalog import ADVICE_CATALOG
 from voice_coach.coaching.prioritizer import rank_issues
 from voice_coach.domain.models import DiagnosticIssue, DiagnosticProfile
-from voice_coach.models.generator_adapters import GeneratorCandidate, GeneratorFamilyChain, GeneratorFamily
+
+if TYPE_CHECKING:
+    from voice_coach.models.generator_adapters import (
+        GeneratorCandidate,
+        GeneratorFamily,
+        GeneratorFamilyChain,
+    )
+else:
+    # Preserve runtime annotation introspection without importing scorer-only
+    # modules from the base API process.
+    GeneratorCandidate = Any
+    GeneratorFamily = Any
+    GeneratorFamilyChain = Any
 
 
 class ClosedLoopApplicationError(RuntimeError):
@@ -125,12 +136,19 @@ class ClosedLoopTTSService:
 
     def generate_reference(
         self,
-        learner_waveform: torch.Tensor,
-        learner_text_tokens: torch.Tensor,
-        native_reference_waveform: torch.Tensor,
+        learner_waveform: Any,
+        learner_text_tokens: Any,
+        native_reference_waveform: Any,
         *,
         families: Sequence[GeneratorFamily],
     ) -> tuple[GeneratorCandidate, ...]:
+        try:
+            import_module("torch")
+        except (ImportError, OSError) as exc:
+            raise ClosedLoopApplicationError(
+                "TTS reference generation requires the optional scorer dependencies; "
+                "install voice-coach[scorer] and verify that torch can be loaded"
+            ) from exc
         return self.generator_chain.generate_candidates(
             learner_waveform,
             learner_text_tokens,

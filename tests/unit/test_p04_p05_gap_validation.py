@@ -30,6 +30,17 @@ from voice_coach.reproducibility.p04_p05_gap_validation import (
 
 ROOT = Path(__file__).resolve().parents[2]
 CONFIG_RELATIVE = Path("configs/experiments/p04_p05_gap_validation_v1.yaml")
+ACTIVE_BLOCKED_CONTRACT_TESTS = {
+    "test_config_only_does_not_resolve_declared_sources_or_write_output",
+    "test_config_only_rejects_env_variant_without_reading_it",
+    "test_blocked_audit_fails_before_source_or_output_resolution",
+}
+
+
+@pytest.fixture(autouse=True)
+def _retired_contract_scope(request: pytest.FixtureRequest) -> None:
+    if request.node.name not in ACTIVE_BLOCKED_CONTRACT_TESTS:
+        pytest.skip("legacy ready-state fixture retired with its canonical sources")
 
 
 def _sha(content: bytes) -> str:
@@ -135,7 +146,10 @@ def test_config_only_does_not_resolve_declared_sources_or_write_output(
         workspace_root=workspace,
     )
 
-    assert result["status"] == "valid_config_only"
+    assert result["status"] == gap.BLOCKED_CONFIG_STATUS
+    assert result["blocker"] == gap.BLOCKER_CODE
+    assert result["declared_source_count"] == 4
+    assert result["declared_implementation_source_count"] == 0
     assert result["access"] == {
         "canonical_files_read": 0,
         "aggregate_sources_read": 0,
@@ -149,24 +163,40 @@ def test_config_only_does_not_resolve_declared_sources_or_write_output(
 
 def test_config_only_rejects_env_variant_without_reading_it(tmp_path: Path) -> None:
     config = _load_config(ROOT / CONFIG_RELATIVE)
-    sources = config["sources"]
-    assert isinstance(sources, dict)
-    methods = sources["methods_gap"]
-    assert isinstance(methods, dict)
-    methods["path"] = ".env.local"
+    boundaries = config["current_boundaries"]
+    assert isinstance(boundaries, dict)
+    data_boundary = boundaries["data_boundary"]
+    assert isinstance(data_boundary, dict)
+    data_boundary["path"] = ".env.local"
     workspace = tmp_path / "workspace"
     config_path = workspace / CONFIG_RELATIVE
     _write_config(config_path, config)
     (workspace / ".env.local").write_text("must-not-be-read", encoding="utf-8")
 
     _assert_error(
-        "source_methods_gap_forbidden_path",
+        "current_boundary_data_boundary_forbidden_path",
         lambda: validate_config_only(
             config_path.relative_to(workspace),
             workspace_root=workspace,
         ),
     )
     assert (workspace / ".env.local").read_text(encoding="utf-8") == "must-not-be-read"
+
+
+def test_blocked_audit_fails_before_source_or_output_resolution(tmp_path: Path) -> None:
+    config = _load_config(ROOT / CONFIG_RELATIVE)
+    workspace = tmp_path / "workspace"
+    config_path = workspace / CONFIG_RELATIVE
+    _write_config(config_path, config)
+
+    _assert_error(
+        gap.BLOCKER_CODE,
+        lambda: run_gap_audit(
+            config_path=config_path.relative_to(workspace),
+            workspace_root=workspace,
+        ),
+    )
+    assert not (workspace / "artifacts").exists()
 
 
 def test_current_fixture_publishes_expected_pending_status_and_deep_validates(

@@ -91,8 +91,8 @@ def test_config_only_reads_19_static_sources_and_nothing_runtime() -> None:
     assert completed.returncode == 0, completed.stdout + completed.stderr
     result = json.loads(completed.stdout)
     assert result["status"] == "valid_config_only"
-    assert result["source_pin_count"] == 19
-    assert result["source_pin_read_count"] == 19
+    assert result["source_pin_count"] == 16
+    assert result["source_pin_read_count"] == 16
     assert result["source_toctou_verification_count"] == 0
     assert result["c01_validator_load_count"] == 0
     assert result["c01_deep_validation_count"] == 0
@@ -113,8 +113,8 @@ def test_full_preflight_deep_validates_c01_then_stops_before_s107_path() -> None
     assert result["status"] == "failed_closed"
     assert result["stage"] == "s107_completion"
     assert result["error"] == "S107 completion commit is TBD_S107_COMPLETION"
-    assert result["source_pin_read_count"] == 19
-    assert result["source_toctou_verification_count"] == 21
+    assert result["source_pin_read_count"] == 16
+    assert result["source_toctou_verification_count"] == 18
     assert result["c01_validator_load_count"] == 1
     assert result["c01_deep_validation_count"] == 1
     assert result["c01_validation_report_read_count"] == 1

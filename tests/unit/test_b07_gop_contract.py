@@ -162,7 +162,7 @@ def test_config_only_reads_no_protected_input_and_writes_nothing(
     assert result.returncode == 0, result.stderr
     payload = json.loads(result.stdout)
     assert payload["status"] == "config_valid"
-    assert payload["source_count"] == 11
+    assert payload["source_count"] == 10
     for key, value in payload.items():
         if key.endswith("_read") or key.endswith("_written"):
             assert value is False

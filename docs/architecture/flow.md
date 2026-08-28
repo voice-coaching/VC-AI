@@ -1,7 +1,8 @@
 # 입술 모양 피드백 Sidecar 흐름
 
 - 문서 상태: `implemented_contract_with_internal_smoke`
-- 구현 상태: `partial_implementation`; 사용자 실영상 runtime은 `not_ready`
+- 구현 상태: `partial_implementation`; 사용자 실영상 media/audio 경로는 smoke 검증,
+  visual feedback runtime은 `not_ready`
 - 상세 설계: [`SEUNGUN_VISUAL_PRONUNCIATION_EVIDENCE_PIPELINE_KO.md`](SEUNGUN_VISUAL_PRONUNCIATION_EVIDENCE_PIPELINE_KO.md)
 - 데이터 후보: [`VISUAL_DATASET_EVIDENCE_LEDGER_KO.md`](VISUAL_DATASET_EVIDENCE_LEDGER_KO.md)
 
@@ -10,8 +11,9 @@
 - Actor: `seungun` audio 결과를 이미 보유한 상위 composition root
 - Entry point: in-process coordinator/facade와 internal CLI. 권장 `--video-fd`는 사전에
   read-only로 연 `fd >= 3`을 받아 participant path를 argv에서 제외한다. `--video`는
-  argv/shell-history 노출 가능성이 있는 내부 편의 기능이다. 합성 H.264/AAC
-  `--video-fd` CUDA+MediaPipe E2E는 성공, 실제 사용자 영상 성공 실행은 미검증
+  argv/shell-history 노출 가능성이 있는 내부 편의 기능이다. 합성 H.264와 HEVC unit
+  path에 더해 두 HEVC Main/AAC, 1080x1920 portrait 사용자 영상의 `--video-fd`
+  CUDA+MediaPipe audio-completed E2E를 확인했다.
 - Required input: 검증된 upstream evidence reference, opaque video handle, consent receipt
 - Side effects: 내부 fixture record와 local restricted media 삭제 receipt; production audit
   ledger는 미구현
@@ -43,7 +45,7 @@ upstream schema/binding/reliability validation
 opaque video + consent
         |
         v
-rights/admission -> video QC -> A/V sync -> lip tracking
+rights/admission -> global 8-frame lip tracking/QC -> A/V sync
         |                |             |
         |                |             +-- uncertain --> visual_uncertain
         |                +-- recapturable failure --> visual_rerecord_required
@@ -51,7 +53,12 @@ rights/admission -> video QC -> A/V sync -> lip tracking
         +-- denied/integrity failure ---------------> visual_failed_closed
         |
         v
-upstream target/span과 lip timeline join
+exact bound upstream target/span + policy-valid measured sync
+        |
+        +-- raw/unavailable sync --> dense window 미실행, reliability gate
+        |
+        v
+bounded dense phone-window decode -> lip re-tracking -> receipt DAG
         |
         v
 visible lip cue extraction + reference/calibration
@@ -87,9 +94,10 @@ visual_feedback_ready (supplement only)
 self-digest, source record와 presented receipt의 exact-match 대상이다. local FFmpeg
 `AudioDerivationReceipt`와 container/audio lineage를 handoff에 전달하는 bridge는 unit
 test로 검사됐다. internal CLI/local composition은 권장 pre-opened read-only
-`--video-fd`로 합성 H.264/AAC MP4, 공식 MediaPipe model과 CUDA Seungun에서 audio
-완료·visual unavailable·cleanup 완료를 반환했지만 persistent source 재로드와
-실제 사용자 영상 실행은 아직 검증되지 않았다.
+`--video-fd`로 합성 H.264/AAC MP4와 두 HEVC Main/AAC, 1080x1920 portrait,
+30 fps 사용자 영상을 공식 MediaPipe model과 CUDA Seungun에서 실행했다. 실제 두 영상
+모두 audio `coaching_ready`, visual unavailable, cleanup 완료를 반환했지만 persistent
+source 재로드와 visual feedback publication은 아직 검증되지 않았다.
 
 ### F1. 동의와 제한 media admission
 
@@ -118,21 +126,25 @@ blur, 가림과 조명을 관찰한다.
 
 QC 실패를 score 0 또는 정상 cue로 변환하지 않는다.
 
-`FfmpegAvContainerAdapter`는 single MP4/H.264 video + AAC audio, duration/geometry/FPS,
+`FfmpegAvContainerAdapter`는 single MP4/(H.264|HEVC) video + AAC audio,
+duration/geometry/FPS,
 frame count와 monotonic timestamp를 strict policy로 probe하고, 첫·마지막 frame을 포함해
 전 구간의 bounded RGB24 frame을 결정론적으로 균등 sample한다. FFmpeg/ffprobe는
 pre-exec seccomp와 resource limit launcher 뒤에서 실행된다. launcher는 io_uring과
 일반 process/session/group escape를 차단하고 thread clone만 허용한다. FFmpeg stdout/
-stderr pipe는 nonblocking이며 어떤 예외에서도 process group을 종료한다. 이 경로는
-합성 비개인 MP4와 local FFmpeg/ffprobe로 실행됐다.
+stderr pipe는 nonblocking이며 어떤 예외에서도 process group을 종료한다. local
+composition은 width/height 각각 최대 1920, 전 구간 8-frame/64 MiB와 dense
+12-frame/80 MiB의 압축 해제 RGB gate를 유지한다. 이 경로는 합성 H.264/HEVC media와
+두 HEVC portrait 사용자 파일에서 local FFmpeg/ffprobe로 실행됐다.
 
 `VideoQcCandidateAdapter`는 decoded RGB와 MediaPipe landmark를 exact timestamp/
 container/model lineage로 묶고 single/multiple-face coverage, 전체·lip-ROI luma와
 under/overexposure fraction, neighbor-luma edge sharpness proxy, lip ROI coverage,
 single-face run과 lip-center track continuity를 계산한다. 결과는 runtime visual detection
 v2 receipt에 포함된다. P6 전에는 `candidate_unvalidated` 또는 `unavailable`일 뿐이며
-pose·occlusion, calibrated QC pass나 reliability를 만들지 않는다. 실제 사용자 영상의
-QC 분포와 rerecord/unsupported threshold도 검증되지 않았다.
+pose·occlusion, calibrated QC pass나 reliability를 만들지 않는다. 두 실제 사용자
+영상에서 candidate path는 실행됐지만 population/device별 QC 분포와
+rerecord/unsupported threshold는 검증되지 않았다.
 
 ### F3. lip tracking과 A/V sync
 
@@ -146,13 +158,15 @@ video window 안의 최소 2D lip 좌표를 aperture/closure aggregate로 바꾼
 수를 세고 single-face일 때 네 점의 최소 lip geometry를 반환하도록 구현됐다. worker는
 pre-exec seccomp/resource-limit launcher 뒤에서 bounded streaming I/O로 실행된다.
 `LipAudioAvSyncAdapter`는 이 geometry의 aperture ratio와 restricted PCM energy를
-교차상관해 offset·anchor candidate와 exact lineage receipt를 계산한다. 합성 신호 unit
-test에서 `candidate_unvalidated`를 확인했지만, P6 calibration 전에는 sync reliability나
-visual claim 근거로 승격하지 않는다. MediaPipe 공식 model은 합성 CLI에서 실행됐지만
-공개 test portrait의 실제 얼굴 landmark/QC·sync candidate는 관측됐지만 실제 사용자
-영상의 head-pose normalization과 sync 성능은 검증되지 않았다.
-runtime bridge v2는 sample/probe/binding, frame timestamp, landmark/model과 QC/A-V-sync
-receipt를 하나의 typed detection receipt로 묶고, 다른 container sample을 detector
+교차상관해 offset·anchor candidate와 exact lineage receipt를 계산한다. 별도 calibrated
+decision wrapper가 candidate offset/correlation/전체 anchor와 정책·코드 SHA를 복사한
+decision v2를 발급하며 synchronized decision에서만 validated offset을 만든다. 실제
+TS174/TL174 정책 evidence가 없으면 sync reliability나 visual claim 근거로 승격하지 않는다. MediaPipe 공식 model은 공개 test portrait와
+두 HEVC portrait 사용자 영상에서 실행됐다. 두 실제 영상의 content-sync는 각각
+`not_observed`와 `candidate_unvalidated`였으며, 이 두 표본은 head-pose normalization이나
+population-level sync 성능 평가가 아니다.
+runtime bridge v3는 sample/probe/binding, frame timestamp, landmark/model과 QC/A-V-sync
+candidate·decision·offset receipt를 하나의 typed detection receipt로 묶고, 다른 container sample을 detector
 호출 전에 거부하는 unit test를 통과한다.
 
 ### F4. timeline join
@@ -160,6 +174,20 @@ receipt를 하나의 typed detection receipt로 묶고, 다른 container sample�
 upstream이 제공한 expected phone index와 location만 join anchor로 사용한다.
 visual sidecar는 phone, index 또는 location을 새로 선택하지 않는다. span이 없거나
 media binding이 일치하지 않으면 비교 가능한 visual cue를 만들지 않는다.
+
+현재 facade는 whole-clip 8-frame sample로 QC/sync를 먼저 수행한다. 그 뒤
+`MediaPipeVisualDetectorBridge`가 already-bound handoff에서 exact selected
+`UpstreamPhoneAnchor`를 다시 확인하고, attempt/binding/audio/video/landmark/policy가
+일치하는 `PolicyValidatedAvSyncOffset`이 있을 때만 고정 padding을 적용한 video window를
+host-issued request로 만든다. caller는 시작/끝이나 offset을 주입할 수 없다.
+
+`PhoneWindowDecoderPort`의 FFmpeg adapter는 `[start,end)`에 속하는 exact frame index와
+PTS만 bounded RGB24로 decode하고 RGB digest/FFmpeg revision을
+`PhoneWindowDecodeReceipt`에 묶는다. 동일 MediaPipe backend의 dense re-tracking 결과는
+`PhoneWindowTrackingReceipt`, global QC/sync/context 결합은
+`RuntimePhoneWindowReceipt`로 이어진다. 이 DAG는 visual을 자체 승격하지 않고 cleanup
+소유권도 추가하지 않는다. 실제 두 영상은 policy-valid sync가 없어 dense decode 전
+fail-closed됐고 세 receipt는 모두 `not_issued`다.
 
 ### F5. cue, reference와 relation
 
@@ -229,12 +257,15 @@ visual 흐름은 다음 부수효과를 만들 수 없다.
 ready, 사용자 synthetic 차단, consent 선행 차단, blur 재촬영, sync 불확실,
 동일-attempt mismatch, 모든 terminal의 cleanup과 supplement JSON round-trip을 검사한다.
 
-별도 unit test는 local 제한 저장의 commit 후 0400, 실제 FFmpeg/ffprobe 기반 합성 MP4
-probe·전 구간 균등 RGB decode·PCM derivation, MediaPipe worker network 차단,
+별도 unit test는 local 제한 저장의 commit 후 0400, 실제 FFmpeg/ffprobe 기반 H.264/HEVC
+MP4 probe·전 구간 균등 RGB decode·exact-PTS dense phone-window decode·PCM derivation,
+MediaPipe worker network 차단,
 RGB/landmark QC candidate, lip/PCM sync candidate, io_uring·process escape 차단과
 nonblocking FFmpeg pipe/process-group 종료를 검사한다. cleanup 실패 시 audio를 포함한
-결과 전체가 억제되는 것도 검사한다. internal CLI는 합성 H.264/AAC MP4, 공식 landmark
-model과 CUDA Seungun에서 `audio_completed_visual_unavailable`,
-`cleanup_status=completed`, `video_qc_candidate_not_calibrated`와
-`content_av_sync_candidate_not_calibrated`를 반환했다. 이는 실제 사용자 영상
-QC, pose/occlusion, P6 calibration, P8 evaluation 또는 사용자 claim 검증이 아니다.
+결과 전체가 억제되는 것과 정상 dense path에서도 cleanup이 정확히 한 번인 것을
+검사한다. internal CLI의 두 HEVC Main/AAC portrait 사용자 영상은 공식 landmark model과
+CUDA Seungun에서 audio `coaching_ready`, `audio_completed_visual_unavailable`,
+`cleanup_status=completed`, `video_qc_candidate_not_calibrated`를 반환했다. content sync는
+각각 `not_observed`와 `candidate_unvalidated`였다. 이는 두 실제 파일의 infrastructure
+smoke이지 calibrated QC, pose/occlusion, P6 calibration, P8 evaluation 또는 사용자
+visual claim 검증이 아니다.

@@ -72,9 +72,9 @@ fallback을 모두 차단한다. 이는 기존 detector를 고치는 작업이 �
   소급해서 해소하지 않는다.
 
 현재 계약은
-[frozen detector](../../seungun/src/korean_phone_ctc/frozen_detector.py),
-[audio-only bridge](../../src/voice_coach/pronunciation_feedback/seungun_bridge.py),
-[신뢰성 개선 제안](../../seungun/docs/PIPELINE_RELIABILITY_IMPROVEMENT_PROPOSAL_KO.md)을 기준으로 한다.
+[frozen detector](../../../seungun/src/korean_phone_ctc/frozen_detector.py),
+[audio-only bridge](../../../src/voice_coach/pronunciation_feedback/seungun_bridge.py),
+[신뢰성 개선 제안](../../../seungun/docs/PIPELINE_RELIABILITY_IMPROVEMENT_PROPOSAL_KO.md)을 기준으로 한다.
 
 ### 2.2 이 문서에서 구현하지 않은 것
 
@@ -1640,10 +1640,10 @@ P0~P2 전에는 대형 end-to-end video model 전체 학습을 시작하지 않�
 ## 17. 근거 문서
 
 - [발음 피드백 정본 파이프라인](PRONUNCIATION_FEEDBACK_PIPELINE_KO.md)
-- [현재 seungun audio pipeline](../../seungun/docs/CURRENT_PIPELINE_KO.md.md)
-- [seungun audio 신뢰성 개선 제안](../../seungun/docs/PIPELINE_RELIABILITY_IMPROVEMENT_PROPOSAL_KO.md)
-- [O-GPF audio-visual MDD 설계](../paper/VC논문/입술모양인식/개선방향_문헌_2026-08-25/IMPROVED_AUDIO_VISUAL_MDD_MVP_ARCHITECTURE_KO.md)
-- [audio-visual MDD 타당성 검토](../paper/VC논문/입술모양인식/개선방향_문헌_2026-08-25/FEASIBILITY_AND_PRACTICALITY_REVIEW_KO.md)
-- [한국어 phoneme-viseme 후속 문헌](../paper/VC논문/입술모양인식/후속_음소_비짐_문헌_2026-08-25/SOURCES.md)
-- [데이터·개인정보 경계](../constraints/DATA_PRIVACY_BOUNDARY_KO.md)
-- [데이터 license/role matrix](../constraints/DATA_LICENSE_AND_ROLE_MATRIX_KO.md)
+- [현재 seungun audio pipeline](../../../seungun/docs/CURRENT_PIPELINE_KO.md.md)
+- [seungun audio 신뢰성 개선 제안](../../../seungun/docs/PIPELINE_RELIABILITY_IMPROVEMENT_PROPOSAL_KO.md)
+- [O-GPF audio-visual MDD 설계](../../paper/VC논문/입술모양인식/개선방향_문헌_2026-08-25/IMPROVED_AUDIO_VISUAL_MDD_MVP_ARCHITECTURE_KO.md)
+- [audio-visual MDD 타당성 검토](../../paper/VC논문/입술모양인식/개선방향_문헌_2026-08-25/FEASIBILITY_AND_PRACTICALITY_REVIEW_KO.md)
+- [한국어 phoneme-viseme 후속 문헌](../../paper/VC논문/입술모양인식/후속_음소_비짐_문헌_2026-08-25/SOURCES.md)
+- snapshot 당시 데이터·개인정보 경계(현재 tracked tree에서 퇴역)
+- snapshot 당시 데이터 license/role matrix(현재 tracked tree에서 퇴역)

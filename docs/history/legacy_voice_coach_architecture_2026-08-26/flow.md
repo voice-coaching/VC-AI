@@ -4,7 +4,7 @@
 
 > **legacy/runtime 구분(2026-08-10):** 아래 G04 amended 흐름은 현재 구현을
 > 설명하지만 새 정책에서는 T43/I30이 `diagnostic_only`다. D07/S108 개방은
-> [`PIPELINE_COMPLETION_PLAN_2026-08-10_KO.md`](../PIPELINE_COMPLETION_PLAN_2026-08-10_KO.md)의
+> snapshot 당시 `PIPELINE_COMPLETION_PLAN_2026-08-10_KO.md`(현재 tracked tree에서 퇴역)의
 > P0 migration 후 새 독립 gate를 따른다. P0 전 runtime은 legacy fail-closed다.
 
 주요 기능 흐름을 단계별로 기록한다.

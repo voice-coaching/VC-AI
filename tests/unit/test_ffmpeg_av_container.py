@@ -27,6 +27,10 @@ from voice_coach.pronunciation_attempts.models import (
     VideoConsentAuthorization,
     VideoConsentDecision,
 )
+from voice_coach.pronunciation_attempts.phone_window import (
+    PhoneWindowDecodePolicy,
+    PhoneWindowDecodeRequest,
+)
 
 
 HAS_FFMPEG = shutil.which("ffmpeg") is not None and shutil.which("ffprobe") is not None
@@ -102,8 +106,10 @@ def _generate_fixture(path: Path, *, with_audio: bool = True, codec: str = "libx
             ]
         )
     command.extend(["-t", "1", "-c:v", codec])
-    if codec == "libx264":
+    if codec in {"libx264", "libx265"}:
         command.extend(["-pix_fmt", "yuv420p"])
+    if codec == "libx265":
+        command.extend(["-x265-params", "pools=1:frame-threads=1"])
     if with_audio:
         command.extend(["-c:a", "aac", "-shortest"])
     command.extend(["-movflags", "+faststart", "-y", str(path)])
@@ -172,11 +178,101 @@ def test_strict_probe_bounded_rgb_decode_and_audio_derivation(tmp_path: Path) ->
 
 
 @pytest.mark.skipif(not HAS_FFMPEG, reason="local ffmpeg/ffprobe required")
+def test_hevc_aac_mp4_is_explicitly_allowlisted(tmp_path: Path) -> None:
+    source = tmp_path / "synthetic-hevc.mp4"
+    _generate_fixture(source, codec="libx265")
+    store, asset = _admit(tmp_path, source)
+    adapter = FfmpegAvContainerAdapter(store)
+
+    probe = adapter.probe(asset, _container_policy())
+
+    assert probe.video_stream.codec_name == "hevc"
+    assert probe.audio_stream.codec_name == "aac"
+    sample = adapter.decode_rgb24_sample(
+        asset,
+        _container_policy(),
+        frame_count=3,
+    )
+    assert len(sample.frames) == 3
+    store.delete(asset)
+
+
+@pytest.mark.skipif(not HAS_FFMPEG, reason="local ffmpeg/ffprobe required")
+def test_phone_window_decode_binds_exact_pts_and_decompressed_bytes(
+    tmp_path: Path,
+) -> None:
+    source = tmp_path / "synthetic-window.mp4"
+    _generate_fixture(source)
+    store, asset = _admit(tmp_path, source)
+    adapter = FfmpegAvContainerAdapter(store)
+    policy = _container_policy()
+    probe = adapter.probe(asset, policy)
+    window_policy = PhoneWindowDecodePolicy(
+        policy_revision="selected_phone_test_v1",
+        expected_av_sync_policy_sha256="1" * 64,
+        context_contract_sha256="2" * 64,
+        maximum_absolute_offset_ms=100,
+        padding_before_ms=0,
+        padding_after_ms=0,
+        minimum_frame_count=2,
+        maximum_frame_count=5,
+        maximum_window_duration_ms=500,
+        maximum_rgb_bytes=2_000_000,
+    )
+    request = PhoneWindowDecodeRequest.issue(
+        attempt_id_sha256=asset.attempt_id_sha256,
+        binding_receipt_sha256="3" * 64,
+        container_sha256=asset.container_sha256,
+        detection_receipt_sha256="4" * 64,
+        phone_anchor_sha256="5" * 64,
+        av_sync_receipt_sha256="6" * 64,
+        av_sync_offset_receipt_sha256="7" * 64,
+        policy=window_policy,
+        video_start_ms=200,
+        video_end_ms=600,
+    )
+
+    window = adapter.decode_rgb24_window(
+        asset,
+        policy,
+        probe=probe,
+        request=request,
+    )
+
+    assert window.decode_receipt.selected_frame_indices == (5, 7, 10, 12, 14)
+    assert window.decode_receipt.decoded_timestamps_us == (
+        200_000,
+        280_000,
+        400_000,
+        480_000,
+        560_000,
+    )
+    assert tuple(frame.timestamp_us for frame in window.sample.frames) == (
+        window.decode_receipt.decoded_timestamps_us
+    )
+    assert sum(len(frame.rgb24) for frame in window.sample.frames) <= (
+        request.maximum_rgb_bytes
+    )
+    assert window.decode_receipt.receipt_sha256 not in {
+        request.request_sha256,
+        window.decode_receipt.decoded_rgb_sha256,
+    }
+    adapter_module_path = getattr(
+        sys.modules[FfmpegAvContainerAdapter.__module__], "__file__", None
+    )
+    assert isinstance(adapter_module_path, str)
+    assert window.decode_receipt.decoder_code_sha256 == hashlib.sha256(
+        Path(adapter_module_path).read_bytes()
+    ).hexdigest()
+    store.delete(asset)
+
+
+@pytest.mark.skipif(not HAS_FFMPEG, reason="local ffmpeg/ffprobe required")
 @pytest.mark.parametrize(
     ("with_audio", "codec"),
     [(False, "libx264"), (True, "mpeg4")],
 )
-def test_non_single_av_or_non_h264_container_is_unsupported(
+def test_non_single_av_or_non_allowlisted_video_container_is_unsupported(
     tmp_path: Path,
     with_audio: bool,
     codec: str,

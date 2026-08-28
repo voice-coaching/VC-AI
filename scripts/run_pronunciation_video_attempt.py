@@ -1,9 +1,9 @@
 #!/usr/bin/env python
 """Run one local video -> Seungun pronunciation-feedback attempt.
 
-The input contract is a single H.264/AAC MP4.  The admitted copy and decoded
-PCM are kept in a mode-restricted temporary workspace and deleted after the
-attempt.  The caller's original file is never deleted.
+The input contract is a single H.264-or-HEVC/AAC MP4.  The admitted copy and
+decoded PCM are kept in a mode-restricted temporary workspace and deleted
+after the attempt.  The caller's original file is never deleted.
 """
 
 from __future__ import annotations

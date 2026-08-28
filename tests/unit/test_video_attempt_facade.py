@@ -261,6 +261,41 @@ class _Ports:
         self._call("detector")
         return VisualDetection(evidence={"landmarks": "detector-owned"})
 
+    def plan_phone_window(
+        self,
+        *,
+        detection: VisualDetection,
+        probe: MediaProbe,
+        handoff: HostVisualHandoff,
+    ) -> object:
+        del detection, probe, handoff
+        self._call("phone_window_plan")
+        return object()
+
+    def decode_rgb24_window(
+        self,
+        asset: RestrictedVideoAsset,
+        policy: AvContainerPolicy,
+        *,
+        probe: MediaProbe,
+        request: object,
+    ) -> object:
+        del asset, policy, probe, request
+        self._call("phone_window_decode")
+        return object()
+
+    def detect_phone_window(
+        self,
+        *,
+        window: object,
+        detection: VisualDetection,
+        probe: MediaProbe,
+        handoff: HostVisualHandoff,
+    ) -> VisualDetection:
+        del window, probe, handoff
+        self._call("phone_window_detector")
+        return detection
+
     def evaluate(
         self, *, detection: VisualDetection, handoff: HostVisualHandoff
     ) -> VisualReliabilityDecision:
@@ -288,7 +323,9 @@ class _Ports:
         return self.visual_result
 
 
-def _facade(ports: _Ports) -> VideoAttemptFacade:
+def _facade(
+    ports: _Ports, *, with_phone_window: bool = False
+) -> VideoAttemptFacade:
     return VideoAttemptFacade(
         consent_port=ports,
         media_store_port=ports,
@@ -323,6 +360,8 @@ def _facade(ports: _Ports) -> VideoAttemptFacade:
         detector_port=ports,
         reliability_port=ports,
         visual_port=ports,
+        phone_window_decoder_port=ports if with_phone_window else None,
+        phone_window_detector_port=ports if with_phone_window else None,
     )
 
 
@@ -359,6 +398,48 @@ def test_success_uses_host_authorities_in_order_and_runs_seungun_once() -> None:
     assert result.visual_supplement is ports.visual_result
     assert result.visual_stage_status is VisualStageStatus.COMPLETED
     assert result.cleanup_status is WorkspaceCleanupStatus.COMPLETED
+
+
+def test_dense_phone_window_runs_after_global_detection_and_cleans_up_once() -> None:
+    ports = _Ports()
+
+    result = _facade(ports, with_phone_window=True).run(_command())
+
+    assert ports.trace == [
+        "consent",
+        "admit",
+        "probe",
+        "extract",
+        "prompt",
+        "seungun",
+        "handoff",
+        "decode",
+        "detector",
+        "phone_window_plan",
+        "phone_window_decode",
+        "phone_window_detector",
+        "reliability",
+        "visual",
+        "delete",
+    ]
+    assert ports.seungun_calls == 1
+    assert ports.trace.count("delete") == 1
+    assert result.status is VideoAttemptStatus.AUDIO_COMPLETED_VISUAL_SUPPLEMENTED
+
+
+def test_dense_phone_window_failure_keeps_audio_and_cleans_up_once() -> None:
+    ports = _Ports()
+    ports.fail_at = "phone_window_decode"
+
+    result = _facade(ports, with_phone_window=True).run(_command())
+
+    assert ports.seungun_calls == 1
+    assert ports.trace[-2:] == ["phone_window_decode", "delete"]
+    assert ports.trace.count("delete") == 1
+    assert result.status is VideoAttemptStatus.AUDIO_COMPLETED_VISUAL_UNAVAILABLE
+    assert result.audio_result is ports.audio_result
+    assert result.reason_codes == ("phone_window_decode_failed",)
+    assert result.visual_stage_status is VisualStageStatus.PHONE_WINDOW_DECODE_FAILED
 
 
 def test_entrypoint_cannot_supply_phone_index_or_authority_receipts() -> None:

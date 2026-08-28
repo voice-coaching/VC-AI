@@ -52,8 +52,8 @@ def test_config_only_has_zero_runtime_model_audio_metric_or_output() -> None:
     assert completed.returncode == 0, completed.stdout + completed.stderr
     result = json.loads(completed.stdout)
     assert result["status"] == "valid_config_only"
-    assert result["source_pin_count"] == 16
-    assert result["source_pin_read_count"] == 16
+    assert result["source_pin_count"] == 15
+    assert result["source_pin_read_count"] == 15
     for field in (
         "r00_deep_validation_count",
         "r01_completion_commit_read_attempt_count",
@@ -89,7 +89,7 @@ def test_full_preflight_deep_validates_r00_then_stops_before_r01_or_d1() -> None
     assert result["status"] == "failed_closed"
     assert result["stage"] == "r01_completion_commit"
     assert result["error"] == "R01 completion commit is TBD_R01_COMPLETION"
-    assert result["source_pin_read_count"] == 16
+    assert result["source_pin_read_count"] == 15
     assert result["r00_validator_load_count"] == 1
     assert result["r00_deep_validation_count"] == 1
     assert result["r00_public_or_aggregate_evidence_read_count"] == 33

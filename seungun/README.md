@@ -1,34 +1,32 @@
 # Korean phone CTC gated baseline
 
 AI Hub 한국어 학습자 발음 데이터의 실제 관측 음소열을 검증하고
-XLS-R-300M CTC smoke training으로 넘어가기 위한 독립 작업 디렉터리다.
+XLS-R-300M CTC 진단 연구를 재현하기 위한 독립 작업 디렉터리다.
 
-현재 자동 준비는 완료됐으며 상태는
-`MANUAL_ALIGNMENT_AUDIT_REQUIRED`다. 독립 수동 정렬 감사 전에는 모델
-학습이 비활성화된다.
+현재 신뢰 가능한 gate 상태는 `MANUAL_ALIGNMENT_AUDIT_FAILED`다. 독립 수동
+정렬 감사 240건 중 178건이 기준에 맞아 정확도 `0.7417`이었고, 요구값
+`0.95`를 통과하지 못했다. 현재 학습 CLI는 smoke와 full 모두 이 gate를
+우회하지 못한다. 과거 수행된 ungated 내부 연구 실행은 production training이나
+gate 통과 근거가 아니다.
 
 ## 핵심 문서
 
 - [작업 기록과 실측 결과](docs/WORK_LOG_AND_FINDINGS_KO.md)
-- [다음 단계와 재개 gate](docs/NEXT_STEPS_KO.md)
+- [상태 충돌과 신뢰성 개선 제안](docs/PIPELINE_RELIABILITY_IMPROVEMENT_PROPOSAL_KO.md)
+- [HyperCLOVA X 제한 표현 계층 상태](docs/HYPERCLOVAX_INTEGRATION_STATUS_KO.md)
+- [과거 다음 단계 계획](docs/NEXT_STEPS_KO.md) — 현재 상태 정본으로 사용하지 않음
 - [TextGrid target 정책](configs/textgrid_target_policy.yaml)
 
 ## 저장소 루트 공용 문서
 
-수동 정렬 감사와 데이터 취급은 이 디렉터리만의 도구가 아니라 저장소
-루트에 이미 구현·문서화된 자산을 그대로 따른다.
+삭제된 과거 문서를 복원하거나 추측하지 않는다. 현재 존재하는 다음 문서와
+계약만 사용한다.
 
-- [수동 정렬 감사 절차](../docs/constraints/AIHUB71490_MANUAL_ALIGNMENT_AUDIT_KO.md) —
-  240건 판정 기준과 채점 gate
-- [토큰 보호 로컬 검수 UI/tkinter 클라이언트](../docs/LOCAL_ALIGNMENT_REVIEW_UI_KO.md) —
-  `scripts/review_alignment_audit.py`, `scripts/review_alignment_audit_gui.py`
-- [전문가 worksheet·음성 경로 안내](../docs/constraints/AIHUB71490_EXPERT_AUDIT_WORKSHEET_GUIDE_KO.md)
-- [AI Hub 71490 데이터 카드](../docs/constraints/DATA_CARD_AIHUB71490_KO.md) — 발화·화자
-  규모, 길이 분포, 이 디렉터리의 CTC 3-way split과는 별도인 5-way split
-  집계 참고용
-- [연구 데이터 개인정보·반출 경계](../docs/constraints/DATA_PRIVACY_BOUNDARY_KO.md) —
-  `manifest/`, `processor/`, `checkpoints/`는 R1 운영 제한구역 기준을
-  따른다
+- [현재 발음 피드백 파이프라인](../docs/architecture/PRONUNCIATION_FEEDBACK_PIPELINE_KO.md)
+- [G04 음성 AI 프록시 결과](../docs/evaluation/G04_AUDIO_AI_PROXY_RESULT_2026-08-09_KO.md)
+- [연구 데이터 저장 원칙](../data/README.md)
+- [저장소 연구·데이터 거버넌스](../.codex/ai_rule_developer/GLOBAL_RULES.md)
+- [공개 수동 감사 집계](../docs/audit/aihub71490_manual_alignment_audit_public.tsv)
 
 ## 확인된 사실
 
@@ -41,8 +39,11 @@ XLS-R-300M CTC smoke training으로 넘어가기 위한 독립 작업 디렉터�
 - vocabulary는 43개이고 `<pad>` ID 0을 CTC blank로 사용한다.
 - XLS-R-300M revision은
   `1a640f32ac3e39899438a2931f9924c02f080a54`로 고정했다.
-- 240건 독립 수동 정렬 감사 worksheet는 아직 전부 미검수 상태다.
-- 전체 학습과 smoke training은 시작하지 않았다.
+- 240건 독립 수동 정렬 감사 결과는 `178/240`, `0.7417`, `failed`다.
+- 이후 Stage-1/Stage-2 내부 연구 실행이 있었지만 manual gate를 통과한 학습은
+  아니다.
+- 일부 후속 문서는 frozen detector와 one-shot 로컬 artifact의 존재를 보고하지만,
+  독립 재실행·정본 승격·실제 학습자 타당성은 확인되지 않았다.
 
 ## 감사 명령
 
@@ -86,7 +87,17 @@ processor/  # 16 kHz feature extractor와 43-token tokenizer
 ```
 
 전체 재현 명령과 수동 감사 이후의 smoke/full 실행 순서는
-[다음 단계 문서](docs/NEXT_STEPS_KO.md)에 기록돼 있다.
+[과거 다음 단계 문서](docs/NEXT_STEPS_KO.md)에 기록돼 있다. 해당 문서의 실행
+상태 표현은 현재 작업 기록과 신뢰성 제안서보다 오래됐으므로 그대로 완료 근거로
+사용하지 않는다.
+
+## 학습 gate
+
+`scripts/train_ctc.py`는 smoke와 full 모두 `status=passed` 및
+`alignment_accuracy >= 0.95`인 독립 수동 감사 결과를 요구한다. 과거의
+`--allow-ungated-diagnostic-smoke`와 `--allow-ungated-internal-full` CLI 옵션은
+제거했다. Python API에 남아 있는 동명 legacy keyword를 `True`로 전달해도
+명시적으로 실패한다.
 
 ## locked test 접근 경계
 
@@ -98,5 +109,6 @@ train/dev/vocab 파일·manifest 디렉터리·상위 경로 symlink는 fail-clo
 split/source_split provenance를 검사한다.
 
 `manifest/test.jsonl`은 일반 학습·smoke·checkpoint 선택·재로딩 검증에서
-읽지 않는다. 최종 locked 평가는 별도 one-shot 보호 실행기와 명시적 승인
-계약이 구현되기 전까지 미실행 상태다.
+읽지 않는다. 후속 문서가 로컬 one-shot artifact 존재를 보고하더라도 현재 일반
+runner의 접근 차단은 유지되며, 그 artifact를 재튜닝이나 production 승격 근거로
+사용하지 않는다.

@@ -68,7 +68,7 @@ predecessors:
     selected_variant_must_match_commit: true
   b07:
     config: configs/experiments/b07_gop_acoustic_posterior_v1.yaml
-    config_sha256: 9a2070ab1fa7e00009657d824cf41fae8adfde4654516419951855322413bdb0
+    config_sha256: bad4845448c12959e8da8ea66676702a1cf02f2021a743a215c440d6baf2f222
     commit_manifest: artifacts/experiments/aihub71490_b07_gop_acoustic_posterior_v1/commit.json
     commit_sha256: ff31a88e694d23c89996193646d7c062069c9e776b5ed72ef7fc354950f3907c
     commit_schema_version: voice_coach.b07_gop_commit.v1
@@ -416,7 +416,7 @@ implementation:
     sha256: b1ed2979e086d32aa0fdbbed70e64bb9c5f8039617132cc48195edacc888d88c
   contract_module:
     path: src/voice_coach/training/wavlm_s106_fusion_contract.py
-    sha256: 09606692ea72bed4f065339d736a8cebf5857d82a343591ed3f6aefe99fcc66e
+    sha256: 08ec4af2c9e543b752c26b7ee648be5c944c1bc1d6019802844015a9cd6ec490
   training_module:
     path: src/voice_coach/training/wavlm_s106_fusion_training.py
     sha256: e8366b150f507b12a48a7608fbbb2f9af619fcdd7eb10ffaceda4c9952d88097
@@ -434,7 +434,7 @@ implementation:
     sha256: 31b15dde4d4a2ae4ee0b069a6268a03e951cf0593b39a0e047cde64d4311df5b
   project_manifest:
     path: pyproject.toml
-    sha256: 20ede7c9fbd4eb047fdcd81a2732588756278842b757a1b9b44794befdc4d1da
+    sha256: 87fbe75e3df2ad7f64494cafb3744e7cfb815cfe1b8e9ea8d774d8b990c35e71
   scorer_lock:
     path: requirements/scorer-lock-linux-aarch64-cu130.txt
     sha256: f6c5b10c1028506d7361c83ad1e9aae0b1fafcf34f4e918e5b7123c51fac8cf2

@@ -1,7 +1,8 @@
 # 입술 모양 피드백 Sidecar 상태
 
 - 문서 상태: `implemented_contract_with_internal_smoke`
-- 구현 상태: `partial_implementation`; 사용자 실영상 runtime은 `not_ready`
+- 구현 상태: `p6_reference_calibrated_runtime_promotion_blocked`; 사용자 실영상
+  media/audio 경로와 AI Hub 68 P6/P6B는 검증됐지만 사용자 visual publication은 `not_ready`
 - 상세 설계: [`SEUNGUN_VISUAL_PRONUNCIATION_EVIDENCE_PIPELINE_KO.md`](SEUNGUN_VISUAL_PRONUNCIATION_EVIDENCE_PIPELINE_KO.md)
 
 이 문서의 enum 값이 visual sidecar 상태 계약의 정본이다. Python `StrEnum`과 strict
@@ -86,6 +87,7 @@ upstream dependency 누락을 visual cue로 보완하지 않고, rights 실패�
 | video QC | 회복 가능한 capture 실패 | `visual_rerecord_required` | reason receipt |
 | video QC/capability | 지원 범위 밖 | `visual_unsupported` | visual analysis 중단 |
 | tracking/sync/cue | 저신뢰 또는 conflict | `visual_uncertain` | visual advice 미발행 |
+| phone-window planning | policy-valid measured sync 부재 | 별도 terminal을 만들지 않고 기존 blocker 우선순위 유지 | dense decode 미실행 |
 | cue eligibility | 지원 cue 없음 | `no_supported_lip_cue` | audio 결과 유지 |
 | cue eligibility | observed/supports_upstream/catalog 통과 | `visual_feedback_ready` | supplement와 audit receipt |
 
@@ -121,17 +123,42 @@ dependency-unavailable, failed-closed와 conflict relation을 synthetic record�
 handoff도 unit test로 검사했다. local 제한 저장의 commit 후 0400과 cleanup 실패 시
 audio 포함 전체 반환값 억제, 합성 비개인 MP4의 실제 FFmpeg probe·전 구간 균등 RGB
 decode·PCM derivation, MediaPipe worker network/model-integrity 경계도 별도 검사했다.
-RGB/landmark video-QC와 lip/PCM A/V-sync candidate는 runtime detection v2에 receipt로
-결합되지만 P6 전에는 `candidate_unvalidated`/`unavailable`이다. 합성 H.264/AAC CLI는
-공개 test portrait를 변환한 static H.264/AAC를 pre-opened read-only `--video-fd`, 공식
-landmark model과 CUDA Seungun에서 실행해 audio 완료·visual unavailable, cleanup 완료와
-`video_qc_candidate_not_calibrated`·`content_av_sync_candidate_not_calibrated`를 반환했다.
-따라서 실제 얼굴 landmark/QC·sync candidate 경로는 관측됐다. pose·occlusion과 calibrated QC pass,
-실제 사용자 영상의 `visual_unsupported` 분포, user-ready precision, content-sync 실측
-성능, 실제 데이터 calibration, P8 locked evaluation과 자동 claim-policy conformance는
-아직 검증되지 않았다. `--video`는 path가 argv/shell history에 남을 수 있는 내부 편의
-기능이다. TTL/orphan scavenger/persistent cleanup ledger와 `RLIMIT_NPROC`/`RLIMIT_FSIZE`도
-없으며 launcher 강화가 전체 sandbox 완료를 뜻하지 않는다.
+RGB/landmark video-QC와 lip/PCM A/V-sync 측정은 raw candidate v2를 발행한다. 별도
+`calibrated_runtime_decisions.py`가 exact candidate receipt와 모든 관측값, 측정
+policy/code SHA, 결정 policy/code SHA를 복사·self-digest한 decision v2를 발행한다.
+동기화 decision만 `PolicyValidatedAvSyncOffset v2`로 승격할 수 있고, candidate·decision·
+offset SHA는 runtime detection v3에 함께 결합된다. 느슨한 `passed`/`synchronized` mapping과
+raw candidate 직접 승격은 거부된다. 실제 데이터에서 동결된 결정 정책이 없으면 여전히
+`candidate_unvalidated`/`unavailable`이며 publication gate를 통과하지 않는다. codec gate는 single
+MP4/(H.264|HEVC) video + AAC audio이며 local composition은 width/height 각각 최대 1920,
+whole-clip 8-frame/64 MiB와 dense 12-frame/80 MiB의 압축 해제 RGB bounds를 유지한다.
+
+합성 H.264/AAC 공개 portrait smoke 외에 HEVC Main/AAC, 1080x1920 portrait, 30 fps
+사용자 영상 두 건을 pre-opened read-only `--video-fd`, 공식 landmark model과 CUDA
+Seungun에서 실행했다. 둘 다 audio `coaching_ready`, attempt
+`audio_completed_visual_unavailable`, cleanup 완료와
+`video_qc_candidate_not_calibrated`를 반환했다. content sync는 첫 영상
+`not_observed`, 둘째 영상 `candidate_unvalidated`였다. 따라서 실제 사용자 파일의
+admission/decode/landmark/QC 후보와 audio coaching 경로는 관측됐다. 두 실행의 visual
+stage는 기존 `p6_user_runtime_calibration_not_available`와
+`p8_user_runtime_claim_catalog_not_available`에 의해 `blocked_reliability`였다.
+
+host-controlled phone-window 경로는 already-bound exact selected anchor와 policy-valid
+measured A/V offset이 있을 때만 whole-clip QC/sync decision 뒤 dense decode·re-tracking을 수행한다.
+decode/tracking/runtime receipt는 exact PTS/RGB/model/QC/sync candidate·decision·offset
+lineage와 decoder/tracker/phone-window code 및 semantic policy SHA를 self-digest한다.
+실제 두 실행에는 policy-valid offset이 없어서 세 receipt가 모두 `not_issued`였고, 이는
+추정 offset이나 caller window로 우회하지 않은 정상 fail-closed 상태다. phone-window는
+cleanup을 추가 소유하거나 visual publication을 자체 승격하지 않는다.
+
+pose·occlusion별 QC/sync 결정 threshold, 실제 사용자 영상의 `visual_unsupported` 분포,
+user-ready precision, population-level content-sync 성능, P8 locked evaluation과 자동
+claim-policy conformance는 아직 검증되지 않았다. 특히 AI Hub 538 비잠금 TS174/TL174
+실매체 admission/evaluator가 만든 결정 정책 artifact와 fresh-process reload receipt가
+없으므로 runtime promotion CLI는 출력 전에 fail-closed한다. `--video`는
+path가 argv/shell history에 남을 수 있는 내부 편의 기능이다. TTL/orphan scavenger/
+persistent cleanup ledger와 `RLIMIT_NPROC`/`RLIMIT_FSIZE`도 없으며 launcher 강화가 전체
+sandbox 완료를 뜻하지 않는다.
 
 Seungun upstream 상태는 고정 detector config/state/normalization의 pin 검증과 완료된
 analysis schema를 sidecar anchor로 사용할 수 있다는 제한된 의미에서 `supported`다.
@@ -139,10 +166,17 @@ analysis schema를 sidecar anchor로 사용할 수 있다는 제한된 의미에
 ranking score를 보정된 confidence로 바꾸거나 개인별 진단 정확도·교육 효과를 승인하지
 않는다. visual publication에는 별도의 사용자 runtime P6/P8 evidence가 계속 필요하다.
 
-P6/P8 evidence validator와 CLI는 구현됐다. P6 성공 receipt는 항상
-`evidence_validated_not_promoted`, `visual_reliability_authorized=false`이고 P8 성공
-receipt는 항상 `zero_violations_not_promoted`, `user_visual_claims_authorized=false`다.
-unit test는 synthetic privacy-safe bundle만 사용한다. AI Hub 68/538 실제 download,
-admission, 24-point metric/calibration 산출과 locked P8 replay는 여전히 `not_started`다.
-rights/reload와 read-zero seal은 supplied digest/assertion evidence이며 독립 생성·인증된
-사실로 해석하지 않는다.
+AI Hub 68 P6 geometry와 phone-conditioned P6B는 실제 승인 corpus에서 실행됐다. P6B의
+고정 selector는 `word_id=9`, `word=어`, `frame_index=10`, expected phone `ㅓ`이고,
+12/5 actor-disjoint split의 60 dev·25 calibration frame, 5 cameras, production-worker
+85/85 parity가 통과했다. calibration artifact, 두 개의 visible-only claim catalog와
+policy, producer/reload/parity bundle은 `artifacts/visual_feedback/p6`에 0400으로 보존된다.
+잘못된 v1 `ㅃ` bundle은 audit 목적으로만 보존하며 runtime 입력으로 거부한다.
+
+자동 P6 runtime promotion 계약 v4와 pipeline identity v3, fresh-process reload worker는
+구현·fixture 검증됐지만 실제 promotion receipt/identity는 발급하지 않았다. 발급에는
+AI Hub 538 TS174/TL174 actual-media decision-policy evidence, actor/attempt overlap 0,
+전체 admission/evaluation, candidate→decision lineage 전수 확인, 0400 정책 artifact와
+fresh-process reload가 모두 필요하다. 현재 해당 세 evidence 파일이 없으므로 기본 CLI는
+출력 0개로 실패한다. P8 read-zero seal v3 및 locked evaluator/replay 계약은 synthetic
+aggregate test만 통과했으며 실제 locked partition open/evaluation은 실행되지 않았다.

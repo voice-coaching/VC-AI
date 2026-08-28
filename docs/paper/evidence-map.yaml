@@ -66,9 +66,12 @@ artifacts:
   paper_aihub71490_cohort_svg:
     path: docs/paper/figures/aihub71490_cohort_flow.svg
     sha256: d697e42cea9a820c24c082dd183653bc0a59a9ba4e3406c85eafb8117437ce9e
-  data_license_source_ledger:
-    path: docs/constraints/DATA_LICENSE_SOURCE_LEDGER_KO.md
-    sha256: b6ceeb1f874de3071462e98c3526136302ab54d3ea9ecc109400d1a3f03f7cd4
+  data_privacy_license_boundary:
+    path: data/README.md
+    sha256: 53cba9ea730b608474086158c610b831f992538b008bc8f4db784383786a26e5
+    coverage: repository_data_boundary_only
+    license_ledger_status: unavailable
+    claim_resolution_allowed: false
   explicit_dev_report:
     path: artifacts/experiments/aihub71490_explicit_oracle_boundary_v1/report.json
     sha256: a5c3ade0738777409bb57956b088e025081cb63886808c6d6fc87724d0875519

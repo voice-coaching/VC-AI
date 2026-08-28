@@ -21,7 +21,8 @@ artifact, threshold, 완료 receipt로 재명명하거나 재사용하지 않는
 ## 1. 불변식
 
 - gate 순서는 건너뛰거나 병렬 성공으로 대체하지 않는다.
-- 실제 사용자 영상 전에는 consent·rights·privacy·retention과 데이터 역할을 동결한다.
+- 모든 실제 사용자 영상 처리에는 consent·rights·privacy·retention과 데이터 역할을
+  먼저 적용한다.
 - synthetic 또는 static 검증을 실제 영상 QC·성능·잠금 평가로 승격하지 않는다.
 - 공개 portal/card의 listing은 데이터 사용 적격성, calibration 실행, 잠금 평가 또는
   claim-policy conformance 완료를 뜻하지 않는다.
@@ -52,11 +53,11 @@ artifact는 존재하지 않는다.
 
 | Gate | 현재 상태 | 근거와 한계 |
 |---|---|---|
-| VE0 | `incomplete` | 공개 후보 메타데이터는 감사했지만 production rights/admission receipt, 실제 capture contract와 split/stop rule freeze가 없음 |
-| VE1 | `automation_executed_not_formally_passed` | port/receipt/state/strict JSON, fake adapter와 synthetic smoke가 존재하지만 VE0 선행 완료 receipt 없음 |
-| VE2 | `not_started` | local 합성 MP4 adapter test와 별개로 AI Hub 68/539 admission·download, 실제 사용자/dataset 영상 decode·QC report 없음 |
-| VE3 | `not_started` | MediaPipe worker code와 별개로 AI Hub 68 successful tracker smoke·metric artifact 없음 |
-| VE4 | `not_started` | aggregate P6 bundle validator는 구현됐지만 calibration split 실행, production artifact, 실제 metric/hash/reload evidence 없음 |
+| VE0 | `p6_completed_p8_pending` | AI Hub 68 권리 확인·admission과 고정 split/protocol은 완료; AI Hub 538 실제 admission/evaluation evidence는 아직 없음 |
+| VE1 | `implemented_and_tested` | port/receipt/state/strict JSON과 fail-closed orchestration이 구현·회귀 테스트됨 |
+| VE2 | `p6_completed_p8_pending` | AI Hub 68 실제 archive admission 및 aggregate-only source manifest 완료; 538 TS174/TL174 admission은 미실행 |
+| VE3 | `passed_for_p6_population` | AI Hub 68 24-point geometry, 5 cameras, actor/attempt-disjoint metric 및 production tracker parity artifact 통과 |
+| VE4 | `p6_passed_runtime_promotion_blocked` | `어`/`ㅓ` P6B reference/calibration/catalog/policy와 fresh reload 통과; TS174/TL174 decision policy evidence 전에는 runtime promotion 미발급 |
 | VE5 | `not_started` | AI Hub 538이 provisional locked 후보지만 seal·교집합 감사·one-shot 평가 없음 |
 | VE6 | `not_started` | frozen-summary P8 conformance validator는 구현됐지만 production policy/catalog와 실제 locked replay receipt 없음 |
 
@@ -67,32 +68,39 @@ artifact는 존재하지 않는다.
 | 구분 | 현재 상태 |
 |---|---|
 | 공개 후보 조사 | `dataset_candidates_audited` |
-| 실제 데이터 admission/access | `not_started` |
-| P6 calibration 실행 | `not_started` |
+| 실제 데이터 admission/access | `AI Hub 68 completed`; `AI Hub 538 pending` |
+| P6 calibration 실행 | `passed`; runtime promotion은 decision-policy evidence 대기 |
 | P8 자동 독립평가 | `not_started` |
 | VE6 claim-policy conformance | `not_started` |
-| gate 승격 | `none` |
+| gate 승격 | P6/P6B evidence passed; user runtime `none` |
 
 내부 `visual_feedback_ready` scenario는 candidate cardinality와 serializer를 검사하는
 synthetic case일 뿐 gate를 건너뛰어 사용자 claim을 활성화하지 않는다.
 
-P6 validator 성공은 `evidence_validated_not_promoted`와
-`visual_reliability_authorized=false`, P8 validator 성공은
-`zero_violations_not_promoted`와 `user_visual_claims_authorized=false`로 고정된다.
-rights/reload assertion과 read-zero seal은 supplied digest evidence이지 validator가
-독립 생성·인증한 기록이 아니다. 현재 unit/CLI test는 synthetic privacy-safe fixture만
-검증했으므로 위 `not_started` ledger를 변경하지 않는다.
+legacy summary validator의 non-promotional receipt와 별도로, automated P6 v4 builder는
+실제 P6/P6B producer evidence와 production tracker parity, actual-media decision-policy
+evidence를 모두 요구한다. 마지막 evidence는 아직 없으므로 실제 pipeline identity와
+promotion receipt를 발급하지 않았다. P8는 read-zero seal/one-shot evaluator 계약의
+synthetic test만 완료됐으며 locked partition은 열지 않았다.
 
-local 제한 저장의 commit 후 0400, 실제 FFmpeg/ffprobe 기반 합성 MP4 probe·전 구간 균등
-RGB decode·PCM derivation, MediaPipe worker의 network/model-integrity 경계와
+local 제한 저장의 commit 후 0400, 실제 FFmpeg/ffprobe 기반 H.264/HEVC MP4 probe·전 구간
+균등 RGB decode·PCM derivation, MediaPipe worker의 network/model-integrity 경계와
 RGB/landmark video-QC candidate, lip-aperture/PCM-energy A/V anchor candidate는 구현·unit
 test됐다. QC candidate는 얼굴 coverage, luma/exposure, edge proxy, lip ROI와 continuity를
 측정하지만 pose·occlusion 또는 calibrated pass를 발급하지 않는다. 합성 H.264/AAC
-권장 `--video-fd` CLI도 공식 landmark model과 CUDA Seungun에서 합성 audio 완료·visual unavailable,
-`video_qc_candidate_not_calibrated`·`content_av_sync_candidate_not_calibrated`, cleanup 완료로 실행됐다.
-이는 공개 후보 dataset admission, production tracker 정확도 근거, 실제 사용자 영상 QC
-report 또는 P6 calibration이 아니므로 VE0~VE3 ledger와 P6/P8 상태는 위 표 그대로
-유지한다.
+smoke 외에 HEVC Main/AAC, 1080x1920 portrait, 30 fps 사용자 영상 두 건을 권장
+`--video-fd`, 공식 landmark model과 CUDA Seungun으로 실행했다. 둘 다 audio
+`coaching_ready`, `audio_completed_visual_unavailable`, cleanup 완료였고
+`video_qc_candidate_not_calibrated`였다. content sync는 각각 `not_observed`와
+`candidate_unvalidated`였다. 이는 공개 후보 dataset admission, production tracker
+정확도 또는 P6 calibration이 아니므로 VE0~VE3 formal ledger와 P6/P8 상태는 위 표
+그대로 유지한다.
+
+host-controlled dense phone-window 경로도 unit/integration test됐다. whole-clip 8-frame
+QC/sync sample을 먼저 처리한 뒤 already-bound Seungun selected anchor와 policy-valid
+measured A/V offset만으로 bounded RGB24 window를 decode·re-track하고,
+decode/tracking/runtime receipt SHA를 결합한다. 실제 두 영상에는 policy-valid offset이
+없어 세 receipt가 모두 `not_issued`였으며 visual gate를 승격하지 않았다.
 
 ## 3. upstream dependency gate
 
@@ -105,8 +113,9 @@ timebase, consent와 caller 제공 reliability를 `SeungunVisualHandoff`로 원�
 제시된 digest와 exact match를 검사하므로, 필드가 같더라도 별도로 재발급한 receipt는
 거부된다. binding v2는 audio derivation receipt digest도 필수로 self-digest에 묶는다.
 local media derivation과 container/audio lineage를 handoff로 전달하는 bridge는 unit
-test됐고 internal CLI/local composition은 합성 container E2E까지 실행됐다. 그러나
-persistent source 재로드와 실제 사용자 영상으로 성공 실행한 근거는 아직 없다. 또한
+test됐고 internal CLI/local composition은 합성 H.264 및 두 HEVC portrait 사용자 파일의
+audio-completed E2E까지 실행됐다. 그러나 persistent source 재로드와 visual claim 성공
+근거는 아직 없다. 또한
 local composition은 hash-pinned `final_pronunciation_detector_v1`의 완료 analysis를
 sidecar anchor로 사용하는 범위에서 upstream reliability를 `supported`로 발급한다.
 이는 artifact/schema 호환성이지 correctness confidence 또는 production 정확도 승인이

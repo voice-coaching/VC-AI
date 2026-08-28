@@ -20,28 +20,22 @@ experiment:
 canonical_sources:
   access_scope: C1_code_and_policy_only
   pins:
-    - path: docs/한국어 AI 보이스 코칭을 위한 폐쇄루프 TTS 아키텍처.pdf
-      sha256: 2e60d812290ad0b8d7dc0fd689de6b7cf4a0fbecde7e5a1612f85a2e7a18b4dd
-    - path: docs/IMPLEMENTATION_PLAN_KO.md
-      sha256: 836ea2b5a2db2bf3dcfb6ea4003c73c5240ae24bea9ea9af8531519f6a57e07a
-    - path: docs/constraints/WP4_POST_S103_EXECUTION_CONTRACT_KO.md
-      sha256: 908c26bc7f3de3ccf1e6daa9eb70b09537f16d32571c0dc1259bba6668ed0a0f
-    - path: docs/constraints/DATA_PRIVACY_BOUNDARY_KO.md
-      sha256: 8934384f1c570cf1a086fd08c18b26f577c0a22c3bd69ae1b5064eb34f8b1309
-    - path: docs/constraints/DATA_LICENSE_AND_ROLE_MATRIX_KO.md
-      sha256: 3480b342675c22590aec3f800e252bb967edb6be69c5e6a969766c2bd9f37119
+    - path: .codex/ai_rule_developer/GLOBAL_RULES.md
+      sha256: 3c928b24640f1204623b9fae7d28e54ba20e77b68d38050b79aeb62c98856584
+    - path: data/README.md
+      sha256: 53cba9ea730b608474086158c610b831f992538b008bc8f4db784383786a26e5
     - path: docs/paper/EXPERIMENTAL_MANUSCRIPT_KO.md
-      sha256: c21e6d86570eb74069df104295aafe7cf78af02ce51398335c50133a5d1304f2
+      sha256: 3f10f7f05ff89b0c7f6e7a1dfaf48216a5b0dec8f1ab51bbadd2c809f443afef
     - path: docs/paper/RELATED_WORK_SOURCE_LEDGER_KO.md
       sha256: d37bf2ab5564c55f03dbb9e1974e9bf421274df9971b30d31bb54ff4909e44b6
     - path: pyproject.toml
-      sha256: 20ede7c9fbd4eb047fdcd81a2732588756278842b757a1b9b44794befdc4d1da
+      sha256: 87fbe75e3df2ad7f64494cafb3744e7cfb815cfe1b8e9ea8d774d8b990c35e71
     - path: requirements/scorer-lock-linux-aarch64-cu130.txt
       sha256: f6c5b10c1028506d7361c83ad1e9aae0b1fafcf34f4e918e5b7123c51fac8cf2
-    - path: src/voice_coach/training/s2_s200_auditor_contract.py
-      sha256: b9f13b578ef89586c38fd2d80b0d8d985cf735d52e2532c2958888cb1da1a35b
     - path: scripts/prepare_s2_s200_auditor.py
       sha256: 9b4e528f025743fe18dfcf7e6bb3a2ed3e57d3bcf05c76ce459ceac520a5b9d1
+    - path: src/voice_coach/training/s2_s200_auditor_contract.py
+      sha256: 02a7f8b18a88f83091ea23b86b8386b4f96897907b42100af96bd75cc3d81c62
 
 predecessor:
   validate_before_external_evidence: true

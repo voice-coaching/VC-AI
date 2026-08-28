@@ -84,7 +84,6 @@ SOURCE_PATHS = (
     "configs/experiments/s2_s203_expert_holdout_audit_v1.yaml",
     "src/voice_coach/training/s2_s203_holdout_contract.py",
     "configs/experiments/learning_effect_power_v1.yaml",
-    "docs/IMPLEMENTATION_PLAN_KO.md",
     "docs/paper/CLAIM_GAP_MAP_KO.md",
     "docs/paper/RELATED_WORK_SOURCE_LEDGER_KO.md",
 )

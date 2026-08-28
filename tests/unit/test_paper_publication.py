@@ -320,6 +320,35 @@ def test_config_only_reads_no_referenced_sources_or_outputs(
     assert not (tmp_path / "artifacts/reproducibility/paper_publication").exists()
 
 
+def test_repository_config_is_blocked_before_source_or_output_access(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    relative = Path(publication.CANONICAL_CONFIG_PATH)
+    target = tmp_path / relative
+    target.parent.mkdir(parents=True, exist_ok=True)
+    target.write_bytes((REPOSITORY_ROOT / relative).read_bytes())
+
+    def forbidden(*args: object, **kwargs: object) -> object:
+        raise AssertionError((args, kwargs))
+
+    monkeypatch.setattr(publication, "_read_source_record", forbidden)
+    config_only = publication.validate_config_only(
+        config_path=relative,
+        workspace_root=tmp_path,
+    )
+    assert config_only["status"] == publication.BLOCKED_CONFIG_STATUS
+    assert config_only["blocker"] == publication.BLOCKER_CODE
+    assert config_only["source_record_schemas_validated"] == 4
+
+    with pytest.raises(publication.PublicationAuditError, match=publication.BLOCKER_CODE):
+        publication.audit_paper_publication(
+            config_path=relative,
+            workspace_root=tmp_path,
+        )
+    assert not (tmp_path / publication.CANONICAL_OUTPUT_ROOT).exists()
+
+
 def test_offline_audit_publishes_and_deep_validates_content_addressed_receipt(
     tmp_path: Path,
 ) -> None:

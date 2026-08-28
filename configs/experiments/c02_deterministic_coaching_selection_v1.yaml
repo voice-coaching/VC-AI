@@ -32,17 +32,11 @@ canonical_sources:
     - path: configs/coaching/c02_coaching_selection_output_v1.schema.json
       sha256: 935db571a2371e96b082a59979af7b24a508318f5385f62032d4ce735ed6c643
     - path: configs/experiments/wavlm_s107_calibration_v1.yaml
-      sha256: f85821abece46e8bb6a2a0c49e74e5717b5bdd9b0139c9138b93a446f1497c95
+      sha256: c606f77b45c44a517ffff3118bba618ce3da7f0f7f571220c7e9ce15ac4e1966
     - path: data/processed/aihub71490/manifests/aihub71490_data_card.json
       sha256: 4ab53c6837b1a28fbf153dd3a351a195f6931a43694467114cea6c21b8a57b13
-    - path: docs/constraints/C01_KOREAN_ERROR_ADVICE_ONTOLOGY_DATA_CARD_KO.md
-      sha256: 14d5e61bc671cc781fc711a2bfb589271ea9b87b3c8f5a8585840b23e19204b7
-    - path: docs/IMPLEMENTATION_PLAN_KO.md
-      sha256: 836ea2b5a2db2bf3dcfb6ea4003c73c5240ae24bea9ea9af8531519f6a57e07a
-    - path: docs/constraints/WAVLM_S107_CALIBRATION_READINESS_KO.md
-      sha256: 7bc4f1335c21c016103c26b4819bd7d416638198e61eb0017b15b47cce88d975
     - path: docs/paper/EXPERIMENTAL_MANUSCRIPT_KO.md
-      sha256: c21e6d86570eb74069df104295aafe7cf78af02ce51398335c50133a5d1304f2
+      sha256: 3f10f7f05ff89b0c7f6e7a1dfaf48216a5b0dec8f1ab51bbadd2c809f443afef
     - path: scripts/prepare_wavlm_s107_calibration.py
       sha256: 6afe337409b16f2072809dc9de164d371fad9cc94851aa5a621936d0ea572d46
     - path: scripts/run_wavlm_s107_calibration.py
@@ -86,7 +80,7 @@ predecessor_s107:
   deep_validation_required: true
   actual_completed_output_required: true
   config_path: configs/experiments/wavlm_s107_calibration_v1.yaml
-  config_sha256: f85821abece46e8bb6a2a0c49e74e5717b5bdd9b0139c9138b93a446f1497c95
+  config_sha256: c606f77b45c44a517ffff3118bba618ce3da7f0f7f571220c7e9ce15ac4e1966
   contract_path: src/voice_coach/training/wavlm_s107_calibration_contract.py
   contract_sha256: 04909937b7b8eb4a135a0f7e44c7ec0afc8a438c29aae2d2cbe3de4dcdafac1e
   completion_validator_path: src/voice_coach/training/wavlm_s107_calibration_training.py

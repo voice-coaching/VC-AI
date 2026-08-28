@@ -6,6 +6,7 @@
 | --- | --- | --- | --- |
 | GET | /health | public | 상태 확인 |
 | POST | /v1/oracle-attempts | research-only | 정답 라벨로 진단·코칭 계약을 검증 |
+| POST | /v1/closed-loop/oracle-attempts | research-only | 정답 라벨로 stateless 코칭·재녹음 전이 계약을 검증 |
 | GET | / | loopback | T43/I30 전문가 검수 GUI shell |
 | GET | /assets/styles.css | loopback | 검수 GUI stylesheet |
 | GET | /assets/app.js | loopback | 검수 GUI application |

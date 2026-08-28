@@ -11,6 +11,7 @@ from dataclasses import dataclass
 import hashlib
 import json
 import math
+from pathlib import Path
 
 from ..models import Rgb24Sample
 from .mediapipe_lip_landmarks import (
@@ -20,8 +21,8 @@ from .mediapipe_lip_landmarks import (
 
 
 MEASUREMENT_REVISION = "video_qc_rgb24_luma_edge_lip_v1"
-_SCHEMA_VERSION = "voice_coach.video_qc_candidate.v1"
-_PROVENANCE_SCHEMA_VERSION = "voice_coach.video_qc_provenance.v1"
+_SCHEMA_VERSION = "voice_coach.video_qc_candidate.v2"
+_PROVENANCE_SCHEMA_VERSION = "voice_coach.video_qc_provenance.v2"
 _REASON_CODES = frozenset(
     {
         "video_qc_single_face_coverage_insufficient",
@@ -254,6 +255,7 @@ class VideoQcCandidateEvidence:
     landmark_model_sha256: str
     policy_receipt_sha256: str
     measurement_revision: str
+    measurement_adapter_code_sha256: str
     metrics: VideoQcMetrics
     reason_codes: tuple[str, ...]
     provenance_receipt_sha256: str
@@ -272,6 +274,7 @@ class VideoQcCandidateEvidence:
             "landmark_evidence_sha256",
             "landmark_model_sha256",
             "policy_receipt_sha256",
+            "measurement_adapter_code_sha256",
             "provenance_receipt_sha256",
             "receipt_sha256",
         ):
@@ -339,6 +342,9 @@ class VideoQcCandidateEvidence:
             "landmark_model_sha256": self.landmark_model_sha256,
             "policy_receipt_sha256": self.policy_receipt_sha256,
             "measurement_revision": self.measurement_revision,
+            "measurement_adapter_code_sha256": (
+                self.measurement_adapter_code_sha256
+            ),
         }
 
     def unsigned_json_object(self) -> dict[str, object]:
@@ -414,6 +420,9 @@ class VideoQcCandidateAdapter:
             "landmark_model_sha256": landmarks.model_sha256,
             "policy_receipt_sha256": self._policy.receipt_sha256,
             "measurement_revision": MEASUREMENT_REVISION,
+            "measurement_adapter_code_sha256": (
+                video_qc_measurement_code_sha256()
+            ),
         }
         unsigned = {
             "schema_version": _SCHEMA_VERSION,
@@ -435,6 +444,9 @@ class VideoQcCandidateAdapter:
             landmark_model_sha256=landmarks.model_sha256,
             policy_receipt_sha256=self._policy.receipt_sha256,
             measurement_revision=MEASUREMENT_REVISION,
+            measurement_adapter_code_sha256=(
+                video_qc_measurement_code_sha256()
+            ),
             metrics=metrics,
             reason_codes=reasons,
             provenance_receipt_sha256=unsigned["provenance_receipt_sha256"],
@@ -686,6 +698,15 @@ def _sha256_document(value: object) -> str:
     return hashlib.sha256(payload).hexdigest()
 
 
+def video_qc_measurement_code_sha256() -> str:
+    """Return the exact loaded measurement-adapter source digest."""
+
+    try:
+        return hashlib.sha256(Path(__file__).read_bytes()).hexdigest()
+    except OSError:
+        raise ValueError("video QC measurement source is unavailable") from None
+
+
 __all__ = [
     "MEASUREMENT_REVISION",
     "VideoQcCandidateAdapter",
@@ -693,4 +714,5 @@ __all__ = [
     "VideoQcMetrics",
     "VideoQcPolicy",
     "VideoQcRuntimeError",
+    "video_qc_measurement_code_sha256",
 ]

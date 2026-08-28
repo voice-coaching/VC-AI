@@ -5,7 +5,7 @@
 > **migration pending(2026-08-10):** G04 관련 state는 진단자료로 보존한다.
 > 아래 `G04 passed -> D07/S108` 전이는 현재 구현 snapshot이며 새 정책 전이가
 > 아니다. 정본 목표와 P0 이관 기준은
-> [`PIPELINE_COMPLETION_PLAN_2026-08-10_KO.md`](../PIPELINE_COMPLETION_PLAN_2026-08-10_KO.md)를
+> snapshot 당시 `PIPELINE_COMPLETION_PLAN_2026-08-10_KO.md`(현재 tracked tree에서 퇴역)를
 > 따른다.
 
 중요한 상태 모델과 상태 전이를 이 문서에 기록한다.

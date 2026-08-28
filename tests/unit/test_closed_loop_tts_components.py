@@ -6,7 +6,10 @@ import numpy as np
 import pytest
 import torch
 
-from voice_coach.application.closed_loop import ClosedLoopSession
+from voice_coach.application.closed_loop import (
+    ClosedLoopSession,
+    ClosedLoopTTSService,
+)
 from voice_coach.data.adversarial_speech import NativeSpeechRecord
 from voice_coach.domain.models import (
     AspectScores,
@@ -184,7 +187,7 @@ def test_external_generator_family_chain_is_explicit() -> None:
         backend,
     )
     chain = GeneratorFamilyChain({GeneratorFamily.COSYVOICE2: adapter})
-    result = chain.generate_candidates(
+    result = ClosedLoopTTSService(chain).generate_reference(
         torch.zeros(1, 32),
         torch.ones(1, 2, dtype=torch.long),
         torch.zeros(1, 32),

@@ -44,7 +44,7 @@ def test_cli_config_only_has_zero_runtime_access_and_output() -> None:
     assert completed.returncode == 0, completed.stderr
     result = json.loads(completed.stdout)
     assert result["status"] == "valid_config_only"
-    assert result["source_pin_read_count"] >= 10
+    assert result["source_pin_read_count"] == 8
     for field_name in (
         "predecessor_metadata_read_attempt_count",
         "predecessor_metadata_read_count",

@@ -8,11 +8,14 @@
 
 1. 먼저 `.codex/ai_rule_developer/`의 모든 규칙과
    `.codex/ref_docs/PROJECT_CONTEXT_AND_GOVERNANCE_KO.md`를 읽는다.
-2. 작업과 직접 관련된 루트 `docs/` 정본 문서를 읽는다. 최소한 현재 상태는
-   `docs/constraints/RESEARCH_COMPLETION_TRACKER_KO.md`, 데이터 작업은
-   `docs/constraints/DATA_PRIVACY_BOUNDARY_KO.md`와 `docs/constraints/DATA_LICENSE_AND_ROLE_MATRIX_KO.md`,
-   WP4 후속 실험은 `docs/constraints/WP4_POST_S103_EXECUTION_CONTRACT_KO.md`, 실행 편차는
-   `docs/constraints/PROTOCOL_DEVIATION_LEDGER_KO.md`를 우선한다.
+2. 작업과 직접 관련된 현행 정본을 소유권별로 읽는다. 오디오 경로는
+   `seungun/README.md`와 `seungun/docs/`, visual sidecar는
+   `docs/architecture/`, API는 `docs/api/`, 현행 평가 경계는
+   `docs/evaluation/`, 데이터 저장·반출은 `data/README.md`, 논문 주장과
+   미해결 갭은 `docs/paper/`를 우선한다. 현재 tracked tree에는 저장소 전체를
+   대표하는 단일 completion tracker·구현 계획·privacy/license matrix·실행 편차
+   ledger가 없으므로, 삭제된 `docs/constraints/` 경로를 정본으로 추측하거나
+   부재한 gate를 통과로 처리하지 않는다.
 3. `.codex/ref_docs`의 다른 자료가 있으면 사용자 제공 참고자료로 읽되, 프로젝트
    상태·계약의 정본은 루트 `docs/`임을 유지한다.
 4. 현재 요청을 다음 중 하나 이상으로 분류한다: 아키텍처, 도메인/스키마, API,

@@ -86,7 +86,6 @@ ARTIFACT_LAYOUT: Final = (
     "paired_explicit_refit_control_comparison.json",
 )
 CANONICAL_SOURCE_PATHS: Final = {
-    "readiness": "docs/GOP_ACOUSTIC_POSTERIOR_READINESS_KO.md",
     "explicit_baseline_config": "configs/experiments/explicit_baseline_v1.yaml",
     "wavlm_cache_contract": "src/voice_coach/reproducibility/wavlm_cache.py",
     "gop_feature_implementation": "src/voice_coach/features/gop.py",

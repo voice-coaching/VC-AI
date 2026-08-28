@@ -2,7 +2,8 @@
 
 - 최종 갱신: 2026-08-28 (Asia/Seoul)
 - 문서 상태: `implemented_contract_with_internal_smoke`
-- 구현 상태: `partial_implementation`; handoff facade는 구현, production host 연동은 `not_ready`
+- 구현 상태: `partial_implementation`; handoff와 internal user-video host loop는 구현,
+  production host/visual publication은 `not_ready`
 - 호환성 역할: 기존 파일 경로를 유지하는 연동 계약
 - 상세 정본: [seungun 입술 모양 피드백 sidecar 상세 설계](SEUNGUN_VISUAL_PRONUNCIATION_EVIDENCE_PIPELINE_KO.md)
 
@@ -132,13 +133,13 @@ record를 함께 만든다. `InMemorySeungunAnalysisSource`는 internal test dou
 `pronunciation_attempts`에는 restricted PCM을 0600 WAV로 생성하고 fsync·0400 commit 뒤
 격리된 Seungun worker에서 detector를 한 번 호출한 다음 삭제하는 runtime adapter와,
 container/audio derivation lineage를 검증해 위 facade에 전달하는 handoff adapter도 있다.
-internal CLI와 local composition root는 권장 pre-opened read-only `--video-fd`로 합성
-H.264/AAC MP4, 공식 landmark
-model과 CUDA Seungun에서 audio 완료·visual unavailable,
-`video_qc_candidate_not_calibrated`·`content_av_sync_candidate_not_calibrated`, cleanup
-완료까지 실행됐다. `--video`는 path가 argv/shell history에 남을 수 있는 내부 편의
-기능이다. 다만 persistent source 재로드나 실제 사용자 영상 실행 완료를
-뜻하지 않는다.
+internal CLI와 local composition root는 권장 pre-opened read-only `--video-fd`로
+H.264 또는 HEVC video 한 개와 AAC audio 한 개를 가진 MP4를 받는다. 합성 H.264/AAC
+smoke 외에도 HEVC Main/AAC, 1080x1920 portrait, 30 fps 사용자 영상 두 건을 공식
+landmark model과 CUDA Seungun으로 실행해 모두 audio `coaching_ready`,
+`audio_completed_visual_unavailable`, cleanup 완료까지 확인했다. `--video`는 path가
+argv/shell history에 남을 수 있는 내부 편의 기능이다. 이 결과는 persistent source
+재로드나 visual feedback publication 완료를 뜻하지 않는다.
 
 `SeungunEvidenceEnvelope`에는 최소한 다음이 필요하다.
 
@@ -175,11 +176,18 @@ reliability를 합성하지 않는다. 필수 `audio_derivation_receipt_sha256`�
 직접 포함된다.
 
 local media admission, FFmpeg derivation과 handoff lineage bridge는 구현·unit test됐다.
-RGB/landmark QC와 lip/PCM sync candidate는 runtime visual detection v2 receipt에 묶인다.
-두 candidate는 P6 전 `candidate_unvalidated`/`unavailable`이며 pose·occlusion이나
-calibrated pass/reliability를 만들지 않는다. 남은 blocker는 persistent source 재로드,
-실제 사용자 attempt 실행 검증, camera-upload API/UI, 실제 사용자 영상 QC/content-sync
-성능과 P6/P8 reliability다. TTL/orphan scavenger/persistent cleanup ledger와
+RGB/landmark QC와 lip/PCM sync candidate는 calibrated decision/validated-offset과 함께
+runtime visual detection v3 receipt에 묶인다. decision은 exact raw 관측값과
+measurement/decision policy·code SHA를 보존한다. TS174/TL174 actual-media 정책 evidence가
+없으면 두 candidate는 `candidate_unvalidated`/`unavailable`이며 calibrated reliability를
+만들지 않는다. host-controlled dense phone-window 경로도
+구현됐다. 시작/끝은 caller 입력이 아니라 already-bound Seungun handoff의 exact selected
+`UpstreamPhoneAnchor`에서만 얻고, policy-valid measured A/V offset이 있을 때만 video
+clock으로 변환한다. 기존 전 구간 8-frame sample은 QC/sync에 유지하며, 선택 음소
+window는 bounded FFmpeg RGB24 decode와 재-tracking 뒤 decode/tracking/runtime receipt
+DAG로 detection evidence에 묶는다. raw sync candidate면 dense path를 시작하지 않는다.
+남은 blocker는 persistent source 재로드, camera-upload API/UI, 실제 사용자 영상의
+calibrated QC/content-sync 성능과 P6/P8 reliability다. TTL/orphan scavenger/persistent cleanup ledger와
 `RLIMIT_NPROC`/`RLIMIT_FSIZE`도 없다. launcher 경계는 전체 sandbox가 아니다. 현재
 고정 Seungun v1 analysis는 sidecar anchor로 사용할 수 있다는 제한된 upstream
 `supported` receipt를 가진다. 그러나 reliability bridge는 사용자 runtime P6 calibration
@@ -316,15 +324,21 @@ binding digest exact-match, phone index/span 보존과 path-free supplement를 �
 handoff facade는 concrete detector를 import·호출하지 않고 analysis를 한 번만
 직렬화한다. 다음 production 조건은 남아 있다.
 
-1. 합성 composition에서 확인한 local admission/FFmpeg/handoff/detection v2 lineage를
-   실제 사용자 attempt와 제품 entrypoint에서 재검증
+1. 두 실제 사용자 파일에서 확인한 local admission/FFmpeg/handoff/detection v3
+   infrastructure lineage를 제품 entrypoint와 대표 capture/device 표본에서 재검증
 2. persistent source에서 analysis reference와 registered binding을 atomic 저장·재로드
 3. retry/idempotency와 충돌 request 정책 검증
 4. unknown schema·누락 receipt fail-closed test
 5. raw path·identifier·digest의 public/LLM egress 거부 test
 6. TTL/orphan scavenger와 persistent cleanup ledger 구현·복구 test
-7. 미보정 video-QC/content A/V sync candidate를 실제 사용자 영상에서 검증하고 P6/P8
-   reliability receipt에 연결
+7. 실제 두 영상에서 각각 `not_observed`/`candidate_unvalidated`로 남은 content A/V sync와
+   미보정 video-QC candidate를 population-level P6/P8 reliability receipt에 연결
+
+두 실제 실행은 audio `coaching_ready`였지만 visual은 기존 P6/P8 blocker와 미검증 sync로
+fail-closed했다. policy-valid measured A/V offset이 없어서 dense decode가 호출되지 않았고,
+실제 `PhoneWindowDecodeReceipt`, `PhoneWindowTrackingReceipt`,
+`RuntimePhoneWindowReceipt`는 모두 `not_issued`다. 이는 cleanup을 중복 수행하거나 visual
+상태를 승격한 결과가 아니다.
 
 이 조건은 상세 visual 성능 gate보다 앞선 dependency gate다. facade unit test와
 internal source smoke를 production host/media 연동 완료로 기록하지 않는다.

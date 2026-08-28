@@ -1291,7 +1291,11 @@ def test_table_header_repetition_requires_consecutive_page_top_copies(
     headers = [str(value) for value in html.audit["table_header_probes"]]
     first = headers[0]
 
-    accepted = baseline + "\f" + first + "\f"
+    baseline_key, character_offsets, _ = draft._whitespace_free_with_offsets(baseline)
+    first_key = draft._semantic_text_key(first)
+    first_offset = baseline_key.index(first_key)
+    first_end = character_offsets[first_offset + len(first_key) - 1] + 1
+    accepted = baseline[:first_end] + "\f" + first + baseline[first_end:]
     audit = draft._table_header_postflight(accepted, headers, 2)
     assert audit["headers"][0]["occurrence_count"] == 2
     assert audit["headers"][0]["pages"] == [1, 2]
@@ -1313,8 +1317,8 @@ def test_table_header_repetition_requires_consecutive_page_top_copies(
         with pytest.raises(PaperDraftPdfError, match=code):
             draft._table_header_postflight(attacked, headers, page_count)
 
-    split_atom = baseline.replace(first, first.replace("-", "-\n", 1), 1)
-    split_atom += "\n항목-1"
+    split_index = character_offsets[first_offset + first_key.index("-")] + 1
+    split_atom = baseline[:split_index] + "\n" + baseline[split_index:]
     with pytest.raises(
         PaperDraftPdfError,
         match="PDF_TABLE_HEADER_ATOMIC_TOKEN_SPLIT",

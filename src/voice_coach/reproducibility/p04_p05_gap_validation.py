@@ -37,6 +37,20 @@ RECEIPT_SCHEMA = "voice_coach.p04_p05_gap_validation_receipt.v1"
 COMMIT_SCHEMA = "voice_coach.p04_p05_gap_validation_commit.v1"
 
 EXPECTED_AUDIT_STATUS = "integrity_pass_semantic_update_pending"
+BLOCKED_CONFIG_STATUS = "blocked_retired_canonical_sources"
+BLOCKER_CODE = "retired_canonical_sources"
+BLOCKED_BOUNDARY_SOURCES = (
+    "data_boundary",
+    "governance_rules",
+    "evidence_map",
+    "evidence_validator",
+)
+BLOCKED_RETIRED_SOURCE_ROLES = (
+    "manuscript_evidence_validation_document",
+    "research_completion_tracker",
+    "data_license_source_ledger",
+    "data_license_role_matrix",
+)
 CANONICAL_CONFIG_PATH = "configs/experiments/p04_p05_gap_validation_v1.yaml"
 DEFAULT_OUTPUT_ROOT = "artifacts/reproducibility/p04_p05_gap_validation"
 OUTPUT_PREFIX = ("artifacts", "reproducibility")
@@ -324,7 +338,90 @@ def _validate_record_shape(value: object, code: str) -> None:
         _fail(f"{code}_aggregate_only")
 
 
+def _validate_blocked_config(document: Mapping[str, Any]) -> None:
+    expected_keys = {
+        "schema_version",
+        "status",
+        "actual_state",
+        "blocker",
+        "current_boundaries",
+        "contract",
+    }
+    if set(document) != expected_keys:
+        _fail("blocked_config_keys")
+
+    actual_state = _mapping(document.get("actual_state"), "actual_state")
+    expected_actual_keys = {
+        "canonical_files_read",
+        "aggregate_sources_read",
+        "locked_test_files_read",
+        "raw_or_restricted_files_read",
+        "external_human_records_read",
+        "outputs_written",
+    }
+    if set(actual_state) != expected_actual_keys or any(
+        _integer(actual_state.get(key), f"actual_state_{key}") != 0
+        for key in expected_actual_keys
+    ):
+        _fail("blocked_config_actual_state")
+
+    blocker = _mapping(document.get("blocker"), "blocker")
+    if set(blocker) != {
+        "code",
+        "retired_source_roles",
+        "evidence_status",
+        "explanation",
+    }:
+        _fail("blocker_keys")
+    if blocker.get("code") != BLOCKER_CODE:
+        _fail("blocker_code")
+    retired_roles = tuple(
+        _string(item, "retired_source_role")
+        for item in _sequence(
+            blocker.get("retired_source_roles"),
+            "retired_source_roles",
+        )
+    )
+    if retired_roles != BLOCKED_RETIRED_SOURCE_ROLES:
+        _fail("retired_source_roles")
+    if blocker.get("evidence_status") != "unresolved":
+        _fail("blocker_evidence_status")
+    _string(blocker.get("explanation"), "blocker_explanation")
+
+    boundaries = _mapping(document.get("current_boundaries"), "current_boundaries")
+    if tuple(boundaries) != BLOCKED_BOUNDARY_SOURCES:
+        _fail("current_boundary_order")
+    for name in BLOCKED_BOUNDARY_SOURCES:
+        _validate_record_shape(boundaries.get(name), f"current_boundary_{name}")
+
+    contract = _mapping(document.get("contract"), "contract")
+    if set(contract) != {
+        "output_root",
+        "canonical_write_allowed",
+        "p04_complete_claim_allowed",
+        "p05_complete_claim_allowed",
+        "manuscript_stale_resolved_claim_allowed",
+    }:
+        _fail("blocked_contract_keys")
+    if contract.get("output_root") != DEFAULT_OUTPUT_ROOT:
+        _fail("blocked_contract_output_root")
+    for key in (
+        "canonical_write_allowed",
+        "p04_complete_claim_allowed",
+        "p05_complete_claim_allowed",
+        "manuscript_stale_resolved_claim_allowed",
+    ):
+        if contract.get(key) is not False:
+            _fail(f"blocked_contract_{key}")
+
+
 def _validate_config(document: Mapping[str, Any]) -> None:
+    if document.get("schema_version") != CONFIG_SCHEMA:
+        _fail("config_schema")
+    if document.get("status") == BLOCKED_CONFIG_STATUS:
+        _validate_blocked_config(document)
+        return
+
     expected_keys = {
         "schema_version",
         "status",
@@ -336,8 +433,6 @@ def _validate_config(document: Mapping[str, Any]) -> None:
     }
     if set(document) != expected_keys:
         _fail("config_keys")
-    if document.get("schema_version") != CONFIG_SCHEMA:
-        _fail("config_schema")
     if document.get("status") != "ready":
         _fail("config_status")
 
@@ -638,20 +733,26 @@ def validate_config_only(
 ) -> Mapping[str, Any]:
     """Validate only the config document and touch no declared source/output."""
 
-    _, config_source, _ = _load_canonical_config(
+    _, config_source, document = _load_canonical_config(
         config_path=config_path,
         workspace_root=workspace_root,
     )
+    blocked = document.get("status") == BLOCKED_CONFIG_STATUS
     return {
-        "status": "valid_config_only",
+        "status": BLOCKED_CONFIG_STATUS if blocked else "valid_config_only",
         "schema_version": CONFIG_SCHEMA,
         "config": {
             "path": CANONICAL_CONFIG_PATH,
             "sha256": config_source.fingerprint.sha256,
             "size_bytes": config_source.fingerprint.size_bytes,
         },
-        "declared_source_count": len(REQUIRED_SOURCES),
-        "declared_implementation_source_count": len(REQUIRED_IMPLEMENTATION_SOURCES),
+        "declared_source_count": (
+            len(BLOCKED_BOUNDARY_SOURCES) if blocked else len(REQUIRED_SOURCES)
+        ),
+        "declared_implementation_source_count": (
+            0 if blocked else len(REQUIRED_IMPLEMENTATION_SOURCES)
+        ),
+        "blocker": BLOCKER_CODE if blocked else None,
         "access": {
             "canonical_files_read": 0,
             "aggregate_sources_read": 0,
@@ -3015,6 +3116,8 @@ def run_gap_audit(
         config_path=config_path,
         workspace_root=workspace_root,
     )
+    if config.get("status") == BLOCKED_CONFIG_STATUS:
+        _fail(BLOCKER_CODE)
     configured_output = _string(
         _mapping(config.get("contract"), "contract").get("output_root"),
         "contract_output_root",

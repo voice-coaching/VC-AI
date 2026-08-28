@@ -74,8 +74,8 @@ def test_config_only_reads_static_pins_and_nothing_runtime() -> None:
     assert completed.returncode == 0, completed.stdout + completed.stderr
     result = json.loads(completed.stdout)
     assert result["status"] == "valid_config_only"
-    assert result["source_pin_count"] == 13
-    assert result["source_pin_read_count"] == 13
+    assert result["source_pin_count"] == 12
+    assert result["source_pin_read_count"] == 12
     assert result["source_pin_verify_count"] == 0
     assert result["s108_deep_validation_count"] == 0
     assert result["s203_deep_validation_count"] == 0
@@ -113,7 +113,7 @@ def test_full_preflight_fails_first_at_unresolved_s108() -> None:
     assert result["status"] == "failed_closed"
     assert result["stage"] == "s108_final"
     assert result["error"] == "S108 completion commit SHA is TBD_S108_COMPLETION"
-    assert result["source_pin_read_count"] == 13
+    assert result["source_pin_read_count"] == 12
     assert result["predecessor_path_resolution_count"] == 0
     assert result["predecessor_read_attempt_count"] == 0
     assert result["predecessor_read_count"] == 0

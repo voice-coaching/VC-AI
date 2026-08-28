@@ -1,7 +1,6 @@
 schema_version: voice_coach.p04_p05_gap_validation_config.v1
-status: ready
+status: blocked_retired_canonical_sources
 
-# Config-only validation reads this file and nothing declared below.
 actual_state:
   canonical_files_read: 0
   aggregate_sources_read: 0
@@ -10,162 +9,44 @@ actual_state:
   external_human_records_read: 0
   outputs_written: 0
 
+blocker:
+  code: retired_canonical_sources
+  retired_source_roles:
+    - manuscript_evidence_validation_document
+    - research_completion_tracker
+    - data_license_source_ledger
+    - data_license_role_matrix
+  evidence_status: unresolved
+  explanation: >-
+    The former exact tracker and license-ledger sources are retired. The current
+    repository data boundary does not prove their URL, redistribution, or
+    original-license-review claims, so this audit must remain fail-closed.
+
+current_boundaries:
+  data_boundary:
+    path: data/README.md
+    sha256: 53cba9ea730b608474086158c610b831f992538b008bc8f4db784383786a26e5
+    size_bytes: 1828
+    aggregate_only: true
+  governance_rules:
+    path: .codex/ai_rule_developer/GLOBAL_RULES.md
+    sha256: 3c928b24640f1204623b9fae7d28e54ba20e77b68d38050b79aeb62c98856584
+    size_bytes: 4108
+    aggregate_only: true
+  evidence_map:
+    path: docs/paper/evidence-map.yaml
+    sha256: 6f90e19e1215504823d39c5bfaf96c881d540af37929f276b71d847863adc191
+    size_bytes: 189746
+    aggregate_only: true
+  evidence_validator:
+    path: src/voice_coach/reproducibility/evidence.py
+    sha256: 183ba32fe3e047c4c97b98ab36d3295673f4dc317af3c8ed59afb65bf615b2a9
+    size_bytes: 30260
+    aggregate_only: true
+
 contract:
-  expected_status: integrity_pass_semantic_update_pending
-  gap:
-    total_rows: 40
-    domain_rows: {M: 8, S: 8, F: 8, E: 8, R: 8}
-    status_counts: {A: 33, B: 0, C: 7}
-    domain_status:
-      M: {A: 7, B: 0, C: 1}
-      S: {A: 7, B: 0, C: 1}
-      F: {A: 6, B: 0, C: 2}
-      E: {A: 6, B: 0, C: 2}
-      R: {A: 7, B: 0, C: 1}
-  evidence:
-    artifact_count: 35
-    artifact_passed: 35
-    claim_count: 475
-    claim_passed: 475
-  pending:
-    marker_count: 18
-    markers_sha256: 1d0cce59025c86879d0a9972f0da31e45e87169b41f5b8fadd427c111e6d7673
-  locked_guard:
-    entry_count: 16
-    expected_true_count: 0
-    status: passed
-  registry_metric_splits: [dev, dev_exploratory, inner_val]
   output_root: artifacts/reproducibility/p04_p05_gap_validation
   canonical_write_allowed: false
   p04_complete_claim_allowed: false
   p05_complete_claim_allowed: false
   manuscript_stale_resolved_claim_allowed: false
-
-sources:
-  methods_gap:
-    path: docs/paper/METHODS_ETHICS_REPRODUCIBILITY_GAP_KO.md
-    sha256: 604e0b74d575b81912e04277393ec309199ffa83b2f3a6faae0a7692aad402a4
-    size_bytes: 22962
-    aggregate_only: true
-  manuscript:
-    path: docs/paper/EXPERIMENTAL_MANUSCRIPT_KO.md
-    sha256: c21e6d86570eb74069df104295aafe7cf78af02ce51398335c50133a5d1304f2
-    size_bytes: 41392
-    aggregate_only: true
-  claim_gap:
-    path: docs/paper/CLAIM_GAP_MAP_KO.md
-    sha256: 5117751ef57c10e4266a3492d8764bada3fe0761d709a1f8bb614e4cc49305d3
-    size_bytes: 22040
-    aggregate_only: true
-  evidence_map:
-    path: docs/paper/evidence-map.yaml
-    sha256: edf548f9b439b0c423a2ff15b1d2dc8b22fb6590ef679958a81af306ebb7c1fb
-    size_bytes: 189659
-    aggregate_only: true
-  validation_doc:
-    path: docs/MANUSCRIPT_EVIDENCE_VALIDATION_KO.md
-    sha256: 882f125e12bcb4c932c66535c9e00fde162a266f4a0d41e943a1220e58a1c35f
-    size_bytes: 5447
-    aggregate_only: true
-  validation_report:
-    path: artifacts/reproducibility/manuscript_evidence_validation.json
-    sha256: af4a8566050f83c1c5e4cfc5de21ad2e84fceaee0f9a5870d5d10f77c400e92d
-    size_bytes: 139174
-    aggregate_only: true
-  tracker:
-    path: docs/constraints/RESEARCH_COMPLETION_TRACKER_KO.md
-    sha256: a0e7a904d165a8e71ce3a18c4b562b0b68a828f1238e0b0a6031414bfd5a7ee9
-    size_bytes: 219109
-    aggregate_only: true
-  b07_config:
-    path: configs/experiments/b07_gop_acoustic_posterior_v1.yaml
-    sha256: b94d882de2d2bd214c39110013731959ba8c19114f82c2601fae330f9e5599d5
-    size_bytes: 16401
-    aggregate_only: true
-  b07_commit:
-    path: artifacts/experiments/aihub71490_b07_gop_acoustic_posterior_v1/commit.json
-    sha256: ff31a88e694d23c89996193646d7c062069c9e776b5ed72ef7fc354950f3907c
-    size_bytes: 11822
-    aggregate_only: true
-  b07_registry:
-    path: artifacts/experiment_registry/aihub71490-b07-gop-acoustic-posterior-v1/metadata.json
-    sha256: 5db35282cab879b3a05fa5a6b5cd9a5cac00c5469215ffc77a6dc34abf95eb12
-    size_bytes: 23916
-    aggregate_only: true
-  b07_aggregate_report:
-    path: artifacts/experiments/aihub71490_b07_gop_acoustic_posterior_v1/generations/bc1a7eb174c6a8f69627292f30c9229235dcde8e10e69a7e07899847986d6e09/aggregate_report.json
-    sha256: 842d414609dba5220212edc0caf9c0a554bd753877535475617fc785f300085b
-    size_bytes: 990
-    aggregate_only: true
-  b07_paired_report:
-    path: artifacts/experiments/aihub71490_b07_gop_acoustic_posterior_v1/generations/bc1a7eb174c6a8f69627292f30c9229235dcde8e10e69a7e07899847986d6e09/paired_explicit_refit_control_comparison.json
-    sha256: fc7820072d542104d36d29769cc8d7b569c118980ef6b1b77801546df947b7ac
-    size_bytes: 1990
-    aggregate_only: true
-  license_ledger:
-    path: docs/constraints/DATA_LICENSE_SOURCE_LEDGER_KO.md
-    sha256: b6ceeb1f874de3071462e98c3526136302ab54d3ea9ecc109400d1a3f03f7cd4
-    size_bytes: 4136
-    aggregate_only: true
-  license_matrix:
-    path: docs/constraints/DATA_LICENSE_AND_ROLE_MATRIX_KO.md
-    sha256: 3480b342675c22590aec3f800e252bb967edb6be69c5e6a969766c2bd9f37119
-    size_bytes: 2703
-    aggregate_only: true
-
-implementation_sources:
-  module:
-    path: src/voice_coach/reproducibility/p04_p05_gap_validation.py
-    sha256: 283f814f75c6ebfb1acf9ad6789f13bb06cc5f67f5d5e44bfcc8df9f310aed51
-    size_bytes: 108251
-    aggregate_only: true
-  cli:
-    path: scripts/validate_p04_p05_gap.py
-    sha256: b7f2d51f58c701d9617f52ebba2358ed4011fa3d1a1c3c67b679bddfad57b0dc
-    size_bytes: 2929
-    aggregate_only: true
-
-semantic_contract:
-  expected_finding_codes:
-    - B07_COMPLETED_EVIDENCE_NOT_PROMOTED
-  expected_resolution_codes:
-    - CLAIM_GAP_P04_C_COUNT_RESOLVED
-    - DATA_LICENSE_LEDGER_EVIDENCE_MAPPING_RESOLVED
-  b07:
-    generation_id: bc1a7eb174c6a8f69627292f30c9229235dcde8e10e69a7e07899847986d6e09
-    artifact_count: 21
-    seeds: [42, 43, 44]
-    mean_phone_macro_f1: 0.6304424500285749
-    sample_std_phone_macro_f1: 0.0002218332425636882
-    mean_error_auprc: 0.2645733385270365
-    sample_std_error_auprc: 0.00022841133796295214
-    explicit_refit_phone_macro_f1: 0.5644327426652991
-    mean_phone_macro_f1_delta: 0.06600970736327587
-    manuscript_future_gop_anchors:
-      - "frozen WavLM과 GOP 보강을 후속 비교한다."
-      - "후속 adapter·GOP·fusion"
-    required_absent_token: B07
-    claim_gap_legacy_scope_anchor: "S101–S103와 R00 관측값 반영,"
-  claim_gap_resolution:
-    expected_c_count: 7
-    current_anchor: "후속·외부 artifact가 필요한 P04 C 등급 7개 갱신"
-    forbidden_stale_anchor: "후속·외부 artifact가 필요한 P04 C 등급 9개 갱신"
-  license:
-    ledger_path_token: docs/constraints/DATA_LICENSE_SOURCE_LEDGER_KO.md
-    ledger_sha256: b6ceeb1f874de3071462e98c3526136302ab54d3ea9ecc109400d1a3f03f7cd4
-    evidence_alias: data_license_source_ledger
-    required_ledger_anchors:
-      - "공식 링크 12개는 redirect 이후 HTTP 200이었다."
-      - "`needs-original-license-review` (재배포·파생 공개)"
-  external_pending_anchors:
-    claim_gap:
-      - "| X01 | G04 수동 정렬 정확도 ≥95% | 240/240 검토 완료, 정답 178/240 = 0.7417, `status=failed` |"
-    tracker:
-      - "| G04 | 실패(1차 감사 완료·95% 미달) | 240건 수동 정렬 정확도≥95% |"
-      - "- 실제 전문가 완료: 0/240"
-    manuscript:
-      - "현재 IRB·모집·녹음·empirical pilot은 없고 최종"
-    methods_gap:
-      - |-
-        P04는
-        `진행 중`이며, 외부 task 상태와 PENDING marker를 변경하지 않는다.

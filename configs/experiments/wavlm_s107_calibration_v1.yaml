@@ -17,7 +17,7 @@ predecessor:
   validation_must_complete_before_calibration_path_resolution: true
   config:
     path: configs/experiments/wavlm_s106_stack_fusion_v1.yaml
-    sha256: cb5e10464ff8e227756a8aa6171cfde6e630fedbe37b5dc24e7fb2e16f0af7ea
+    sha256: 72be88ab0507098e292228d98526324afa410c6d16d0304e28ff67f0389d9586
   commit_manifest: artifacts/experiments/aihub71490_wavlm_s106_stack_fusion_v1/commit.json
   commit_schema_version: voice_coach.wavlm_s106_stack_fusion_commit.v2
   required_commit_status: committed
@@ -206,7 +206,7 @@ implementation:
     sha256: 201973a25e75da77ec86468a60094c22ac3d3376d936d5e2d089531d52b5d6d3
   project_manifest:
     path: pyproject.toml
-    sha256: 20ede7c9fbd4eb047fdcd81a2732588756278842b757a1b9b44794befdc4d1da
+    sha256: 87fbe75e3df2ad7f64494cafb3744e7cfb815cfe1b8e9ea8d774d8b990c35e71
   scorer_lock:
     path: requirements/scorer-lock-linux-aarch64-cu130.txt
     sha256: f6c5b10c1028506d7361c83ad1e9aae0b1fafcf34f4e918e5b7123c51fac8cf2

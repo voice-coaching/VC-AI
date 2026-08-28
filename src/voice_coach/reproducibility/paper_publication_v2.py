@@ -52,6 +52,18 @@ CANONICAL_RECEIPT_NAME = "publication-audit-v2.json"
 CANONICAL_NETWORK_ROOT = (
     "artifacts/reproducibility/paper_publication_v2/network_observations"
 )
+BLOCKED_CONFIG_STATUS = "blocked_retired_canonical_sources"
+BLOCKER_CODE = "retired_canonical_sources"
+BLOCKED_BOUNDARY_SOURCES = (
+    "manuscript",
+    "evidence_map",
+    "source_ledger",
+    "data_boundary",
+)
+BLOCKED_RETIRED_SOURCE_ROLES = (
+    "manuscript_evidence_validation_document",
+    "publication_v1_ready_contract",
+)
 ROOT_NAMESPACE_LOCK_NAME = ".paper_publication_v2.publish.lock"
 OUTPUT_LOCK_NAME = ".publish-v2.lock"
 
@@ -443,7 +455,66 @@ def _validate_completion_state(value: object, code: str) -> None:
         _fail(code)
 
 
+def _validate_blocked_config(config: Mapping[str, Any]) -> None:
+    _expect_keys(
+        config,
+        {
+            "schema_version",
+            "status",
+            "blocker",
+            "current_boundaries",
+            "completion_state",
+            "output",
+        },
+        "blocked_config_keys",
+    )
+    blocker = _mapping(config.get("blocker"), "blocker")
+    _expect_keys(
+        blocker,
+        {"code", "retired_source_roles", "evidence_status", "explanation"},
+        "blocker_keys",
+    )
+    if blocker.get("code") != BLOCKER_CODE:
+        _fail("blocker_code")
+    roles = tuple(
+        _string(item, "retired_source_role")
+        for item in _list(blocker.get("retired_source_roles"), "retired_source_roles")
+    )
+    if roles != BLOCKED_RETIRED_SOURCE_ROLES:
+        _fail("retired_source_roles")
+    if blocker.get("evidence_status") != "unresolved":
+        _fail("blocker_evidence_status")
+    _string(blocker.get("explanation"), "blocker_explanation")
+
+    boundaries = _mapping(config.get("current_boundaries"), "current_boundaries")
+    if tuple(boundaries) != BLOCKED_BOUNDARY_SOURCES:
+        _fail("current_boundary_order")
+    for name in BLOCKED_BOUNDARY_SOURCES:
+        _expected_record(boundaries.get(name), f"current_boundary_{name}")
+
+    _validate_completion_state(config.get("completion_state"), "completion_state")
+    output = _mapping(config.get("output"), "output")
+    _expect_keys(
+        output,
+        {"root", "commit_name", "receipt_name", "network_observation_root"},
+        "output_keys",
+    )
+    if output != {
+        "root": CANONICAL_OUTPUT_ROOT,
+        "commit_name": CANONICAL_COMMIT_NAME,
+        "receipt_name": CANONICAL_RECEIPT_NAME,
+        "network_observation_root": CANONICAL_NETWORK_ROOT,
+    }:
+        _fail("blocked_output")
+
+
 def _validate_config_document(config: Mapping[str, Any]) -> None:
+    if config.get("schema_version") != CONFIG_SCHEMA:
+        _fail("config_schema")
+    if config.get("status") == BLOCKED_CONFIG_STATUS:
+        _validate_blocked_config(config)
+        return
+
     _expect_keys(
         config,
         {
@@ -459,8 +530,6 @@ def _validate_config_document(config: Mapping[str, Any]) -> None:
         },
         "config_keys",
     )
-    if config.get("schema_version") != CONFIG_SCHEMA:
-        _fail("config_schema")
     if config.get("status") != "ready":
         _fail("config_status")
     _expected_record(config.get("base_content_contract"), "base_content_contract")
@@ -1047,23 +1116,29 @@ def validate_config_only(
     except DescriptorIOError as exc:
         _fail(f"descriptor_{exc}")
     counters = AccessCounters(config_files_read=1)
+    blocked = loaded.document.get("status") == BLOCKED_CONFIG_STATUS
     source_count = (
-        1
-        + 4
-        + 4
-        + 3
-        + len(
-            _list(
-                _mapping(loaded.document.get("canonical"), "canonical").get(
-                    "local_assets"
-                ),
-                "canonical_local_assets",
+        len(BLOCKED_BOUNDARY_SOURCES)
+        if blocked
+        else (
+            1
+            + 4
+            + 4
+            + 3
+            + len(
+                _list(
+                    _mapping(loaded.document.get("canonical"), "canonical").get(
+                        "local_assets"
+                    ),
+                    "canonical_local_assets",
+                )
             )
         )
     )
     return {
         "schema_version": CONFIG_SCHEMA,
-        "status": "valid_config_only",
+        "status": BLOCKED_CONFIG_STATUS if blocked else "valid_config_only",
+        "blocker": BLOCKER_CODE if blocked else None,
         "config": loaded.record.as_dict(),
         "source_record_schemas_validated": source_count,
         "completion_state": dict(COMPLETION_STATE),
@@ -1836,6 +1911,8 @@ def audit_paper_publication(
     try:
         with RootDirectory.open(workspace_root) as workspace:
             loaded = _read_config(workspace, config_path)
+            if loaded.document.get("status") == BLOCKED_CONFIG_STATUS:
+                _fail(BLOCKER_CODE)
             with PublicationStore.open(
                 workspace,
                 exclusive=True,

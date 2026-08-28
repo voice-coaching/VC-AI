@@ -56,7 +56,7 @@ def _assert_zero_protected_runtime_and_output(
     assert result["production_deployment_claim_allowed"] is False
 
 
-def test_config_only_reads_50_static_sources_and_nothing_protected() -> None:
+def test_config_only_reads_49_scoped_sources_and_nothing_protected() -> None:
     before = tuple(path.exists() for path in DECLARED_OUTPUTS)
     completed = _run("--config-only")
     after = tuple(path.exists() for path in DECLARED_OUTPUTS)
