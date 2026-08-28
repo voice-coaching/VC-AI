@@ -48,6 +48,8 @@ WORKSHEET_COLUMNS = [
     "reviewer_id",
     "alignment_correct",
     "maximum_boundary_error_ms",
+    "incorrect_interval_count",
+    "annotation_fidelity",
     "notes",
 ]
 
@@ -103,6 +105,10 @@ def main() -> int:
         row["reviewer_id"] = review["reviewer_id_sha256"]
         row["alignment_correct"] = str(review["alignment_correct"]).lower()
         row["maximum_boundary_error_ms"] = review["maximum_boundary_error_ms"]
+        row["incorrect_interval_count"] = review.get("incorrect_interval_count") or ""
+        row["annotation_fidelity"] = (
+            review.get("annotation_fidelity") or ""
+        )
         row["notes"] = review["notes"]
         updated_rows.append(row)
 

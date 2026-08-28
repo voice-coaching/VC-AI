@@ -30,9 +30,6 @@
     "research_lead_approved",
     "calibration_gold_sha256",
     "sealed_locked_gold_sha256",
-    "h00_approval_sha256",
-    "h00_attestation_sha256",
-    "d07_institutional_approval_sha256",
     "reviewer_attestation_sha256",
     "preregistration_sha256",
     "calibration_report_sha256",
@@ -118,15 +115,6 @@
       "$ref": "#/$defs/sha256"
     },
     "sealed_locked_gold_sha256": {
-      "$ref": "#/$defs/sha256"
-    },
-    "h00_approval_sha256": {
-      "$ref": "#/$defs/sha256"
-    },
-    "h00_attestation_sha256": {
-      "$ref": "#/$defs/sha256"
-    },
-    "d07_institutional_approval_sha256": {
       "$ref": "#/$defs/sha256"
     },
     "reviewer_attestation_sha256": {

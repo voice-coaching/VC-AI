@@ -15,7 +15,7 @@ import re
 import secrets
 import statistics
 import threading
-from typing import Any, Mapping
+from typing import Any, Literal, Mapping
 import unicodedata
 from uuid import uuid4
 
@@ -39,7 +39,17 @@ LEGACY_REVIEW_FIELDS = frozenset(
         "updated_at_utc",
     }
 )
-CURRENT_REVIEW_FIELDS = LEGACY_REVIEW_FIELDS | {"incorrect_interval_count"}
+INTERVAL_REVIEW_FIELDS = LEGACY_REVIEW_FIELDS | {"incorrect_interval_count"}
+CURRENT_REVIEW_FIELDS = INTERVAL_REVIEW_FIELDS | {"annotation_fidelity"}
+ANNOTATION_FIDELITY_VALUES = frozenset(
+    {
+        "consistent",
+        "target_annotation_mismatch",
+        "realized_annotation_mismatch",
+        "both_annotations_mismatch",
+        "uncertain",
+    }
+)
 REQUIRED_WORKSHEET_COLUMNS = {
     "audit_index",
     "utterance_id",
@@ -320,6 +330,13 @@ class ReviewSubmission(BaseModel):
     alignment_correct: bool
     maximum_boundary_error_ms: float = Field(ge=0)
     incorrect_interval_count: int = Field(ge=0, default=0)
+    annotation_fidelity: Literal[
+        "consistent",
+        "target_annotation_mismatch",
+        "realized_annotation_mismatch",
+        "both_annotations_mismatch",
+        "uncertain",
+    ] = "uncertain"
     notes: str = Field(max_length=2_000)
 
     @field_validator("maximum_boundary_error_ms")
@@ -369,7 +386,13 @@ class ReviewStore:
             if set(review) == LEGACY_REVIEW_FIELDS:
                 # Predates the phone-level accuracy field: whole-utterance
                 # judgment only, incorrect-interval count unknown.
-                review = {**review, "incorrect_interval_count": None}
+                review = {
+                    **review,
+                    "incorrect_interval_count": None,
+                    "annotation_fidelity": None,
+                }
+            elif set(review) == INTERVAL_REVIEW_FIELDS:
+                review = {**review, "annotation_fidelity": None}
             elif set(review) != CURRENT_REVIEW_FIELDS:
                 raise ValueError("review state item has incomplete/extra fields")
             reviewer_hash = review["reviewer_id_sha256"]
@@ -408,6 +431,12 @@ class ReviewStore:
                     raise ValueError(
                         "alignment_correct=false requires incorrect_interval_count>=1"
                     )
+            annotation_fidelity = review["annotation_fidelity"]
+            if (
+                annotation_fidelity is not None
+                and annotation_fidelity not in ANNOTATION_FIDELITY_VALUES
+            ):
+                raise ValueError("annotation_fidelity is invalid")
             notes = review["notes"]
             if not isinstance(notes, str) or len(notes) > 2_000:
                 raise ValueError("notes are invalid")
@@ -473,6 +502,7 @@ class ReviewStore:
                 "alignment_correct": submission.alignment_correct,
                 "maximum_boundary_error_ms": (submission.maximum_boundary_error_ms),
                 "incorrect_interval_count": submission.incorrect_interval_count,
+                "annotation_fidelity": submission.annotation_fidelity,
                 "notes": submission.notes,
                 "updated_at_utc": datetime.now(timezone.utc).isoformat(),
             }
@@ -657,6 +687,14 @@ label{{display:block;margin:10px 0}} textarea{{width:100%;min-height:80px}}
 <form id="form"><label>정렬 정확성 <select id="correct" required>
 <option value="">선택</option><option value="true">correct</option>
 <option value="false">incorrect</option></select></label>
+<label>annotation fidelity <select id="annotation" required>
+<option value="">select</option>
+<option value="consistent">consistent</option>
+<option value="target_annotation_mismatch">target annotation mismatch</option>
+<option value="realized_annotation_mismatch">realized annotation mismatch</option>
+<option value="both_annotations_mismatch">both annotations mismatch</option>
+<option value="uncertain">uncertain</option></select></label>
+<label>incorrect mappings <input id="incorrect-count" type="number" min="0" step="1" required></label>
 <label>최대 경계 오차(ms) <input id="boundary" type="number" min="0" step="0.1" required></label>
 <label>메모 <textarea id="notes" maxlength="2000"></textarea></label>
 <button type="submit">원자 저장</button></form></section></main>
@@ -684,11 +722,15 @@ async function load(hash){{const x=await api('/api/items/'+hash);current=hash;re
  automatic_phone_alignments:x.automatic_phone_alignments}},null,2);
  const r=x.review||{{}};document.getElementById('correct').value=
  r.alignment_correct===true?'true':r.alignment_correct===false?'false':'';
+ document.getElementById('annotation').value=r.annotation_fidelity??'';
  document.getElementById('boundary').value=r.maximum_boundary_error_ms??'';
+ document.getElementById('incorrect-count').value=r.incorrect_interval_count??'';
  document.getElementById('notes').value=r.notes??'';}}
 document.getElementById('form').onsubmit=async e=>{{e.preventDefault();if(!current)return;
  const body={{alignment_correct:document.getElementById('correct').value==='true',
+ annotation_fidelity:document.getElementById('annotation').value,
  maximum_boundary_error_ms:Number(document.getElementById('boundary').value),
+ incorrect_interval_count:Number(document.getElementById('incorrect-count').value),
  notes:document.getElementById('notes').value}};
  await api('/api/items/'+current+'/review',{{method:reviewed?'PUT':'POST',body:JSON.stringify(body)}});
  reviewed=true;await refresh();}};refresh();
@@ -710,6 +752,16 @@ def build_aggregate_report(
     correct = sum(bool(review["alignment_correct"]) for review in reviews)
     boundaries = [float(review["maximum_boundary_error_ms"]) for review in reviews]
     accuracy = correct / len(reviews) if complete else None
+    annotation_missing_count = sum(
+        1 for review in reviews if review.get("annotation_fidelity") is None
+    )
+    annotation_counts = {
+        value: sum(review.get("annotation_fidelity") == value for review in reviews)
+        for value in sorted(ANNOTATION_FIDELITY_VALUES)
+    }
+    annotation_unresolved_count = (
+        annotation_missing_count + annotation_counts["uncertain"]
+    )
 
     # Phone-level accuracy: unlike utterance-level accuracy above, this is
     # not skewed by utterance length/phone count, since it counts wrong
@@ -733,7 +785,10 @@ def build_aggregate_report(
             )
     gate_status = (
         "passed"
-        if complete and accuracy is not None and accuracy >= minimum_accuracy
+        if complete
+        and annotation_unresolved_count == 0
+        and accuracy is not None
+        and accuracy >= minimum_accuracy
         else "failed"
         if complete
         else "incomplete"
@@ -746,6 +801,12 @@ def build_aggregate_report(
         "incorrect_count": len(reviews) - correct if reviews else 0,
         "alignment_accuracy": accuracy,
         "minimum_accuracy": minimum_accuracy,
+        "annotation_fidelity": {
+            "counts": annotation_counts,
+            "missing_count": annotation_missing_count,
+            "unresolved_count": annotation_unresolved_count,
+            "gate_requires_complete_classification": True,
+        },
         "phone_level_accuracy": {
             "value": phone_level_accuracy,
             "total_phone_intervals": total_phone_intervals,
@@ -806,6 +867,7 @@ def export_completed_reviews(
         "alignment_correct",
         "maximum_boundary_error_ms",
         "incorrect_interval_count",
+        "annotation_fidelity",
         "total_alignment_interval_count",
         "notes",
     ]
@@ -824,6 +886,11 @@ def export_completed_reviews(
                 "maximum_boundary_error_ms": (review["maximum_boundary_error_ms"]),
                 "incorrect_interval_count": (
                     "" if incorrect_count is None else incorrect_count
+                ),
+                "annotation_fidelity": (
+                    ""
+                    if review.get("annotation_fidelity") is None
+                    else review["annotation_fidelity"]
                 ),
                 "total_alignment_interval_count": len(item.automatic_phone_alignments),
                 "notes": review["notes"],

@@ -1056,12 +1056,18 @@ def _validate_rights_template(payload: Mapping[str, Any]) -> None:
     )
     _expect(payload.get("status"), TBD_EXTERNAL, "recording-rights template status")
     source = _mapping(payload.get("source_classification"), "source classification")
-    _expect(source.get("public_corpus_audio_used"), False, "public corpus use")
-    _expect(source.get("tts_audio_used"), False, "TTS audio use")
+    # TTS and licensed corpus audio are permitted sources. The architecture under
+    # study is a closed loop between a TTS generator and an evaluator, so synthesised
+    # reference audio is the subject of the experiment rather than a substitute for
+    # a human recording. What the template still fixes is that every source declares
+    # itself -- the label requirement below -- because a source that lies about what
+    # it is corrupts every downstream comparison.
+    for field in ("source_kind", "public_corpus_audio_used", "tts_audio_used"):
+        _expect(source.get(field), TBD_EXTERNAL, f"recording-rights {field}")
     _expect(
-        source.get("corpus_or_tts_disguised_as_human"),
-        False,
-        "source disguise",
+        source.get("human_tts_source_label_required"),
+        True,
+        "source label requirement",
     )
     protocol = _mapping(payload.get("recording_protocol"), "recording protocol")
     for field, expected_value in (
@@ -2055,30 +2061,31 @@ def validate_recording_rights_payload(
         source,
         {
             "source_kind",
+            "source_kind_allowed_values",
             "public_corpus_audio_used",
             "tts_audio_used",
-            "corpus_or_tts_disguised_as_human",
             "human_tts_source_label_required",
+            "source_label_rationale_ko",
             "license_basis",
         },
         "source classification",
     )
-    _expect(
-        source.get("source_kind"),
-        "newly_recorded_consented_adult_native_korean_human",
-        "source kind",
-    )
-    for field in (
-        "public_corpus_audio_used",
-        "tts_audio_used",
-        "corpus_or_tts_disguised_as_human",
-    ):
-        _expect(source.get(field), False, f"source classification {field}")
+    # The source must be one of the declared kinds and must say which. It does not
+    # have to be a human recording: see the note on the template validator above.
+    allowed = tuple(_list(source.get("source_kind_allowed_values"), "source kinds"))
+    if source.get("source_kind") not in allowed:
+        raise D08ContractError(
+            f"source kind must be one of {sorted(allowed)}, "
+            f"got {source.get('source_kind')!r}"
+        )
+    for field in ("public_corpus_audio_used", "tts_audio_used"):
+        _boolean(source.get(field), f"source classification {field}")
     _expect(
         source.get("human_tts_source_label_required"),
         True,
         "source label requirement",
     )
+    _string(source.get("source_label_rationale_ko"), "source label rationale")
     _string(source.get("license_basis"), "recording license basis")
     protocol = _mapping(payload.get("recording_protocol"), "recording protocol")
     expected_protocol_keys = {

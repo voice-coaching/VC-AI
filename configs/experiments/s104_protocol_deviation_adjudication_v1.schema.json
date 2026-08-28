@@ -11,6 +11,7 @@
     "created_at",
     "experiment",
     "event",
+    "terminal_run",
     "start_bindings",
     "scorer_environment",
     "bindings",
@@ -43,7 +44,9 @@
         "pid",
         "process_started_at",
         "registry_started_at",
-        "development_only"
+        "development_only",
+        "run_result",
+        "superseded_by_deviation_id"
       ],
       "properties": {
         "experiment_id": {
@@ -63,6 +66,52 @@
         },
         "development_only": {
           "const": true
+        },
+        "run_result": {
+          "const": "invalidated"
+        },
+        "superseded_by_deviation_id": {
+          "const": "DEV-S104-003"
+        }
+      }
+    },
+    "terminal_run": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "experiment_id",
+        "registry_run_id",
+        "config_path",
+        "config_sha256",
+        "execution_lock_path",
+        "execution_lock_sha256",
+        "relationship_to_event_run",
+        "event_transient_edit_occurred_in_this_run"
+      ],
+      "properties": {
+        "experiment_id": {
+          "const": "aihub71490_wavlm_s104_adapter_v2_current_code"
+        },
+        "registry_run_id": {
+          "const": "aihub71490-wavlm-s104-adapter-v2-current-code-dev"
+        },
+        "config_path": {
+          "const": "configs/experiments/wavlm_s104_adapter_v2_current_code.yaml"
+        },
+        "config_sha256": {
+          "$ref": "#/$defs/sha256"
+        },
+        "execution_lock_path": {
+          "const": "artifacts/experiments/aihub71490_wavlm_s104_adapter_v2_current_code/execution_lock.json"
+        },
+        "execution_lock_sha256": {
+          "$ref": "#/$defs/sha256"
+        },
+        "relationship_to_event_run": {
+          "const": "clean_rerun_of_the_invalidated_event_run"
+        },
+        "event_transient_edit_occurred_in_this_run": {
+          "const": false
         }
       }
     },

@@ -24,11 +24,11 @@ canonical_sources:
     - path: artifacts/reference/r00/r00_sentence_card_v1.validation.json
       sha256: 95b4fd861a3c21222ff13859cfbc9c196e3fd06493852bca823d8a63dc2816dd
     - path: configs/experiments/r01_human_cosyvoice_candidates_v1.yaml
-      sha256: edcd0bc4905d9aac412d0c1f9a9243b6ef6e3f0ca40cc2c59f19b22e4355ced4
+      sha256: bc0ff862f7159c2516a8fa302c21ad8a59975b56b5e9c0b994a585cd8577f718
     - path: configs/experiments/r02_candidate_hard_gate_v1.yaml
-      sha256: 952338f435b3820636436c30079e4e38ef9af703ca4bb428f16f5893492c75f9
+      sha256: b23a2ae9837f70708a951509430cf6050aabb36f0c6ea697d5677841a54d22cc
     - path: configs/experiments/r03_reference_bank_selection_v1.yaml
-      sha256: e43b0bb02a4db87baefd3e6b6ea52549d5b8608c587b3cf6f0355b19849ae14c
+      sha256: 632262f343f650840715f66f311a893cf69e79d699fd424d2620d2b6717f819c
     - path: configs/reference/r00_sentence_card_v1.schema.json
       sha256: 1f8bcf0325414e1923cda0def9a973ac2f7be7bd85cca4ee869743ef862a7b92
     - path: configs/reference/r01_candidate_manifest_v1.schema.json
@@ -40,7 +40,7 @@ canonical_sources:
     - path: configs/reference/r04_human_research_approval_v1.template.json
       sha256: 8908faa1fca5b57967429e540367b863c322d9969d887c45df1f5415ef28e961
     - path: configs/reference/r04_blind_evaluation_preregistration_v1.template.json
-      sha256: 34e89b372a1bd1de662cebcefae635655dc47722d4813372f02db8e30bcdbc80
+      sha256: 08a8d1008d89f3c760aa724c637899e2d5d82c5c469f67641d58d175e0335fc8
     - path: configs/reference/r04_pilot_nuisance_attestation_v1.template.json
       sha256: 6b0d8cea7732a49cc12ae233c89a8500f540cc3dec0a70aae2d620fbf73c84e8
     - path: configs/reference/r04_statistical_analysis_plan_v1.template.json
@@ -60,15 +60,15 @@ canonical_sources:
     - path: docs/paper/EXPERIMENTAL_MANUSCRIPT_KO.md
       sha256: c21e6d86570eb74069df104295aafe7cf78af02ce51398335c50133a5d1304f2
     - path: docs/한국어 AI 보이스 코칭을 위한 폐쇄루프 TTS 아키텍처.pdf
-      sha256: eb403f04e9df77932baba9c671c4e7ee6b2adc2a7eb31bbdc43970e321907ebb
+      sha256: 2e60d812290ad0b8d7dc0fd689de6b7cf4a0fbecde7e5a1612f85a2e7a18b4dd
     - path: scripts/validate_r00_sentence_card.py
       sha256: 967517e74194936c91dad1eed4fcfb0c059b5480af32b8adfc9725fdb7d6e7d0
     - path: src/voice_coach/references/r01_candidate_contract.py
-      sha256: 91ee50b25b1ce955d8745e58c09b5413438833df1f8f82ba1caec8095496b1e7
+      sha256: c109fc242db42affb371259bdad625ec06d516011b32551d8d8e088fceee7231
     - path: src/voice_coach/references/r02_hard_gate_contract.py
       sha256: a50e6287ffdb56c9ec2f22859a9be800cc3fb787b7c3390f4330052412eaf5bf
     - path: src/voice_coach/references/r03_selection_contract.py
-      sha256: 626e5641e86c19fdac2582d3d1f62e006a2f12ba448dad5127936c241fd00bb8
+      sha256: 1a15870458a7e12a36460e2c2ba4f92db4facff0da7b3a81059aea78080df167
 
 predecessor_r00:
   deep_validation_required: true
@@ -88,9 +88,9 @@ predecessor_r00:
 predecessor_r01:
   deep_validation_required: true
   config_path: configs/experiments/r01_human_cosyvoice_candidates_v1.yaml
-  config_sha256: edcd0bc4905d9aac412d0c1f9a9243b6ef6e3f0ca40cc2c59f19b22e4355ced4
+  config_sha256: bc0ff862f7159c2516a8fa302c21ad8a59975b56b5e9c0b994a585cd8577f718
   contract_path: src/voice_coach/references/r01_candidate_contract.py
-  contract_sha256: 91ee50b25b1ce955d8745e58c09b5413438833df1f8f82ba1caec8095496b1e7
+  contract_sha256: c109fc242db42affb371259bdad625ec06d516011b32551d8d8e088fceee7231
   completion_commit_path: artifacts/experiments/r01_human_cosyvoice_candidates_v1/commit.json
   completion_commit_sha256: TBD_R01_COMPLETION
   registry_path: artifacts/experiment_registry/r01-human-cosyvoice-candidates-v1/metadata.json
@@ -100,7 +100,7 @@ predecessor_r01:
 predecessor_r02:
   deep_validation_required: true
   config_path: configs/experiments/r02_candidate_hard_gate_v1.yaml
-  config_sha256: 952338f435b3820636436c30079e4e38ef9af703ca4bb428f16f5893492c75f9
+  config_sha256: b23a2ae9837f70708a951509430cf6050aabb36f0c6ea697d5677841a54d22cc
   contract_path: src/voice_coach/references/r02_hard_gate_contract.py
   contract_sha256: a50e6287ffdb56c9ec2f22859a9be800cc3fb787b7c3390f4330052412eaf5bf
   completion_commit_path: artifacts/experiments/r02_candidate_hard_gate_v1/commit.json
@@ -116,9 +116,9 @@ predecessor_r02:
 predecessor_r03:
   deep_validation_required: true
   config_path: configs/experiments/r03_reference_bank_selection_v1.yaml
-  config_sha256: e43b0bb02a4db87baefd3e6b6ea52549d5b8608c587b3cf6f0355b19849ae14c
+  config_sha256: 632262f343f650840715f66f311a893cf69e79d699fd424d2620d2b6717f819c
   contract_path: src/voice_coach/references/r03_selection_contract.py
-  contract_sha256: 626e5641e86c19fdac2582d3d1f62e006a2f12ba448dad5127936c241fd00bb8
+  contract_sha256: 1a15870458a7e12a36460e2c2ba4f92db4facff0da7b3a81059aea78080df167
   bank_schema_path: configs/reference/r03_reference_bank_manifest_v1.schema.json
   bank_schema_sha256: 2e6c4728943fbfb5519f7e961fca68da816b82e44fc65f003938644ade68ca83
   completion_commit_path: artifacts/experiments/r03_reference_bank_selection_v1/commit.json
@@ -152,7 +152,7 @@ human_research_approval:
 preregistration:
   placeholder: TBD_PREREGISTRATION
   template_path: configs/reference/r04_blind_evaluation_preregistration_v1.template.json
-  template_sha256: 34e89b372a1bd1de662cebcefae635655dc47722d4813372f02db8e30bcdbc80
+  template_sha256: 08a8d1008d89f3c760aa724c637899e2d5d82c5c469f67641d58d175e0335fc8
   approved_artifact_path: artifacts/external_attestations/r04/r04_blind_evaluation_preregistration_v1.json
   approved_artifact_sha256: TBD_PREREGISTRATION
   required_schema_version: voice_coach.r04_blind_evaluation_preregistration.v1
@@ -218,9 +218,14 @@ evaluation_contract:
     - R00-18
     - R00-19
     - R00-20
-  candidate_sources_required:
-    - human_recording
+  # A human condition is no longer required. The architecture under study is a
+  # closed loop between a TTS generator and an evaluator, so a TTS-only condition
+  # set is a complete design rather than a degraded one. Sources still declare
+  # themselves and blinding still conceals which is which from the listener.
+  candidate_sources_allowed:
     - cosyvoice_tts
+    - human_recording
+  candidate_sources_required_minimum_count: 1
   r02_hard_gate_failures_excluded_without_rescue: true
   mos:
     unit: listener_x_sentence_x_candidate

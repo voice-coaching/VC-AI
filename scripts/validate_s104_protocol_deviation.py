@@ -36,7 +36,9 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument(
         "--s104-config",
         type=Path,
-        default=Path("configs/experiments/wavlm_s104_adapter_v1.yaml"),
+        # The terminal run the adjudication binds. The deviation event itself
+        # belongs to the invalidated v1 run and is resolved by the validator.
+        default=Path("configs/experiments/wavlm_s104_adapter_v2_current_code.yaml"),
     )
     parser.add_argument(
         "--workspace-root",

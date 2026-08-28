@@ -20,11 +20,11 @@ canonical_sources:
   access_scope: C1_code_config_docs_only
   pins:
     - path: configs/experiments/s2_s200_independent_auditor_v1.yaml
-      sha256: 4805da97c6f2272f29f488480923e4ff57e3e73ac200b2abcd4ae0ff2d45ff06
+      sha256: 6cb1dd0e11ecaf24247443552f92d2a3ecf106469912b591c9bee4f3f613a370
     - path: docs/constraints/S2_S200_INDEPENDENT_AUDITOR_READINESS_KO.md
       sha256: ab264ba837ef81b9b8ddac5635b36856f5d927e6a71a708d3c9fd9d697f1a66b
     - path: configs/experiments/s2_s201_whisper_content_gate_v1.yaml
-      sha256: 54512f1223b862e3b08a2ff35f1b80cedbfa1c06ab18c9b2f096f6c2d50e230f
+      sha256: cbba7af10f03ceb2bbf815e3d6796c518add39100e8b6f77eba27d89665e4aee
     - path: src/voice_coach/training/s2_s201_whisper_contract.py
       sha256: 88f0cd148129fd880b8af4322b30d21715e9aea26eea4d48bb2f64f130ad7667
     - path: scripts/prepare_s2_s201_whisper_content.py

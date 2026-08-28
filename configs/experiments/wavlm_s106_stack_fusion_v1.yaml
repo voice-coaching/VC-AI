@@ -35,9 +35,9 @@ predecessors:
       full_train_selection_dev_recomputed_required: true
     access_basis: pinned_public_validator_contract_inspection
   s104:
-    config: configs/experiments/wavlm_s104_adapter_v1.yaml
-    config_sha256: aa9a19fa1bf2b706d2c692498055795284364d2cfab13774fddb2ad77e1ba8e9
-    commit_manifest: artifacts/experiments/aihub71490_wavlm_s104_adapter_v1/commit.json
+    config: configs/experiments/wavlm_s104_adapter_v2_current_code.yaml
+    config_sha256: 7a78e718954c45eb3ad03658b6da916a5c1163a51d683125daccd6c272be6434
+    commit_manifest: artifacts/experiments/aihub71490_wavlm_s104_adapter_v2_current_code/commit.json
     commit_schema_version: voice_coach.wavlm_s104_adapter_commit.v1
     report_schema_version: voice_coach.wavlm_s104_adapter_report.v1
     independent_validator: voice_coach.training.wavlm_adapter_training.validate_s104_commit
@@ -49,9 +49,9 @@ predecessors:
     required_report_status: completed
     required_selected_candidate: base_plus
   s105:
-    config: configs/experiments/wavlm_s105_hierarchy_v1.yaml
-    config_sha256: e7818240f477af9957c4e13b88479a69820bbb44d48ece2c47e9a54cfc964ea0
-    commit_manifest: artifacts/experiments/aihub71490_wavlm_s105_hierarchy_v1/commit.json
+    config: configs/experiments/wavlm_s105_hierarchy_v5_stream_cardinality.yaml
+    config_sha256: 9805384e147aec2741cdfd3d97ecd3452c7c2c60dc26e0141f2ac4415ae39443
+    commit_manifest: artifacts/experiments/aihub71490_wavlm_s105_hierarchy_v5_stream_cardinality/commit.json
     commit_schema_version: voice_coach.wavlm_s105_hierarchy_commit.v1
     comparison_report_schema_version: voice_coach.wavlm_s105_hierarchy_comparison.v1
     comparison_report_relative_path: ablation_comparison_report.json
@@ -416,13 +416,13 @@ implementation:
     sha256: b1ed2979e086d32aa0fdbbed70e64bb9c5f8039617132cc48195edacc888d88c
   contract_module:
     path: src/voice_coach/training/wavlm_s106_fusion_contract.py
-    sha256: 8210581f6d3a9b15b8af6c8d769d0b0a1d51e6b7410801f4210903b5ec037793
+    sha256: 09606692ea72bed4f065339d736a8cebf5857d82a343591ed3f6aefe99fcc66e
   training_module:
     path: src/voice_coach/training/wavlm_s106_fusion_training.py
     sha256: e8366b150f507b12a48a7608fbbb2f9af619fcdd7eb10ffaceda4c9952d88097
   component_projection_module:
     path: src/voice_coach/training/wavlm_s106_component_projection.py
-    sha256: baeb6192517989d9c6ca42859a5c27e379853652842008e6893baa355a12340e
+    sha256: 5ab54f0e1fee4a1bbe49eedbc25ab5a5abd3667ab194c5ebf5729298c78056f5
   component_generator_config:
     path: configs/experiments/wavlm_s106_component_inputs_v1.yaml
     sha256: feafe24c7bcd32130519b884e39bf27fe4ae77d372004de8137cf06d963572b0
@@ -434,7 +434,7 @@ implementation:
     sha256: 31b15dde4d4a2ae4ee0b069a6268a03e951cf0593b39a0e047cde64d4311df5b
   project_manifest:
     path: pyproject.toml
-    sha256: c33af395f4f3a3c23b625219d4f0911de2c35b08d6ffecc2710a118766f17328
+    sha256: 20ede7c9fbd4eb047fdcd81a2732588756278842b757a1b9b44794befdc4d1da
   scorer_lock:
     path: requirements/scorer-lock-linux-aarch64-cu130.txt
     sha256: f6c5b10c1028506d7361c83ad1e9aae0b1fafcf34f4e918e5b7123c51fac8cf2

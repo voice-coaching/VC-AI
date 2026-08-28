@@ -18,7 +18,7 @@ canonical_sources:
   access_scope: C1_code_config_docs_only
   pins:
     - path: configs/experiments/s2_s200_independent_auditor_v1.yaml
-      sha256: 4805da97c6f2272f29f488480923e4ff57e3e73ac200b2abcd4ae0ff2d45ff06
+      sha256: 6cb1dd0e11ecaf24247443552f92d2a3ecf106469912b591c9bee4f3f613a370
     - path: src/voice_coach/training/s2_s200_auditor_contract.py
       sha256: b9f13b578ef89586c38fd2d80b0d8d985cf735d52e2532c2958888cb1da1a35b
     - path: docs/constraints/S2_S200_INDEPENDENT_AUDITOR_READINESS_KO.md

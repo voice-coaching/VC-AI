@@ -11,9 +11,9 @@ experiment:
 
 predecessor:
   stage: s104_adapter
-  config: configs/experiments/wavlm_s104_adapter_v1.yaml
-  config_sha256: aa9a19fa1bf2b706d2c692498055795284364d2cfab13774fddb2ad77e1ba8e9
-  commit_manifest: artifacts/experiments/aihub71490_wavlm_s104_adapter_v1/commit.json
+  config: configs/experiments/wavlm_s104_adapter_v2_current_code.yaml
+  config_sha256: 7a78e718954c45eb3ad03658b6da916a5c1163a51d683125daccd6c272be6434
+  commit_manifest: artifacts/experiments/aihub71490_wavlm_s104_adapter_v2_current_code/commit.json
   commit_schema_version: voice_coach.wavlm_s104_adapter_commit.v1
   report_schema_version: voice_coach.wavlm_s104_adapter_report.v1
   checkpoint_schema_version: voice_coach.wavlm_s104_adapter_checkpoint.v1
@@ -234,19 +234,19 @@ runtime:
 implementation:
   preflight_script:
     path: scripts/prepare_wavlm_s105_hierarchy.py
-    sha256: c99530bd4b1e713d54d36a6bdde22e393f0efe74e827a00b09f48a5f02854cd3
+    sha256: 0b92ad78ddc84aa2d8afa938db5a47b966d543e34fc17c3d7b94ae118b2210e6
   trainer_script:
     path: scripts/train_wavlm_s105_hierarchy.py
-    sha256: 913fc26f9e04979aa12c948269b807739fa0cf15f574e8183ab877415b41dba1
+    sha256: 9384deaf3a87a50a194d31068333c1d5815c1cb4b4aabcd51e93ffbd956d0b11
   contract_module:
     path: src/voice_coach/training/wavlm_hierarchy_contract.py
-    sha256: ba906cf4fa8693a23c8fe6138170b251ad0f5aba846db3f3b582a0ac307ffef6
+    sha256: d3b87625d6561c933444ffff58061138418b5a5ef96bad04996c30065c24b545
   training_module:
     path: src/voice_coach/training/wavlm_hierarchy_training.py
     sha256: e2f7269c757ddee82f33de6787df466b29cbe9e1e2b1fed90130eaaec1c53ad1
   execution_module:
     path: src/voice_coach/training/wavlm_hierarchy_execution.py
-    sha256: 9ed1e67123449446c2a06d3db60651987605408737baa8d2b8246cc04b9466d8
+    sha256: adaa8ceeb9f4dfade2e7944ff2ae438b68c73485439519b4f9678e4c151ec937
   model_module:
     path: src/voice_coach/models/wavlm_hierarchy.py
     sha256: 42fdbd4c2bb5e95bbc22f1ffb434ff59d1f5474a62613777783baff5e2cedce8

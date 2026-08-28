@@ -188,3 +188,34 @@ def test_manifest_audit_rejects_cross_split_pcm_and_speaker_overlap() -> None:
     assert report["status"] == "failed"
     assert "cross_split_speaker_overlap" in report["failed_gates"]
     assert "cross_split_pcm_duplicate" in report["failed_gates"]
+
+
+def test_temporal_alignment_unique_mode_prefers_true_overlap_over_tolerance_only_neighbor() -> None:
+    targets = [
+        Interval(0.33, 0.36, "ㅂ"),
+        Interval(0.36, 0.39, "ㅓ"),
+    ]
+    realized = [
+        Interval(0.33, 0.36, "ㅂ"),
+        Interval(0.36, 0.39, "ㅓ"),
+    ]
+
+    alignments = align_intervals(
+        targets,
+        realized,
+        tolerance_seconds=0.03,
+        min_overlap_ratio=0.5,
+        preserve_one_to_many=False,
+    )
+
+    assert [
+        (
+            result.target.label if result.target else None,
+            result.realized.label if result.realized else None,
+            result.operation,
+        )
+        for result in alignments
+    ] == [
+        ("ㅂ", "ㅂ", "match"),
+        ("ㅓ", "ㅓ", "match"),
+    ]

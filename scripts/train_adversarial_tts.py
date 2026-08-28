@@ -1,11 +1,10 @@
 #!/usr/bin/env python3
-"""Validate or run a bounded CPU smoke step for the GAN prototype.
+"""Validate or train the source-conditioned adversarial TTS prototype.
 
 ``--synthetic-smoke`` proves model/loss/gradient wiring with random tensors.
-``--real-data-smoke`` opens a tiny AI Hub/KSS batch but remains a wiring check:
-it publishes no checkpoint and is not a research result.  Canonical corpus
-training remains blocked on multi-speaker native conditioning and the paper
-experiment gates.
+``--real-data-smoke`` opens a bounded AI Hub/KSS batch.  ``--train-steps``
+repeats that explicit batch and can publish a model-only safetensors checkpoint;
+this produces an executable prototype artifact, not a paper result claim.
 """
 
 from __future__ import annotations
@@ -32,7 +31,7 @@ def parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser(
         description=(
             "Torch-free validate the pronunciation GAN contract or execute "
-            "one explicitly synthetic CPU smoke update."
+            "bounded prototype training."
         )
     )
     parser.add_argument(
@@ -50,16 +49,15 @@ def parse_args() -> argparse.Namespace:
         "--synthetic-smoke",
         action="store_true",
         help=(
-            "Run one random CPU-only gradient step; never open corpus audio "
-            "or publish a checkpoint."
+            "Run synthetic CPU training without opening corpus audio."
         ),
     )
     smoke_group.add_argument(
         "--real-data-smoke",
         action="store_true",
         help=(
-            "Run one bounded CPU step on actual AI Hub/KSS audio; this is a "
-            "wiring check, not a research result or checkpoint run."
+            "Run bounded CPU training on actual AI Hub/KSS audio; it is "
+            "still not a paper result."
         ),
     )
     parser.add_argument(
@@ -102,17 +100,39 @@ def parse_args() -> argparse.Namespace:
         type=Path,
         help="Optional workspace-relative aggregate-only JSON report.",
     )
+    parser.add_argument(
+        "--train-steps",
+        type=int,
+        default=1,
+        help=(
+            "Number of alternating updates on the selected smoke batch; "
+            "must be positive."
+        ),
+    )
+    parser.add_argument(
+        "--checkpoint",
+        type=Path,
+        help=(
+            "Optional workspace-relative .safetensors model checkpoint. "
+            "Existing outputs are never overwritten."
+        ),
+    )
     return parser.parse_args()
 
 
 def _synthetic_smoke(
     config: dict[str, Any],
+    *,
+    train_steps: int,
+    checkpoint_path: Path | None,
 ) -> dict[str, object]:
     import torch
 
+    from voice_coach.application.adversarial_tts import AdversarialTTSEngine
     from voice_coach.training.adversarial_tts import (
         AdversarialSpeechBatch,
         alternating_adversarial_step,
+        build_adversarial_optimizers,
         build_adversarial_system,
         loss_weights_from_mapping,
     )
@@ -146,52 +166,43 @@ def _synthetic_smoke(
         mismatched_learner_text_tokens=learner_tokens.flip(0),
         mismatched_native_text_tokens=native_tokens.flip(0),
     )
-    rates = config["training"]["learning_rates"]  # type: ignore[index]
-    generator_optimizer = torch.optim.Adam(
-        system.generator.parameters(),
-        lr=float(rates["generator"]),
-    )
-    primary_optimizer = torch.optim.Adam(
-        system.primary_evaluator.core_parameters(),
-        lr=float(rates["evaluator1_core"]),
-    )
-    meta_optimizer = torch.optim.Adam(
-        system.meta_critic.parameters(),
-        lr=float(rates["evaluator2_meta_critic"]),
-    )
-    reward_optimizer = torch.optim.Adam(
-        system.primary_evaluator.meta_parameters(),
-        lr=float(rates["evaluator1_meta_reward"]),
-    )
-    metrics = alternating_adversarial_step(
-        system,
-        batch,
-        generator_optimizer=generator_optimizer,
-        primary_optimizer=primary_optimizer,
-        meta_critic_optimizer=meta_optimizer,
-        reward_adapter_optimizer=reward_optimizer,
-        weights=loss_weights_from_mapping(
-            config["training"]["loss_weights"]  # type: ignore[index]
-        ),
-        monotonic_margin=float(
-            config["training"]["monotonic_margin"]  # type: ignore[index]
-        ),
-        max_gradient_norm=float(
-            config["training"]["max_gradient_norm"]  # type: ignore[index]
-        ),
-    )
-    with torch.no_grad():
-        trajectory = system(
-            learner,
-            learner_tokens,
-            native,
+    optimizers = build_adversarial_optimizers(system, config)
+    weights = loss_weights_from_mapping(config["training"]["loss_weights"])  # type: ignore[index]
+    metrics = None
+    for _ in range(train_steps):
+        metrics = alternating_adversarial_step(
+            system,
+            batch,
+            generator_optimizer=optimizers.generator,
+            primary_optimizer=optimizers.primary,
+            meta_critic_optimizer=optimizers.meta_critic,
+            reward_adapter_optimizer=optimizers.reward_adapter,
+            weights=weights,
+            monotonic_margin=float(config["training"]["monotonic_margin"]),  # type: ignore[index]
+            max_gradient_norm=float(config["training"]["max_gradient_norm"]),  # type: ignore[index]
         )
+    if metrics is None:  # pragma: no cover - guarded by main validation
+        raise RuntimeError("synthetic training did not execute")
+    engine = AdversarialTTSEngine(system, config, device="cpu")
+    checkpoint = None
+    if checkpoint_path is not None:
+        checkpoint = engine.save_checkpoint(
+            checkpoint_path,
+            optimizer_step=train_steps,
+        )
+    trajectory = engine.generate(learner, learner_tokens, native)
     return {
-        "status": "synthetic_smoke_completed",
+        "status": (
+            "synthetic_training_completed"
+            if train_steps > 1 or checkpoint is not None
+            else "synthetic_smoke_completed"
+        ),
         "device": "cpu",
         "corpus_audio_opened": False,
-        "checkpoint_published": False,
+        "checkpoint_published": checkpoint is not None,
+        "checkpoint": checkpoint,
         "research_result": False,
+        "optimizer_steps": train_steps,
         "refined_waveform_shape": list(trajectory.refined.waveform.shape),
         "metrics": metrics.to_dict(),
     }
@@ -230,6 +241,8 @@ def _real_data_smoke(
     record_limit: int,
     batch_size: int,
     max_duration_seconds: float,
+    train_steps: int,
+    checkpoint_path: Path | None,
 ) -> dict[str, object]:
     if not 1 <= batch_size <= 4:
         raise ValueError("real_batch_size must be between 1 and 4")
@@ -281,8 +294,10 @@ def _real_data_smoke(
         load_native_speech_records,
         native_policy_from_catalog,
     )
+    from voice_coach.application.adversarial_tts import AdversarialTTSEngine
     from voice_coach.training.adversarial_tts import (
         alternating_adversarial_step,
+        build_adversarial_optimizers,
         build_adversarial_system,
         loss_weights_from_mapping,
     )
@@ -321,34 +336,30 @@ def _real_data_smoke(
     )
 
     system = build_adversarial_system(config)
-    rates = config["training"]["learning_rates"]
-    generator_optimizer = torch.optim.Adam(
-        system.generator.parameters(),
-        lr=float(rates["generator"]),
-    )
-    primary_optimizer = torch.optim.Adam(
-        system.primary_evaluator.core_parameters(),
-        lr=float(rates["evaluator1_core"]),
-    )
-    meta_optimizer = torch.optim.Adam(
-        system.meta_critic.parameters(),
-        lr=float(rates["evaluator2_meta_critic"]),
-    )
-    reward_optimizer = torch.optim.Adam(
-        system.primary_evaluator.meta_parameters(),
-        lr=float(rates["evaluator1_meta_reward"]),
-    )
-    metrics = alternating_adversarial_step(
-        system,
-        batch,
-        generator_optimizer=generator_optimizer,
-        primary_optimizer=primary_optimizer,
-        meta_critic_optimizer=meta_optimizer,
-        reward_adapter_optimizer=reward_optimizer,
-        weights=loss_weights_from_mapping(config["training"]["loss_weights"]),
-        monotonic_margin=float(config["training"]["monotonic_margin"]),
-        max_gradient_norm=float(config["training"]["max_gradient_norm"]),
-    )
+    optimizers = build_adversarial_optimizers(system, config)
+    weights = loss_weights_from_mapping(config["training"]["loss_weights"])
+    metrics = None
+    for _ in range(train_steps):
+        metrics = alternating_adversarial_step(
+            system,
+            batch,
+            generator_optimizer=optimizers.generator,
+            primary_optimizer=optimizers.primary,
+            meta_critic_optimizer=optimizers.meta_critic,
+            reward_adapter_optimizer=optimizers.reward_adapter,
+            weights=weights,
+            monotonic_margin=float(config["training"]["monotonic_margin"]),
+            max_gradient_norm=float(config["training"]["max_gradient_norm"]),
+        )
+    if metrics is None:  # pragma: no cover - guarded by main validation
+        raise RuntimeError("real-data training did not execute")
+    engine = AdversarialTTSEngine(system, config, device="cpu")
+    checkpoint = None
+    if checkpoint_path is not None:
+        checkpoint = engine.save_checkpoint(
+            checkpoint_path,
+            optimizer_step=train_steps,
+        )
     learner_aspect_mask = batch.learner_aspect_mask
     native_aspect_mask = batch.native_aspect_mask
     learner_content_mask = batch.learner_content_mask
@@ -361,14 +372,19 @@ def _real_data_smoke(
     ):
         raise RuntimeError("real-data collation omitted supervision masks")
     return {
-        "status": "real_data_wiring_smoke_completed",
+        "status": (
+            "real_data_training_completed"
+            if train_steps > 1 or checkpoint is not None
+            else "real_data_wiring_smoke_completed"
+        ),
         "device": "cpu",
         "cuda_visible_to_process": bool(torch.cuda.is_available()),
         "corpus_audio_opened": True,
-        "checkpoint_published": False,
+        "checkpoint_published": checkpoint is not None,
+        "checkpoint": checkpoint,
         "research_result": False,
         "windowed_or_cropped_audio": False,
-        "optimizer_steps": 1,
+        "optimizer_steps": train_steps,
         "batch_size": batch_size,
         "max_duration_seconds": max_duration_seconds,
         "learner_records_loaded": len(learner_result.records),
@@ -386,6 +402,33 @@ def _real_data_smoke(
         "metrics": metrics.to_dict(),
     }
 
+
+
+def _resolve_workspace_output(
+    workspace: Path,
+    candidate: Path,
+    *,
+    field_name: str,
+) -> Path:
+    resolved = (candidate if candidate.is_absolute() else workspace / candidate).resolve()
+    try:
+        relative = resolved.relative_to(workspace)
+    except ValueError as exc:
+        raise ValueError(f"{field_name} escapes the workspace") from exc
+    lowered = {part.lower() for part in relative.parts}
+    if any(
+        part in {"raw", "restricted"}
+        or part == ".env"
+        or part.startswith(".env.")
+        for part in lowered
+    ):
+        raise ValueError(f"{field_name} violates the privacy boundary")
+    if resolved.suffix != ".safetensors":
+        raise ValueError(f"{field_name} must end with .safetensors")
+    metadata_path = resolved.with_suffix(resolved.suffix + ".json")
+    if resolved.exists() or metadata_path.exists():
+        raise ValueError(f"{field_name} already exists; choose a new output")
+    return resolved
 
 def _write_report(
     workspace: Path,
@@ -419,9 +462,20 @@ def main() -> int:
     )
     if TORCH_IMPORTED_BEFORE_PREFLIGHT or "torch" in sys.modules:
         raise RuntimeError("Torch was imported before the contract preflight")
+    if args.train_steps < 1:
+        raise ValueError("train_steps must be positive")
+    if args.checkpoint is not None and not (args.synthetic_smoke or args.real_data_smoke):
+        raise ValueError("--checkpoint requires --synthetic-smoke or --real-data-smoke")
     if not args.synthetic_smoke and not args.real_data_smoke:
         print(json.dumps(preflight, ensure_ascii=False, sort_keys=True))
         return 0
+    checkpoint_path = None
+    if args.checkpoint is not None:
+        checkpoint_path = _resolve_workspace_output(
+            workspace,
+            args.checkpoint,
+            field_name="checkpoint",
+        )
     config_path = args.config
     if not config_path.is_absolute():
         config_path = workspace / config_path
@@ -436,9 +490,15 @@ def main() -> int:
             record_limit=args.real_record_limit,
             batch_size=args.real_batch_size,
             max_duration_seconds=args.real_max_duration_seconds,
+            train_steps=args.train_steps,
+            checkpoint_path=checkpoint_path,
         )
     else:
-        smoke = _synthetic_smoke(config)
+        smoke = _synthetic_smoke(
+            config,
+            train_steps=args.train_steps,
+            checkpoint_path=checkpoint_path,
+        )
     result: dict[str, object] = {"preflight": preflight, "smoke": smoke}
     if args.report is not None:
         written = _write_report(workspace, args.report, result)

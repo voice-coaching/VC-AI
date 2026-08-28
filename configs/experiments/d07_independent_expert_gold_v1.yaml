@@ -21,84 +21,75 @@ canonical_sources:
     - path: configs/expert_evaluation/d07_expert_rating_manifest_v1.schema.json
       sha256: e9c233837d9693ba5de04d4ad86fb10b12dacbc36c496571f23115fd58a0b42f
     - path: configs/expert_evaluation/d07_gold_completion_attestation_v1.schema.json
-      sha256: 1b9dcb492531cbdd305d13c3e79a87027cd297ba0d41fe0f04bb05683e2a910f
+      sha256: 13a72537ca460f0555cfc5d755db0f2ba132d31163f1e67584c8f585236dd198
     - path: configs/expert_evaluation/d07_gold_item_manifest_v1.schema.json
-      sha256: 756d8e954077800e5b3de975b8839796b375c5d29d7ce343832d45fdfc994546
-    - path: configs/expert_evaluation/d07_institutional_expert_approval_v1.template.json
-      sha256: 3e8a0c6314e42ce6fa9ae36cea4bf568f618957d99769592679c7218194abc4d
+      sha256: bd685f25605a062191d9d01d6021dae03313b3f412de18ad0af00afc1ec6bd2f
     - path: configs/expert_evaluation/d07_locked_access_authorization_v1.template.json
       sha256: 8479443a2d181e8a8190af81eacd8c51e2353cd1b1e095a5f21b1d2eb65aa3e6
     - path: configs/expert_evaluation/d07_locked_evaluation_report_v1.schema.json
       sha256: c5a352fa3d08631b09c2ec183779e2300a8d075ea9be2db78f0b2b1f79256a2e
     - path: configs/expert_evaluation/d07_preregistration_v1.template.json
-      sha256: 2e1bc517b8651f9aed09697fffcfaa8361074efdaedd66317cdd4af7fae82c79
+      sha256: 03b1ed43bee4a6ecb381b2f7aff5623f74e27d9411fae08fd9d3a228a83a1b4d
     - path: configs/expert_evaluation/d07_reviewer_attestation_v1.template.json
-      sha256: fddc578c52392a3e5c72c35ce9eda1fcc59e8080c2f914403d782cc1788d53c2
+      sha256: 95eed91a215d0ffe8281c8031945ab956b686ed63cfa9a3c35d4e52c170d23cd
+    - path: configs/expert_evaluation/g04_amended_completion_attestation_v1.schema.json
+      sha256: f11be1b15507c6894830c54babe5ae54bd4ac6f53a480ff7b5828f62bf4f69f0
+    - path: configs/expert_evaluation/g04_amended_progress_v1.schema.json
+      sha256: e5b9e4dd44d34a2f151c91f6b1fe8c048711c96b20d7be0dadddd8b062282313
+    - path: configs/expert_evaluation/g04_t43_manifest_v1.schema.json
+      sha256: 204611e7d47efeb1f19c1603cb55a28dc8432ae1280d0fbe152037afa4b5bc96
     - path: configs/coaching/korean_error_advice_ontology_v1.json
       sha256: 1ba0c0198533abd51a3caa4b176f17aae17aa48d08899f6e7ced634a1eef0d60
-    - path: configs/experiments/h00_human_research_approval_v1.yaml
-      sha256: efd05a09f8fc3ccdd49e75a15ae9a7556ce32298cb1b15ac873d48d7ec92a3db
     - path: configs/experiments/wavlm_s108_no_locked_dry_run_v1.yaml
-      sha256: 341ae126eb4bb8edb5ff21e9db86dc5d932aee5fc7815c39764dac53386e4dfc
-    - path: data/processed/aihub71490/manifests/aihub71490_manual_alignment_review_progress.json
-      sha256: 04b9de68d31dbdd3d3d77efc2f9ec710378043eb82840772321c9c0a338b7ca5
+      sha256: cb852db3bb805167a6fd797f90424470fe01403f2b8af7fda5bb8c8282a4b55c
+    - path: artifacts/evaluation/g04_amended_progress_v1.json
+      sha256: f59ab54a5f2dbd9fefb2e061bbc0d4b1f7965272f5ff792750472ba69b36316e
     - path: docs/constraints/AIHUB71490_MANUAL_ALIGNMENT_AUDIT_KO.md
-      sha256: 4e18b58dc8159ad560b62496e8dc4241b69667a361d4c5d0b4178d1cd8d6fc8d
+      sha256: c53e52a8dfd1dc37369341fcb182e108387b1524ae1c567b397b02dab215e875
     - path: docs/constraints/DATA_PRIVACY_BOUNDARY_KO.md
       sha256: 8934384f1c570cf1a086fd08c18b26f577c0a22c3bd69ae1b5064eb34f8b1309
+    - path: docs/constraints/G04_TARGETED_PHONE_AUDIT_AMENDMENT_KO.md
+      sha256: c5cac987ac75baf3727283164ae6fa56ceb8c575bf995c2372136660fc835bdc
     - path: docs/LOCAL_ALIGNMENT_REVIEW_UI_KO.md
-      sha256: 733e01b52c58370f4d07752de3e58aaefb204e1eda7e96ea223e792e193c5f6d
+      sha256: de1ac0d3b40896764dc11509b46d6b2ee8b7115bd35637223966adf72dbadaa1
     - path: scripts/prepare_d07_independent_expert_gold.py
-      sha256: 869f952f84c2f9aec463e5edf43ed1a134a750429ca3cbc5ba0fe9225292d98b
+      sha256: f8e26a33be5b8e9618ed97396e56863c05ffae8128c2b826d10f787e36c3fde1
     - path: src/voice_coach/evaluation/d07_expert_gold_contract.py
-      sha256: b5f0920cdde610dd2b79b3a2067a5991f72f25f142d4c5a3e66a0db8017dbbd2
-    - path: src/voice_coach/human_research/h00_approval_contract.py
-      sha256: 142a2b23b8b79dc6535a275ba643db76ab611502be54d7ac93c55fe427043462
+      sha256: 2ea0b803f606fb5450ee6755d53a25f4a9ff9ad748e8438424f9ef66cb221cc6
+    - path: src/voice_coach/evaluation/g04_amended_contract.py
+      sha256: c2afa98092c300ca7a9f87a1e122a4edad311517a188200330575ddae1f56661
     - path: src/voice_coach/training/wavlm_s108_dry_run.py
-      sha256: 38002184f5a48924c79eab88ef3ce9cc9b29beebe3474ab2408c8cdeb31b2ba2
+      sha256: 78444cdf5fd89dae71186028fcdf1a9771488937d698417f0ac1d84cd1aeeb32
 
 g04_separation:
-  stage: G04_distinct_alignment_review
-  progress_aggregate_path: data/processed/aihub71490/manifests/aihub71490_manual_alignment_review_progress.json
-  progress_aggregate_sha256: 04b9de68d31dbdd3d3d77efc2f9ec710378043eb82840772321c9c0a338b7ca5
-  expected_schema_version: voice_coach.alignment_review_report.v1
-  expected_count: 240
-  current_completed_count: 0
+  stage: G04_amended_T43_I30
+  progress_aggregate_path: artifacts/evaluation/g04_amended_progress_v1.json
+  progress_aggregate_sha256: f59ab54a5f2dbd9fefb2e061bbc0d4b1f7965272f5ff792750472ba69b36316e
+  expected_schema_version: voice_coach.g04_amended_progress.v1
+  expected_t43_count: 43
+  expected_i30_count: 30
+  current_t43_completed_count: 0
+  current_i30_completed_count: 0
   current_status: incomplete
-  completion_attestation_path: artifacts/external_evaluation/g04_alignment_completion_attestation_v1.json
+  t43_accuracy_denominator_allowed: false
+  i30_phone_accuracy_gate: 0.95
+  completion_attestation_path: artifacts/external_evaluation/g04_amended_completion_attestation_v1.json
   completion_attestation_sha256: TBD_G04_COMPLETION
-  completion_attestation_schema_version: voice_coach.g04_alignment_completion_attestation.v1
+  completion_attestation_schema_version: voice_coach.g04_amended_completion_attestation.v1
   d07_item_or_rating_reuse_allowed: false
   restricted_ui_state_access_allowed: false
   g04_completion_required_only_before_d07_locked_access: true
 
-predecessor_h00:
-  config_path: configs/experiments/h00_human_research_approval_v1.yaml
-  config_sha256: efd05a09f8fc3ccdd49e75a15ae9a7556ce32298cb1b15ac873d48d7ec92a3db
-  contract_path: src/voice_coach/human_research/h00_approval_contract.py
-  contract_sha256: 142a2b23b8b79dc6535a275ba643db76ab611502be54d7ac93c55fe427043462
-  approval_path: artifacts/external_attestations/h00/h00_human_research_approval_public_v1.json
-  approval_sha256: TBD_H00_APPROVAL
-  attestation_path: artifacts/external_attestations/h00/h00_official_document_attestation_v1.json
-  attestation_sha256: TBD_H00_ATTESTATION
-  actual_active_official_determination_required: true
-  restricted_official_document_resolution_allowed: false
-  fail_before_module_or_path_while_tbd: true
-
-institutional_expert_approval:
-  placeholder: TBD_EXTERNAL_ATTESTATION
-  template_path: configs/expert_evaluation/d07_institutional_expert_approval_v1.template.json
-  template_sha256: 3e8a0c6314e42ce6fa9ae36cea4bf568f618957d99769592679c7218194abc4d
-  approved_artifact_path: artifacts/external_attestations/d07/d07_institutional_expert_approval_v1.json
-  approved_artifact_sha256: TBD_EXTERNAL_ATTESTATION
-  required_schema_version: voice_coach.d07_institutional_expert_approval.v1
-  required_status: approved
-  must_bind_actual_h00: true
+# Removed 2026-08-08 by project-owner instruction (DEV-CLAUDE-009): the
+# `predecessor_h00` and `institutional_expert_approval` sections, and the
+# `privacy_and_non_execution` section below them.  Nothing in this contract now
+# verifies institutional approval, consent, withdrawal, retention, deletion,
+# access logging, redistribution limits or the privacy zone.
 
 reviewer_attestations:
   placeholder: TBD_EXTERNAL_ATTESTATION
   template_path: configs/expert_evaluation/d07_reviewer_attestation_v1.template.json
-  template_sha256: fddc578c52392a3e5c72c35ce9eda1fcc59e8080c2f914403d782cc1788d53c2
+  template_sha256: 95eed91a215d0ffe8281c8031945ab956b686ed63cfa9a3c35d4e52c170d23cd
   approved_artifact_path: artifacts/external_attestations/d07/d07_reviewer_attestation_manifest_v1.json
   approved_artifact_sha256: TBD_EXTERNAL_ATTESTATION
   required_schema_version: voice_coach.d07_reviewer_attestation_manifest.v1
@@ -111,7 +102,7 @@ reviewer_attestations:
 preregistration:
   placeholder: TBD_PREREGISTRATION
   template_path: configs/expert_evaluation/d07_preregistration_v1.template.json
-  template_sha256: 2e1bc517b8651f9aed09697fffcfaa8361074efdaedd66317cdd4af7fae82c79
+  template_sha256: 03b1ed43bee4a6ecb381b2f7aff5623f74e27d9411fae08fd9d3a228a83a1b4d
   approved_artifact_path: artifacts/external_attestations/d07/d07_preregistration_v1.json
   approved_artifact_sha256: TBD_PREREGISTRATION
   required_schema_version: voice_coach.d07_preregistration.v1
@@ -208,35 +199,14 @@ locked_test_contract:
   one_shot_transaction_protocol: TBD_PREREGISTRATION
   recovery_and_failure_policy: TBD_PREREGISTRATION
 
-privacy_and_non_execution:
-  raw_audio_zone: R0_raw_restricted
-  locator_and_reviewer_mapping_zone: R1_restricted_locator
-  item_and_rating_zone: D1_pseudonymized_restricted_experiment
-  aggregate_report_zone: A1_aggregate_only
-  code_schema_document_zone: C1_public
-  r0_audio_access_allowed_in_this_package: false
-  r1_locator_access_allowed_in_this_package: false
-  d1_item_or_rating_access_allowed_in_this_package: false
-  g04_ui_state_access_allowed: false
-  locked_audio_access_allowed_in_this_package: false
-  reviewer_recruitment_or_rating_allowed: false
-  model_gpu_network_access_allowed: false
-  output_write_allowed: false
-  direct_identifier_or_path_in_payload_allowed: false
-  pii_in_note_allowed: false
-  reviewer_mapping_stored_separately: true
-
 execution_order:
   - validate_d07_static_sources_schemas_templates_and_g04_aggregate_separation
-  - require_exact_h00_approval_and_attestation_sha_before_path_resolution
-  - deep_validate_actual_h00_approval_without_restricted_document_resolution
-  - validate_d07_specific_institutional_approval
   - validate_two_primary_reviewers_and_one_adjudicator_attestations
   - validate_frozen_d07_preregistration_without_tbd
   - stop_before_d1_item_r1_locator_r0_audio_rating_or_output_resolution
   - separate_executor_calibration_800_independent_ratings_only
   - validate_calibration_agreement_gate_or_require_retraining_and_separate_resample
-  - validate_g04_completion_as_distinct_240_item_stage
+  - validate_g04_completion_as_distinct_t43_i30_stage
   - validate_one_shot_locked_expert_access_authorization
   - separate_executor_locked_test_up_to_1200_without_rubric_or_primary_change
   - validate_two_original_and_adjudicated_sensitivity_reports
@@ -244,7 +214,7 @@ execution_order:
 
 outputs:
   item_schema_path: configs/expert_evaluation/d07_gold_item_manifest_v1.schema.json
-  item_schema_sha256: 756d8e954077800e5b3de975b8839796b375c5d29d7ce343832d45fdfc994546
+  item_schema_sha256: bd685f25605a062191d9d01d6021dae03313b3f412de18ad0af00afc1ec6bd2f
   rating_schema_path: configs/expert_evaluation/d07_expert_rating_manifest_v1.schema.json
   rating_schema_sha256: e9c233837d9693ba5de04d4ad86fb10b12dacbc36c496571f23115fd58a0b42f
   calibration_report_schema_path: configs/expert_evaluation/d07_calibration_agreement_report_v1.schema.json
@@ -252,7 +222,7 @@ outputs:
   locked_report_schema_path: configs/expert_evaluation/d07_locked_evaluation_report_v1.schema.json
   locked_report_schema_sha256: c5a352fa3d08631b09c2ec183779e2300a8d075ea9be2db78f0b2b1f79256a2e
   completion_schema_path: configs/expert_evaluation/d07_gold_completion_attestation_v1.schema.json
-  completion_schema_sha256: 1b9dcb492531cbdd305d13c3e79a87027cd297ba0d41fe0f04bb05683e2a910f
+  completion_schema_sha256: 13a72537ca460f0555cfc5d755db0f2ba132d31163f1e67584c8f585236dd198
   future_item_manifest_path: data/processed/expert_evaluation/d07/d07_gold_item_manifest_v1.json
   future_calibration_rating_manifest_path: data/restricted/expert_evaluation/d07/d07_calibration_ratings_v1.json
   future_calibration_report_path: artifacts/expert_evaluation/d07/d07_calibration_agreement_report_v1.json

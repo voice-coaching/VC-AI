@@ -39,9 +39,9 @@ def _parser() -> argparse.ArgumentParser:
         action="store_true",
         help=(
             "validate C1/A1 source pins, strict schemas, unresolved templates, "
-            "and the G04 0/240 aggregate only; H00/external evidence, reviewers, "
-            "D1/R1/R0, audio, ratings, locked access, models, metrics, and "
-            "outputs remain untouched"
+            "and the G04 T43/I30 aggregate only; reviewers, D1/R1/R0, audio, "
+            "ratings, locked access, models, metrics, and outputs remain "
+            "untouched"
         ),
     )
     return parser
@@ -73,16 +73,13 @@ def main() -> int:
             result = {
                 "status": preflight.status,
                 "config_sha256": preflight.config_sha256,
-                "h00_approval_sha256": preflight.h00_approval_sha256,
-                "h00_attestation_sha256": preflight.h00_attestation_sha256,
-                "institutional_approval_sha256": (
-                    preflight.institutional_approval_sha256
-                ),
                 "reviewer_attestation_sha256": (preflight.reviewer_attestation_sha256),
                 "preregistration_sha256": preflight.preregistration_sha256,
                 **preflight.audit,
-                "g04_current_completed_count": 0,
-                "g04_expected_count": 240,
+                "g04_t43_completed_count": 0,
+                "g04_t43_expected_count": 43,
+                "g04_i30_completed_count": 0,
+                "g04_i30_expected_count": 30,
                 "actual_expert_count": 0,
                 "actual_rating_count": 0,
                 "actual_locked_access_count": 0,
@@ -105,8 +102,10 @@ def main() -> int:
                     "status": "failed_closed",
                     "stage": "filesystem",
                     "error": str(exc),
-                    "g04_current_completed_count": 0,
-                    "g04_expected_count": 240,
+                    "g04_t43_completed_count": 0,
+                    "g04_t43_expected_count": 43,
+                    "g04_i30_completed_count": 0,
+                    "g04_i30_expected_count": 30,
                     "actual_expert_count": 0,
                     "actual_rating_count": 0,
                     "actual_locked_access_count": 0,

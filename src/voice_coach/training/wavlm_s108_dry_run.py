@@ -24,6 +24,14 @@ from uuid import uuid4
 
 import yaml  # type: ignore[import-untyped]
 
+from voice_coach.evaluation.g04_amended_contract import (
+    EXPECTED_I30_COUNT,
+    EXPECTED_T43_COUNT,
+    G04AmendedContractError,
+    validate_amended_progress,
+    validate_completion_attestation,
+)
+
 
 CHECKLIST_SCHEMA_VERSION = "voice_coach.wavlm_s108_no_locked_checklist.v1"
 RECEIPT_SCHEMA_VERSION = "voice_coach.wavlm_s108_no_locked_dry_run_receipt.v1"
@@ -472,6 +480,7 @@ def _validate_source_pins(
     for name in (
         "preflight_script",
         "contract_module",
+        "g04_contract_module",
         "project_manifest",
         "scorer_lock",
     ):
@@ -619,9 +628,11 @@ def validate_static_config(
             f"{section}.{key}",
         )
     g04 = _mapping(external.get("g04"), "g04")
-    _expect(g04.get("expected_count"), 240, "G04 expected count")
-    _expect(g04.get("minimum_correct_count"), 228, "G04 minimum correct")
-    _expect(g04.get("minimum_accuracy"), 0.95, "G04 minimum accuracy")
+    _expect(g04.get("consumer_contract_version"), "g04_t43_i30_v1", "G04 contract")
+    _expect(g04.get("expected_t43_count"), EXPECTED_T43_COUNT, "G04 T43 count")
+    _expect(g04.get("expected_i30_count"), EXPECTED_I30_COUNT, "G04 I30 count")
+    _expect(g04.get("t43_accuracy_denominator_allowed"), False, "G04 T43 role")
+    _expect(g04.get("minimum_phone_accuracy"), 0.95, "G04 phone gate")
     _expect(
         g04.get("reviewer_qualification_attestation_required"),
         True,
@@ -1426,24 +1437,10 @@ def _validate_g04(document: Mapping[str, Any], *, config: Mapping[str, Any]) -> 
         section.get("attestation_schema_version"),
         "G04 attestation schema",
     )
-    _expect(document.get("status"), "passed", "G04 status")
-    _aggregate_attestation_flags(document, "G04")
-    _expect(document.get("expected_count"), 240, "G04 expected count")
-    _expect(document.get("completed_count"), 240, "G04 completed count")
-    correct = _integer(document.get("correct_count"), "G04 correct count", minimum=0)
-    if correct < 228 or correct > 240:
-        raise S108DryRunError("G04 correct count does not pass 228/240")
-    accuracy = _finite(document.get("alignment_accuracy"), "G04 accuracy")
-    if accuracy < 0.95 or not math.isclose(accuracy, correct / 240, abs_tol=1e-12):
-        raise S108DryRunError("G04 accuracy differs")
-    _expect(document.get("scorer_status"), "passed", "G04 scorer status")
-    _sha256(document.get("privacy_safe_report_sha256"), "G04 report SHA-256")
-    _expect(
-        document.get("reviewer_qualification_confirmed"),
-        True,
-        "G04 reviewer qualification",
-    )
-    _expect(document.get("research_lead_approved"), True, "G04 approval")
+    try:
+        validate_completion_attestation(document)
+    except G04AmendedContractError as exc:
+        raise S108DryRunError(f"G04 amended completion invalid: {exc}") from exc
 
 
 def _validate_d07(document: Mapping[str, Any], *, config: Mapping[str, Any]) -> None:
@@ -1493,7 +1490,11 @@ def _progress_snapshot(
     )
     path = section.get("progress_path")
     if not reader.exists(path, "G04 progress aggregate"):
-        return {"status": "missing", "completed_count": None, "correct_count": None}
+        return {
+            "status": "missing",
+            "t43_completed_count": None,
+            "i30_completed_count": None,
+        }
     report = reader.json(
         path,
         category="external_progress_aggregate",
@@ -1504,24 +1505,20 @@ def _progress_snapshot(
         section.get("progress_schema_version"),
         "G04 progress schema",
     )
-    _expect(report.get("expected_count"), 240, "G04 progress expected count")
-    completed = _integer(
-        report.get("completed_count"), "G04 progress completed", minimum=0
-    )
-    correct = _integer(report.get("correct_count"), "G04 progress correct", minimum=0)
-    if completed > 240 or correct > completed:
-        raise S108DryRunError("G04 progress counts are invalid")
-    privacy = _mapping(report.get("privacy"), "G04 progress privacy")
-    _expect(
-        privacy.get("raw_paths_or_utterance_ids_exported"),
-        False,
-        "G04 progress privacy",
-    )
+    try:
+        validate_amended_progress(report)
+    except G04AmendedContractError as exc:
+        raise S108DryRunError(f"G04 amended progress invalid: {exc}") from exc
+    _expect(report.get("consumer_migration_complete"), True, "G04 migration")
+    t43 = _mapping(report.get("t43"), "G04 progress T43")
+    i30 = _mapping(report.get("i30"), "G04 progress I30")
     return {
         "status": str(report.get("status")),
-        "completed_count": completed,
-        "correct_count": correct,
-        "remaining_count": 240 - completed,
+        "t43_completed_count": t43.get("completed_count"),
+        "t43_remaining_count": t43.get("remaining_count"),
+        "i30_completed_count": i30.get("completed_count"),
+        "i30_remaining_count": i30.get("remaining_count"),
+        "phone_level_accuracy": i30.get("phone_level_accuracy"),
     }
 
 

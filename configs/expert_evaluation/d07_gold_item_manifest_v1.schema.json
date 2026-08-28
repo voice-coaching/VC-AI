@@ -7,9 +7,6 @@
   "required": [
     "schema_version",
     "manifest_id",
-    "h00_approval_sha256",
-    "h00_attestation_sha256",
-    "d07_institutional_approval_sha256",
     "reviewer_attestation_sha256",
     "preregistration_sha256",
     "g04_progress_aggregate_sha256",
@@ -27,15 +24,6 @@
     "manifest_id": {
       "type": "string",
       "pattern": "^d07items_[0-9a-f]{32}$"
-    },
-    "h00_approval_sha256": {
-      "$ref": "#/$defs/sha256"
-    },
-    "h00_attestation_sha256": {
-      "$ref": "#/$defs/sha256"
-    },
-    "d07_institutional_approval_sha256": {
-      "$ref": "#/$defs/sha256"
     },
     "reviewer_attestation_sha256": {
       "$ref": "#/$defs/sha256"

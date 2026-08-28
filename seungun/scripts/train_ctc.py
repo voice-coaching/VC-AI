@@ -30,7 +30,7 @@ from korean_phone_ctc.io_utils import atomic_write_json
 from korean_phone_ctc.training_utils import (
     collapse_ctc_ids,
     score_phone_sequences,
-    validate_manual_alignment_gate,
+    validate_training_gate,
 )
 
 MODEL_ID = "facebook/wav2vec2-xls-r-300m"
@@ -49,6 +49,54 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--seed", type=int, default=42)
     parser.add_argument("--num-workers", type=int, default=8)
     parser.add_argument("--resume-from-checkpoint")
+    parser.add_argument(
+        "--allow-ungated-diagnostic-smoke",
+        action="store_true",
+        help=(
+            "Bypass the pending manual alignment gate for diagnostic smoke only; "
+            "this option is rejected in full mode."
+        ),
+    )
+    parser.add_argument(
+        "--allow-ungated-internal-full",
+        action="store_true",
+        help=(
+            "Bypass the pending manual audit only for explicitly labeled "
+            "internal full-data training."
+        ),
+    )
+    parser.add_argument(
+        "--init-model-dir",
+        type=Path,
+        help=(
+            "Load fine-tuned model weights from this local directory. "
+            "Optimizer and scheduler start fresh."
+        ),
+    )
+    parser.add_argument(
+        "--full-epochs",
+        type=float,
+        default=3.0,
+        help="Number of epochs in full mode.",
+    )
+    parser.add_argument(
+        "--full-learning-rate",
+        type=float,
+        default=5e-5,
+        help="Peak learning rate in full mode.",
+    )
+    parser.add_argument(
+        "--full-warmup-ratio",
+        type=float,
+        default=0.1,
+        help="Warmup ratio in full mode.",
+    )
+    parser.add_argument(
+        "--smoke-max-steps",
+        type=int,
+        default=200,
+        help="Optimization steps for smoke mode only.",
+    )
     return parser.parse_args()
 
 
@@ -191,16 +239,32 @@ def argmax_logits(
     return value.argmax(dim=-1)
 
 
-def load_model(vocab_size: int) -> torch.nn.Module:
-    model = AutoModelForCTC.from_pretrained(
-        MODEL_ID,
-        revision=MODEL_REVISION,
-        vocab_size=vocab_size,
-        pad_token_id=0,
-        ctc_loss_reduction="mean",
-        ctc_zero_infinity=True,
-        ignore_mismatched_sizes=True,
-    )
+def load_model(
+    vocab_size: int,
+    *,
+    init_model_dir: Path | None = None,
+) -> torch.nn.Module:
+    if init_model_dir is None:
+        model = AutoModelForCTC.from_pretrained(
+            MODEL_ID,
+            revision=MODEL_REVISION,
+            vocab_size=vocab_size,
+            pad_token_id=0,
+            ctc_loss_reduction="mean",
+            ctc_zero_infinity=True,
+            ignore_mismatched_sizes=True,
+        )
+    else:
+        model = AutoModelForCTC.from_pretrained(str(init_model_dir))
+        if model.config.vocab_size != vocab_size:
+            raise ValueError(
+                "initial model vocabulary size differs from training vocabulary"
+            )
+        if model.config.pad_token_id != 0:
+            raise ValueError("initial model must use CTC blank/pad token id 0")
+        model.config.ctc_loss_reduction = "mean"
+        model.config.ctc_zero_infinity = True
+
     model.freeze_feature_encoder()
     model.config.use_cache = False
     return model
@@ -208,8 +272,42 @@ def load_model(vocab_size: int) -> torch.nn.Module:
 
 def main() -> int:
     args = parse_args()
+    if args.smoke_max_steps <= 0:
+        raise ValueError("--smoke-max-steps must be positive")
+    if args.mode != "smoke" and args.smoke_max_steps != 200:
+        raise ValueError("--smoke-max-steps is allowed for smoke mode only")
+    if args.full_epochs <= 0:
+        raise ValueError("--full-epochs must be positive")
+    if args.full_learning_rate <= 0:
+        raise ValueError("--full-learning-rate must be positive")
+    if not 0.0 <= args.full_warmup_ratio < 1.0:
+        raise ValueError("--full-warmup-ratio must be in [0, 1)")
+    if args.init_model_dir is not None:
+        if args.mode != "full":
+            raise ValueError("--init-model-dir is allowed for full mode only")
+        if args.resume_from_checkpoint:
+            raise ValueError(
+                "--init-model-dir and --resume-from-checkpoint are mutually exclusive"
+            )
+        if not args.init_model_dir.is_dir():
+            raise ValueError("--init-model-dir does not exist")
     gate = json.loads(args.manual_audit_result.read_text(encoding="utf-8"))
-    validate_manual_alignment_gate(gate)
+    validate_training_gate(
+        gate,
+        mode=args.mode,
+        allow_ungated_diagnostic_smoke=args.allow_ungated_diagnostic_smoke,
+        allow_ungated_internal_full=args.allow_ungated_internal_full,
+    )
+    if args.allow_ungated_diagnostic_smoke:
+        print(
+            "WARNING: manual alignment gate is NOT passed; "
+            "running diagnostic smoke only."
+        )
+    if args.allow_ungated_internal_full:
+        print(
+            "WARNING: manual alignment gate is NOT passed; "
+            "running explicitly labeled internal full-data training."
+        )
     random.seed(args.seed)
     np.random.seed(args.seed)
     torch.manual_seed(args.seed)
@@ -241,23 +339,28 @@ def main() -> int:
     output_dir = args.output_dir.resolve()
     output_dir.mkdir(parents=True, exist_ok=True)
     metric = MetricComputer(vocabulary, records["dev"])
-    model = load_model(len(vocabulary))
+    model = load_model(
+        len(vocabulary),
+        init_model_dir=args.init_model_dir,
+    )
     smoke = args.mode == "smoke"
     training_args = TrainingArguments(
         output_dir=str(output_dir),
         do_train=True,
         do_eval=True,
-        max_steps=200 if smoke else -1,
-        num_train_epochs=1 if smoke else 3,
+        max_steps=args.smoke_max_steps if smoke else -1,
+        num_train_epochs=1 if smoke else args.full_epochs,
         per_device_train_batch_size=4,
         per_device_eval_batch_size=4,
         gradient_accumulation_steps=4,
-        learning_rate=1e-4 if smoke else 5e-5,
-        warmup_ratio=0.1,
+        learning_rate=1e-4 if smoke else args.full_learning_rate,
+        warmup_ratio=0.1 if smoke else args.full_warmup_ratio,
+        lr_scheduler_type="linear",
         bf16=True,
         bf16_full_eval=True,
         tf32=True,
         gradient_checkpointing=True,
+        eval_on_start=bool(args.init_model_dir) and not smoke,
         eval_strategy="steps" if smoke else "epoch",
         save_strategy="steps" if smoke else "epoch",
         eval_steps=50 if smoke else None,
@@ -265,8 +368,8 @@ def main() -> int:
         logging_steps=10 if smoke else 100,
         logging_first_step=True,
         save_total_limit=2,
-        load_best_model_at_end=True,
-        metric_for_best_model="per",
+        load_best_model_at_end=not smoke,
+        metric_for_best_model=None if smoke else "per",
         greater_is_better=False,
         dataloader_num_workers=args.num_workers,
         dataloader_persistent_workers=args.num_workers > 0,
@@ -328,6 +431,23 @@ def main() -> int:
     losses = [item["loss"] for item in log_history if "loss" in item]
     report = {
         "mode": args.mode,
+        "configured_max_steps": args.smoke_max_steps if smoke else None,
+        "initialization_source": (
+            str(args.init_model_dir.resolve())
+            if args.init_model_dir is not None
+            else f"{MODEL_ID}@{MODEL_REVISION}"
+        ),
+        "optimizer_scheduler_started_fresh": bool(
+            args.init_model_dir is not None
+            and args.resume_from_checkpoint is None
+        ),
+        "configured_full_epochs": args.full_epochs if not smoke else None,
+        "configured_learning_rate": (
+            args.full_learning_rate if not smoke else 1e-4
+        ),
+        "configured_warmup_ratio": (
+            args.full_warmup_ratio if not smoke else 0.1
+        ),
         "model_id": MODEL_ID,
         "model_revision": MODEL_REVISION,
         "record_counts": {key: len(value) for key, value in records.items()},
@@ -342,6 +462,13 @@ def main() -> int:
         "reload_argmax_identical": bool(torch.equal(before, after)),
         "nan_or_inf_loss": any(not math.isfinite(float(value)) for value in losses),
         "manual_audit_result": str(args.manual_audit_result.resolve()),
+        "manual_audit_status": gate.get("status"),
+        "manual_gate_bypassed_for_diagnostic_smoke": bool(
+            args.allow_ungated_diagnostic_smoke
+        ),
+        "manual_gate_bypassed_for_internal_full": bool(
+            args.allow_ungated_internal_full
+        ),
         "locked_test_accessed": False,
     }
     atomic_write_json(output_dir / "training_report.json", report)

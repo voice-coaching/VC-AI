@@ -79,6 +79,7 @@ def _derived_sections() -> dict[str, Any]:
     ]
     return {
         "experiment": {"derived": "experiment"},
+        "terminal_run": {"derived": "terminal_run"},
         "event": {
             "during": {
                 "sha256": deviation.EXPECTED_TRANSIENT_SHA256,
@@ -233,6 +234,11 @@ def _patch_live_derivations(
             sections["event"],
             sections["start_bindings"],
         ),
+    )
+    monkeypatch.setattr(
+        deviation,
+        "_derive_terminal_run",
+        lambda **_kwargs: sections["terminal_run"],
     )
     monkeypatch.setattr(
         deviation,
@@ -422,3 +428,148 @@ def test_validator_fails_closed_when_terminal_validation_fails(
             receipt_commit_path=commit_path,
             s104_config_path=config_path,
         )
+
+
+def test_event_run_and_terminal_run_are_distinct_contracts() -> None:
+    """The event happened in the invalidated v1 run; the binding target is v2.
+
+    Collapsing the two would assert that the transient pyproject.toml edit
+    occurred during the v2 window, where it demonstrably did not.
+    """
+
+    assert deviation.EVENT_EXPERIMENT_ID.endswith("_v1")
+    assert deviation.EVENT_REGISTRY_RUN_ID.endswith("-v1-dev")
+    assert deviation.EVENT_S104_CONFIG_RELATIVE.endswith("wavlm_s104_adapter_v1.yaml")
+    assert deviation.TERMINAL_EXPERIMENT_ID.endswith("_v2_current_code")
+    assert deviation.TERMINAL_REGISTRY_RUN_ID.endswith("-v2-current-code-dev")
+    assert deviation.S104_CONFIG_RELATIVE.endswith(
+        "wavlm_s104_adapter_v2_current_code.yaml"
+    )
+    assert deviation.EVENT_EXPERIMENT_ID != deviation.TERMINAL_EXPERIMENT_ID
+    assert deviation.EVENT_S104_CONFIG_RELATIVE != deviation.S104_CONFIG_RELATIVE
+
+
+def test_schema_pins_both_run_identities() -> None:
+    root = Path(__file__).resolve().parents[2]
+    schema = json.loads(
+        (root / deviation.SCHEMA_RELATIVE).read_text(encoding="utf-8"),
+    )
+
+    experiment = schema["properties"]["experiment"]["properties"]
+    assert experiment["experiment_id"]["const"] == deviation.EVENT_EXPERIMENT_ID
+    assert experiment["registry_run_id"]["const"] == deviation.EVENT_REGISTRY_RUN_ID
+    assert experiment["run_result"]["const"] == "invalidated"
+    assert (
+        experiment["superseded_by_deviation_id"]["const"]
+        == deviation.EVENT_SUPERSEDED_BY_DEVIATION_ID
+    )
+
+    terminal = schema["properties"]["terminal_run"]["properties"]
+    assert terminal["experiment_id"]["const"] == deviation.TERMINAL_EXPERIMENT_ID
+    assert terminal["registry_run_id"]["const"] == deviation.TERMINAL_REGISTRY_RUN_ID
+    assert terminal["config_path"]["const"] == deviation.S104_CONFIG_RELATIVE
+    assert terminal["event_transient_edit_occurred_in_this_run"]["const"] is False
+    assert schema["properties"]["terminal_run"]["additionalProperties"] is False
+
+
+def test_terminal_run_rejects_the_invalidated_v1_contract(tmp_path: Path) -> None:
+    v1_path = tmp_path / deviation.EVENT_S104_CONFIG_RELATIVE
+    v1_path.parent.mkdir(parents=True, exist_ok=True)
+    v1_path.write_text("{}\n", encoding="utf-8")
+
+    with pytest.raises(
+        deviation.S104ProtocolDeviationError,
+        match="terminal experiment id differs",
+    ):
+        deviation._derive_terminal_run(
+            root=tmp_path,
+            config_path=v1_path,
+            config={
+                "experiment": {"id": deviation.EVENT_EXPERIMENT_ID},
+                "outputs": {},
+            },
+        )
+
+
+def test_terminal_run_describes_the_repository_v2_contract() -> None:
+    root = Path(__file__).resolve().parents[2]
+    config_path = root / deviation.S104_CONFIG_RELATIVE
+    config = deviation._load_config(config_path)
+
+    record = deviation._derive_terminal_run(
+        root=root,
+        config_path=config_path,
+        config=config,
+    )
+
+    assert record["experiment_id"] == deviation.TERMINAL_EXPERIMENT_ID
+    assert record["registry_run_id"] == deviation.TERMINAL_REGISTRY_RUN_ID
+    assert record["config_sha256"] == deviation.EXPECTED_CONFIG_SHA256
+    assert record["execution_lock_sha256"] == deviation.EXPECTED_EXECUTION_LOCK_SHA256
+    assert record["event_transient_edit_occurred_in_this_run"] is False
+
+
+def test_event_config_binding_comes_from_the_immutable_lock() -> None:
+    """The v1 config file drifted after the run, so the lock is the anchor."""
+
+    root = Path(__file__).resolve().parents[2]
+    config_path = root / deviation.EVENT_S104_CONFIG_RELATIVE
+
+    assert (
+        deviation.sha256_file(config_path) != deviation.EVENT_EXPECTED_CONFIG_SHA256
+    ), "if the file no longer drifts, this evidence path should be revisited"
+
+    experiment, _event, start_bindings = deviation._derive_experiment_event_start(
+        root=root,
+    )
+
+    assert experiment["experiment_id"] == deviation.EVENT_EXPERIMENT_ID
+    assert experiment["run_result"] == "invalidated"
+    config_record = start_bindings["config"]
+    assert config_record["sha256"] == deviation.EVENT_EXPECTED_CONFIG_SHA256
+    assert config_record["sha256_evidence_source"] == "v1_execution_lock_config_sha256"
+    assert config_record["current_file_differs_from_run_binding"] is True
+
+
+def test_the_reissued_inode_evidence_keeps_the_original_recovery_time() -> None:
+    """DEV-CLAUDE-002 re-attested the inode; it must not rewrite the history.
+
+    The committed receipt records when the S104 transient edit was actually
+    reverted. A later unrelated edit-and-revert reset the inode timestamps, and
+    st_ctime cannot be restored on POSIX. Re-attesting the live state is the only
+    way forward, but overwriting the original constant would make the receipt claim
+    the S104 recovery happened on the day of the disturbance.
+    """
+
+    assert deviation.RECOVERY_MTIME_NS != deviation.LIVE_MANIFEST_MTIME_NS
+    assert deviation.RECOVERY_MTIME_NS == 1_785_328_527_998_502_375
+    assert deviation.LIVE_MANIFEST_REISSUE_REASON == "DEV-CLAUDE-002"
+
+
+def test_the_committed_receipt_still_carries_the_original_recovery_time() -> None:
+    """The artifact on disk is immutable evidence and was not rewritten."""
+
+    import json
+
+    receipts = sorted(
+        Path("artifacts/protocol_deviations/dev-s104-001/generations").glob(
+            "*/receipt.json"
+        )
+    )
+    if not receipts:
+        pytest.skip("the committed receipt artifact is absent")
+    payload = json.dumps(json.loads(receipts[0].read_text(encoding="utf-8")))
+
+    assert str(deviation.RECOVERY_MTIME_NS) in payload
+    assert str(deviation.LIVE_MANIFEST_MTIME_NS) not in payload
+
+
+def test_a_metadata_only_change_is_reported_apart_from_a_content_change() -> None:
+    """The two have different remedies, so they must not share a message."""
+
+    import inspect
+
+    source = inspect.getsource(deviation._derive_experiment_event_start)
+
+    assert "recovered project manifest differs" in source
+    assert "inode differs from the attested state" in source

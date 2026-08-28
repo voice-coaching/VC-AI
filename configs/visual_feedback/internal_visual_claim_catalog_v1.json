@@ -1,0 +1,20 @@
+{
+  "catalog_id": "internal_visual_claim_catalog_v1",
+  "catalog_sha256": "12319572e1b897222a24af377b93b43248311a3b684418dbaa033fabb71f14cc",
+  "claims": [
+    {
+      "action_id": "visual_lip_aperture_reduce_001",
+      "approved_claim_id": "visual_claim_lip_aperture_above_reference_001",
+      "context_id": "phone_center",
+      "cue_id": "lip_aperture_ratio",
+      "direction": "above_reference",
+      "expected_phones": [
+        "ㅏ"
+      ],
+      "renderer_key": "visual_lip_aperture_reduce"
+    }
+  ],
+  "revision": "synthetic_contract_v1",
+  "schema_version": "voice_coach.visual_claim_catalog.v1",
+  "scope": "synthetic_contract_only"
+}

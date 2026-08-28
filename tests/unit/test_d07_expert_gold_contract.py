@@ -20,38 +20,6 @@ SHA_E = "e" * 64
 SHA_F = "f" * 64
 
 
-def _h00() -> contract.H00Evidence:
-    return contract.H00Evidence(
-        approval_sha256=SHA_A,
-        attestation_sha256=SHA_B,
-    )
-
-
-def _institutional_approval() -> dict[str, object]:
-    return {
-        "schema_version": contract.INSTITUTIONAL_APPROVAL_SCHEMA_VERSION,
-        "approval_id": "d07-approval-2026",
-        "status": "approved",
-        "h00_approval_sha256": SHA_A,
-        "h00_official_document_attestation_sha256": SHA_B,
-        "d07_protocol_sha256": SHA_C,
-        "institutional_scope_receipt_sha256": SHA_D,
-        "existing_restricted_audio_expert_rating_approved": True,
-        "calibration_800_approved": True,
-        "locked_test_up_to_1200_expert_rating_approved": True,
-        "two_independent_reviewers_approved": True,
-        "disagreement_only_adjudicator_approved": True,
-        "consent_or_lawful_basis_verified": True,
-        "withdrawal_process_verified": True,
-        "purpose_limitation_verified": True,
-        "retention_and_deletion_verified": True,
-        "access_logging_verified": True,
-        "restricted_redistribution_only": True,
-        "raw_audio_export_allowed": False,
-        "privacy_zone": "C1_public_attestation",
-    }
-
-
 def _reviewer_row(role: str, index: int) -> dict[str, object]:
     is_adjudicator = role == "adjudicator"
     return {
@@ -74,7 +42,6 @@ def _reviewer_payload() -> dict[str, object]:
     return {
         "schema_version": contract.REVIEWER_ATTESTATION_SCHEMA_VERSION,
         "status": "approved",
-        "d07_institutional_approval_sha256": SHA_C,
         "reviewer_count": 3,
         "primary_reviewer_count": 2,
         "adjudicator_count": 1,
@@ -95,10 +62,7 @@ def _reviewer_payload() -> dict[str, object]:
 
 
 def _reviewer_evidence() -> contract.ReviewerEvidence:
-    return contract.validate_reviewer_attestation_payload(
-        _reviewer_payload(),
-        institutional_approval_sha256=SHA_C,
-    )
+    return contract.validate_reviewer_attestation_payload(_reviewer_payload())
 
 
 def _resolved_prereg(
@@ -110,9 +74,6 @@ def _resolved_prereg(
         {
             "status": "approved",
             "frozen": True,
-            "h00_approval_sha256": SHA_A,
-            "h00_attestation_sha256": SHA_B,
-            "d07_institutional_approval_sha256": SHA_C,
             "reviewer_attestation_sha256": reviewer.sha256,
             "g04_progress_aggregate_sha256": SHA_D,
             "privacy_zone": "C1_public_preregistration",
@@ -170,8 +131,6 @@ def _resolved_prereg(
     payload["approval"].update({"decision": "approved", "signed_receipt_sha256": SHA_C})
     return contract.validate_preregistration_payload(
         payload,
-        h00=_h00(),
-        institutional_approval_sha256=SHA_C,
         reviewer=reviewer,
         g04_progress_sha256=SHA_D,
         ontology_sha256=SHA_A,
@@ -208,9 +167,6 @@ def _item_manifest(
     return {
         "schema_version": contract.ITEM_SCHEMA_VERSION,
         "manifest_id": "d07items_" + "1" * 32,
-        "h00_approval_sha256": SHA_A,
-        "h00_attestation_sha256": SHA_B,
-        "d07_institutional_approval_sha256": SHA_C,
         "reviewer_attestation_sha256": reviewer.sha256,
         "preregistration_sha256": prereg.sha256,
         "g04_progress_aggregate_sha256": SHA_D,
@@ -370,14 +326,29 @@ def _g04_completion() -> dict[str, object]:
         "contains_labels": False,
         "contains_predictions": False,
         "locked_access_count": 0,
-        "expected_count": 240,
-        "completed_count": 240,
-        "correct_count": 228,
-        "alignment_accuracy": 0.95,
+        "t43": {
+            "expected_count": 43,
+            "completed_count": 43,
+            "uncertain_count": 0,
+            "unresolved_count": 0,
+            "invalid_resolution_count": 0,
+            "report_sha256": SHA_A,
+        },
+        "i30": {
+            "expected_count": 30,
+            "completed_count": 30,
+            "phone_level_accuracy": 0.95,
+            "minimum_phone_level_accuracy": 0.95,
+            "total_phone_intervals": 100,
+            "incorrect_phone_intervals": 5,
+            "strata_valid": True,
+            "report_sha256": SHA_B,
+        },
         "scorer_status": "passed",
-        "privacy_safe_report_sha256": SHA_A,
+        "reviewer_attestation_sha256": SHA_C,
         "reviewer_qualification_confirmed": True,
         "research_lead_approved": True,
+        "consumer_contract_version": "g04_t43_i30_v1",
     }
 
 
@@ -454,9 +425,6 @@ def _completion(
     for field, value in (
         ("calibration_gold_sha256", SHA_A),
         ("sealed_locked_gold_sha256", SHA_B),
-        ("h00_approval_sha256", SHA_C),
-        ("h00_attestation_sha256", SHA_D),
-        ("d07_institutional_approval_sha256", SHA_E),
         ("reviewer_attestation_sha256", SHA_F),
         ("calibration_report_sha256", SHA_A),
         ("g04_completion_attestation_sha256", SHA_B),
@@ -478,44 +446,46 @@ def test_repository_config_only_reads_only_c1_and_g04_a1_aggregate() -> None:
     )
     result = contract.config_only_result(static, audit)
     assert result["status"] == "valid_config_only"
-    assert result["source_pin_count"] == 20
-    assert result["source_pin_read_count"] == 20
+    assert result["source_pin_count"] == 22
+    assert result["source_pin_read_count"] == 22
     assert result["g04_progress_aggregate_read_count"] == 1
-    assert result["g04_current_completed_count"] == 0
+    assert result["g04_t43_completed_count"] == 0
+    assert result["g04_i30_completed_count"] == 0
     for field, value in result.items():
         if field.endswith("_count") and field not in (
             "source_pin_count",
             "source_pin_read_count",
             "g04_progress_aggregate_read_count",
-            "g04_expected_count",
+            "g04_t43_expected_count",
+            "g04_i30_expected_count",
         ):
             assert value == 0, field
 
 
-def test_full_stops_at_h00_tbd_before_module_or_external_path() -> None:
+def test_full_stops_at_the_reviewer_attestation_before_any_external_path() -> None:
+    """The first gate is now the reviewer attestation.
+
+    Institutional approval, consent, withdrawal, retention, access logging,
+    redistribution limits and the privacy zone are no longer checked anywhere in
+    this package; they were removed on 2026-08-08 by project-owner instruction
+    (DEV-CLAUDE-009).
+    """
+
     config = contract.load_config(CONFIG_PATH)
-    with pytest.raises(contract.D07ContractError, match="H00") as caught:
+    with pytest.raises(contract.D07ContractError, match="reviewer") as caught:
         contract.run_full_preflight(
             workspace_root=ROOT,
             config_path=CONFIG_PATH,
             config=config,
         )
-    assert caught.value.stage == "h00_approval"
+    assert caught.value.stage == "reviewer_attestation"
     assert caught.value.audit is not None
     audit = caught.value.audit
-    assert audit.source_pin_read_count == 20
-    assert audit.source_toctou_verification_count == 20
+    assert audit.source_pin_read_count == 22
+    assert audit.source_toctou_verification_count == 22
     assert audit.g04_progress_aggregate_read_count == 1
     for field in (
-        "h00_module_load_count",
-        "h00_approval_path_resolution_count",
-        "h00_approval_read_attempt_count",
-        "h00_approval_read_count",
-        "h00_attestation_path_resolution_count",
-        "h00_attestation_read_attempt_count",
-        "h00_attestation_read_count",
-        "institutional_approval_path_resolution_count",
-        "reviewer_attestation_path_resolution_count",
+        "reviewer_attestation_read_count",
         "preregistration_path_resolution_count",
         "d1_item_manifest_path_resolution_count",
         "r1_locator_path_resolution_count",
@@ -532,38 +502,49 @@ def test_full_stops_at_h00_tbd_before_module_or_external_path() -> None:
         assert getattr(audit, field) == 0, field
 
 
-def test_g04_aggregate_is_separate_zero_of_240_and_never_d07_reuse() -> None:
+def test_g04_aggregate_is_separate_zero_of_t43_i30_and_never_d07_reuse() -> None:
     progress = json.loads(
-        (
-            ROOT / "data/processed/aihub71490/manifests/"
-            "aihub71490_manual_alignment_review_progress.json"
-        ).read_text(encoding="utf-8")
+        (ROOT / "artifacts/evaluation/g04_amended_progress_v1.json").read_text(
+            encoding="utf-8"
+        )
     )
     contract._validate_g04_progress(progress)
-    assert progress["completed_count"] == 0
-    assert progress["source"]["review_state_sha256"] is None
-    assert progress["export"]["written"] is False
+    assert progress["t43"]["completed_count"] == 0
+    assert progress["i30"]["completed_count"] == 0
+    assert progress["consumer_migration_complete"] is True
 
 
-def test_institutional_and_three_role_reviewer_attestations() -> None:
-    approval = _institutional_approval()
-    assert (
-        contract.validate_institutional_approval_payload(
-            approval,
-            h00=_h00(),
-        )
-        == approval
-    )
+def test_three_role_reviewer_attestation_still_requires_distinct_roles() -> None:
     reviewer = _reviewer_evidence()
     assert set(reviewer.reviewer_ids_by_role) == set(contract.REVIEWER_ROLES)
 
     duplicate = _reviewer_payload()
     duplicate["reviewers"][2]["role"] = "primary_reviewer_2"
     with pytest.raises(contract.D07ContractError, match="roles"):
-        contract.validate_reviewer_attestation_payload(
-            duplicate,
-            institutional_approval_sha256=SHA_C,
-        )
+        contract.validate_reviewer_attestation_payload(duplicate)
+
+
+def test_no_approval_consent_or_privacy_validator_remains() -> None:
+    """Pins the removal so it cannot come back by accident, or be missed.
+
+    Removed on 2026-08-08 by project-owner instruction (DEV-CLAUDE-009). If any of
+    these reappears, the contract's guarantees changed and the ledger entry needs
+    revisiting.
+    """
+
+    for name in (
+        "validate_institutional_approval_payload",
+        "H00Evidence",
+        "InstitutionalApprovalEvidence",
+        "INSTITUTIONAL_APPROVAL_SCHEMA_VERSION",
+        "TBD_H00_APPROVAL",
+    ):
+        assert not hasattr(contract, name), name
+    assert "predecessor_h00" not in contract.TOP_LEVEL_KEYS
+    assert "institutional_expert_approval" not in contract.TOP_LEVEL_KEYS
+    assert "privacy_and_non_execution" not in contract.TOP_LEVEL_KEYS
+    reviewer_fields = contract.validate_reviewer_attestation_payload.__doc__ or ""
+    assert "institutional" not in reviewer_fields.lower()
 
 
 def test_preregistration_resolves_design_without_inventing_static_values() -> None:
@@ -580,8 +561,6 @@ def test_preregistration_resolves_design_without_inventing_static_values() -> No
     with pytest.raises(contract.D07ContractError, match="contains TBD"):
         contract.validate_preregistration_payload(
             unresolved_payload,
-            h00=_h00(),
-            institutional_approval_sha256=SHA_C,
             reviewer=reviewer,
             g04_progress_sha256=SHA_D,
             ontology_sha256=SHA_A,
@@ -594,8 +573,6 @@ def test_item_manifest_enforces_800_plus_prefixed_locked_and_no_g04_reuse() -> N
     payload = _item_manifest(prereg, reviewer)
     evidence = contract.validate_item_manifest_payload(
         payload,
-        h00=_h00(),
-        institutional_approval_sha256=SHA_C,
         reviewer_sha256=reviewer.sha256,
         preregistration=prereg,
         g04_progress_sha256=SHA_D,
@@ -608,8 +585,6 @@ def test_item_manifest_enforces_800_plus_prefixed_locked_and_no_g04_reuse() -> N
     with pytest.raises(contract.D07ContractError, match="g04_item_reused"):
         contract.validate_item_manifest_payload(
             reused,
-            h00=_h00(),
-            institutional_approval_sha256=SHA_C,
             reviewer_sha256=reviewer.sha256,
             preregistration=prereg,
             g04_progress_sha256=SHA_D,
@@ -828,6 +803,11 @@ def test_static_source_does_not_include_or_open_g04_ui_state() -> None:
 
 
 def test_hash_helpers_are_canonical_for_external_artifacts() -> None:
-    payload = _institutional_approval()
+    payload = _reviewer_payload()
     digest = hashlib.sha256(contract.canonical_json_bytes(payload)).hexdigest()
     assert len(digest) == 64
+    # Canonical means key order cannot change the digest.
+    reordered = dict(reversed(list(payload.items())))
+    assert (
+        hashlib.sha256(contract.canonical_json_bytes(reordered)).hexdigest() == digest
+    )

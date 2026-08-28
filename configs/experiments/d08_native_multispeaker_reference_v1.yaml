@@ -36,7 +36,7 @@ canonical_sources:
     - path: configs/reference/d08_recording_metadata_v1.schema.json
       sha256: 6ae7bf0c6d30cf85e9f02fad37586d0dcb06baac7789e62f6310c4e20732364e
     - path: configs/reference/d08_recording_rights_attestation_v1.template.json
-      sha256: 89d02baf5b9d5ad8ec415575aefeddbcdb89d096bc950026a00fdbdad637e7ed
+      sha256: 87708790d6dafa5f5a61e6836b13d8ba03e9f575058f03250cd46b5cd7a94d6a
     - path: configs/reference/r00_sentence_card_v1.schema.json
       sha256: 1f8bcf0325414e1923cda0def9a973ac2f7be7bd85cca4ee869743ef862a7b92
     - path: data/reference/r00/CC0_NOTICE.txt
@@ -56,7 +56,7 @@ canonical_sources:
     - path: scripts/validate_r00_sentence_card.py
       sha256: 967517e74194936c91dad1eed4fcfb0c059b5480af32b8adfc9725fdb7d6e7d0
     - path: src/voice_coach/references/d08_native_reference_contract.py
-      sha256: 03fd1dc54238b7dc2b72451ac32383d002c8105ba854b636aac04d60dfdcc073
+      sha256: e1f3aaea33dfa4046c53fa21f0ab36b8a886fa8b3a789bb95cb5dba9183b2c49
 
 predecessor_r00:
   deep_validation_required: true

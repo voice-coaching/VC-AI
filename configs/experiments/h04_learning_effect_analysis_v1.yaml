@@ -43,7 +43,7 @@ canonical_sources:
     - path: docs/paper/EXPERIMENTAL_MANUSCRIPT_KO.md
       sha256: c21e6d86570eb74069df104295aafe7cf78af02ce51398335c50133a5d1304f2
     - path: docs/paper/CLAIM_GAP_MAP_KO.md
-      sha256: d2c70053cab43de6e55929f688ba7fcb20ea9444ca054d5eebeaa8fe23dbf3a7
+      sha256: 5117751ef57c10e4266a3492d8764bada3fe0761d709a1f8bb614e4cc49305d3
     - path: docs/paper/METHODS_ETHICS_REPRODUCIBILITY_GAP_KO.md
       sha256: 604e0b74d575b81912e04277393ec309199ffa83b2f3a6faae0a7692aad402a4
 

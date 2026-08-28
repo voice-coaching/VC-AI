@@ -38,6 +38,7 @@ PUBLIC_COLUMNS = [
     "alignment_correct",
     "maximum_boundary_error_ms",
     "incorrect_interval_count",
+    "annotation_fidelity",
     "notes",
 ]
 
@@ -82,7 +83,7 @@ def main() -> int:
         rows = list(csv.DictReader(handle, delimiter="\t"))
     if len(rows) != args.expected_samples:
         raise ValueError(f"expected {args.expected_samples} rows, found {len(rows)}")
-    missing = (set(PUBLIC_COLUMNS) - {"item_id"}) - set(rows[0])
+    missing = (set(PUBLIC_COLUMNS) - {"item_id", "annotation_fidelity"}) - set(rows[0])
     if missing - FORBIDDEN_COLUMNS:
         raise ValueError(
             "worksheet is missing required columns: "

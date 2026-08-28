@@ -1,0 +1,71 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "voice_coach.g04_amended_progress.v1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_version",
+    "status",
+    "t43",
+    "i30",
+    "consumer_migration_complete",
+    "canonical_g04_completion_claim_allowed",
+    "privacy"
+  ],
+  "properties": {
+    "schema_version": {"const": "voice_coach.g04_amended_progress.v1"},
+    "status": {"enum": ["incomplete", "passed"]},
+    "t43": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "expected_count",
+        "completed_count",
+        "remaining_count",
+        "status",
+        "uncertain_count",
+        "unresolved_count"
+      ],
+      "properties": {
+        "expected_count": {"const": 43},
+        "completed_count": {"type": "integer", "minimum": 0, "maximum": 43},
+        "remaining_count": {"type": "integer", "minimum": 0, "maximum": 43},
+        "status": {"enum": ["incomplete", "failed", "passed"]},
+        "uncertain_count": {"type": "integer", "minimum": 0, "maximum": 43},
+        "unresolved_count": {"type": "integer", "minimum": 0, "maximum": 43}
+      }
+    },
+    "i30": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "expected_count",
+        "completed_count",
+        "remaining_count",
+        "status",
+        "phone_level_accuracy",
+        "minimum_phone_level_accuracy"
+      ],
+      "properties": {
+        "expected_count": {"const": 30},
+        "completed_count": {"type": "integer", "minimum": 0, "maximum": 30},
+        "remaining_count": {"type": "integer", "minimum": 0, "maximum": 30},
+        "status": {"enum": ["incomplete", "failed", "passed"]},
+        "phone_level_accuracy": {
+          "type": ["number", "null"],
+          "minimum": 0,
+          "maximum": 1
+        },
+        "minimum_phone_level_accuracy": {"const": 0.95}
+      }
+    },
+    "consumer_migration_complete": {"type": "boolean"},
+    "canonical_g04_completion_claim_allowed": {"type": "boolean"},
+    "privacy": {
+      "const": {
+        "aggregate_only": true,
+        "contains_item_hashes_rows_audio_labels_or_paths": false
+      }
+    }
+  }
+}

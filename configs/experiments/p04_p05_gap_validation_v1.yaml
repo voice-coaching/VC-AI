@@ -54,8 +54,8 @@ sources:
     aggregate_only: true
   claim_gap:
     path: docs/paper/CLAIM_GAP_MAP_KO.md
-    sha256: d2c70053cab43de6e55929f688ba7fcb20ea9444ca054d5eebeaa8fe23dbf3a7
-    size_bytes: 21997
+    sha256: 5117751ef57c10e4266a3492d8764bada3fe0761d709a1f8bb614e4cc49305d3
+    size_bytes: 22040
     aggregate_only: true
   evidence_map:
     path: docs/paper/evidence-map.yaml
@@ -74,12 +74,12 @@ sources:
     aggregate_only: true
   tracker:
     path: docs/constraints/RESEARCH_COMPLETION_TRACKER_KO.md
-    sha256: 5c0c4c2e9f0319a682f2a462fe3936b9053beae868bd5794a413da7045164510
-    size_bytes: 213065
+    sha256: a0e7a904d165a8e71ce3a18c4b562b0b68a828f1238e0b0a6031414bfd5a7ee9
+    size_bytes: 219109
     aggregate_only: true
   b07_config:
     path: configs/experiments/b07_gop_acoustic_posterior_v1.yaml
-    sha256: 9a2070ab1fa7e00009657d824cf41fae8adfde4654516419951855322413bdb0
+    sha256: b94d882de2d2bd214c39110013731959ba8c19114f82c2601fae330f9e5599d5
     size_bytes: 16401
     aggregate_only: true
   b07_commit:
@@ -159,7 +159,7 @@ semantic_contract:
       - "`needs-original-license-review` (재배포·파생 공개)"
   external_pending_anchors:
     claim_gap:
-      - "| X01 | G04 수동 정렬 정확도 ≥95% | 외부 의존, 0/240 |"
+      - "| X01 | G04 수동 정렬 정확도 ≥95% | 240/240 검토 완료, 정답 178/240 = 0.7417, `status=failed` |"
     tracker:
       - "| G04 | 실패(1차 감사 완료·95% 미달) | 240건 수동 정렬 정확도≥95% |"
       - "- 실제 전문가 완료: 0/240"

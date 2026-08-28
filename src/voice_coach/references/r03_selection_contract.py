@@ -2241,8 +2241,17 @@ def validate_a1_aggregate_payload(
         payload.get("source_kind_counts"),
         "aggregate source counts",
     )
-    if set(source_counts_raw) != set(SOURCE_KINDS):
-        raise R03ContractError("aggregate source counts must contain both sources")
+    unknown_sources = set(source_counts_raw) - set(SOURCE_KINDS)
+    if unknown_sources:
+        raise R03ContractError(
+            f"aggregate source counts have unknown kinds: {sorted(unknown_sources)}"
+        )
+    if not source_counts_raw:
+        raise R03ContractError("aggregate source counts name no source")
+    # A human source is not required. The architecture under study is a closed loop
+    # between a TTS generator and an evaluator, so a bank of synthesised references
+    # is the subject of the experiment rather than a substitute for one. Each count
+    # still says which kind it counts.
     source_counts = {
         key: _integer(value, f"source_kind_counts.{key}", minimum=1)
         for key, value in source_counts_raw.items()

@@ -44,6 +44,13 @@ except ImportError:  # headless machine; the GUI needs a desktop Python
 DEFAULT_ALIGNMENT_CORRECT = "correct"
 DEFAULT_MAXIMUM_BOUNDARY_ERROR_MS = "0"
 DEFAULT_INCORRECT_INTERVAL_COUNT = "0"
+ANNOTATION_FIDELITY_VALUES = (
+    "consistent",
+    "target_annotation_mismatch",
+    "realized_annotation_mismatch",
+    "both_annotations_mismatch",
+    "uncertain",
+)
 
 
 def parse_args() -> argparse.Namespace:
@@ -298,11 +305,22 @@ class ReviewApp:
         tk.Entry(form, textvariable=self.incorrect_count_var, width=6).grid(
             row=0, column=5, sticky="w", padx=6
         )
-        tk.Label(form, text="메모").grid(row=1, column=0, sticky="nw", pady=4)
+        tk.Label(form, text="annotation fidelity").grid(
+            row=1, column=0, sticky="w"
+        )
+        self.annotation_var = tk.StringVar(value="")
+        ttk.Combobox(
+            form,
+            textvariable=self.annotation_var,
+            values=ANNOTATION_FIDELITY_VALUES,
+            state="readonly",
+            width=30,
+        ).grid(row=1, column=1, columnspan=3, sticky="w", padx=6)
+        tk.Label(form, text="메모").grid(row=2, column=0, sticky="nw", pady=4)
         self.notes = tk.Text(form, height=3, width=80)
-        self.notes.grid(row=1, column=1, columnspan=5, sticky="we", pady=4)
+        self.notes.grid(row=2, column=1, columnspan=5, sticky="we", pady=4)
         tk.Button(form, text="원자 저장", command=self.on_save).grid(
-            row=2, column=0, pady=4, sticky="w"
+            row=3, column=0, pady=4, sticky="w"
         )
 
         self.refresh()
@@ -391,6 +409,7 @@ class ReviewApp:
         self.boundary_var.set(
             DEFAULT_MAXIMUM_BOUNDARY_ERROR_MS if boundary is None else str(boundary)
         )
+        self.annotation_var.set(review.get("annotation_fidelity") or "")
         incorrect_count = review.get("incorrect_interval_count")
         self.incorrect_count_var.set(
             DEFAULT_INCORRECT_INTERVAL_COUNT
@@ -417,6 +436,12 @@ class ReviewApp:
             return
         if self.correct_var.get() not in {"correct", "incorrect"}:
             messagebox.showwarning("입력 필요", "정렬 정확성을 선택하세요.")
+            return
+        annotation_fidelity = self.annotation_var.get()
+        if annotation_fidelity not in ANNOTATION_FIDELITY_VALUES:
+            messagebox.showwarning(
+                "입력 필요", "annotation fidelity를 선택하세요."
+            )
             return
         try:
             boundary = float(self.boundary_var.get())
@@ -451,6 +476,7 @@ class ReviewApp:
             "alignment_correct": is_correct,
             "maximum_boundary_error_ms": boundary,
             "incorrect_interval_count": incorrect_count,
+            "annotation_fidelity": annotation_fidelity,
             "notes": self.notes.get("1.0", "end-1c"),
         }
         try:

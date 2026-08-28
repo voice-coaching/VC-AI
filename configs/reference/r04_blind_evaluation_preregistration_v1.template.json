@@ -9,10 +9,12 @@
   "r04_config_sha256": "TBD_R04_STATIC_PIN",
   "evaluation_design": {
     "sentence_count": 20,
-    "candidate_sources_required": [
-      "human_recording",
-      "cosyvoice_tts"
+    "candidate_sources_allowed": [
+      "cosyvoice_tts",
+      "human_recording"
     ],
+    "candidate_sources_required_minimum_count": 1,
+    "candidate_sources_rationale_ko": "TTS 단독 조건 집합으로도 설계가 성립한다. 이 연구의 대상이 TTS와 평가자 루프이기 때문이다. 사람 조건이 있으면 사람 대비 비교가 추가로 가능해질 뿐이며, 없다고 설계가 무효가 되지는 않는다.",
     "r02_hard_gate_failures_excluded_without_rescue": true,
     "mos_unit": "listener_x_sentence_x_candidate",
     "cmos_unit": "listener_x_sentence_x_same_sentence_pair",

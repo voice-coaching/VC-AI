@@ -32,7 +32,7 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument(
         "--config",
         type=Path,
-        default=Path("configs/experiments/wavlm_s105_hierarchy_v1.yaml"),
+        default=Path("configs/experiments/wavlm_s105_hierarchy_v5_stream_cardinality.yaml"),
     )
     parser.add_argument(
         "--workspace-root",

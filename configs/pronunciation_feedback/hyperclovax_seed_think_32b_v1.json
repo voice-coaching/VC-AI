@@ -1,0 +1,23 @@
+{
+  "schemaVersion": "voice_coach.local_llm_runtime.v1",
+  "modelId": "naver-hyperclovax/HyperCLOVAX-SEED-Think-32B",
+  "revision": "a6cdfd3464d1b767259cad23e164eaf39d3e3960",
+  "license": "hyperclovax",
+  "expectedRepositoryBytes": 66642461825,
+  "expectedWeightShards": 14,
+  "localDirectory": "data/models/hyperclovax-seed-think-32b/a6cdfd3464d1b767259cad23e164eaf39d3e3960",
+  "runtime": {
+    "transport": "openai_compatible_loopback_http",
+    "defaultEndpoint": "http://127.0.0.1:8000/v1",
+    "thinking": false,
+    "temperature": 0,
+    "maximumNewTokens": 128,
+    "externalNetworkAllowedAtInference": false,
+    "python": "3.12",
+    "torch": "2.12.1+cu130",
+    "transformers": "4.52.4",
+    "accelerate": "1.14.0",
+    "importlibMetadata": "8.7.1"
+  },
+  "claimScope": "engineering_provisional"
+}

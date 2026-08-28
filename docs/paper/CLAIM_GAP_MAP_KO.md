@@ -157,7 +157,7 @@ source는 구성요소와 선행 범위만 지지하며 본 연구의 한국어 
 
 | ID | 미해결 주장 | tracker의 정확한 현재 상태 | 해제 조건 |
 |---|---|---|---|
-| X01 | G04 수동 정렬 정확도 ≥95% | 외부 의존, 0/240 | 한국어 음성학 전문가 판정 원본 |
+| X01 | G04 수동 정렬 정확도 ≥95% | 240/240 검토 완료, 정답 178/240 = 0.7417, `status=failed` | 기준 충족 재검토와 aggregate report |
 | X02 | D07 독립 gold와 ICC/QWK | 외부 의존 | 전문가 2인, 1,000–2,000 발화 재평가 |
 | X03 | B05 locked-test confusion/slice/bootstrap/Holm | 대기 | G04 후 locked test 1회와 전용 aggregate report |
 | X04 | adapter/HiPAMA/fusion/calibration/S108 비교·승격 성능 | S101–S103은 O21–O24로 완료; S104 Base+ adapter 3-seed 정본 GPU 학습 실행 중, S105–S108 실제 결과 0 | S104 completed commit과 S105–S108 ablation·calibration·promotion report |

@@ -19,6 +19,7 @@ import os
 from pathlib import Path
 import shutil
 import stat
+import time
 import fcntl
 from typing import Any, Literal, cast
 from uuid import uuid4
@@ -64,6 +65,8 @@ from voice_coach.training.wavlm_adapter_training import (
 )
 from voice_coach.training.wavlm_hierarchy_contract import (
     EXECUTION_LOCK_SCHEMA_VERSION,
+    PROGRESS_EVENT_SCHEMA_VERSION,
+    ZERO_TARGET_PHONE_POLICY,
     load_config,
     load_json_strict,
     sha256_file,
@@ -134,6 +137,66 @@ FAILURE_STAGES = frozenset(
 )
 GenerationBuilder = Callable[[Path, DeepValidationContext], None]
 FaultInjector = Callable[[str], None]
+
+#: Progress goes to stdout as JSON lines, never into the generation tree: the
+#: artifact set is fixed at 82 files and a commit must not depend on how often a
+#: run happened to log. Only counts, losses, metrics and timings are emitted —
+#: no utterance id, speaker id, filesystem path, or split payload.
+_PROGRESS_FORBIDDEN_FIELDS = frozenset(
+    {
+        "audio_path",
+        "dataset_root",
+        "path",
+        "pcm_sha256",
+        "speaker_id_sha256",
+        "utterance_id_sha256",
+    }
+)
+
+
+def _emit_progress(event: str, /, **fields: Any) -> None:
+    """Write one canonical progress line to stdout and flush it.
+
+    Flushing matters: without it a multi-hour first epoch buffers its heartbeat
+    and the run looks identical to a hang.
+    """
+
+    leaked = _PROGRESS_FORBIDDEN_FIELDS.intersection(fields)
+    if leaked:
+        raise S105TrainingError("progress event would leak a protected field")
+    payload = {
+        "schema_version": PROGRESS_EVENT_SCHEMA_VERSION,
+        "event": event,
+        **fields,
+    }
+    print(
+        json.dumps(payload, ensure_ascii=False, sort_keys=True, allow_nan=False),
+        flush=True,
+    )
+
+
+@dataclass(frozen=True, slots=True)
+class ProgressLoggingContract:
+    """Declared progress-logging behaviour, resolved from the config."""
+
+    heartbeat_utterances: int
+    emit_epoch_summary: bool
+
+    @classmethod
+    def from_config(cls, config: Mapping[str, Any]) -> ProgressLoggingContract:
+        runtime = cast(Mapping[str, Any], config["runtime"])
+        declared = cast(Mapping[str, Any], runtime["progress_logging"])
+        if declared.get("destination") != "stdout_json_lines":
+            raise S105TrainingError("progress logging destination is not declared")
+        if declared.get("schema_version") != PROGRESS_EVENT_SCHEMA_VERSION:
+            raise S105TrainingError("progress event schema version differs")
+        interval = declared.get("heartbeat_utterances")
+        if isinstance(interval, bool) or not isinstance(interval, int) or interval <= 0:
+            raise S105TrainingError("heartbeat_utterances must be a positive integer")
+        summary = declared.get("emit_epoch_summary")
+        if not isinstance(summary, bool):
+            raise S105TrainingError("emit_epoch_summary must be a boolean")
+        return cls(heartbeat_utterances=interval, emit_epoch_summary=summary)
 
 
 @dataclass(frozen=True, slots=True)
@@ -346,9 +409,67 @@ def _clean_phone_targets(
             binary.append(1)
         else:
             raise S105TrainingError("phone alignment operation is invalid")
-    if not intervals:
-        raise S105TrainingError("hierarchy utterance has no target phone")
+    # An empty target-phone set is returned rather than raised: the caller
+    # applies the declared zero-target-phone policy, which keeps the decision in
+    # the contract instead of hiding it in this validator.
     return tuple(intervals), tuple(binary)
+
+
+def count_zero_target_phone_utterances(
+    *,
+    manifest_path: Path,
+    labels: Mapping[str, UtteranceLabel],
+    reserved_prompts: set[str],
+    modulus: int,
+    validation_buckets: set[int],
+    allowed_l1: set[str],
+    allowed_gender: set[str],
+) -> Mapping[str, int]:
+    """Count guarded train rows that carry no target phone, per inner subset.
+
+    Runs before training on the manifest alone — no audio, no model — so the
+    declared exclusion count can be checked against the data before the first
+    optimizer step rather than discovered mid-epoch.
+    """
+
+    counts = {"fit": 0, "inner_validation": 0, "dev": 0}
+    for split in ("train", "dev"):
+        for row in _manifest_rows(manifest_path, split=split):
+            if row.get("qc_flags"):
+                continue
+            if row.get("prompt_sha256") in reserved_prompts:
+                continue
+            if (
+                str(row.get("l1") or "") not in allowed_l1
+                or str(row.get("gender") or "") not in allowed_gender
+            ):
+                continue
+            speaker = row.get("speaker_id")
+            if not _is_sha256(speaker):
+                raise S105TrainingError("manifest speaker hash is invalid")
+            identifier = hash_utterance_id(row.get("id"))
+            label = labels.get(identifier)
+            if (
+                label is None
+                or label.speaker_id_sha256 != speaker
+                or label.split != split
+            ):
+                raise S105TrainingError("manifest/explicit-label join differs")
+            phones, _ = _clean_phone_targets(
+                row.get("target_phone_intervals"),
+                row.get("phone_alignments"),
+            )
+            if phones:
+                continue
+            if split == "dev":
+                counts["dev"] += 1
+                continue
+            counts[
+                "inner_validation"
+                if speaker_bucket(str(speaker), modulus) in validation_buckets
+                else "fit"
+            ] += 1
+    return counts
 
 
 def iter_hierarchy_examples(
@@ -363,10 +484,15 @@ def iter_hierarchy_examples(
     validation_buckets: set[int],
     allowed_l1: set[str],
     allowed_gender: set[str],
+    zero_target_phone_policy: str,
+    excluded_zero_target_phone: set[str] | None = None,
     shuffle_buffer: int | None = None,
     shuffle_seed: int | None = None,
 ) -> Iterator[HierarchyOnlineExample]:
     """Stream a guarded subset and resolve raw audio only as the final step."""
+
+    if zero_target_phone_policy != ZERO_TARGET_PHONE_POLICY:
+        raise S105TrainingError("zero-target-phone policy is not the declared policy")
 
     split = "dev" if subset == "dev" else "train"
     rows: Iterable[Mapping[str, Any]] = _manifest_rows(
@@ -415,6 +541,12 @@ def iter_hierarchy_examples(
             row.get("target_phone_intervals"),
             row.get("phone_alignments"),
         )
+        if not phones:
+            # Excluded before any raw-audio path is resolved, so a degenerate row
+            # never causes an R0 read.
+            if excluded_zero_target_phone is not None:
+                excluded_zero_target_phone.add(identifier)
+            continue
         words = _clean_word_intervals(row.get("word_intervals"))
         grouping = map_phones_to_words(
             [{"start": interval.start, "end": interval.end} for interval in phones],
@@ -830,6 +962,7 @@ def train_and_select_all_heads(
     fit_examples_factory: Callable[[int], Iterable[HierarchyOnlineExample]],
     validation_examples_factory: Callable[[], Iterable[HierarchyOnlineExample]],
     selected_candidate: Mapping[str, Any],
+    expected_fit_utterances: int,
     expected_validation_utterances: int,
     audio_integrity: AudioIntegrityVerifier,
 ) -> Mapping[str, HeadSelection]:
@@ -868,12 +1001,23 @@ def train_and_select_all_heads(
     maximum_chunk_seconds = float(
         cast(Mapping[str, Any], config["runtime"])["maximum_chunk_seconds"]
     )
+    progress = ProgressLoggingContract.from_config(config)
     for epoch in range(1, maximum_epochs + 1):
         if not active:
             break
         loss_totals = {variant: 0.0 for variant in active}
         optimizer_steps = {variant: 0 for variant in active}
         fit_count = 0
+        epoch_started = time.monotonic()
+        next_heartbeat = progress.heartbeat_utterances
+        _emit_progress(
+            "epoch_started",
+            seed=seed,
+            epoch=epoch,
+            maximum_epochs=maximum_epochs,
+            active_variant_count=len(active),
+            fit_utterances_expected=expected_fit_utterances,
+        )
         for window in _windows(fit_examples_factory(epoch), accumulation):
             for variant in active:
                 heads[variant].train()
@@ -927,8 +1071,45 @@ def train_and_select_all_heads(
                 ):
                     raise S105TrainingError("hierarchy parameter is non-finite")
                 optimizer_steps[variant] += 1
-        if fit_count != metadata.fit_utterances:
+            if fit_count >= next_heartbeat:
+                elapsed = time.monotonic() - epoch_started
+                _emit_progress(
+                    "fit_heartbeat",
+                    seed=seed,
+                    epoch=epoch,
+                    fit_utterances_done=fit_count,
+                    fit_utterances_expected=expected_fit_utterances,
+                    fraction_of_epoch=round(
+                        fit_count / expected_fit_utterances, 6
+                    ),
+                    elapsed_seconds=round(elapsed, 1),
+                    utterances_per_second=round(fit_count / elapsed, 3)
+                    if elapsed > 0
+                    else None,
+                    projected_epoch_seconds=round(
+                        elapsed * expected_fit_utterances / fit_count, 1
+                    )
+                    if fit_count
+                    else None,
+                    peak_gpu_bytes=int(torch.cuda.max_memory_allocated()),
+                )
+                next_heartbeat = fit_count + progress.heartbeat_utterances
+        if fit_count != expected_fit_utterances:
             raise S105TrainingError("train-fit epoch cardinality changed")
+        _emit_progress(
+            "fit_epoch_finished",
+            seed=seed,
+            epoch=epoch,
+            fit_utterances_done=fit_count,
+            elapsed_seconds=round(time.monotonic() - epoch_started, 1),
+            mean_joint_loss_by_variant={
+                variant: round(loss_totals[variant] / fit_count, 6)
+                for variant in sorted(active)
+            },
+            optimizer_steps_by_variant={
+                variant: optimizer_steps[variant] for variant in sorted(active)
+            },
+        )
         validation, validation_count = _evaluate_inner_shared_with_grid(
             heads=heads,
             active=active,
@@ -980,6 +1161,25 @@ def train_and_select_all_heads(
             if epoch >= minimum_epochs and no_improvement[variant] >= patience:
                 stopped[variant] = True
                 completed.add(variant)
+        if progress.emit_epoch_summary:
+            _emit_progress(
+                "epoch_summary",
+                seed=seed,
+                epoch=epoch,
+                inner_validation_utterances=validation_count,
+                inner_phone_macro_f1_by_variant={
+                    variant: round(float(validation[variant]["phone_macro_f1"]), 6)
+                    for variant in sorted(active)
+                },
+                best_epoch_by_variant={
+                    variant: best_epoch[variant] for variant in sorted(active)
+                },
+                epochs_without_improvement_by_variant={
+                    variant: no_improvement[variant] for variant in sorted(active)
+                },
+                stopped_variants=sorted(completed),
+                remaining_variant_count=len(active - completed),
+            )
         active -= completed
     selections: dict[str, HeadSelection] = {}
     for variant, head in heads.items():
@@ -1418,6 +1618,29 @@ def build_online_generation(
         or metadata.fit_utterances <= 0
     ):
         raise S105TrainingError("fit metadata differs from execution lock")
+
+    interval_mapping = cast(Mapping[str, Any], data["interval_mapping"])
+    declared_exclusions = {
+        str(subset): int(count)
+        for subset, count in cast(
+            Mapping[str, Any],
+            interval_mapping["expected_zero_target_phone_exclusions"],
+        ).items()
+    }
+    observed_exclusions = count_zero_target_phone_utterances(
+        manifest_path=manifest_path,
+        labels=labels,
+        reserved_prompts=reserved,
+        modulus=modulus,
+        validation_buckets=validation_buckets,
+        allowed_l1=allowed_l1,
+        allowed_gender=allowed_gender,
+    )
+    if dict(observed_exclusions) != declared_exclusions:
+        raise S105TrainingError(
+            "zero-target-phone exclusion count differs from the declared contract"
+        )
+    excluded_identifiers: set[str] = set()
     vocabulary = {
         target: index for index, target in enumerate(metadata.target_vocabulary)
     }
@@ -1426,7 +1649,28 @@ def build_online_generation(
     for variant in VARIANT_ORDER:
         for seed in SEEDS:
             (temporary / variant / f"seed_{seed}").mkdir(parents=True)
-    for seed in SEEDS:
+    run_started = time.monotonic()
+    _emit_progress(
+        "run_started",
+        seeds=list(SEEDS),
+        variants=[str(variant) for variant in VARIANT_ORDER],
+        fit_utterances=metadata.fit_utterances - declared_exclusions["fit"],
+        inner_validation_utterances=int(locked_data["inner_validation_utterances"])
+        - declared_exclusions["inner_validation"],
+        dev_utterances=cast(Mapping[str, Any], locked_data["split_utterances"])["dev"]
+        - declared_exclusions["dev"],
+        zero_target_phone_exclusions=dict(observed_exclusions),
+        target_label_count=len(metadata.target_vocabulary),
+    )
+    for seed_position, seed in enumerate(SEEDS, start=1):
+        seed_started = time.monotonic()
+        _emit_progress(
+            "seed_started",
+            seed=seed,
+            seed_position=seed_position,
+            seed_count=len(SEEDS),
+            elapsed_seconds=round(time.monotonic() - run_started, 1),
+        )
         set_deterministic_seed(seed)
         torch.cuda.reset_peak_memory_stats()
         encoder, selected, s104_checkpoint = _load_frozen_s104_encoder(
@@ -1461,6 +1705,10 @@ def build_online_generation(
                 validation_buckets=validation_buckets,
                 allowed_l1=allowed_l1,
                 allowed_gender=allowed_gender,
+                zero_target_phone_policy=str(
+                    interval_mapping["zero_target_phone_utterance_policy"]
+                ),
+                excluded_zero_target_phone=excluded_identifiers,
                 shuffle_buffer=(
                     int(optimization["bounded_shuffle_buffer_utterances"])
                     if subset == "fit"
@@ -1481,10 +1729,30 @@ def build_online_generation(
             fit_examples_factory=lambda epoch: examples("fit", epoch=epoch),
             validation_examples_factory=lambda: examples("inner_validation"),
             selected_candidate=selected,
-            expected_validation_utterances=int(
-                locked_data["inner_validation_utterances"]
+            # The fit scan and the lock both counted every guarded row, including
+            # the rows the declared zero-target-phone policy excludes, so every
+            # expected pass cardinality is that count minus those exclusions.
+            expected_fit_utterances=(
+                metadata.fit_utterances - declared_exclusions["fit"]
+            ),
+            expected_validation_utterances=(
+                int(locked_data["inner_validation_utterances"])
+                - declared_exclusions["inner_validation"]
             ),
             audio_integrity=integrity,
+        )
+        _emit_progress(
+            "inner_selection_finished",
+            seed=seed,
+            best_epoch_by_variant={
+                str(variant): selections[str(variant)].best_epoch
+                for variant in VARIANT_ORDER
+            },
+            stopped_early_by_variant={
+                str(variant): selections[str(variant)].stopped_early
+                for variant in VARIANT_ORDER
+            },
+            elapsed_seconds=round(time.monotonic() - seed_started, 1),
         )
         checkpoint_records: dict[str, Mapping[str, Any]] = {}
         for variant in VARIANT_ORDER:
@@ -1529,9 +1797,23 @@ def build_online_generation(
                 ledger=ledger,
                 audio_integrity=integrity,
             )
-        if dev_count != cast(Mapping[str, Any], locked_data["split_utterances"])["dev"]:
+        expected_dev_utterances = (
+            cast(Mapping[str, Any], locked_data["split_utterances"])["dev"]
+            - declared_exclusions["dev"]
+        )
+        if dev_count != expected_dev_utterances:
             raise S105TrainingError("dev cardinality differs from execution lock")
         integrity.assert_stable()
+        _emit_progress(
+            "seed_finished",
+            seed=seed,
+            seed_position=seed_position,
+            seed_count=len(SEEDS),
+            dev_utterances=dev_count,
+            seed_elapsed_seconds=round(time.monotonic() - seed_started, 1),
+            run_elapsed_seconds=round(time.monotonic() - run_started, 1),
+            peak_gpu_bytes=int(torch.cuda.max_memory_allocated()),
+        )
         device_report = _device_metadata(device)
         for variant in VARIANT_ORDER:
             name = str(variant)

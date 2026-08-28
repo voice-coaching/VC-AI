@@ -15,7 +15,7 @@ from voice_coach.training import wavlm_hierarchy_contract as contract
 
 
 ROOT = Path(__file__).resolve().parents[2]
-CONFIG = ROOT / "configs/experiments/wavlm_s105_hierarchy_v1.yaml"
+CONFIG = ROOT / "configs/experiments/wavlm_s105_hierarchy_v5_stream_cardinality.yaml"
 SCRIPT = ROOT / "scripts/prepare_wavlm_s105_hierarchy.py"
 TRAIN_SCRIPT = ROOT / "scripts/train_wavlm_s105_hierarchy.py"
 

@@ -782,6 +782,78 @@ def alternating_adversarial_step(
     )
 
 
+
+def evaluate_adversarial_batch(
+    system: AdversarialPronunciationSystem,
+    batch: AdversarialSpeechBatch,
+    *,
+    weights: AdversarialLossWeights,
+    monotonic_margin: float = 0.02,
+) -> dict[str, float]:
+    """Evaluate the generator objective without updating any model role."""
+
+    validate_adversarial_batch(
+        batch,
+        aspect_count=system.primary_evaluator.aspect_count,
+    )
+    system.eval()
+    with torch.no_grad():
+        loss, components = _generator_loss(
+            system,
+            batch,
+            weights,
+            monotonic_margin=monotonic_margin,
+        )
+    _assert_loss_finite(loss, field_name="evaluation_generator_loss")
+    return {
+        "generator_loss": float(loss.detach()),
+        "reward_before": float(components["reward_before"].detach()),
+        "reward_after": float(components["reward_after"].detach()),
+        "meta_progress": float(components["meta_progress"].detach()),
+    }
+
+
+@dataclass(frozen=True, slots=True)
+class AdversarialOptimizers:
+    """The four optimizer roles required by the alternating update contract."""
+
+    generator: torch.optim.Optimizer
+    primary: torch.optim.Optimizer
+    meta_critic: torch.optim.Optimizer
+    reward_adapter: torch.optim.Optimizer
+
+
+def build_adversarial_optimizers(
+    system: AdversarialPronunciationSystem,
+    config: Mapping[str, Any],
+) -> AdversarialOptimizers:
+    """Build isolated Adam optimizers from the validated experiment config."""
+
+    try:
+        rates = config["training"]["learning_rates"]
+        return AdversarialOptimizers(
+            generator=torch.optim.Adam(
+                system.generator.parameters(),
+                lr=float(rates["generator"]),
+            ),
+            primary=torch.optim.Adam(
+                system.primary_evaluator.core_parameters(),
+                lr=float(rates["evaluator1_core"]),
+            ),
+            meta_critic=torch.optim.Adam(
+                system.meta_critic.parameters(),
+                lr=float(rates["evaluator2_meta_critic"]),
+            ),
+            reward_adapter=torch.optim.Adam(
+                system.primary_evaluator.meta_parameters(),
+                lr=float(rates["evaluator1_meta_reward"]),
+            ),
+        )
+    except (KeyError, TypeError, ValueError) as exc:
+        raise AdversarialTTSTrainingError(
+            "adversarial TTS learning_rates are incomplete or invalid"
+        ) from exc
+
 def build_adversarial_system(
     config: Mapping[str, Any],
 ) -> AdversarialPronunciationSystem:

@@ -34,12 +34,12 @@ canonical_sources:
       sha256: ffd86dc89cf0957dccc61f6ecb7af1c7ebbbdbff2bd87c951e54c40afc1262c9
     - path: data/reference/r00/r00_sentence_card_v1.json
       sha256: 08dc149ccf10006a587e6216dda0471c19b5c55eab6b320b4348587527d82c4d
+    - path: docs/IMPLEMENTATION_PLAN_KO.md
+      sha256: 836ea2b5a2db2bf3dcfb6ea4003c73c5240ae24bea9ea9af8531519f6a57e07a
     - path: docs/constraints/DATA_LICENSE_AND_ROLE_MATRIX_KO.md
       sha256: 3480b342675c22590aec3f800e252bb967edb6be69c5e6a969766c2bd9f37119
     - path: docs/constraints/DATA_PRIVACY_BOUNDARY_KO.md
       sha256: 8934384f1c570cf1a086fd08c18b26f577c0a22c3bd69ae1b5064eb34f8b1309
-    - path: docs/IMPLEMENTATION_PLAN_KO.md
-      sha256: 836ea2b5a2db2bf3dcfb6ea4003c73c5240ae24bea9ea9af8531519f6a57e07a
     - path: docs/paper/EXPERIMENTAL_MANUSCRIPT_KO.md
       sha256: c21e6d86570eb74069df104295aafe7cf78af02ce51398335c50133a5d1304f2
     - path: docs/paper/RELATED_WORK_SOURCE_LEDGER_KO.md

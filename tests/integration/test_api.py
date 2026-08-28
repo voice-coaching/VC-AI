@@ -46,3 +46,31 @@ def test_oracle_attempt_returns_evidence_constrained_coaching() -> None:
     assert payload["analysisSource"] == "oracle"
     assert payload["coaching"]["action"] == "coach"
     assert payload["coaching"]["adviceId"] == "ARTICULATION_RULE_017"
+
+
+def test_closed_loop_endpoint_returns_rerecord_transition() -> None:
+    response = client.post(
+        "/v1/closed-loop/oracle-attempts",
+        json={
+            "attempt": {
+                "attemptId": str(uuid4()),
+                "targetText": "가",
+                "contentMatch": {"score": 0.4, "confidence": 0.95},
+                "aspects": {
+                    "segmental": 0.5,
+                    "fluency": 0.5,
+                    "prosody": 0.5,
+                    "comprehensibility": 0.5,
+                },
+                "goldIssues": [],
+            },
+            "attemptIndex": 1,
+            "maxAttempts": 2,
+        },
+    )
+
+    assert response.status_code == 200
+    payload = response.json()
+    assert payload["decision"]["action"] == "rerecord"
+    assert payload["decision"]["next_state"] == "awaiting_rerecord"
+    assert payload["profile"]["coaching"]["action"] == "rerecord"

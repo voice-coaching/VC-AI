@@ -624,6 +624,27 @@ def _expect_keys(
         )
 
 
+def _validate_candidate_sources(design: Mapping[str, Any], name: str) -> None:
+    """The condition set must name known sources; it need not include a human one.
+
+    The architecture under study is a closed loop between a TTS generator and an
+    evaluator, so a TTS-only condition set is a complete design. Requiring a human
+    condition made the study unbuildable without changing what it measures. What
+    stays is that every condition declares which kind it is, and that the listener
+    is blind to it.
+    """
+
+    allowed = tuple(_list(design.get("candidate_sources_allowed"), name))
+    unknown = set(allowed) - set(SOURCE_KINDS)
+    if unknown:
+        raise R04ContractError(f"{name} names unknown kinds: {sorted(unknown)}")
+    minimum = design.get("candidate_sources_required_minimum_count")
+    if not isinstance(minimum, int) or minimum < 1:
+        raise R04ContractError(f"{name} minimum count must be a positive integer")
+    if len(allowed) < minimum:
+        raise R04ContractError(f"{name} allows fewer kinds than it requires")
+
+
 def _reject_nonfinite_tree(value: Any, name: str) -> None:
     if isinstance(value, float) and not math.isfinite(value):
         raise R04ContractError(f"{name} contains non-finite number")
@@ -1009,11 +1030,7 @@ def _validate_templates(payload_by_path: Mapping[str, bytes]) -> None:
     )
     design = _mapping(prereg.get("evaluation_design"), "prereg evaluation design")
     _expect(design.get("sentence_count"), 20, "prereg sentence count")
-    _expect(
-        tuple(_list(design.get("candidate_sources_required"), "prereg sources")),
-        SOURCE_KINDS,
-        "prereg sources",
-    )
+    _validate_candidate_sources(design, "prereg sources")
     _expect(
         tuple(_list(design.get("mos_dimensions"), "prereg MOS dimensions")),
         MOS_DIMENSIONS,
@@ -1315,16 +1332,7 @@ def _validate_config_values(config: Mapping[str, Any]) -> None:
         SENTENCE_IDS,
         "evaluation sentence IDs",
     )
-    _expect(
-        tuple(
-            _list(
-                evaluation.get("candidate_sources_required"),
-                "evaluation sources",
-            )
-        ),
-        SOURCE_KINDS,
-        "evaluation source coverage",
-    )
+    _validate_candidate_sources(evaluation, "evaluation sources")
     _expect(
         evaluation.get("r02_hard_gate_failures_excluded_without_rescue"),
         True,
@@ -2489,7 +2497,9 @@ def validate_preregistration_payload(
         design,
         {
             "sentence_count",
-            "candidate_sources_required",
+            "candidate_sources_allowed",
+            "candidate_sources_required_minimum_count",
+            "candidate_sources_rationale_ko",
             "r02_hard_gate_failures_excluded_without_rescue",
             "mos_unit",
             "cmos_unit",
@@ -2507,11 +2517,7 @@ def validate_preregistration_payload(
         "preregistered evaluation design",
     )
     _expect(design.get("sentence_count"), 20, "preregistered sentence count")
-    _expect(
-        tuple(_list(design.get("candidate_sources_required"), "sources")),
-        SOURCE_KINDS,
-        "preregistered sources",
-    )
+    _validate_candidate_sources(design, "preregistered sources")
     _expect(
         design.get("r02_hard_gate_failures_excluded_without_rescue"),
         True,

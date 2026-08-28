@@ -293,26 +293,59 @@ def _external_ready(
     }
     _write_json(tmp_path / paths["preregistration"]["attestation_path"], prereg)
     progress = {
-        "schema_version": "voice_coach.alignment_review_report.v1",
-        "status": "complete",
-        "expected_count": 240,
-        "completed_count": 240,
-        "correct_count": 230,
-        "privacy": {"raw_paths_or_utterance_ids_exported": False},
+        "schema_version": "voice_coach.g04_amended_progress.v1",
+        "status": "passed",
+        "t43": {
+            "expected_count": 43,
+            "completed_count": 43,
+            "remaining_count": 0,
+            "status": "passed",
+            "uncertain_count": 0,
+            "unresolved_count": 0,
+        },
+        "i30": {
+            "expected_count": 30,
+            "completed_count": 30,
+            "remaining_count": 0,
+            "status": "passed",
+            "phone_level_accuracy": 0.96,
+            "minimum_phone_level_accuracy": 0.95,
+        },
+        "consumer_migration_complete": True,
+        "canonical_g04_completion_claim_allowed": True,
+        "privacy": {
+            "aggregate_only": True,
+            "contains_item_hashes_rows_audio_labels_or_paths": False,
+        },
     }
     _write_json(tmp_path / paths["g04"]["progress_path"], progress)
     g04 = {
-        "schema_version": "voice_coach.g04_alignment_completion_attestation.v1",
+        "schema_version": "voice_coach.g04_amended_completion_attestation.v1",
         "status": "passed",
         **_base_flags(),
-        "expected_count": 240,
-        "completed_count": 240,
-        "correct_count": 230,
-        "alignment_accuracy": 230 / 240,
+        "t43": {
+            "expected_count": 43,
+            "completed_count": 43,
+            "uncertain_count": 0,
+            "unresolved_count": 0,
+            "invalid_resolution_count": 0,
+            "report_sha256": "2" * 64,
+        },
+        "i30": {
+            "expected_count": 30,
+            "completed_count": 30,
+            "phone_level_accuracy": 0.96,
+            "minimum_phone_level_accuracy": 0.95,
+            "total_phone_intervals": 100,
+            "incorrect_phone_intervals": 4,
+            "strata_valid": True,
+            "report_sha256": "3" * 64,
+        },
         "scorer_status": "passed",
-        "privacy_safe_report_sha256": "2" * 64,
+        "reviewer_attestation_sha256": "4" * 64,
         "reviewer_qualification_confirmed": True,
         "research_lead_approved": True,
+        "consumer_contract_version": "g04_t43_i30_v1",
     }
     _write_json(tmp_path / paths["g04"]["attestation_path"], g04)
     d07 = {
@@ -723,8 +756,8 @@ def test_invalid_g04_count_remains_blocked(tmp_path: Path) -> None:
     config_path, config = _ready_workspace(tmp_path)
     path = tmp_path / config["external_aggregate_evidence"]["g04"]["attestation_path"]
     document = json.loads(path.read_text())
-    document["correct_count"] = 227
-    document["alignment_accuracy"] = 227 / 240
+    document["i30"]["incorrect_phone_intervals"] = 6
+    document["i30"]["phone_level_accuracy"] = 0.94
     _write_json(path, document)
     checklist = s108.build_no_locked_checklist(
         workspace_root=tmp_path,

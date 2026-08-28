@@ -10,12 +10,19 @@ from typing import Any
 from .evaluation.phone_alignment import align_phones
 
 
-def collapse_ctc_ids(ids: Sequence[int], *, blank_id: int = 0) -> list[int]:
-    """Collapse repeats and remove blanks according to greedy CTC decoding."""
+def collapse_ctc_ids(
+    ids: Sequence[int],
+    *,
+    blank_id: int = 0,
+    padding_id: int = -100,
+) -> list[int]:
+    """Collapse CTC repeats while removing blanks and Trainer padding."""
 
     result: list[int] = []
     previous: int | None = None
     for token_id in ids:
+        if token_id == padding_id:
+            continue
         if token_id != previous and token_id != blank_id:
             result.append(token_id)
         previous = token_id
@@ -99,3 +106,28 @@ def validate_manual_alignment_gate(payload: Mapping[str, Any]) -> None:
         raise ValueError("manual alignment audit status is not passed")
     if not isinstance(accuracy, int | float) or accuracy < 0.95:
         raise ValueError("manual alignment audit accuracy is below 0.95")
+
+
+def validate_training_gate(
+    payload: Mapping[str, Any],
+    *,
+    mode: str,
+    allow_ungated_diagnostic_smoke: bool = False,
+    allow_ungated_internal_full: bool = False,
+) -> None:
+    """Enforce the audit gate unless an explicitly scoped override is used."""
+
+    if allow_ungated_diagnostic_smoke and allow_ungated_internal_full:
+        raise ValueError("choose exactly one ungated training override")
+
+    if allow_ungated_diagnostic_smoke:
+        if mode != "smoke":
+            raise ValueError("ungated diagnostic override is allowed for smoke only")
+        return
+
+    if allow_ungated_internal_full:
+        if mode != "full":
+            raise ValueError("ungated internal override is allowed for full mode only")
+        return
+
+    validate_manual_alignment_gate(payload)

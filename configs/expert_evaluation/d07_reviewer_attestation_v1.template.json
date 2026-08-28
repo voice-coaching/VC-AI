@@ -1,7 +1,6 @@
 {
   "schema_version": "voice_coach.d07_reviewer_attestation_manifest.v1",
   "status": "TBD_EXTERNAL_ATTESTATION",
-  "d07_institutional_approval_sha256": "TBD_EXTERNAL_ATTESTATION",
   "reviewer_count": 3,
   "primary_reviewer_count": 2,
   "adjudicator_count": 1,

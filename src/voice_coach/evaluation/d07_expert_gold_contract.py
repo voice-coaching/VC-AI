@@ -1,19 +1,27 @@
 """Fail-closed D07 independent expert gold static-readiness contract.
 
-The package validates C1/A1 static policy and, in full-preflight mode, only
-the authorization chain needed before a separate calibration executor may
+The package validates C1/A1 static policy and, in full-preflight mode, the
+reviewer and design chain needed before a separate calibration executor may
 resolve D1/R1/R0 data:
 
-1. actual H00 public approval and restricted-document attestation;
-2. D07-specific institutional approval;
-3. exactly two independent primary experts plus one disagreement adjudicator;
-4. a frozen preregistration with every design choice resolved.
+1. exactly two independent primary experts plus one disagreement adjudicator;
+2. a frozen preregistration with every design choice resolved.
 
-G04 remains a distinct 240-item alignment-review stage.  Static validation
-checks only its A1 0/240 progress aggregate and never resolves the restricted
-UI state.  Pure payload validators define future D07 item/rating, calibration,
-G04 completion, locked one-shot authorization, locked report, and completion
-contracts without executing human review or opening protected data.
+Removed on 2026-08-08 by project-owner instruction (DEV-CLAUDE-009): the H00
+institutional approval chain, the D07-specific institutional approval, and every
+assertion those payloads carried -- consent or lawful basis, withdrawal process,
+purpose limitation, retention and deletion, access logging, restricted
+redistribution, raw-audio-export refusal and privacy zone.  **Nothing in this
+package verifies any of them now.**  The reviewer attestations and the frozen
+preregistration are what remain.
+
+G04 remains a distinct amended stage: T43 resolves enriched root causes and is
+never an accuracy denominator, while independent I30 supplies the phone-level
+accuracy gate. Static validation reads only their A1 aggregate progress and
+never resolves restricted review state. Pure payload validators define future
+D07 item/rating, calibration, G04 completion, locked one-shot authorization,
+locked report, and completion contracts without executing human review or
+opening protected data.
 """
 
 from __future__ import annotations
@@ -27,17 +35,27 @@ import math
 from pathlib import Path, PurePosixPath
 import re
 import stat
-import sys
-from types import ModuleType
 from typing import Any
 
 import yaml  # type: ignore[import-untyped]
 
+from voice_coach.evaluation.g04_amended_contract import (
+    COMPLETION_SCHEMA_VERSION as _G04_COMPLETION_SCHEMA_VERSION,
+    EXPECTED_I30_COUNT,
+    EXPECTED_T43_COUNT,
+    G04AmendedContractError,
+    PROGRESS_SCHEMA_VERSION as _G04_PROGRESS_SCHEMA_VERSION,
+    T43_MANIFEST_SCHEMA_VERSION,
+    validate_amended_progress,
+    validate_completion_attestation,
+)
+
+G04_PROGRESS_SCHEMA_VERSION = _G04_PROGRESS_SCHEMA_VERSION
+G04_COMPLETION_SCHEMA_VERSION = _G04_COMPLETION_SCHEMA_VERSION
+
 
 CONFIG_SCHEMA_VERSION = 1
 STATIC_STATUS = "static_readiness_only"
-TBD_H00_APPROVAL = "TBD_H00_APPROVAL"
-TBD_H00_ATTESTATION = "TBD_H00_ATTESTATION"
 TBD_EXTERNAL_ATTESTATION = "TBD_EXTERNAL_ATTESTATION"
 TBD_PREREGISTRATION = "TBD_PREREGISTRATION"
 TBD_ATTESTATION = "TBD_ATTESTATION"
@@ -53,15 +71,9 @@ RATING_SCHEMA_VERSION = "voice_coach.d07_expert_rating_manifest.v1"
 CALIBRATION_SCHEMA_VERSION = "voice_coach.d07_calibration_agreement_report.v1"
 LOCKED_REPORT_SCHEMA_VERSION = "voice_coach.d07_locked_evaluation_report.v1"
 COMPLETION_SCHEMA_VERSION = "voice_coach.d07_gold_completion_attestation.v1"
-INSTITUTIONAL_APPROVAL_SCHEMA_VERSION = (
-    "voice_coach.d07_institutional_expert_approval.v1"
-)
 REVIEWER_ATTESTATION_SCHEMA_VERSION = "voice_coach.d07_reviewer_attestation_manifest.v1"
 PREREGISTRATION_SCHEMA_VERSION = "voice_coach.d07_preregistration.v1"
 LOCKED_AUTHORIZATION_SCHEMA_VERSION = "voice_coach.d07_locked_access_authorization.v1"
-G04_PROGRESS_SCHEMA_VERSION = "voice_coach.alignment_review_report.v1"
-G04_COMPLETION_SCHEMA_VERSION = "voice_coach.g04_alignment_completion_attestation.v1"
-
 CALIBRATION_COUNT = 800
 MINIMUM_TOTAL_COUNT = 1000
 MAXIMUM_TOTAL_COUNT = 2000
@@ -111,15 +123,12 @@ ERROR_TYPES = (
 
 EXPECTED_EXECUTION_ORDER = (
     "validate_d07_static_sources_schemas_templates_and_g04_aggregate_separation",
-    "require_exact_h00_approval_and_attestation_sha_before_path_resolution",
-    "deep_validate_actual_h00_approval_without_restricted_document_resolution",
-    "validate_d07_specific_institutional_approval",
     "validate_two_primary_reviewers_and_one_adjudicator_attestations",
     "validate_frozen_d07_preregistration_without_tbd",
     "stop_before_d1_item_r1_locator_r0_audio_rating_or_output_resolution",
     "separate_executor_calibration_800_independent_ratings_only",
     "validate_calibration_agreement_gate_or_require_retraining_and_separate_resample",
-    "validate_g04_completion_as_distinct_240_item_stage",
+    "validate_g04_completion_as_distinct_t43_i30_stage",
     "validate_one_shot_locked_expert_access_authorization",
     "separate_executor_locked_test_up_to_1200_without_rubric_or_primary_change",
     "validate_two_original_and_adjudicated_sensitivity_reports",
@@ -131,21 +140,23 @@ SOURCE_PATHS = (
     "configs/expert_evaluation/d07_expert_rating_manifest_v1.schema.json",
     "configs/expert_evaluation/d07_gold_completion_attestation_v1.schema.json",
     "configs/expert_evaluation/d07_gold_item_manifest_v1.schema.json",
-    "configs/expert_evaluation/d07_institutional_expert_approval_v1.template.json",
     "configs/expert_evaluation/d07_locked_access_authorization_v1.template.json",
     "configs/expert_evaluation/d07_locked_evaluation_report_v1.schema.json",
     "configs/expert_evaluation/d07_preregistration_v1.template.json",
     "configs/expert_evaluation/d07_reviewer_attestation_v1.template.json",
+    "configs/expert_evaluation/g04_amended_completion_attestation_v1.schema.json",
+    "configs/expert_evaluation/g04_amended_progress_v1.schema.json",
+    "configs/expert_evaluation/g04_t43_manifest_v1.schema.json",
     "configs/coaching/korean_error_advice_ontology_v1.json",
-    "configs/experiments/h00_human_research_approval_v1.yaml",
     "configs/experiments/wavlm_s108_no_locked_dry_run_v1.yaml",
-    "data/processed/aihub71490/manifests/aihub71490_manual_alignment_review_progress.json",
+    "artifacts/evaluation/g04_amended_progress_v1.json",
     "docs/constraints/AIHUB71490_MANUAL_ALIGNMENT_AUDIT_KO.md",
     "docs/constraints/DATA_PRIVACY_BOUNDARY_KO.md",
+    "docs/constraints/G04_TARGETED_PHONE_AUDIT_AMENDMENT_KO.md",
     "docs/LOCAL_ALIGNMENT_REVIEW_UI_KO.md",
     "scripts/prepare_d07_independent_expert_gold.py",
     "src/voice_coach/evaluation/d07_expert_gold_contract.py",
-    "src/voice_coach/human_research/h00_approval_contract.py",
+    "src/voice_coach/evaluation/g04_amended_contract.py",
     "src/voice_coach/training/wavlm_s108_dry_run.py",
 )
 
@@ -154,15 +165,12 @@ TOP_LEVEL_KEYS = {
     "experiment",
     "canonical_sources",
     "g04_separation",
-    "predecessor_h00",
-    "institutional_expert_approval",
     "reviewer_attestations",
     "preregistration",
     "sampling_contract",
     "rating_contract",
     "calibration_agreement",
     "locked_test_contract",
-    "privacy_and_non_execution",
     "execution_order",
     "outputs",
 }
@@ -285,18 +293,6 @@ class AccessAudit:
     g04_progress_aggregate_read_count: int = 0
     g04_ui_state_path_resolution_count: int = 0
     g04_ui_state_read_count: int = 0
-    h00_module_load_count: int = 0
-    h00_approval_path_resolution_count: int = 0
-    h00_approval_read_attempt_count: int = 0
-    h00_approval_read_count: int = 0
-    h00_attestation_path_resolution_count: int = 0
-    h00_attestation_read_attempt_count: int = 0
-    h00_attestation_read_count: int = 0
-    h00_restricted_document_path_resolution_count: int = 0
-    h00_restricted_document_read_count: int = 0
-    institutional_approval_path_resolution_count: int = 0
-    institutional_approval_read_attempt_count: int = 0
-    institutional_approval_read_count: int = 0
     reviewer_attestation_path_resolution_count: int = 0
     reviewer_attestation_read_attempt_count: int = 0
     reviewer_attestation_read_count: int = 0
@@ -357,18 +353,6 @@ class StaticValidation:
 
 
 @dataclass(frozen=True, slots=True)
-class H00Evidence:
-    approval_sha256: str
-    attestation_sha256: str
-
-
-@dataclass(frozen=True, slots=True)
-class InstitutionalApprovalEvidence:
-    sha256: str
-    payload: Mapping[str, Any]
-
-
-@dataclass(frozen=True, slots=True)
 class ReviewerEvidence:
     sha256: str
     qualification_policy_sha256: str
@@ -401,9 +385,6 @@ class ItemManifestEvidence:
 class PreflightResult:
     status: str
     config_sha256: str
-    h00_approval_sha256: str
-    h00_attestation_sha256: str
-    institutional_approval_sha256: str
     reviewer_attestation_sha256: str
     preregistration_sha256: str
     audit: Mapping[str, int]
@@ -695,31 +676,6 @@ def _verify_snapshot(workspace_root: Path, snapshot: FileSnapshot) -> None:
         raise D07ContractError(f"TOCTOU drift: {snapshot.relative_path}")
 
 
-def _load_module(
-    *,
-    workspace_root: Path,
-    relative: str,
-    expected_sha256: str,
-) -> ModuleType:
-    data, snapshot = _read_file(workspace_root, relative, "pinned H00 contract")
-    if snapshot.sha256 != expected_sha256:
-        raise D07ContractError("pinned H00 contract SHA-256 differs")
-    module_name = "_voice_coach_d07_pinned_h00_contract"
-    module = ModuleType(module_name)
-    module.__file__ = str(workspace_root / relative)
-    module.__package__ = ""
-    sys.modules[module_name] = module
-    try:
-        exec(
-            compile(data, str(workspace_root / relative), "exec"),
-            module.__dict__,
-        )
-    except Exception as exc:
-        sys.modules.pop(module_name, None)
-        raise D07ContractError(f"cannot load pinned H00 contract: {exc}") from exc
-    return module
-
-
 def _validate_schema(
     payload: Mapping[str, Any],
     *,
@@ -769,37 +725,11 @@ def _validate_template(
 
 
 def _validate_g04_progress(payload: Mapping[str, Any]) -> None:
-    _expect(
-        payload.get("schema_version"),
-        G04_PROGRESS_SCHEMA_VERSION,
-        "G04 progress schema",
-    )
-    _expect(payload.get("status"), "incomplete", "G04 current status")
-    _expect(payload.get("expected_count"), 240, "G04 expected count")
-    _expect(payload.get("completed_count"), 0, "G04 completed count")
-    _expect(payload.get("remaining_count"), 240, "G04 remaining count")
-    _expect(payload.get("completion_fraction"), 0.0, "G04 fraction")
-    _expect(payload.get("correct_count"), 0, "G04 correct count")
-    _expect(payload.get("incorrect_count"), 0, "G04 incorrect count")
-    _expect(payload.get("alignment_accuracy"), None, "G04 incomplete accuracy")
-    _expect(payload.get("minimum_accuracy"), 0.95, "G04 gate")
-    _expect(payload.get("reviewer_count"), 0, "G04 reviewer count")
-    source = _mapping(payload.get("source"), "G04 source")
-    _expect(source.get("review_state_sha256"), None, "G04 state unopened")
-    export = _mapping(payload.get("export"), "G04 export")
-    _expect(export.get("written"), False, "G04 export boundary")
-    _expect(export.get("sha256"), None, "G04 export hash")
-    privacy = _mapping(payload.get("privacy"), "G04 privacy")
-    for field in (
-        "item_ids_namespaced_sha256_only",
-        "reviewer_ids_namespaced_sha256_only",
-    ):
-        _expect(privacy.get(field), True, f"G04 privacy {field}")
-    _expect(
-        privacy.get("raw_paths_or_utterance_ids_exported"),
-        False,
-        "G04 path export",
-    )
+    try:
+        validate_amended_progress(payload)
+    except G04AmendedContractError as exc:
+        raise D07ContractError(f"G04 amended progress invalid: {exc}") from exc
+    _expect(payload.get("consumer_migration_complete"), True, "G04 migration")
 
 
 def _validate_config_values(config: Mapping[str, Any]) -> None:
@@ -828,9 +758,13 @@ def _validate_config_values(config: Mapping[str, Any]) -> None:
     _expect(canonical.get("strict_sha256"), True, "strict source hashes")
 
     g04 = _mapping(config.get("g04_separation"), "g04_separation")
-    _expect(g04.get("stage"), "G04_distinct_alignment_review", "G04 stage")
-    _expect(g04.get("expected_count"), 240, "G04 count")
-    _expect(g04.get("current_completed_count"), 0, "G04 current progress")
+    _expect(g04.get("stage"), "G04_amended_T43_I30", "G04 stage")
+    _expect(g04.get("expected_t43_count"), EXPECTED_T43_COUNT, "G04 T43 count")
+    _expect(g04.get("expected_i30_count"), EXPECTED_I30_COUNT, "G04 I30 count")
+    _expect(g04.get("current_t43_completed_count"), 0, "G04 T43 progress")
+    _expect(g04.get("current_i30_completed_count"), 0, "G04 I30 progress")
+    _expect(g04.get("t43_accuracy_denominator_allowed"), False, "G04 T43 role")
+    _expect(g04.get("i30_phone_accuracy_gate"), 0.95, "G04 I30 gate")
     _expect(g04.get("d07_item_or_rating_reuse_allowed"), False, "G04 reuse")
     _expect(g04.get("restricted_ui_state_access_allowed"), False, "G04 state access")
     _relative_string(g04.get("progress_aggregate_path"), "G04 progress path")
@@ -840,30 +774,6 @@ def _validate_config_values(config: Mapping[str, Any]) -> None:
     )
     if g04_completion_sha != TBD_G04_COMPLETION:
         _sha256(g04_completion_sha, "G04 completion SHA")
-
-    h00 = _mapping(config.get("predecessor_h00"), "predecessor_h00")
-    for field in ("config_path", "contract_path"):
-        _relative_string(h00.get(field), f"H00 {field}")
-    for field, marker in (
-        ("approval_sha256", TBD_H00_APPROVAL),
-        ("attestation_sha256", TBD_H00_ATTESTATION),
-    ):
-        value = _string(h00.get(field), f"H00 {field}")
-        if value != marker:
-            _sha256(value, f"H00 {field}")
-
-    approval = _mapping(
-        config.get("institutional_expert_approval"),
-        "institutional_expert_approval",
-    )
-    _expect(
-        approval.get("required_schema_version"),
-        INSTITUTIONAL_APPROVAL_SCHEMA_VERSION,
-        "D07 approval schema",
-    )
-    approval_sha = _string(approval.get("approved_artifact_sha256"), "D07 approval SHA")
-    if approval_sha != TBD_EXTERNAL_ATTESTATION:
-        _sha256(approval_sha, "D07 approval SHA")
 
     reviewer = _mapping(config.get("reviewer_attestations"), "reviewers")
     _expect(
@@ -956,18 +866,6 @@ def _validate_config_values(config: Mapping[str, Any]) -> None:
         "sensitivity bases",
     )
 
-    privacy = _mapping(config.get("privacy_and_non_execution"), "privacy")
-    for field in (
-        "r0_audio_access_allowed_in_this_package",
-        "r1_locator_access_allowed_in_this_package",
-        "d1_item_or_rating_access_allowed_in_this_package",
-        "g04_ui_state_access_allowed",
-        "locked_audio_access_allowed_in_this_package",
-        "reviewer_recruitment_or_rating_allowed",
-        "model_gpu_network_access_allowed",
-        "output_write_allowed",
-    ):
-        _expect(privacy.get(field), False, f"privacy {field}")
     _expect(
         tuple(_list(config.get("execution_order"), "execution order")),
         EXPECTED_EXECUTION_ORDER,
@@ -1057,6 +955,21 @@ def validate_static_config(
             COMPLETION_SCHEMA_VERSION,
             "D07 completion schema",
         ),
+        (
+            "configs/expert_evaluation/g04_t43_manifest_v1.schema.json",
+            T43_MANIFEST_SCHEMA_VERSION,
+            "G04 T43 manifest schema",
+        ),
+        (
+            "configs/expert_evaluation/g04_amended_progress_v1.schema.json",
+            G04_PROGRESS_SCHEMA_VERSION,
+            "G04 amended progress schema",
+        ),
+        (
+            "configs/expert_evaluation/g04_amended_completion_attestation_v1.schema.json",
+            G04_COMPLETION_SCHEMA_VERSION,
+            "G04 amended completion schema",
+        ),
     )
     for path, version, name in schema_specs:
         _validate_schema(
@@ -1065,11 +978,6 @@ def validate_static_config(
             name=name,
         )
     template_specs = (
-        (
-            "configs/expert_evaluation/d07_institutional_expert_approval_v1.template.json",
-            INSTITUTIONAL_APPROVAL_SCHEMA_VERSION,
-            "D07 institutional template",
-        ),
         (
             "configs/expert_evaluation/d07_reviewer_attestation_v1.template.json",
             REVIEWER_ATTESTATION_SCHEMA_VERSION,
@@ -1093,10 +1001,7 @@ def validate_static_config(
             name=name,
         )
 
-    progress_path = (
-        "data/processed/aihub71490/manifests/"
-        "aihub71490_manual_alignment_review_progress.json"
-    )
+    progress_path = "artifacts/evaluation/g04_amended_progress_v1.json"
     progress = _mapping(json.loads(payloads[progress_path]), "G04 progress aggregate")
     _validate_g04_progress(progress)
     access.g04_progress_aggregate_read_count += 1
@@ -1115,24 +1020,6 @@ def validate_static_config(
             "progress_aggregate_path",
             "progress_aggregate_sha256",
             progress_path,
-        ),
-        (
-            "predecessor_h00",
-            "config_path",
-            "config_sha256",
-            "configs/experiments/h00_human_research_approval_v1.yaml",
-        ),
-        (
-            "predecessor_h00",
-            "contract_path",
-            "contract_sha256",
-            "src/voice_coach/human_research/h00_approval_contract.py",
-        ),
-        (
-            "institutional_expert_approval",
-            "template_path",
-            "template_sha256",
-            "configs/expert_evaluation/d07_institutional_expert_approval_v1.template.json",
         ),
         (
             "reviewer_attestations",
@@ -1184,7 +1071,6 @@ def validate_static_config(
         "rating_contract": config["rating_contract"],
         "calibration_agreement": config["calibration_agreement"],
         "locked_test_contract": config["locked_test_contract"],
-        "privacy_and_non_execution": config["privacy_and_non_execution"],
         "execution_order": config["execution_order"],
     }
     return StaticValidation(
@@ -1204,165 +1090,14 @@ def _verify_snapshots(
         audit.source_toctou_verification_count += 1
 
 
-def _deep_validate_h00(
-    *,
-    workspace_root: Path,
-    config: Mapping[str, Any],
-    audit: AccessAudit,
-) -> H00Evidence:
-    section = _mapping(config.get("predecessor_h00"), "predecessor_h00")
-    approval_sha = _string(section.get("approval_sha256"), "H00 approval SHA")
-    attestation_sha = _string(section.get("attestation_sha256"), "H00 attestation SHA")
-    if approval_sha == TBD_H00_APPROVAL or attestation_sha == TBD_H00_ATTESTATION:
-        raise D07ContractError(
-            "H00 actual approval/attestation is unresolved",
-            stage="h00_approval",
-            audit=audit,
-        )
-    _sha256(approval_sha, "H00 approval SHA")
-    _sha256(attestation_sha, "H00 attestation SHA")
-    audit.h00_module_load_count += 1
-    try:
-        module = _load_module(
-            workspace_root=workspace_root,
-            relative=_relative_string(
-                section.get("contract_path"), "H00 contract path"
-            ),
-            expected_sha256=_sha256(section.get("contract_sha256"), "H00 contract SHA"),
-        )
-        h00_config_path = workspace_root / _relative_string(
-            section.get("config_path"),
-            "H00 config path",
-        )
-        h00_config = module.load_config(h00_config_path)
-        official = _mapping(h00_config.get("official_approval"), "pinned H00 approval")
-        attestation = _mapping(
-            h00_config.get("official_document_attestation"),
-            "pinned H00 attestation",
-        )
-        _expect(official.get("approval_sha256"), approval_sha, "H00 approval binding")
-        _expect(
-            attestation.get("attestation_sha256"),
-            attestation_sha,
-            "H00 attestation binding",
-        )
-        result = module.run_full_preflight(
-            workspace_root=workspace_root,
-            config_path=h00_config_path,
-            config=h00_config,
-        )
-    except Exception as exc:
-        raise D07ContractError(
-            f"H00 deep validation failed: {exc}",
-            stage="h00_approval",
-            audit=audit,
-        ) from exc
-    h00_audit = result.audit
-    audit.h00_approval_path_resolution_count += int(
-        h00_audit["approval_path_resolution_count"]
-    )
-    audit.h00_approval_read_attempt_count += int(
-        h00_audit["approval_read_attempt_count"]
-    )
-    audit.h00_approval_read_count += int(h00_audit["approval_read_count"])
-    audit.h00_attestation_path_resolution_count += int(
-        h00_audit["attestation_path_resolution_count"]
-    )
-    audit.h00_attestation_read_attempt_count += int(
-        h00_audit["attestation_read_attempt_count"]
-    )
-    audit.h00_attestation_read_count += int(h00_audit["attestation_read_count"])
-    audit.h00_restricted_document_path_resolution_count += int(
-        h00_audit["restricted_locator_path_resolution_count"]
-    )
-    audit.h00_restricted_document_read_count += int(
-        h00_audit["restricted_document_read_count"]
-    )
-    _expect(result.approval_sha256, approval_sha, "H00 deep approval SHA")
-    _expect(result.attestation_sha256, attestation_sha, "H00 deep attestation SHA")
-    return H00Evidence(
-        approval_sha256=approval_sha,
-        attestation_sha256=attestation_sha,
-    )
-
-
-def validate_institutional_approval_payload(
-    payload: Mapping[str, Any],
-    *,
-    h00: H00Evidence,
-) -> Mapping[str, Any]:
-    _reject_nonfinite_tree(payload, "D07 institutional approval")
-    _reject_sensitive_payload(payload, "D07 institutional approval")
-    keys = {
-        "schema_version",
-        "approval_id",
-        "status",
-        "h00_approval_sha256",
-        "h00_official_document_attestation_sha256",
-        "d07_protocol_sha256",
-        "institutional_scope_receipt_sha256",
-        "existing_restricted_audio_expert_rating_approved",
-        "calibration_800_approved",
-        "locked_test_up_to_1200_expert_rating_approved",
-        "two_independent_reviewers_approved",
-        "disagreement_only_adjudicator_approved",
-        "consent_or_lawful_basis_verified",
-        "withdrawal_process_verified",
-        "purpose_limitation_verified",
-        "retention_and_deletion_verified",
-        "access_logging_verified",
-        "restricted_redistribution_only",
-        "raw_audio_export_allowed",
-        "privacy_zone",
-    }
-    _expect_keys(payload, keys, "D07 institutional approval")
-    _expect(
-        payload.get("schema_version"),
-        INSTITUTIONAL_APPROVAL_SCHEMA_VERSION,
-        "D07 approval schema",
-    )
-    _safe_id(payload.get("approval_id"), "D07 approval ID")
-    _expect(payload.get("status"), "approved", "D07 approval status")
-    _expect(payload.get("h00_approval_sha256"), h00.approval_sha256, "H00 approval")
-    _expect(
-        payload.get("h00_official_document_attestation_sha256"),
-        h00.attestation_sha256,
-        "H00 attestation",
-    )
-    for field in ("d07_protocol_sha256", "institutional_scope_receipt_sha256"):
-        _sha256(payload.get(field), f"D07 approval {field}")
-    for field in (
-        "existing_restricted_audio_expert_rating_approved",
-        "calibration_800_approved",
-        "locked_test_up_to_1200_expert_rating_approved",
-        "two_independent_reviewers_approved",
-        "disagreement_only_adjudicator_approved",
-        "consent_or_lawful_basis_verified",
-        "withdrawal_process_verified",
-        "purpose_limitation_verified",
-        "retention_and_deletion_verified",
-        "access_logging_verified",
-        "restricted_redistribution_only",
-    ):
-        _expect(payload.get(field), True, f"D07 approval {field}")
-    _expect(payload.get("raw_audio_export_allowed"), False, "raw audio export")
-    _expect(payload.get("privacy_zone"), "C1_public_attestation", "approval zone")
-    if _contains_tbd(payload):
-        raise D07ContractError("D07 institutional approval contains TBD")
-    return payload
-
-
 def validate_reviewer_attestation_payload(
     payload: Mapping[str, Any],
-    *,
-    institutional_approval_sha256: str,
 ) -> ReviewerEvidence:
     _reject_nonfinite_tree(payload, "D07 reviewer attestation")
     _reject_sensitive_payload(payload, "D07 reviewer attestation")
     keys = {
         "schema_version",
         "status",
-        "d07_institutional_approval_sha256",
         "reviewer_count",
         "primary_reviewer_count",
         "adjudicator_count",
@@ -1383,11 +1118,6 @@ def validate_reviewer_attestation_payload(
         "reviewer schema",
     )
     _expect(payload.get("status"), "approved", "reviewer status")
-    _expect(
-        payload.get("d07_institutional_approval_sha256"),
-        institutional_approval_sha256,
-        "reviewer approval binding",
-    )
     _expect(payload.get("reviewer_count"), 3, "reviewer count")
     _expect(payload.get("primary_reviewer_count"), 2, "primary reviewer count")
     _expect(payload.get("adjudicator_count"), 1, "adjudicator count")
@@ -1496,8 +1226,6 @@ def validate_reviewer_attestation_payload(
 def validate_preregistration_payload(
     payload: Mapping[str, Any],
     *,
-    h00: H00Evidence,
-    institutional_approval_sha256: str,
     reviewer: ReviewerEvidence,
     g04_progress_sha256: str,
     ontology_sha256: str,
@@ -1508,9 +1236,6 @@ def validate_preregistration_payload(
         "schema_version",
         "status",
         "frozen",
-        "h00_approval_sha256",
-        "h00_attestation_sha256",
-        "d07_institutional_approval_sha256",
         "reviewer_attestation_sha256",
         "g04_progress_aggregate_sha256",
         "sampling",
@@ -1528,19 +1253,6 @@ def validate_preregistration_payload(
     )
     _expect(payload.get("status"), "approved", "prereg status")
     _expect(payload.get("frozen"), True, "prereg frozen")
-    _expect(
-        payload.get("h00_approval_sha256"), h00.approval_sha256, "prereg H00 approval"
-    )
-    _expect(
-        payload.get("h00_attestation_sha256"),
-        h00.attestation_sha256,
-        "prereg H00 attestation",
-    )
-    _expect(
-        payload.get("d07_institutional_approval_sha256"),
-        institutional_approval_sha256,
-        "prereg institutional approval",
-    )
     _expect(
         payload.get("reviewer_attestation_sha256"),
         reviewer.sha256,
@@ -1729,8 +1441,6 @@ def validate_preregistration_payload(
 def validate_item_manifest_payload(
     payload: Mapping[str, Any],
     *,
-    h00: H00Evidence,
-    institutional_approval_sha256: str,
     reviewer_sha256: str,
     preregistration: PreregistrationEvidence,
     g04_progress_sha256: str,
@@ -1740,9 +1450,6 @@ def validate_item_manifest_payload(
     keys = {
         "schema_version",
         "manifest_id",
-        "h00_approval_sha256",
-        "h00_attestation_sha256",
-        "d07_institutional_approval_sha256",
         "reviewer_attestation_sha256",
         "preregistration_sha256",
         "g04_progress_aggregate_sha256",
@@ -1759,9 +1466,6 @@ def validate_item_manifest_payload(
     if not re.fullmatch(r"d07items_[0-9a-f]{32}", manifest_id):
         raise D07ContractError("invalid D07 item manifest ID")
     bindings = {
-        "h00_approval_sha256": h00.approval_sha256,
-        "h00_attestation_sha256": h00.attestation_sha256,
-        "d07_institutional_approval_sha256": institutional_approval_sha256,
         "reviewer_attestation_sha256": reviewer_sha256,
         "preregistration_sha256": preregistration.sha256,
         "g04_progress_aggregate_sha256": g04_progress_sha256,
@@ -2134,51 +1838,10 @@ def validate_calibration_report_payload(
 def validate_g04_completion_payload(payload: Mapping[str, Any]) -> Mapping[str, Any]:
     _reject_nonfinite_tree(payload, "G04 completion")
     _reject_sensitive_payload(payload, "G04 completion")
-    keys = {
-        "schema_version",
-        "status",
-        "aggregate_only",
-        "contains_identifiers",
-        "contains_rows",
-        "contains_audio",
-        "contains_labels",
-        "contains_predictions",
-        "locked_access_count",
-        "expected_count",
-        "completed_count",
-        "correct_count",
-        "alignment_accuracy",
-        "scorer_status",
-        "privacy_safe_report_sha256",
-        "reviewer_qualification_confirmed",
-        "research_lead_approved",
-    }
-    _expect_keys(payload, keys, "G04 completion")
-    _expect(payload.get("schema_version"), G04_COMPLETION_SCHEMA_VERSION, "G04 schema")
-    _expect(payload.get("status"), "passed", "G04 status")
-    _expect(payload.get("aggregate_only"), True, "G04 aggregate")
-    for field in (
-        "contains_identifiers",
-        "contains_rows",
-        "contains_audio",
-        "contains_labels",
-        "contains_predictions",
-    ):
-        _expect(payload.get(field), False, f"G04 {field}")
-    _expect(payload.get("locked_access_count"), 0, "G04 locked access")
-    _expect(payload.get("expected_count"), 240, "G04 expected count")
-    _expect(payload.get("completed_count"), 240, "G04 completed count")
-    correct = _integer(
-        payload.get("correct_count"), "G04 correct", minimum=228, maximum=240
-    )
-    accuracy = _unit(payload.get("alignment_accuracy"), "G04 accuracy")
-    _expect(accuracy, Decimal(correct) / Decimal(240), "G04 accuracy/count")
-    if accuracy < Decimal("0.95"):
-        raise D07ContractError("G04 accuracy gate failed")
-    _expect(payload.get("scorer_status"), "passed", "G04 scorer")
-    _sha256(payload.get("privacy_safe_report_sha256"), "G04 report SHA")
-    _expect(payload.get("reviewer_qualification_confirmed"), True, "G04 reviewer")
-    _expect(payload.get("research_lead_approved"), True, "G04 research lead")
+    try:
+        validate_completion_attestation(payload)
+    except G04AmendedContractError as exc:
+        raise D07ContractError(f"G04 amended completion invalid: {exc}") from exc
     return payload
 
 
@@ -2402,9 +2065,6 @@ def validate_completion_attestation_payload(
         "research_lead_approved",
         "calibration_gold_sha256",
         "sealed_locked_gold_sha256",
-        "h00_approval_sha256",
-        "h00_attestation_sha256",
-        "d07_institutional_approval_sha256",
         "reviewer_attestation_sha256",
         "preregistration_sha256",
         "calibration_report_sha256",
@@ -2463,9 +2123,6 @@ def validate_completion_attestation_payload(
     for field in (
         "calibration_gold_sha256",
         "sealed_locked_gold_sha256",
-        "h00_approval_sha256",
-        "h00_attestation_sha256",
-        "d07_institutional_approval_sha256",
         "reviewer_attestation_sha256",
         "calibration_report_sha256",
         "g04_completion_attestation_sha256",
@@ -2477,46 +2134,10 @@ def validate_completion_attestation_payload(
     return payload
 
 
-def _read_institutional_approval(
-    *,
-    workspace_root: Path,
-    config: Mapping[str, Any],
-    h00: H00Evidence,
-    audit: AccessAudit,
-) -> InstitutionalApprovalEvidence:
-    section = _mapping(
-        config.get("institutional_expert_approval"),
-        "institutional_expert_approval",
-    )
-    expected_sha = _string(section.get("approved_artifact_sha256"), "D07 approval SHA")
-    if expected_sha == TBD_EXTERNAL_ATTESTATION:
-        raise D07ContractError(
-            "D07 institutional approval is TBD_EXTERNAL_ATTESTATION",
-            stage="institutional_approval",
-            audit=audit,
-        )
-    _sha256(expected_sha, "D07 approval SHA")
-    audit.institutional_approval_path_resolution_count += 1
-    audit.institutional_approval_read_attempt_count += 1
-    payload, snapshot = _read_exact_json(
-        workspace_root=workspace_root,
-        relative=_relative_string(
-            section.get("approved_artifact_path"), "D07 approval path"
-        ),
-        expected_sha256=expected_sha,
-        name="D07 institutional approval",
-    )
-    audit.institutional_approval_read_count += 1
-    validate_institutional_approval_payload(payload, h00=h00)
-    _verify_snapshot(workspace_root, snapshot)
-    return InstitutionalApprovalEvidence(sha256=snapshot.sha256, payload=payload)
-
-
 def _read_reviewers(
     *,
     workspace_root: Path,
     config: Mapping[str, Any],
-    approval: InstitutionalApprovalEvidence,
     audit: AccessAudit,
 ) -> ReviewerEvidence:
     section = _mapping(config.get("reviewer_attestations"), "reviewers")
@@ -2539,10 +2160,7 @@ def _read_reviewers(
         name="D07 reviewer attestation",
     )
     audit.reviewer_attestation_read_count += 1
-    evidence = validate_reviewer_attestation_payload(
-        payload,
-        institutional_approval_sha256=approval.sha256,
-    )
+    evidence = validate_reviewer_attestation_payload(payload)
     _expect(evidence.sha256, snapshot.sha256, "reviewer canonical/file SHA")
     _verify_snapshot(workspace_root, snapshot)
     return evidence
@@ -2552,8 +2170,6 @@ def _read_preregistration(
     *,
     workspace_root: Path,
     config: Mapping[str, Any],
-    h00: H00Evidence,
-    approval: InstitutionalApprovalEvidence,
     reviewer: ReviewerEvidence,
     audit: AccessAudit,
 ) -> PreregistrationEvidence:
@@ -2581,8 +2197,6 @@ def _read_preregistration(
     )
     evidence = validate_preregistration_payload(
         payload,
-        h00=h00,
-        institutional_approval_sha256=approval.sha256,
         reviewer=reviewer,
         g04_progress_sha256=_sha256(
             g04.get("progress_aggregate_sha256"),
@@ -2601,7 +2215,11 @@ def run_full_preflight(
     config_path: Path,
     config: Mapping[str, Any],
 ) -> PreflightResult:
-    """Validate external authorization and stop before D1/R1/R0 paths."""
+    """Validate the reviewer and design chain, stopping before D1/R1/R0 paths.
+
+    No approval, consent or privacy attestation is checked here any more; see the
+    module docstring.
+    """
 
     audit = AccessAudit()
     static = validate_static_config(
@@ -2611,37 +2229,20 @@ def run_full_preflight(
         audit=audit,
     )
     _verify_snapshots(workspace_root, static.source_snapshots, audit)
-    h00 = _deep_validate_h00(
-        workspace_root=workspace_root,
-        config=config,
-        audit=audit,
-    )
-    approval = _read_institutional_approval(
-        workspace_root=workspace_root,
-        config=config,
-        h00=h00,
-        audit=audit,
-    )
     reviewer = _read_reviewers(
         workspace_root=workspace_root,
         config=config,
-        approval=approval,
         audit=audit,
     )
     prereg = _read_preregistration(
         workspace_root=workspace_root,
         config=config,
-        h00=h00,
-        approval=approval,
         reviewer=reviewer,
         audit=audit,
     )
     return PreflightResult(
         status="ready_for_separate_registered_d07_calibration_executor",
         config_sha256=static.config_sha256,
-        h00_approval_sha256=h00.approval_sha256,
-        h00_attestation_sha256=h00.attestation_sha256,
-        institutional_approval_sha256=approval.sha256,
         reviewer_attestation_sha256=reviewer.sha256,
         preregistration_sha256=prereg.sha256,
         audit=audit.as_dict(),
@@ -2664,8 +2265,10 @@ def config_only_result(
         "policy_sha256": static.policy_sha256,
         "source_pin_count": len(static.source_snapshots),
         **access.as_dict(),
-        "g04_current_completed_count": 0,
-        "g04_expected_count": 240,
+        "g04_t43_completed_count": 0,
+        "g04_t43_expected_count": EXPECTED_T43_COUNT,
+        "g04_i30_completed_count": 0,
+        "g04_i30_expected_count": EXPECTED_I30_COUNT,
         "actual_expert_count": 0,
         "actual_rating_count": 0,
         "actual_locked_access_count": 0,
@@ -2684,8 +2287,10 @@ def failure_result(error: D07ContractError) -> Mapping[str, Any]:
         "stage": error.stage,
         "error": str(error),
         **audit.as_dict(),
-        "g04_current_completed_count": 0,
-        "g04_expected_count": 240,
+        "g04_t43_completed_count": 0,
+        "g04_t43_expected_count": EXPECTED_T43_COUNT,
+        "g04_i30_completed_count": 0,
+        "g04_i30_expected_count": EXPECTED_I30_COUNT,
         "actual_expert_count": 0,
         "actual_rating_count": 0,
         "actual_locked_access_count": 0,

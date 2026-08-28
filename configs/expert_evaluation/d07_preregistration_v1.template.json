@@ -2,9 +2,6 @@
   "schema_version": "voice_coach.d07_preregistration.v1",
   "status": "TBD_PREREGISTRATION",
   "frozen": false,
-  "h00_approval_sha256": "TBD_PREREGISTRATION",
-  "h00_attestation_sha256": "TBD_PREREGISTRATION",
-  "d07_institutional_approval_sha256": "TBD_PREREGISTRATION",
   "reviewer_attestation_sha256": "TBD_PREREGISTRATION",
   "g04_progress_aggregate_sha256": "TBD_PREREGISTRATION",
   "sampling": {

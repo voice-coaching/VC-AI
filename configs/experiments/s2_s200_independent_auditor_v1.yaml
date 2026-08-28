@@ -21,7 +21,7 @@ canonical_sources:
   access_scope: C1_code_and_policy_only
   pins:
     - path: docs/한국어 AI 보이스 코칭을 위한 폐쇄루프 TTS 아키텍처.pdf
-      sha256: eb403f04e9df77932baba9c671c4e7ee6b2adc2a7eb31bbdc43970e321907ebb
+      sha256: 2e60d812290ad0b8d7dc0fd689de6b7cf4a0fbecde7e5a1612f85a2e7a18b4dd
     - path: docs/IMPLEMENTATION_PLAN_KO.md
       sha256: 836ea2b5a2db2bf3dcfb6ea4003c73c5240ae24bea9ea9af8531519f6a57e07a
     - path: docs/constraints/WP4_POST_S103_EXECUTION_CONTRACT_KO.md
@@ -35,7 +35,7 @@ canonical_sources:
     - path: docs/paper/RELATED_WORK_SOURCE_LEDGER_KO.md
       sha256: d37bf2ab5564c55f03dbb9e1974e9bf421274df9971b30d31bb54ff4909e44b6
     - path: pyproject.toml
-      sha256: c33af395f4f3a3c23b625219d4f0911de2c35b08d6ffecc2710a118766f17328
+      sha256: 20ede7c9fbd4eb047fdcd81a2732588756278842b757a1b9b44794befdc4d1da
     - path: requirements/scorer-lock-linux-aarch64-cu130.txt
       sha256: f6c5b10c1028506d7361c83ad1e9aae0b1fafcf34f4e918e5b7123c51fac8cf2
     - path: src/voice_coach/training/s2_s200_auditor_contract.py

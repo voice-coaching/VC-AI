@@ -27,6 +27,10 @@ scorer = [
   "torch==2.12.1",
   "transformers==5.14.1",
 ]
+visual = [
+  "mediapipe==1.0.1",
+  "numpy==2.5.1",
+]
 test = [
   "httpx==0.28.1",
   "pytest==9.1.1",
@@ -34,6 +38,13 @@ test = [
 
 [tool.setuptools.packages.find]
 where = ["src"]
+
+[tool.setuptools.package-data]
+"voice_coach.evaluation" = [
+  "g04_review_frontend/*.html",
+  "g04_review_frontend/*.css",
+  "g04_review_frontend/*.js",
+]
 
 [tool.pytest.ini_options]
 addopts = "-q"

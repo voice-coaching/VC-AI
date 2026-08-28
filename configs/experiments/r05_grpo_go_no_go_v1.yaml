@@ -31,11 +31,11 @@ canonical_sources:
     - path: scripts/prepare_r05_grpo_go_no_go.py
       sha256: 917b72f6429a80ced5db1f080b0cebb5d7ab33e6e6fc75318bf4be76b37e807d
     - path: configs/experiments/s2_s202_independent_auditor_v1.yaml
-      sha256: ca24a8814d4be1f716ede947e2aa725cb141db0a5db10d75aa3096022bad3031
+      sha256: b70197a2a8ec8d9dcdded7ad1bec55d5810a151e67fa9de907a845a53828ec3c
     - path: src/voice_coach/training/s2_s202_auditor_contract.py
       sha256: 0ba78271b3d4d99ec3fff865e65bbe992428edfb587785021632677bc46fdaac
     - path: configs/experiments/s2_s203_expert_holdout_audit_v1.yaml
-      sha256: f6b4ee6dde2fe30761b7f48947e09d112a91f352b643421bd20f738d64815cd9
+      sha256: 11760e08076cc4162658c2776f8b02dbaef0c4800599619030cea1852632ea3f
     - path: src/voice_coach/training/s2_s203_holdout_contract.py
       sha256: 35ee786e59b247c28eb2cd06e5e58c11096cb4ad7944b74c0ab6950b5d2f578b
     - path: configs/experiments/learning_effect_power_v1.yaml
@@ -43,7 +43,7 @@ canonical_sources:
     - path: docs/IMPLEMENTATION_PLAN_KO.md
       sha256: 836ea2b5a2db2bf3dcfb6ea4003c73c5240ae24bea9ea9af8531519f6a57e07a
     - path: docs/paper/CLAIM_GAP_MAP_KO.md
-      sha256: d2c70053cab43de6e55929f688ba7fcb20ea9444ca054d5eebeaa8fe23dbf3a7
+      sha256: 5117751ef57c10e4266a3492d8764bada3fe0761d709a1f8bb614e4cc49305d3
     - path: docs/paper/RELATED_WORK_SOURCE_LEDGER_KO.md
       sha256: d37bf2ab5564c55f03dbb9e1974e9bf421274df9971b30d31bb54ff4909e44b6
 
@@ -118,7 +118,7 @@ predecessors:
     validation_order: 1
     deep_validation_required: true
     delegate_config_path: configs/experiments/s2_s202_independent_auditor_v1.yaml
-    delegate_config_sha256: ca24a8814d4be1f716ede947e2aa725cb141db0a5db10d75aa3096022bad3031
+    delegate_config_sha256: b70197a2a8ec8d9dcdded7ad1bec55d5810a151e67fa9de907a845a53828ec3c
     delegate_contract_path: src/voice_coach/training/s2_s202_auditor_contract.py
     delegate_contract_sha256: 0ba78271b3d4d99ec3fff865e65bbe992428edfb587785021632677bc46fdaac
     completion_commit_path: artifacts/experiments/aihub71490_wavlm_s108_final_s1_v1/commit.json
@@ -132,7 +132,7 @@ predecessors:
     validation_order: 2
     deep_validation_required: true
     static_config_path: configs/experiments/s2_s203_expert_holdout_audit_v1.yaml
-    static_config_sha256: f6b4ee6dde2fe30761b7f48947e09d112a91f352b643421bd20f738d64815cd9
+    static_config_sha256: 11760e08076cc4162658c2776f8b02dbaef0c4800599619030cea1852632ea3f
     static_contract_path: src/voice_coach/training/s2_s203_holdout_contract.py
     static_contract_sha256: 35ee786e59b247c28eb2cd06e5e58c11096cb4ad7944b74c0ab6950b5d2f578b
     completion_commit_path: TBD_PREREGISTRATION

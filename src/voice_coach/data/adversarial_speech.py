@@ -70,6 +70,7 @@ class LearnerSpeechRecord:
     gender_group: str
     proficiency_group: str
     error_presence: bool
+    speaker_id_sha256: str | None = None
 
 
 @dataclass(frozen=True, slots=True)
@@ -89,6 +90,7 @@ class NativeSpeechRecord:
     aspect_targets: tuple[float, float, float, float]
     aspect_mask: tuple[bool, bool, bool, bool]
     content_supervised: bool
+    speaker_id_sha256: str | None = None
 
 
 @dataclass(frozen=True, slots=True)
@@ -387,6 +389,7 @@ def load_aihub_learner_records(
     parquet = pq.ParquetFile(Path(manifest_path).resolve(strict=True))
     columns = [
         "id",
+        "speaker_id",
         "split",
         "audio_path",
         "duration_seconds",
@@ -456,6 +459,14 @@ def load_aihub_learner_records(
             error_presence = row.get("error_presence")
             if not isinstance(error_presence, bool):
                 raise AdversarialSpeechDataError("error_presence must be boolean")
+            speaker_id = row.get("speaker_id")
+            if speaker_id is not None and (
+                not isinstance(speaker_id, str)
+                or not _SHA256_PATTERN.fullmatch(speaker_id)
+            ):
+                raise AdversarialSpeechDataError(
+                    "speaker_id must be a lowercase SHA-256 when supplied"
+                )
             output.append(
                 LearnerSpeechRecord(
                     stable_id=stable_id,
@@ -470,6 +481,7 @@ def load_aihub_learner_records(
                     gender_group=str(row.get("gender") or "missing"),
                     proficiency_group=str(row.get("proficiency") or "missing"),
                     error_presence=error_presence,
+                    speaker_id_sha256=speaker_id,
                 )
             )
             if limit is not None and len(output) >= limit:
@@ -557,7 +569,7 @@ def load_native_speech_records(
         raise AdversarialSpeechDataError("limit must be positive")
 
     parquet = pq.ParquetFile(Path(manifest_path).resolve(strict=True))
-    columns = [
+    base_columns = [
         "stable_id",
         "source_id",
         "audio_storage",
@@ -572,6 +584,9 @@ def load_native_speech_records(
         "intended_role",
         "access_scope",
     ]
+    manifest_columns = set(parquet.schema_arrow.names)
+    has_speaker_metadata = "speaker_id" in manifest_columns
+    columns = base_columns + (["speaker_id"] if has_speaker_metadata else [])
     output: list[NativeSpeechRecord] = []
     exclusions: Counter[str] = Counter()
     source_rows = 0
@@ -645,6 +660,14 @@ def load_native_speech_records(
                     field_name=f"native_tokens_by_id[{stable_id!r}]",
                 )
                 content_supervised = True
+            speaker_id = row.get("speaker_id")
+            if speaker_id is not None and (
+                not isinstance(speaker_id, str)
+                or not _SHA256_PATTERN.fullmatch(speaker_id)
+            ):
+                raise AdversarialSpeechDataError(
+                    "native speaker_id must be a lowercase SHA-256 when supplied"
+                )
             output.append(
                 NativeSpeechRecord(
                     stable_id=stable_id,
@@ -667,6 +690,7 @@ def load_native_speech_records(
                     aspect_targets=(0.0, 0.0, 0.0, 0.0),
                     aspect_mask=(False, False, False, False),
                     content_supervised=content_supervised,
+                    speaker_id_sha256=speaker_id,
                 )
             )
             if limit is not None and len(output) >= limit:

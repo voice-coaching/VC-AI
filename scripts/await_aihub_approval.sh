@@ -50,11 +50,18 @@ for ((attempt = 1; attempt <= max_attempts; attempt++)); do
   exit_code=$?
   set -e
 
-  if [[ $exit_code -eq 0 ]]; then
+  # aihubshell exits 0 even when the server refuses with HTTP 502, so the exit
+  # code alone would report a completed download for a request that transferred
+  # nothing. The log is inspected first, and success additionally requires that a
+  # payload file actually appeared.
+  downloaded=$(find "$destination" -type f \
+    ! -name 'approval-watcher.log' ! -name 'approval-attempt-*.log' | head -n 1)
+  if [[ $exit_code -eq 0 && -n "$downloaded" ]] \
+    && ! grep -Eq 'HTTP status [45][0-9][0-9]|Download failed' "$attempt_log"; then
     printf '%s DOWNLOAD_COMPLETED\n' "$(date --iso-8601=seconds)" >> "$status_path"
     exit 0
   fi
-  if grep -Eq 'HTTP status 502|권한|인증|Authentication' "$attempt_log"; then
+  if grep -Eq 'HTTP status 502|권한|인증|Authentication|승인' "$attempt_log"; then
     printf '%s WAITING_FOR_PORTAL_APPROVAL\n' "$(date --iso-8601=seconds)" \
       >> "$status_path"
     if ((attempt < max_attempts)); then

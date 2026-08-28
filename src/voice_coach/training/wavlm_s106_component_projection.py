@@ -923,11 +923,11 @@ def production_projection_blockers(workspace_root: Path) -> tuple[str, ...]:
     for stage, relative in (
         (
             "s104",
-            "artifacts/experiments/aihub71490_wavlm_s104_adapter_v1/commit.json",
+            "artifacts/experiments/aihub71490_wavlm_s104_adapter_v2_current_code/commit.json",
         ),
         (
             "s105",
-            "artifacts/experiments/aihub71490_wavlm_s105_hierarchy_v1/commit.json",
+            "artifacts/experiments/aihub71490_wavlm_s105_hierarchy_v5_stream_cardinality/commit.json",
         ),
     ):
         if not (workspace_root / relative).is_file():

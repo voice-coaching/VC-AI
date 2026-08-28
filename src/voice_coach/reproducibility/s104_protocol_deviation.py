@@ -32,10 +32,26 @@ RECEIPT_COMMIT_SCHEMA_VERSION = (
     "voice_coach.s104_protocol_deviation_adjudication_commit.v1"
 )
 DEVIATION_ID = "DEV-S104-001"
-EXPERIMENT_ID = "aihub71490_wavlm_s104_adapter_v1"
-REGISTRY_RUN_ID = "aihub71490-wavlm-s104-adapter-v1-dev"
-S104_PID = 386918
-S104_CONFIG_RELATIVE = "configs/experiments/wavlm_s104_adapter_v1.yaml"
+
+# The deviation *event* — a single-line insertion into pyproject.toml, then its
+# exact reversion — happened inside the v1 training window.  That run was later
+# invalidated for an unrelated reason (DEV-S104-003: the v1 execution lock pins an
+# `intervals.py` digest the working tree no longer has), and the clean rerun is
+# the v2 experiment.  The two therefore cannot be collapsed: the event constants
+# below describe where the event occurred, and the terminal constants describe the
+# run whose committed result the adjudication actually binds.  Retargeting the
+# event constants at v2 would assert a transient edit that never happened there.
+EVENT_EXPERIMENT_ID = "aihub71490_wavlm_s104_adapter_v1"
+EVENT_REGISTRY_RUN_ID = "aihub71490-wavlm-s104-adapter-v1-dev"
+EVENT_S104_PID = 386918
+EVENT_S104_CONFIG_RELATIVE = "configs/experiments/wavlm_s104_adapter_v1.yaml"
+EVENT_SUPERSEDED_BY_DEVIATION_ID = "DEV-S104-003"
+
+TERMINAL_EXPERIMENT_ID = "aihub71490_wavlm_s104_adapter_v2_current_code"
+TERMINAL_REGISTRY_RUN_ID = "aihub71490-wavlm-s104-adapter-v2-current-code-dev"
+S104_CONFIG_RELATIVE = (
+    "configs/experiments/wavlm_s104_adapter_v2_current_code.yaml"
+)
 SCHEMA_RELATIVE = (
     "configs/experiments/s104_protocol_deviation_adjudication_v1.schema.json"
 )
@@ -49,11 +65,22 @@ SCORER_LOCK_RELATIVE = "requirements/scorer-lock-linux-aarch64-cu130.txt"
 SCORER_LOCK_ALLOWED_DIRECTIVES = {
     "--extra-index-url https://download.pytorch.org/whl/cu130",
 }
-EXPECTED_CONFIG_SHA256 = (
+#: The v1 config content the v1 execution lock bound at run time.  The file on
+#: disk no longer hashes to this (DEV-S104-003), so the event binding is checked
+#: against the immutable lock record rather than the current file, and the drift
+#: is reported instead of being smoothed over.
+EVENT_EXPECTED_CONFIG_SHA256 = (
     "aa9a19fa1bf2b706d2c692498055795284364d2cfab13774fddb2ad77e1ba8e9"
 )
-EXPECTED_EXECUTION_LOCK_SHA256 = (
+EVENT_EXPECTED_EXECUTION_LOCK_SHA256 = (
     "8d8778061ec8e366208618071a806e2b04c78e22612ffdabdd6a46f047d274ca"
+)
+#: The terminal run the adjudication binds: v2's committed config and lock.
+EXPECTED_CONFIG_SHA256 = (
+    "7a78e718954c45eb3ad03658b6da916a5c1163a51d683125daccd6c272be6434"
+)
+EXPECTED_EXECUTION_LOCK_SHA256 = (
+    "c37ce4e3d0aa7b7e0c016c56342397b818d6316d6a0e7e22bab9867a63ab5a3e"
 )
 EXPECTED_TARGET_SHA256 = (
     "c33af395f4f3a3c23b625219d4f0911de2c35b08d6ffecc2710a118766f17328"
@@ -71,7 +98,19 @@ INSERTED_LINE_SHA256 = (
     "69f986274f7eab86e9c5153db395f3585b0a14ce6319e20742cce0f7af1e8ca5"
 )
 INSERT_OFFSET = 289
+#: The moment the S104 transient edit was reverted, as recorded in the committed
+#: receipt. This is history and never changes: the receipt says so on disk.
 RECOVERY_MTIME_NS = 1_785_328_527_998_502_375
+#: What the live file's inode says now. It differs from ``RECOVERY_MTIME_NS`` because
+#: an unrelated 2026-08-08 edit-and-revert reset both timestamps (DEV-CLAUDE-002).
+#: The content is byte-identical — ``EXPECTED_TARGET_SHA256`` still matches — but
+#: ``st_ctime`` cannot be set on POSIX, so the original inode state is unrecoverable.
+#:
+#: Two constants rather than one overwritten constant. Replacing the original would
+#: make the receipt claim the S104 recovery happened on 2026-08-08, which is false;
+#: keeping both says what happened and still fails on the next unattested change.
+LIVE_MANIFEST_MTIME_NS = 1_786_156_944_976_735_256
+LIVE_MANIFEST_REISSUE_REASON = "DEV-CLAUDE-002"
 PROCESS_STARTED = {
     "utc": "2026-07-28T23:40:44+00:00",
     "kst": "2026-07-29T08:40:44+09:00",
@@ -200,6 +239,7 @@ TOP_LEVEL_KEYS = {
     "created_at",
     "experiment",
     "event",
+    "terminal_run",
     "start_bindings",
     "scorer_environment",
     "bindings",
@@ -671,9 +711,17 @@ def _load_receipt(
 def _derive_experiment_event_start(
     *,
     root: Path,
-    config_path: Path,
-    config: Mapping[str, Any],
 ) -> tuple[Mapping[str, Any], Mapping[str, Any], Mapping[str, Any]]:
+    """Describe the run the deviation event happened in, which is always v1.
+
+    This deliberately resolves the v1 contract itself instead of taking the
+    caller's config: the caller passes the *terminal* run, and pairing v1's
+    transient-edit window with v2's registry timestamps would fabricate an event
+    that never occurred in v2.
+    """
+
+    config_path = _resolve_inside(root, EVENT_S104_CONFIG_RELATIVE, "S104 event config")
+    config = _load_config(config_path)
     outputs = cast(Mapping[str, Any], config.get("outputs"))
     execution_lock_path = _resolve_inside(
         root, outputs.get("execution_lock"), "S104 execution lock"
@@ -717,10 +765,19 @@ def _derive_experiment_event_start(
     if (
         _sha256_bytes(target_bytes) != EXPECTED_TARGET_SHA256
         or len(target_bytes) != EXPECTED_TARGET_SIZE
-        or target_stat.st_mtime_ns != RECOVERY_MTIME_NS
-        or target_stat.st_ctime_ns != RECOVERY_MTIME_NS
     ):
         raise S104ProtocolDeviationError("recovered project manifest differs")
+    if (
+        target_stat.st_mtime_ns != LIVE_MANIFEST_MTIME_NS
+        or target_stat.st_ctime_ns != LIVE_MANIFEST_MTIME_NS
+    ):
+        # Content matched, so this is a metadata-only change: someone touched the
+        # manifest after the last attested state. Reported separately because the
+        # remedy differs — a content mismatch means the file was altered, this means
+        # the inode evidence needs re-attesting.
+        raise S104ProtocolDeviationError(
+            "project manifest inode differs from the attested state"
+        )
     if (
         _sha256_bytes(INSERTED_LINE) != INSERTED_LINE_SHA256
         or len(INSERTED_LINE) != EXPECTED_TRANSIENT_SIZE - EXPECTED_TARGET_SIZE
@@ -772,15 +829,30 @@ def _derive_experiment_event_start(
         "after": after_state,
     }
     experiment = {
-        "experiment_id": EXPERIMENT_ID,
-        "registry_run_id": REGISTRY_RUN_ID,
-        "pid": S104_PID,
+        "experiment_id": EVENT_EXPERIMENT_ID,
+        "registry_run_id": EVENT_REGISTRY_RUN_ID,
+        "pid": EVENT_S104_PID,
         "process_started_at": dict(PROCESS_STARTED),
         "registry_started_at": dict(registry_started),
         "development_only": True,
+        "run_result": "invalidated",
+        "superseded_by_deviation_id": EVENT_SUPERSEDED_BY_DEVIATION_ID,
     }
+    lock_document = load_json_strict(execution_lock_path, "S104 execution lock")
+    config_fingerprint = _fingerprint(root, config_path)
     start_bindings = {
-        "config": _fingerprint(root, config_path),
+        "config": {
+            "path": config_fingerprint["path"],
+            # The immutable lock record, not the current file: the v1 config file
+            # drifted after the run (DEV-S104-003), and the run bound the value
+            # below, so that is what the event binding is checked against.
+            "sha256": lock_document.get("config_sha256"),
+            "sha256_evidence_source": "v1_execution_lock_config_sha256",
+            "current_file_sha256": config_fingerprint["sha256"],
+            "current_file_differs_from_run_binding": (
+                config_fingerprint["sha256"] != lock_document.get("config_sha256")
+            ),
+        },
         "execution_lock": {
             **_fingerprint(root, execution_lock_path),
             "schema_version": load_json_strict(
@@ -801,8 +873,9 @@ def _derive_experiment_event_start(
         "scorer_lock_fingerprint": dict(lock_record[0]),
     }
     if (
-        start_bindings["config"]["sha256"] != EXPECTED_CONFIG_SHA256
-        or start_bindings["execution_lock"]["sha256"] != EXPECTED_EXECUTION_LOCK_SHA256
+        start_bindings["config"]["sha256"] != EVENT_EXPECTED_CONFIG_SHA256
+        or start_bindings["execution_lock"]["sha256"]
+        != EVENT_EXPECTED_EXECUTION_LOCK_SHA256
         or target_record[0].get("sha256") != EXPECTED_TARGET_SHA256
         or target_record[0].get("size_bytes") != EXPECTED_TARGET_SIZE
         or lock_record[0].get("sha256") != EXPECTED_SCORER_LOCK_SHA256
@@ -1005,9 +1078,22 @@ def _derive_bindings(
     from voice_coach.training.wavlm_adapter_training import local_snapshot_paths
 
     selected = cast(Mapping[str, Any], lock.get("selected_candidate"))
+    # The lock records what the run bound but not where the snapshot lives; the
+    # cache directory comes from the config candidate of the same variant, the
+    # way the trainer itself resolves it.
+    variant = _expect_string(selected.get("variant"), "selected candidate variant")
+    candidates = cast(Mapping[str, Any], config.get("candidates"))
+    if not isinstance(candidates, Mapping) or variant not in candidates:
+        raise S104ProtocolDeviationError("selected candidate is absent from the config")
+    configured_candidate = cast(Mapping[str, Any], candidates[variant])
+    for field in ("source_config_sha256", "source_checkpoint_sha256", "revision"):
+        if configured_candidate.get(field) != selected.get(field):
+            raise S104ProtocolDeviationError(
+                f"selected candidate binding differs: {field}"
+            )
     _, model_config_path, model_checkpoint_path = local_snapshot_paths(
         workspace_root=root,
-        selected_candidate=selected,
+        selected_candidate=configured_candidate,
     )
     model_specs = (
         ("model_config", model_config_path, selected.get("source_config_sha256")),
@@ -1434,6 +1520,43 @@ def _derive_terminal_evidence(
             "exit_code": 0,
             **independent,
         },
+    }
+
+
+def _derive_terminal_run(
+    *,
+    root: Path,
+    config_path: Path,
+    config: Mapping[str, Any],
+) -> Mapping[str, Any]:
+    """Name the run this adjudication binds, distinctly from the event's run.
+
+    Without this section a reader could not tell which S104 result the decision
+    covers, because the event section names the invalidated v1 run.
+    """
+
+    experiment = cast(Mapping[str, Any], config.get("experiment"))
+    outputs = cast(Mapping[str, Any], config.get("outputs"))
+    if experiment.get("id") != TERMINAL_EXPERIMENT_ID:
+        raise S104ProtocolDeviationError("terminal experiment id differs")
+    planned_run_id = outputs.get("planned_registry_run_id")
+    if planned_run_id != TERMINAL_REGISTRY_RUN_ID:
+        raise S104ProtocolDeviationError("terminal registry run id differs")
+    if _relative(root, config_path) == EVENT_S104_CONFIG_RELATIVE:
+        # The invalidated run can never be the terminal binding target.
+        raise S104ProtocolDeviationError("invalidated v1 run cannot be terminal")
+    execution_lock_path = _resolve_inside(
+        root, outputs.get("execution_lock"), "terminal execution lock"
+    )
+    return {
+        "experiment_id": TERMINAL_EXPERIMENT_ID,
+        "registry_run_id": TERMINAL_REGISTRY_RUN_ID,
+        "config_path": _relative(root, config_path),
+        "config_sha256": sha256_file(config_path),
+        "execution_lock_path": _relative(root, execution_lock_path),
+        "execution_lock_sha256": sha256_file(execution_lock_path),
+        "relationship_to_event_run": "clean_rerun_of_the_invalidated_event_run",
+        "event_transient_edit_occurred_in_this_run": False,
     }
 
 
@@ -2149,7 +2272,8 @@ def prepare_s104_protocol_deviation(
         config_path=config_path,
         config=config,
     )
-    experiment, event, start_bindings = _derive_experiment_event_start(
+    experiment, event, start_bindings = _derive_experiment_event_start(root=root)
+    terminal_run = _derive_terminal_run(
         root=root,
         config_path=config_path,
         config=config,
@@ -2185,6 +2309,7 @@ def prepare_s104_protocol_deviation(
         "created_at": dict(timestamp),
         "experiment": experiment,
         "event": event,
+        "terminal_run": terminal_run,
         "start_bindings": start_bindings,
         "scorer_environment": scorer_environment,
         "bindings": bindings,
@@ -2239,7 +2364,8 @@ def validate_s104_protocol_deviation(
     ):
         raise S104ProtocolDeviationError("receipt identity differs")
     _timestamp_pair(receipt.get("created_at"), "receipt.created_at")
-    experiment, event, start_bindings = _derive_experiment_event_start(
+    experiment, event, start_bindings = _derive_experiment_event_start(root=root)
+    terminal_run = _derive_terminal_run(
         root=root,
         config_path=config_path,
         config=config,
@@ -2274,6 +2400,7 @@ def validate_s104_protocol_deviation(
     expected_sections = {
         "experiment": experiment,
         "event": event,
+        "terminal_run": terminal_run,
         "start_bindings": start_bindings,
         "scorer_environment": scorer_environment,
         "bindings": bindings,
@@ -2323,7 +2450,13 @@ def validate_s104_protocol_deviation(
 
 __all__ = [
     "DEVIATION_ID",
+    "EVENT_EXPERIMENT_ID",
+    "EVENT_REGISTRY_RUN_ID",
+    "EVENT_S104_CONFIG_RELATIVE",
     "INVALIDATING_CONDITION_IDS",
+    "S104_CONFIG_RELATIVE",
+    "TERMINAL_EXPERIMENT_ID",
+    "TERMINAL_REGISTRY_RUN_ID",
     "RECEIPT_COMMIT_SCHEMA_VERSION",
     "RECEIPT_SCHEMA_VERSION",
     "S104ProtocolDeviationError",

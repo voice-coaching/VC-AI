@@ -19,7 +19,7 @@ canonical_sources:
     - path: artifacts/reference/r00/r00_sentence_card_v1.validation.json
       sha256: 95b4fd861a3c21222ff13859cfbc9c196e3fd06493852bca823d8a63dc2816dd
     - path: configs/experiments/r01_human_cosyvoice_candidates_v1.yaml
-      sha256: edcd0bc4905d9aac412d0c1f9a9243b6ef6e3f0ca40cc2c59f19b22e4355ced4
+      sha256: bc0ff862f7159c2516a8fa302c21ad8a59975b56b5e9c0b994a585cd8577f718
     - path: configs/reference/r00_sentence_card_v1.schema.json
       sha256: 1f8bcf0325414e1923cda0def9a973ac2f7be7bd85cca4ee869743ef862a7b92
     - path: configs/reference/r01_candidate_manifest_v1.schema.json
@@ -47,7 +47,7 @@ canonical_sources:
     - path: scripts/validate_r00_sentence_card.py
       sha256: 967517e74194936c91dad1eed4fcfb0c059b5480af32b8adfc9725fdb7d6e7d0
     - path: src/voice_coach/references/r01_candidate_contract.py
-      sha256: 91ee50b25b1ce955d8745e58c09b5413438833df1f8f82ba1caec8095496b1e7
+      sha256: c109fc242db42affb371259bdad625ec06d516011b32551d8d8e088fceee7231
 
 predecessor_r00:
   deep_validation_required: true
@@ -69,7 +69,7 @@ predecessor_r00:
 predecessor_r01:
   deep_validation_required: true
   config_path: configs/experiments/r01_human_cosyvoice_candidates_v1.yaml
-  config_sha256: edcd0bc4905d9aac412d0c1f9a9243b6ef6e3f0ca40cc2c59f19b22e4355ced4
+  config_sha256: bc0ff862f7159c2516a8fa302c21ad8a59975b56b5e9c0b994a585cd8577f718
   completion_commit_path: artifacts/experiments/r01_human_cosyvoice_candidates_v1/commit.json
   completion_commit_sha256: TBD_R01_COMPLETION
   completion_schema_version: voice_coach.r01_candidate_completion.v1

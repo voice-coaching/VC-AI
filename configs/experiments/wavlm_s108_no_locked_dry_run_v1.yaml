@@ -67,7 +67,7 @@ predecessors:
   s104:
     config:
       path: configs/experiments/wavlm_s104_adapter_v1.yaml
-      sha256: 0b633fa93de9ed0e7952893a2221ee5fdaaf1968255bc83c02fd031ae08bde70
+      sha256: 38d428d7e0065493a2024164a8f107f377e80c2ddb9d390bf981737030903e9f
     commit:
       path: artifacts/experiments/aihub71490_wavlm_s104_adapter_v1/commit.json
       schema_version: voice_coach.wavlm_s104_adapter_commit.v1
@@ -85,7 +85,7 @@ predecessors:
   s105:
     config:
       path: configs/experiments/wavlm_s105_hierarchy_v1.yaml
-      sha256: e7818240f477af9957c4e13b88479a69820bbb44d48ece2c47e9a54cfc964ea0
+      sha256: b38ee80d0bb08b7eaf32bc83afd50e1b3e38a1fccf9d5f42af45e026a597b759
     commit:
       path: artifacts/experiments/aihub71490_wavlm_s105_hierarchy_v1/commit.json
       schema_version: voice_coach.wavlm_s105_hierarchy_commit.v1
@@ -99,7 +99,7 @@ predecessors:
   s106:
     config:
       path: configs/experiments/wavlm_s106_stack_fusion_v1.yaml
-      sha256: 196ed40aa59c77af1f7d4d975941b90229d21a9de16f4109e7621b4c3fbcaabb
+      sha256: cb5e10464ff8e227756a8aa6171cfde6e630fedbe37b5dc24e7fb2e16f0af7ea
     commit:
       path: artifacts/experiments/aihub71490_wavlm_s106_stack_fusion_v1/commit.json
       schema_version: voice_coach.wavlm_s106_stack_fusion_commit.v2
@@ -113,7 +113,7 @@ predecessors:
   s107:
     config:
       path: configs/experiments/wavlm_s107_calibration_v1.yaml
-      sha256: 6702ea196481784319c03e413d8ee6844a060e83407aed204f9344cb0230909f
+      sha256: f85821abece46e8bb6a2a0c49e74e5717b5bdd9b0139c9138b93a446f1497c95
     commit:
       path: artifacts/experiments/aihub71490_wavlm_s107_calibration_v1/commit.json
       schema_version: voice_coach.wavlm_s107_calibration_commit.v1
@@ -133,13 +133,15 @@ external_aggregate_evidence:
     schema_version: voice_coach.wavlm_s108_preregistration_freeze.v1
     required_status: frozen
   g04:
-    progress_path: data/processed/aihub71490/manifests/aihub71490_manual_alignment_review_progress.json
-    progress_schema_version: voice_coach.alignment_review_report.v1
-    attestation_path: artifacts/external_evaluation/g04_alignment_completion_attestation_v1.json
-    attestation_schema_version: voice_coach.g04_alignment_completion_attestation.v1
-    expected_count: 240
-    minimum_correct_count: 228
-    minimum_accuracy: 0.95
+    progress_path: artifacts/evaluation/g04_amended_progress_v1.json
+    progress_schema_version: voice_coach.g04_amended_progress.v1
+    attestation_path: artifacts/external_evaluation/g04_amended_completion_attestation_v1.json
+    attestation_schema_version: voice_coach.g04_amended_completion_attestation.v1
+    consumer_contract_version: g04_t43_i30_v1
+    expected_t43_count: 43
+    expected_i30_count: 30
+    t43_accuracy_denominator_allowed: false
+    minimum_phone_accuracy: 0.95
     reviewer_qualification_attestation_required: true
   d07:
     attestation_path: artifacts/external_evaluation/d07_gold_completion_attestation_v1.json
@@ -236,10 +238,13 @@ implementation:
     sha256: 467ef6011338ec48ef1485ce118466f5e440b4f7828f57e1bf6767622703b6b6
   contract_module:
     path: src/voice_coach/training/wavlm_s108_dry_run.py
-    sha256: 38002184f5a48924c79eab88ef3ce9cc9b29beebe3474ab2408c8cdeb31b2ba2
+    sha256: 78444cdf5fd89dae71186028fcdf1a9771488937d698417f0ac1d84cd1aeeb32
+  g04_contract_module:
+    path: src/voice_coach/evaluation/g04_amended_contract.py
+    sha256: c2afa98092c300ca7a9f87a1e122a4edad311517a188200330575ddae1f56661
   project_manifest:
     path: pyproject.toml
-    sha256: c33af395f4f3a3c23b625219d4f0911de2c35b08d6ffecc2710a118766f17328
+    sha256: 20ede7c9fbd4eb047fdcd81a2732588756278842b757a1b9b44794befdc4d1da
   scorer_lock:
     path: requirements/scorer-lock-linux-aarch64-cu130.txt
     sha256: f6c5b10c1028506d7361c83ad1e9aae0b1fafcf34f4e918e5b7123c51fac8cf2

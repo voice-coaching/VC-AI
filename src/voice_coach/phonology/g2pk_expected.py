@@ -384,6 +384,32 @@ def _token_digest(
     ).hexdigest()
 
 
+def expected_phone_token_digest(
+    *,
+    g2pk_version: str,
+    descriptive: bool,
+    group_vowels: bool,
+    word_boundary_policy: WordBoundaryPolicy,
+    allowed_punctuation: tuple[str, ...],
+    phone_tokens: tuple[str, ...],
+) -> str:
+    """Public view of the token digest so out-of-process callers can re-verify.
+
+    The expected-phone frontend may run in a separate interpreter; the digest is
+    the only integrity anchor across that boundary, so both sides must compute it
+    with this one function rather than a copied formula.
+    """
+
+    return _token_digest(
+        g2pk_version=g2pk_version,
+        descriptive=descriptive,
+        group_vowels=group_vowels,
+        word_boundary_policy=word_boundary_policy,
+        allowed_punctuation=allowed_punctuation,
+        phone_tokens=phone_tokens,
+    )
+
+
 def generate_g2pk_expected_phones(
     text: object,
     *,

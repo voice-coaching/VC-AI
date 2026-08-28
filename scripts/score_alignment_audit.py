@@ -15,6 +15,13 @@ from uuid import uuid4
 
 TRUE_VALUES = {"1", "true", "yes", "y", "pass", "correct", "정상"}
 FALSE_VALUES = {"0", "false", "no", "n", "fail", "incorrect", "오류"}
+ANNOTATION_FIDELITY_VALUES = {
+    "consistent",
+    "target_annotation_mismatch",
+    "realized_annotation_mismatch",
+    "both_annotations_mismatch",
+    "uncertain",
+}
 
 
 def parse_args() -> argparse.Namespace:
@@ -58,6 +65,9 @@ def main() -> int:
     missing_reviewers = []
     decisions = []
     boundary_errors = []
+    annotation_counts = {value: 0 for value in sorted(ANNOTATION_FIDELITY_VALUES)}
+    invalid_annotation_indices = []
+    unresolved_annotation_indices = []
     for row in rows:
         if not row["reviewer_id"].strip():
             missing_reviewers.append(row["audit_index"])
@@ -78,6 +88,13 @@ def main() -> int:
             boundary_errors.append(boundary)
         except (TypeError, ValueError):
             invalid_boundaries.append(row["audit_index"])
+        annotation_fidelity = row.get("annotation_fidelity", "").strip()
+        if annotation_fidelity not in ANNOTATION_FIDELITY_VALUES:
+            invalid_annotation_indices.append(row["audit_index"])
+        else:
+            annotation_counts[annotation_fidelity] += 1
+            if annotation_fidelity == "uncertain":
+                unresolved_annotation_indices.append(row["audit_index"])
 
     failed_checks = []
     if len(rows) != args.expected_samples:
@@ -92,6 +109,10 @@ def main() -> int:
         failed_checks.append("missing_reviewer_id")
     if invalid_boundaries:
         failed_checks.append("incomplete_or_invalid_boundary_error")
+    if invalid_annotation_indices:
+        failed_checks.append("incomplete_or_invalid_annotation_fidelity")
+    if unresolved_annotation_indices:
+        failed_checks.append("unresolved_annotation_fidelity")
     accuracy = sum(decisions) / len(decisions) if decisions else 0.0
     if not invalid and accuracy < args.minimum_accuracy:
         failed_checks.append("alignment_accuracy")
@@ -149,6 +170,12 @@ def main() -> int:
         "correct_count": sum(decisions),
         "alignment_accuracy": accuracy,
         "minimum_accuracy": args.minimum_accuracy,
+        "annotation_fidelity": {
+            "counts": annotation_counts,
+            "invalid_audit_indices": invalid_annotation_indices,
+            "unresolved_audit_indices": unresolved_annotation_indices,
+            "gate_requires_complete_classification": True,
+        },
         "phone_level_accuracy": {
             "value": phone_level_accuracy,
             "total_phone_intervals": total_phone_intervals,

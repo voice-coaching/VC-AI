@@ -143,10 +143,15 @@ def _rights() -> dict[str, object]:
         "individual_consent_attestation_sha256": CONSENT_SHA,
         "source_classification": {
             "source_kind": "newly_recorded_consented_adult_native_korean_human",
+            "source_kind_allowed_values": [
+                "newly_recorded_consented_adult_native_korean_human",
+                "cosyvoice_tts",
+                "licensed_corpus_audio",
+            ],
             "public_corpus_audio_used": False,
             "tts_audio_used": False,
-            "corpus_or_tts_disguised_as_human": False,
             "human_tts_source_label_required": True,
+            "source_label_rationale_ko": "출처를 밝힌다.",
             "license_basis": "individual_recording_license_grants",
         },
         "recording_protocol": {
@@ -636,11 +641,24 @@ def test_revoked_consent_and_disguised_source_are_rejected() -> None:
     consent = contract.validate_individual_consent_payload(
         _consent(), h00_sha256=H00_SHA
     )
-    disguised = _rights()
-    disguised["source_classification"]["public_corpus_audio_used"] = True
-    with pytest.raises(contract.D08ContractError, match="public_corpus"):
+    # TTS and licensed corpus audio are permitted now (the loop under study is
+    # generator-plus-evaluator), so what stays enforced is that the source names
+    # itself as one of the declared kinds.
+    tts_source = _rights()
+    tts_source["source_classification"]["source_kind"] = "cosyvoice_tts"
+    tts_source["source_classification"]["tts_audio_used"] = True
+    assert contract.validate_recording_rights_payload(
+        tts_source,
+        h00_sha256=H00_SHA,
+        consent_sha256=CONSENT_SHA,
+        consent_receipts=consent,
+    )
+
+    unnamed = _rights()
+    unnamed["source_classification"]["source_kind"] = "something_undeclared"
+    with pytest.raises(contract.D08ContractError, match="source kind must be one of"):
         contract.validate_recording_rights_payload(
-            disguised,
+            unnamed,
             h00_sha256=H00_SHA,
             consent_sha256=CONSENT_SHA,
             consent_receipts=consent,

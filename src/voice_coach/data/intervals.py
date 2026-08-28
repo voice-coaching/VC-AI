@@ -146,9 +146,21 @@ def align_intervals(
                 continue
             overlap = _overlap(target, observed, tolerance_seconds)
             ratio = _ratio(target, observed, overlap)
+            actual_overlap = _overlap(target, observed, 0.0)
+            actual_ratio = _ratio(target, observed, actual_overlap)
             if overlap > 0 and ratio >= min_overlap_ratio:
-                matches.append((realized_index, overlap, ratio))
-        matches.sort(key=lambda item: (-item[2], -item[1], item[0]))
+                matches.append(
+                    (realized_index, overlap, ratio, actual_overlap, actual_ratio)
+                )
+        matches.sort(
+            key=lambda item: (
+                -item[4],
+                -item[3],
+                -item[2],
+                -item[1],
+                item[0],
+            )
+        )
         candidates[target_index] = matches
 
     output: list[Alignment] = []
@@ -163,7 +175,7 @@ def align_intervals(
         if not matches:
             output.append(Alignment(target, None, 0.0, 0.0, "deletion"))
             continue
-        for realized_index, overlap, ratio in matches:
+        for realized_index, overlap, ratio, _, _ in matches:
             used_realized.add(realized_index)
             observed = realized_items[realized_index]
             operation = (

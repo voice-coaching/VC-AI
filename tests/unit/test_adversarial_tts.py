@@ -7,6 +7,7 @@ import pytest
 import torch
 
 from voice_coach.application.adversarial_tts import (
+    AdversarialTTSEngine,
     GeneratedAudioError,
     write_generated_waveform,
 )
@@ -170,6 +171,98 @@ def test_feedback_is_detached_but_final_waveform_keeps_generator_gradient() -> N
     assert any(
         parameter.grad is not None for parameter in system.generator.parameters()
     )
+
+
+def _engine_config() -> dict[str, object]:
+    return {
+        "model": {
+            "vocabulary_size": 32,
+            "feedback_dim": 6,
+            "aspect_count": 4,
+            "max_meta_adjustment": 0.2,
+            "generator": {
+                "hidden_dim": 16,
+                "acoustic_dim": 8,
+                "hop_length": 4,
+                "residual_blocks": 2,
+                "dropout": 0.0,
+                "max_edit_amplitude": 0.2,
+            },
+            "evaluator1": {
+                "hidden_dim": 16,
+                "embedding_dim": 16,
+            },
+            "evaluator2_meta_critic": {
+                "hidden_dim": 16,
+                "embedding_dim": 16,
+            },
+        }
+    }
+
+
+def test_adversarial_tts_engine_checkpoint_roundtrip_and_inference(
+    tmp_path: Path,
+) -> None:
+    config = _engine_config()
+    engine = AdversarialTTSEngine(_system(), config)
+    checkpoint = tmp_path / "prototype.safetensors"
+    record = engine.save_checkpoint(checkpoint, optimizer_step=3)
+
+    restored = AdversarialTTSEngine.from_checkpoint(checkpoint, config)
+    source, native, tokens, _ = _inputs()
+    trajectory = restored.generate(source, tokens, native)
+
+    assert record["schema_version"] == AdversarialTTSEngine.CHECKPOINT_SCHEMA
+    assert record["optimizer_step"] == 3
+    assert trajectory.refined.waveform.shape == source.shape
+    assert torch.isfinite(trajectory.refined.waveform).all()
+    assert torch.max(trajectory.refined.waveform.abs()) <= 1
+    with pytest.raises(GeneratedAudioError, match="already exists"):
+        engine.save_checkpoint(checkpoint, optimizer_step=4)
+
+def test_optimizer_checkpoint_roundtrip_restores_slots_and_best_metric(
+    tmp_path: Path,
+) -> None:
+    config = _engine_config()
+    torch.manual_seed(17)
+    system = _system()
+    engine = AdversarialTTSEngine(system, config)
+    optimizer = torch.optim.Adam(system.generator.parameters(), lr=1e-3)
+    loss = sum(parameter.square().mean() for parameter in system.generator.parameters())
+    loss.backward()
+    optimizer.step()
+
+    checkpoint = tmp_path / "resumable.safetensors"
+    engine.save_checkpoint(
+        checkpoint,
+        optimizer_step=7,
+        optimizers={"generator": optimizer},
+        epoch=2,
+        batch_index=4,
+        metric_name="validation_generator_loss",
+        metric_value=0.42,
+        best_metric_value=0.31,
+        is_best=False,
+    )
+
+    restored_optimizer = torch.optim.Adam(
+        AdversarialTTSEngine.from_config(config).system.generator.parameters(),
+        lr=1e-3,
+    )
+    restored = AdversarialTTSEngine.from_checkpoint(
+        checkpoint,
+        config,
+        optimizers={"generator": restored_optimizer},
+    )
+    metadata = __import__("json").loads(
+        checkpoint.with_suffix(".safetensors.json").read_text(encoding="utf-8")
+    )
+
+    assert restored.system.generator is not None
+    assert restored_optimizer.state
+    assert metadata["optimizer_step"] == 7
+    assert metadata["best_metric_value"] == 0.31
+    assert checkpoint.with_suffix(".optim.safetensors").is_file()
 
 
 def test_generated_waveform_writer_adds_mandatory_provenance_sidecar(

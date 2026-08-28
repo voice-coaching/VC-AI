@@ -7,11 +7,16 @@
   "h00_approval_sha256": "TBD_EXTERNAL_ATTESTATION",
   "individual_consent_attestation_sha256": "TBD_EXTERNAL_ATTESTATION",
   "source_classification": {
-    "source_kind": "newly_recorded_consented_adult_native_korean_human",
-    "public_corpus_audio_used": false,
-    "tts_audio_used": false,
-    "corpus_or_tts_disguised_as_human": false,
+    "source_kind": "TBD_EXTERNAL_ATTESTATION",
+    "source_kind_allowed_values": [
+      "newly_recorded_consented_adult_native_korean_human",
+      "cosyvoice_tts",
+      "licensed_corpus_audio"
+    ],
+    "tts_audio_used": "TBD_EXTERNAL_ATTESTATION",
+    "public_corpus_audio_used": "TBD_EXTERNAL_ATTESTATION",
     "human_tts_source_label_required": true,
+    "source_label_rationale_ko": "TTS 사용은 허용된다 — 이 연구의 대상이 TTS와 평가자 루프이므로 합성 참조음은 대체물이 아니라 연구 대상이다. 유지되는 것은 **출처 표기**뿐이다: 어떤 음원이든 자신이 무엇인지 밝혀야 하고, 합성음은 학습자에게 합성음이라고 고지한다. 이것은 TTS 사용을 막지 않는다.",
     "license_basis": "TBD_EXTERNAL_ATTESTATION"
   },
   "recording_protocol": {

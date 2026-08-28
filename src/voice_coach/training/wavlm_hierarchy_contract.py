@@ -39,6 +39,12 @@ VARIANTS = (
     "levelwise_multi_aspect_hierarchy",
 )
 TASKS = ("phone_binary_error", "utterance_scores")
+#: Declared handling for a manifest row that has phone alignments but no target
+#: phone interval. Excluding it is a contract term, not an implementation detail.
+ZERO_TARGET_PHONE_POLICY = "exclude_and_report"
+#: Kept here rather than imported from the execution module so that config
+#: validation stays free of the training runtime.
+PROGRESS_EVENT_SCHEMA_VERSION = "voice_coach.wavlm_s105_progress_event.v1"
 ALLOWED_SPLITS = ("train", "dev")
 FORBIDDEN_SPLITS = ("stack", "calibration", "locked_test")
 SHA256_PATTERN = re.compile(r"^[0-9a-f]{64}$")
@@ -408,8 +414,27 @@ def validate_config(config: Mapping[str, Any]) -> None:
         "tie_break": "lowest_word_index",
         "unassigned_phone_policy": "utterance_orphan_bucket",
         "zero_phone_word_policy": "retain_unlabeled_representation",
+        # A manifest row can carry alignments but no target phone interval. The
+        # hierarchy has nothing to aggregate at any level for such a row, so the
+        # policy is declared here — with the exact per-subset count — instead of
+        # being a silent skip. Any drift in that count fails the run closed.
+        "zero_target_phone_utterance_policy": ZERO_TARGET_PHONE_POLICY,
     }.items():
         _expect(interval.get(key), expected, f"interval_mapping.{key}")
+    exclusions = _mapping(
+        interval.get("expected_zero_target_phone_exclusions"),
+        "interval_mapping.expected_zero_target_phone_exclusions",
+    )
+    # Every stream S105 iterates must declare its own count, including dev where
+    # the count is zero: a cardinality check compares against the declared number,
+    # so an undeclared stream is a check waiting to fail at the epoch boundary.
+    if set(exclusions) != {"fit", "inner_validation", "dev"}:
+        raise S105ContractError("zero-target-phone exclusion subsets differ")
+    for subset, count in exclusions.items():
+        if not isinstance(count, int) or isinstance(count, bool) or count < 0:
+            raise S105ContractError(
+                f"zero-target-phone exclusion count is invalid: {subset}"
+            )
     word = _mapping(data.get("word_supervision"), "data.word_supervision")
     expected_word = {
         "role": "unlabeled_intermediate_representation_only",
@@ -624,6 +649,49 @@ def validate_config(config: Mapping[str, Any]) -> None:
         "environment_files_forbidden": True,
     }.items():
         _expect(runtime.get(key), expected, f"runtime.{key}")
+    # Progress logging is declared, not incidental: a run that reports nothing for
+    # hours is indistinguishable from a hung one, and a run that writes progress
+    # into the generation tree would make the commit depend on logging frequency.
+    logging_contract = _mapping(
+        runtime.get("progress_logging"),
+        "runtime.progress_logging",
+    )
+    _expect(
+        logging_contract.get("destination"),
+        "stdout_json_lines",
+        "progress_logging.destination",
+    )
+    _expect(
+        logging_contract.get("schema_version"),
+        PROGRESS_EVENT_SCHEMA_VERSION,
+        "progress_logging.schema_version",
+    )
+    _expect(
+        logging_contract.get("generation_tree_writes_allowed"),
+        False,
+        "progress_logging.generation_tree_writes_allowed",
+    )
+    _expect(
+        logging_contract.get("identifier_fields_allowed"),
+        False,
+        "progress_logging.identifier_fields_allowed",
+    )
+    heartbeat = logging_contract.get("heartbeat_utterances")
+    if isinstance(heartbeat, bool) or not isinstance(heartbeat, int) or heartbeat <= 0:
+        raise S105ContractError("progress_logging.heartbeat_utterances must be > 0")
+    if not isinstance(logging_contract.get("emit_epoch_summary"), bool):
+        raise S105ContractError("progress_logging.emit_epoch_summary must be a boolean")
+    expected_events = [
+        "run_started",
+        "seed_started",
+        "epoch_started",
+        "fit_heartbeat",
+        "fit_epoch_finished",
+        "epoch_summary",
+        "inner_selection_finished",
+        "seed_finished",
+    ]
+    _expect(logging_contract.get("events"), expected_events, "progress_logging.events")
 
     implementation = _mapping(config.get("implementation"), "implementation")
     if tuple(implementation) != IMPLEMENTATION_ROLES:

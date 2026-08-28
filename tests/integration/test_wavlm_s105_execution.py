@@ -62,7 +62,7 @@ from voice_coach.training.wavlm_hierarchy_training import (
 
 
 ROOT = Path(__file__).resolve().parents[2]
-CONFIG = ROOT / "configs/experiments/wavlm_s105_hierarchy_v1.yaml"
+CONFIG = ROOT / "configs/experiments/wavlm_s105_hierarchy_v5_stream_cardinality.yaml"
 
 
 def _sha(value: str) -> str:

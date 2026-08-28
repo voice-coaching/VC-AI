@@ -1,489 +1,611 @@
-# XLS-R 한국어 음소 인식 베이스라인 작업 기록
+# XLS-R / Pronunciation Error Detector 작업 기록
 
-최종 갱신: 2026-08-02 (Asia/Seoul)
+최종 갱신: 2026-08-22 (Asia/Seoul)
 
-## 1. 작업 목적과 안전 원칙
+> 2026-08-02까지의 데이터 감사, TextGrid target 분석, manifest 준비, processor 구축, 수동 alignment audit 과정은 `archive/WORK_LOG_AND_FINDINGS_KO_2026-08-02.md`를 참고한다.
 
-목표는 XLS-R-300M CTC 모델이 입력 음성에서 실제 발음된 한국어 음소열을
-예측하도록 만드는 것이다. 전체 학습 전에 반드시 데이터 감사, 라벨 의미
-검증, 화자 비중첩 smoke training, 평가를 차례로 통과해야 한다.
+---
 
-현재까지 전체 학습과 smoke training은 시작하지 않았다. JSON
-`RecordingMetadata.phonemic.phones`가 실제 관측 전사가 아니라 기대
-발음열이라는 중단 조건이 확인됐기 때문이다.
+## 1. 데이터와 split
 
-## 2. 저장소와 실행 환경
-
-- 저장소: `/home/cmsl-dgx01/intelligent04/intelligentAI`
-- 작업 디렉터리: `seungun/`
-- 구현 커밋: `5ac0bb95fb506c78f6e67c03cc58b94d88e5d14b`
-- 커밋 메시지: `feat: add gated AI Hub phone label audit`
-- GPU: NVIDIA GB10 1개, unified memory
-- 시스템 메모리: 약 119.69 GiB
-- CUDA driver/toolkit: 13.0/13.0.88
-- Python: 3.12.3
-- PyTorch: 2.12.1+cu130
-- Transformers: 5.14.1
-- bf16: 지원
-
-저장소 루트에는 이 작업 전부터 존재한 미커밋 변경이 있다. `seungun/`
-커밋에는 해당 변경을 포함하지 않았다.
-
-## 3. 데이터 식별 결과
-
-요청서에는 dataset ID가 `71479`로 기재됐지만 서버에서 발견되고 파일
-목록이 일치하는 데이터는 `71490`이다.
+최종 CTC split:
 
 ```text
-/home/cmsl-dgx01/intelligent04/intelligentAI/data/restricted/aihub/dataset-71490
+Train
+217,176 utterances
+1,263 speakers
+
+Dev
+34,424 utterances
+197 speakers
+
+Locked Test
+65,296 utterances
+370 speakers
 ```
 
-서버 데이터의 제목은 `교육용 중·일어 모국어 사용자의 한국어 음성
-데이터`다. 따라서 요청서의 “중·일어 제외” 설명과도 불일치한다. 이
-불일치는 향후 dataset manifest와 모델 manifest에 반드시 기록해야 한다.
+train/dev/test speaker overlap은 모두 0이다.
 
-외부 데이터 준비 프로세스가 만든 추출 파일 수는 다음과 같다. 각
-디렉터리의 `.verified-zip-extraction-complete.json`은 아래 수에 포함하지
-않는다.
+Locked test는 현재까지 사용하지 않았다.
 
-| 분할 | WAV | JSON | TextGrid |
-|---|---:|---:|---:|
-| Training | 286,560 | 286,560 | 286,560 |
-| Validation | 35,820 | 35,820 | 35,820 |
+---
 
-## 4. 구현한 코드
+## 2. Manual alignment audit 상태
 
-- `scripts/audit_aihub_pronunciation.py`: ZIP 스트리밍 감사 CLI
-- `src/korean_phone_ctc/data/audit.py`: 파일 대응, 무결성, 분포 및
-  라벨 의미 감사
-- `src/korean_phone_ctc/data/aihub_reader.py`: AI Hub JSON 및 TextGrid
-  parser
-- `src/korean_phone_ctc/data/speaker_split.py`: 결정적 화자 단위 층화 분할
-- `src/korean_phone_ctc/data/phone_vocab.py`: 새 phone vocabulary 생성
-- `src/korean_phone_ctc/evaluation/phone_alignment.py`: Levenshtein 정렬
-- `src/korean_phone_ctc/io_utils.py`: 원자적 JSON/JSONL/CSV 저장
-- `configs/xlsr300m_smoke.yaml`: 비활성 smoke 설정 초안
-- `configs/xlsr300m_full.yaml`: 전체 학습 명시적 비활성 설정
-
-## 5. Validation 전체 감사 결과
-
-ZIP 내부 Validation 35,820건을 모두 검사했다.
-
-| 항목 | 결과 |
-|---|---:|
-| WAV/JSON/TextGrid | 각각 35,820 |
-| 동일 stem triplet | 35,820 |
-| 매칭률 | 100% |
-| 누락/중복 | 0/0 |
-| 깨진 JSON/TextGrid/WAV header | 0/0/0 |
-| ZIP CRC 실패 | 0 |
-| 독립 UserID | 1,812 |
-| 총 녹음 시간 | 137,094.15초 |
-| 빈 JSON phone sequence | 0 |
-| 잘못된 JSON/TextGrid interval | 0/0 |
-| 정상/오류 샘플 | 25,735/10,085 |
-| JSON–TextGrid 음소열 불일치 | 10,439 |
-
-원본 sample rate는 8, 16, 24, 44.1, 48, 96kHz가 혼재하며 모든 파일은
-mono였다. 학습 loader에서 16kHz로 동적 resampling해야 한다.
-
-JSON phone inventory는 38개다.
+240건 독립 수동 감사 결과:
 
 ```text
-spn ㄱ ㄲ ㄴ ㄷ ㄸ ㄹ ㅁ ㅂ ㅃ ㅅ ㅆ ㅇ ㅈ ㅉ ㅊ ㅋ ㅌ ㅍ ㅎ
-ㅏ ㅐ ㅑ ㅓ ㅔ ㅕ ㅖ ㅗ ㅘ ㅚ ㅛ ㅜ ㅝ ㅟ ㅠ ㅡ ㅢ ㅣ
+sample_count       = 240
+correct_count      = 178
+alignment_accuracy = 0.7417
+status             = failed
 ```
 
-## 6. 라벨 의미 검증과 중단 결정
+기존 0.95 gate는 통과하지 못했다.
 
-오류 태그가 있는 100개 표본을 JSON과 TextGrid로 비교했다. 95개에서
-서열이 달랐다.
+따라서 이후 수행한 XLS-R 학습은 "manual audit gate를 통과한 production training"이라고 기록하면 안 된다.
+
+Stage-1/Stage-2는 내부 연구·진단 목적의 명시적 internal training 경로에서 수행된 실험이다.
+
+---
+
+## 3. XLS-R Stage-1
+
+모델:
 
 ```text
-prompt: 켤레
-JSON:     ㅋ ㅕ ㄹ ㄹ ㅔ
-TextGrid: ㅋ ㅛ - ㄹ ㅔ
-tags: 모음오류, 종성
-
-prompt: 흔들다
-JSON:     ㅎ ㅡ ㄴ ㄷ ㅡ ㄹ ㄷ ㅏ
-TextGrid: ㅎ ㅡ - ㄷ ㅡ ㄹ ㄷ ㅏ
-tags: 종성
-
-prompt: 좋다
-JSON:     ㅈ ㅗ ㅌ ㅏ
-TextGrid: ㅈ ㅗ ㄷ ㅏ
-tags: 격음화
+facebook/wav2vec2-xls-r-300m
 ```
 
-결론은 다음과 같다.
-
-1. JSON `phonemic.phones`는 prompt의 기대 발음열이다.
-2. TextGrid `phones` tier가 실제 교체와 삭제를 기록한다.
-3. JSON phones를 CTC target으로 사용하면 실제 발음 인식 목표와
-   불일치한다.
-4. 따라서 기존 목표 정의로는 `LABEL_NOT_SUITABLE`이다.
-5. manifest, processor, XLS-R 다운로드, smoke training 및 평가는
-   수행하지 않았다.
-
-## 7. 생성된 감사 산출물
-
-산출물은 Git에 포함하지 않는다.
+Stage-1:
 
 ```text
-artifacts/data_audit.json
-artifacts/data_audit.md
-artifacts/phone_inventory.json
-artifacts/error_tag_distribution.csv
-artifacts/missing_pairs.csv
-artifacts/sample_error_cases.jsonl
+epochs = 3
+learning rate = 5e-5
+feature encoder frozen
+BF16
+gradient checkpointing
 ```
 
-Validation 감사 당시 주요 SHA-256:
+전체 dev 결과:
 
 ```text
-c75f35d11d2c83980d190162e1f726a265722bd34e7c35a56fff7e4f262ba9d0  data_audit.json
-4f4231c2b5220107e409c65dacce807ddda1a10de1a47ef0c2096e50fbc1386b  data_audit.md
-b4ea9644b37246c6ef5853a66befb413e0fb7c26741f004361286e7237547144  phone_inventory.json
-5faa5277fc0dbc4495f5248ace102bab570a5f2eff1b5bcb1e171a35206123fa  sample_error_cases.jsonl
+utterances        = 34,424
+reference phones  = 363,709
+
+PER               = 0.0644939
+substitution rate = 0.0414672
+deletion rate     = 0.0119134
+insertion rate    = 0.0111133
 ```
 
-## 8. 초기 품질 검사 결과
+Stage-1 best model은 pronunciation-error baseline 평가에 사용한다.
 
-- pytest: 9 passed
-- Ruff lint: 통과
-- Ruff format check: 통과
-- mypy strict: 9개 source file, 오류 없음
+---
 
-## 9. 미완료 사항
+## 4. XLS-R Stage-2
 
-Training+Validation ZIP 통합 감사 실행 중 외부 추출 프로세스가 ZIP을
-이동하여 마지막 CRC 단계가 실패했다. 원자 저장 방식 때문에 기존
-Validation 감사 결과는 손상되지 않았다. 현재 원본 payload는 검증된
-추출 디렉터리에 있으므로 다음 감사는 ZIP이 아니라 해당 디렉터리를
-대상으로 수행한다.
-
-## 10. 후속 TextGrid target 감사
-
-JSON target 부적합 판정 이후 모델 학습은 계속 차단하고, 추출된 전체
-Training/Validation을 대상으로 TextGrid phone tier 자체의 사용 가능성을
-추가 조사했다.
-
-| 항목 | 결과 |
-|---|---:|
-| Training matched triplet | 286,560 |
-| Validation matched triplet | 35,820 |
-| Training/Validation UserID | 1,830/1,812 |
-| 공식 분할 UserID 교집합 | 1,812 |
-| 전체 TextGrid phone interval | 4,403,404 |
-| 빈 interval | 119,378 |
-| 정확한 `-` 삭제 placeholder | 23,873 |
-| 공백 복합 label | 1,755 |
-| raw label inventory | 1,715 |
-| phone tier 누락 발화 | 1 |
-| 정규화 후 빈 target | 48 |
-| JSON 기대열과 raw TextGrid가 다른 발화 | 93,126 |
-
-공식 Validation 화자 1,812명이 모두 Training에도 존재한다. 따라서 공식
-분할은 평가에 사용할 수 없고 반드시 UserID 단위로 전면 재분할해야 한다.
-
-raw TextGrid label에는 정상 단일 자모 외에 다음이 섞여 있다.
-
-- 자모 연결: `ㄹㅣ`, `ㄱㅏ`
-- 공백 연결: `ㄱ ㅓ`
-- 유효하지만 JSON inventory에는 없던 모음: `ㅒ`, `ㅙ`, `ㅞ`
-- 삭제 변형: `ㄴ-`, `－`
-- 기호와 잡음 표기: `_`, `.`, `x`, `SPN`
-- 완성형 음절 또는 단어: `가`, `그`, `백쩜`
-
-단순 공백 분리만 적용하면 1,260개 symbol이 남아 CTC vocabulary로 사용할
-수 없다. 알려진 현대 한국어 단일 자모의 연결만 추가로 분리하는 보수적
-정책에서도 자동 처리할 수 없는 label이 남으므로 gate 상태는
-`review_required`다.
-
-현대 한국어 compatibility jamo 40개와 `spn`을 허용하는 보수적 정책
-초안으로 재검사한 결과:
-
-- 알려진 자모 연결로 안전하게 분리 가능한 interval: 12,873
-- 자동 처리 불가능한 raw label: 357종
-- 자동 처리 불가능한 interval: 1,785
-- 미해결 label을 포함한 발화: 1,450
-- 정책 후보 inventory: 41개
-
-미해결 상위 label에는 `_`, `ㄴ-`, `－`, `.`, `ㄹ-`, `가`, `그`, `ㄻ`,
-`ㄱ-`, `구`, `x` 등이 있다. 이를 punctuation 제거, G2P 또는 임의 alias로
-자동 교정하지 않았다.
-
-후속 산출물:
+Stage-1 weight에서 추가 fine-tuning:
 
 ```text
-artifacts/textgrid_target_audit.json
-artifacts/textgrid_target_audit.md
-artifacts/textgrid_raw_label_distribution.csv
-artifacts/textgrid_unresolved_labels.csv
-artifacts/textgrid_special_cases.jsonl
+epochs = 2
+learning rate = 1e-5
 ```
 
-현재 품질 검사는 pytest 11개, Ruff lint/format, mypy strict 모두
-통과했다.
-
-## 11. 전체 학습 준비 자동화
-
-사용자의 전체 학습 진행 요청에 따라 자동화할 수 있는 준비 단계를
-수행했다. 다만 독립 수동 정렬 감사를 통과하기 전에는 smoke 및 전체
-학습을 시작하지 않도록 gate를 유지했다.
-
-### 11.1 확정한 TextGrid target 정책
-
-`configs/textgrid_target_policy.yaml`을
-`textgrid-observed-phone-v1`으로 갱신했다.
-
-- 빈 interval: 시간 공백으로 보고 target에서 제외
-- 정확한 ASCII `-`: 기대 음소 삭제 placeholder로 보고 제외
-- 공백으로 구분된 알려진 자모: 개별 phone으로 분리
-- 알려진 단일 자모가 붙어 있는 label: 개별 phone으로 분리
-- `spn`: 관측 잡음/미지 phone으로 보존
-- 그 밖의 미해결 label: 임의 교정하지 않고 발화 전체 제외
-- phone tier 누락, 정규화 후 빈 target, source QC flag: 발화 전체 제외
-- 동일 PCM: 첫 레코드만 보존
-- 20초 초과 발화: 메모리 안정성을 위해 제외
-
-완성형 음절 G2P, punctuation 제거, `SPN` case folding, 임의 alias는
-적용하지 않았다.
-
-### 11.2 CTC manifest 생성 결과
-
-기존 전체 raw manifest와 enriched Parquet를 같은 순서로 함께 읽어
-관측 발음 CTC manifest를 생성했다.
-
-| 항목 | 결과 |
-|---|---:|
-| 입력 발화 | 322,380 |
-| 채택 발화 | 316,896 |
-| 제외 발화 | 5,484 |
-| train | 217,176발화 / 1,263명 |
-| dev | 34,424발화 / 197명 |
-| test | 65,296발화 / 370명 |
-| train/dev/test 화자 교집합 | 모든 조합 0 |
-| 채택 오디오 시간 | 약 303.59시간 |
-
-기존 5-way split은 다음과 같이 CTC 3-way split으로 보수적으로
-재사용했다.
+전체 dev 결과:
 
 ```text
-train + stack + calibration -> train
-dev                         -> dev
-locked_test                 -> test
+PER               = 0.0620689
+substitution rate = 0.0403867
+deletion rate     = 0.0110858
+insertion rate    = 0.0105964
 ```
 
-`locked_test`를 학습 또는 모델 선택에 합치지 않았다.
+Stage-2는 Stage-1보다 일반 CTC PER이 개선됐다.
 
-제외 내역:
+그러나 이 사실만으로 Error Detector backbone을 Stage-2로 선택하지 않았다.
+
+---
+
+## 5. Deterministic dev500 pronunciation-error protocol 복원
+
+과거 Stage-1 pronunciation-error 결과를 동일하게 재현하기 위해 deterministic dev500 selection rule을 역검증했다.
+
+확정된 selection:
 
 ```text
-audio_too_long                 3,002
-unresolved_textgrid_label      1,354
-source_qc_flag                 1,071
-empty_observed_phone_sequence     45
-duplicate_pcm                     12
+seed = xlsr-phone-error-f1-dev500-v1
+
+score =
+SHA256(
+    seed + "\0" + utterance_id
+)
+
+score 오름차순
+→ 앞 500 utterances
 ```
 
-생성 경로:
+이 방법만 과거 gold signature를 정확히 재현했다.
 
 ```text
-manifest/train.jsonl
-manifest/dev.jsonl
-manifest/test.jsonl
-manifest/speaker_split.json
-manifest/vocab.json
-manifest/phone_inventory.json
-manifest/preparation_report.json
+target phones    = 5,300
+gold errors      = 437
+gold insertions  = 17
 ```
 
-`manifest/`는 제한 데이터에서 파생된 로컬 산출물이므로 Git에서 제외한다.
-
-### 11.3 vocabulary와 processor
-
-Training 관측 target만으로 41개 phone과 특수 토큰 2개를 구성했다.
+Stage-1 재평가 결과:
 
 ```text
-vocab size: 43
-<pad>: 0, CTC blank
-<unk>: 1
-word boundary token: 사용하지 않음
+TN = 4769
+FP =   94
+FN =  300
+TP =  137
+
+Precision = 0.593074
+Recall    = 0.313501
+Error-F1  = 0.410180
+Macro-F1  = 0.685255
 ```
 
-Transformers tokenizer가 `word_delimiter_token=None`을 문자열 `"None"`으로
-추가하는 동작을 발견했다. vocab 크기가 몰래 44로 증가하지 않도록 이미
-존재하는 `<pad>`를 delimiter 자리에도 지정했고, phone decode는 명시적인
-ID-to-token 변환만 사용하도록 했다. 저장 후 processor vocabulary 재로딩
-일치 검증을 통과했다.
+기존 결과와 정확히 일치했다.
 
-Processor 경로:
+---
+
+## 6. Stage-1 vs Stage-2 pronunciation-error 평가
+
+동일 dev500으로 Stage-2를 평가했다.
+
+Stage-2:
 
 ```text
-processor/
+TN = 4769
+FP =   94
+FN =  306
+TP =  131
+
+Precision = 0.582222
+Recall    = 0.299771
+Error-F1  = 0.395770
+Macro-F1  = 0.677760
 ```
 
-### 11.4 base model 고정과 forward 검증
-
-Hugging Face의 현재 `main`을 조회해 다음 revision을 고정했다.
+결론:
 
 ```text
-model: facebook/wav2vec2-xls-r-300m
-revision: 1a640f32ac3e39899438a2931f9924c02f080a54
+CTC PER:
+Stage-2 우수
+
+Pronunciation-error detection:
+Stage-1 우수
 ```
 
-가중치는 저장소 공용 Hugging Face cache에 내려받았다. 43개 출력 head는
-새로 초기화되며 feature encoder는 freeze하도록 학습 코드에 반영했다.
+따라서 Error Detector phonetic backbone은 Stage-1으로 결정했다.
 
-첫 검증에서 모델 전체를 BF16으로 직접 변환하고 FP32 입력을 넣어 dtype
-mismatch가 발생했다. 실제 학습 방식인 FP32 model과 CUDA BF16 autocast로
-다시 실행해 다음 결과를 확인했다.
+---
+
+## 7. Hard mismatch의 문제
+
+Stage-1 CTC의 top-1 predicted phone과 expected phone이 다르면 error로 간주하는 hard detector는 실제 error에 대해 지나치게 보수적이었다.
+
+dev500:
 
 ```text
-logits shape: (1, 49, 43)
-dtype: bfloat16
-finite: true
-peak CUDA allocation: 1,902,228,992 bytes
+Error Recall = 31.35%
 ```
 
-### 11.5 구현한 추가 코드
+즉 실제 오류의 약 69%를 놓쳤다.
 
-- `src/korean_phone_ctc/data/ctc_manifest.py`
-  - 보수적 TextGrid target 정규화와 발화 채택/제외 판정
-- `src/korean_phone_ctc/training_utils.py`
-  - CTC greedy collapse, PER/S/D/I, 수동 감사 gate
-- `src/korean_phone_ctc/data/training_manifest.py`
-  - 일반 학습에서 train/reviewed-dev만 여는 fail-closed manifest loader
-- `scripts/prepare_ctc_data.py`
-  - 전체 manifest, 분포, vocab, split 보고서 생성
-- `scripts/create_ctc_processor.py`
-  - 고정 vocab processor 생성과 재로딩 검증
-- `scripts/train_ctc.py`
-  - 같은 코드 경로의 smoke/full 학습, dev 선택·평가, dev confusion matrix,
-    대표 예측, checkpoint 재로딩 검증
-- `tests/test_ctc_manifest.py`
-- `tests/test_training_manifest.py`
-- `tests/test_training_utils.py`
+가설:
 
-학습 스크립트는 수동 감사 결과 JSON의 `status=passed`와
-`alignment_accuracy>=0.95`를 확인하지 못하면 모델을 로드하기 전에
-종료한다.
+CTC top-1 label만 사용하는 과정에서 probability distribution 안에 있는 uncertainty 정보를 버리고 있다.
 
-### 11.6 현재 품질 검사
+---
+
+## 8. Soft detector spike
+
+Stage-1을 freeze하고 다음 soft evidence를 사용했다.
 
 ```text
-pytest: 27 passed
-Ruff lint: passed
-Ruff format: 27 files passed
-mypy strict: 13 source files, no errors
+hard error
+predicted span 존재 여부
+expected-phone probability
+top competitor probability
+expected margin
+predicted-phone probability
+entropy
+blank probability
+span duration
 ```
 
-### 11.7 현재 중단 지점
+train 2,000 utterance 규모 spike:
 
-다음 worksheet의 240개 행은 모두 미검수 상태다.
+Hard:
 
 ```text
-../data/processed/aihub71490/manifests/
-  aihub71490_manual_alignment_audit.tsv
+Precision = 0.5931
+Recall    = 0.3135
+Error-F1  = 0.4102
 ```
 
-확인 결과:
+Soft Linear:
 
 ```text
-reviewer_id: 240/240 빈 값
-alignment_correct: 240/240 빈 값
-maximum_boundary_error_ms: 240/240 빈 값
+Precision = 0.5037
+Recall    = 0.4622
+Error-F1  = 0.4821
 ```
 
-이 단계는 한국어 음성학/정렬 역량이 있는 독립 검수자가 실제 음성과
-TextGrid를 함께 확인해야 한다. 자동 분석을 독립 인간 검수로 대신 기록하지
-않았다. 미완료 G0 audit JSON을 smoke 명령에 전달했을 때 exit code 1로
-정상 차단되는 것도 확인했다.
+결론:
 
-따라서 현재까지 smoke training, checkpoint 생성, PER 평가 및 전체
-학습은 시작되지 않았다.
+CTC soft evidence에 hard top-1 mismatch가 버리고 있던 pronunciation-error signal이 존재한다.
 
-### 11.8 locked test 조기 접근 차단 보강
+---
 
-2026-07-29 재점검에서 기존 `scripts/train_ctc.py`가 학습 시작 전에
-`train.jsonl`, `dev.jsonl`, `test.jsonl`을 모두 열고 smoke/full 종료 시
-test를 평가하는 위험을 확인했다. 이는 최종 one-shot 시점 전까지
-`locked_test`를 보지 않아야 한다는 분할 계약에 맞지 않았다.
+## 9. Full soft feature extraction
 
-일반 학습 경로를 다음과 같이 수정했다.
+전체 train/dev에서 Stage-1 soft feature를 추출했다.
 
-- smoke/full은 `train.jsonl`과 `dev.jsonl`만 연다.
-- train은 source split `train`, `stack`, `calibration`만 허용한다.
-- dev는 `split=dev`, `source_split=dev`를 동시에 만족해야 한다.
-- workspace 밖 manifest 경로를 거부한다.
-- workspace root부터 manifest directory까지 각 경로 구성요소를
-  `openat`/`O_NOFOLLOW`로 열어 symlink이면 실패한다.
-- train/dev manifest와 vocab 파일도 같은 directory descriptor 기준
-  `O_NOFOLLOW`로 열어 직접 symlink를 거부한다.
-- 각 manifest의 device/inode/mode/size/mtime/ctime을 전체 scan 전후 비교해
-  scan 도중 교체·변경되면 실패한다.
-- smoke 반환 limit 이후 레코드도 파일 끝까지 split/source provenance를
-  검사하고, 허용된 앞 N개만 반환한다.
-- dev 평가·confusion matrix·checkpoint 재로딩 확인은 dev만 사용한다.
-- `test_evaluation.json`은 일반 학습 경로에서 생성하지 않는다.
-- 설정의 수동 정렬 감사, `training_allowed: false`,
-  `full_training_allowed: false`, `enabled: false`는 변경하지 않았다.
-
-별도 protected one-shot evaluator는 이 변경에서 구현하지 않았다. 따라서
-locked test 접근과 최종 test PER 산출은 계속 미승인·미실행 상태다.
-
-집중 검증 결과:
+Train:
 
 ```text
-canonical train/dev full provenance scan, smoke-sized return:
-  train 5,000 / source_split calibration, stack, train
-  dev   1,000 / source_split dev only
-  secured vocabulary size 43
-pytest: 27 passed
-Ruff lint: passed
-Ruff format: 27 files passed
-mypy strict: 13 source files, no errors
+utterances       = 217,176
+phone rows       = 2,301,676
+gold error rows  = 143,111
+gold error rate  = 0.0621769
 ```
 
-미통과 감사 JSON과 존재하지 않는 dataset/manifest/processor/output 경로를
-함께 준 CLI 검증은 exit code 1과
-`manual alignment audit status is not passed`로 먼저 종료됐다. output
-directory도 생성되지 않아 수동 정렬 gate가 manifest·모델 접근보다 앞에서
-계속 fail-closed임을 확인했다.
-
-### 11.9 240건 1차 감사 실제 완료(2026-08-02) 및 gate 미달
-
-독립 검수자가 token 보호 로컬 review UI(브라우저·Windows tkinter
-클라이언트)로 240건 전부를 실제 청취·판정했다. 판정 결과를 원본
-worksheet에 반영하는 과정에서 worksheet 파일의 pinned SHA-256이
-일시적으로 어긋난 사고가 있었으나 pristine 사본으로 즉시 복구했다.
+Dev:
 
 ```text
-sample_count=240, valid_decision_count=240
-correct_count=178, alignment_accuracy=0.7417
-status=failed (minimum_accuracy=0.95, 228/240 필요)
+utterances       = 34,424
+phone rows       = 366,288
+gold error rows  = 30,246
+gold error rate  = 0.0825744
 ```
 
-62건 실패를 층화·자동 operation·검수자 메모로 분석한 결과, "발화가
-길수록 실패율이 높다"는 관찰은 phone(음소) 개수 누적에 따른
-이항분포 효과로 확인됐다(phone 단위 오류율은 발화 길이와 무관하게
-5~8%로 일정). `align_intervals`의 tolerance_seconds/min_overlap_ratio
-파라미터를 완화해도 deletion+insertion이 줄지 않고 오히려 늘어,
-파라미터 튜닝으로 해결되는 문제가 아님을 확인했다. 검수자 메모 기반
-가설 두 건(Unicode 자모 인코딩, target null)도 원본 데이터 직접
-대조 결과 사실이 아니었다. 다만 `_parse_interval_list`의 null-label
-방어와 `align_intervals`의 Hangul 자모 정규화는 별개의 정당한 방어
-코드로 반영했다(`src/voice_coach/data/aihub71490.py`,
-`src/voice_coach/data/intervals.py`).
+Train/Dev speaker overlap:
 
-이에 따라 `incorrect_interval_count` 기반 phone-level accuracy를
-발화 단위 accuracy와 병행 도입하고, duration 5초 이상 utterance
-30건을 현재(버그 수정 반영) 알고리즘으로 재계산한 독립 재감사
-표본을 생성했다(`aihub71490_manual_alignment_audit_long30_v2.tsv`).
-이 재감사 결과와 최종 gate 지표 확정은 아직 진행 중이며, 통과 전까지
-`configs/xlsr300m_full.yaml`의 `enabled: false`를 유지한다. 상세는
-저장소 루트 `docs/constraints/AIHUB71490_EXPERT_AUDIT_WORKSHEET_GUIDE_KO.md` 6절과
-`docs/constraints/RESEARCH_COMPLETION_TRACKER_KO.md`(즉시 실행 큐 91번 항목)를
-따른다.
+```text
+0
+```
+
+zero-target train utterance:
+
+```text
+2
+```
+
+확인된 ID:
+
+```text
+00771-M-2-ZH-B-RS055-0171949
+01519-M-95-ZH-A-RS032-0463948
+```
+
+해당 발화는 pronunciation gold alignment가 insertion-only여서 target-phone supervised row가 0개였다.
+
+이를 임의로 manifest phone으로 대체하지 않고 0-row utterance로 보존했다.
+
+---
+
+## 10. Full-dev Hard baseline
+
+전체 dev 34,424 / 366,288 phone rows:
+
+```text
+TN = 329643
+FP =   6399
+FN =  22191
+TP =   8055
+
+Precision = 0.557285
+Recall    = 0.266316
+Error-F1  = 0.360403
+Macro-F1  = 0.659420
+```
+
+이 값이 앞으로 full-dev Error Detector의 기본 baseline이다.
+
+dev500 F1 0.4102와 full-dev F1 0.3604를 혼동하지 않는다.
+
+---
+
+## 11. Soft Linear full-dev
+
+train 내부 speaker-disjoint fit/calibration split을 사용했다.
+
+Dev:
+
+```text
+Precision = 0.461676
+Recall    = 0.436917
+Error-F1  = 0.448955
+Macro-F1  = 0.700402
+```
+
+Hard 대비:
+
+```text
+Recall:
+0.2663 → 0.4369
+
+Error-F1:
+0.3604 → 0.4490
+```
+
+실제 오류를 더 많이 탐지하지만 false positive도 증가한다.
+
+---
+
+## 12. Soft MLP full-dev
+
+동일 9개 soft feature를 작은 MLP에 입력했다.
+
+Dev:
+
+```text
+Precision = 0.470469
+Recall    = 0.429015
+Error-F1  = 0.448787
+Macro-F1  = 0.700774
+Average Precision = 0.374545
+```
+
+Linear와 비교:
+
+```text
+Linear F1 = 0.448955
+MLP F1    = 0.448787
+```
+
+classifier capacity를 Linear → MLP로 늘려도 Error-F1은 개선되지 않았다.
+
+결론:
+
+> 현재 병목은 classifier capacity보다 입력 representation의 정보량일 가능성이 높다.
+
+Precision 60% operating point:
+
+```text
+Precision = 0.603234
+Recall    = 0.128281
+Error-F1  = 0.211571
+```
+
+Precision 70%는 calibration에서 유효 operating point를 확보하지 못했다.
+
+따라서 단순 soft feature만으로 제품 수준 precision/recall trade-off를 확보하기 어렵다고 판단했다.
+
+---
+
+## 13. XLS-R hidden-state smoke
+
+Stage-1에서 `output_hidden_states=True`를 사용해 hidden representation을 확인했다.
+
+모델 구조:
+
+```text
+Transformer layers = 24
+hidden size        = 1024
+vocab size         = 43
+blank id           = 0
+```
+
+hidden tuple:
+
+```text
+25 tensors
+= encoder input representation + 24 transformer layers
+```
+
+후보 layer:
+
+```text
+6
+12
+18
+24
+```
+
+모든 layer가 logits와 동일한 CTC time dimension을 갖는 것을 확인했다.
+
+---
+
+## 14. Hidden representation screening
+
+Screen 규모:
+
+```text
+Train = 20,000 utterances
+Dev   = 5,000 utterances
+```
+
+비교 모델:
+
+```text
+soft_only
+soft_expected
+soft + expected + layer 6
+soft + expected + layer 12
+soft + expected + layer 18
+soft + expected + layer 24
+```
+
+결과:
+
+| Model           | Precision | Recall |   Error-F1 |         AP | P60 Recall | P70 Recall |
+| --------------- | --------: | -----: | ---------: | ---------: | ---------: | ---------: |
+| soft_only       |    0.4283 | 0.4675 |     0.4470 |     0.3637 |     0.1683 |     0.0002 |
+| soft_expected   |    0.4374 | 0.4609 |     0.4488 |     0.3756 |     0.2050 |     0.0546 |
+| hidden layer 6  |    0.4637 | 0.4333 |     0.4480 |     0.4013 |     0.2285 |     0.1299 |
+| hidden layer 12 |    0.4481 | 0.4665 |     0.4571 |     0.4165 |     0.2345 |     0.0825 |
+| hidden layer 18 |    0.4430 | 0.4960 | **0.4680** | **0.4273** |     0.2243 | **0.1506** |
+| hidden layer 24 |    0.4568 | 0.4633 |     0.4600 |     0.4268 | **0.2501** |     0.1455 |
+
+F1 ranking:
+
+```text
+1. Layer 18
+2. Layer 24
+3. Layer 12
+4. Soft + Expected
+5. Layer 6
+6. Soft Only
+```
+
+해석:
+
+* expected-phone conditioning 자체는 작은 개선을 보였다.
+* layer 6은 ranking AP는 좋아졌지만 F1 개선은 거의 없었다.
+* 중후반 layer 12/18/24에서 유의미한 개선 신호가 나타났다.
+* layer 18이 Error-F1/AP 기준 1위였다.
+* layer 24는 layer 18과 AP가 매우 가깝고 Precision 60% operating point의 Recall이 가장 높았다.
+
+따라서 full extraction 후보는 layer 18과 24 두 개로 결정했다.
+
+---
+
+## 15. 현재 진행 중
+
+현재 실행:
+
+```text
+XLS-R Stage-1 frozen
+        ↓
+output hidden states
+        ↓
+Layer 18 + Layer 24
+        ↓
+Train 217,176
+Dev    34,424
+        ↓
+phone-span mean pooling
+        ↓
+full hidden feature 저장
+```
+
+한 XLS-R forward에서 layer 18과 24를 동시에 저장한다.
+
+이 작업이 끝난 후 다음 detector를 비교할 예정이다.
+
+```text
+Layer 18
+Layer 24
+Layer 18 + Layer 24
+```
+
+---
+
+## 16. 현재까지의 핵심 연구 결과
+
+### Finding 1
+
+낮은 PER이 좋은 pronunciation-error detection을 보장하지 않는다.
+
+Stage-2는 Stage-1보다 PER이 낮지만 pronunciation-error F1은 더 낮았다.
+
+### Finding 2
+
+hard top-1 mismatch는 error recall이 매우 낮다.
+
+CTC probability distribution을 버리는 것이 주요 병목 중 하나다.
+
+### Finding 3
+
+soft evidence는 실제로 유효하다.
+
+전체 dev에서 Recall과 Error-F1을 크게 개선했다.
+
+### Finding 4
+
+같은 9개 soft feature에서 Linear → MLP로 classifier capacity를 늘려도 F1 개선은 거의 없었다.
+
+따라서 representation 자체의 한계가 존재한다.
+
+### Finding 5
+
+XLS-R hidden representation에는 soft CTC summary보다 추가적인 pronunciation-error 정보가 존재하는 신호가 있다.
+
+특히 layer 18과 layer 24가 유망하다.
+
+### Finding 6
+
+현재 결과는 dev 기반 architecture selection 단계다.
+
+아직 locked test 성능이 아니다.
+
+---
+
+## 17. 절대 잘못 해석하면 안 되는 수치
+
+```text
+PER 6.45%
+```
+
+를
+
+```text
+accuracy 93.55%
+```
+
+라고 부르지 않는다.
+
+```text
+Macro-F1 0.70
+```
+
+을
+
+```text
+오발음을 70% 탐지
+```
+
+라고 부르지 않는다.
+
+pronunciation-error detection을 설명할 때는 최소한 다음을 별도로 보고한다.
+
+```text
+Precision
+Recall
+Error-F1
+Macro-F1
+```
+
+---
+
+## 18. Locked test 상태
+
+```text
+Locked test utterances = 65,296
+Locked test speakers   = 370
+
+현재 접근 여부 = NO
+```
+
+최종 detector architecture와 threshold가 freeze되기 전까지 사용하지 않는다.
+
+---
+
+## 19. 현재 결정 사항
+
+```text
+Pronunciation backbone:
+XLS-R Stage-1
+
+Soft evidence:
+유지
+
+Expected-phone conditioning:
+유지
+
+Hidden full extraction:
+Layer 18 + Layer 24
+
+Final detector:
+미확정
+
+Locked test:
+미사용
+```
+
+다음 결정은 full train/dev 기준의 layer 18, layer 24, layer 18+24 비교 후 수행한다.

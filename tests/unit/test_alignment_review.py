@@ -16,6 +16,7 @@ from voice_coach.evaluation.alignment_review import (
     ReviewDataset,
     ReviewStore,
     ReviewSubmission,
+    build_aggregate_report,
     create_review_app,
     export_completed_reviews,
     hash_item_id,
@@ -264,7 +265,37 @@ def test_atomic_review_validation_duplicate_update_and_resume(
     resumed = ReviewStore(store.path, dataset)
     assert resumed.status()["completed_count"] == 1
     assert resumed.reviews[item.item_sha256]["alignment_correct"] is False
+    assert resumed.reviews[item.item_sha256]["annotation_fidelity"] == "uncertain"
     assert resumed.reviews[item.item_sha256]["notes"] == "corrected"
+
+
+def test_g04_fails_closed_when_annotation_fidelity_is_unresolved(
+    tmp_path: Path,
+) -> None:
+    dataset, store = _dataset(tmp_path)
+    reviewer_hash = hash_reviewer_id("expert-a")
+    for item in dataset.items:
+        store.save_review(
+            item_hash=item.item_sha256,
+            reviewer_hash=reviewer_hash,
+            submission=ReviewSubmission(
+                alignment_correct=True,
+                maximum_boundary_error_ms=0.0,
+                incorrect_interval_count=0,
+                notes="",
+            ),
+            replace=False,
+        )
+
+    report = build_aggregate_report(
+        dataset=dataset,
+        store=store,
+        minimum_accuracy=0.95,
+    )
+
+    assert report["alignment_accuracy"] == 1.0
+    assert report["annotation_fidelity"]["unresolved_count"] == 2
+    assert report["status"] == "failed"
 
 
 def test_incomplete_then_completed_privacy_safe_scorer_export(
@@ -295,6 +326,7 @@ def test_incomplete_then_completed_privacy_safe_scorer_export(
                 alignment_correct=decision,
                 maximum_boundary_error_ms=10.0,
                 incorrect_interval_count=0 if decision else 1,
+                annotation_fidelity="consistent",
                 notes="",
             ),
             replace=False,

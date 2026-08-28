@@ -32,16 +32,16 @@ CONFIG_SCHEMA_VERSION = 1
 EXECUTION_LOCK_SCHEMA_VERSION = "voice_coach.wavlm_s106_execution_lock.v2"
 S104_COMMIT_SCHEMA_VERSION = "voice_coach.wavlm_s104_adapter_commit.v1"
 S104_REPORT_SCHEMA_VERSION = "voice_coach.wavlm_s104_adapter_report.v1"
-S104_CONFIG_PATH = "configs/experiments/wavlm_s104_adapter_v1.yaml"
-S104_CONFIG_SHA256 = "aa9a19fa1bf2b706d2c692498055795284364d2cfab13774fddb2ad77e1ba8e9"
+S104_CONFIG_PATH = "configs/experiments/wavlm_s104_adapter_v2_current_code.yaml"
+S104_CONFIG_SHA256 = "7a78e718954c45eb3ad03658b6da916a5c1163a51d683125daccd6c272be6434"
 S104_VALIDATOR_MODULE_PATH = "src/voice_coach/training/wavlm_adapter_training.py"
 S104_VALIDATOR_MODULE_SHA256 = (
     "a7b41d507385c7f45b102f2d1603ad4214f0247ad9e0e08c6a3640f2df6bed80"
 )
 S105_COMMIT_SCHEMA_VERSION = "voice_coach.wavlm_s105_hierarchy_commit.v1"
 S105_REPORT_SCHEMA_VERSION = "voice_coach.wavlm_s105_hierarchy_comparison.v1"
-S105_CONFIG_PATH = "configs/experiments/wavlm_s105_hierarchy_v1.yaml"
-S105_CONFIG_SHA256 = "e7818240f477af9957c4e13b88479a69820bbb44d48ece2c47e9a54cfc964ea0"
+S105_CONFIG_PATH = "configs/experiments/wavlm_s105_hierarchy_v5_stream_cardinality.yaml"
+S105_CONFIG_SHA256 = "9805384e147aec2741cdfd3d97ecd3452c7c2c60dc26e0141f2ac4415ae39443"
 S105_VALIDATOR_MODULE_PATH = "src/voice_coach/training/wavlm_hierarchy_training.py"
 S105_VALIDATOR_MODULE_SHA256 = (
     "e2f7269c757ddee82f33de6787df466b29cbe9e1e2b1fed90130eaaec1c53ad1"
