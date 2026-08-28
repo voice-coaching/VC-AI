@@ -24,7 +24,7 @@
 
 ## 2. 문서 정본·링크·source pin 감사
 
-- Git 추적 Markdown 64개 전체를 검사했으며 상대 링크 누락은 0건이다.
+- 최종 커밋의 Git 추적 Markdown 66개 전체를 검사했으며 상대 링크 누락은 0건이다.
 - 삭제된 구현계획, privacy, license ledger, tracker 문서를 현행 정본처럼 참조하던
   루트·API·architecture·paper·Seungun 문서를 이관했다.
 - legacy snapshot은 역사 자료로만 표시하고 현행 상태 근거에서 제외했다.
