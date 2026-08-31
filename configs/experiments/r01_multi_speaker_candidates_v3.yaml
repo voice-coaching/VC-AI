@@ -113,10 +113,10 @@ canonical_sources:
     # v2 pinned the path only, so module drift was undetectable. Pinned by digest
     # here because this contract exists because of code that changed.
     path: src/voice_coach/pronunciation_feedback/adapters/reference_generator.py
-    sha256: 576b9c5f69331f5ac3f29099afb66b679a4df73b8259dddc52fe4f2d9f97a5f6
+    sha256: 813ba5a6b3f5abb4f62fbc742313df0c5c9e36c29ebfb43ab37a739f07de3804
   worker:
     path: scripts/cosyvoice_reference_worker.py
-    sha256: f28e7b3dbd9d2f73729b49c612abb96c13bb69800e0f31c3fa295ea660db1104
+    sha256: 80b0a24dba911db9b14007d8cb6fb15187d2ff75c2c73e67c61b9b6af889f6a2
     trimming_removed: true
     trimming_removal_reason_ko: >-
       진폭만으로는 문장 내부 휴지와 문장 종료를 구분할 수 없다. 느린 낭독은 어절
