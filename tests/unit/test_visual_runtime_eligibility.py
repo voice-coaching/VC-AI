@@ -1216,6 +1216,9 @@ def _p8_evidence_store(
         phone_window_code_sha256=identity.phone_window_code_sha256,
         phone_window_policy_revision=identity.phone_window_policy_revision,
         phone_window_policy_sha256=identity.phone_window_policy_sha256,
+        evaluation_pipeline_code_sha256=_sha("p8-evaluation-pipeline-code"),
+        source_evaluator_code_sha256=_sha("p8-source-evaluator-code"),
+        media_engine_code_sha256=_sha("p8-media-engine-code"),
         sealed_at_utc="2026-08-28T01:00:00Z",
     )
     transaction = P8AccessTransaction.issue(

@@ -24,6 +24,10 @@ from voice_coach.pronunciation_feedback.adapters.expected_phones_subprocess impo
 from voice_coach.visual_feedback.models.binding import UpstreamReliabilityReceipt
 from voice_coach.visual_feedback.models.enums import UpstreamReliabilityStatus
 from voice_coach.visual_feedback.models.integrity import sha256_document
+from voice_coach.visual_feedback.models.runtime_eligibility import (
+    AutomatedVisualRuntimeEligibilityReceipt,
+    VisualRuntimeBundle,
+)
 from voice_coach.visual_feedback.services.handoff import SeungunAttemptBindingFacade
 
 from .adapters.ffmpeg_av_container import FfmpegAvContainerAdapter
@@ -42,12 +46,14 @@ from .adapters.mediapipe_lip_landmarks import (
     MediaPipeLandmarkPolicy,
     MediaPipeLipLandmarkAdapter,
 )
+from .adapters.production_visual_sidecar import ProductionVisualSidecarAdapter
 from .adapters.restricted_local_media import LocalRestrictedVideoAdmissionAdapter
 from .adapters.video_qc import VideoQcCandidateAdapter, VideoQcPolicy
 from .adapters.runtime import (
     BlockedVisualReliabilityAdapter,
     FrozenPronunciationDetectorPort,
     FrozenSeungunRuntimeAdapter,
+    FixedLocalTrustedPromptAdapter,
     LocalExplicitConsentAuthority,
     MediaPipeVisualDetectorBridge,
     R00TrustedPromptAdapter,
@@ -113,19 +119,23 @@ def build_local_video_attempt_facade(
     seungun_detector: FrozenPronunciationDetectorPort,
     landmark_model_path: str | Path | None = None,
     card_path: str | Path | None = None,
+    fixed_local_prompt: tuple[str, str] | None = None,
     clock: Callable[[], datetime] = _utc_now,
     attempt_nonce: Callable[[], bytes] = _attempt_nonce,
     video_qc_decision_policy: CalibratedVideoQcDecisionPolicy | None = None,
     av_sync_decision_policy: CalibratedAvSyncDecisionPolicy | None = None,
+    visual_runtime_bundle: VisualRuntimeBundle | None = None,
+    visual_runtime_eligibility: AutomatedVisualRuntimeEligibilityReceipt | None = None,
 ) -> VideoAttemptFacade:
-    """Build the current internal loop with visual publication locked off.
+    """Build the local loop, enabling visual publication only from promoted state.
 
     The returned facade can complete Seungun audio feedback from a supported
     MP4.  The hash-pinned Seungun v1 result is eligible as an upstream sidecar
     anchor, without any correctness-confidence claim.  The facade may execute
     the pinned MediaPipe landmark backend, but its independent visual
-    reliability adapter remains fail-closed until user-runtime P6 calibration,
-    P8 locked evaluation, and claim-policy conformance artifacts exist.
+    reliability adapter remains fail-closed unless the caller injects a strictly
+    reloadable P6/P8 runtime bundle, its exact eligibility receipt, and the
+    calibrated QC/A/V decision policies pinned by that bundle.
     """
 
     root = Path(repository_root)
@@ -135,6 +145,23 @@ def build_local_video_attempt_facade(
         raise ValueError(
             "calibrated QC and A/V sync decision policies must be paired"
         )
+    if (visual_runtime_bundle is None) != (visual_runtime_eligibility is None):
+        raise ValueError("visual runtime bundle and eligibility must be paired")
+    if visual_runtime_bundle is not None and video_qc_decision_policy is None:
+        raise ValueError(
+            "visual runtime requires calibrated QC and A/V sync decision policies"
+        )
+    if visual_runtime_bundle is not None:
+        identity = visual_runtime_bundle.pipeline_identity
+        if (
+            identity.media_capture_contract_id != _CAPTURE_CONTRACT_ID
+            or identity.video_qc_decision_policy_sha256
+            != video_qc_decision_policy.policy_sha256
+            or av_sync_decision_policy is None
+            or identity.av_sync_decision_policy_sha256
+            != av_sync_decision_policy.policy_sha256
+        ):
+            raise ValueError("visual runtime policy identity differs")
 
     media_store = LocalRestrictedVideoAdmissionAdapter(
         restricted_root=restricted_media_root,
@@ -154,10 +181,19 @@ def build_local_video_attempt_facade(
         # the frontend's optional ``|`` display boundary is not a model token.
         word_boundary_policy="drop",
     )
-    prompt = R00TrustedPromptAdapter(
-        catalog=R00PromptCatalog(card_path or root / DEFAULT_CARD_PATH),
-        expected_phone_frontend=expected_phone_frontend,
-    )
+    if fixed_local_prompt is None:
+        prompt = R00TrustedPromptAdapter(
+            catalog=R00PromptCatalog(card_path or root / DEFAULT_CARD_PATH),
+            expected_phone_frontend=expected_phone_frontend,
+        )
+    else:
+        if card_path is not None:
+            raise ValueError("fixed_local_prompt and card_path are mutually exclusive")
+        prompt = FixedLocalTrustedPromptAdapter(
+            prompt_id=fixed_local_prompt[0],
+            normalized_text=fixed_local_prompt[1],
+            expected_phone_frontend=expected_phone_frontend,
+        )
     seungun = FrozenSeungunRuntimeAdapter(
         media_store=media_store,
         detector=seungun_detector,
@@ -177,8 +213,10 @@ def build_local_video_attempt_facade(
         reliability_receipt=upstream_reliability,
         clock=clock,
         capture_contract_id=_CAPTURE_CONTRACT_ID,
-        population_id_sha256=sha256_document(
-            {"population": "unscoped_internal_video_attempt"}
+        population_id_sha256=(
+            visual_runtime_bundle.pipeline_identity.population_id_sha256
+            if visual_runtime_bundle is not None
+            else sha256_document({"population": "unscoped_internal_video_attempt"})
         ),
         context_id=_CONTEXT_ID,
     )
@@ -283,6 +321,16 @@ def build_local_video_attempt_facade(
         ),
     )
 
+    visual_sidecar = (
+        ProductionVisualSidecarAdapter(
+            runtime_bundle=visual_runtime_bundle,
+            eligibility_receipt=visual_runtime_eligibility,
+        )
+        if visual_runtime_bundle is not None
+        and visual_runtime_eligibility is not None
+        else None
+    )
+
     return VideoAttemptFacade(
         consent_port=consent,
         media_store_port=media_store,
@@ -315,8 +363,16 @@ def build_local_video_attempt_facade(
         seungun_port=seungun,
         handoff_port=handoff,
         detector_port=visual_detector,
-        reliability_port=BlockedVisualReliabilityAdapter(),
-        visual_port=_NeverPublishVisualSupplement(),
+        reliability_port=(
+            visual_sidecar
+            if visual_sidecar is not None
+            else BlockedVisualReliabilityAdapter()
+        ),
+        visual_port=(
+            visual_sidecar
+            if visual_sidecar is not None
+            else _NeverPublishVisualSupplement()
+        ),
         phone_window_decoder_port=container,
         phone_window_detector_port=visual_detector,
     )

@@ -97,6 +97,26 @@ def test_cli_invalid_preopened_fd_is_path_free_after_consent() -> None:
     assert "987654" not in completed.stderr
 
 
+def test_cli_rejects_partial_visual_runtime_configuration() -> None:
+    completed = _run(
+        "--video-fd",
+        "987654",
+        "--prompt-id",
+        "R00-01",
+        "--consent-local-processing",
+        "--visual-runtime-bundle",
+        "missing-runtime-bundle.json",
+    )
+
+    assert completed.returncode == 2
+    assert json.loads(completed.stdout) == {
+        "status": "failed_closed",
+        "reason_codes": ["video_attempt_configuration_failed"],
+    }
+    assert "missing-runtime-bundle" not in completed.stdout
+    assert "missing-runtime-bundle" not in completed.stderr
+
+
 def test_cli_help_exposes_only_user_authority_inputs() -> None:
     completed = _run("--help")
 
@@ -105,6 +125,8 @@ def test_cli_help_exposes_only_user_authority_inputs() -> None:
     assert "--video-fd" in completed.stdout
     assert "--prompt-id" in completed.stdout
     assert "--consent-local-processing" in completed.stdout
+    assert "--visual-runtime-bundle" in completed.stdout
+    assert "--visual-runtime-eligibility" in completed.stdout
     assert "expected-phone" not in completed.stdout
     assert "binding-receipt" not in completed.stdout
     assert "reliability-receipt" not in completed.stdout

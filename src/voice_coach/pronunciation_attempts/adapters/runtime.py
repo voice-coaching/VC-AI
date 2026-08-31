@@ -598,6 +598,55 @@ class R00TrustedPromptAdapter:
             ) from None
 
 
+class FixedLocalTrustedPromptAdapter:
+    """Resolve one host-fixed local smoke prompt through the pinned g2pK.
+
+    This adapter does not accept caller-provided text and does not pretend that
+    a short local smoke sentence belongs to the frozen 20-sentence R00 card.
+    """
+
+    def __init__(
+        self,
+        *,
+        prompt_id: str,
+        normalized_text: str,
+        expected_phone_frontend: SubprocessG2PKExpectedPhoneFrontend,
+    ) -> None:
+        if not prompt_id or not normalized_text:
+            raise ValueError("fixed local prompt fields must not be empty")
+        self._prompt_id = prompt_id
+        self._normalized_text = normalized_text
+        self._expected_phone_frontend = expected_phone_frontend
+
+    def resolve(self, *, prompt_id: str) -> TrustedPrompt:
+        if prompt_id != self._prompt_id:
+            raise PronunciationAttemptRuntimeError("trusted_prompt_unavailable")
+        try:
+            sequence = self._expected_phone_frontend.expected_phones(
+                self._normalized_text
+            )
+        except Exception:
+            raise PronunciationAttemptRuntimeError(
+                "trusted_prompt_unavailable"
+            ) from None
+        revision_digest = sha256_document(
+            {
+                "schema_version": "voice_coach.fixed_local_trusted_prompt.v1",
+                "prompt_id": self._prompt_id,
+                "normalized_text": self._normalized_text,
+                "expected_phone_backend_id": sequence.backend_id,
+                "expected_phone_revision": sequence.revision,
+                "expected_phone_token_sha256": sequence.token_sha256,
+            }
+        )
+        return TrustedPrompt(
+            prompt_id=self._prompt_id,
+            revision=f"fixed_local_g2pk_{revision_digest}",
+            normalized_text=self._normalized_text,
+            expected_phones=sequence.tokens,
+        )
+
+
 class FrozenSeungunRuntimeAdapter:
     """Materialize restricted PCM as a transient WAV and run one detector call."""
 
@@ -1707,6 +1756,7 @@ __all__ = [
     "BlockedVisualReliabilityAdapter",
     "CompletedPronunciationAnalysis",
     "ConsentReceiptResolverPort",
+    "FixedLocalTrustedPromptAdapter",
     "FrozenPronunciationDetectorPort",
     "FrozenSeungunRuntimeAdapter",
     "IsolatedFrozenSeungunDetectorAdapter",

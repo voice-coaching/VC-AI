@@ -58,6 +58,25 @@ def test_current_frozen_seungun_is_supported_only_as_upstream_anchor(
     assert facade._phone_window_detector_port is facade._detector_port  # noqa: SLF001
 
 
+def test_composition_keeps_fixed_local_smoke_prompt_outside_r00(tmp_path: Path) -> None:
+    repository_root = Path(__file__).resolve().parents[2]
+    facade = build_local_video_attempt_facade(
+        repository_root=repository_root,
+        restricted_media_root=tmp_path / "media",
+        restricted_audio_root=tmp_path / "audio",
+        nltk_data_root=repository_root / ".venv-paper-g2pk/nltk_data",
+        seungun_detector=_UnusedDetector(),
+        fixed_local_prompt=(
+            "LOCAL-TEST-RICE-CLEAN-V1",
+            "쌀을 깨끗이 씻어요",
+        ),
+    )
+
+    assert facade._prompt_port.__class__.__name__ == (  # noqa: SLF001
+        "FixedLocalTrustedPromptAdapter"
+    )
+
+
 def test_composition_rejects_only_one_calibrated_decision_policy(
     tmp_path: Path,
 ) -> None:
@@ -85,4 +104,20 @@ def test_composition_rejects_only_one_calibrated_decision_policy(
             nltk_data_root=repository_root / ".nltk_data",
             seungun_detector=_UnusedDetector(),
             video_qc_decision_policy=qc_policy,
+        )
+
+
+def test_composition_rejects_only_one_visual_runtime_artifact(
+    tmp_path: Path,
+) -> None:
+    repository_root = Path(__file__).resolve().parents[2]
+
+    with pytest.raises(ValueError, match="bundle and eligibility must be paired"):
+        build_local_video_attempt_facade(
+            repository_root=repository_root,
+            restricted_media_root=tmp_path / "media",
+            restricted_audio_root=tmp_path / "audio",
+            nltk_data_root=repository_root / ".nltk_data",
+            seungun_detector=_UnusedDetector(),
+            visual_runtime_bundle=object(),  # type: ignore[arg-type]
         )

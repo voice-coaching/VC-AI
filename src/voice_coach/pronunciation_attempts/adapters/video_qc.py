@@ -11,7 +11,9 @@ from dataclasses import dataclass
 import hashlib
 import json
 import math
+import os
 from pathlib import Path
+from weakref import WeakKeyDictionary,ref
 
 from ..models import Rgb24Sample
 from .mediapipe_lip_landmarks import (
@@ -21,6 +23,7 @@ from .mediapipe_lip_landmarks import (
 
 
 MEASUREMENT_REVISION = "video_qc_rgb24_luma_edge_lip_v1"
+_LIVE_VIDEO_QC_ADAPTERS=WeakKeyDictionary()
 _SCHEMA_VERSION = "voice_coach.video_qc_candidate.v2"
 _PROVENANCE_SCHEMA_VERSION = "voice_coach.video_qc_provenance.v2"
 _REASON_CODES = frozenset(
@@ -370,6 +373,13 @@ class VideoQcCandidateAdapter:
 
     def __init__(self, *, policy: VideoQcPolicy) -> None:
         self._policy = policy
+        _LIVE_VIDEO_QC_ADAPTERS[self]=(os.getpid(),policy,ref(self))
+
+    @property
+    def production_identity(self) -> VideoQcPolicy:
+        row=_LIVE_VIDEO_QC_ADAPTERS.get(self)
+        if row is None or row[0]!=os.getpid() or row[1]!=self._policy or row[2]() is not self: raise VideoQcRuntimeError("video_qc_adapter_capability_invalid")
+        return self._policy
 
     def measure(
         self,

@@ -13,6 +13,7 @@ import argparse
 import base64
 import ctypes
 import errno
+import fcntl
 import hashlib
 import json
 import math
@@ -110,37 +111,90 @@ def _read_model_bytes(path_value: object, expected_sha256: object) -> bytes:
         or any(character not in "0123456789abcdef" for character in expected_sha256)
     ):
         raise _WorkerError("landmark_model_integrity_failed")
-    path = Path(path_value)
-    flags = os.O_RDONLY | getattr(os, "O_CLOEXEC", 0)
-    nofollow = getattr(os, "O_NOFOLLOW", None)
-    if nofollow is None:
-        raise _WorkerError("landmark_model_unavailable")
-    flags |= nofollow
-    try:
-        descriptor = os.open(path, flags)
-    except OSError as error:
-        raise _WorkerError("landmark_model_unavailable") from error
+    descriptor = _open_model_descriptor(path_value)
     try:
         metadata = os.fstat(descriptor)
-        if not stat.S_ISREG(metadata.st_mode):
+        if (
+            not stat.S_ISREG(metadata.st_mode)
+            or metadata.st_size <= 0
+            or metadata.st_size > _HARD_MAXIMUM_MODEL_BYTES
+        ):
             raise _WorkerError("landmark_model_unavailable")
-        if metadata.st_size <= 0 or metadata.st_size > _HARD_MAXIMUM_MODEL_BYTES:
-            raise _WorkerError("landmark_model_unavailable")
+        before = _descriptor_identity(metadata)
         chunks: list[bytes] = []
         digest = hashlib.sha256()
-        remaining = metadata.st_size
-        while remaining:
-            chunk = os.read(descriptor, min(1024 * 1024, remaining))
+        offset = 0
+        while offset < metadata.st_size:
+            chunk = os.pread(
+                descriptor,
+                min(1024 * 1024, metadata.st_size - offset),
+                offset,
+            )
             if not chunk:
                 raise _WorkerError("landmark_model_integrity_failed")
             chunks.append(chunk)
             digest.update(chunk)
-            remaining -= len(chunk)
-        if digest.hexdigest() != expected_sha256:
+            offset += len(chunk)
+        if (
+            offset != metadata.st_size
+            or _descriptor_identity(os.fstat(descriptor)) != before
+            or digest.hexdigest() != expected_sha256
+        ):
             raise _WorkerError("landmark_model_integrity_failed")
         return b"".join(chunks)
     finally:
         os.close(descriptor)
+
+
+def _open_model_descriptor(path_value: str) -> int:
+    if path_value.startswith("fd:"):
+        descriptor_text = path_value.removeprefix("fd:")
+        if (
+            not descriptor_text
+            or not descriptor_text.isascii()
+            or not descriptor_text.isdecimal()
+            or len(descriptor_text) > 10
+        ):
+            raise _WorkerError("landmark_model_unavailable")
+        source_descriptor = int(descriptor_text)
+        if source_descriptor < 3:
+            raise _WorkerError("landmark_model_unavailable")
+        duplicate = -1
+        try:
+            duplicate = os.dup(source_descriptor)
+            os.set_inheritable(duplicate, False)
+            flags = fcntl.fcntl(duplicate, fcntl.F_GETFL)
+            if flags & os.O_ACCMODE != os.O_RDONLY:
+                raise OSError
+            return duplicate
+        except OSError:
+            if duplicate >= 0:
+                os.close(duplicate)
+            raise _WorkerError("landmark_model_unavailable") from None
+    path = Path(path_value)
+    nofollow = getattr(os, "O_NOFOLLOW", None)
+    if nofollow is None:
+        raise _WorkerError("landmark_model_unavailable")
+    try:
+        return os.open(
+            path,
+            os.O_RDONLY | getattr(os, "O_CLOEXEC", 0) | nofollow,
+        )
+    except OSError:
+        raise _WorkerError("landmark_model_unavailable") from None
+
+
+def _descriptor_identity(
+    metadata: os.stat_result,
+) -> tuple[int, int, int, int, int, int]:
+    return (
+        metadata.st_dev,
+        metadata.st_ino,
+        metadata.st_mode,
+        metadata.st_size,
+        metadata.st_mtime_ns,
+        metadata.st_ctime_ns,
+    )
 
 
 def _require_options(value: object) -> dict[str, float | int]:

@@ -19,6 +19,7 @@ from voice_coach.pronunciation_attempts.adapters import (
 from voice_coach.pronunciation_attempts.adapters import runtime as runtime_module
 from voice_coach.pronunciation_attempts.adapters.runtime import (
     BlockedVisualReliabilityAdapter,
+    FixedLocalTrustedPromptAdapter,
     FrozenSeungunRuntimeAdapter,
     LocalExplicitConsentAuthority,
     MediaPipeVisualDetectorBridge,
@@ -92,6 +93,30 @@ _CONTAINER_SHA256 = "b" * 64
 _ASSET_HANDLE_ID = "d" * 64
 _PCM = b"\x00\x00" * 1600
 _PCM_SHA256 = hashlib.sha256(_PCM).hexdigest()
+
+
+def test_fixed_local_prompt_is_exact_and_uses_expected_phone_frontend() -> None:
+    class Frontend:
+        def expected_phones(self, text: str) -> ExpectedPhoneSequence:
+            assert text == "쌀을 깨끗이 씻어요"
+            return ExpectedPhoneSequence(
+                tokens=("ㅆ", "ㅏ", "ㄹ"),
+                token_sha256="a" * 64,
+                backend_id="g2pk-expected-phones",
+                revision="0.9.4",
+            )
+
+    adapter = FixedLocalTrustedPromptAdapter(
+        prompt_id="LOCAL-TEST-RICE-CLEAN-V1",
+        normalized_text="쌀을 깨끗이 씻어요",
+        expected_phone_frontend=Frontend(),  # type: ignore[arg-type]
+    )
+
+    prompt = adapter.resolve(prompt_id="LOCAL-TEST-RICE-CLEAN-V1")
+    assert prompt.normalized_text == "쌀을 깨끗이 씻어요"
+    assert prompt.expected_phones == ("ㅆ", "ㅏ", "ㄹ")
+    with pytest.raises(PronunciationAttemptRuntimeError):
+        adapter.resolve(prompt_id="R00-01")
 
 
 def test_explicit_consent_requires_exact_token_and_issues_both_receipts() -> None:

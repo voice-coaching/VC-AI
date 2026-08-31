@@ -911,6 +911,13 @@ class FfmpegAvContainerAdapter:
             "PATH": _SUBPROCESS_PATH,
             "PYTHONHASHSEED": "0",
             "PYTHONNOUSERSITE": "1",
+            "OMP_NUM_THREADS": "1",
+            "OPENBLAS_NUM_THREADS": "1",
+            "MKL_NUM_THREADS": "1",
+            "NUMEXPR_NUM_THREADS": "1",
+            "VECLIB_MAXIMUM_THREADS": "1",
+            "TF_NUM_INTRAOP_THREADS": "1",
+            "TF_NUM_INTEROP_THREADS": "1",
         }
         try:
             process = subprocess.Popen(

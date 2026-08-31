@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import base64
 from dataclasses import dataclass
+import fcntl
 import hashlib
 import json
 import math
@@ -11,9 +12,11 @@ import os
 from pathlib import Path
 import selectors
 import signal
+import stat
 import subprocess
 import sys
 import time
+from weakref import WeakKeyDictionary,ref
 
 from ..models import Rgb24Sample
 from .mediapipe_landmark_worker import BACKEND_REVISION, PROTOCOL_VERSION
@@ -21,6 +24,7 @@ from .network_isolated_exec import isolated_command
 
 
 _PROCESS_CHUNK_BYTES = 64 * 1024
+_LIVE_LANDMARK_ADAPTERS=WeakKeyDictionary()
 _SUBPROCESS_ADDRESS_SPACE_BYTES = 4 * 1024 * 1024 * 1024
 _ISOLATION_LAUNCHER = Path(__file__).with_name("network_isolated_exec.py")
 _WORKER_FAILURE_REASON_CODES = frozenset(
@@ -226,6 +230,7 @@ class MediaPipeLipLandmarkAdapter:
         model_path: str | Path,
         expected_model_sha256: str,
         policy: MediaPipeLandmarkPolicy,
+        model_descriptor: int | None = None,
         worker_python: str | Path | None = None,
         repository_root: str | Path | None = None,
     ) -> None:
@@ -237,7 +242,14 @@ class MediaPipeLipLandmarkAdapter:
             )
         ):
             raise ValueError("expected_model_sha256 must be lowercase SHA-256")
+        if model_descriptor is not None and (
+            isinstance(model_descriptor, bool)
+            or not isinstance(model_descriptor, int)
+            or model_descriptor < 3
+        ):
+            raise ValueError("model_descriptor must be an integer >= 3")
         self._model_path = Path(model_path)
+        self._model_descriptor = model_descriptor
         self._expected_model_sha256 = expected_model_sha256
         self._policy = policy
         self._worker_python = Path(worker_python or sys.executable)
@@ -246,6 +258,13 @@ class MediaPipeLipLandmarkAdapter:
             if repository_root is not None
             else Path(__file__).resolve().parents[4]
         )
+        _LIVE_LANDMARK_ADAPTERS[self]=(os.getpid(),self._expected_model_sha256,self._policy,ref(self))
+
+    @property
+    def production_identity(self) -> tuple[str, MediaPipeLandmarkPolicy]:
+        row=_LIVE_LANDMARK_ADAPTERS.get(self)
+        if row is None or row[0]!=os.getpid() or row[1]!=self._expected_model_sha256 or row[2]!=self._policy or row[3]() is not self: raise LipLandmarkRuntimeError("landmark_adapter_capability_invalid")
+        return self._expected_model_sha256, self._policy
 
     def detect(self, sample: Rgb24Sample) -> MediaPipeLandmarkBatch:
         if len(sample.frames) > self._policy.maximum_frame_count:
@@ -253,31 +272,6 @@ class MediaPipeLipLandmarkAdapter:
         total_rgb_bytes = sum(len(frame.rgb24) for frame in sample.frames)
         if total_rgb_bytes > self._policy.maximum_total_rgb_bytes:
             raise LipLandmarkRuntimeError("landmark_frame_bytes_exceeded")
-        request = {
-            "protocol_version": PROTOCOL_VERSION,
-            "model_path": str(self._model_path),
-            "expected_model_sha256": self._expected_model_sha256,
-            "options": {
-                "maximum_frame_count": self._policy.maximum_frame_count,
-                "maximum_total_rgb_bytes": self._policy.maximum_total_rgb_bytes,
-                "minimum_face_detection_confidence": (
-                    self._policy.minimum_face_detection_confidence
-                ),
-                "minimum_face_presence_confidence": (
-                    self._policy.minimum_face_presence_confidence
-                ),
-                "minimum_tracking_confidence": self._policy.minimum_tracking_confidence,
-            },
-            "frames": [
-                {
-                    "timestamp_us": frame.timestamp_us,
-                    "width": frame.width,
-                    "height": frame.height,
-                    "rgb24_base64": base64.b64encode(frame.rgb24).decode("ascii"),
-                }
-                for frame in sample.frames
-            ],
-        }
         environment = {
             "LANG": "C",
             "LC_ALL": "C",
@@ -285,18 +279,84 @@ class MediaPipeLipLandmarkAdapter:
             "PYTHONHASHSEED": "0",
             "PYTHONNOUSERSITE": "1",
             "PYTHONPATH": str(self._repository_root / "src"),
+            "OMP_NUM_THREADS": "1",
+            "OPENBLAS_NUM_THREADS": "1",
+            "MKL_NUM_THREADS": "1",
+            "NUMEXPR_NUM_THREADS": "1",
+            "VECLIB_MAXIMUM_THREADS": "1",
+            "TF_NUM_INTRAOP_THREADS": "1",
+            "TF_NUM_INTEROP_THREADS": "1",
         }
-        request_bytes = json.dumps(
-            request,
-            ensure_ascii=False,
-            sort_keys=True,
-            separators=(",", ":"),
-            allow_nan=False,
-        ).encode("utf-8")
-        return_code, stdout, _stderr = self._run_bounded_worker(
-            request_bytes=request_bytes,
-            environment=environment,
-        )
+        descriptor: int | None = None
+        descriptor_identity: tuple[int, int, int, int, int, int] | None = None
+        try:
+            if self._model_descriptor is None:
+                model_locator = str(self._model_path)
+                pass_fds: tuple[int, ...] = ()
+            else:
+                descriptor, descriptor_identity = (
+                    self._duplicate_read_only_model_descriptor(
+                        self._model_descriptor
+                    )
+                )
+                model_locator = f"fd:{descriptor}"
+                pass_fds = (descriptor,)
+            request = {
+                "protocol_version": PROTOCOL_VERSION,
+                "model_path": model_locator,
+                "expected_model_sha256": self._expected_model_sha256,
+                "options": {
+                    "maximum_frame_count": self._policy.maximum_frame_count,
+                    "maximum_total_rgb_bytes": (
+                        self._policy.maximum_total_rgb_bytes
+                    ),
+                    "minimum_face_detection_confidence": (
+                        self._policy.minimum_face_detection_confidence
+                    ),
+                    "minimum_face_presence_confidence": (
+                        self._policy.minimum_face_presence_confidence
+                    ),
+                    "minimum_tracking_confidence": (
+                        self._policy.minimum_tracking_confidence
+                    ),
+                },
+                "frames": [
+                    {
+                        "timestamp_us": frame.timestamp_us,
+                        "width": frame.width,
+                        "height": frame.height,
+                        "rgb24_base64": base64.b64encode(frame.rgb24).decode(
+                            "ascii"
+                        ),
+                    }
+                    for frame in sample.frames
+                ],
+            }
+            request_bytes = json.dumps(
+                request,
+                ensure_ascii=False,
+                sort_keys=True,
+                separators=(",", ":"),
+                allow_nan=False,
+            ).encode("utf-8")
+            return_code, stdout, _stderr = self._run_bounded_worker(
+                request_bytes=request_bytes,
+                environment=environment,
+                pass_fds=pass_fds,
+            )
+            if (
+                descriptor is not None
+                and self._descriptor_identity(os.fstat(descriptor))
+                != descriptor_identity
+            ):
+                raise LipLandmarkRuntimeError(
+                    "landmark_model_integrity_failed"
+                )
+        except OSError:
+            raise LipLandmarkRuntimeError("landmark_model_unavailable") from None
+        finally:
+            if descriptor is not None:
+                os.close(descriptor)
         try:
             response = json.loads(stdout.decode("utf-8", errors="strict"))
         except (UnicodeDecodeError, json.JSONDecodeError) as error:
@@ -316,6 +376,7 @@ class MediaPipeLipLandmarkAdapter:
         *,
         request_bytes: bytes,
         environment: dict[str, str],
+        pass_fds: tuple[int, ...],
     ) -> tuple[int, bytes, bytes]:
         """Exchange bytes without ever buffering unbounded worker output."""
 
@@ -347,6 +408,7 @@ class MediaPipeLipLandmarkAdapter:
                 stdin=subprocess.PIPE,
                 stdout=subprocess.PIPE,
                 stderr=subprocess.PIPE,
+                pass_fds=pass_fds,
                 close_fds=True,
                 shell=False,
                 cwd=str(self._repository_root),
@@ -437,6 +499,45 @@ class MediaPipeLipLandmarkAdapter:
                     stream.close()
                 except OSError:
                     pass
+
+    @staticmethod
+    def _duplicate_read_only_model_descriptor(
+        descriptor: int,
+    ) -> tuple[int, tuple[int, int, int, int, int, int]]:
+        """Duplicate one caller-owned model FD for an explicit child pass."""
+
+        duplicate = -1
+        try:
+            duplicate = os.dup(descriptor)
+            os.set_inheritable(duplicate, False)
+            flags = fcntl.fcntl(duplicate, fcntl.F_GETFL)
+            metadata = os.fstat(duplicate)
+            if (
+                flags & os.O_ACCMODE != os.O_RDONLY
+                or not stat.S_ISREG(metadata.st_mode)
+                or not 0 < metadata.st_size <= 64 * 1024 * 1024
+            ):
+                raise OSError
+            return duplicate, MediaPipeLipLandmarkAdapter._descriptor_identity(
+                metadata
+            )
+        except OSError:
+            if duplicate >= 0:
+                os.close(duplicate)
+            raise LipLandmarkRuntimeError("landmark_model_unavailable") from None
+
+    @staticmethod
+    def _descriptor_identity(
+        metadata: os.stat_result,
+    ) -> tuple[int, int, int, int, int, int]:
+        return (
+            metadata.st_dev,
+            metadata.st_ino,
+            metadata.st_mode,
+            metadata.st_size,
+            metadata.st_mtime_ns,
+            metadata.st_ctime_ns,
+        )
 
     @staticmethod
     def _kill_process_group(process: subprocess.Popen[bytes]) -> None:
