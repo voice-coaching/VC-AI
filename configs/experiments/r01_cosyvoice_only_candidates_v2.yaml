@@ -1,0 +1,172 @@
+schema_version: 2
+
+experiment:
+  id: r01_cosyvoice_only_candidates_v2
+  stage: wp7_r01_reference_candidate_generation
+  supersedes: r01_human_cosyvoice_candidates_v1
+  claim_scope: engineering_provisional
+  decision_record: DEV-R01-001
+  decision_date_kst: 2026-08-08
+  decision_by_role: project_owner
+  # v1 required exactly equal human and CosyVoice candidates per sentence. No human
+  # recording of the R00 sentences exists — they are original CC0 sentences written
+  # for this project, so no corpus can contain them. v2 proceeds TTS-only and pays
+  # for it below in `claims_closed_by_this_amendment`.
+  amendment_reason: no_human_recording_of_r00_sentences_exists
+
+claims_closed_by_this_amendment:
+  # What this contract gives up, stated where it cannot be missed.
+  r04_human_versus_tts_comparison_available: false
+  r04_source_kind_blinding_meaningful: false
+  human_comparison_available: false
+  note_ko: >-
+    사람 후보가 0건이므로 R04의 5조건 blind 평가에서 "사람 대비" 조건을 구성할 수
+    없다. 이 계약으로 생성한 뱅크는 TTS 참조음의 다양성만 제공하며, 사람 낭독과의
+    비교 주장은 D08 실녹음이 확보될 때까지 열리지 않는다.
+
+known_limitations:
+  # CosyVoice2-0.5B ships no built-in speakers, so every rendering is conditioned on
+  # a prompt voice. Only one rights-cleared prompt exists today.
+  distinct_prompt_voices: 1
+  speaker_axis_diversity_available: false
+  speaker_axis_note_ko: >-
+    화자 축 다양성이 없다. d(x,R)의 tolerance는 exemplar 산포에서 유도되므로,
+    화자가 1명이면 화자 축 tolerance는 유도되지 않고 MISSING으로 남는다.
+    AI Hub 542 승인 시 prompt 화자를 늘려 이 항목을 갱신한다.
+  pitch_axis_available: false
+  pitch_axis_note_ko: >-
+    v1이 요구한 pitch bucket 3종은 prompt 화자 1명으로 구성할 수 없다.
+    합성 후 pitch shift로 만드는 것은 새로운 화자가 아니라 같은 화자의 변형이므로
+    다양성으로 계상하지 않는다.
+
+runtime:
+  actual_model_download_allowed: true
+  actual_tts_inference_allowed: true
+  actual_gpu_access_allowed: false
+  gpu_note_ko: >-
+    S105가 GPU를 점유 중이며 attestation의 concurrent_training_process_allowed는
+    false다. 생성은 CPU에서만 수행한다.
+  actual_audio_write_allowed: true
+  actual_manifest_write_allowed: true
+  actual_human_recording_allowed: false
+  environment_files_forbidden: true
+  locked_test_access_allowed: false
+  expert_holdout_access_allowed: false
+
+canonical_sources:
+  r00_card:
+    path: data/reference/r00/r00_sentence_card_v1.json
+    # The card's own status string and the validator's verdict are two different
+    # facts, and a gate that checked only one would pass on a card that was never
+    # validated, or on a stale report for a card that has since changed.
+    required_card_status: fixed_validated_sentence_text_only
+    required_sentence_count: 20
+    validation_report_path: artifacts/reference/r00/r00_sentence_card_v1.validation.json
+    required_validation_status: valid
+  cosyvoice_attestation:
+    path: artifacts/external_attestations/r01/cosyvoice_model_attestation_v1.json
+    sha256: fb4ff89c1268500fede2aa5db2be5ef257fa0c7354b886e94f81813acc412c43
+    required_status: approved_for_r01_inference
+  generator_module:
+    path: src/voice_coach/pronunciation_feedback/adapters/reference_generator.py
+  worker:
+    path: scripts/cosyvoice_reference_worker.py
+
+candidate_design:
+  sentence_ids_from: r00_card
+  expected_sentence_count: 20
+  source_balance:
+    rule: cosyvoice_only
+    human_candidates_expected: 0
+    cosyvoice_candidates_per_sentence: 3
+  diversity_preservation:
+    dimensions:
+      - speed
+    required_speed_buckets:
+      - slow
+      - neutral
+      - fast
+    # v1 also required speaker and pitch. Both are declared unavailable above rather
+    # than quietly dropped, so a later reader cannot mistake this for the full design.
+    dimensions_declared_unavailable:
+      - speaker
+      - pitch
+    preserve_all_design_cells_until_r02: true
+    posthoc_relabel_or_collapse_allowed: false
+  candidate_id:
+    scheme: content_addressed_sha256
+    inputs:
+      - prompt_id
+      - normalized_text
+      - prompt_voice_id
+      - speed_bucket
+      - generator_id
+      - vendor_revision
+      - model_revision
+    overwrite_existing_allowed: false
+
+prompt_voices:
+  - prompt_voice_id: cosyvoice-vendor-demo
+    audio_path: vendor/CosyVoice-074ca6dc/asset/zero_shot_prompt.wav
+    license_spdx: Apache-2.0
+    rights_basis: >-
+      Demo asset shipped in the CosyVoice repository at the attested revision under
+      Apache-2.0; used as a zero-shot prompt for non-commercial research only.
+    speaker_axis: vendor-demo-a
+    third_party_speaker_cloning: false
+
+cosyvoice:
+  source_kind: cosyvoice_tts
+  ledger_observation:
+    canonical_repository: https://github.com/FunAudioLLM/CosyVoice
+    repository_revision: 074ca6dc9e80a2f424f1f74b48bdd7d3fea531cc
+    repository_license_spdx: Apache-2.0
+    repository_license_sha256: c71d239df91726fc519c6eb72d318ec65820627232b2f796219e87dcf35d0ab4
+    model_provider: FunAudioLLM
+    model_id: CosyVoice2-0.5B
+    model_revision: eec1ae6c79877dbd9379285cf8789c9e0879293d
+    weight_manifest_sha256: d31bdef955351837f1337f65ce07eb422e27004341ad21af1bbaf9ab4c183651
+  authorization_decision: approved_for_non_commercial_research_inference
+  grpo_allowed: false
+  fine_tuning_allowed: false
+  # Amended 2026-08-08 (DEV-R01-002). Scoped to AI Hub 542 prompts, generated
+  # audio never redistributed or published, speaker axis pseudonymous.
+  voice_cloning_of_third_party_speakers_allowed: true
+  voice_cloning_scope: aihub542_prompt_only_non_commercial_no_redistribution
+  redistribution_allowed: false
+  commercial_use_allowed: false
+
+learner_facing:
+  synthetic_disclosure_required: true
+  synthetic_disclosure_ko: 이 참조 음성은 AI가 합성한 것입니다.
+  exemplar_without_rights_basis_playable: false
+
+outputs:
+  bank_manifest:
+    path: artifacts/reference/r01/cosyvoice_only_v2/bank.json
+    schema_version: voice_coach.reference_bank_store.v1
+  audio_dir: artifacts/reference/r01/cosyvoice_only_v2/audio
+  receipt:
+    path: artifacts/reference/r01/cosyvoice_only_v2/generation_receipt.json
+
+execution_order:
+  - validate_r00_card_and_sentence_count
+  - validate_cosyvoice_attestation_status_and_digest
+  - validate_prompt_voice_rights_and_audio_presence
+  - synthesise_each_sentence_and_speed_cell
+  - write_content_addressed_audio_without_overwrite
+  - write_bank_manifest_and_receipt
+
+stop_conditions:
+  - r00_card_status_not_valid
+  - r00_sentence_count_not_20
+  - attestation_status_not_approved
+  - attestation_digest_mismatch
+  - prompt_voice_rights_absent
+  - output_path_collision
+  - gpu_used_while_training_holds_it
+
+publication_gate:
+  publication_allowed: false
+  r02_hard_gate_passed: false
+  completion_claim_allowed: false
