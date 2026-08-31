@@ -447,7 +447,7 @@ def test_repository_config_only_has_zero_runtime_access() -> None:
     )
     result = s201.config_only_result(static)
     assert result["status"] == "valid_config_only"
-    assert result["source_pin_read_count"] == 8
+    assert result["source_pin_read_count"] == 5
     for field in (
         "predecessor_metadata_read_attempt_count",
         "external_attestation_read_attempt_count",

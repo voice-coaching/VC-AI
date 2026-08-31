@@ -70,20 +70,11 @@ SEUNGUN_AUDIO_CANONICAL_SOURCE_PATHS = {
     "seungun/src/korean_phone_ctc/frozen_detector.py",
 }
 
-DATA_PRIVACY_BOUNDARY_SOURCE_PATHS = {"data/README.md"}
+DATA_PRIVACY_BOUNDARY_SOURCE_PATHS = {"scripts/check_project_constraints.py"}
 
 API_CONTRACT_SOURCE_PATHS = {
     "docs/api/endpoints.md",
     "docs/api/specification.md",
-}
-
-VISUAL_SIDECAR_ONLY_SOURCE_PATHS = {
-    "docs/architecture/README_KO.md",
-    "docs/architecture/architecture.md",
-    "docs/architecture/component.md",
-    "docs/architecture/directory.md",
-    "docs/architecture/flow.md",
-    "docs/architecture/state.md",
 }
 
 EXPECTED_SOURCE_SCOPES = {
@@ -94,7 +85,6 @@ EXPECTED_SOURCE_SCOPES = {
     ),
     **dict.fromkeys(DATA_PRIVACY_BOUNDARY_SOURCE_PATHS, "data_privacy_boundary"),
     **dict.fromkeys(API_CONTRACT_SOURCE_PATHS, "api_contract"),
-    **dict.fromkeys(VISUAL_SIDECAR_ONLY_SOURCE_PATHS, "visual_sidecar_only"),
 }
 SOURCE_PATHS = tuple(EXPECTED_SOURCE_SCOPES)
 

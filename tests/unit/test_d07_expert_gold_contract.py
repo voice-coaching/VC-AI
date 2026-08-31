@@ -446,8 +446,8 @@ def test_repository_config_only_reads_only_c1_and_g04_a1_aggregate() -> None:
     )
     result = contract.config_only_result(static, audit)
     assert result["status"] == "valid_config_only"
-    assert result["source_pin_count"] == 22
-    assert result["source_pin_read_count"] == 22
+    assert result["source_pin_count"] == 20
+    assert result["source_pin_read_count"] == 20
     assert result["g04_progress_aggregate_read_count"] == 1
     assert result["g04_t43_completed_count"] == 0
     assert result["g04_i30_completed_count"] == 0
@@ -481,8 +481,8 @@ def test_full_stops_at_the_reviewer_attestation_before_any_external_path() -> No
     assert caught.value.stage == "reviewer_attestation"
     assert caught.value.audit is not None
     audit = caught.value.audit
-    assert audit.source_pin_read_count == 22
-    assert audit.source_toctou_verification_count == 22
+    assert audit.source_pin_read_count == 20
+    assert audit.source_toctou_verification_count == 20
     assert audit.g04_progress_aggregate_read_count == 1
     for field in (
         "reviewer_attestation_read_count",

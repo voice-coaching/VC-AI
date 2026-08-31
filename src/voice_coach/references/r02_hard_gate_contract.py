@@ -71,8 +71,7 @@ SOURCE_PATHS = (
     "configs/reference/r02_gate_preregistration_v1.template.json",
     "configs/reference/r02_hard_gate_report_v1.schema.json",
     "data/reference/r00/r00_sentence_card_v1.json",
-    "docs/paper/EXPERIMENTAL_MANUSCRIPT_KO.md",
-    "docs/paper/RELATED_WORK_SOURCE_LEDGER_KO.md",
+    "scripts/check_project_constraints.py",
     "scripts/validate_r00_sentence_card.py",
     "src/voice_coach/references/r01_candidate_contract.py",
 )

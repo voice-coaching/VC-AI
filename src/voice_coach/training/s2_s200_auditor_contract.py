@@ -123,7 +123,6 @@ S203_PRIMARY_GATES: Mapping[str, tuple[str, float]] = {
     "disagreement_expert_error_hit_rate": ("greater_than_or_equal", 0.60),
 }
 STATIC_SOURCE_PREFIXES = (
-    ".codex/ai_rule_developer/",
     "configs/",
     "docs/",
     "requirements/",
@@ -1104,11 +1103,9 @@ def validate_static_config(
         if relative in seen:
             raise S200ContractError(f"duplicate canonical source pin: {relative}")
         seen.add(relative)
-        if relative != "data/README.md" and relative.startswith(
-            ("data/", "artifacts/", "models/", "checkpoints/")
-        ):
+        if relative.startswith(("data/", "artifacts/", "models/", "checkpoints/")):
             raise S200ContractError(f"source pin enters a data/model zone: {relative}")
-        if relative not in {"pyproject.toml", "data/README.md"} and not relative.startswith(
+        if relative != "pyproject.toml" and not relative.startswith(
             STATIC_SOURCE_PREFIXES
         ):
             raise S200ContractError(

@@ -157,8 +157,8 @@ def test_canonical_config_only_has_zero_runtime_access() -> None:
     result = contract.config_only_result(static, audit)
 
     assert result["status"] == "valid_config_only"
-    assert result["source_pin_count"] == 15
-    assert result["source_pin_read_count"] == 15
+    assert result["source_pin_count"] == 14
+    assert result["source_pin_read_count"] == 14
     for name in (
         "r00_deep_validation_count",
         "r01_completion_commit_read_attempt_count",

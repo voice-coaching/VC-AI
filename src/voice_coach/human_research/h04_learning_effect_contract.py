@@ -55,9 +55,7 @@ SOURCE_PATHS = (
     "src/voice_coach/human_research/h00_approval_contract.py",
     "configs/experiments/learning_effect_power_v1.yaml",
     "artifacts/planning/learning_effect_power_sensitivity_v1.json",
-    "docs/paper/EXPERIMENTAL_MANUSCRIPT_KO.md",
-    "docs/paper/CLAIM_GAP_MAP_KO.md",
-    "docs/paper/METHODS_ETHICS_REPRODUCIBILITY_GAP_KO.md",
+    "scripts/check_project_constraints.py",
 )
 
 EXPECTED_EXECUTION_ORDER = (

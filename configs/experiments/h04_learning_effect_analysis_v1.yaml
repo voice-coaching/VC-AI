@@ -33,27 +33,23 @@ canonical_sources:
     - path: configs/human_research/h04_analyst_attestation_v1.template.json
       sha256: f3fe61c3ed5b3adb2d6d1fb9603e6316b885ff70757207b5e163247911cae1f0
     - path: configs/experiments/h00_human_research_approval_v1.yaml
-      sha256: 3b9dd19cd1a4bae5eed9b8fc75898610192cbdc273c86442022f96611be10d94
+      sha256: 6029a79763e10c1d1af5a5470e99d0c58317ab00b75dc33fd1bba3e7e7e42959
     - path: src/voice_coach/human_research/h00_approval_contract.py
-      sha256: fe8f494961fbf41e76ebf6bd81a4d91bc5c9f3bd252921e4d09669b01930bc15
+      sha256: 06580d68588a8cfe6ca7010dd8e9bbff2167f201ee82eb36f35b6f02689d80c3
     - path: configs/experiments/learning_effect_power_v1.yaml
       sha256: 67737548ce1a22b7716fb5c58635f55a216ff7059fd709476198df3d5fb75c86
     - path: artifacts/planning/learning_effect_power_sensitivity_v1.json
       sha256: d63dc95bb4df4967775781def0386beb7ec959c396d847ae6b6e8c982dbce66d
-    - path: docs/paper/EXPERIMENTAL_MANUSCRIPT_KO.md
-      sha256: 3f10f7f05ff89b0c7f6e7a1dfaf48216a5b0dec8f1ab51bbadd2c809f443afef
-    - path: docs/paper/CLAIM_GAP_MAP_KO.md
-      sha256: 3d7009c7ac4dc7c6f45e10290b1042fae21915ad05a420caffa76b667fe24561
-    - path: docs/paper/METHODS_ETHICS_REPRODUCIBILITY_GAP_KO.md
-      sha256: 898d6288a311b9b9e5a3902443f2d71f7877c41d8bdf9d6178fccfe13f52b0d6
+    - path: scripts/check_project_constraints.py
+      sha256: 7c885d9d863d1a505bb074e5be33b63e262b191585bcf7a02a03162ca0f1ba86
 
 predecessor_h00:
   deep_validation_required: true
   actual_official_authorization_required: true
   config_path: configs/experiments/h00_human_research_approval_v1.yaml
-  config_sha256: 3b9dd19cd1a4bae5eed9b8fc75898610192cbdc273c86442022f96611be10d94
+  config_sha256: 6029a79763e10c1d1af5a5470e99d0c58317ab00b75dc33fd1bba3e7e7e42959
   contract_path: src/voice_coach/human_research/h00_approval_contract.py
-  contract_sha256: fe8f494961fbf41e76ebf6bd81a4d91bc5c9f3bd252921e4d09669b01930bc15
+  contract_sha256: 06580d68588a8cfe6ca7010dd8e9bbff2167f201ee82eb36f35b6f02689d80c3
   approval_path: artifacts/external_attestations/h00/h00_human_research_approval_public_v1.json
   approval_sha256: TBD_H00_APPROVAL
   attestation_path: artifacts/external_attestations/h00/h00_official_document_attestation_v1.json

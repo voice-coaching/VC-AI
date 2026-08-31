@@ -75,7 +75,7 @@ SOURCE_PATHS = (
     "configs/reference/r02_gate_preregistration_v1.template.json",
     "configs/reference/r03_reference_bank_manifest_v1.schema.json",
     "configs/reference/r03_pareto_diversity_preregistration_v1.template.json",
-    "docs/paper/EXPERIMENTAL_MANUSCRIPT_KO.md",
+    "scripts/check_project_constraints.py",
     "scripts/prepare_r01_human_cosyvoice_candidates.py",
     "scripts/prepare_r02_candidate_hard_gate.py",
     "scripts/validate_r00_sentence_card.py",

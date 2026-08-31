@@ -20,15 +20,11 @@ canonical_sources:
   access_scope: C1_code_config_docs_only
   pins:
     - path: configs/experiments/s2_s200_independent_auditor_v1.yaml
-      sha256: 270dab9a14d3ef58ffa39bab0ebad624ca0ff54b2ad8703dcbc8042a6195b739
+      sha256: d7a59577f19a1a366365973bb7d21d00f626f5f421289a366a9587b33400d575
     - path: configs/experiments/s2_s201_whisper_content_gate_v1.yaml
-      sha256: 18fe3a4ea169bf78f9828c5d81704a7a304552e8baf000d92db1cacb96818a16
-    - path: docs/paper/EXPERIMENTAL_MANUSCRIPT_KO.md
-      sha256: 3f10f7f05ff89b0c7f6e7a1dfaf48216a5b0dec8f1ab51bbadd2c809f443afef
-    - path: docs/paper/RELATED_WORK_SOURCE_LEDGER_KO.md
-      sha256: d37bf2ab5564c55f03dbb9e1974e9bf421274df9971b30d31bb54ff4909e44b6
-    - path: docs/paper/S2_S202_INDEPENDENT_AUDITOR_AMENDMENT_TEMPLATE_KO.md
-      sha256: 62da51dbe9289acf349f177f69c4585ef08c48d2b363055c36874bd235935417
+      sha256: 0a483f595d769e442d74d8face87103e9a772291006ed8ae60b8396077a6f809
+    - path: scripts/check_project_constraints.py
+      sha256: 7c885d9d863d1a505bb074e5be33b63e262b191585bcf7a02a03162ca0f1ba86
     - path: scripts/prepare_s2_s201_whisper_content.py
       sha256: 0f10c1d9104e80152baba94e1764ffcc1af2b2c2f0147d20af656586ef22d2b2
     - path: scripts/prepare_s2_s202_independent_auditor.py

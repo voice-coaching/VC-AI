@@ -75,8 +75,7 @@ SOURCE_PATHS = (
     "src/voice_coach/training/s2_s202_auditor_contract.py",
     "configs/experiments/s2_s203_expert_holdout_audit_v1.yaml",
     "src/voice_coach/training/s2_s203_holdout_contract.py",
-    "docs/paper/EXPERIMENTAL_MANUSCRIPT_KO.md",
-    "docs/paper/CLAIM_GAP_MAP_KO.md",
+    "scripts/check_project_constraints.py",
 )
 
 EXECUTION_ORDER = (

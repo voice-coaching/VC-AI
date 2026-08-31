@@ -283,7 +283,7 @@ def _c02_bundle_commit(s107: S107Evidence) -> dict[str, Any]:
     return payload
 
 
-def test_static_config_reads_27_scoped_sources_and_nothing_runtime() -> None:
+def test_static_config_reads_21_scoped_sources_and_nothing_runtime() -> None:
     audit = AccessAudit()
     static = validate_static_config(
         workspace_root=WORKSPACE,
@@ -292,8 +292,8 @@ def test_static_config_reads_27_scoped_sources_and_nothing_runtime() -> None:
         audit=audit,
     )
 
-    assert len(static.source_snapshots) == 27
-    assert audit.source_pin_read_count == 27
+    assert len(static.source_snapshots) == 21
+    assert audit.source_pin_read_count == 21
     assert audit.s107_completion_path_resolution_count == 0
     assert audit.c02_completion_path_resolution_count == 0
     assert audit.request_or_row_access_count == 0
@@ -302,14 +302,14 @@ def test_static_config_reads_27_scoped_sources_and_nothing_runtime() -> None:
     assert audit.output_count == 0
 
 
-def test_static_config_rejects_visual_sidecar_as_audio_authority() -> None:
+def test_static_config_rejects_repository_policy_as_audio_authority() -> None:
     config = deepcopy(load_config(CONFIG))
-    visual_pin = next(
+    policy_pin = next(
         pin
         for pin in config["canonical_sources"]["pins"]
-        if pin["path"] == "docs/architecture/README_KO.md"
+        if pin["path"] == "scripts/check_project_constraints.py"
     )
-    visual_pin["scope"] = "seungun_audio_canonical"
+    policy_pin["scope"] = "seungun_audio_canonical"
 
     with pytest.raises(E02ContractError, match="source pin .* scope"):
         validate_static_config(

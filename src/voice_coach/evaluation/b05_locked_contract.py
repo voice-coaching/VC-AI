@@ -146,11 +146,7 @@ EXPECTED_SOURCE_PATHS = {
     "src/voice_coach/training/wavlm_s107_calibration_training.py",
     "configs/experiments/wavlm_s108_no_locked_dry_run_v1.yaml",
     "src/voice_coach/training/wavlm_s108_dry_run.py",
-    "data/README.md",
-    "docs/evaluation/G04_AUDIO_AI_PROXY_PROTOCOL_KO.md",
-    "docs/paper/CLAIM_GAP_MAP_KO.md",
-    "docs/paper/METHODS_ETHICS_REPRODUCIBILITY_GAP_KO.md",
-    "docs/paper/EXPERIMENTAL_MANUSCRIPT_KO.md",
+    "scripts/check_project_constraints.py",
     "pyproject.toml",
 }
 

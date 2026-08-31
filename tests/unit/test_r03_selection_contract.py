@@ -339,7 +339,7 @@ def _copy_static_bundle(tmp_path: Path) -> Path:
 
 def test_static_source_hash_drift_is_rejected(tmp_path: Path) -> None:
     config_path = _copy_static_bundle(tmp_path)
-    source = tmp_path / "docs/paper/EXPERIMENTAL_MANUSCRIPT_KO.md"
+    source = tmp_path / "scripts/check_project_constraints.py"
     source.write_text(
         source.read_text(encoding="utf-8") + "\ndrift\n", encoding="utf-8"
     )

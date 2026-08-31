@@ -698,8 +698,8 @@ def test_static_config_reads_exactly_19_pins_and_no_runtime() -> None:
         config=config,
         audit=audit,
     )
-    assert len(result.source_snapshots) == 15
-    assert audit.source_pin_read_count == 15
+    assert len(result.source_snapshots) == 13
+    assert audit.source_pin_read_count == 13
     assert audit.source_toctou_verification_count == 0
     runtime = audit.as_dict()
     runtime.pop("source_pin_read_count")
@@ -718,8 +718,8 @@ def test_full_preflight_stops_at_h00_before_any_runtime_path_resolution() -> Non
     assert raised.value.stage == "h00_authorization"
     audit = raised.value.audit
     assert audit is not None
-    assert audit.source_pin_read_count == 15
-    assert audit.source_toctou_verification_count == 15
+    assert audit.source_pin_read_count == 13
+    assert audit.source_toctou_verification_count == 13
     protected = audit.as_dict()
     protected.pop("source_pin_read_count")
     protected.pop("source_toctou_verification_count")

@@ -88,7 +88,7 @@ SOURCE_PATHS = (
     "configs/coaching/c02_diagnostic_issues_input_v1.schema.json",
     "configs/experiments/c02_deterministic_coaching_selection_v1.yaml",
     "configs/experiments/wavlm_s107_calibration_v1.yaml",
-    "data/README.md",
+    "scripts/check_project_constraints.py",
     "scripts/prepare_c03_expert_coaching_audit.py",
     "src/voice_coach/coaching/c02_selection_contract.py",
     "src/voice_coach/coaching/c03_expert_audit_contract.py",

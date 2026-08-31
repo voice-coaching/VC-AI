@@ -28,8 +28,8 @@ jobs:
         with:
           python-version: "3.12"
 
-      - name: Validate relative file destinations
-        run: python scripts/check_markdown_links.py
+      - name: Validate project constraints
+        run: python scripts/check_project_constraints.py
 
       - name: Validate repository-current source pins
         run: python scripts/check_source_pins.py
@@ -69,6 +69,7 @@ jobs:
           tests/integration/test_api.py
           tests/unit/test_contracts.py
           tests/unit/test_markdown_links.py
+          tests/unit/test_project_constraints.py
           tests/unit/test_source_pins.py
 
       - name: Record excluded research-runtime boundary

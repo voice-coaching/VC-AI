@@ -34,8 +34,8 @@ def test_canonical_config_only_is_static_and_has_zero_runtime_access() -> None:
     result = contract.config_only_result(static, audit)
 
     assert result["status"] == "valid_config_only"
-    assert result["source_pin_count"] == 12
-    assert result["source_pin_read_count"] == 12
+    assert result["source_pin_count"] == 9
+    assert result["source_pin_read_count"] == 9
     assert result["r00_deep_validation_count"] == 0
     assert result["human_attestation_read_attempt_count"] == 0
     assert result["cosyvoice_attestation_read_attempt_count"] == 0

@@ -233,7 +233,7 @@ SOURCE_PATHS = (
     "configs/coaching/c02_coaching_selection_output_v1.schema.json",
     "configs/experiments/wavlm_s107_calibration_v1.yaml",
     "data/processed/aihub71490/manifests/aihub71490_data_card.json",
-    "docs/paper/EXPERIMENTAL_MANUSCRIPT_KO.md",
+    "scripts/check_project_constraints.py",
     "scripts/prepare_wavlm_s107_calibration.py",
     "scripts/run_wavlm_s107_calibration.py",
     "scripts/validate_korean_error_advice_ontology.py",

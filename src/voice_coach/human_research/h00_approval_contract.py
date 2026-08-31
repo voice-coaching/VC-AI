@@ -45,8 +45,7 @@ SOURCE_PATHS = (
     "configs/human_research/h00_human_research_approval_public_v1.template.json",
     "configs/human_research/h00_official_document_attestation_v1.schema.json",
     "configs/human_research/h00_official_document_attestation_v1.template.json",
-    ".codex/ai_rule_developer/GLOBAL_RULES.md",
-    "data/README.md",
+    "scripts/check_project_constraints.py",
 )
 
 EXPECTED_EXECUTION_ORDER = (

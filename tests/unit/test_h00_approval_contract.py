@@ -260,8 +260,8 @@ def test_static_config_reads_12_sources_without_external_or_participant_access()
         audit=audit,
     )
 
-    assert len(static.source_snapshots) == 8
-    assert audit.source_pin_read_count == 8
+    assert len(static.source_snapshots) == 7
+    assert audit.source_pin_read_count == 7
     assert audit.approval_path_resolution_count == 0
     assert audit.external_access_count == 0
     assert audit.network_access_count == 0
@@ -329,8 +329,8 @@ def test_synthetic_future_full_preflight_validates_both_public_artifacts(
     )
 
     assert result.status == "ready_for_separately_authorized_h00_human_operations"
-    assert result.audit["source_pin_read_count"] == 8
-    assert result.audit["source_toctou_verification_count"] == 10
+    assert result.audit["source_pin_read_count"] == 7
+    assert result.audit["source_toctou_verification_count"] == 9
     assert result.audit["approval_path_resolution_count"] == 1
     assert result.audit["approval_read_count"] == 1
     assert result.audit["approval_deep_validation_count"] == 1

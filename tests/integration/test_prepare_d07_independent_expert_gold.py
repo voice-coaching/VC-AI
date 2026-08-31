@@ -25,8 +25,8 @@ def test_config_only_keeps_every_protected_runtime_counter_zero() -> None:
     assert completed.returncode == 0, completed.stderr
     result = json.loads(completed.stdout)
     assert result["status"] == "valid_config_only"
-    assert result["source_pin_count"] == 22
-    assert result["source_pin_read_count"] == 22
+    assert result["source_pin_count"] == 20
+    assert result["source_pin_read_count"] == 20
     assert result["g04_progress_aggregate_read_count"] == 1
     assert result["g04_t43_completed_count"] == 0
     assert result["g04_t43_expected_count"] == 43
@@ -58,8 +58,8 @@ def test_full_fails_at_the_reviewer_attestation_before_protected_paths() -> None
     assert result["status"] == "failed_closed"
     assert result["stage"] == "reviewer_attestation"
     assert "reviewer" in result["error"]
-    assert result["source_pin_read_count"] == 22
-    assert result["source_toctou_verification_count"] == 22
+    assert result["source_pin_read_count"] == 20
+    assert result["source_toctou_verification_count"] == 20
     assert result["g04_progress_aggregate_read_count"] == 1
     for field, value in result.items():
         if field.endswith("_count") and field not in (

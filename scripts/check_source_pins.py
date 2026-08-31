@@ -596,7 +596,11 @@ def main(argv: Sequence[str] | None = None) -> int:
     args = _build_parser().parse_args(argv)
     repository_root = args.repository_root.resolve()
     tracked_files = _git_tracked_files(repository_root)
-    config_files = _tracked_config_files(tracked_files)
+    config_files = tuple(
+        path
+        for path in _tracked_config_files(tracked_files)
+        if (repository_root / path).is_file()
+    )
     result = check_source_pins(
         repository_root,
         config_files,

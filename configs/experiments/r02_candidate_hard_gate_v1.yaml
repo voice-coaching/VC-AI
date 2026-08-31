@@ -19,7 +19,7 @@ canonical_sources:
     - path: artifacts/reference/r00/r00_sentence_card_v1.validation.json
       sha256: 95b4fd861a3c21222ff13859cfbc9c196e3fd06493852bca823d8a63dc2816dd
     - path: configs/experiments/r01_human_cosyvoice_candidates_v1.yaml
-      sha256: 7cc35e4661abdd68bdbccc4aacb79f50b708dc1ca96db9521ff33c948ecf7f79
+      sha256: bb8cc083b83714b6c8d283ad918cb1cceee76c64c176e98d6aba6d85d558488d
     - path: configs/reference/r00_sentence_card_v1.schema.json
       sha256: 1f8bcf0325414e1923cda0def9a973ac2f7be7bd85cca4ee869743ef862a7b92
     - path: configs/reference/r01_candidate_manifest_v1.schema.json
@@ -38,14 +38,12 @@ canonical_sources:
       sha256: 60525a3b685574a3dce193a7423d77a811050c9c38d36b2c3ba947b71f06a92b
     - path: data/reference/r00/r00_sentence_card_v1.json
       sha256: 08dc149ccf10006a587e6216dda0471c19b5c55eab6b320b4348587527d82c4d
-    - path: docs/paper/EXPERIMENTAL_MANUSCRIPT_KO.md
-      sha256: 3f10f7f05ff89b0c7f6e7a1dfaf48216a5b0dec8f1ab51bbadd2c809f443afef
-    - path: docs/paper/RELATED_WORK_SOURCE_LEDGER_KO.md
-      sha256: d37bf2ab5564c55f03dbb9e1974e9bf421274df9971b30d31bb54ff4909e44b6
+    - path: scripts/check_project_constraints.py
+      sha256: 7c885d9d863d1a505bb074e5be33b63e262b191585bcf7a02a03162ca0f1ba86
     - path: scripts/validate_r00_sentence_card.py
       sha256: 967517e74194936c91dad1eed4fcfb0c059b5480af32b8adfc9725fdb7d6e7d0
     - path: src/voice_coach/references/r01_candidate_contract.py
-      sha256: c8ac2bf542ff910b3b88f6008e833b4d4887e4cc9cb449313756dc5f6e50adca
+      sha256: 4b51682155ea165c67ac2dcf1fa236d7f70021acc211f54546f3545b576597be
 
 predecessor_r00:
   deep_validation_required: true
@@ -67,7 +65,7 @@ predecessor_r00:
 predecessor_r01:
   deep_validation_required: true
   config_path: configs/experiments/r01_human_cosyvoice_candidates_v1.yaml
-  config_sha256: 7cc35e4661abdd68bdbccc4aacb79f50b708dc1ca96db9521ff33c948ecf7f79
+  config_sha256: bb8cc083b83714b6c8d283ad918cb1cceee76c64c176e98d6aba6d85d558488d
   completion_commit_path: artifacts/experiments/r01_human_cosyvoice_candidates_v1/commit.json
   completion_commit_sha256: TBD_R01_COMPLETION
   completion_schema_version: voice_coach.r01_candidate_completion.v1

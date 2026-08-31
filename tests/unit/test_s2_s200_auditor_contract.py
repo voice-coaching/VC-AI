@@ -187,7 +187,7 @@ def test_repository_config_only_is_valid_and_has_no_runtime_access() -> None:
     )
     output = s200.config_only_result(result)
     assert output["status"] == "valid_config_only"
-    assert output["source_pin_read_count"] == 8
+    assert output["source_pin_read_count"] == 5
     for field_name in (
         "predecessor_metadata_read_count",
         "external_aggregate_read_count",

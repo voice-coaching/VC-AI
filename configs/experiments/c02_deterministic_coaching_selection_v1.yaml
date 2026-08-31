@@ -35,8 +35,8 @@ canonical_sources:
       sha256: c606f77b45c44a517ffff3118bba618ce3da7f0f7f571220c7e9ce15ac4e1966
     - path: data/processed/aihub71490/manifests/aihub71490_data_card.json
       sha256: 4ab53c6837b1a28fbf153dd3a351a195f6931a43694467114cea6c21b8a57b13
-    - path: docs/paper/EXPERIMENTAL_MANUSCRIPT_KO.md
-      sha256: 3f10f7f05ff89b0c7f6e7a1dfaf48216a5b0dec8f1ab51bbadd2c809f443afef
+    - path: scripts/check_project_constraints.py
+      sha256: 7c885d9d863d1a505bb074e5be33b63e262b191585bcf7a02a03162ca0f1ba86
     - path: scripts/prepare_wavlm_s107_calibration.py
       sha256: 6afe337409b16f2072809dc9de164d371fad9cc94851aa5a621936d0ea572d46
     - path: scripts/run_wavlm_s107_calibration.py

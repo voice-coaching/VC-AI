@@ -29,10 +29,8 @@ canonical_sources:
       sha256: 67737548ce1a22b7716fb5c58635f55a216ff7059fd709476198df3d5fb75c86
     - path: artifacts/planning/learning_effect_power_sensitivity_v1.json
       sha256: d63dc95bb4df4967775781def0386beb7ec959c396d847ae6b6e8c982dbce66d
-    - path: data/README.md
-      sha256: 53cba9ea730b608474086158c610b831f992538b008bc8f4db784383786a26e5
-    - path: .codex/ai_rule_developer/GLOBAL_RULES.md
-      sha256: 3c928b24640f1204623b9fae7d28e54ba20e77b68d38050b79aeb62c98856584
+    - path: scripts/check_project_constraints.py
+      sha256: 7c885d9d863d1a505bb074e5be33b63e262b191585bcf7a02a03162ca0f1ba86
 
 official_approval:
   approval_path: artifacts/external_attestations/h00/h00_human_research_approval_public_v1.json

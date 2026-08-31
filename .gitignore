@@ -7,9 +7,6 @@
 /data/models/
 /data/testvideo/
 /artifacts/*
-!/artifacts/public/
-/artifacts/public/*
-!/artifacts/public/README.md
 /models/
 /checkpoints/
 

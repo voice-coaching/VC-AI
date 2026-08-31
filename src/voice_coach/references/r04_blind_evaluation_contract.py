@@ -98,7 +98,7 @@ SOURCE_PATHS = (
     "configs/reference/r04_randomization_manifest_v1.template.json",
     "configs/reference/r04_rating_manifest_v1.schema.json",
     "configs/reference/r04_rating_manifest_v1.template.json",
-    "docs/paper/EXPERIMENTAL_MANUSCRIPT_KO.md",
+    "scripts/check_project_constraints.py",
     "scripts/validate_r00_sentence_card.py",
     "src/voice_coach/references/r01_candidate_contract.py",
     "src/voice_coach/references/r02_hard_gate_contract.py",

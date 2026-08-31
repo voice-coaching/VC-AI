@@ -44,18 +44,14 @@ canonical_sources:
       sha256: 7803feb6121568cf78a582cbacd7a848893a0655bdfc211bac9d35ecc1dd40cc
     - path: artifacts/evaluation/g04_amended_progress_v1.json
       sha256: f59ab54a5f2dbd9fefb2e061bbc0d4b1f7965272f5ff792750472ba69b36316e
-    - path: docs/evaluation/G04_AUDIO_AI_PROXY_PROTOCOL_KO.md
-      sha256: df2bdf6dd460e981211f1757a2a4c34119d59ab30818effc405b0497ac348fdb
-    - path: data/README.md
-      sha256: 53cba9ea730b608474086158c610b831f992538b008bc8f4db784383786a26e5
-    - path: docs/evaluation/G04_AUDIO_AI_PROXY_RESULT_2026-08-09_KO.md
-      sha256: 2fd6bdf497d71b166aa006cd452311985101bc49faf27198f6c5856c2d09a81d
+    - path: scripts/check_project_constraints.py
+      sha256: 7c885d9d863d1a505bb074e5be33b63e262b191585bcf7a02a03162ca0f1ba86
     - path: src/voice_coach/evaluation/g04_amended_review_app.py
       sha256: bfb8f329477067b4cb43aebed1639532163eeb1256d825c8df4a0a45b398a930
     - path: scripts/prepare_d07_independent_expert_gold.py
       sha256: f8e26a33be5b8e9618ed97396e56863c05ffae8128c2b826d10f787e36c3fde1
     - path: src/voice_coach/evaluation/d07_expert_gold_contract.py
-      sha256: 8c3b7a5db8bb5813e7564692386bfe4c6aef670ac3d16c94df4f9a6a33eca0a2
+      sha256: 6ab8f7b52163ab8b07953ebd4b7e6961376435d2086bd0a36fac93bfa3b04492
     - path: src/voice_coach/evaluation/g04_amended_contract.py
       sha256: c2afa98092c300ca7a9f87a1e122a4edad311517a188200330575ddae1f56661
     - path: src/voice_coach/training/wavlm_s108_dry_run.py

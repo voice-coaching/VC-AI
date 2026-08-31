@@ -25,7 +25,7 @@ def test_repository_config_only_has_zero_runtime_data_model_and_output_access() 
     assert completed.returncode == 0, completed.stderr
     result = json.loads(completed.stdout)
     assert result["status"] == "valid_config_only"
-    assert result["source_pin_read_count"] == 9
+    assert result["source_pin_read_count"] == 7
     for field in (
         "predecessor_metadata_read_attempt_count",
         "predecessor_metadata_read_count",

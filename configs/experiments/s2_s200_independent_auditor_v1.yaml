@@ -20,14 +20,8 @@ experiment:
 canonical_sources:
   access_scope: C1_code_and_policy_only
   pins:
-    - path: .codex/ai_rule_developer/GLOBAL_RULES.md
-      sha256: 3c928b24640f1204623b9fae7d28e54ba20e77b68d38050b79aeb62c98856584
-    - path: data/README.md
-      sha256: 53cba9ea730b608474086158c610b831f992538b008bc8f4db784383786a26e5
-    - path: docs/paper/EXPERIMENTAL_MANUSCRIPT_KO.md
-      sha256: 3f10f7f05ff89b0c7f6e7a1dfaf48216a5b0dec8f1ab51bbadd2c809f443afef
-    - path: docs/paper/RELATED_WORK_SOURCE_LEDGER_KO.md
-      sha256: d37bf2ab5564c55f03dbb9e1974e9bf421274df9971b30d31bb54ff4909e44b6
+    - path: scripts/check_project_constraints.py
+      sha256: 7c885d9d863d1a505bb074e5be33b63e262b191585bcf7a02a03162ca0f1ba86
     - path: pyproject.toml
       sha256: 87fbe75e3df2ad7f64494cafb3744e7cfb815cfe1b8e9ea8d774d8b990c35e71
     - path: requirements/scorer-lock-linux-aarch64-cu130.txt
@@ -35,7 +29,7 @@ canonical_sources:
     - path: scripts/prepare_s2_s200_auditor.py
       sha256: 9b4e528f025743fe18dfcf7e6bb3a2ed3e57d3bcf05c76ce459ceac520a5b9d1
     - path: src/voice_coach/training/s2_s200_auditor_contract.py
-      sha256: 02a7f8b18a88f83091ea23b86b8386b4f96897907b42100af96bd75cc3d81c62
+      sha256: 7d68e08e062275338fd2e3d6305f08b744da6a524e315931c214211d54d2feba
 
 predecessor:
   validate_before_external_evidence: true

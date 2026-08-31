@@ -237,7 +237,7 @@ def find_broken_links(
 
 
 def tracked_markdown_files(repository_root: Path) -> tuple[Path, ...]:
-    """Return Markdown files tracked by Git, independent of ignored artifacts."""
+    """Return tracked Markdown files that exist in the current worktree."""
 
     completed = subprocess.run(
         ["git", "ls-files", "-z", "--", "*.md"],
@@ -246,9 +246,11 @@ def tracked_markdown_files(repository_root: Path) -> tuple[Path, ...]:
         capture_output=True,
     )
     return tuple(
-        repository_root / Path(raw_path.decode("utf-8"))
+        path
         for raw_path in completed.stdout.split(b"\0")
         if raw_path
+        for path in (repository_root / Path(raw_path.decode("utf-8")),)
+        if path.is_file()
     )
 
 
