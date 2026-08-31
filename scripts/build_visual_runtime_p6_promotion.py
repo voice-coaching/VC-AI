@@ -96,7 +96,10 @@ def _parser() -> argparse.ArgumentParser:
         type=Path,
         default=(
             artifact_root
-            / "aihub538_ts174_tl174_video_qc_decision_policy_v1.json"
+            / (
+                "aihub538_ts174_tl174_ts175_tl175_ts176_tl176_"
+                "video_qc_decision_policy_v1.json"
+            )
         ),
     )
     parser.add_argument(
@@ -104,7 +107,10 @@ def _parser() -> argparse.ArgumentParser:
         type=Path,
         default=(
             artifact_root
-            / "aihub538_ts174_tl174_av_sync_decision_policy_v1.json"
+            / (
+                "aihub538_ts174_tl174_ts175_tl175_ts176_tl176_"
+                "av_sync_decision_policy_v1.json"
+            )
         ),
     )
     parser.add_argument(
@@ -112,7 +118,10 @@ def _parser() -> argparse.ArgumentParser:
         type=Path,
         default=(
             artifact_root
-            / "aihub538_ts174_tl174_decision_policy_evidence_v1.json"
+            / (
+                "aihub538_ts174_tl174_ts175_tl175_ts176_tl176_"
+                "decision_policy_evidence_v2.json"
+            )
         ),
     )
     return parser

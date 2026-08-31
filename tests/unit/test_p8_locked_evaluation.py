@@ -84,6 +84,12 @@ def test_read_zero_seal_pins_listing_frozen_thresholds_and_code() -> None:
     assert seal.access_count == 0
     assert seal.sealed_before_source_access is True
     assert seal.aggregate_only is True
+    assert seal.schema_version == "voice_coach.p8_read_zero_seal.v4"
+    assert seal.evaluation_pipeline_code_sha256 == _sha(
+        "evaluation_pipeline_code"
+    )
+    assert seal.source_evaluator_code_sha256 == _sha("source_evaluator_code")
+    assert seal.media_engine_code_sha256 == _sha("media_engine_code")
     assert [
         (entry.file_key, entry.partition_id, entry.role, entry.listed_size)
         for entry in seal.source_listing_digest_inputs
@@ -118,6 +124,26 @@ def test_read_zero_seal_pins_listing_frozen_thresholds_and_code() -> None:
     assert P8ReadZeroSeal.from_json_object(seal.to_json_object()) == seal
     with pytest.raises(FrozenInstanceError):
         seal.access_count = 1  # type: ignore[misc]
+
+
+def test_resigned_evaluation_pipeline_code_tamper_changes_frozen_pins() -> None:
+    original = _seal()
+    document = original.to_json_object()
+    document["evaluation_pipeline_code_sha256"] = _sha(
+        "different_evaluation_pipeline_code"
+    )
+    _resign(document, "seal_sha256")
+
+    changed = P8ReadZeroSeal.from_json_object(document)
+
+    from voice_coach.visual_feedback.adapters.aihub538_locked_dataset import (
+        p8_frozen_pipeline_pins_sha256,
+    )
+
+    assert changed.seal_sha256 != original.seal_sha256
+    assert p8_frozen_pipeline_pins_sha256(changed) != (
+        p8_frozen_pipeline_pins_sha256(original)
+    )
 
 
 def test_resigned_threshold_tamper_is_rejected() -> None:
@@ -888,6 +914,15 @@ def test_cli_seal_reload_and_explicit_non_execution_consumption(
     assert seal_document["landmark_model_sha256"] == hashlib.sha256(
         pinned_files["landmark-model"]
     ).hexdigest()
+    assert seal_document["evaluation_pipeline_code_sha256"] == hashlib.sha256(
+        pinned_files["evaluation-pipeline-code"]
+    ).hexdigest()
+    assert seal_document["source_evaluator_code_sha256"] == hashlib.sha256(
+        pinned_files["source-evaluator-code"]
+    ).hexdigest()
+    assert seal_document["media_engine_code_sha256"] == hashlib.sha256(
+        pinned_files["media-engine-code"]
+    ).hexdigest()
     p6_path = _argument_path(file_arguments, "--p6-evidence-receipt-file")
     p6_document = json.loads(p6_path.read_text(encoding="utf-8"))
     assert seal_document["p6_evidence_receipt_sha256"] == (
@@ -1112,6 +1147,9 @@ def _seal() -> P8ReadZeroSeal:
         phone_window_code_sha256=_sha("phone_window"),
         phone_window_policy_revision="p8_test_phone_window_policy_v1",
         phone_window_policy_sha256=_sha("phone_window_policy"),
+        evaluation_pipeline_code_sha256=_sha("evaluation_pipeline_code"),
+        source_evaluator_code_sha256=_sha("source_evaluator_code"),
+        media_engine_code_sha256=_sha("media_engine_code"),
         sealed_at_utc=SEALED_AT,
     )
 
@@ -1276,6 +1314,9 @@ def _pinned_file_arguments(
         "av-sync-measurement-code": b"av sync measurement code\n",
         "av-sync-decision-code": b"av sync decision code\n",
         "phone-window-code": b"phone window code\n",
+        "evaluation-pipeline-code": b"evaluation pipeline code\n",
+        "source-evaluator-code": b"source evaluator code\n",
+        "media-engine-code": b"media engine code\n",
     }
     media_capture_contract_id = "p8_test_media_capture_v1"
     visual_observation_contract_id = "p8_test_visible_lips_rgb_v1"

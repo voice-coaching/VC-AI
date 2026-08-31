@@ -18,6 +18,8 @@ import pytest
 
 from voice_coach.visual_feedback.adapters import aihub538_training_archive as archive_module
 from voice_coach.visual_feedback.adapters.aihub538_training_archive import (
+    AIHUB538_LOCKED_FILE_KEYS,
+    AIHUB538_TRAINING_FILE_KEYS,
     Aihub538ArchiveError,
     Aihub538ArchiveSecurityPolicy,
     NamedSplitZipPart,
@@ -25,6 +27,7 @@ from voice_coach.visual_feedback.adapters.aihub538_training_archive import (
     extract_verified_zip_descriptor,
     merge_split_zip_parts,
     validate_zip_descriptor,
+    verify_aihub538_locked_download,
     verify_aihub538_training_download,
 )
 from voice_coach.visual_feedback.models.integrity import sha256_document
@@ -43,7 +46,11 @@ def _readonly(stack: ExitStack, path: Path) -> int:
     return descriptor
 
 
-def _download_fixture(tmp_path: Path) -> tuple[Path, Path]:
+def _download_fixture(
+    tmp_path: Path,
+    *,
+    file_keys: tuple[str, ...] = AIHUB538_TRAINING_FILE_KEYS,
+) -> tuple[Path, Path]:
     archive = _private(tmp_path / "download.tar")
     archive.write_bytes(b"completed aggregate tar fixture")
     archive.chmod(0o600)
@@ -53,7 +60,7 @@ def _download_fixture(tmp_path: Path) -> tuple[Path, Path]:
             {
                 "schema_version": "voice_coach.aihub_secure_download_receipt.v1",
                 "dataset_key": "538",
-                "file_keys": ["54725", "54944"],
+                "file_keys": list(file_keys),
                 "archive_size_bytes": archive.stat().st_size,
                 "archive_sha256": hashlib.sha256(archive.read_bytes()).hexdigest(),
                 "download_completed_unix_seconds": 1_787_856_000,
@@ -115,6 +122,87 @@ def test_secure_download_receipt_binds_exact_dataset_keys_size_and_sha(
     ).hexdigest()
     assert document["credential_persisted"] is False
     assert document["locked_partition_accessed"] is False
+
+
+def test_locked_download_receipt_binds_exact_order_size_and_sha_aggregate_only(
+    tmp_path: Path,
+) -> None:
+    archive, receipt = _download_fixture(
+        tmp_path,
+        file_keys=AIHUB538_LOCKED_FILE_KEYS,
+    )
+    with ExitStack() as stack:
+        result = verify_aihub538_locked_download(
+            archive_descriptor=_readonly(stack, archive),
+            receipt_descriptor=_readonly(stack, receipt),
+        )
+
+    document = result.to_json_object()
+    assert document == {
+        "schema_version": "voice_coach.aihub538_locked_download_verification.v1",
+        "dataset_id": 538,
+        "dataset_partition": "locked_evaluation_vs11_vl11",
+        "file_keys": ["55114", "55082"],
+        "archive_size_bytes": archive.stat().st_size,
+        "archive_sha256": hashlib.sha256(archive.read_bytes()).hexdigest(),
+        "secure_download_receipt_sha256": hashlib.sha256(
+            receipt.read_bytes()
+        ).hexdigest(),
+        "credential_persisted": False,
+        "locked_partition_accessed": True,
+        "aggregate_only": True,
+    }
+
+
+@pytest.mark.parametrize(
+    ("verifier_name", "file_keys"),
+    (
+        ("locked", AIHUB538_TRAINING_FILE_KEYS),
+        ("training", AIHUB538_LOCKED_FILE_KEYS),
+        ("locked", tuple(reversed(AIHUB538_LOCKED_FILE_KEYS))),
+        ("training", tuple(reversed(AIHUB538_TRAINING_FILE_KEYS))),
+    ),
+)
+def test_download_verifiers_reject_cross_partition_and_reversed_key_contracts(
+    tmp_path: Path,
+    verifier_name: str,
+    file_keys: tuple[str, ...],
+) -> None:
+    archive, receipt = _download_fixture(tmp_path, file_keys=file_keys)
+    verifier = (
+        verify_aihub538_locked_download
+        if verifier_name == "locked"
+        else verify_aihub538_training_download
+    )
+    with ExitStack() as stack, pytest.raises(Aihub538ArchiveError) as caught:
+        verifier(
+            archive_descriptor=_readonly(stack, archive),
+            receipt_descriptor=_readonly(stack, receipt),
+        )
+
+    assert caught.value.reason_code == "aihub538_download_receipt_contract_mismatch"
+
+
+def test_locked_download_verifier_rejects_archive_digest_mismatch(
+    tmp_path: Path,
+) -> None:
+    archive, receipt = _download_fixture(
+        tmp_path,
+        file_keys=AIHUB538_LOCKED_FILE_KEYS,
+    )
+    document = json.loads(receipt.read_text(encoding="utf-8"))
+    document["archive_sha256"] = "0" * 64
+    receipt.chmod(0o600)
+    receipt.write_text(json.dumps(document), encoding="utf-8")
+    receipt.chmod(0o400)
+
+    with ExitStack() as stack, pytest.raises(Aihub538ArchiveError) as caught:
+        verify_aihub538_locked_download(
+            archive_descriptor=_readonly(stack, archive),
+            receipt_descriptor=_readonly(stack, receipt),
+        )
+
+    assert caught.value.reason_code == "aihub538_download_sha256_mismatch"
 
 
 @pytest.mark.parametrize(

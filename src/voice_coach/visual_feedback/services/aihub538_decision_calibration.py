@@ -27,14 +27,39 @@ from ...pronunciation_attempts.adapters.lip_audio_av_sync import (
 from ...pronunciation_attempts.adapters.video_qc import VideoQcCandidateEvidence
 from ..errors import VisualFeedbackContractError
 from ..models.aihub538_decision_calibration import (
+    AIHUB538_MULTI_METADATA_BBOX_ELIGIBILITY_RULE,
+    AIHUB538_QC_CANDIDATE_UNAVAILABLE_REASON_CODES,
+    AIHUB538_QC_DECISION_FAILURE_REASON_CODES,
+    AIHUB538_QC_THRESHOLD_DIAGNOSTIC_SPECS,
+    Aihub538AggregateReasonCount,
+    Aihub538AngleQcFailureDiagnostic,
     Aihub538CalibrationAngleEvidence,
     Aihub538DecisionCalibrationEvidence,
+    Aihub538DecisionCalibrationFailureArtifact,
+    Aihub538DecisionCalibrationFailureArtifactV2,
     Aihub538DecisionCalibrationProtocol,
+    Aihub538QcOptionalMetricMissingCombinations,
+    Aihub538QcThresholdMarginHistogram,
     DEFAULT_AIHUB538_DECISION_CALIBRATION_PROTOCOL,
+    MULTISHARD_AIHUB538_DECISION_CALIBRATION_PROTOCOL,
+)
+from ..models.aihub538_balanced_cohort import (
+    AIHUB538_MULTI_ACTOR_ASSIGNMENT_RULE,
+    aihub538_balanced_assignment_commitment,
+    aihub538_label_selection_root_sha256,
+    build_aihub538_balanced_actor_assignment,
+)
+from ..models.aihub538_multishard_admission import (
+    Aihub538MultiShardAdmissionReceipt,
+)
+from ..models.aihub538_nonlocked_shards import (
+    AIHUB538_MULTI_CALIBRATION_SOURCE_PARTITIONS,
+    AIHUB538_TS174_TL174_SHARD,
 )
 from ..models.aihub538_training_evidence import (
     AIHUB538_TRAINING_ADMISSION_POLICY_SHA256,
     AIHUB538_TRAINING_ANGLES,
+    AIHUB538_TS174_LEGACY_V1_ADMISSION_POLICY_SHA256,
     Aihub538TrainingAdmissionReceipt,
 )
 from ..models.binding import SameAttemptBindingReceipt
@@ -55,8 +80,23 @@ _SELECTION_DOMAIN = b"voice_coach.aihub538.angle_selection.v1\x00"
 class Aihub538DecisionCalibrationError(RuntimeError):
     """Stable aggregate-only failure that never embeds a restricted value."""
 
-    def __init__(self, reason_code: str) -> None:
+    def __init__(
+        self,
+        reason_code: str,
+        *,
+        failure_artifact: (
+            Aihub538DecisionCalibrationFailureArtifact
+            | Aihub538DecisionCalibrationFailureArtifactV2
+            | None
+        ) = None,
+    ) -> None:
+        if failure_artifact is not None and type(failure_artifact) not in {
+            Aihub538DecisionCalibrationFailureArtifact,
+            Aihub538DecisionCalibrationFailureArtifactV2,
+        }:
+            raise TypeError("failure_artifact type differs")
         self.reason_code = reason_code
+        self.failure_artifact = failure_artifact
         super().__init__(reason_code)
 
 
@@ -68,13 +108,27 @@ class Aihub538CalibrationMediaItem:
     actor_token_sha256: str = field(repr=False)
     attempt_token_sha256: str = field(repr=False)
     angle: str
+    metadata_bbox_observation_available: bool = True
+    label_selection_token_sha256: str | None = field(
+        default=None,
+        repr=False,
+    )
 
     def __post_init__(self) -> None:
         require_sha256(self.sample_sha256, "sample_sha256")
         require_sha256(self.actor_token_sha256, "actor_token_sha256")
         require_sha256(self.attempt_token_sha256, "attempt_token_sha256")
+        if self.label_selection_token_sha256 is not None:
+            require_sha256(
+                self.label_selection_token_sha256,
+                "label_selection_token_sha256",
+            )
         if self.angle not in AIHUB538_TRAINING_ANGLES:
             raise VisualFeedbackContractError("calibration media angle differs")
+        if not isinstance(self.metadata_bbox_observation_available, bool):
+            raise VisualFeedbackContractError(
+                "calibration metadata bbox availability differs"
+            )
 
 
 @dataclass(frozen=True, slots=True)
@@ -133,6 +187,8 @@ class Aihub538CalibrationSplit:
     actor_overlap_count: int
     attempt_overlap_count: int
     source_manifest_sha256: str
+    admitted_item_count: int
+    metadata_excluded_item_count: int
 
 
 @dataclass(frozen=True, slots=True)
@@ -162,7 +218,10 @@ class Aihub538DecisionCalibrationService:
         self,
         *,
         items: tuple[Aihub538CalibrationMediaItem, ...],
-        admission_receipt: Aihub538TrainingAdmissionReceipt,
+        admission_receipt: (
+            Aihub538TrainingAdmissionReceipt
+            | Aihub538MultiShardAdmissionReceipt
+        ),
         video_qc_measurement_policy: P8RuntimePolicyArtifact,
         av_sync_measurement_policy: P8RuntimePolicyArtifact,
     ) -> Aihub538DecisionCalibrationResult:
@@ -178,7 +237,28 @@ class Aihub538DecisionCalibrationService:
             protocol=self._protocol,
         )
         development = self._measure_all(split.development)
-        _require_development_availability(development, self._protocol)
+        development_failure = _development_availability_failure_reason(
+            development,
+            self._protocol,
+        )
+        if development_failure is not None:
+            raise _stop_policy_error(
+                reason_code=development_failure,
+                protocol=self._protocol,
+                split=split,
+                admission_receipt=admission_receipt,
+                development=development,
+                calibration=(),
+                decisions=(),
+                angle_diagnostics=_development_angle_diagnostics(
+                    split=split,
+                    development=development,
+                ),
+                video_qc_measurement_policy=video_qc_measurement_policy,
+                av_sync_measurement_policy=av_sync_measurement_policy,
+                video_qc_decision_policy=None,
+                av_sync_decision_policy=None,
+            )
         video_qc_decision_policy, av_sync_decision_policy = _derive_policies(
             development=development,
             protocol=self._protocol,
@@ -197,7 +277,25 @@ class Aihub538DecisionCalibrationService:
             calibration=calibration,
             decisions=decisions,
         )
-        _require_calibration_stop_policy(angle_evidence, self._protocol)
+        calibration_failure = _calibration_stop_policy_reason(
+            angle_evidence,
+            self._protocol,
+        )
+        if calibration_failure is not None:
+            raise _stop_policy_error(
+                reason_code=calibration_failure,
+                protocol=self._protocol,
+                split=split,
+                admission_receipt=admission_receipt,
+                development=development,
+                calibration=calibration,
+                decisions=decisions,
+                angle_diagnostics=angle_evidence,
+                video_qc_measurement_policy=video_qc_measurement_policy,
+                av_sync_measurement_policy=av_sync_measurement_policy,
+                video_qc_decision_policy=video_qc_decision_policy,
+                av_sync_decision_policy=av_sync_decision_policy,
+            )
 
         evidence = Aihub538DecisionCalibrationEvidence.issue(
             source_manifest_sha256=split.source_manifest_sha256,
@@ -241,6 +339,19 @@ class Aihub538DecisionCalibrationService:
                 item.sync_lineage_valid for item in decisions
             ),
             angle_evidence=angle_evidence,
+            source_partitions=self._protocol.source_partitions,
+            admitted_item_count=(
+                split.admitted_item_count
+                if self._protocol.source_partitions
+                == AIHUB538_MULTI_CALIBRATION_SOURCE_PARTITIONS
+                else 0
+            ),
+            metadata_excluded_item_count=(
+                split.metadata_excluded_item_count
+                if self._protocol.source_partitions
+                == AIHUB538_MULTI_CALIBRATION_SOURCE_PARTITIONS
+                else 0
+            ),
         )
         return Aihub538DecisionCalibrationResult(
             video_qc_decision_policy=video_qc_decision_policy,
@@ -272,7 +383,10 @@ class Aihub538DecisionCalibrationService:
 def build_aihub538_calibration_split(
     *,
     items: tuple[Aihub538CalibrationMediaItem, ...],
-    admission_receipt: Aihub538TrainingAdmissionReceipt,
+    admission_receipt: (
+        Aihub538TrainingAdmissionReceipt
+        | Aihub538MultiShardAdmissionReceipt
+    ),
     protocol: Aihub538DecisionCalibrationProtocol,
 ) -> Aihub538CalibrationSplit:
     """Select exact per-angle quotas after deterministic actor partitioning."""
@@ -281,20 +395,74 @@ def build_aihub538_calibration_split(
         raise Aihub538DecisionCalibrationError(
             "aihub538_calibration_inventory_empty"
         )
-    if not isinstance(admission_receipt, Aihub538TrainingAdmissionReceipt):
+    if not isinstance(
+        admission_receipt,
+        (
+            Aihub538TrainingAdmissionReceipt,
+            Aihub538MultiShardAdmissionReceipt,
+        ),
+    ):
         raise Aihub538DecisionCalibrationError(
             "aihub538_calibration_admission_receipt_invalid"
+        )
+    try:
+        admission_receipt._validate()
+    except (TypeError, ValueError):
+        raise Aihub538DecisionCalibrationError(
+            "aihub538_calibration_admission_receipt_invalid"
+        ) from None
+    is_multi = isinstance(
+        admission_receipt,
+        Aihub538MultiShardAdmissionReceipt,
+    )
+    if is_multi and (
+        protocol != MULTISHARD_AIHUB538_DECISION_CALIBRATION_PROTOCOL
+        or protocol.protocol_sha256
+        != admission_receipt.frozen_calibration_protocol_sha256
+    ):
+        raise Aihub538DecisionCalibrationError(
+            "aihub538_calibration_frozen_protocol_mismatch"
+        )
+    if not is_multi and (
+        protocol != DEFAULT_AIHUB538_DECISION_CALIBRATION_PROTOCOL
+        or admission_receipt.shard_id
+        != AIHUB538_TS174_TL174_SHARD.shard_id
+        or admission_receipt.dataset_partition
+        != AIHUB538_TS174_TL174_SHARD.dataset_partition
+        or admission_receipt.source_role_component
+        != AIHUB538_TS174_TL174_SHARD.source_role_component
+        or admission_receipt.label_role_component
+        != AIHUB538_TS174_TL174_SHARD.label_role_component
+        or admission_receipt.ordered_file_keys
+        != AIHUB538_TS174_TL174_SHARD.ordered_file_keys
+        or admission_receipt.sample_selection_rule
+        != AIHUB538_TS174_TL174_SHARD.sample_selection_rule
+        or admission_receipt.admission_policy_sha256
+        not in {
+            AIHUB538_TRAINING_ADMISSION_POLICY_SHA256,
+            AIHUB538_TS174_LEGACY_V1_ADMISSION_POLICY_SHA256,
+        }
+    ):
+        raise Aihub538DecisionCalibrationError(
+            "aihub538_calibration_single_shard_scope_invalid"
         )
     sample_digests = [item.sample_sha256 for item in items]
     if len(set(sample_digests)) != len(sample_digests):
         raise Aihub538DecisionCalibrationError(
             "aihub538_calibration_sample_duplicate"
         )
+    selection_schema = (
+        "voice_coach.aihub538_training_sample_selection.v3"
+        if is_multi
+        else "voice_coach.aihub538_training_sample_selection.v1"
+    )
     expected_selection_sha256 = sha256_document(
         {
-            "schema_version": "voice_coach.aihub538_training_sample_selection.v1",
-            "selection_rule": "all_exactly_admitted_ts174_tl174_pairs",
-            "admission_policy_sha256": AIHUB538_TRAINING_ADMISSION_POLICY_SHA256,
+            "schema_version": selection_schema,
+            "selection_rule": admission_receipt.sample_selection_rule,
+            "admission_policy_sha256": (
+                admission_receipt.admission_policy_sha256
+            ),
             "sample_sha256": sorted(sample_digests),
         }
     )
@@ -302,12 +470,44 @@ def build_aihub538_calibration_split(
         raise Aihub538DecisionCalibrationError(
             "aihub538_calibration_inventory_admission_mismatch"
         )
+    if is_multi:
+        label_tokens = [
+            item.label_selection_token_sha256 for item in items
+        ]
+        if any(token is None for token in label_tokens) or len(
+            set(label_tokens)
+        ) != len(label_tokens):
+            raise Aihub538DecisionCalibrationError(
+                "aihub538_calibration_label_selection_token_invalid"
+            )
 
     attempt_actors: dict[str, str] = {}
     partitions: dict[str, list[Aihub538CalibrationMediaItem]] = {
         "development": [],
         "calibration": [],
     }
+    actor_assignments: dict[str, str] | None = None
+    if protocol.actor_split_rule == AIHUB538_MULTI_ACTOR_ASSIGNMENT_RULE:
+        try:
+            actor_assignments = build_aihub538_balanced_actor_assignment(
+                item.actor_token_sha256 for item in items
+            )
+        except ValueError as error:
+            raise Aihub538DecisionCalibrationError(str(error)) from None
+        assert actor_assignments is not None
+        if (
+            aihub538_balanced_assignment_commitment(actor_assignments)
+            != admission_receipt.capacity_actor_assignment_root_sha256
+        ):
+            raise Aihub538DecisionCalibrationError(
+                "aihub538_calibration_capacity_actor_assignment_mismatch"
+            )
+    exclude_metadata_unavailable = (
+        protocol.metadata_bbox_eligibility_rule
+        == AIHUB538_MULTI_METADATA_BBOX_ELIGIBILITY_RULE
+    )
+    metadata_excluded: list[Aihub538CalibrationMediaItem] = []
+    eligible_items: list[Aihub538CalibrationMediaItem] = []
     for item in items:
         actor = attempt_actors.setdefault(
             item.attempt_token_sha256, item.actor_token_sha256
@@ -316,9 +516,27 @@ def build_aihub538_calibration_split(
             raise Aihub538DecisionCalibrationError(
                 "aihub538_calibration_attempt_actor_mismatch"
             )
-        partition = _actor_partition(
-            actor_token_sha256=item.actor_token_sha256,
-            protocol_sha256=protocol.protocol_sha256,
+        if (
+            exclude_metadata_unavailable
+            and not item.metadata_bbox_observation_available
+        ):
+            metadata_excluded.append(item)
+            continue
+        if (
+            not exclude_metadata_unavailable
+            and not item.metadata_bbox_observation_available
+        ):
+            raise Aihub538DecisionCalibrationError(
+                "aihub538_calibration_metadata_bbox_unavailable"
+            )
+        eligible_items.append(item)
+        partition = (
+            actor_assignments[item.actor_token_sha256]
+            if actor_assignments is not None
+            else _actor_partition(
+                actor_token_sha256=item.actor_token_sha256,
+                protocol_sha256=protocol.protocol_sha256,
+            )
         )
         partitions[partition].append(item)
 
@@ -328,11 +546,47 @@ def build_aihub538_calibration_split(
             partition=partition,
             quota=protocol.samples_per_angle_per_partition,
             protocol_sha256=protocol.protocol_sha256,
+            quota_unavailable_reason=(
+                "aihub538_calibration_angle_quota_unavailable_after_"
+                "metadata_exclusion"
+                if exclude_metadata_unavailable
+                else "aihub538_calibration_angle_quota_unavailable"
+            ),
+            use_label_selection_token=is_multi,
         )
         for partition, partition_items in partitions.items()
     }
     development = selected["development"]
     calibration = selected["calibration"]
+    if is_multi:
+        excluded_tokens = tuple(
+            item.label_selection_token_sha256
+            for item in metadata_excluded
+            if item.label_selection_token_sha256 is not None
+        )
+        development_tokens = tuple(
+            item.label_selection_token_sha256
+            for item in development
+            if item.label_selection_token_sha256 is not None
+        )
+        calibration_tokens = tuple(
+            item.label_selection_token_sha256
+            for item in calibration
+            if item.label_selection_token_sha256 is not None
+        )
+        if (
+            len(excluded_tokens)
+            != admission_receipt.capacity_metadata_excluded_label_count
+            or aihub538_label_selection_root_sha256(excluded_tokens)
+            != admission_receipt.capacity_metadata_exclusion_root_sha256
+            or aihub538_label_selection_root_sha256(development_tokens)
+            != admission_receipt.capacity_development_label_selection_root_sha256
+            or aihub538_label_selection_root_sha256(calibration_tokens)
+            != admission_receipt.capacity_calibration_label_selection_root_sha256
+        ):
+            raise Aihub538DecisionCalibrationError(
+                "aihub538_calibration_capacity_selection_mismatch"
+            )
     development_actors = {item.actor_token_sha256 for item in development}
     calibration_actors = {item.actor_token_sha256 for item in calibration}
     development_attempts = {item.attempt_token_sha256 for item in development}
@@ -343,9 +597,15 @@ def build_aihub538_calibration_split(
         raise Aihub538DecisionCalibrationError(
             "aihub538_calibration_partition_overlap_detected"
         )
+    if (
+        len(development_actors) < protocol.minimum_actor_count_per_partition
+        or len(calibration_actors) < protocol.minimum_actor_count_per_partition
+    ):
+        raise Aihub538DecisionCalibrationError(
+            "aihub538_calibration_actor_quota_unavailable"
+        )
 
-    source_manifest_sha256 = sha256_document(
-        {
+    source_manifest_document: dict[str, object] = {
             "schema_version": "voice_coach.aihub538_calibration_source_manifest.v1",
             "admission_receipt_sha256": admission_receipt.receipt_sha256,
             "admission_manifest_sha256": admission_receipt.admission_manifest_sha256,
@@ -364,17 +624,61 @@ def build_aihub538_calibration_split(
             "attempt_overlap_count": attempt_overlap,
             "angles": list(AIHUB538_TRAINING_ANGLES),
             "individual_identifiers_serialized": False,
-        }
-    )
+    }
+    if is_multi:
+        source_manifest_document.update(
+            {
+                "schema_version": (
+                    "voice_coach.aihub538_calibration_source_manifest.v3"
+                ),
+                "source_partitions": list(protocol.source_partitions),
+                "actor_split_rule": protocol.actor_split_rule,
+                "minimum_actor_count_per_partition": (
+                    protocol.minimum_actor_count_per_partition
+                ),
+                "admitted_item_count": len(items),
+                "eligible_item_count": len(eligible_items),
+                "metadata_excluded_item_count": len(metadata_excluded),
+                "metadata_bbox_eligibility_rule": (
+                    protocol.metadata_bbox_eligibility_rule
+                ),
+                "metadata_exclusion_root_sha256": _selection_root(
+                    tuple(metadata_excluded)
+                ),
+                "metadata_unavailable_excluded_before_selection": True,
+                "post_exclusion_exact_quota_revalidated": True,
+                "hidden_skip_allowed": False,
+                "bbox_endpoint_repair_allowed": False,
+                "capacity_audit_receipt_sha256": (
+                    admission_receipt.capacity_audit_receipt_sha256
+                ),
+                "capacity_actor_assignment_root_sha256": (
+                    admission_receipt.capacity_actor_assignment_root_sha256
+                ),
+                "capacity_metadata_exclusion_root_sha256": (
+                    admission_receipt.capacity_metadata_exclusion_root_sha256
+                ),
+                "capacity_development_label_selection_root_sha256": (
+                    admission_receipt.capacity_development_label_selection_root_sha256
+                ),
+                "capacity_calibration_label_selection_root_sha256": (
+                    admission_receipt.capacity_calibration_label_selection_root_sha256
+                ),
+                "label_selection_root_parity_verified": True,
+            }
+        )
+    source_manifest_sha256 = sha256_document(source_manifest_document)
     return Aihub538CalibrationSplit(
         development=development,
         calibration=calibration,
-        eligible_item_count=len(items),
+        eligible_item_count=len(eligible_items),
         development_actor_count=len(development_actors),
         calibration_actor_count=len(calibration_actors),
         actor_overlap_count=actor_overlap,
         attempt_overlap_count=attempt_overlap,
         source_manifest_sha256=source_manifest_sha256,
+        admitted_item_count=len(items),
+        metadata_excluded_item_count=len(metadata_excluded),
     )
 
 
@@ -402,23 +706,38 @@ def _balanced_angle_selection(
     partition: str,
     quota: int,
     protocol_sha256: str,
+    quota_unavailable_reason: str,
+    use_label_selection_token: bool,
 ) -> tuple[Aihub538CalibrationMediaItem, ...]:
     selected: list[Aihub538CalibrationMediaItem] = []
     for angle in AIHUB538_TRAINING_ANGLES:
         candidates = [item for item in items if item.angle == angle]
         candidates.sort(
-            key=lambda item: _selection_score(
-                item=item,
-                partition=partition,
-                protocol_sha256=protocol_sha256,
+            key=(
+                lambda item: _required_label_selection_token(item)
+                if use_label_selection_token
+                else _selection_score(
+                    item=item,
+                    partition=partition,
+                    protocol_sha256=protocol_sha256,
+                )
             )
         )
         if len(candidates) < quota:
-            raise Aihub538DecisionCalibrationError(
-                "aihub538_calibration_angle_quota_unavailable"
-            )
+            raise Aihub538DecisionCalibrationError(quota_unavailable_reason)
         selected.extend(candidates[:quota])
     return tuple(selected)
+
+
+def _required_label_selection_token(
+    item: Aihub538CalibrationMediaItem,
+) -> str:
+    token = item.label_selection_token_sha256
+    if token is None:
+        raise Aihub538DecisionCalibrationError(
+            "aihub538_calibration_label_selection_token_invalid"
+        )
+    return token
 
 
 def _selection_score(
@@ -467,6 +786,18 @@ def _require_development_availability(
     measurements: tuple[Aihub538CalibrationMeasurement, ...],
     protocol: Aihub538DecisionCalibrationProtocol,
 ) -> None:
+    reason_code = _development_availability_failure_reason(
+        measurements,
+        protocol,
+    )
+    if reason_code is not None:
+        raise Aihub538DecisionCalibrationError(reason_code)
+
+
+def _development_availability_failure_reason(
+    measurements: tuple[Aihub538CalibrationMeasurement, ...],
+    protocol: Aihub538DecisionCalibrationProtocol,
+) -> str | None:
     for angle in AIHUB538_TRAINING_ANGLES:
         rows = tuple(item for item in measurements if item.item.angle == angle)
         qc_available = sum(_usable_qc(item.video_qc_candidate) for item in rows)
@@ -477,9 +808,10 @@ def _require_development_availability(
             qc_available < protocol.minimum_available_per_angle
             or sync_available < protocol.minimum_available_per_angle
         ):
-            raise Aihub538DecisionCalibrationError(
+            return (
                 "aihub538_development_candidate_availability_below_stop_policy"
             )
+    return None
 
 
 def _derive_policies(
@@ -782,10 +1114,486 @@ def _angle_evidence(
     return tuple(result)
 
 
+def _development_angle_diagnostics(
+    *,
+    split: Aihub538CalibrationSplit,
+    development: tuple[Aihub538CalibrationMeasurement, ...],
+) -> tuple[Aihub538CalibrationAngleEvidence, ...]:
+    """Represent unexecuted calibration fields as zero, never as sample rows."""
+
+    result: list[Aihub538CalibrationAngleEvidence] = []
+    for angle in AIHUB538_TRAINING_ANGLES:
+        dev = tuple(item for item in development if item.item.angle == angle)
+        calibration_selected_count = sum(
+            item.angle == angle for item in split.calibration
+        )
+        result.append(
+            Aihub538CalibrationAngleEvidence(
+                angle=angle,
+                development_selected_count=len(dev),
+                calibration_selected_count=calibration_selected_count,
+                development_qc_available_count=sum(
+                    _usable_qc(item.video_qc_candidate) for item in dev
+                ),
+                development_sync_available_count=sum(
+                    item.av_sync_candidate.status == "candidate_unvalidated"
+                    for item in dev
+                ),
+                calibration_qc_available_count=0,
+                calibration_sync_available_count=0,
+                calibration_qc_passed_count=0,
+                calibration_sync_passed_count=0,
+                qc_lineage_valid_count=0,
+                sync_lineage_valid_count=0,
+            )
+        )
+    return tuple(result)
+
+
+def _aggregate_reason_counts(
+    *,
+    reason_sequences: tuple[tuple[str, ...], ...],
+    catalog: tuple[str, ...],
+) -> tuple[Aihub538AggregateReasonCount, ...]:
+    counts = {reason_code: 0 for reason_code in catalog}
+    for reasons in reason_sequences:
+        for reason_code in reasons:
+            if reason_code not in counts:
+                raise VisualFeedbackContractError(
+                    "AI Hub 538 QC diagnostic reason catalog differs"
+                )
+            counts[reason_code] += 1
+    return tuple(
+        Aihub538AggregateReasonCount(
+            reason_code=reason_code,
+            occurrence_count=counts[reason_code],
+        )
+        for reason_code in catalog
+    )
+
+
+def _qc_candidate_unavailable_reason_codes(
+    candidate: VideoQcCandidateEvidence,
+) -> tuple[str, ...]:
+    """Map every evaluator-unusable candidate to a fixed aggregate reason."""
+
+    if _usable_qc(candidate):
+        return ()
+    if candidate.status != "candidate_unvalidated":
+        return candidate.reason_codes
+    reasons: list[str] = []
+    if candidate.metrics.lip_roi_mean_neighbor_luma_delta_8bit is None:
+        reasons.append("video_qc_lip_edge_metric_unavailable")
+    if candidate.metrics.maximum_lip_center_step_normalized is None:
+        reasons.append("video_qc_lip_center_step_metric_unavailable")
+    if not reasons:
+        raise VisualFeedbackContractError(
+            "AI Hub 538 QC diagnostic availability semantics differ"
+        )
+    return tuple(reasons)
+
+
+def _qc_optional_metric_missing_combinations(
+    measurements: tuple[Aihub538CalibrationMeasurement, ...],
+) -> Aihub538QcOptionalMetricMissingCombinations:
+    edge_only = 0
+    center_only = 0
+    both = 0
+    for measurement in measurements:
+        candidate = measurement.video_qc_candidate
+        if candidate.status != "candidate_unvalidated":
+            continue
+        edge_missing = (
+            candidate.metrics.lip_roi_mean_neighbor_luma_delta_8bit is None
+        )
+        center_missing = (
+            candidate.metrics.maximum_lip_center_step_normalized is None
+        )
+        if edge_missing and center_missing:
+            both += 1
+        elif edge_missing:
+            edge_only += 1
+        elif center_missing:
+            center_only += 1
+    return Aihub538QcOptionalMetricMissingCombinations(
+        lip_edge_only_missing_count=edge_only,
+        lip_center_step_only_missing_count=center_only,
+        both_optional_metrics_missing_count=both,
+    )
+
+
+def _qc_threshold_margin_histograms(
+    *,
+    measurements: tuple[Aihub538CalibrationMeasurement, ...],
+    policy: VideoQcDecisionSemanticPolicy,
+) -> tuple[Aihub538QcThresholdMarginHistogram, ...]:
+    result: list[Aihub538QcThresholdMarginHistogram] = []
+    for (
+        reason_code,
+        metric_name,
+        comparison,
+        policy_threshold_name,
+        diagnostic_margin,
+    ) in AIHUB538_QC_THRESHOLD_DIAGNOSTIC_SPECS:
+        threshold = getattr(policy, policy_threshold_name)
+        bins = [0, 0, 0, 0]
+        for measurement in measurements:
+            candidate = measurement.video_qc_candidate
+            if candidate.status != "candidate_unvalidated":
+                continue
+            observed = getattr(
+                candidate.metrics,
+                metric_name,
+            )
+            if observed is None:
+                continue
+            signed_margin = (
+                float(observed) - float(threshold)
+                if comparison == "minimum"
+                else float(threshold) - float(observed)
+            )
+            if signed_margin < -diagnostic_margin:
+                bins[0] += 1
+            elif signed_margin < 0.0:
+                bins[1] += 1
+            elif signed_margin <= diagnostic_margin:
+                bins[2] += 1
+            else:
+                bins[3] += 1
+        result.append(
+            Aihub538QcThresholdMarginHistogram(
+                reason_code=reason_code,
+                failed_beyond_margin_count=bins[0],
+                failed_within_margin_count=bins[1],
+                passed_within_margin_count=bins[2],
+                passed_beyond_margin_count=bins[3],
+            )
+        )
+    return tuple(result)
+
+
+def _qc_failure_diagnostics(
+    *,
+    development: tuple[Aihub538CalibrationMeasurement, ...],
+    calibration: tuple[Aihub538CalibrationMeasurement, ...],
+    decisions: tuple[_CalibrationDecisionPair, ...],
+    video_qc_decision_policy: P8RuntimePolicyArtifact | None,
+) -> tuple[Aihub538AngleQcFailureDiagnostic, ...]:
+    if tuple(item.measurement for item in decisions) != calibration:
+        raise VisualFeedbackContractError(
+            "AI Hub 538 QC diagnostic decision population differs"
+        )
+    policy_document: VideoQcDecisionSemanticPolicy | None = None
+    if video_qc_decision_policy is not None:
+        if (
+            video_qc_decision_policy.policy_kind != "video_qc_decision"
+            or not isinstance(
+                video_qc_decision_policy.policy_document,
+                VideoQcDecisionSemanticPolicy,
+            )
+        ):
+            raise VisualFeedbackContractError(
+                "AI Hub 538 QC diagnostic policy type differs"
+            )
+        policy_document = video_qc_decision_policy.policy_document
+    result: list[Aihub538AngleQcFailureDiagnostic] = []
+    for angle in AIHUB538_TRAINING_ANGLES:
+        development_rows = tuple(
+            item for item in development if item.item.angle == angle
+        )
+        calibration_rows = tuple(
+            item for item in calibration if item.item.angle == angle
+        )
+        decision_rows = tuple(
+            item for item in decisions if item.measurement.item.angle == angle
+        )
+        result.append(
+            Aihub538AngleQcFailureDiagnostic(
+                angle=angle,
+                development_source_candidate_available_count=sum(
+                    item.video_qc_candidate.status == "candidate_unvalidated"
+                    for item in development_rows
+                ),
+                calibration_source_candidate_available_count=sum(
+                    item.video_qc_candidate.status == "candidate_unvalidated"
+                    for item in calibration_rows
+                ),
+                development_optional_metric_missing_combinations=(
+                    _qc_optional_metric_missing_combinations(development_rows)
+                ),
+                calibration_optional_metric_missing_combinations=(
+                    _qc_optional_metric_missing_combinations(calibration_rows)
+                ),
+                development_candidate_unavailable_reason_counts=(
+                    _aggregate_reason_counts(
+                        reason_sequences=tuple(
+                            _qc_candidate_unavailable_reason_codes(
+                                item.video_qc_candidate
+                            )
+                            for item in development_rows
+                        ),
+                        catalog=AIHUB538_QC_CANDIDATE_UNAVAILABLE_REASON_CODES,
+                    )
+                ),
+                calibration_candidate_unavailable_reason_counts=(
+                    _aggregate_reason_counts(
+                        reason_sequences=tuple(
+                            _qc_candidate_unavailable_reason_codes(
+                                item.video_qc_candidate
+                            )
+                            for item in calibration_rows
+                        ),
+                        catalog=AIHUB538_QC_CANDIDATE_UNAVAILABLE_REASON_CODES,
+                    )
+                ),
+                calibration_decision_failure_reason_counts=(
+                    _aggregate_reason_counts(
+                        reason_sequences=tuple(
+                            item.qc_decision.reason_codes
+                            for item in decision_rows
+                        ),
+                        catalog=AIHUB538_QC_DECISION_FAILURE_REASON_CODES,
+                    )
+                ),
+                development_threshold_margin_histograms=(
+                    _qc_threshold_margin_histograms(
+                        measurements=development_rows,
+                        policy=policy_document,
+                    )
+                    if policy_document is not None
+                    else ()
+                ),
+                calibration_threshold_margin_histograms=(
+                    _qc_threshold_margin_histograms(
+                        measurements=calibration_rows,
+                        policy=policy_document,
+                    )
+                    if policy_document is not None
+                    else ()
+                ),
+            )
+        )
+    return tuple(result)
+
+
+def _stop_policy_error(
+    *,
+    reason_code: str,
+    protocol: Aihub538DecisionCalibrationProtocol,
+    split: Aihub538CalibrationSplit,
+    admission_receipt: (
+        Aihub538TrainingAdmissionReceipt | Aihub538MultiShardAdmissionReceipt
+    ),
+    development: tuple[Aihub538CalibrationMeasurement, ...],
+    calibration: tuple[Aihub538CalibrationMeasurement, ...],
+    decisions: tuple[_CalibrationDecisionPair, ...],
+    angle_diagnostics: tuple[Aihub538CalibrationAngleEvidence, ...],
+    video_qc_measurement_policy: P8RuntimePolicyArtifact,
+    av_sync_measurement_policy: P8RuntimePolicyArtifact,
+    video_qc_decision_policy: P8RuntimePolicyArtifact | None,
+    av_sync_decision_policy: P8RuntimePolicyArtifact | None,
+) -> Aihub538DecisionCalibrationError:
+    if (
+        protocol != MULTISHARD_AIHUB538_DECISION_CALIBRATION_PROTOCOL
+        or type(admission_receipt) is not Aihub538MultiShardAdmissionReceipt
+    ):
+        return Aihub538DecisionCalibrationError(reason_code)
+    all_measurements = development + calibration
+    landmark_models = {
+        measurement.video_qc_candidate.landmark_model_sha256
+        for measurement in all_measurements
+    } | {
+        measurement.av_sync_candidate.landmark_model_sha256
+        for measurement in all_measurements
+    }
+    qc_adapter_codes = {
+        measurement.video_qc_candidate.measurement_adapter_code_sha256
+        for measurement in all_measurements
+    }
+    sync_adapter_codes = {
+        measurement.av_sync_candidate.measurement_adapter_code_sha256
+        for measurement in all_measurements
+    }
+    if (
+        len(landmark_models) != 1
+        or len(qc_adapter_codes) != 1
+        or len(sync_adapter_codes) != 1
+        or any(
+            measurement.video_qc_candidate.policy_receipt_sha256
+            != video_qc_measurement_policy.policy_sha256
+            or measurement.av_sync_candidate.measurement_policy_sha256
+            != av_sync_measurement_policy.policy_sha256
+            for measurement in all_measurements
+        )
+    ):
+        return Aihub538DecisionCalibrationError(
+            "aihub538_calibration_failure_diagnostic_lineage_invalid"
+        )
+    if (video_qc_decision_policy is None) != (
+        av_sync_decision_policy is None
+    ):
+        return Aihub538DecisionCalibrationError(
+            "aihub538_calibration_failure_diagnostic_lineage_invalid"
+        )
+    decision_policies_derived = video_qc_decision_policy is not None
+    totals = {
+        name: sum(getattr(item, name) for item in angle_diagnostics)
+        for name in (
+            "development_selected_count",
+            "calibration_selected_count",
+            "development_qc_available_count",
+            "development_sync_available_count",
+            "calibration_qc_available_count",
+            "calibration_sync_available_count",
+            "calibration_qc_passed_count",
+            "calibration_sync_passed_count",
+            "qc_lineage_valid_count",
+            "sync_lineage_valid_count",
+        )
+    }
+    calibration_executed = reason_code != (
+        "aihub538_development_candidate_availability_below_stop_policy"
+    )
+    failure_summary = Aihub538DecisionCalibrationFailureArtifact.issue(
+        reason_code=reason_code,
+        failure_stage={
+            "aihub538_development_candidate_availability_below_stop_policy": (
+                "development_availability"
+            ),
+            "aihub538_calibration_per_angle_stop_policy_failed": (
+                "per_angle_stop_policy"
+            ),
+            "aihub538_calibration_global_stop_policy_failed": (
+                "global_stop_policy"
+            ),
+        }[reason_code],
+        protocol_revision=protocol.protocol_revision,
+        source_manifest_sha256=split.source_manifest_sha256,
+        admission_receipt_sha256=admission_receipt.receipt_sha256,
+        admission_manifest_sha256=admission_receipt.admission_manifest_sha256,
+        admission_policy_sha256=admission_receipt.admission_policy_sha256,
+        capacity_audit_receipt_sha256=(
+            admission_receipt.capacity_audit_receipt_sha256
+        ),
+        evaluation_protocol_sha256=protocol.protocol_sha256,
+        evaluator_code_sha256=decision_calibration_evaluator_code_sha256(),
+        landmark_model_sha256=next(iter(landmark_models)),
+        video_qc_measurement_adapter_code_sha256=next(
+            iter(qc_adapter_codes)
+        ),
+        av_sync_measurement_adapter_code_sha256=next(
+            iter(sync_adapter_codes)
+        ),
+        video_qc_measurement_policy_artifact_sha256=(
+            video_qc_measurement_policy.artifact_sha256
+        ),
+        video_qc_measurement_policy_sha256=(
+            video_qc_measurement_policy.policy_sha256
+        ),
+        av_sync_measurement_policy_artifact_sha256=(
+            av_sync_measurement_policy.artifact_sha256
+        ),
+        av_sync_measurement_policy_sha256=(
+            av_sync_measurement_policy.policy_sha256
+        ),
+        decision_policies_derived=decision_policies_derived,
+        video_qc_decision_policy_artifact_sha256=(
+            video_qc_decision_policy.artifact_sha256
+            if video_qc_decision_policy is not None
+            else None
+        ),
+        video_qc_decision_policy_sha256=(
+            video_qc_decision_policy.policy_sha256
+            if video_qc_decision_policy is not None
+            else None
+        ),
+        av_sync_decision_policy_artifact_sha256=(
+            av_sync_decision_policy.artifact_sha256
+            if av_sync_decision_policy is not None
+            else None
+        ),
+        av_sync_decision_policy_sha256=(
+            av_sync_decision_policy.policy_sha256
+            if av_sync_decision_policy is not None
+            else None
+        ),
+        admitted_item_count=split.admitted_item_count,
+        eligible_item_count=split.eligible_item_count,
+        metadata_excluded_item_count=split.metadata_excluded_item_count,
+        development_measurement_count=len(development),
+        calibration_measurement_count=len(calibration),
+        decision_evaluated_count=(
+            len(calibration) if calibration_executed else 0
+        ),
+        **totals,
+        development_qc_available_fraction=(
+            totals["development_qc_available_count"]
+            / totals["development_selected_count"]
+        ),
+        development_sync_available_fraction=(
+            totals["development_sync_available_count"]
+            / totals["development_selected_count"]
+        ),
+        calibration_qc_pass_fraction=(
+            totals["calibration_qc_passed_count"]
+            / totals["calibration_selected_count"]
+            if calibration_executed
+            else None
+        ),
+        calibration_sync_pass_fraction=(
+            totals["calibration_sync_passed_count"]
+            / totals["calibration_selected_count"]
+            if calibration_executed
+            else None
+        ),
+        samples_per_angle_per_partition_threshold=(
+            protocol.samples_per_angle_per_partition
+        ),
+        minimum_available_per_angle_threshold=(
+            protocol.minimum_available_per_angle
+        ),
+        minimum_per_angle_pass_fraction_threshold=(
+            protocol.minimum_per_angle_pass_fraction
+        ),
+        minimum_global_pass_fraction_threshold=(
+            protocol.minimum_calibration_pass_fraction
+        ),
+        angle_diagnostics=angle_diagnostics,
+    )
+    try:
+        artifact = Aihub538DecisionCalibrationFailureArtifactV2.issue(
+            failure_summary=failure_summary,
+            diagnostic_video_qc_decision_policy=video_qc_decision_policy,
+            angle_qc_diagnostics=_qc_failure_diagnostics(
+                development=development,
+                calibration=calibration,
+                decisions=decisions,
+                video_qc_decision_policy=video_qc_decision_policy,
+            ),
+        )
+    except (TypeError, ValueError):
+        return Aihub538DecisionCalibrationError(
+            "aihub538_calibration_failure_diagnostic_semantics_invalid"
+        )
+    return Aihub538DecisionCalibrationError(
+        reason_code,
+        failure_artifact=artifact,
+    )
+
+
 def _require_calibration_stop_policy(
     angle_evidence: tuple[Aihub538CalibrationAngleEvidence, ...],
     protocol: Aihub538DecisionCalibrationProtocol,
 ) -> None:
+    reason_code = _calibration_stop_policy_reason(angle_evidence, protocol)
+    if reason_code is not None:
+        raise Aihub538DecisionCalibrationError(reason_code)
+
+
+def _calibration_stop_policy_reason(
+    angle_evidence: tuple[Aihub538CalibrationAngleEvidence, ...],
+    protocol: Aihub538DecisionCalibrationProtocol,
+) -> str | None:
     for item in angle_evidence:
         selected = item.calibration_selected_count
         if (
@@ -803,9 +1611,7 @@ def _require_calibration_stop_policy(
             or item.calibration_sync_passed_count / selected
             < protocol.minimum_per_angle_pass_fraction
         ):
-            raise Aihub538DecisionCalibrationError(
-                "aihub538_calibration_per_angle_stop_policy_failed"
-            )
+            return "aihub538_calibration_per_angle_stop_policy_failed"
     selected_total = sum(item.calibration_selected_count for item in angle_evidence)
     if (
         sum(item.calibration_qc_passed_count for item in angle_evidence)
@@ -815,9 +1621,8 @@ def _require_calibration_stop_policy(
         / selected_total
         < protocol.minimum_calibration_pass_fraction
     ):
-        raise Aihub538DecisionCalibrationError(
-            "aihub538_calibration_global_stop_policy_failed"
-        )
+        return "aihub538_calibration_global_stop_policy_failed"
+    return None
 
 
 def _usable_qc(candidate: VideoQcCandidateEvidence) -> bool:

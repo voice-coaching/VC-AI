@@ -17,6 +17,13 @@ from voice_coach.visual_feedback.services.aihub538_training_pipeline import (
     Aihub538TrainingPipeline,
     Aihub538TrainingPipelineError,
 )
+from voice_coach.visual_feedback.models.aihub538_nonlocked_shards import (
+    aihub538_nonlocked_shard_by_id,
+)
+from voice_coach.visual_feedback.services.aihub538_label_capacity_audit import (
+    Aihub538LabelCapacityPipelineError,
+    load_aihub538_capacity_receipt_descriptor,
+)
 
 
 def _arguments(argv: list[str] | None = None) -> argparse.Namespace:
@@ -61,6 +68,20 @@ def _arguments(argv: list[str] | None = None) -> argparse.Namespace:
         help="absent destination; the pipeline creates it as 0700",
     )
     parser.add_argument(
+        "--shard-id",
+        choices=("ts174_tl174", "ts175_tl175", "ts176_tl176"),
+        default="ts174_tl174",
+        help=(
+            "strict non-locked pair; TS175/TS176 require the exact feasible "
+            "cumulative label-prefix receipt"
+        ),
+    )
+    parser.add_argument(
+        "--label-capacity-audit-receipt-fd",
+        type=int,
+        help="read-only 0400 feasible label-prefix capacity receipt",
+    )
+    parser.add_argument(
         "--dataset-access-permission-confirmed",
         action="store_true",
         help="confirm that AI Hub dataset access was approved",
@@ -94,9 +115,17 @@ def main(argv: list[str] | None = None) -> int:
     if arguments.input_directory is not None and arguments.receipt_fd is not None:
         _public_failure("aihub538_input_mode_invalid")
         return 64
-    pipeline = Aihub538TrainingPipeline()
     output_directory = arguments.output_directory.absolute()
     try:
+        shard_spec = aihub538_nonlocked_shard_by_id(arguments.shard_id)
+        capacity_receipt = (
+            load_aihub538_capacity_receipt_descriptor(
+                arguments.label_capacity_audit_receipt_fd
+            )
+            if arguments.label_capacity_audit_receipt_fd is not None
+            else None
+        )
+        pipeline = Aihub538TrainingPipeline(shard_spec=shard_spec)
         if arguments.input_directory is not None:
             evidence = pipeline.run_from_completed_directory(
                 input_directory=arguments.input_directory.absolute(),
@@ -105,6 +134,7 @@ def main(argv: list[str] | None = None) -> int:
                 dataset_access_permission_confirmed=(
                     arguments.dataset_access_permission_confirmed
                 ),
+                capacity_audit_receipt=capacity_receipt,
             )
         else:
             evidence = pipeline.run(
@@ -115,8 +145,12 @@ def main(argv: list[str] | None = None) -> int:
                 dataset_access_permission_confirmed=(
                     arguments.dataset_access_permission_confirmed
                 ),
+                capacity_audit_receipt=capacity_receipt,
             )
-    except Aihub538TrainingPipelineError as error:
+    except (
+        Aihub538TrainingPipelineError,
+        Aihub538LabelCapacityPipelineError,
+    ) as error:
         _public_failure(error.reason_code)
         return 65
     except Exception:

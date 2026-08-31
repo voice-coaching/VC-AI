@@ -246,7 +246,10 @@ def _aihub539_actual_media_authorization_guard(
     )
     if arguments.dataset_key == "539":
         if requested != _AIHUB539_ACTUAL_MEDIA_FILE_KEYS:
-            if len(requested) == len(_AIHUB539_ACTUAL_MEDIA_FILE_KEYS) and set(requested) == protected_keys:
+            if (
+                len(requested) == len(_AIHUB539_ACTUAL_MEDIA_FILE_KEYS)
+                and set(requested) == protected_keys
+            ):
                 raise DownloadError("aihub539_actual_media_file_key_order_invalid")
             reason = (
                 "aihub539_actual_media_file_keys_invalid"
@@ -258,6 +261,8 @@ def _aihub539_actual_media_authorization_guard(
         raise DownloadError("aihub539_actual_media_dataset_mismatch")
     elif descriptor_text:
         raise DownloadError("aihub539_actual_media_authorization_request_mismatch")
+    else:
+        return lambda: None
     try:
         descriptor = int(descriptor_text)
         if descriptor < 3:

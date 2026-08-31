@@ -1,0 +1,45 @@
+{
+  "aggregate_rule": "all_fixed_cases_and_all_measurement_pairs_must_pass",
+  "dataset_id": 539,
+  "dataset_role": "nonlocked_actual_media_differential_sync_regression",
+  "drift_change_absolute_tolerance_parts_per_million": 250.0,
+  "evaluation_scope": "known_injected_change_only_non_p8",
+  "injection_cases": [
+    {
+      "case_id": "offset_positive_120ms",
+      "injected_drift_change_parts_per_million": 0.0,
+      "injected_offset_change_ms": 120.0
+    },
+    {
+      "case_id": "offset_negative_120ms",
+      "injected_drift_change_parts_per_million": 0.0,
+      "injected_offset_change_ms": -120.0
+    },
+    {
+      "case_id": "affine_positive_60ms_2500ppm",
+      "injected_drift_change_parts_per_million": 2500.0,
+      "injected_offset_change_ms": 60.0
+    },
+    {
+      "case_id": "affine_negative_60ms_2500ppm",
+      "injected_drift_change_parts_per_million": -2500.0,
+      "injected_offset_change_ms": -60.0
+    }
+  ],
+  "maximum_affine_fit_root_mean_square_error_ms": 3.0,
+  "metadata_sync_truth_used": false,
+  "minimum_anchor_count_per_measurement": 6,
+  "minimum_anchor_span_ms": 4000.0,
+  "minimum_measurement_pairs_per_case": 1,
+  "native_sync_ground_truth_validated": false,
+  "offset_change_absolute_tolerance_ms": 5.0,
+  "p8_authorized": false,
+  "promotion_authorized": false,
+  "protocol_revision": "aihub539_av_sync_differential_regression_v1",
+  "protocol_sha256": "da97dd7c1d1e97c459fed798feafc2d7ab67a2d04974d52c28b2a4fe3a6c2274",
+  "protocol_state": "frozen_pre_observation",
+  "runtime_authorized": false,
+  "schema_version": "voice_coach.aihub539_av_sync_differential_regression_protocol.v1",
+  "truth_basis": "injected_offset_and_affine_drift_change_only",
+  "user_visual_claims_authorized": false
+}

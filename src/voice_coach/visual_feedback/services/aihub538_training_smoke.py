@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 
 from ..adapters.aihub538_training_dataset import (
     Aihub538TrainingAdmissionError,
@@ -10,6 +10,7 @@ from ..adapters.aihub538_training_dataset import (
 )
 from ..models.aihub538_training_evidence import (
     Aihub538TrainingAdmissionReceipt,
+    Aihub538TrainingAdmissionAggregate,
     Aihub538TrainingEvaluatorSmokeReceipt,
     Aihub538TrainingSampleAggregate,
 )
@@ -32,6 +33,10 @@ class Aihub538TrainingSmokeEvidence:
 
     admission_receipt: Aihub538TrainingAdmissionReceipt
     evaluator_smoke_receipt: Aihub538TrainingEvaluatorSmokeReceipt
+    aggregate: Aihub538TrainingAdmissionAggregate | None = field(
+        default=None,
+        repr=False,
+    )
 
 
 class Aihub538TrainingSmokeService:
@@ -71,6 +76,7 @@ class Aihub538TrainingSmokeService:
         return Aihub538TrainingSmokeEvidence(
             admission_receipt=admission_receipt,
             evaluator_smoke_receipt=evaluator_receipt,
+            aggregate=aggregate,
         )
 
 

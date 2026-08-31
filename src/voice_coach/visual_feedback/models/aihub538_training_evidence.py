@@ -12,16 +12,26 @@ from __future__ import annotations
 from dataclasses import dataclass
 import math
 
+from .aihub538_nonlocked_shards import (
+    AIHUB538_LABEL_CAPACITY_LADDER_PAIR_SHARDS,
+    AIHUB538_TS174_TL174_SHARD,
+    Aihub538NonlockedShardSpec,
+    aihub538_nonlocked_shard_by_id,
+    require_aihub538_nonlocked_shard_spec,
+)
+from .aihub538_bbox_observation import (
+    AIHUB538_BOUNDED_REVERSED_BBOX_OBSERVATION_POLICY_SHA256,
+)
 from .integrity import require_sha256, sha256_document
 
 
 AIHUB538_TRAINING_ANGLES = tuple("ABCDEFGHI")
 AIHUB538_TRAINING_ADMISSION_POLICY = {
-    "schema_version": "voice_coach.aihub538_training_admission_policy.v1",
+    "schema_version": "voice_coach.aihub538_training_admission_policy.v2",
     "dataset_id": 538,
     "dataset_partition": "nonlocked_training_ts174_tl174",
-    "source_file_key": "54725",
-    "label_file_key": "54944",
+    "label_file_key": "54725",
+    "source_file_key": "54944",
     "source_role_component": "TS174",
     "label_role_component": "TL174",
     "creator_schema": "IIP-Sogang/olkavs-avspeech.preprocess.py",
@@ -35,8 +45,22 @@ AIHUB538_TRAINING_ADMISSION_POLICY = {
     "label_document_rule": "json_array_exactly_one_object",
     "label_to_source_rule": "TL174_to_TS174_same_relative_stem",
     "audio_rule": "non_A_view_uses_same_session_A_wav",
+    "label_audio_name_rule": (
+        "Audio_info.Audio_Name_names_label_view_before_creator_A_view_rewrite"
+    ),
     "lip_bbox_rule": "Bounding_box_info.Lip_bounding_box.xtl_ytl_xbr_ybr",
+    "lip_bbox_axis_rule": (
+        "creator_preprocess_frame_row_start_row_end_col_start_col_end"
+    ),
+    "video_environment_rule": (
+        "stem_J_K_and_json_category_validated_independently"
+    ),
+    "video_environment_categories": ["indoor_light", "outdoor_light"],
     "sentence_rule": "Sentence_info_start_time_end_time",
+    "sentence_media_tail_tolerance_seconds": 0.5,
+    "sentence_tail_tolerance_basis": (
+        "creator_numpy_slice_clipping_and_ts174_aggregate_audit"
+    ),
     "transcript_retained": False,
     "source_paths_retained": False,
     "speaker_identifiers_retained": False,
@@ -47,6 +71,80 @@ AIHUB538_TRAINING_ADMISSION_POLICY = {
 AIHUB538_TRAINING_ADMISSION_POLICY_SHA256 = sha256_document(
     AIHUB538_TRAINING_ADMISSION_POLICY
 )
+# Exact historical document used by the completed TS174 admission.  The
+# ``v1`` name refers to the admission-receipt schema: the policy document
+# itself was the current v2 document with the label/source file-key values
+# transposed.  Keeping the whole document here makes the compatibility pin
+# independently reproducible instead of treating a bare digest as an alias for
+# the corrected policy.
+AIHUB538_TS174_LEGACY_V1_ADMISSION_POLICY = {
+    **AIHUB538_TRAINING_ADMISSION_POLICY,
+    "label_file_key": "54944",
+    "source_file_key": "54725",
+}
+AIHUB538_TS174_LEGACY_V1_ADMISSION_POLICY_SHA256 = (
+    "a4673c05fad1bdc51642847bf4182c4ee50ed8afd7c64221f7e4719fa0344682"
+)
+if (
+    sha256_document(AIHUB538_TS174_LEGACY_V1_ADMISSION_POLICY)
+    != AIHUB538_TS174_LEGACY_V1_ADMISSION_POLICY_SHA256
+):
+    raise RuntimeError("aihub538_ts174_legacy_policy_pin_invalid")
+
+
+def aihub538_shard_admission_policy_sha256(
+    shard_spec: Aihub538NonlockedShardSpec,
+) -> str:
+    """Return the legacy pin or a role-equivalent allowlisted shard pin."""
+
+    validated = require_aihub538_nonlocked_shard_spec(
+        shard_spec,
+        require_pair=True,
+    )
+    if validated == AIHUB538_TS174_TL174_SHARD:
+        return AIHUB538_TRAINING_ADMISSION_POLICY_SHA256
+    document = dict(AIHUB538_TRAINING_ADMISSION_POLICY)
+    document.update(
+        {
+            "schema_version": "voice_coach.aihub538_training_admission_policy.v3",
+            "dataset_partition": validated.dataset_partition,
+            "label_file_key": validated.ordered_file_keys[0],
+            "source_file_key": validated.ordered_file_keys[1],
+            "source_role_component": validated.source_role_component,
+            "label_role_component": validated.label_role_component,
+            "label_to_source_rule": (
+                f"{validated.label_role_component}_to_"
+                f"{validated.source_role_component}_same_relative_stem"
+            ),
+            "shard_spec_sha256": validated.spec_sha256,
+            "bbox_observation_policy_sha256": (
+                AIHUB538_BOUNDED_REVERSED_BBOX_OBSERVATION_POLICY_SHA256
+            ),
+            "bounded_reversed_bbox_classification": (
+                "reversed_bbox_unavailable"
+            ),
+            "bbox_endpoint_reordering_allowed": False,
+            "unavailable_bbox_authorizes_promotion": False,
+        }
+    )
+    if validated in AIHUB538_LABEL_CAPACITY_LADDER_PAIR_SHARDS[2:]:
+        # Local import avoids a module-import cycle with the canonical angle
+        # vocabulary consumed by the label-capacity model.
+        from .aihub538_label_capacity import (
+            AIHUB538_LABEL_CAPACITY_TERMINAL_FRAME_TAIL_POLICY_SHA256,
+        )
+
+        document.update(
+            {
+                "schema_version": (
+                    "voice_coach.aihub538_training_admission_policy.v4"
+                ),
+                "terminal_frame_tail_policy_sha256": (
+                    AIHUB538_LABEL_CAPACITY_TERMINAL_FRAME_TAIL_POLICY_SHA256
+                ),
+            }
+        )
+    return sha256_document(document)
 
 
 @dataclass(frozen=True, slots=True)
@@ -69,11 +167,38 @@ class Aihub538TrainingSampleAggregate:
     audio_size_bytes: int
     video_crc32: int
     audio_crc32: int
+    face_reversed_bbox_unavailable_count: int = 0
+    lip_reversed_bbox_unavailable_count: int = 0
+    # Stable label-only selection token.  It is retained only in restricted
+    # memory and never serialized in aggregate receipts.  Legacy fixture rows
+    # may omit it; every paired ladder admission requires it downstream.
+    label_selection_token_sha256: str | None = None
 
     def __post_init__(self) -> None:
         require_sha256(self.sample_sha256, "sample_sha256")
+        if self.label_selection_token_sha256 is not None:
+            require_sha256(
+                self.label_selection_token_sha256,
+                "label_selection_token_sha256",
+            )
         if self.angle not in AIHUB538_TRAINING_ANGLES:
             raise ValueError("aihub538_training_sample_angle_invalid")
+        if (
+            any(
+                isinstance(value, bool)
+                or not isinstance(value, int)
+                or value < 0
+                for value in (
+                    self.face_reversed_bbox_unavailable_count,
+                    self.lip_reversed_bbox_unavailable_count,
+                )
+            )
+            or self.face_reversed_bbox_unavailable_count
+            > self.face_bbox_frame_count
+            or self.lip_reversed_bbox_unavailable_count
+            > self.lip_bbox_frame_count
+        ):
+            raise ValueError("aihub538_training_sample_bbox_unavailable_invalid")
 
 
 @dataclass(frozen=True, slots=True)
@@ -139,6 +264,18 @@ class Aihub538TrainingAdmissionAggregate:
     sample_selection_sha256: str
     admission_manifest_sha256: str
     restricted_identity_set: "Aihub538RestrictedIdentitySet"
+    shard_id: str = AIHUB538_TS174_TL174_SHARD.shard_id
+    dataset_partition: str = AIHUB538_TS174_TL174_SHARD.dataset_partition
+    source_role_component: str = AIHUB538_TS174_TL174_SHARD.source_role_component
+    label_role_component: str = AIHUB538_TS174_TL174_SHARD.label_role_component
+    ordered_file_keys: tuple[str, ...] = (
+        AIHUB538_TS174_TL174_SHARD.ordered_file_keys
+    )
+    admission_policy_sha256: str = AIHUB538_TRAINING_ADMISSION_POLICY_SHA256
+    sample_selection_rule: str = (
+        AIHUB538_TS174_TL174_SHARD.sample_selection_rule
+    )
+    restricted_member_set: "Aihub538RestrictedMemberSet | None" = None
 
 
 @dataclass(frozen=True, slots=True)
@@ -162,6 +299,24 @@ class Aihub538RestrictedIdentitySet:
             raise ValueError("aihub538_restricted_identity_set_empty")
         for value in self.speaker_hmac_sha256 | self.session_hmac_sha256:
             require_sha256(value, "restricted_identity_hmac_sha256")
+
+
+@dataclass(frozen=True, slots=True)
+class Aihub538RestrictedMemberSet:
+    """Non-serializable HMACs used only for cross-shard collision checks."""
+
+    namespace_commitment_sha256: str
+    relative_label_path_hmac_sha256: frozenset[str]
+
+    def __post_init__(self) -> None:
+        require_sha256(
+            self.namespace_commitment_sha256,
+            "member_namespace_commitment_sha256",
+        )
+        if not self.relative_label_path_hmac_sha256:
+            raise ValueError("aihub538_restricted_member_set_empty")
+        for value in self.relative_label_path_hmac_sha256:
+            require_sha256(value, "restricted_member_hmac_sha256")
 
 
 @dataclass(frozen=True, slots=True)
@@ -314,6 +469,20 @@ class Aihub538TrainingAdmissionReceipt:
     admission_manifest_sha256: str
     identity_namespace_commitment_sha256: str
     receipt_sha256: str
+    shard_id: str = AIHUB538_TS174_TL174_SHARD.shard_id
+    dataset_partition: str = AIHUB538_TS174_TL174_SHARD.dataset_partition
+    source_role_component: str = AIHUB538_TS174_TL174_SHARD.source_role_component
+    label_role_component: str = AIHUB538_TS174_TL174_SHARD.label_role_component
+    ordered_file_keys: tuple[str, ...] = (
+        AIHUB538_TS174_TL174_SHARD.ordered_file_keys
+    )
+    admission_policy_sha256: str = AIHUB538_TRAINING_ADMISSION_POLICY_SHA256
+    sample_selection_rule: str = (
+        AIHUB538_TS174_TL174_SHARD.sample_selection_rule
+    )
+    face_reversed_bbox_unavailable_count: int = 0
+    lip_reversed_bbox_unavailable_count: int = 0
+    reversed_bbox_affected_sample_count: int = 0
 
     @classmethod
     def issue(
@@ -347,6 +516,28 @@ class Aihub538TrainingAdmissionReceipt:
                 aggregate.restricted_identity_set.namespace_commitment_sha256
             ),
             receipt_sha256="0" * 64,
+            shard_id=aggregate.shard_id,
+            dataset_partition=aggregate.dataset_partition,
+            source_role_component=aggregate.source_role_component,
+            label_role_component=aggregate.label_role_component,
+            ordered_file_keys=aggregate.ordered_file_keys,
+            admission_policy_sha256=aggregate.admission_policy_sha256,
+            sample_selection_rule=aggregate.sample_selection_rule,
+            face_reversed_bbox_unavailable_count=sum(
+                sample.face_reversed_bbox_unavailable_count
+                for sample in aggregate.samples
+            ),
+            lip_reversed_bbox_unavailable_count=sum(
+                sample.lip_reversed_bbox_unavailable_count
+                for sample in aggregate.samples
+            ),
+            reversed_bbox_affected_sample_count=sum(
+                bool(
+                    sample.face_reversed_bbox_unavailable_count
+                    or sample.lip_reversed_bbox_unavailable_count
+                )
+                for sample in aggregate.samples
+            ),
         )
         unsigned = receipt._unsigned_json()
         issued = cls(
@@ -366,16 +557,16 @@ class Aihub538TrainingAdmissionReceipt:
         return document
 
     def _unsigned_json(self) -> dict[str, object]:
-        return {
+        document = {
             "schema_version": "voice_coach.aihub538_training_admission_receipt.v1",
             "status": "completed_nonlocked_training_admission",
             "dataset_id": 538,
-            "dataset_partition": "nonlocked_training_ts174_tl174",
+            "dataset_partition": self.dataset_partition,
             "dataset_role": "training_smoke_only_not_locked_evaluation",
             "dataset_access_permission_confirmed": True,
             "permission_grants_technical_promotion": False,
             "aggregate_only": True,
-            "admission_policy_sha256": AIHUB538_TRAINING_ADMISSION_POLICY_SHA256,
+            "admission_policy_sha256": self.admission_policy_sha256,
             "label_archive_sha256": self.label_archive_sha256,
             "source_archive_sha256": self.source_archive_sha256,
             "label_zip_content_root_sha256": self.label_zip_content_root_sha256,
@@ -408,8 +599,60 @@ class Aihub538TrainingAdmissionReceipt:
             "promotion_authorized": False,
             "locked_partition_accessed": False,
         }
+        if self.shard_id != AIHUB538_TS174_TL174_SHARD.shard_id:
+            document.update(
+                {
+                    "schema_version": (
+                        "voice_coach.aihub538_training_admission_receipt.v2"
+                    ),
+                    "shard_id": self.shard_id,
+                    "source_role_component": self.source_role_component,
+                    "label_role_component": self.label_role_component,
+                    "ordered_file_keys": list(self.ordered_file_keys),
+                    "sample_selection_rule": self.sample_selection_rule,
+                    "bbox_observation_policy_sha256": (
+                        AIHUB538_BOUNDED_REVERSED_BBOX_OBSERVATION_POLICY_SHA256
+                    ),
+                    "face_reversed_bbox_unavailable_count": (
+                        self.face_reversed_bbox_unavailable_count
+                    ),
+                    "lip_reversed_bbox_unavailable_count": (
+                        self.lip_reversed_bbox_unavailable_count
+                    ),
+                    "reversed_bbox_affected_sample_count": (
+                        self.reversed_bbox_affected_sample_count
+                    ),
+                    "reversed_bbox_coordinates_reordered": False,
+                    "selected_unavailable_bbox_is_qc_failure": True,
+                }
+            )
+        return document
 
     def _validate(self) -> None:
+        try:
+            shard_spec = aihub538_nonlocked_shard_by_id(self.shard_id)
+            require_aihub538_nonlocked_shard_spec(shard_spec, require_pair=True)
+        except ValueError:
+            raise ValueError("aihub538_training_receipt_shard_invalid") from None
+        if (
+            self.dataset_partition != shard_spec.dataset_partition
+            or self.source_role_component != shard_spec.source_role_component
+            or self.label_role_component != shard_spec.label_role_component
+            or self.ordered_file_keys != shard_spec.ordered_file_keys
+            or self.sample_selection_rule != shard_spec.sample_selection_rule
+            or (
+                self.admission_policy_sha256
+                not in {
+                    aihub538_shard_admission_policy_sha256(shard_spec),
+                    *(
+                        (AIHUB538_TS174_LEGACY_V1_ADMISSION_POLICY_SHA256,)
+                        if shard_spec == AIHUB538_TS174_TL174_SHARD
+                        else ()
+                    ),
+                }
+            )
+        ):
+            raise ValueError("aihub538_training_receipt_shard_invalid")
         for value in (
             self.label_archive_sha256,
             self.source_archive_sha256,
@@ -418,6 +661,7 @@ class Aihub538TrainingAdmissionReceipt:
             self.sample_selection_sha256,
             self.admission_manifest_sha256,
             self.identity_namespace_commitment_sha256,
+            self.admission_policy_sha256,
             self.receipt_sha256,
         ):
             require_sha256(value, "aihub538_training_receipt_sha256")
@@ -430,10 +674,34 @@ class Aihub538TrainingAdmissionReceipt:
             self.speaker_count,
             self.lip_bbox_frame_count,
             self.sentence_count,
+            self.face_reversed_bbox_unavailable_count,
+            self.lip_reversed_bbox_unavailable_count,
+            self.reversed_bbox_affected_sample_count,
         )
         if any(
-            isinstance(value, bool) or not isinstance(value, int) or value <= 0
+            isinstance(value, bool) or not isinstance(value, int)
             for value in integer_counts
+        ) or any(value <= 0 for value in integer_counts[:8]) or any(
+            value < 0 for value in integer_counts[8:]
+        ):
+            raise ValueError("aihub538_training_receipt_count_invalid")
+        if (
+            self.shard_id == AIHUB538_TS174_TL174_SHARD.shard_id
+            and (
+                self.face_reversed_bbox_unavailable_count
+                or self.lip_reversed_bbox_unavailable_count
+                or self.reversed_bbox_affected_sample_count
+            )
+        ):
+            raise ValueError("aihub538_training_receipt_count_invalid")
+        if (
+            self.reversed_bbox_affected_sample_count > self.paired_sample_count
+            or (
+                self.face_reversed_bbox_unavailable_count
+                + self.lip_reversed_bbox_unavailable_count
+                == 0
+            )
+            != (self.reversed_bbox_affected_sample_count == 0)
         ):
             raise ValueError("aihub538_training_receipt_count_invalid")
         if not (
@@ -473,6 +741,8 @@ class Aihub538TrainingEvaluatorSmokeReceipt:
     total_sentence_count: int
     sample_selection_sha256: str
     receipt_sha256: str
+    shard_id: str = AIHUB538_TS174_TL174_SHARD.shard_id
+    dataset_partition: str = AIHUB538_TS174_TL174_SHARD.dataset_partition
 
     @classmethod
     def issue(
@@ -513,6 +783,8 @@ class Aihub538TrainingEvaluatorSmokeReceipt:
             total_sentence_count=sum(sample.sentence_count for sample in samples),
             sample_selection_sha256=aggregate.sample_selection_sha256,
             receipt_sha256="0" * 64,
+            shard_id=aggregate.shard_id,
+            dataset_partition=aggregate.dataset_partition,
         )
         unsigned = draft._unsigned_json()
         issued = cls(
@@ -527,6 +799,8 @@ class Aihub538TrainingEvaluatorSmokeReceipt:
             total_sentence_count=draft.total_sentence_count,
             sample_selection_sha256=draft.sample_selection_sha256,
             receipt_sha256=sha256_document(unsigned),
+            shard_id=draft.shard_id,
+            dataset_partition=draft.dataset_partition,
         )
         issued._validate()
         return issued
@@ -537,11 +811,11 @@ class Aihub538TrainingEvaluatorSmokeReceipt:
         return document
 
     def _unsigned_json(self) -> dict[str, object]:
-        return {
+        document = {
             "schema_version": "voice_coach.aihub538_training_evaluator_smoke_receipt.v1",
             "status": "completed_metadata_and_container_envelope_smoke",
             "dataset_id": 538,
-            "dataset_partition": "nonlocked_training_ts174_tl174",
+            "dataset_partition": self.dataset_partition,
             "evaluation_scope": "schema_pairing_timing_bbox_and_media_envelope_only",
             "admission_receipt_sha256": self.admission_receipt_sha256,
             "paired_sample_count": self.paired_sample_count,
@@ -571,8 +845,21 @@ class Aihub538TrainingEvaluatorSmokeReceipt:
                 "bbox_presence_is_not_tracker_or_qc_calibration",
             ],
         }
+        if self.shard_id != AIHUB538_TS174_TL174_SHARD.shard_id:
+            document["schema_version"] = (
+                "voice_coach.aihub538_training_evaluator_smoke_receipt.v2"
+            )
+            document["shard_id"] = self.shard_id
+        return document
 
     def _validate(self) -> None:
+        try:
+            shard_spec = aihub538_nonlocked_shard_by_id(self.shard_id)
+            require_aihub538_nonlocked_shard_spec(shard_spec, require_pair=True)
+        except ValueError:
+            raise ValueError("aihub538_training_smoke_shard_invalid") from None
+        if self.dataset_partition != shard_spec.dataset_partition:
+            raise ValueError("aihub538_training_smoke_shard_invalid")
         require_sha256(self.admission_receipt_sha256, "admission_receipt_sha256")
         require_sha256(self.sample_selection_sha256, "sample_selection_sha256")
         require_sha256(self.receipt_sha256, "receipt_sha256")
@@ -593,6 +880,8 @@ class Aihub538TrainingEvaluatorSmokeReceipt:
 __all__ = [
     "AIHUB538_TRAINING_ADMISSION_POLICY",
     "AIHUB538_TRAINING_ADMISSION_POLICY_SHA256",
+    "AIHUB538_TS174_LEGACY_V1_ADMISSION_POLICY",
+    "AIHUB538_TS174_LEGACY_V1_ADMISSION_POLICY_SHA256",
     "AIHUB538_TRAINING_ANGLES",
     "Aihub538TrainingAdmissionAggregate",
     "Aihub538TrainingAdmissionReceipt",
@@ -601,4 +890,6 @@ __all__ = [
     "Aihub538TrainingSampleAggregate",
     "Aihub538IdentityIntersectionReceipt",
     "Aihub538RestrictedIdentitySet",
+    "Aihub538RestrictedMemberSet",
+    "aihub538_shard_admission_policy_sha256",
 ]

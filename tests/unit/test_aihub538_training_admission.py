@@ -36,8 +36,16 @@ assert len(_FIXTURE_IDENTITY_KEY) == 32
 _PRIVATE_TRANSCRIPT = "테스트 전사 원문은 공개 receipt에 없어야 한다"
 
 
-def _session_stem(*, angle: str, speaker_digits: str = "032", session: str = "010") -> str:
-    return f"lip_J_1_F_02_C{speaker_digits}_{angle}_{session}"
+def _session_stem(
+    *,
+    angle: str,
+    speaker_digits: str = "032",
+    session: str = "010",
+    environment_code: str = "J",
+) -> str:
+    return (
+        f"lip_{environment_code}_1_F_02_C{speaker_digits}_{angle}_{session}"
+    )
 
 
 def _label_record(
@@ -45,16 +53,13 @@ def _label_record(
     angle: str,
     speaker_digits: str = "032",
     session: str = "010",
+    environment_code: str = "J",
 ) -> dict[str, object]:
     stem = _session_stem(
         angle=angle,
         speaker_digits=speaker_digits,
         session=session,
-    )
-    audio_stem = _session_stem(
-        angle="A",
-        speaker_digits=speaker_digits,
-        session=session,
+        environment_code=environment_code,
     )
     boxes = [[100, 100, 200, 180] for _ in range(3)]
     lip_boxes = [[120, 130, 180, 165] for _ in range(3)]
@@ -73,14 +78,14 @@ def _label_record(
             "Resolution": "640x480",
         },
         "Audio_info": {
-            "Audio_Name": f"{audio_stem}.wav",
+            "Audio_Name": f"{stem}.wav",
             "Audio_Format": "wav",
             "Audio_Duration": "0.1",
             "Sampling_rate": "48kHz",
             "Channel(s)": 1,
         },
         "Audio_env": {"Noise": 1},
-        "Video_env": {"env": "J", "Angle": angle},
+        "Video_env": {"env": "indoor_light", "Angle": angle},
         "Sentence_info": [
             {
                 "ID": "sentence-1",
@@ -121,6 +126,7 @@ def _dataset_fixture(
     raw_label_transform: Callable[[str, bytes], bytes] | None = None,
     omit_source_name: str | None = None,
     add_extra_source: bool = False,
+    environment_code: str = "J",
 ) -> tuple[Path, Path]:
     root.mkdir(parents=True)
     label_members: dict[str, bytes] = {}
@@ -131,11 +137,13 @@ def _dataset_fixture(
             angle=angle,
             speaker_digits=speaker_digits,
             session=session,
+            environment_code=environment_code,
         )
         record = _label_record(
             angle=angle,
             speaker_digits=speaker_digits,
             session=session,
+            environment_code=environment_code,
         )
         if mutate_record is not None:
             mutate_record(angle, record)
@@ -157,6 +165,7 @@ def _dataset_fixture(
         angle="A",
         speaker_digits=speaker_digits,
         session=session,
+        environment_code=environment_code,
     )
     audio_name = f"restricted/Source/TS174/{relative_directory}/{a_stem}.wav"
     if audio_name != omit_source_name:
@@ -297,11 +306,13 @@ def test_non_A_view_reuses_exact_A_wav_and_extra_media_fails_closed(
     assert caught.value.reason_code == "aihub538_training_exact_media_pairing_failed"
 
 
-def test_metadata_must_name_A_wav_for_non_A_view(tmp_path: Path) -> None:
+def test_metadata_names_label_view_while_payload_reuses_A_wav(
+    tmp_path: Path,
+) -> None:
     def mutate(angle: str, record: dict[str, object]) -> None:
         if angle == "B":
             record["Audio_info"]["Audio_Name"] = (  # type: ignore[index]
-                f"{_session_stem(angle='B')}.wav"
+                f"{_session_stem(angle='A')}.wav"
             )
 
     label_zip, source_zip = _dataset_fixture(
@@ -313,6 +324,29 @@ def test_metadata_must_name_A_wav_for_non_A_view(tmp_path: Path) -> None:
     assert caught.value.reason_code == (
         "aihub538_training_metadata_media_name_mismatch"
     )
+
+
+def test_video_environment_category_is_independent_and_allowlisted(
+    tmp_path: Path,
+) -> None:
+    # An actual admitted shard has K in the media stem and indoor_light in the
+    # JSON category.  Both fields are valid but are not aliases.
+    label_zip, source_zip = _dataset_fixture(
+        tmp_path / "independent-categories",
+        environment_code="K",
+    )
+    assert len(_admit(label_zip, source_zip).samples) == 2
+
+    def invalid_environment(_: str, record: dict[str, object]) -> None:
+        record["Video_env"]["env"] = "K"  # type: ignore[index]
+
+    label_zip, source_zip = _dataset_fixture(
+        tmp_path / "invalid-category",
+        mutate_record=invalid_environment,
+    )
+    with pytest.raises(Aihub538TrainingSmokeError) as caught:
+        _evaluate(label_zip, source_zip)
+    assert caught.value.reason_code == "aihub538_training_session_metadata_mismatch"
 
 
 def test_creator_json_must_be_single_item_array_without_duplicate_keys(
@@ -365,7 +399,7 @@ def test_bbox_and_sentence_times_are_finite_in_frame_bounds(tmp_path: Path) -> N
 
     def invalid_time(angle: str, record: dict[str, object]) -> None:
         if angle == "A":
-            record["Sentence_info"][0]["end_time"] = 0.5  # type: ignore[index]
+            record["Sentence_info"][0]["end_time"] = 0.7  # type: ignore[index]
 
     label_zip, source_zip = _dataset_fixture(
         tmp_path / "time",
@@ -374,6 +408,23 @@ def test_bbox_and_sentence_times_are_finite_in_frame_bounds(tmp_path: Path) -> N
     with pytest.raises(Aihub538TrainingSmokeError) as caught:
         _evaluate(label_zip, source_zip)
     assert caught.value.reason_code == "aihub538_training_sentence_time_invalid"
+
+
+def test_bbox_uses_pinned_creator_row_column_axis_order(tmp_path: Path) -> None:
+    def creator_axis_order(_: str, record: dict[str, object]) -> None:
+        boxes = [[100, 500, 200, 600] for _ in range(3)]
+        record["Bounding_box_info"]["Face_bounding_box"][  # type: ignore[index]
+            "xtl_ytl_xbr_ybr"
+        ] = boxes
+        record["Bounding_box_info"]["Lip_bounding_box"][  # type: ignore[index]
+            "xtl_ytl_xbr_ybr"
+        ] = boxes
+
+    label_zip, source_zip = _dataset_fixture(
+        tmp_path / "creator-axis-order",
+        mutate_record=creator_axis_order,
+    )
+    assert len(_admit(label_zip, source_zip).samples) == 2
 
 
 def test_metadata_duration_disagreement_fails_smoke_without_threshold_artifact(

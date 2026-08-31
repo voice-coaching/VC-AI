@@ -112,6 +112,13 @@ def _parser() -> argparse.ArgumentParser:
     seal_parser.add_argument(
         "--phone-window-policy-file", type=Path, required=True
     )
+    seal_parser.add_argument(
+        "--evaluation-pipeline-code-file", type=Path, required=True
+    )
+    seal_parser.add_argument(
+        "--source-evaluator-code-file", type=Path, required=True
+    )
+    seal_parser.add_argument("--media-engine-code-file", type=Path, required=True)
     seal_parser.add_argument("--sealed-at-utc", default=None)
 
     consume_parser = subparsers.add_parser(
@@ -374,6 +381,15 @@ def _seal(arguments: argparse.Namespace) -> dict[str, object]:
         phone_window_code_sha256=pipeline_identity.phone_window_code_sha256,
         phone_window_policy_revision=phone_window_policy.policy_revision,
         phone_window_policy_sha256=phone_window_policy.policy_sha256,
+        evaluation_pipeline_code_sha256=_sha256_regular_file(
+            arguments.evaluation_pipeline_code_file
+        ),
+        source_evaluator_code_sha256=_sha256_regular_file(
+            arguments.source_evaluator_code_file
+        ),
+        media_engine_code_sha256=_sha256_regular_file(
+            arguments.media_engine_code_file
+        ),
         sealed_at_utc=arguments.sealed_at_utc or _utc_now(),
     )
     P8LockedEvaluationService(store).create_read_zero_seal(seal)

@@ -22,22 +22,45 @@ from ..adapters.aihub538_identity_key_store import (
     Aihub538IdentityKeyStoreError,
     load_aihub538_identity_key_descriptor,
 )
+from ..adapters.aihub538_split_tar_archive import (
+    InnerTarZipRepackReceipt,
+    NamedSplitTarPart,
+    SplitTarMergeReceipt,
+    merge_split_tar_parts,
+    repack_verified_inner_tar_to_zip,
+)
 from ..adapters.aihub538_training_archive import (
     Aihub538ArchiveError,
     Aihub538ArchiveSecurityPolicy,
-    DEFAULT_AIHUB538_ARCHIVE_SECURITY_POLICY,
     NamedSplitZipPart,
     SplitZipMergeReceipt,
     TarExtractionReceipt,
     VerifiedAihub538Download,
+    VerifiedAihub538NonlockedShardDownload,
     ZipValidationReceipt,
+    aihub538_archive_security_policy_for_shard,
     extract_verified_tar_descriptor,
     merge_split_zip_parts,
     open_validated_zip_descriptor,
     validate_zip_descriptor,
     verify_aihub538_training_download,
+    verify_aihub538_nonlocked_shard_download,
 )
 from ..adapters.aihub538_training_dataset import Aihub538TrainingDatasetAdapter
+from ..models.aihub538_label_selection_authorization import (
+    Aihub538LabelSelectionAuthorizationReceipt,
+    require_aihub538_frozen_source_authorization_receipt,
+)
+from ..models.aihub538_label_capacity import (
+    AIHUB538_LABEL_CAPACITY_TERMINAL_FRAME_TAIL_POLICY_SHA256,
+)
+from ..models.aihub538_p6_remediation import Aihub538P6RemediationAuditReceipt
+from ..models.aihub538_nonlocked_shards import (
+    AIHUB538_LABEL_CAPACITY_LADDER_PAIR_SHARDS,
+    AIHUB538_TS174_TL174_SHARD,
+    Aihub538NonlockedShardSpec,
+    require_aihub538_nonlocked_shard_spec,
+)
 from ..models.integrity import sha256_document
 from .aihub538_training_smoke import (
     Aihub538TrainingSmokeError,
@@ -50,6 +73,9 @@ _COMPLETED_ARCHIVE_NAME = "download.tar"
 _COMPLETED_RECEIPT_NAME = "download.receipt.json"
 _SPLIT_PART_PATTERN = re.compile(
     r"^(?P<stem>[^/\\\x00]+\.zip)\.part(?P<offset>[0-9]+)$"
+)
+_SPLIT_ARCHIVE_PATTERN = re.compile(
+    r"^(?P<stem>[^/\\\x00]+\.(?P<kind>zip|tar))\.part(?P<offset>[0-9]+)$"
 )
 _LABEL_TOP_LEVEL_KEYS = {
     "Audio_env",
@@ -75,6 +101,12 @@ _RECEIPT_FILE_NAMES = (
     "99-completion.json",
 )
 
+_Aihub538CapacityReceipt = (
+    Aihub538LabelSelectionAuthorizationReceipt | Aihub538P6RemediationAuditReceipt
+)
+_GENERIC_MERGE_RECEIPT_NAME = "20-split-archive-merge.json"
+_INNER_TAR_REPACK_RECEIPT_NAME = "25-inner-tar-repack.json"
+
 
 class Aihub538TrainingPipelineError(RuntimeError):
     """Path-free, restricted-data-free pipeline failure."""
@@ -92,9 +124,11 @@ class Aihub538SemanticRoleReceipt:
     source_member_count: int
     source_mp4_count: int
     source_wav_count: int
+    shard_id: str = AIHUB538_TS174_TL174_SHARD.shard_id
+    dataset_partition: str = AIHUB538_TS174_TL174_SHARD.dataset_partition
 
     def to_json_object(self) -> dict[str, object]:
-        return {
+        document = {
             "schema_version": (
                 "voice_coach.aihub538_semantic_archive_role_receipt.v1"
             ),
@@ -117,20 +151,35 @@ class Aihub538SemanticRoleReceipt:
             "aggregate_only": True,
             "locked_partition_accessed": False,
         }
+        if self.shard_id != AIHUB538_TS174_TL174_SHARD.shard_id:
+            document["schema_version"] = (
+                "voice_coach.aihub538_semantic_archive_role_receipt.v2"
+            )
+            document["shard_id"] = self.shard_id
+            document["dataset_partition"] = self.dataset_partition
+        return document
 
 
 @dataclass(frozen=True, slots=True)
 class Aihub538TrainingPipelineEvidence:
     """All aggregate receipts issued by one completed transactional run."""
 
-    download_verification: VerifiedAihub538Download
+    download_verification: (
+        VerifiedAihub538Download | VerifiedAihub538NonlockedShardDownload
+    )
     tar_extraction: TarExtractionReceipt
-    split_merge_receipts: tuple[SplitZipMergeReceipt, SplitZipMergeReceipt]
+    split_merge_receipts: tuple[
+        SplitZipMergeReceipt | SplitTarMergeReceipt,
+        SplitZipMergeReceipt | SplitTarMergeReceipt,
+    ]
+    inner_tar_repack_receipts: tuple[InnerTarZipRepackReceipt, ...]
     label_zip_validation: ZipValidationReceipt
     source_zip_validation: ZipValidationReceipt
     semantic_role_receipt: Aihub538SemanticRoleReceipt
     smoke_evidence: Aihub538TrainingSmokeEvidence
     completion_receipt_sha256: str
+    shard_spec: Aihub538NonlockedShardSpec = AIHUB538_TS174_TL174_SHARD
+    capacity_audit_receipt_sha256: str | None = None
 
     def to_json_object(self) -> dict[str, object]:
         document = self._unsigned_json_object()
@@ -138,15 +187,21 @@ class Aihub538TrainingPipelineEvidence:
         return document
 
     def _unsigned_json_object(self) -> dict[str, object]:
-        return {
-            "schema_version": "voice_coach.aihub538_training_pipeline_receipt.v1",
+        document = {
+            "schema_version": "voice_coach.aihub538_training_pipeline_receipt.v2",
             "status": "completed_nonlocked_training_metadata_smoke",
             "dataset_id": 538,
-            "dataset_partition": "nonlocked_training_ts174_tl174",
+            "dataset_partition": self.shard_spec.dataset_partition,
             "download_verification": self.download_verification.to_json_object(),
             "outer_tar_extraction": self.tar_extraction.to_json_object(),
-            "split_zip_merge": _merge_stage_document(
+            "split_archive_merge": _merge_stage_document(
                 self.split_merge_receipts
+            ),
+            "split_zip_merge": _legacy_zip_merge_stage_document(
+                self.split_merge_receipts
+            ),
+            "inner_tar_repack": _repack_stage_document(
+                self.inner_tar_repack_receipts
             ),
             "zip_validation": _validation_stage_document(
                 (
@@ -181,36 +236,60 @@ class Aihub538TrainingPipelineEvidence:
             "aggregate_only": True,
             "promotion_authorized": False,
         }
+        if self.shard_spec != AIHUB538_TS174_TL174_SHARD:
+            document.update(
+                {
+                    "schema_version": (
+                        "voice_coach.aihub538_training_pipeline_receipt.v3"
+                    ),
+                    "shard_id": self.shard_spec.shard_id,
+                    "shard_spec_sha256": self.shard_spec.spec_sha256,
+                    "capacity_audit_receipt_sha256": (
+                        self.capacity_audit_receipt_sha256
+                    ),
+                    "capacity_audit_precondition_satisfied": True,
+                }
+            )
+        return document
 
     @classmethod
     def issue(
         cls,
         *,
-        download_verification: VerifiedAihub538Download,
+        download_verification: (
+            VerifiedAihub538Download | VerifiedAihub538NonlockedShardDownload
+        ),
         tar_extraction: TarExtractionReceipt,
         split_merge_receipts: tuple[
-            SplitZipMergeReceipt,
-            SplitZipMergeReceipt,
+            SplitZipMergeReceipt | SplitTarMergeReceipt,
+            SplitZipMergeReceipt | SplitTarMergeReceipt,
         ],
+        inner_tar_repack_receipts: tuple[InnerTarZipRepackReceipt, ...],
         label_zip_validation: ZipValidationReceipt,
         source_zip_validation: ZipValidationReceipt,
         semantic_role_receipt: Aihub538SemanticRoleReceipt,
         smoke_evidence: Aihub538TrainingSmokeEvidence,
+        shard_spec: Aihub538NonlockedShardSpec = AIHUB538_TS174_TL174_SHARD,
+        capacity_audit_receipt_sha256: str | None = None,
     ) -> "Aihub538TrainingPipelineEvidence":
         draft = cls(
             download_verification=download_verification,
             tar_extraction=tar_extraction,
             split_merge_receipts=split_merge_receipts,
+            inner_tar_repack_receipts=inner_tar_repack_receipts,
             label_zip_validation=label_zip_validation,
             source_zip_validation=source_zip_validation,
             semantic_role_receipt=semantic_role_receipt,
             smoke_evidence=smoke_evidence,
             completion_receipt_sha256="0" * 64,
+            shard_spec=shard_spec,
+            capacity_audit_receipt_sha256=capacity_audit_receipt_sha256,
         )
         return cls(
             download_verification=download_verification,
             tar_extraction=tar_extraction,
             split_merge_receipts=split_merge_receipts,
+            inner_tar_repack_receipts=inner_tar_repack_receipts,
             label_zip_validation=label_zip_validation,
             source_zip_validation=source_zip_validation,
             semantic_role_receipt=semantic_role_receipt,
@@ -218,6 +297,8 @@ class Aihub538TrainingPipelineEvidence:
             completion_receipt_sha256=sha256_document(
                 draft._unsigned_json_object()
             ),
+            shard_spec=shard_spec,
+            capacity_audit_receipt_sha256=capacity_audit_receipt_sha256,
         )
 
 
@@ -232,9 +313,17 @@ class _RoleProbe:
 @dataclass(frozen=True, slots=True)
 class _MergedCandidate:
     descriptor: int
-    merge_receipt: SplitZipMergeReceipt
+    merge_receipt: SplitZipMergeReceipt | SplitTarMergeReceipt
+    repack_receipt: InnerTarZipRepackReceipt | None
     validation_receipt: ZipValidationReceipt
     role_probe: _RoleProbe
+
+
+@dataclass(frozen=True, slots=True)
+class _ArchiveSplitGroup:
+    kind: str
+    zip_parts: tuple[NamedSplitZipPart, ...] = ()
+    tar_parts: tuple[NamedSplitTarPart, ...] = ()
 
 
 class _DuplicateJsonKeyError(ValueError):
@@ -247,13 +336,32 @@ class Aihub538TrainingPipeline:
     def __init__(
         self,
         *,
-        archive_policy: Aihub538ArchiveSecurityPolicy = (
-            DEFAULT_AIHUB538_ARCHIVE_SECURITY_POLICY
-        ),
+        shard_spec: Aihub538NonlockedShardSpec = AIHUB538_TS174_TL174_SHARD,
+        archive_policy: Aihub538ArchiveSecurityPolicy | None = None,
     ) -> None:
-        self._archive_policy = archive_policy
+        try:
+            self._shard_spec = require_aihub538_nonlocked_shard_spec(
+                shard_spec,
+                require_pair=True,
+            )
+        except ValueError as error:
+            raise Aihub538TrainingPipelineError(str(error)) from None
+        self._archive_policy = (
+            aihub538_archive_security_policy_for_shard(self._shard_spec)
+            if archive_policy is None
+            else archive_policy
+        )
         self._smoke_service = Aihub538TrainingSmokeService(
-            Aihub538TrainingDatasetAdapter(archive_policy=archive_policy)
+            Aihub538TrainingDatasetAdapter(
+                archive_policy=self._archive_policy,
+                shard_spec=self._shard_spec,
+                nonlocked_label_schema_policy_sha256=(
+                    AIHUB538_LABEL_CAPACITY_TERMINAL_FRAME_TAIL_POLICY_SHA256
+                    if self._shard_spec
+                    in AIHUB538_LABEL_CAPACITY_LADDER_PAIR_SHARDS[2:]
+                    else None
+                ),
+            )
         )
 
     def run_from_completed_directory(
@@ -263,6 +371,7 @@ class Aihub538TrainingPipeline:
         identity_key_descriptor: int,
         output_directory: Path,
         dataset_access_permission_confirmed: bool,
+        capacity_audit_receipt: _Aihub538CapacityReceipt | None = None,
     ) -> Aihub538TrainingPipelineEvidence:
         """Open only the two exact completed-download files in a private dir."""
 
@@ -276,6 +385,7 @@ class Aihub538TrainingPipeline:
                 dataset_access_permission_confirmed=(
                     dataset_access_permission_confirmed
                 ),
+                capacity_audit_receipt=capacity_audit_receipt,
             )
 
     def run(
@@ -286,6 +396,7 @@ class Aihub538TrainingPipeline:
         identity_key_descriptor: int,
         output_directory: Path,
         dataset_access_permission_confirmed: bool,
+        capacity_audit_receipt: _Aihub538CapacityReceipt | None = None,
     ) -> Aihub538TrainingPipelineEvidence:
         """Execute all stages or remove only this call's newly-created root."""
 
@@ -293,15 +404,27 @@ class Aihub538TrainingPipeline:
             raise Aihub538TrainingPipelineError(
                 "aihub538_dataset_access_permission_not_confirmed"
             )
+        capacity_receipt_sha256 = _validate_capacity_precondition(
+            shard_spec=self._shard_spec,
+            receipt=capacity_audit_receipt,
+        )
         try:
             identity_key = load_aihub538_identity_key_descriptor(
                 identity_key_descriptor
             )
-            verified_download = verify_aihub538_training_download(
-                archive_descriptor=archive_descriptor,
-                receipt_descriptor=receipt_descriptor,
-                policy=self._archive_policy,
-            )
+            if self._shard_spec == AIHUB538_TS174_TL174_SHARD:
+                verified_download = verify_aihub538_training_download(
+                    archive_descriptor=archive_descriptor,
+                    receipt_descriptor=receipt_descriptor,
+                    policy=self._archive_policy,
+                )
+            else:
+                verified_download = verify_aihub538_nonlocked_shard_download(
+                    archive_descriptor=archive_descriptor,
+                    receipt_descriptor=receipt_descriptor,
+                    shard_spec=self._shard_spec,
+                    policy=self._archive_policy,
+                )
         except (Aihub538ArchiveError, Aihub538IdentityKeyStoreError) as error:
             raise Aihub538TrainingPipelineError(error.reason_code) from None
 
@@ -350,11 +473,36 @@ class Aihub538TrainingPipeline:
                     ordered_merge_receipts[0],
                     ordered_merge_receipts[1],
                 )
+                merge_receipt_name = (
+                    _RECEIPT_FILE_NAMES[2]
+                    if all(
+                        isinstance(receipt, SplitZipMergeReceipt)
+                        for receipt in split_merge_receipts
+                    )
+                    else _GENERIC_MERGE_RECEIPT_NAME
+                )
                 _persist_json_receipt(
                     root_descriptor,
-                    _RECEIPT_FILE_NAMES[2],
+                    merge_receipt_name,
                     _merge_stage_document(split_merge_receipts),
                 )
+
+                inner_tar_repack_receipts = tuple(
+                    sorted(
+                        (
+                            item.repack_receipt
+                            for item in candidates
+                            if item.repack_receipt is not None
+                        ),
+                        key=lambda receipt: receipt.repacked_zip_sha256,
+                    )
+                )
+                if inner_tar_repack_receipts:
+                    _persist_json_receipt(
+                        root_descriptor,
+                        _INNER_TAR_REPACK_RECEIPT_NAME,
+                        _repack_stage_document(inner_tar_repack_receipts),
+                    )
 
                 validations = tuple(
                     sorted(
@@ -375,6 +523,8 @@ class Aihub538TrainingPipeline:
                     source_member_count=source.role_probe.regular_member_count,
                     source_mp4_count=source.role_probe.mp4_count,
                     source_wav_count=source.role_probe.wav_count,
+                    shard_id=self._shard_spec.shard_id,
+                    dataset_partition=self._shard_spec.dataset_partition,
                 )
                 _persist_json_receipt(
                     root_descriptor,
@@ -388,6 +538,21 @@ class Aihub538TrainingPipeline:
                     dataset_access_permission_confirmed=True,
                     identity_hash_key=identity_key.key,
                 )
+                expected_capacity_lineage = _capacity_label_lineage(
+                    shard_spec=self._shard_spec,
+                    receipt=capacity_audit_receipt,
+                )
+                if expected_capacity_lineage is not None and (
+                    expected_capacity_lineage[0]
+                    != smoke_evidence.admission_receipt.label_archive_sha256
+                    or expected_capacity_lineage[1]
+                    != smoke_evidence.admission_receipt.label_zip_content_root_sha256
+                    or expected_capacity_lineage[2]
+                    != smoke_evidence.admission_receipt.identity_namespace_commitment_sha256
+                ):
+                    raise Aihub538TrainingPipelineError(
+                        "aihub538_capacity_admission_lineage_mismatch"
+                    )
                 _persist_json_receipt(
                     root_descriptor,
                     _RECEIPT_FILE_NAMES[5],
@@ -402,10 +567,13 @@ class Aihub538TrainingPipeline:
                     download_verification=verified_download,
                     tar_extraction=tar_receipt,
                     split_merge_receipts=split_merge_receipts,
+                    inner_tar_repack_receipts=inner_tar_repack_receipts,
                     label_zip_validation=label.validation_receipt,
                     source_zip_validation=source.validation_receipt,
                     semantic_role_receipt=role_receipt,
                     smoke_evidence=smoke_evidence,
+                    shard_spec=self._shard_spec,
+                    capacity_audit_receipt_sha256=capacity_receipt_sha256,
                 )
                 _persist_json_receipt(
                     root_descriptor,
@@ -471,9 +639,9 @@ class Aihub538TrainingPipeline:
         output_directory: Path,
     ) -> tuple[_MergedCandidate, _MergedCandidate]:
         outer_descriptor = _open_private_directory_at(root_descriptor, "outer")
-        groups: tuple[tuple[NamedSplitZipPart, ...], ...] = ()
+        groups: tuple[_ArchiveSplitGroup, ...] = ()
         try:
-            groups = _discover_exact_split_groups(
+            groups = _discover_exact_archive_groups(
                 outer_descriptor,
                 policy=self._archive_policy,
             )
@@ -482,13 +650,49 @@ class Aihub538TrainingPipeline:
         candidate_descriptors: list[int] = []
         candidates: list[_MergedCandidate] = []
         try:
-            for index, parts in enumerate(groups):
-                merged_path = output_directory / f"candidate-{index}.zip"
-                merge_receipt = merge_split_zip_parts(
-                    parts=parts,
-                    destination=merged_path,
-                    policy=self._archive_policy,
-                )
+            for index, group in enumerate(groups):
+                repack_receipt: InnerTarZipRepackReceipt | None = None
+                if group.kind == "zip":
+                    merged_path = output_directory / f"candidate-{index}.zip"
+                    merge_receipt = merge_split_zip_parts(
+                        parts=group.zip_parts,
+                        destination=merged_path,
+                        policy=self._archive_policy,
+                    )
+                elif group.kind == "tar":
+                    merged_tar_path = output_directory / f"candidate-{index}.tar"
+                    merge_receipt = merge_split_tar_parts(
+                        parts=group.tar_parts,
+                        destination=merged_tar_path,
+                        policy=self._archive_policy,
+                    )
+                    tar_descriptor = os.open(
+                        f"candidate-{index}.tar",
+                        os.O_RDONLY | os.O_NOFOLLOW,
+                        dir_fd=root_descriptor,
+                    )
+                    try:
+                        repack_receipt, repack_validation = (
+                            repack_verified_inner_tar_to_zip(
+                                archive_descriptor=tar_descriptor,
+                                destination=(
+                                    output_directory / f"candidate-{index}.zip"
+                                ),
+                                policy=self._archive_policy,
+                            )
+                        )
+                    finally:
+                        os.close(tar_descriptor)
+                    if (
+                        repack_receipt.source_tar_sha256
+                        != merge_receipt.merged_sha256
+                    ):
+                        raise Aihub538TrainingPipelineError(
+                            "aihub538_merged_tar_lineage_mismatch"
+                        )
+                    merged_path = output_directory / f"candidate-{index}.zip"
+                else:
+                    raise AssertionError("unreachable split archive kind")
                 descriptor = os.open(
                     f"candidate-{index}.zip",
                     os.O_RDONLY | os.O_NOFOLLOW,
@@ -499,18 +703,36 @@ class Aihub538TrainingPipeline:
                     descriptor,
                     policy=self._archive_policy,
                 )
-                if validation.archive_sha256 != merge_receipt.merged_sha256:
+                if group.kind == "zip" and (
+                    validation.archive_sha256 != merge_receipt.merged_sha256
+                ):
                     raise Aihub538TrainingPipelineError(
                         "aihub538_merged_zip_lineage_mismatch"
+                    )
+                if group.kind == "tar" and (
+                    repack_receipt is None
+                    or validation != repack_validation
+                    or validation.archive_sha256
+                    != repack_receipt.repacked_zip_sha256
+                ):
+                    raise Aihub538TrainingPipelineError(
+                        "aihub538_repacked_zip_lineage_mismatch"
                     )
                 candidates.append(
                     _MergedCandidate(
                         descriptor=descriptor,
                         merge_receipt=merge_receipt,
+                        repack_receipt=repack_receipt,
                         validation_receipt=validation,
                         role_probe=_probe_semantic_role(
                             descriptor,
                             policy=self._archive_policy,
+                            label_role_component=(
+                                self._shard_spec.label_role_component
+                            ),
+                            source_role_component=(
+                                self._shard_spec.source_role_component
+                            ),
                         ),
                     )
                 )
@@ -526,7 +748,7 @@ class Aihub538TrainingPipeline:
             return result
         finally:
             for group in groups:
-                for part in group:
+                for part in group.zip_parts + group.tar_parts:
                     os.close(part.descriptor)
             for descriptor in candidate_descriptors:
                 os.close(descriptor)
@@ -589,15 +811,63 @@ def open_completed_aihub538_download_directory(
 
 
 def _merge_stage_document(
-    receipts: Sequence[SplitZipMergeReceipt],
+    receipts: Sequence[SplitZipMergeReceipt | SplitTarMergeReceipt],
 ) -> dict[str, object]:
     ordered = sorted(receipts, key=lambda receipt: receipt.merged_sha256)
     return {
-        "schema_version": "voice_coach.aihub538_split_zip_merge_stage.v1",
+        "schema_version": "voice_coach.aihub538_split_archive_merge_stage.v2",
         "archive_count": len(ordered),
         "archives": [receipt.to_json_object() for receipt in ordered],
+        "archive_kinds": sorted(
+            {
+                "inner_posix_tar"
+                if isinstance(receipt, SplitTarMergeReceipt)
+                else "zip"
+                for receipt in ordered
+            }
+        ),
+        "byte_offset_suffix_semantics": True,
         "role_assignment_deferred_until_semantic_probe": True,
         "outer_member_names_serialized": False,
+        "aggregate_only": True,
+    }
+
+
+def _legacy_zip_merge_stage_document(
+    receipts: Sequence[SplitZipMergeReceipt | SplitTarMergeReceipt],
+) -> dict[str, object]:
+    if all(isinstance(receipt, SplitZipMergeReceipt) for receipt in receipts):
+        ordered = sorted(receipts, key=lambda receipt: receipt.merged_sha256)
+        return {
+            "schema_version": "voice_coach.aihub538_split_zip_merge_stage.v1",
+            "archive_count": len(ordered),
+            "archives": [receipt.to_json_object() for receipt in ordered],
+            "role_assignment_deferred_until_semantic_probe": True,
+            "outer_member_names_serialized": False,
+            "aggregate_only": True,
+        }
+    return {
+        "schema_version": "voice_coach.aihub538_split_zip_merge_stage.v1",
+        "status": "not_applicable_split_inner_tar_input",
+        "archive_count": 0,
+        "archives": [],
+        "outer_member_names_serialized": False,
+        "aggregate_only": True,
+    }
+
+
+def _repack_stage_document(
+    receipts: Sequence[InnerTarZipRepackReceipt],
+) -> dict[str, object]:
+    ordered = sorted(receipts, key=lambda receipt: receipt.repacked_zip_sha256)
+    return {
+        "schema_version": "voice_coach.aihub538_inner_tar_repack_stage.v1",
+        "status": (
+            "completed" if ordered else "not_applicable_split_zip_input"
+        ),
+        "archive_count": len(ordered),
+        "archives": [receipt.to_json_object() for receipt in ordered],
+        "raw_member_names_serialized": False,
         "aggregate_only": True,
     }
 
@@ -619,6 +889,8 @@ def _probe_semantic_role(
     descriptor: int,
     *,
     policy: Aihub538ArchiveSecurityPolicy,
+    label_role_component: str = _LABEL_ROLE_COMPONENT,
+    source_role_component: str = _SOURCE_ROLE_COMPONENT,
 ) -> _RoleProbe:
     try:
         with open_validated_zip_descriptor(descriptor, policy=policy) as opened:
@@ -630,7 +902,7 @@ def _probe_semantic_role(
             )
             suffixes = {path.suffix for _, path in regular}
             if suffixes == {".json"} and all(
-                path.parts.count(_LABEL_ROLE_COMPONENT) == 1
+                path.parts.count(label_role_component) == 1
                 for _, path in regular
             ):
                 for info, _ in regular:
@@ -642,7 +914,7 @@ def _probe_semantic_role(
                         return _RoleProbe("unsupported", len(regular))
                 return _RoleProbe("label", len(regular))
             if suffixes <= {".mp4", ".wav"} and all(
-                path.parts.count(_SOURCE_ROLE_COMPONENT) == 1
+                path.parts.count(source_role_component) == 1
                 for _, path in regular
             ):
                 mp4_count = 0
@@ -717,6 +989,115 @@ def _one_candidate_for_role(
             "aihub538_pipeline_semantic_role_pair_invalid"
         )
     return selected[0]
+
+
+def _discover_exact_archive_groups(
+    outer_descriptor: int,
+    *,
+    policy: Aihub538ArchiveSecurityPolicy,
+) -> tuple[_ArchiveSplitGroup, _ArchiveSplitGroup]:
+    zip_groups: dict[
+        tuple[tuple[str, ...], str],
+        list[NamedSplitZipPart],
+    ] = {}
+    tar_groups: dict[
+        tuple[tuple[str, ...], str],
+        list[NamedSplitTarPart],
+    ] = {}
+    opened: list[int] = []
+
+    def visit(directory_descriptor: int, parents: tuple[str, ...]) -> None:
+        try:
+            names = sorted(os.listdir(directory_descriptor))
+        except OSError:
+            raise Aihub538TrainingPipelineError(
+                "aihub538_pipeline_outer_traversal_failed"
+            ) from None
+        for name in names:
+            try:
+                metadata = os.stat(
+                    name,
+                    dir_fd=directory_descriptor,
+                    follow_symlinks=False,
+                )
+            except OSError:
+                raise Aihub538TrainingPipelineError(
+                    "aihub538_pipeline_outer_traversal_failed"
+                ) from None
+            if stat.S_ISDIR(metadata.st_mode):
+                child = _open_private_directory_at(directory_descriptor, name)
+                try:
+                    visit(child, parents + (name,))
+                finally:
+                    os.close(child)
+                continue
+            if not stat.S_ISREG(metadata.st_mode):
+                raise Aihub538TrainingPipelineError(
+                    "aihub538_pipeline_outer_member_type_invalid"
+                )
+            match = _SPLIT_ARCHIVE_PATTERN.fullmatch(name)
+            if match is None:
+                raise Aihub538TrainingPipelineError(
+                    "aihub538_pipeline_outer_split_part_invalid"
+                )
+            try:
+                descriptor = os.open(
+                    name,
+                    os.O_RDONLY | os.O_NOFOLLOW,
+                    dir_fd=directory_descriptor,
+                )
+            except OSError:
+                raise Aihub538TrainingPipelineError(
+                    "aihub538_pipeline_outer_split_part_invalid"
+                ) from None
+            opened.append(descriptor)
+            key = (parents, match.group("stem"))
+            if match.group("kind") == "zip":
+                zip_groups.setdefault(key, []).append(
+                    NamedSplitZipPart(name=name, descriptor=descriptor)
+                )
+            else:
+                tar_groups.setdefault(key, []).append(
+                    NamedSplitTarPart(name=name, descriptor=descriptor)
+                )
+
+    try:
+        visit(outer_descriptor, ())
+        group_count = len(zip_groups) + len(tar_groups)
+        if group_count != 2 or (zip_groups and tar_groups):
+            raise Aihub538TrainingPipelineError(
+                "aihub538_pipeline_split_archive_pair_invalid"
+            )
+        if zip_groups:
+            if any(
+                not 1 <= len(parts) <= policy.maximum_split_part_count
+                for parts in zip_groups.values()
+            ):
+                raise Aihub538TrainingPipelineError(
+                    "aihub538_pipeline_split_archive_pair_invalid"
+                )
+            ordered = tuple(
+                _ArchiveSplitGroup(kind="zip", zip_parts=tuple(zip_groups[key]))
+                for key in sorted(zip_groups)
+            )
+        else:
+            if any(
+                not 1 <= len(parts) <= policy.maximum_split_part_count
+                for parts in tar_groups.values()
+            ):
+                raise Aihub538TrainingPipelineError(
+                    "aihub538_pipeline_split_archive_pair_invalid"
+                )
+            ordered = tuple(
+                _ArchiveSplitGroup(kind="tar", tar_parts=tuple(tar_groups[key]))
+                for key in sorted(tar_groups)
+            )
+        result = (ordered[0], ordered[1])
+        opened.clear()
+        return result
+    finally:
+        for descriptor in opened:
+            os.close(descriptor)
 
 
 def _discover_exact_split_groups(
@@ -967,6 +1348,106 @@ def _remove_directory_contents(directory_descriptor: int) -> None:
         else:
             os.unlink(name, dir_fd=directory_descriptor)
     os.fsync(directory_descriptor)
+
+
+def _validate_capacity_precondition(
+    *,
+    shard_spec: Aihub538NonlockedShardSpec,
+    receipt: _Aihub538CapacityReceipt | None,
+) -> str | None:
+    if shard_spec == AIHUB538_TS174_TL174_SHARD:
+        if receipt is not None:
+            raise Aihub538TrainingPipelineError(
+                "aihub538_capacity_receipt_not_applicable"
+            )
+        return None
+    if (
+        shard_spec not in AIHUB538_LABEL_CAPACITY_LADDER_PAIR_SHARDS
+        or receipt is None
+    ):
+        raise Aihub538TrainingPipelineError(
+            "aihub538_capacity_audit_required"
+        )
+    try:
+        receipt._validate()
+    except ValueError:
+        raise Aihub538TrainingPipelineError(
+            "aihub538_capacity_audit_invalid"
+        ) from None
+    if not receipt.is_feasible:
+        raise Aihub538TrainingPipelineError(
+            "aihub538_capacity_audit_infeasible"
+        )
+    _capacity_label_lineage(shard_spec=shard_spec, receipt=receipt)
+    return receipt.receipt_sha256
+
+
+def _capacity_label_lineage(
+    *,
+    shard_spec: Aihub538NonlockedShardSpec,
+    receipt: _Aihub538CapacityReceipt | None,
+) -> tuple[str, str, str] | None:
+    if shard_spec == AIHUB538_TS174_TL174_SHARD:
+        return None
+    if isinstance(receipt, Aihub538LabelSelectionAuthorizationReceipt):
+        try:
+            require_aihub538_frozen_source_authorization_receipt(receipt)
+        except ValueError:
+            raise Aihub538TrainingPipelineError(
+                "aihub538_capacity_audit_release_pin_mismatch"
+            ) from None
+        if not receipt.is_feasible:
+            raise Aihub538TrainingPipelineError(
+                "aihub538_capacity_shard_not_authorized"
+            )
+        try:
+            index = AIHUB538_LABEL_CAPACITY_LADDER_PAIR_SHARDS.index(
+                shard_spec
+            )
+            lineage = receipt.prefix_lineage[index]
+        except (ValueError, IndexError):
+            raise Aihub538TrainingPipelineError(
+                "aihub538_capacity_shard_not_authorized"
+            ) from None
+        if (
+            lineage.label_role_component != shard_spec.label_role_component
+            or lineage.label_file_key != shard_spec.ordered_file_keys[0]
+        ):
+            raise Aihub538TrainingPipelineError(
+                "aihub538_capacity_shard_not_authorized"
+            )
+        return (
+            lineage.label_archive_sha256,
+            lineage.label_content_root_sha256,
+            receipt.identity_namespace_commitment_sha256,
+        )
+    if isinstance(receipt, Aihub538P6RemediationAuditReceipt):
+        try:
+            receipt._validate()
+            if not receipt.is_feasible:
+                raise ValueError
+            index = AIHUB538_LABEL_CAPACITY_LADDER_PAIR_SHARDS.index(shard_spec)
+            lineage = receipt.evaluated_prefix_lineage[index - 2]
+        except (ValueError, IndexError):
+            raise Aihub538TrainingPipelineError(
+                "aihub538_capacity_shard_not_authorized"
+            ) from None
+        if (
+            index < 2
+            or lineage.label_role_component != shard_spec.label_role_component
+            or lineage.label_file_key != shard_spec.ordered_file_keys[0]
+        ):
+            raise Aihub538TrainingPipelineError(
+                "aihub538_capacity_shard_not_authorized"
+            )
+        return (
+            lineage.label_archive_sha256,
+            lineage.label_content_root_sha256,
+            receipt.identity_namespace_commitment_sha256,
+        )
+    raise Aihub538TrainingPipelineError(
+        "aihub538_capacity_audit_invalid"
+    )
 
 
 __all__ = [

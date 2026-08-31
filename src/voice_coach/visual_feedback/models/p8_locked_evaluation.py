@@ -7,10 +7,9 @@ entries and the frozen inputs that must exist before dataset 538 may be opened.
 
 from __future__ import annotations
 
-from collections.abc import Mapping, Sequence
+from collections.abc import Sequence
 from dataclasses import dataclass
 from enum import Enum
-from typing import Any
 
 from ..errors import VisualFeedbackContractError
 from .integrity import (
@@ -30,7 +29,10 @@ from .p8_evaluation_completeness import (
     validate_p8_evaluation_completeness,
 )
 
-P8_READ_ZERO_SEAL_SCHEMA_VERSION = "voice_coach.p8_read_zero_seal.v3"
+P8_READ_ZERO_SEAL_SCHEMA_VERSION = "voice_coach.p8_read_zero_seal.v4"
+P8_STATE_ROOT_BINDING_SCHEMA_VERSION = (
+    "voice_coach.p8_state_root_binding.v1"
+)
 P8_ACCESS_TRANSACTION_SCHEMA_VERSION = "voice_coach.p8_access_transaction.v1"
 P8_LOCKED_EVALUATION_REPORT_SCHEMA_VERSION = (
     "voice_coach.p8_locked_evaluation_report.v3"
@@ -305,6 +307,9 @@ class P8ReadZeroSeal:
     phone_window_code_sha256: str
     phone_window_policy_revision: str
     phone_window_policy_sha256: str
+    evaluation_pipeline_code_sha256: str
+    source_evaluator_code_sha256: str
+    media_engine_code_sha256: str
     sealed_at_utc: str
     access_count: int
     sealed_before_source_access: bool
@@ -374,6 +379,9 @@ class P8ReadZeroSeal:
             "av_sync_decision_policy_sha256",
             "phone_window_code_sha256",
             "phone_window_policy_sha256",
+            "evaluation_pipeline_code_sha256",
+            "source_evaluator_code_sha256",
+            "media_engine_code_sha256",
             "seal_sha256",
         ):
             require_sha256(getattr(self, field_name), field_name)
@@ -445,6 +453,9 @@ class P8ReadZeroSeal:
         phone_window_code_sha256: str,
         phone_window_policy_revision: str,
         phone_window_policy_sha256: str,
+        evaluation_pipeline_code_sha256: str,
+        source_evaluator_code_sha256: str,
+        media_engine_code_sha256: str,
         sealed_at_utc: str,
     ) -> P8ReadZeroSeal:
         unsigned = {
@@ -505,6 +516,11 @@ class P8ReadZeroSeal:
             "phone_window_code_sha256": phone_window_code_sha256,
             "phone_window_policy_revision": phone_window_policy_revision,
             "phone_window_policy_sha256": phone_window_policy_sha256,
+            "evaluation_pipeline_code_sha256": (
+                evaluation_pipeline_code_sha256
+            ),
+            "source_evaluator_code_sha256": source_evaluator_code_sha256,
+            "media_engine_code_sha256": media_engine_code_sha256,
             "sealed_at_utc": sealed_at_utc,
             "access_count": 0,
             "sealed_before_source_access": True,
@@ -554,6 +570,9 @@ class P8ReadZeroSeal:
             phone_window_code_sha256=phone_window_code_sha256,
             phone_window_policy_revision=phone_window_policy_revision,
             phone_window_policy_sha256=phone_window_policy_sha256,
+            evaluation_pipeline_code_sha256=evaluation_pipeline_code_sha256,
+            source_evaluator_code_sha256=source_evaluator_code_sha256,
+            media_engine_code_sha256=media_engine_code_sha256,
             sealed_at_utc=sealed_at_utc,
             access_count=0,
             sealed_before_source_access=True,
@@ -620,6 +639,11 @@ class P8ReadZeroSeal:
             "phone_window_code_sha256": self.phone_window_code_sha256,
             "phone_window_policy_revision": self.phone_window_policy_revision,
             "phone_window_policy_sha256": self.phone_window_policy_sha256,
+            "evaluation_pipeline_code_sha256": (
+                self.evaluation_pipeline_code_sha256
+            ),
+            "source_evaluator_code_sha256": self.source_evaluator_code_sha256,
+            "media_engine_code_sha256": self.media_engine_code_sha256,
             "sealed_at_utc": self.sealed_at_utc,
             "access_count": self.access_count,
             "sealed_before_source_access": self.sealed_before_source_access,
@@ -671,6 +695,9 @@ class P8ReadZeroSeal:
                 "phone_window_code_sha256",
                 "phone_window_policy_revision",
                 "phone_window_policy_sha256",
+                "evaluation_pipeline_code_sha256",
+                "source_evaluator_code_sha256",
+                "media_engine_code_sha256",
                 "sealed_at_utc",
                 "access_count",
                 "sealed_before_source_access",
@@ -812,6 +839,18 @@ class P8ReadZeroSeal:
                 document["phone_window_policy_sha256"],
                 "phone_window_policy_sha256",
             ),
+            evaluation_pipeline_code_sha256=require_sha256(
+                document["evaluation_pipeline_code_sha256"],
+                "evaluation_pipeline_code_sha256",
+            ),
+            source_evaluator_code_sha256=require_sha256(
+                document["source_evaluator_code_sha256"],
+                "source_evaluator_code_sha256",
+            ),
+            media_engine_code_sha256=require_sha256(
+                document["media_engine_code_sha256"],
+                "media_engine_code_sha256",
+            ),
             sealed_at_utc=require_utc_timestamp(
                 document["sealed_at_utc"], "sealed_at_utc"
             ),
@@ -830,6 +869,166 @@ class P8ReadZeroSeal:
                 document["schema_version"], "schema_version"
             ),
         )
+
+
+@dataclass(frozen=True, slots=True)
+class P8StateRootBinding:
+    """Atomic persisted companion that makes one state-directory authoritative."""
+
+    base_read_zero_seal_sha256: str
+    state_directory_device: int
+    state_directory_inode: int
+    binding_sha256: str
+    schema_version: str = P8_STATE_ROOT_BINDING_SCHEMA_VERSION
+
+    def __post_init__(self) -> None:
+        if self.schema_version != P8_STATE_ROOT_BINDING_SCHEMA_VERSION:
+            raise VisualFeedbackContractError("P8 state root binding schema differs")
+        require_sha256(
+            self.base_read_zero_seal_sha256,
+            "base_read_zero_seal_sha256",
+        )
+        require_integer(
+            self.state_directory_device,
+            "state_directory_device",
+            minimum=0,
+        )
+        require_integer(
+            self.state_directory_inode,
+            "state_directory_inode",
+            minimum=1,
+        )
+        require_sha256(self.binding_sha256, "binding_sha256")
+        if self.binding_sha256 != sha256_document(self.unsigned_json_object()):
+            raise VisualFeedbackContractError("P8 state root binding digest differs")
+
+    @classmethod
+    def issue(
+        cls,
+        *,
+        seal: P8ReadZeroSeal,
+        state_directory_device: int,
+        state_directory_inode: int,
+    ) -> P8StateRootBinding:
+        values = {
+            "base_read_zero_seal_sha256": seal.seal_sha256,
+            "state_directory_device": state_directory_device,
+            "state_directory_inode": state_directory_inode,
+        }
+        unsigned = {
+            "schema_version": P8_STATE_ROOT_BINDING_SCHEMA_VERSION,
+            **values,
+            "authoritative_state_root": True,
+            "state_root_clone_replay_permitted": False,
+        }
+        return cls(**values, binding_sha256=sha256_document(unsigned))
+
+    def unsigned_json_object(self) -> dict[str, object]:
+        return {
+            "schema_version": self.schema_version,
+            "base_read_zero_seal_sha256": self.base_read_zero_seal_sha256,
+            "state_directory_device": self.state_directory_device,
+            "state_directory_inode": self.state_directory_inode,
+            "authoritative_state_root": True,
+            "state_root_clone_replay_permitted": False,
+        }
+
+    def to_json_object(self) -> dict[str, object]:
+        return {**self.unsigned_json_object(), "binding_sha256": self.binding_sha256}
+
+    @classmethod
+    def from_json_object(cls, value: object) -> P8StateRootBinding:
+        document = require_mapping(value, "p8_state_root_binding")
+        require_exact_keys(
+            document,
+            {
+                "schema_version",
+                "base_read_zero_seal_sha256",
+                "state_directory_device",
+                "state_directory_inode",
+                "authoritative_state_root",
+                "state_root_clone_replay_permitted",
+                "binding_sha256",
+            },
+            "p8_state_root_binding",
+        )
+        if (
+            require_boolean(
+                document["authoritative_state_root"],
+                "authoritative_state_root",
+            )
+            is not True
+            or require_boolean(
+                document["state_root_clone_replay_permitted"],
+                "state_root_clone_replay_permitted",
+            )
+            is not False
+        ):
+            raise VisualFeedbackContractError("P8 state root binding scope differs")
+        return cls(
+            base_read_zero_seal_sha256=require_sha256(
+                document["base_read_zero_seal_sha256"],
+                "base_read_zero_seal_sha256",
+            ),
+            state_directory_device=require_integer(
+                document["state_directory_device"],
+                "state_directory_device",
+                minimum=0,
+            ),
+            state_directory_inode=require_integer(
+                document["state_directory_inode"],
+                "state_directory_inode",
+                minimum=1,
+            ),
+            binding_sha256=require_sha256(
+                document["binding_sha256"],
+                "binding_sha256",
+            ),
+            schema_version=require_safe_identifier(
+                document["schema_version"],
+                "schema_version",
+            ),
+        )
+
+
+def issue_p8_state_bound_read_zero_document(
+    *,
+    seal: P8ReadZeroSeal,
+    state_directory_device: int,
+    state_directory_inode: int,
+) -> dict[str, object]:
+    """Return the single-file base seal plus its authoritative-root binding."""
+
+    binding = P8StateRootBinding.issue(
+        seal=seal,
+        state_directory_device=state_directory_device,
+        state_directory_inode=state_directory_inode,
+    )
+    return {**seal.to_json_object(), "state_root_binding": binding.to_json_object()}
+
+
+def load_p8_state_bound_read_zero_document(
+    value: object,
+    *,
+    state_directory_device: int,
+    state_directory_inode: int,
+) -> P8ReadZeroSeal:
+    """Reload the atomic base/root document only in its original directory."""
+
+    document = dict(require_mapping(value, "p8_state_bound_read_zero_seal"))
+    try:
+        binding_value = document.pop("state_root_binding")
+    except KeyError:
+        raise VisualFeedbackContractError("P8 state root binding is absent") from None
+    seal = P8ReadZeroSeal.from_json_object(document)
+    binding = P8StateRootBinding.from_json_object(binding_value)
+    if (
+        binding.base_read_zero_seal_sha256 != seal.seal_sha256
+        or binding.state_directory_device != state_directory_device
+        or binding.state_directory_inode != state_directory_inode
+    ):
+        raise VisualFeedbackContractError("P8 authoritative state root differs")
+    return seal
 
 
 @dataclass(frozen=True, slots=True)
@@ -1417,6 +1616,7 @@ __all__ = [
     "P8_LOCKED_SOURCE_LISTING_INPUTS",
     "P8_LOCKED_SOURCE_LISTING_SHA256",
     "P8_READ_ZERO_SEAL_SCHEMA_VERSION",
+    "P8_STATE_ROOT_BINDING_SCHEMA_VERSION",
     "P8_METRIC_SEMANTICS_VERSION",
     "P8AccessAuthorizationState",
     "P8AccessTransaction",
@@ -1424,5 +1624,8 @@ __all__ = [
     "P8LockedEvaluationStatus",
     "P8LockedEvaluationThresholds",
     "P8ReadZeroSeal",
+    "P8StateRootBinding",
     "P8SourceListingDigestInput",
+    "issue_p8_state_bound_read_zero_document",
+    "load_p8_state_bound_read_zero_document",
 ]

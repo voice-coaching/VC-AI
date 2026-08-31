@@ -1,4 +1,4 @@
-"""Restricted actual-media adapter for AI Hub 538 TS174/TL174 calibration.
+"""Restricted actual-media adapter for allowlisted AI Hub 538 calibration shards.
 
 The adapter consumes only merged non-locked ZIP descriptors that have already
 passed :class:`Aihub538TrainingDatasetAdapter`.  Private member names, raw
@@ -11,6 +11,7 @@ the production ffmpeg, MediaPipe, video-QC, and PCM sync adapters.
 from __future__ import annotations
 
 from datetime import datetime, timedelta, timezone
+from contextlib import contextmanager
 import fcntl
 import hashlib
 import hmac
@@ -23,6 +24,7 @@ import subprocess
 import sys
 import tempfile
 from typing import BinaryIO
+from weakref import WeakKeyDictionary, ref
 from zipfile import BadZipFile, ZipFile, ZipInfo
 
 from ...pronunciation_attempts.adapters.ffmpeg_av_container import (
@@ -54,8 +56,16 @@ from ...pronunciation_attempts.models import (
     VideoConsentDecision,
 )
 from ..models.aihub538_training_evidence import (
-    AIHUB538_TRAINING_ADMISSION_POLICY_SHA256,
     Aihub538TrainingAdmissionReceipt,
+)
+from ..models.aihub538_nonlocked_shards import (
+    AIHUB538_LABEL_CAPACITY_LADDER_PAIR_SHARDS,
+    AIHUB538_TS174_TL174_SHARD,
+    Aihub538NonlockedShardSpec,
+    require_aihub538_nonlocked_shard_spec,
+)
+from ..models.aihub538_balanced_cohort import (
+    aihub538_label_selection_token_sha256,
 )
 from ..models.binding import MediaTimebaseReceipt, SameAttemptBindingReceipt
 from ..models.integrity import sha256_document
@@ -64,9 +74,16 @@ from ..services.aihub538_decision_calibration import (
     Aihub538CalibrationMediaItem,
     Aihub538DecisionCalibrationError,
 )
+from .aihub538_admitted_archive_binding import (
+    Aihub538AdmittedArchiveBinding,
+    assert_aihub538_admitted_archive_binding,
+    bind_aihub538_admitted_archive_descriptors,
+    capture_aihub538_descriptor_identity,
+    revoke_aihub538_admitted_archive_binding,
+)
 from .aihub538_training_archive import (
-    DEFAULT_AIHUB538_ARCHIVE_SECURITY_POLICY,
     _safe_zip_info,
+    aihub538_archive_security_policy_for_shard,
 )
 from .aihub538_training_dataset import (
     _a_view_stem,
@@ -76,8 +93,6 @@ from .aihub538_training_dataset import (
 )
 
 
-_LABEL_ROLE_COMPONENT = "TL174"
-_SOURCE_ROLE_COMPONENT = "TS174"
 _CALIBRATION_PURPOSE = "restricted_dataset_calibration"
 _CALIBRATION_DATA_CATEGORY = "facial_video"
 _CALIBRATION_RETENTION_POLICY = "aihub538_ephemeral_calibration_v1"
@@ -91,6 +106,7 @@ _MUX_TIMEOUT_SECONDS = 180.0
 _ISOLATION_LAUNCHER = Path(
     __file__
 ).parents[2] / "pronunciation_attempts/adapters/network_isolated_exec.py"
+_LIVE_ACTUAL_MEDIA_ADAPTERS: WeakKeyDictionary[object, tuple[object, ...]] = WeakKeyDictionary()
 
 
 class _PrivateItem:
@@ -102,6 +118,7 @@ class _PrivateItem:
         "audio_info",
         "sentence_start_seconds",
         "sentence_duration_seconds",
+        "has_reversed_bbox_unavailable",
     )
 
     def __init__(
@@ -112,16 +129,18 @@ class _PrivateItem:
         audio_info: ZipInfo,
         sentence_start_seconds: float,
         sentence_duration_seconds: float,
+        has_reversed_bbox_unavailable: bool,
     ) -> None:
         self.public = public
         self.video_info = video_info
         self.audio_info = audio_info
         self.sentence_start_seconds = sentence_start_seconds
         self.sentence_duration_seconds = sentence_duration_seconds
+        self.has_reversed_bbox_unavailable = has_reversed_bbox_unavailable
 
 
 class Aihub538ActualMediaCalibrationAdapter:
-    """Inventory and measure admitted TS174/TL174 actual media."""
+    """Inventory and measure an admitted allowlisted non-locked shard pair."""
 
     def __init__(
         self,
@@ -130,6 +149,8 @@ class Aihub538ActualMediaCalibrationAdapter:
         source_zip_descriptor: int,
         identity_hash_key: bytes,
         admission_receipt: Aihub538TrainingAdmissionReceipt,
+        shard_spec: Aihub538NonlockedShardSpec = AIHUB538_TS174_TL174_SHARD,
+        archive_binding: Aihub538AdmittedArchiveBinding | None = None,
         restricted_workspace_root: Path,
         landmark_model_path: Path,
         landmark_model_sha256: str,
@@ -146,6 +167,20 @@ class Aihub538ActualMediaCalibrationAdapter:
             raise Aihub538DecisionCalibrationError(
                 "aihub538_actual_media_admission_receipt_invalid"
             )
+        try:
+            self._shard_spec = require_aihub538_nonlocked_shard_spec(
+                shard_spec,
+                require_pair=True,
+            )
+        except ValueError as error:
+            raise Aihub538DecisionCalibrationError(str(error)) from None
+        if admission_receipt.shard_id != self._shard_spec.shard_id:
+            raise Aihub538DecisionCalibrationError(
+                "aihub538_actual_media_shard_receipt_mismatch"
+            )
+        self._archive_policy = aihub538_archive_security_policy_for_shard(
+            self._shard_spec
+        )
         if not isinstance(identity_hash_key, bytes) or not 32 <= len(
             identity_hash_key
         ) <= 128:
@@ -173,20 +208,60 @@ class Aihub538ActualMediaCalibrationAdapter:
         self._visual_sample_frame_count = visual_sample_frame_count
         self._ffmpeg_binary = _absolute_binary(ffmpeg_binary)
         self._ffprobe_binary = _absolute_binary(ffprobe_binary)
-        self._label_file = _open_zip_file(label_zip_descriptor)
-        self._source_file = _open_zip_file(source_zip_descriptor)
+        self._owns_archive_binding = archive_binding is None
+        if archive_binding is None:
+            # Standalone callers still establish freshness here by hashing and
+            # CRC-scanning both complete ZIPs.  A serialized receipt never
+            # substitutes for this validation boundary.
+            self._archive_binding = bind_aihub538_admitted_archive_descriptors(
+                label_zip_descriptor=label_zip_descriptor,
+                source_zip_descriptor=source_zip_descriptor,
+                admission_receipt=admission_receipt,
+                policy=self._archive_policy,
+            )
+        else:
+            # The authorized-run path may reuse only the live, process-local
+            # capability issued while the same descriptors were validated.
+            assert_aihub538_admitted_archive_binding(
+                archive_binding,
+                admission_receipt=admission_receipt,
+                policy=self._archive_policy,
+            )
+            if (
+                label_zip_descriptor != archive_binding.label.descriptor
+                or source_zip_descriptor != archive_binding.source.descriptor
+            ):
+                raise Aihub538DecisionCalibrationError(
+                    "aihub538_admitted_archive_binding_mismatch"
+                )
+            self._archive_binding = archive_binding
+        self._label_file = None
+        self._source_file = None
         try:
+            self._label_file = _open_zip_file(label_zip_descriptor)
+            self._source_file = _open_zip_file(source_zip_descriptor)
+            self._assert_archive_descriptors_stable()
             self._label_zip = ZipFile(self._label_file, mode="r")
             self._source_zip = ZipFile(self._source_file, mode="r")
+        except Aihub538DecisionCalibrationError:
+            self._close_files()
+            self._revoke_owned_archive_binding()
+            raise
         except (BadZipFile, OSError):
             self._close_files()
+            self._revoke_owned_archive_binding()
             raise Aihub538DecisionCalibrationError(
                 "aihub538_actual_media_zip_invalid"
             ) from None
         self._private_items: dict[str, _PrivateItem] = {}
+        # Capacity/cohort receipts address the label-only selection token,
+        # while the training admission receipt addresses the full paired-media
+        # binding. Keep both indexes so neither authority is weakened.
+        self._private_by_label_selection_token: dict[str, _PrivateItem] = {}
         self._closed = False
         try:
             self._inventory = self._build_inventory()
+            self._assert_archive_descriptors_stable()
             _ensure_private_directory(self._workspace_root)
             self._media_store = LocalRestrictedVideoAdmissionAdapter(
                 restricted_root=self._workspace_root / "media-store",
@@ -208,6 +283,10 @@ class Aihub538ActualMediaCalibrationAdapter:
                 media_store=self._media_store,
                 policy=av_sync_policy,
             )
+            _LIVE_ACTUAL_MEDIA_ADAPTERS[self] = (
+                os.getpid(), self._archive_binding, self._admission_receipt.receipt_sha256,
+                tuple(item.sample_sha256 for item in self._inventory), ref(self),
+            )
         except BaseException:
             self.close()
             raise
@@ -226,6 +305,7 @@ class Aihub538ActualMediaCalibrationAdapter:
             raise Aihub538DecisionCalibrationError(
                 "aihub538_actual_media_adapter_closed"
             )
+        self._assert_archive_descriptors_stable()
         return self._inventory
 
     def measure(
@@ -237,10 +317,25 @@ class Aihub538ActualMediaCalibrationAdapter:
             raise Aihub538DecisionCalibrationError(
                 "aihub538_actual_media_adapter_closed"
             )
+        self._assert_archive_descriptors_stable()
+        try:
+            return self._measure_bound_item(item)
+        finally:
+            # A source archive mutation during extraction/decode invalidates
+            # the measurement even when the runtime adapters otherwise pass.
+            self._assert_archive_descriptors_stable()
+
+    def _measure_bound_item(
+        self, item: Aihub538CalibrationMediaItem
+    ) -> Aihub538CalibrationMeasurement:
         private = self._private_items.get(item.sample_sha256)
         if private is None or private.public != item:
             raise Aihub538DecisionCalibrationError(
                 "aihub538_actual_media_item_unknown"
+            )
+        if private.has_reversed_bbox_unavailable:
+            raise Aihub538DecisionCalibrationError(
+                "aihub538_actual_media_metadata_exclusion_contract_violation"
             )
         asset = None
         body_error: BaseException | None = None
@@ -336,6 +431,7 @@ class Aihub538ActualMediaCalibrationAdapter:
         if getattr(self, "_closed", False):
             return
         self._closed = True
+        _LIVE_ACTUAL_MEDIA_ADAPTERS.pop(self, None)
         label_zip = getattr(self, "_label_zip", None)
         source_zip = getattr(self, "_source_zip", None)
         if label_zip is not None:
@@ -343,6 +439,14 @@ class Aihub538ActualMediaCalibrationAdapter:
         if source_zip is not None:
             source_zip.close()
         self._close_files()
+        self._revoke_owned_archive_binding()
+
+    def _revoke_owned_archive_binding(self) -> None:
+        if getattr(self, "_owns_archive_binding", False):
+            binding = getattr(self, "_archive_binding", None)
+            if binding is not None:
+                revoke_aihub538_admitted_archive_binding(binding)
+            self._owns_archive_binding = False
 
     def _close_files(self) -> None:
         for name in ("_label_file", "_source_file"):
@@ -350,8 +454,31 @@ class Aihub538ActualMediaCalibrationAdapter:
             if file_object is not None and not file_object.closed:
                 file_object.close()
 
+    def _assert_archive_descriptors_stable(self) -> None:
+        binding = self._archive_binding
+        assert_aihub538_admitted_archive_binding(
+            binding,
+            admission_receipt=self._admission_receipt,
+            policy=self._archive_policy,
+        )
+        for file_object, stable in (
+            (self._label_file, binding.label),
+            (self._source_file, binding.source),
+        ):
+            if file_object is None or file_object.closed:
+                raise Aihub538DecisionCalibrationError(
+                    "aihub538_archive_descriptor_changed"
+                )
+            duplicate_identity = capture_aihub538_descriptor_identity(
+                file_object.fileno()
+            )
+            if duplicate_identity != stable.identity:
+                raise Aihub538DecisionCalibrationError(
+                    "aihub538_archive_descriptor_changed"
+                )
+
     def _build_inventory(self) -> tuple[Aihub538CalibrationMediaItem, ...]:
-        policy = DEFAULT_AIHUB538_ARCHIVE_SECURITY_POLICY
+        policy = self._archive_policy
         label_infos = tuple(self._label_zip.infolist())
         source_infos = tuple(self._source_zip.infolist())
         label_names = tuple(_safe_zip_info(info, policy=policy) for info in label_infos)
@@ -361,20 +488,30 @@ class Aihub538ActualMediaCalibrationAdapter:
         label_index = _member_index(
             infos=label_infos,
             names=label_names,
-            role_component=_LABEL_ROLE_COMPONENT,
+            role_component=self._shard_spec.label_role_component,
             allowed_suffixes={".json"},
         )
         source_index = _member_index(
             infos=source_infos,
             names=source_names,
-            role_component=_SOURCE_ROLE_COMPONENT,
+            role_component=self._shard_spec.source_role_component,
             allowed_suffixes={".mp4", ".wav"},
         )
         public_items: list[Aihub538CalibrationMediaItem] = []
         for label_key in sorted(label_index.members):
             try:
                 label_payload = self._label_zip.read(label_index.members[label_key])
-                private_label = _parse_label_payload(label_payload)
+                private_label = _parse_label_payload(
+                    label_payload,
+                    allow_bounded_reversed_bbox_unavailable=(
+                        self._shard_spec
+                        in AIHUB538_LABEL_CAPACITY_LADDER_PAIR_SHARDS
+                    ),
+                    allow_label_capacity_terminal_frame_tail=(
+                        self._shard_spec
+                        in AIHUB538_LABEL_CAPACITY_LADDER_PAIR_SHARDS[2:]
+                    ),
+                )
                 document = _load_creator_json(label_payload)
                 record = document[0]
                 assert isinstance(record, dict)
@@ -395,17 +532,22 @@ class Aihub538ActualMediaCalibrationAdapter:
                 raise Aihub538DecisionCalibrationError(
                     "aihub538_actual_media_pairing_failed"
                 ) from None
+            private_relative_key_sha256 = hashlib.sha256(
+                b"voice_coach.aihub538.private_relative_key.v1\x00"
+                + label_key.encode("utf-8")
+            ).hexdigest()
+            label_selection_token_sha256 = aihub538_label_selection_token_sha256(
+                private_relative_key_sha256=private_relative_key_sha256,
+                label_payload_sha256=private_label.label_payload_sha256,
+                label_archive_sha256=self._admission_receipt.label_archive_sha256,
+                angle=private_label.angle,
+            )
             sample_sha256 = sha256_document(
                 {
                     "schema_version": "voice_coach.aihub538_training_sample_binding.v1",
-                    "private_relative_key_sha256": hashlib.sha256(
-                        b"voice_coach.aihub538.private_relative_key.v1\x00"
-                        + label_key.encode("utf-8")
-                    ).hexdigest(),
+                    "private_relative_key_sha256": private_relative_key_sha256,
                     "label_payload_sha256": private_label.label_payload_sha256,
-                    "source_archive_sha256": (
-                        self._admission_receipt.source_archive_sha256
-                    ),
+                    "source_archive_sha256": self._admission_receipt.source_archive_sha256,
                     "video_size_bytes": video_info.file_size,
                     "video_crc32": video_info.CRC,
                     "audio_size_bytes": audio_info.file_size,
@@ -413,14 +555,25 @@ class Aihub538ActualMediaCalibrationAdapter:
                     "angle": private_label.angle,
                 }
             )
-            sentence_start, sentence_duration = _sentence_window(
-                sentences=sentences,
-                sample_sha256=sample_sha256,
-                media_duration_seconds=min(
-                    private_label.video_duration_seconds,
-                    private_label.audio_duration_seconds,
-                ),
+            has_reversed_bbox_unavailable = bool(
+                private_label.face_reversed_bbox_unavailable_count
+                or private_label.lip_reversed_bbox_unavailable_count
             )
+            if has_reversed_bbox_unavailable:
+                # This item remains in admission and actor/attempt lineage, but
+                # the frozen multi-shard protocol excludes it before cohort
+                # selection.  Do not let a sentence-window defect in an item
+                # that cannot be measured abort inventory construction.
+                sentence_start, sentence_duration = 0.0, 0.0
+            else:
+                sentence_start, sentence_duration = _sentence_window(
+                    sentences=sentences,
+                    sample_sha256=sample_sha256,
+                    media_duration_seconds=min(
+                        private_label.video_duration_seconds,
+                        private_label.audio_duration_seconds,
+                    ),
+                )
             public = Aihub538CalibrationMediaItem(
                 sample_sha256=sample_sha256,
                 actor_token_sha256=_identity_hmac(
@@ -434,25 +587,38 @@ class Aihub538ActualMediaCalibrationAdapter:
                     a_audio_stem,
                 ),
                 angle=private_label.angle,
+                metadata_bbox_observation_available=(
+                    not has_reversed_bbox_unavailable
+                ),
+                label_selection_token_sha256=(
+                    label_selection_token_sha256
+                ),
             )
             if sample_sha256 in self._private_items:
                 raise Aihub538DecisionCalibrationError(
                     "aihub538_actual_media_sample_duplicate"
                 )
-            self._private_items[sample_sha256] = _PrivateItem(
+            private_item = _PrivateItem(
                 public=public,
                 video_info=video_info,
                 audio_info=audio_info,
                 sentence_start_seconds=sentence_start,
                 sentence_duration_seconds=sentence_duration,
+                has_reversed_bbox_unavailable=has_reversed_bbox_unavailable,
             )
+            self._private_items[sample_sha256] = private_item
+            self._private_by_label_selection_token[
+                label_selection_token_sha256
+            ] = private_item
             public_items.append(public)
         public_items.sort(key=lambda item: item.sample_sha256)
         selection_sha256 = sha256_document(
             {
                 "schema_version": "voice_coach.aihub538_training_sample_selection.v1",
-                "selection_rule": "all_exactly_admitted_ts174_tl174_pairs",
-                "admission_policy_sha256": AIHUB538_TRAINING_ADMISSION_POLICY_SHA256,
+                "selection_rule": self._admission_receipt.sample_selection_rule,
+                "admission_policy_sha256": (
+                    self._admission_receipt.admission_policy_sha256
+                ),
                 "sample_sha256": [item.sample_sha256 for item in public_items],
             }
         )
@@ -512,6 +678,67 @@ class Aihub538ActualMediaCalibrationAdapter:
             os.close(audio_descriptor)
             os.close(output_descriptor)
         return output_path
+
+    @contextmanager
+    def _open_photometric_source_clip(
+        self,
+        *,
+        label_selection_token_sha256: str,
+    ):
+        """Yield one policy-sized derived clip without exposing private keys.
+
+        This is intentionally a private boundary used by the P6 source
+        admission capability.  The opaque label-selection token is resolved
+        inside this adapter; member names and sentence timestamps never cross
+        the boundary.
+        """
+
+        if self._closed:
+            raise Aihub538DecisionCalibrationError(
+                "aihub538_actual_media_adapter_closed"
+            )
+        self._assert_archive_descriptors_stable()
+        private = self._private_by_label_selection_token.get(
+            label_selection_token_sha256
+        )
+        if private is None or private.has_reversed_bbox_unavailable:
+            raise Aihub538DecisionCalibrationError(
+                "aihub538_actual_media_photometric_source_unknown"
+            )
+        try:
+            with tempfile.TemporaryDirectory(
+                prefix="photometric-source-", dir=self._workspace_root
+            ) as temporary_name:
+                temporary_root = Path(temporary_name)
+                os.chmod(temporary_root, 0o700)
+                clip_path = self._materialize_muxed_clip(
+                    private=private,
+                    temporary_root=temporary_root,
+                )
+                descriptor = _open_read_only_regular(clip_path)
+                try:
+                    yield descriptor
+                finally:
+                    os.close(descriptor)
+        finally:
+            self._assert_archive_descriptors_stable()
+
+
+def assert_aihub538_live_actual_media_adapter(value: object) -> None:
+    issued = _LIVE_ACTUAL_MEDIA_ADAPTERS.get(value)
+    if (
+        type(value) is not Aihub538ActualMediaCalibrationAdapter
+        or issued is None
+        or issued[0] != os.getpid()
+        or issued[1] is not value._archive_binding
+        or issued[2] != value._admission_receipt.receipt_sha256
+        or issued[3] != tuple(item.sample_sha256 for item in value.inventory)
+        or issued[4]() is not value
+    ):
+        raise Aihub538DecisionCalibrationError(
+            "aihub538_actual_media_adapter_capability_invalid"
+        )
+    value._assert_archive_descriptors_stable()
 
 
 def _sentence_window(
@@ -668,6 +895,14 @@ def _run_mux(
         "18",
         "-pix_fmt",
         "yuv420p",
+        "-color_range",
+        "tv",
+        "-colorspace",
+        "bt709",
+        "-color_trc",
+        "bt709",
+        "-color_primaries",
+        "bt709",
         "-threads",
         "1",
         "-c:a",
@@ -868,4 +1103,4 @@ def math_ceil(value: float) -> int:
     return integer if value == integer else integer + 1
 
 
-__all__ = ["Aihub538ActualMediaCalibrationAdapter"]
+__all__ = ["Aihub538ActualMediaCalibrationAdapter", "assert_aihub538_live_actual_media_adapter"]

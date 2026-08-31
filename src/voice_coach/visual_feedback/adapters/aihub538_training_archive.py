@@ -1,8 +1,10 @@
-"""Fail-closed archive boundary for the approved AI Hub 538 training shard.
+"""Fail-closed archive boundary for approved AI Hub 538 downloads.
 
-This module never opens the P8 locked partition.  It only validates the
-credential-free receipt for file keys 54725/54944 and provides bounded TAR,
-split-ZIP, and ZIP primitives for the non-locked TS174/TL174 smoke shard.
+This module validates credential-free receipts for the non-locked training
+keys 54725/54944 and, through a separate aggregate-only verifier, the P8
+locked keys 55114/55082.  It provides bounded TAR, split-ZIP, and ZIP
+primitives only for the non-locked TS174/TL174 smoke shard; the locked verifier
+does not parse or extract locked archive members.
 
 Archive member names stay inside this adapter.  Every returned receipt is
 aggregate-only and therefore safe to serialize without disclosing restricted
@@ -25,11 +27,24 @@ import tarfile
 from typing import BinaryIO
 from zipfile import BadZipFile, ZipFile, ZipInfo
 
+from ..models.aihub538_nonlocked_shards import (
+    AIHUB538_LABEL_CAPACITY_LADDER_AUDIT_SHARDS,
+    AIHUB538_LABEL_CAPACITY_LADDER_PAIR_SHARDS,
+    AIHUB538_TS174_TL174_SHARD,
+    AIHUB538_TS175_TL175_SHARD,
+    AIHUB538_TS176_TL176_SHARD,
+    Aihub538NonlockedShardSpec,
+    require_aihub538_nonlocked_shard_spec,
+)
 from ..models.integrity import sha256_document
+from ..models.p8_locked_label_download import (
+    AIHUB538_P8_VALIDATION_LABEL_FILE_KEYS,
+)
 
 
 AIHUB538_TRAINING_DATASET_KEY = "538"
-AIHUB538_TRAINING_FILE_KEYS = ("54725", "54944")
+AIHUB538_TRAINING_FILE_KEYS = AIHUB538_TS174_TL174_SHARD.ordered_file_keys
+AIHUB538_LOCKED_FILE_KEYS = ("55114", "55082")
 AIHUB538_DOWNLOAD_RECEIPT_SCHEMA = "voice_coach.aihub_secure_download_receipt.v1"
 
 _DOWNLOAD_RECEIPT_KEYS = {
@@ -59,7 +74,7 @@ class Aihub538ArchiveError(RuntimeError):
 
 @dataclass(frozen=True, slots=True)
 class Aihub538ArchiveSecurityPolicy:
-    """Frozen upper bounds large enough for TS174/TL174, not the full corpus."""
+    """Frozen archive bounds; the default remains scoped to TS174/TL174."""
 
     maximum_download_bytes: int = 64 * 1024**3
     maximum_receipt_bytes: int = 64 * 1024
@@ -107,6 +122,45 @@ class Aihub538ArchiveSecurityPolicy:
 
 DEFAULT_AIHUB538_ARCHIVE_SECURITY_POLICY = Aihub538ArchiveSecurityPolicy()
 
+# TS175/TL175 and TS176/TL176 are the exact two-pair prefix authorized by the
+# frozen v5 label-selection receipt.  AI Hub's completed TS175 pair is larger
+# than the deliberately TS174-scoped 64 GiB default, while its outer parts are
+# still individually bounded by the unchanged 32 GiB member/part limits.  Keep
+# the larger aggregate bounds attached only to these two allowlisted shards so
+# TS174, label-only audits, and P8 locked inputs do not inherit them.
+AIHUB538_AUTHORIZED_PREFIX_ARCHIVE_SECURITY_POLICY = Aihub538ArchiveSecurityPolicy(
+    maximum_download_bytes=128 * 1024**3,
+    maximum_tar_uncompressed_bytes=128 * 1024**3,
+    maximum_merged_zip_bytes=128 * 1024**3,
+)
+AIHUB538_P6_REMEDIATION_ARCHIVE_SECURITY_POLICY = Aihub538ArchiveSecurityPolicy(
+    maximum_download_bytes=128 * 1024**3,
+    maximum_tar_uncompressed_bytes=128 * 1024**3,
+    maximum_merged_zip_bytes=128 * 1024**3,
+)
+
+
+def aihub538_archive_security_policy_for_shard(
+    shard_spec: Aihub538NonlockedShardSpec,
+) -> Aihub538ArchiveSecurityPolicy:
+    """Return the narrow frozen policy for one validated non-locked shard."""
+
+    try:
+        validated = require_aihub538_nonlocked_shard_spec(shard_spec)
+    except ValueError as error:
+        raise Aihub538ArchiveError(str(error)) from None
+    if validated in (
+        AIHUB538_TS175_TL175_SHARD,
+        AIHUB538_TS176_TL176_SHARD,
+    ):
+        return AIHUB538_AUTHORIZED_PREFIX_ARCHIVE_SECURITY_POLICY
+    if validated in (
+        *AIHUB538_LABEL_CAPACITY_LADDER_AUDIT_SHARDS[2:],
+        *AIHUB538_LABEL_CAPACITY_LADDER_PAIR_SHARDS[2:],
+    ):
+        return AIHUB538_P6_REMEDIATION_ARCHIVE_SECURITY_POLICY
+    return DEFAULT_AIHUB538_ARCHIVE_SECURITY_POLICY
+
 
 @dataclass(frozen=True, slots=True)
 class VerifiedAihub538Download:
@@ -128,6 +182,103 @@ class VerifiedAihub538Download:
             "credential_persisted": False,
             "locked_partition_accessed": False,
         }
+
+
+@dataclass(frozen=True, slots=True)
+class VerifiedAihub538NonlockedShardDownload:
+    """Credential-free binding for one strict non-locked shard stage."""
+
+    shard_spec: Aihub538NonlockedShardSpec
+    archive_size_bytes: int
+    archive_sha256: str
+    receipt_sha256: str
+
+    def __post_init__(self) -> None:
+        require_aihub538_nonlocked_shard_spec(self.shard_spec)
+
+    def to_json_object(self) -> dict[str, object]:
+        return {
+            "schema_version": (
+                "voice_coach.aihub538_nonlocked_shard_download_verification.v1"
+            ),
+            "dataset_id": 538,
+            "dataset_partition": self.shard_spec.dataset_partition,
+            "shard_spec_sha256": self.shard_spec.spec_sha256,
+            "stage": self.shard_spec.stage,
+            "file_keys": list(self.shard_spec.ordered_file_keys),
+            "archive_size_bytes": self.archive_size_bytes,
+            "archive_sha256": self.archive_sha256,
+            "secure_download_receipt_sha256": self.receipt_sha256,
+            "credential_persisted": False,
+            "partial_download_accessed": False,
+            "locked_partition_accessed": False,
+        }
+
+
+@dataclass(frozen=True, slots=True)
+class VerifiedAihub538LockedDownload:
+    """Aggregate-only binding for the completed P8 locked download."""
+
+    archive_size_bytes: int
+    archive_sha256: str
+    receipt_sha256: str
+
+    def to_json_object(self) -> dict[str, object]:
+        return {
+            "schema_version": "voice_coach.aihub538_locked_download_verification.v1",
+            "dataset_id": 538,
+            "dataset_partition": "locked_evaluation_vs11_vl11",
+            "file_keys": list(AIHUB538_LOCKED_FILE_KEYS),
+            "archive_size_bytes": self.archive_size_bytes,
+            "archive_sha256": self.archive_sha256,
+            "secure_download_receipt_sha256": self.receipt_sha256,
+            "credential_persisted": False,
+            "locked_partition_accessed": True,
+            "aggregate_only": True,
+        }
+
+
+@dataclass(frozen=True, slots=True)
+class VerifiedAihub538P8LabelDownload:
+    """Aggregate byte binding for the 32-VL request, without payload admission."""
+
+    archive_size_bytes: int
+    archive_sha256: str
+    receipt_sha256: str
+
+    def to_json_object(self) -> dict[str, object]:
+        return {
+            "schema_version": (
+                "voice_coach.aihub538_p8_label_download_verification.v1"
+            ),
+            "dataset_id": 538,
+            "validation_pair_count": 32,
+            "ordered_label_file_keys": list(
+                AIHUB538_P8_VALIDATION_LABEL_FILE_KEYS
+            ),
+            "requested_label_file_key_count": 32,
+            "requested_source_file_key_count": 0,
+            "archive_size_bytes": self.archive_size_bytes,
+            "archive_sha256": self.archive_sha256,
+            "secure_download_receipt_sha256": self.receipt_sha256,
+            "credential_persisted": False,
+            "archive_extracted": False,
+            "payload_admitted": False,
+            "label_archive_presence_verified": False,
+            "source_payload_presence_verified": False,
+            "label_archive_opened": False,
+            "source_file_keys_requested": False,
+            "source_media_opened": False,
+            "promotion_authorized": False,
+            "aggregate_only": True,
+        }
+
+
+@dataclass(frozen=True, slots=True)
+class _VerifiedAihub538DownloadBinding:
+    archive_size_bytes: int
+    archive_sha256: str
+    receipt_sha256: str
 
 
 @dataclass(frozen=True, slots=True)
@@ -248,6 +399,102 @@ def verify_aihub538_training_download(
 ) -> VerifiedAihub538Download:
     """Verify the exact 538/54725+54944 receipt, byte count, and archive SHA."""
 
+    binding = _verify_aihub538_download(
+        archive_descriptor=archive_descriptor,
+        receipt_descriptor=receipt_descriptor,
+        expected_file_keys=AIHUB538_TRAINING_FILE_KEYS,
+        policy=policy,
+    )
+    return VerifiedAihub538Download(
+        archive_size_bytes=binding.archive_size_bytes,
+        archive_sha256=binding.archive_sha256,
+        receipt_sha256=binding.receipt_sha256,
+    )
+
+
+def verify_aihub538_nonlocked_shard_download(
+    *,
+    archive_descriptor: int,
+    receipt_descriptor: int,
+    shard_spec: Aihub538NonlockedShardSpec,
+    policy: Aihub538ArchiveSecurityPolicy | None = None,
+) -> VerifiedAihub538NonlockedShardDownload:
+    """Verify exactly one allowlisted non-locked stage and ordered key list."""
+
+    try:
+        validated_spec = require_aihub538_nonlocked_shard_spec(shard_spec)
+    except ValueError as error:
+        raise Aihub538ArchiveError(str(error)) from None
+    selected_policy = (
+        aihub538_archive_security_policy_for_shard(validated_spec)
+        if policy is None
+        else policy
+    )
+    binding = _verify_aihub538_download(
+        archive_descriptor=archive_descriptor,
+        receipt_descriptor=receipt_descriptor,
+        expected_file_keys=validated_spec.ordered_file_keys,
+        policy=selected_policy,
+    )
+    return VerifiedAihub538NonlockedShardDownload(
+        shard_spec=validated_spec,
+        archive_size_bytes=binding.archive_size_bytes,
+        archive_sha256=binding.archive_sha256,
+        receipt_sha256=binding.receipt_sha256,
+    )
+
+
+def verify_aihub538_locked_download(
+    *,
+    archive_descriptor: int,
+    receipt_descriptor: int,
+    policy: Aihub538ArchiveSecurityPolicy = DEFAULT_AIHUB538_ARCHIVE_SECURITY_POLICY,
+) -> VerifiedAihub538LockedDownload:
+    """Verify exact ordered P8 keys 55114/55082 without exposing members."""
+
+    binding = _verify_aihub538_download(
+        archive_descriptor=archive_descriptor,
+        receipt_descriptor=receipt_descriptor,
+        expected_file_keys=AIHUB538_LOCKED_FILE_KEYS,
+        policy=policy,
+    )
+    return VerifiedAihub538LockedDownload(
+        archive_size_bytes=binding.archive_size_bytes,
+        archive_sha256=binding.archive_sha256,
+        receipt_sha256=binding.receipt_sha256,
+    )
+
+
+def verify_aihub538_p8_label_download(
+    *,
+    archive_descriptor: int,
+    receipt_descriptor: int,
+    policy: Aihub538ArchiveSecurityPolicy = DEFAULT_AIHUB538_ARCHIVE_SECURITY_POLICY,
+) -> VerifiedAihub538P8LabelDownload:
+    """Verify exact dataset 538 and the ordered 32-VL request only."""
+
+    binding = _verify_aihub538_download(
+        archive_descriptor=archive_descriptor,
+        receipt_descriptor=receipt_descriptor,
+        expected_file_keys=AIHUB538_P8_VALIDATION_LABEL_FILE_KEYS,
+        policy=policy,
+    )
+    return VerifiedAihub538P8LabelDownload(
+        archive_size_bytes=binding.archive_size_bytes,
+        archive_sha256=binding.archive_sha256,
+        receipt_sha256=binding.receipt_sha256,
+    )
+
+
+def _verify_aihub538_download(
+    *,
+    archive_descriptor: int,
+    receipt_descriptor: int,
+    expected_file_keys: tuple[str, ...],
+    policy: Aihub538ArchiveSecurityPolicy,
+) -> _VerifiedAihub538DownloadBinding:
+    """Verify dataset 538 and one exact, ordered file-key contract."""
+
     receipt_payload = _read_bounded_descriptor(
         receipt_descriptor,
         maximum_bytes=policy.maximum_receipt_bytes,
@@ -262,7 +509,7 @@ def verify_aihub538_training_download(
     if (
         document["schema_version"] != AIHUB538_DOWNLOAD_RECEIPT_SCHEMA
         or document["dataset_key"] != AIHUB538_TRAINING_DATASET_KEY
-        or document["file_keys"] != list(AIHUB538_TRAINING_FILE_KEYS)
+        or document["file_keys"] != list(expected_file_keys)
         or document["credential_persisted"] is not False
         or document["archive_extracted"] is not False
     ):
@@ -295,7 +542,7 @@ def verify_aihub538_training_download(
             raise Aihub538ArchiveError("aihub538_download_sha256_mismatch")
     finally:
         os.close(archive)
-    return VerifiedAihub538Download(
+    return _VerifiedAihub538DownloadBinding(
         archive_size_bytes=archive_size,
         archive_sha256=expected_sha256,
         receipt_sha256=hashlib.sha256(receipt_payload).hexdigest(),
@@ -1310,6 +1557,9 @@ def _strict_positive_integer(value: object, reason_code: str) -> int:
 
 
 __all__ = [
+    "AIHUB538_AUTHORIZED_PREFIX_ARCHIVE_SECURITY_POLICY",
+    "AIHUB538_P6_REMEDIATION_ARCHIVE_SECURITY_POLICY",
+    "AIHUB538_LOCKED_FILE_KEYS",
     "AIHUB538_TRAINING_DATASET_KEY",
     "AIHUB538_TRAINING_FILE_KEYS",
     "Aihub538ArchiveError",
@@ -1319,11 +1569,18 @@ __all__ = [
     "SplitZipMergeReceipt",
     "TarExtractionReceipt",
     "VerifiedAihub538Download",
+    "VerifiedAihub538LockedDownload",
+    "VerifiedAihub538NonlockedShardDownload",
+    "VerifiedAihub538P8LabelDownload",
     "ZipValidationReceipt",
+    "aihub538_archive_security_policy_for_shard",
     "extract_verified_tar_descriptor",
     "extract_verified_zip_descriptor",
     "merge_split_zip_parts",
     "open_validated_zip_descriptor",
     "validate_zip_descriptor",
+    "verify_aihub538_locked_download",
+    "verify_aihub538_nonlocked_shard_download",
+    "verify_aihub538_p8_label_download",
     "verify_aihub538_training_download",
 ]

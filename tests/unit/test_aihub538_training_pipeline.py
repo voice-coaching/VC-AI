@@ -35,7 +35,6 @@ def _session_stem(*, angle: str) -> str:
 
 def _label_record(*, angle: str) -> dict[str, object]:
     stem = _session_stem(angle=angle)
-    audio_stem = _session_stem(angle="A")
     return {
         "dataSet": {
             "description": "restricted fixture metadata",
@@ -51,14 +50,14 @@ def _label_record(*, angle: str) -> dict[str, object]:
             "Resolution": "640x480",
         },
         "Audio_info": {
-            "Audio_Name": f"{audio_stem}.wav",
+            "Audio_Name": f"{stem}.wav",
             "Audio_Format": "wav",
             "Audio_Duration": "0.1",
             "Sampling_rate": "48kHz",
             "Channel(s)": 1,
         },
         "Audio_env": {"Noise": 1},
-        "Video_env": {"env": "J", "Angle": angle},
+        "Video_env": {"env": "indoor_light", "Angle": angle},
         "Sentence_info": [
             {
                 "ID": "private-sentence-1",
@@ -94,7 +93,18 @@ def _zip_bytes(members: dict[str, bytes]) -> bytes:
     return buffer.getvalue()
 
 
-def _dataset_zip_bytes() -> tuple[bytes, bytes]:
+def _tar_bytes(members: dict[str, bytes]) -> bytes:
+    buffer = io.BytesIO()
+    with tarfile.open(fileobj=buffer, mode="w", format=tarfile.USTAR_FORMAT) as archive:
+        for name, payload in members.items():
+            info = tarfile.TarInfo(name)
+            info.size = len(payload)
+            info.mode = 0o600
+            archive.addfile(info, io.BytesIO(payload))
+    return buffer.getvalue()
+
+
+def _dataset_archive_bytes(*, archive_kind: str = "zip") -> tuple[bytes, bytes]:
     labels: dict[str, bytes] = {}
     sources: dict[str, bytes] = {}
     relative = "noise/C/F/group"
@@ -115,7 +125,10 @@ def _dataset_zip_bytes() -> tuple[bytes, bytes]:
     sources[
         f"restricted/Source/TS174/{relative}/{_session_stem(angle='A')}.wav"
     ] = b"RIFF\x08\x00\x00\x00WAVEfixture-audio"
-    return _zip_bytes(labels), _zip_bytes(sources)
+    if archive_kind == "zip":
+        return _zip_bytes(labels), _zip_bytes(sources)
+    assert archive_kind == "tar"
+    return _tar_bytes(labels), _tar_bytes(sources)
 
 
 def _split_members(
@@ -123,16 +136,20 @@ def _split_members(
     private_directory: str,
     misleading_stem: str,
     payload: bytes,
+    archive_kind: str = "zip",
 ) -> list[tuple[str, bytes]]:
     first_size = len(payload) // 2
     assert first_size > 0
     rows = [
         (
-            f"{private_directory}/{misleading_stem}.zip.part0",
+            f"{private_directory}/{misleading_stem}.{archive_kind}.part0",
             payload[:first_size],
         ),
         (
-            f"{private_directory}/{misleading_stem}.zip.part{first_size}",
+            (
+                f"{private_directory}/{misleading_stem}.{archive_kind}.part"
+                f"{first_size}"
+            ),
             payload[first_size:],
         ),
     ]
@@ -145,19 +162,24 @@ def _completed_download_fixture(
     directory: Path,
     *,
     second_role: str = "source",
+    split_archive_kind: str = "zip",
 ) -> tuple[Path, Path]:
     directory.mkdir(mode=0o700)
     directory.chmod(0o700)
-    label_zip, source_zip = _dataset_zip_bytes()
+    label_zip, source_zip = _dataset_archive_bytes(
+        archive_kind=split_archive_kind
+    )
     second_payload = source_zip if second_role == "source" else label_zip
     members = _split_members(
         private_directory=f"opaque/{_PRIVATE_OUTER_STEM}/first",
         misleading_stem="looks-like-source",
         payload=label_zip,
+        archive_kind=split_archive_kind,
     ) + _split_members(
         private_directory=f"opaque/{_PRIVATE_OUTER_STEM}/second",
         misleading_stem="looks-like-label",
         payload=second_payload,
+        archive_kind=split_archive_kind,
     )
     archive_path = directory / "download.tar"
     with tarfile.open(archive_path, "w") as archive:
@@ -280,6 +302,61 @@ def test_pipeline_runs_offset_split_to_aggregate_smoke_without_raw_leakage(
         assert _PRIVATE_TRANSCRIPT not in persisted
         assert _PRIVATE_OUTER_STEM not in persisted
         assert str(tmp_path) not in persisted
+
+
+def test_pipeline_repackages_actual_shape_split_inner_tar_before_admission(
+    tmp_path: Path,
+) -> None:
+    input_directory = tmp_path / "completed-inner-tar"
+    _completed_download_fixture(
+        input_directory,
+        split_archive_kind="tar",
+    )
+    key_path = _identity_key(tmp_path / "identity.key")
+    output_directory = tmp_path / "tar-run"
+
+    evidence = _run(
+        input_directory=input_directory,
+        key_path=key_path,
+        output_directory=output_directory,
+    )
+
+    document = evidence.to_json_object()
+    assert document["split_archive_merge"]["archive_kinds"] == [
+        "inner_posix_tar"
+    ]
+    assert document["split_zip_merge"]["status"] == (
+        "not_applicable_split_inner_tar_input"
+    )
+    assert document["inner_tar_repack"]["status"] == "completed"
+    assert document["inner_tar_repack"]["archive_count"] == 2
+    for archive in document["inner_tar_repack"]["archives"]:
+        assert archive["normalized_path_hash_size_sha256_parity"] is True
+        assert archive["zip_compression"] == "stored"
+        assert archive["zip64_forced_for_streamed_members"] is True
+    assert document["dataset_admission"]["paired_sample_count"] == 2
+    assert document["metadata_smoke"]["evaluated_sample_count"] == 2
+    assert (output_directory / "20-split-archive-merge.json").is_file()
+    assert (output_directory / "25-inner-tar-repack.json").is_file()
+    assert not (output_directory / "20-split-zip-merge.json").exists()
+    for index in (0, 1):
+        assert stat.S_IMODE(
+            (output_directory / f"candidate-{index}.tar").stat().st_mode
+        ) == 0o600
+        assert stat.S_IMODE(
+            (output_directory / f"candidate-{index}.zip").stat().st_mode
+        ) == 0o600
+
+    serialized = json.dumps(document, ensure_ascii=False, sort_keys=True)
+    for forbidden in (
+        _PRIVATE_TRANSCRIPT,
+        _PRIVATE_OUTER_STEM,
+        "looks-like-source",
+        "looks-like-label",
+        "lip_J_1_F_02_C032",
+        str(tmp_path),
+    ):
+        assert forbidden not in serialized
 
 
 def test_semantic_role_failure_removes_fresh_output_and_same_path_retries(

@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import json
+import importlib.util
 import os
 from pathlib import Path
 import subprocess
@@ -28,6 +29,24 @@ from voice_coach.visual_feedback.models.runtime_policy_artifact import (
 
 ROOT = Path(__file__).resolve().parents[2]
 SCRIPT = ROOT / "scripts/build_visual_runtime_p6_promotion.py"
+
+
+def test_production_defaults_consume_the_multishard_calibration_bundle() -> None:
+    spec = importlib.util.spec_from_file_location("p6_promotion_script", SCRIPT)
+    assert spec is not None and spec.loader is not None
+    module = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(module)
+    arguments = module._parser().parse_args([])
+    prefix = "aihub538_ts174_tl174_ts175_tl175_ts176_tl176_"
+    assert arguments.video_qc_decision_policy.name == (
+        prefix + "video_qc_decision_policy_v1.json"
+    )
+    assert arguments.av_sync_decision_policy.name == (
+        prefix + "av_sync_decision_policy_v1.json"
+    )
+    assert arguments.decision_policy_evidence.name == (
+        prefix + "decision_policy_evidence_v2.json"
+    )
 
 
 def test_runtime_decision_evidence_has_no_public_issue_path() -> None:

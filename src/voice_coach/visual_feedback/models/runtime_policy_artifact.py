@@ -11,6 +11,9 @@ from __future__ import annotations
 from dataclasses import dataclass
 
 from ..errors import VisualFeedbackContractError
+from .aihub538_nonlocked_shards import (
+    AIHUB538_MULTI_CALIBRATION_SOURCE_PARTITIONS,
+)
 from .integrity import (
     require_boolean,
     require_exact_keys,
@@ -27,6 +30,9 @@ P8_RUNTIME_POLICY_ARTIFACT_SCHEMA_VERSION = (
 )
 RUNTIME_DECISION_POLICY_EVIDENCE_SCHEMA_VERSION = (
     "voice_coach.runtime_decision_policy_evidence.v1"
+)
+MULTISHARD_RUNTIME_DECISION_POLICY_EVIDENCE_SCHEMA_VERSION = (
+    "voice_coach.runtime_decision_policy_evidence.v2"
 )
 RUNTIME_DECISION_POLICY_SOURCE_PARTITIONS = ("TS174", "TL174")
 VIDEO_QC_POLICY_DOCUMENT_SCHEMA_VERSION = (
@@ -769,7 +775,7 @@ class P8RuntimePolicyArtifact:
 
 @dataclass(frozen=True, slots=True)
 class RuntimeDecisionPolicyEvidence:
-    """Aggregate proof that actual TS174/TL174 media calibrated both decisions."""
+    """Aggregate proof that one admitted actual-media scope calibrated decisions."""
 
     source_manifest_sha256: str
     admission_receipt_sha256: str
@@ -793,19 +799,29 @@ class RuntimeDecisionPolicyEvidence:
     source_dataset_id: str = "aihub_538"
     source_partitions: tuple[str, ...] = RUNTIME_DECISION_POLICY_SOURCE_PARTITIONS
     schema_version: str = RUNTIME_DECISION_POLICY_EVIDENCE_SCHEMA_VERSION
+    eligible_item_count: int = 0
+    metadata_excluded_item_count: int = 0
+    development_selected_count: int = 0
+    calibration_selected_count: int = 0
 
     def __post_init__(self) -> None:
-        if self.schema_version != RUNTIME_DECISION_POLICY_EVIDENCE_SCHEMA_VERSION:
+        if self.source_partitions == RUNTIME_DECISION_POLICY_SOURCE_PARTITIONS:
+            expected_schema = RUNTIME_DECISION_POLICY_EVIDENCE_SCHEMA_VERSION
+        elif self.source_partitions == AIHUB538_MULTI_CALIBRATION_SOURCE_PARTITIONS:
+            expected_schema = (
+                MULTISHARD_RUNTIME_DECISION_POLICY_EVIDENCE_SCHEMA_VERSION
+            )
+        else:
+            raise VisualFeedbackContractError(
+                "runtime decision policy source partitions differ"
+            )
+        if self.schema_version != expected_schema:
             raise VisualFeedbackContractError(
                 "runtime decision policy evidence schema differs"
             )
         if self.source_dataset_id != "aihub_538":
             raise VisualFeedbackContractError(
                 "runtime decision policy source dataset differs"
-            )
-        if self.source_partitions != RUNTIME_DECISION_POLICY_SOURCE_PARTITIONS:
-            raise VisualFeedbackContractError(
-                "runtime decision policy source partitions differ"
             )
         for name in (
             "source_manifest_sha256",
@@ -826,10 +842,47 @@ class RuntimeDecisionPolicyEvidence:
         evaluated = require_integer(
             self.evaluated_item_count, "evaluated_item_count", minimum=1
         )
-        if admitted != evaluated:
-            raise VisualFeedbackContractError(
-                "runtime decision policy evaluation is incomplete"
+        is_legacy = self.source_partitions == RUNTIME_DECISION_POLICY_SOURCE_PARTITIONS
+        if is_legacy:
+            if admitted != evaluated or any(
+                getattr(self, name) != 0
+                for name in (
+                    "eligible_item_count",
+                    "metadata_excluded_item_count",
+                    "development_selected_count",
+                    "calibration_selected_count",
+                )
+            ):
+                raise VisualFeedbackContractError(
+                    "runtime decision policy evaluation is incomplete"
+                )
+        else:
+            eligible = require_integer(
+                self.eligible_item_count, "eligible_item_count", minimum=1
             )
+            excluded = require_integer(
+                self.metadata_excluded_item_count,
+                "metadata_excluded_item_count",
+                minimum=0,
+            )
+            development_selected = require_integer(
+                self.development_selected_count,
+                "development_selected_count",
+                minimum=1,
+            )
+            calibration_selected = require_integer(
+                self.calibration_selected_count,
+                "calibration_selected_count",
+                minimum=1,
+            )
+            if (
+                admitted != eligible + excluded
+                or evaluated != calibration_selected
+                or development_selected + calibration_selected > eligible
+            ):
+                raise VisualFeedbackContractError(
+                    "runtime decision policy multishard counts differ"
+                )
         for name in ("actor_overlap_count", "attempt_overlap_count"):
             if require_integer(getattr(self, name), name, minimum=0) != 0:
                 raise VisualFeedbackContractError(
@@ -883,6 +936,13 @@ class RuntimeDecisionPolicyEvidence:
         qc_decision_lineage_valid_item_count: int,
         sync_decision_lineage_valid_item_count: int,
         fresh_process_reload_receipt_sha256: str,
+        source_partitions: tuple[str, ...] = (
+            RUNTIME_DECISION_POLICY_SOURCE_PARTITIONS
+        ),
+        eligible_item_count: int = 0,
+        metadata_excluded_item_count: int = 0,
+        development_selected_count: int = 0,
+        calibration_selected_count: int = 0,
     ) -> RuntimeDecisionPolicyEvidence:
         if video_qc_policy.policy_kind != "video_qc_decision":
             raise VisualFeedbackContractError(
@@ -892,10 +952,20 @@ class RuntimeDecisionPolicyEvidence:
             raise VisualFeedbackContractError(
                 "A/V decision policy artifact kind differs"
             )
+        if source_partitions == RUNTIME_DECISION_POLICY_SOURCE_PARTITIONS:
+            schema_version = RUNTIME_DECISION_POLICY_EVIDENCE_SCHEMA_VERSION
+        elif source_partitions == AIHUB538_MULTI_CALIBRATION_SOURCE_PARTITIONS:
+            schema_version = (
+                MULTISHARD_RUNTIME_DECISION_POLICY_EVIDENCE_SCHEMA_VERSION
+            )
+        else:
+            raise VisualFeedbackContractError(
+                "runtime decision policy source partitions differ"
+            )
         unsigned = {
-            "schema_version": RUNTIME_DECISION_POLICY_EVIDENCE_SCHEMA_VERSION,
+            "schema_version": schema_version,
             "source_dataset_id": "aihub_538",
-            "source_partitions": list(RUNTIME_DECISION_POLICY_SOURCE_PARTITIONS),
+            "source_partitions": list(source_partitions),
             "source_manifest_sha256": source_manifest_sha256,
             "admission_receipt_sha256": admission_receipt_sha256,
             "evaluation_protocol_sha256": evaluation_protocol_sha256,
@@ -921,6 +991,15 @@ class RuntimeDecisionPolicyEvidence:
             "fresh_process_reload_passed": True,
             "status": "actual_media_calibrated",
         }
+        if source_partitions == AIHUB538_MULTI_CALIBRATION_SOURCE_PARTITIONS:
+            unsigned.update(
+                {
+                    "eligible_item_count": eligible_item_count,
+                    "metadata_excluded_item_count": metadata_excluded_item_count,
+                    "development_selected_count": development_selected_count,
+                    "calibration_selected_count": calibration_selected_count,
+                }
+            )
         return cls(
             source_manifest_sha256=source_manifest_sha256,
             admission_receipt_sha256=admission_receipt_sha256,
@@ -947,10 +1026,16 @@ class RuntimeDecisionPolicyEvidence:
             fresh_process_reload_passed=True,
             status="actual_media_calibrated",
             receipt_sha256=sha256_document(unsigned),
+            source_partitions=source_partitions,
+            schema_version=schema_version,
+            eligible_item_count=eligible_item_count,
+            metadata_excluded_item_count=metadata_excluded_item_count,
+            development_selected_count=development_selected_count,
+            calibration_selected_count=calibration_selected_count,
         )
 
     def unsigned_json_object(self) -> dict[str, object]:
-        return {
+        document = {
             "schema_version": self.schema_version,
             "source_dataset_id": self.source_dataset_id,
             "source_partitions": list(self.source_partitions),
@@ -981,6 +1066,18 @@ class RuntimeDecisionPolicyEvidence:
             "fresh_process_reload_passed": self.fresh_process_reload_passed,
             "status": self.status,
         }
+        if self.source_partitions == AIHUB538_MULTI_CALIBRATION_SOURCE_PARTITIONS:
+            document.update(
+                {
+                    "eligible_item_count": self.eligible_item_count,
+                    "metadata_excluded_item_count": (
+                        self.metadata_excluded_item_count
+                    ),
+                    "development_selected_count": self.development_selected_count,
+                    "calibration_selected_count": self.calibration_selected_count,
+                }
+            )
+        return document
 
     def to_json_object(self) -> dict[str, object]:
         return {**self.unsigned_json_object(), "receipt_sha256": self.receipt_sha256}
@@ -988,6 +1085,27 @@ class RuntimeDecisionPolicyEvidence:
     @classmethod
     def from_json_object(cls, value: object) -> RuntimeDecisionPolicyEvidence:
         document = require_mapping(value, "runtime_decision_policy_evidence")
+        schema_version = require_safe_identifier(
+            document.get("schema_version"), "schema_version"
+        )
+        partitions = document.get("source_partitions")
+        if not isinstance(partitions, list):
+            raise VisualFeedbackContractError(
+                "runtime decision policy source partitions must be an array"
+            )
+        is_legacy = (
+            schema_version == RUNTIME_DECISION_POLICY_EVIDENCE_SCHEMA_VERSION
+            and partitions == list(RUNTIME_DECISION_POLICY_SOURCE_PARTITIONS)
+        )
+        is_multi = (
+            schema_version
+            == MULTISHARD_RUNTIME_DECISION_POLICY_EVIDENCE_SCHEMA_VERSION
+            and partitions == list(AIHUB538_MULTI_CALIBRATION_SOURCE_PARTITIONS)
+        )
+        if not is_legacy and not is_multi:
+            raise VisualFeedbackContractError(
+                "runtime decision policy evidence schema boundary differs"
+            )
         fields = {
             "schema_version",
             "source_dataset_id",
@@ -1012,16 +1130,18 @@ class RuntimeDecisionPolicyEvidence:
             "status",
             "receipt_sha256",
         }
-        require_exact_keys(document, fields, "runtime_decision_policy_evidence")
-        partitions = document["source_partitions"]
-        if not isinstance(partitions, list):
-            raise VisualFeedbackContractError(
-                "runtime decision policy source partitions must be an array"
+        if is_multi:
+            fields.update(
+                {
+                    "eligible_item_count",
+                    "metadata_excluded_item_count",
+                    "development_selected_count",
+                    "calibration_selected_count",
+                }
             )
+        require_exact_keys(document, fields, "runtime_decision_policy_evidence")
         return cls(
-            schema_version=require_safe_identifier(
-                document["schema_version"], "schema_version"
-            ),
+            schema_version=schema_version,
             source_dataset_id=require_safe_identifier(
                 document["source_dataset_id"], "source_dataset_id"
             ),
@@ -1035,6 +1155,42 @@ class RuntimeDecisionPolicyEvidence:
             ),
             evaluated_item_count=require_integer(
                 document["evaluated_item_count"], "evaluated_item_count", minimum=1
+            ),
+            eligible_item_count=(
+                require_integer(
+                    document["eligible_item_count"],
+                    "eligible_item_count",
+                    minimum=1,
+                )
+                if is_multi
+                else 0
+            ),
+            metadata_excluded_item_count=(
+                require_integer(
+                    document["metadata_excluded_item_count"],
+                    "metadata_excluded_item_count",
+                    minimum=0,
+                )
+                if is_multi
+                else 0
+            ),
+            development_selected_count=(
+                require_integer(
+                    document["development_selected_count"],
+                    "development_selected_count",
+                    minimum=1,
+                )
+                if is_multi
+                else 0
+            ),
+            calibration_selected_count=(
+                require_integer(
+                    document["calibration_selected_count"],
+                    "calibration_selected_count",
+                    minimum=1,
+                )
+                if is_multi
+                else 0
             ),
             actor_overlap_count=require_integer(
                 document["actor_overlap_count"], "actor_overlap_count", minimum=0
@@ -1071,6 +1227,7 @@ __all__ = [
     "AV_SYNC_DECISION_POLICY_DOCUMENT_SCHEMA_VERSION",
     "AV_SYNC_POLICY_DOCUMENT_SCHEMA_VERSION",
     "P8_RUNTIME_POLICY_ARTIFACT_SCHEMA_VERSION",
+    "MULTISHARD_RUNTIME_DECISION_POLICY_EVIDENCE_SCHEMA_VERSION",
     "RUNTIME_DECISION_POLICY_EVIDENCE_SCHEMA_VERSION",
     "RUNTIME_DECISION_POLICY_SOURCE_PARTITIONS",
     "PHONE_WINDOW_POLICY_DOCUMENT_SCHEMA_VERSION",
