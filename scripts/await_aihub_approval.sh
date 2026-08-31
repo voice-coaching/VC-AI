@@ -10,6 +10,31 @@ env_path="$project_root/.env.local"
 destination="$project_root/data/restricted/aihub/dataset-$dataset_key"
 status_path="$destination/approval-watcher.log"
 
+if [[ ! "$dataset_key" =~ ^[1-9][0-9]*$ ]]; then
+  echo "DATASET_KEY must be a canonical positive decimal." >&2
+  exit 2
+fi
+if [[ ! "$file_keys" =~ ^[1-9][0-9]*(,[1-9][0-9]*)*$ ]]; then
+  echo "FILE_KEYS must be a canonical comma-separated key list." >&2
+  exit 2
+fi
+if [[ -x "$project_root/.venv/bin/python" ]]; then
+  guard_python_binary="$project_root/.venv/bin/python"
+else
+  guard_python_binary=python3
+fi
+"$guard_python_binary" \
+  "$project_root/scripts/guard_aihub538_p8_generic_request.py" \
+  "$dataset_key" "$file_keys"
+
+if [[ -n "${VOICE_COACH_PYTHON:-}" ]]; then
+  python_binary=$VOICE_COACH_PYTHON
+elif [[ -x "$project_root/.venv/bin/python" ]]; then
+  python_binary="$project_root/.venv/bin/python"
+else
+  python_binary=python3
+fi
+
 if [[ ! -f "$env_path" ]]; then
   echo ".env.local is missing." >&2
   exit 1
