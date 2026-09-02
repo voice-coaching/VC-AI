@@ -24,7 +24,22 @@ from ..ports import (
 
 
 class _S3Client(Protocol):
+    def head_object(self, **kwargs: object) -> Mapping[str, object]: ...
+
     def get_object(self, **kwargs: object) -> Mapping[str, object]: ...
+
+
+@dataclass(frozen=True, slots=True)
+class _ObjectInspection:
+    etag: str
+    version_id: str | None
+
+    @property
+    def condition(self) -> dict[str, str]:
+        condition = {"IfMatch": self.etag}
+        if self.version_id is not None:
+            condition["VersionId"] = self.version_id
+        return condition
 
 
 @dataclass(frozen=True, slots=True)
@@ -82,9 +97,18 @@ class S3CompatibleRestrictedObjectStore:
         destination = workspace / "source.audio"
         body: object | None = None
         try:
+            inspection = self._inspect_object(
+                request.audio_object_key,
+                expected_byte_count=request.file_size_bytes,
+                expected_mime_type=request.mime_type,
+                maximum_bytes=self._settings.maximum_audio_bytes,
+                metadata_error_code="audio_metadata_mismatch",
+                unavailable_error_code="restricted_audio_unavailable",
+            )
             response = self._client.get_object(
                 Bucket=self._settings.bucket,
                 Key=request.audio_object_key,
+                **inspection.condition,
             )
             body = response.get("Body")
             if body is None or not callable(getattr(body, "read", None)):
@@ -92,6 +116,11 @@ class S3CompatibleRestrictedObjectStore:
                     "restricted_audio_unavailable",
                     "승인된 녹음에 접근할 수 없습니다.",
                 )
+            self._validate_inspected_identity(
+                response,
+                inspection,
+                unavailable_error_code="restricted_audio_unavailable",
+            )
             self._validate_response_metadata(response, request)
             byte_count, digest = self._stream_to_restricted_file(body, destination)
             if request.file_size_bytes is not None and byte_count != request.file_size_bytes:
@@ -147,15 +176,29 @@ class S3CompatibleRestrictedObjectStore:
         destination = workspace / "source.mp4"
         body: object | None = None
         try:
+            inspection = self._inspect_object(
+                visual.object_key,
+                expected_byte_count=visual.file_size_bytes,
+                expected_mime_type=visual.mime_type,
+                maximum_bytes=self._settings.maximum_visual_bytes,
+                metadata_error_code="visual_metadata_mismatch",
+                unavailable_error_code="restricted_visual_unavailable",
+            )
             response = self._client.get_object(
                 Bucket=self._settings.bucket,
                 Key=visual.object_key,
+                **inspection.condition,
             )
             body = response.get("Body")
             if body is None or not callable(getattr(body, "read", None)):
                 raise BackendAnalysisError(
                     "restricted_visual_unavailable", "승인된 영상에 접근할 수 없습니다."
                 )
+            self._validate_inspected_identity(
+                response,
+                inspection,
+                unavailable_error_code="restricted_visual_unavailable",
+            )
             content_length = response.get("ContentLength")
             content_type = response.get("ContentType")
             if (
@@ -198,6 +241,80 @@ class S3CompatibleRestrictedObjectStore:
                 except Exception:
                     pass
             shutil.rmtree(workspace, ignore_errors=True)
+
+    def _inspect_object(
+        self,
+        key: str,
+        *,
+        expected_byte_count: int | None,
+        expected_mime_type: str | None,
+        maximum_bytes: int,
+        metadata_error_code: str,
+        unavailable_error_code: str,
+    ) -> _ObjectInspection:
+        response = self._client.head_object(Bucket=self._settings.bucket, Key=key)
+        content_length = response.get("ContentLength")
+        content_type = response.get("ContentType")
+        etag = response.get("ETag")
+        version_id = response.get("VersionId")
+        if (
+            isinstance(content_length, bool)
+            or not isinstance(content_length, int)
+            or content_length < 0
+            or content_length > maximum_bytes
+            or (
+                expected_byte_count is not None
+                and content_length != expected_byte_count
+            )
+            or (
+                expected_mime_type is not None
+                and (
+                    not isinstance(content_type, str)
+                    or content_type.partition(";")[0].strip().lower()
+                    != expected_mime_type.lower()
+                )
+            )
+        ):
+            raise BackendAnalysisError(
+                metadata_error_code,
+                "등록된 미디어 메타데이터와 일치하지 않습니다.",
+            )
+        if (
+            not isinstance(etag, str)
+            or not etag
+            or len(etag) > 256
+            or any(character in etag for character in "\r\n")
+            or (
+                version_id is not None
+                and (
+                    not isinstance(version_id, str)
+                    or not version_id
+                    or len(version_id) > 1024
+                    or any(character in version_id for character in "\r\n")
+                )
+            )
+        ):
+            raise BackendAnalysisError(
+                unavailable_error_code,
+                "승인된 미디어 버전을 고정할 수 없습니다.",
+            )
+        return _ObjectInspection(etag=etag, version_id=version_id)
+
+    @staticmethod
+    def _validate_inspected_identity(
+        response: Mapping[str, object],
+        inspection: _ObjectInspection,
+        *,
+        unavailable_error_code: str,
+    ) -> None:
+        if response.get("ETag") != inspection.etag or (
+            inspection.version_id is not None
+            and response.get("VersionId") != inspection.version_id
+        ):
+            raise BackendAnalysisError(
+                unavailable_error_code,
+                "승인된 미디어 버전이 다운로드 중 변경되었습니다.",
+            )
 
     def _prepare_workspace_root(self) -> None:
         root = self._settings.workspace_root

@@ -31,12 +31,30 @@ class _Body(io.BytesIO):
 
 
 class _Client:
-    def __init__(self, response: dict[str, object]) -> None:
-        self.response = response
-        self.calls: list[dict[str, object]] = []
+    def __init__(
+        self,
+        response: dict[str, object],
+        *,
+        head_response: dict[str, object] | None = None,
+    ) -> None:
+        self.response = {"ETag": '"stable-etag"', **response}
+        self.head_response = (
+            {
+                key: value
+                for key, value in self.response.items()
+                if key != "Body"
+            }
+            if head_response is None
+            else head_response
+        )
+        self.calls: list[tuple[str, dict[str, object]]] = []
+
+    def head_object(self, **kwargs: object) -> dict[str, object]:
+        self.calls.append(("head", kwargs))
+        return self.head_response
 
     def get_object(self, **kwargs: object) -> dict[str, object]:
-        self.calls.append(kwargs)
+        self.calls.append(("get", kwargs))
         return self.response
 
 
@@ -106,7 +124,14 @@ def _authorization() -> AnalysisAuthorization:
 
 def test_streams_to_read_only_file_and_erases_workspace(tmp_path: Path) -> None:
     body = _Body(b"RIFF")
-    client = _Client({"Body": body, "ContentLength": 4, "ContentType": "audio/wav"})
+    client = _Client(
+        {
+            "Body": body,
+            "ContentLength": 4,
+            "ContentType": "audio/wav",
+            "VersionId": "version-1",
+        }
+    )
     root = tmp_path / "restricted"
     store = S3CompatibleRestrictedObjectStore(
         client,
@@ -124,7 +149,19 @@ def test_streams_to_read_only_file_and_erases_workspace(tmp_path: Path) -> None:
         assert os.stat(audio.path).st_mode & 0o777 == 0o400
 
     assert client.calls == [
-        {"Bucket": "private-recordings", "Key": "recordings/users/9/attempt.wav"}
+        (
+            "head",
+            {"Bucket": "private-recordings", "Key": "recordings/users/9/attempt.wav"},
+        ),
+        (
+            "get",
+            {
+                "Bucket": "private-recordings",
+                "Key": "recordings/users/9/attempt.wav",
+                "IfMatch": '"stable-etag"',
+                "VersionId": "version-1",
+            },
+        ),
     ]
     assert body.closed_by_adapter is True
     assert materialized_path.exists() is False
@@ -148,6 +185,65 @@ def test_rejects_key_outside_prefix_before_s3_access(tmp_path: Path) -> None:
 
     assert error.value.code == "restricted_audio_unavailable"
     assert client.calls == []
+
+
+def test_fails_closed_before_download_when_object_has_no_stable_identity(
+    tmp_path: Path,
+) -> None:
+    client = _Client(
+        {"Body": _Body(b"RIFF"), "ContentLength": 4, "ContentType": "audio/wav"},
+        head_response={"ContentLength": 4, "ContentType": "audio/wav"},
+    )
+    store = S3CompatibleRestrictedObjectStore(
+        client,
+        S3ObjectStoreSettings(
+            bucket="private-recordings",
+            recordings_prefix="recordings/",
+            workspace_root=tmp_path / "restricted",
+        ),
+    )
+
+    with pytest.raises(BackendAnalysisError) as error:
+        with store.materialize(_request(), _authorization()):
+            pass
+
+    assert error.value.code == "restricted_audio_unavailable"
+    assert [operation for operation, _ in client.calls] == ["head"]
+
+
+def test_fails_closed_when_download_identity_differs_from_inspection(
+    tmp_path: Path,
+) -> None:
+    body = _Body(b"RIFF")
+    client = _Client(
+        {
+            "Body": body,
+            "ContentLength": 4,
+            "ContentType": "audio/wav",
+            "ETag": '"changed-etag"',
+        },
+        head_response={
+            "ContentLength": 4,
+            "ContentType": "audio/wav",
+            "ETag": '"inspected-etag"',
+        },
+    )
+    store = S3CompatibleRestrictedObjectStore(
+        client,
+        S3ObjectStoreSettings(
+            bucket="private-recordings",
+            recordings_prefix="recordings/",
+            workspace_root=tmp_path / "restricted",
+        ),
+    )
+
+    with pytest.raises(BackendAnalysisError) as error:
+        with store.materialize(_request(), _authorization()):
+            pass
+
+    assert error.value.code == "restricted_audio_unavailable"
+    assert client.calls[1][1]["IfMatch"] == '"inspected-etag"'
+    assert body.closed_by_adapter is True
 
 
 def test_rejects_download_whose_digest_differs_from_backend_claim(tmp_path: Path) -> None:
@@ -190,7 +286,7 @@ def test_metadata_mismatch_fails_closed_and_cleans_workspace(tmp_path: Path) -> 
             pass
 
     assert error.value.code == "audio_metadata_mismatch"
-    assert body.closed_by_adapter is True
+    assert body.closed_by_adapter is False
     assert list(root.iterdir()) == []
 
 
@@ -242,7 +338,17 @@ def test_materializes_integrity_bound_visual_in_a_separate_workspace(
         assert materialized.sha256 == visual.sha256
         assert os.stat(materialized.path).st_mode & 0o777 == 0o400
 
-    assert client.calls == [{"Bucket": "private-recordings", "Key": visual_key}]
+    assert client.calls == [
+        ("head", {"Bucket": "private-recordings", "Key": visual_key}),
+        (
+            "get",
+            {
+                "Bucket": "private-recordings",
+                "Key": visual_key,
+                "IfMatch": '"stable-etag"',
+            },
+        ),
+    ]
     assert body.closed_by_adapter is True
     assert materialized_path.exists() is False
     assert list(root.iterdir()) == []

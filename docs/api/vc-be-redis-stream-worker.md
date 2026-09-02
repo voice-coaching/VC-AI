@@ -54,7 +54,9 @@ The built-in production composition is
 
 1. `HmacAnalysisAuthorizationAdapter` verifies the signed grant.
 2. `S3CompatibleRestrictedObjectStore` accepts only one bucket and prefix,
-   streams with a 20 MiB default bound, verifies Content-Length/MIME and the
+   inspects ETag and optional VersionId, binds the streaming GET to that exact
+   identity, and rejects a response whose identity changed. It streams with a
+   20 MiB default bound, verifies Content-Length/MIME and the
    registered byte count, writes mode `0400`, calculates SHA-256, compares it
    to the signed backend claim, closes the
    response and recursively removes the mode `0700` attempt workspace. Visual
