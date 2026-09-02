@@ -74,7 +74,7 @@
 - human audit, rights, split, calibration, locked-evaluation 또는 promotion gate를
   우회하는 옵션이나 임시 성공값을 추가하지 않는다.
 - train/dev/test와 locked partition의 접근 경계를 유지한다. test/locked 결과를
-  재튜닝, threshold 선택 또는 checkpoint 선택에 역사용하지 않는다.
+  재튜닝, threshold 선택 또는 checkpoint 선택에 사용하지 않는다.
 - config의 `TBD_*`, `failed`, `not_evaluable`, `promotion_decision_allowed: false`를
   성공으로 해석하거나 실행 없이 채우지 않는다.
 - adapter 존재, synthetic fixture, 다운로드 무결성, 단위 테스트 통과는 모델

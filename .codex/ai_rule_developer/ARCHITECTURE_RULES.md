@@ -95,7 +95,7 @@ visual 계층은 선택적 sidecar다. visual release/QC/sync/landmark/claim이 
 
 - `src/voice_coach/api/app.py`의 `/health`, `/v1/oracle-attempts`,
   `/v1/closed-loop/oracle-attempts`는 무상태 연구·계약 검증 API다.
-- `evaluation/g04_amended_review_app.py`는 loopback 전문가 검수 앱이며 public
+- `src/voice_coach/evaluation/g04_amended_review_app.py`는 loopback 전문가 검수 앱이며 public
   production API가 아니다.
 - route에서 모델 runtime, 파일시스템, 외부 HTTP, 학습 또는 복잡한 상태 전이를
   직접 수행하지 않는다.

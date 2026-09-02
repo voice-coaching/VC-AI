@@ -19,6 +19,16 @@ intelligentAI 저장소 작업을 시작한다.
 - 요청 범위와 성공 조건, 보호 데이터·외부 실행·장시간 GPU 작업 여부를 식별한다.
 - 사용자가 지정한 파일, CLI, 표본이 있으면 그것부터 사용한다.
 
+작업 유형별 문서 선택:
+
+- 구조·의존성·모듈 경계: `ARCHITECTURE_RULES.md`
+- 유스케이스·상태 전이·파이프라인: `SERVICE_LAYER_RULES.md`
+- HTTP·model·subprocess·download: `EXTERNAL_INTEGRATION_RULES.md`
+- FastAPI route·request/response: `API_DESIGN_RULES.md`
+- dataclass·Pydantic·enum·artifact schema: `DOMAIN_MODEL_RULES.md`
+- 코드 작성·리팩토링·테스트: `CODE_STYLE_RULES.md`
+- 명세·상태·근거 기록: `DOCUMENT_RULE.md`
+
 ## 3. 프로젝트 핵심 경계
 
 - 저장소: `intelligentAI`; Python package: `voice_coach`; Python 3.12; FastAPI.
@@ -51,6 +61,5 @@ intelligentAI 저장소 작업을 시작한다.
 - 응답은 작업 유형 -> 적용 규칙 -> 결과 -> 검증 -> 미확인 항목 순으로 작성한다.
 - 파일 변경은 경로별로 설명한다.
 
-현재 repository checker는 `.codex`와 `docs/architecture`를 retired local location으로
-거부한다. 사용자의 현재 요청이 이 로컬 문서 편집을 허용하더라도 checker를 몰래
-약화하거나 이 파일들을 일반 제품 commit에 포함하지 않는다.
+`.codex`와 `docs/architecture`의 현재 local-only/Git 정책은
+`GLOBAL_RULES.md`와 `DOCUMENT_RULE.md`를 따른다.
