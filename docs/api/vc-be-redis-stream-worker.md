@@ -90,7 +90,7 @@ VC-BE needs presign and HEAD; the worker needs GET only.
 | --- | --- | --- |
 | `VOICE_COACH_BACKEND_ANALYSIS_FACTORY` | Y | Set to `voice_coach.backend_analysis.production:create_worker`. |
 | `VOICE_COACH_REPOSITORY_ROOT` | Y | Absolute checked-out intelligentAI root. |
-| `AI_ANALYSIS_AUTHORIZATION_KEYS_JSON` | Y | JSON keyId-to-base64-secret keyring; each decoded secret is at least 32 bytes. |
+| `AI_ANALYSIS_AUTHORIZATION_KEYS_JSON` or `AI_ANALYSIS_AUTHORIZATION_KEYS_FILE` | Y | Exactly one direct value or absolute regular-file secret containing the JSON keyId-to-base64 keyring; each decoded secret is at least 32 bytes. |
 | `AI_ANALYSIS_CONSENT_POLICY_REVISION` | Y | Exact policy revision shared with VC-BE. |
 | `AI_ANALYSIS_AUTHORIZATION_MAX_TTL_SECONDS` | N | Default and maximum `600`. |
 | `AI_ANALYSIS_AUTHORIZATION_CLOCK_SKEW_SECONDS` | N | Default `30`, maximum `60`. |
@@ -105,7 +105,8 @@ VC-BE needs presign and HEAD; the worker needs GET only.
 | `AI_ANALYSIS_SEUNGUN_DEVICE` | N | `cpu` or `cuda`; default `cpu`. |
 | `AI_ANALYSIS_FFMPEG_BINARY` | N | Absolute reviewed ffmpeg path; otherwise `PATH` discovery. |
 | `AI_ANALYSIS_REDIS_HOST` / `AI_ANALYSIS_REDIS_PORT` | Y | Dedicated private Stream Redis endpoint. |
-| `AI_ANALYSIS_REDIS_USERNAME` / `AI_ANALYSIS_REDIS_PASSWORD` | N/Y | Redis ACL identity and secret. |
+| `AI_ANALYSIS_REDIS_USERNAME` | N | Redis ACL identity. |
+| `AI_ANALYSIS_REDIS_PASSWORD` or `AI_ANALYSIS_REDIS_PASSWORD_FILE` | Y | Exactly one direct value or absolute regular-file secret. |
 | `AI_ANALYSIS_REDIS_SSL_ENABLED` | Y | Must be `true`; other values refuse startup. |
 | `AI_ANALYSIS_REDIS_CA_CERT` | Private CA only | Absolute CA certificate path when it is not in the system trust store. |
 | `AI_ANALYSIS_REQUEST_STREAM` | N | Default `analysis:request:v1`. |
@@ -114,6 +115,15 @@ VC-BE needs presign and HEAD; the worker needs GET only.
 | `AI_ANALYSIS_REQUEST_CONSUMER_GROUP` | N | Default `analysis-workers`. |
 | `AI_ANALYSIS_REQUEST_CONSUMER_NAME` | Y | Unique worker instance name. |
 | `AI_ANALYSIS_PENDING_CLAIM_IDLE_MS` | N | Default `300000`. |
+| `AI_ANALYSIS_REDIS_CONNECT_TIMEOUT_SECONDS` | N | Default `5`, maximum `30`. |
+| `AI_ANALYSIS_REDIS_SOCKET_TIMEOUT_SECONDS` | N | Default `30`, maximum `300`. |
+| `AI_ANALYSIS_REDIS_HEALTH_CHECK_INTERVAL_SECONDS` | N | Default `30`, range `1..300`. |
+| `AI_ANALYSIS_MAXIMUM_REQUEST_PAYLOAD_BYTES` | N | Default `65536`, maximum `1048576`; oversized content is not copied to the DLQ. |
+| `AI_ANALYSIS_MAXIMUM_REQUEST_DLQ_ENTRIES` | N | Approximate DLQ cap, default `10000`; request/result streams are never trimmed before safe acknowledgement. |
+| `AI_ANALYSIS_MAX_CONSECUTIVE_POLL_FAILURES` | N | Default `5`; the supervisor restarts the worker after exhaustion. |
+| `AI_ANALYSIS_POLL_FAILURE_BACKOFF_SECONDS` | N | Default `5`, range `0.1..60`. |
+| `AI_ANALYSIS_WORKER_STATE_PATH` | Production Y | Absolute path on a private writable runtime mount. Contains only status, timestamps and counters. |
+| `AI_ANALYSIS_WORKER_HEALTH_MAX_AGE_SECONDS` | N | Default `600`, range `5..3600`; it exceeds the current bounded decode, g2pK and detector path. |
 
 AWS SDK credentials use the normal boto3 credential chain. Do not place keys
 in the JSON request or a tracked `.env.local`. Run only after all settings and
@@ -122,6 +132,19 @@ the approved frozen artifacts are present:
 ```bash
 .venv/bin/python scripts/run_backend_analysis_worker.py --once
 ```
+
+The reviewed container definition is in `deploy/backend-analysis-worker`. It runs
+as UID/GID 10001, uses a read-only root filesystem, drops all capabilities, mounts
+the detector bundle/model/processor and NLTK data read-only, accepts the HMAC keyring
+and Redis password through external Docker secrets, and keeps only restricted media
+and the health state on bounded tmpfs mounts. Build or start it only in the approved
+GPU deployment environment; model weights and protected media never enter the image.
+
+The worker handles `SIGTERM`/`SIGINT` by stopping after the current poll. A result is
+still written before request ACK; if the supervisor's grace period expires during an
+inference, the unacknowledged request remains in the PEL for reclaim. Repeated Redis
+poll failures use bounded backoff and exit after the configured limit. The state-file
+healthcheck never includes request IDs, object keys, endpoints, or exception text.
 
 ## Delivery and verification
 

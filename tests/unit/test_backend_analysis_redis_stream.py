@@ -20,7 +20,7 @@ from voice_coach.backend_analysis.service import BackendAnalysisWorker
 class _FakeRedis:
     def __init__(self, responses: list[object]) -> None:
         self.responses = responses
-        self.added: list[tuple[object, object]] = []
+        self.added: list[tuple[object, object, dict[str, object]]] = []
         self.acked: list[tuple[object, object, object]] = []
 
     def xgroup_create(self, *args: object, **kwargs: object) -> object:
@@ -35,8 +35,8 @@ class _FakeRedis:
         del args, kwargs
         return (b"0-0", [], [])
 
-    def xadd(self, stream: object, fields: object) -> object:
-        self.added.append((stream, fields))
+    def xadd(self, stream: object, fields: object, **kwargs: object) -> object:
+        self.added.append((stream, fields, kwargs))
         return b"1-0"
 
     def xack(self, stream: object, group: object, message_id: object) -> object:
@@ -175,4 +175,27 @@ def test_malformed_request_is_dead_lettered_then_acknowledged() -> None:
 
     assert client.added[0][0] == "analysis:request:dlq:v1"
     assert client.added[0][1]["failureCode"] == "analysis_request_contract_invalid"
+    assert client.added[0][2] == {"maxlen": 10_000, "approximate": True}
+    assert client.acked == [("analysis:request:v1", "analysis-workers", b"1-0")]
+
+
+def test_oversized_request_is_not_copied_into_the_bounded_dlq() -> None:
+    settings = _settings()
+    client = _FakeRedis(
+        [[(b"analysis:request:v1", [(b"1-0", {b"payload": b"x" * 70_000})])]]
+    )
+    adapter = RedisStreamWorker(client=client, settings=settings, worker=_worker())
+
+    assert adapter.poll_once(block_ms=0) == 1
+
+    assert client.added == [
+        (
+            "analysis:request:dlq:v1",
+            {
+                "sourceStreamId": "1-0",
+                "failureCode": "analysis_request_payload_too_large",
+            },
+            {"maxlen": 10_000, "approximate": True},
+        )
+    ]
     assert client.acked == [("analysis:request:v1", "analysis-workers", b"1-0")]

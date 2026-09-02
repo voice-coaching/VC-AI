@@ -4,6 +4,7 @@ import base64
 from datetime import UTC, datetime
 import hashlib
 import hmac
+from pathlib import Path
 
 import pytest
 
@@ -138,6 +139,23 @@ def test_settings_decode_rotation_keyring_without_exposing_secrets() -> None:
             "AI_ANALYSIS_AUTHORIZATION_KEYS_JSON": (
                 '{"backend-test-v1":"' + base64.b64encode(_SECRET).decode() + '"}'
             ),
+            "AI_ANALYSIS_CONSENT_POLICY_REVISION": "voice-analysis-consent-v1",
+        }
+    )
+
+    assert set(settings.keys) == {"backend-test-v1"}
+
+
+def test_settings_read_rotation_keyring_from_secret_file(tmp_path: Path) -> None:
+    keyring = tmp_path / "authorization-keyring.json"
+    keyring.write_text(
+        '{"backend-test-v1":"' + base64.b64encode(_SECRET).decode() + '"}\n',
+        encoding="utf-8",
+    )
+
+    settings = HmacAuthorizationSettings.from_environment(
+        {
+            "AI_ANALYSIS_AUTHORIZATION_KEYS_FILE": str(keyring),
             "AI_ANALYSIS_CONSENT_POLICY_REVISION": "voice-analysis-consent-v1",
         }
     )

@@ -82,3 +82,54 @@ jobs:
             echo "It does not claim scorer, visual/GPU, restricted-data, checkpoint, ignored-artifact, or human-gate validation."
             echo "Those suites require their declared optional dependencies and controlled local evidence."
           } >> "$GITHUB_STEP_SUMMARY"
+
+  backend-analysis-worker-contract:
+    name: Private worker contract (no model artifacts)
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v7
+        with:
+          persist-credentials: false
+
+      - name: Set up Python 3.12
+        uses: actions/setup-python@v7
+        with:
+          python-version: "3.12"
+          cache: pip
+
+      - name: Install worker transport and test dependencies
+        run: >-
+          python -m pip install -e ".[test]"
+          -r requirements/backend-analysis-worker.txt
+
+      - name: Verify worker unit and skipped external integration contracts
+        run: >-
+          python -m pytest
+          tests/unit/test_backend_analysis*.py
+          tests/integration/test_backend_analysis_redis_stream_integration.py
+
+      - name: Validate worker Compose expansion
+        env:
+          SEUNGUN_DETECTOR_BUNDLE_DIR: /tmp/synthetic-detector
+          SEUNGUN_MODEL_DIR: /tmp/synthetic-model
+          SEUNGUN_PROCESSOR_DIR: /tmp/synthetic-processor
+          G2PK_NLTK_DATA_DIR: /tmp/synthetic-nltk
+          ANALYSIS_REDIS_CA_CERT: /tmp/synthetic-ca.crt
+          AI_ANALYSIS_OBJECT_STORAGE_BUCKET: synthetic-bucket
+          AI_ANALYSIS_OBJECT_STORAGE_REGION: ap-northeast-2
+          AI_ANALYSIS_CONSENT_POLICY_REVISION: synthetic-policy-v1
+          AI_ANALYSIS_REDIS_HOST: redis.invalid
+          AI_ANALYSIS_REQUEST_CONSUMER_NAME: ci-worker
+        run: docker compose -f deploy/backend-analysis-worker/compose.yaml config --quiet
+
+      - name: Record controlled-runtime boundary
+        if: always()
+        run: |
+          {
+            echo "### Worker CI scope"
+            echo
+            echo "This job validates the transport, fail-closed contracts, and deployment manifest."
+            echo "It does not load restricted recordings or untracked Seungun model artifacts."
+          } >> "$GITHUB_STEP_SUMMARY"

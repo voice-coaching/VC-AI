@@ -1,0 +1,83 @@
+services:
+  backend-analysis-worker:
+    build:
+      context: ../..
+      dockerfile: deploy/backend-analysis-worker/Dockerfile
+    image: intelligentai/backend-analysis-worker:result-v2
+    restart: unless-stopped
+    init: true
+    gpus: all
+    read_only: true
+    pids_limit: 256
+    stop_grace_period: 5m
+    cap_drop:
+      - ALL
+    security_opt:
+      - no-new-privileges:true
+    tmpfs:
+      - /app/runtime/work:rw,noexec,nosuid,nodev,uid=10001,gid=10001,mode=0700,size=512m
+      - /run/voice-coach-worker:rw,noexec,nosuid,nodev,uid=10001,gid=10001,mode=0700,size=1m
+      - /tmp:rw,noexec,nosuid,nodev,uid=10001,gid=10001,mode=0700,size=64m
+    volumes:
+      - type: bind
+        source: ${SEUNGUN_DETECTOR_BUNDLE_DIR:?set SEUNGUN_DETECTOR_BUNDLE_DIR}
+        target: /app/seungun/artifacts/error_detector/final_pronunciation_detector_v1
+        read_only: true
+      - type: bind
+        source: ${SEUNGUN_MODEL_DIR:?set SEUNGUN_MODEL_DIR}
+        target: /app/seungun/checkpoints/xlsr300m_full_internal_v1/best_model
+        read_only: true
+      - type: bind
+        source: ${SEUNGUN_PROCESSOR_DIR:?set SEUNGUN_PROCESSOR_DIR}
+        target: /app/seungun/processor
+        read_only: true
+      - type: bind
+        source: ${G2PK_NLTK_DATA_DIR:?set G2PK_NLTK_DATA_DIR}
+        target: /app/runtime/nltk_data
+        read_only: true
+      - type: bind
+        source: ${ANALYSIS_REDIS_CA_CERT:?set ANALYSIS_REDIS_CA_CERT}
+        target: /run/analysis-ca/ca.crt
+        read_only: true
+    secrets:
+      - analysis_authorization_keys
+      - analysis_redis_password
+    environment:
+      VOICE_COACH_BACKEND_ANALYSIS_FACTORY: voice_coach.backend_analysis.production:create_worker
+      VOICE_COACH_REPOSITORY_ROOT: /app
+      AI_ANALYSIS_RESTRICTED_WORKSPACE_ROOT: /app/runtime/work
+      AI_ANALYSIS_NLTK_DATA_ROOT: /app/runtime/nltk_data
+      AI_ANALYSIS_SEUNGUN_DEVICE: ${AI_ANALYSIS_SEUNGUN_DEVICE:-cuda}
+      AI_ANALYSIS_FFMPEG_BINARY: /usr/bin/ffmpeg
+      AI_ANALYSIS_OBJECT_STORAGE_BUCKET: ${AI_ANALYSIS_OBJECT_STORAGE_BUCKET:?set AI_ANALYSIS_OBJECT_STORAGE_BUCKET}
+      AI_ANALYSIS_OBJECT_STORAGE_REGION: ${AI_ANALYSIS_OBJECT_STORAGE_REGION:?set AI_ANALYSIS_OBJECT_STORAGE_REGION}
+      AI_ANALYSIS_OBJECT_STORAGE_ENDPOINT: ${AI_ANALYSIS_OBJECT_STORAGE_ENDPOINT:-}
+      AI_ANALYSIS_OBJECT_STORAGE_PATH_STYLE: ${AI_ANALYSIS_OBJECT_STORAGE_PATH_STYLE:-false}
+      AI_ANALYSIS_OBJECT_STORAGE_RECORDINGS_PREFIX: ${AI_ANALYSIS_OBJECT_STORAGE_RECORDINGS_PREFIX:-recordings/}
+      AI_ANALYSIS_AUTHORIZATION_KEYS_FILE: /run/secrets/analysis_authorization_keys
+      AI_ANALYSIS_CONSENT_POLICY_REVISION: ${AI_ANALYSIS_CONSENT_POLICY_REVISION:?set AI_ANALYSIS_CONSENT_POLICY_REVISION}
+      AI_ANALYSIS_REDIS_HOST: ${AI_ANALYSIS_REDIS_HOST:?set AI_ANALYSIS_REDIS_HOST}
+      AI_ANALYSIS_REDIS_PORT: ${AI_ANALYSIS_REDIS_PORT:-6379}
+      AI_ANALYSIS_REDIS_USERNAME: ${AI_ANALYSIS_REDIS_USERNAME:-}
+      AI_ANALYSIS_REDIS_PASSWORD_FILE: /run/secrets/analysis_redis_password
+      AI_ANALYSIS_REDIS_SSL_ENABLED: "true"
+      AI_ANALYSIS_REDIS_CA_CERT: /run/analysis-ca/ca.crt
+      AI_ANALYSIS_REQUEST_CONSUMER_NAME: ${AI_ANALYSIS_REQUEST_CONSUMER_NAME:?set unique AI_ANALYSIS_REQUEST_CONSUMER_NAME}
+      AI_ANALYSIS_WORKER_STATE_PATH: /run/voice-coach-worker/state.json
+      AI_ANALYSIS_WORKER_HEALTH_MAX_AGE_SECONDS: ${AI_ANALYSIS_WORKER_HEALTH_MAX_AGE_SECONDS:-600}
+    healthcheck:
+      test:
+        - CMD
+        - /app/.venv/bin/python
+        - -m
+        - voice_coach.backend_analysis.healthcheck
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 30s
+
+secrets:
+  analysis_authorization_keys:
+    external: true
+  analysis_redis_password:
+    external: true

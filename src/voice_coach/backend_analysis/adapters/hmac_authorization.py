@@ -13,6 +13,7 @@ import re
 
 from ..domain import AnalysisRequest
 from ..ports import AnalysisAuthorization, BackendAnalysisError
+from ..secret_files import secret_text
 
 
 _KEY_ID = re.compile(r"^[A-Za-z0-9._-]{1,100}$")
@@ -51,7 +52,14 @@ class HmacAuthorizationSettings:
     ) -> "HmacAuthorizationSettings":
         env = os.environ if environment is None else environment
         try:
-            encoded_keys = json.loads(env["AI_ANALYSIS_AUTHORIZATION_KEYS_JSON"])
+            encoded_keys = json.loads(
+                secret_text(
+                    env,
+                    value_name="AI_ANALYSIS_AUTHORIZATION_KEYS_JSON",
+                    file_name="AI_ANALYSIS_AUTHORIZATION_KEYS_FILE",
+                    maximum_bytes=64 * 1024,
+                )
+            )
             if not isinstance(encoded_keys, dict):
                 raise ValueError
             keys = {

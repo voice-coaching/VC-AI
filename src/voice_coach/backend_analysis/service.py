@@ -142,3 +142,10 @@ class BackendAnalysisWorker:
             reason=_SAFE_FAILURES[code],
             worker_revision=self._worker_revision,
         )
+
+    def close(self) -> None:
+        """Release an optional long-lived Seungun adapter without widening its port."""
+
+        close = getattr(self._seungun, "close", None)
+        if callable(close):
+            close()

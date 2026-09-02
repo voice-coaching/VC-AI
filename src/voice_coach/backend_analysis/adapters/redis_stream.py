@@ -13,6 +13,7 @@ from pathlib import Path
 from typing import Protocol
 
 from ..domain import AnalysisRequest, BackendAnalysisContractError
+from ..secret_files import secret_text
 from ..service import BackendAnalysisWorker
 
 
@@ -54,6 +55,11 @@ class RedisStreamSettings:
         consumer_name: str,
         claim_idle_ms: int,
         ca_cert_path: str | None = None,
+        socket_connect_timeout_seconds: float = 5.0,
+        socket_timeout_seconds: float = 30.0,
+        health_check_interval_seconds: int = 30,
+        maximum_request_payload_bytes: int = 64 * 1024,
+        maximum_dlq_entries: int = 10_000,
     ) -> None:
         if (
             not host
@@ -66,6 +72,11 @@ class RedisStreamSettings:
             or not consumer_name
             or not 1 <= port <= 65_535
             or claim_idle_ms <= 0
+            or not 0 < socket_connect_timeout_seconds <= 30
+            or not 1 <= socket_timeout_seconds <= 300
+            or not 1 <= health_check_interval_seconds <= 300
+            or not 1_024 <= maximum_request_payload_bytes <= 1024 * 1024
+            or not 1 <= maximum_dlq_entries <= 1_000_000
             or (
                 ca_cert_path is not None
                 and (
@@ -87,6 +98,11 @@ class RedisStreamSettings:
         self.consumer_name = consumer_name
         self.claim_idle_ms = claim_idle_ms
         self.ca_cert_path = ca_cert_path
+        self.socket_connect_timeout_seconds = socket_connect_timeout_seconds
+        self.socket_timeout_seconds = socket_timeout_seconds
+        self.health_check_interval_seconds = health_check_interval_seconds
+        self.maximum_request_payload_bytes = maximum_request_payload_bytes
+        self.maximum_dlq_entries = maximum_dlq_entries
 
     @classmethod
     def from_environment(cls, environment: dict[str, str] | None = None) -> "RedisStreamSettings":
@@ -94,13 +110,34 @@ class RedisStreamSettings:
         try:
             port = int(env["AI_ANALYSIS_REDIS_PORT"])
             claim_idle_ms = int(env.get("AI_ANALYSIS_PENDING_CLAIM_IDLE_MS", "300000"))
+            connect_timeout = float(
+                env.get("AI_ANALYSIS_REDIS_CONNECT_TIMEOUT_SECONDS", "5")
+            )
+            socket_timeout = float(
+                env.get("AI_ANALYSIS_REDIS_SOCKET_TIMEOUT_SECONDS", "30")
+            )
+            health_interval = int(
+                env.get("AI_ANALYSIS_REDIS_HEALTH_CHECK_INTERVAL_SECONDS", "30")
+            )
+            maximum_payload = int(
+                env.get("AI_ANALYSIS_MAXIMUM_REQUEST_PAYLOAD_BYTES", str(64 * 1024))
+            )
+            maximum_dlq_entries = int(
+                env.get("AI_ANALYSIS_MAXIMUM_REQUEST_DLQ_ENTRIES", "10000")
+            )
+            password = secret_text(
+                env,
+                value_name="AI_ANALYSIS_REDIS_PASSWORD",
+                file_name="AI_ANALYSIS_REDIS_PASSWORD_FILE",
+                maximum_bytes=4 * 1024,
+            )
         except (KeyError, ValueError):
             raise WorkerConfigurationError("analysis_stream_configuration_invalid") from None
         return cls(
             host=env.get("AI_ANALYSIS_REDIS_HOST", ""),
             port=port,
             username=env.get("AI_ANALYSIS_REDIS_USERNAME") or None,
-            password=env.get("AI_ANALYSIS_REDIS_PASSWORD", ""),
+            password=password,
             ssl=env.get("AI_ANALYSIS_REDIS_SSL_ENABLED", "").lower() == "true",
             request_stream=env.get("AI_ANALYSIS_REQUEST_STREAM", "analysis:request:v1"),
             result_stream=env.get("AI_ANALYSIS_RESULT_STREAM", "analysis:result:v1"),
@@ -109,6 +146,11 @@ class RedisStreamSettings:
             consumer_name=env.get("AI_ANALYSIS_REQUEST_CONSUMER_NAME", ""),
             claim_idle_ms=claim_idle_ms,
             ca_cert_path=env.get("AI_ANALYSIS_REDIS_CA_CERT") or None,
+            socket_connect_timeout_seconds=connect_timeout,
+            socket_timeout_seconds=socket_timeout,
+            health_check_interval_seconds=health_interval,
+            maximum_request_payload_bytes=maximum_payload,
+            maximum_dlq_entries=maximum_dlq_entries,
         )
 
 
@@ -126,9 +168,11 @@ def create_redis_client(settings: RedisStreamSettings) -> _RedisClient:
         "password": settings.password,
         "ssl": True,
         "decode_responses": False,
-        "socket_connect_timeout": 5,
-        "socket_timeout": 30,
-        "health_check_interval": 30,
+        "socket_connect_timeout": settings.socket_connect_timeout_seconds,
+        "socket_timeout": settings.socket_timeout_seconds,
+        "health_check_interval": settings.health_check_interval_seconds,
+        "max_connections": 4,
+        "ssl_cert_reqs": "required",
     }
     if settings.ca_cert_path is not None:
         options["ssl_ca_certs"] = settings.ca_cert_path
@@ -205,6 +249,12 @@ class RedisStreamWorker:
         payload = _payload_field(fields)
         if payload is None:
             self._publish_request_dlq(message_id, None, "analysis_request_payload_missing")
+        elif len(payload) > self._settings.maximum_request_payload_bytes:
+            self._publish_request_dlq(
+                message_id,
+                None,
+                "analysis_request_payload_too_large",
+            )
         else:
             try:
                 decoded = json.loads(payload.decode("utf-8", errors="strict"))
@@ -240,7 +290,12 @@ class RedisStreamWorker:
         }
         if payload is not None:
             fields["payload"] = payload
-        self._client.xadd(self._settings.request_dlq_stream, fields)
+        self._client.xadd(
+            self._settings.request_dlq_stream,
+            fields,
+            maxlen=self._settings.maximum_dlq_entries,
+            approximate=True,
+        )
 
 
 def _payload_field(fields: object) -> bytes | None:
