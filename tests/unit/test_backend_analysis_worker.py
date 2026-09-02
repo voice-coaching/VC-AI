@@ -12,6 +12,7 @@ from voice_coach.backend_analysis.domain import (
     AnalysisOutcome,
     AnalysisRequest,
     BackendAnalysisContractError,
+    PronunciationEvidence,
 )
 from voice_coach.backend_analysis.ports import (
     AnalysisAuthorization,
@@ -112,6 +113,18 @@ class _Seungun:
         return SeungunAnalysis(
             outcome=AnalysisOutcome.COACHING_READY,
             summary_feedback="승인된 Seungun 근거에 따른 피드백입니다.",
+            pronunciation_evidence=PronunciationEvidence(
+                selected_phone="ㄱ",
+                selected_expected_index=0,
+                selected_start_ms=100,
+                selected_end_ms=200,
+                detector_score=0.91,
+                operating_threshold=0.8,
+                score_semantics=(
+                    "detector_ranking_score_not_calibrated_correctness_confidence"
+                ),
+                evidence_state="frozen_detector_threshold_passed",
+            ),
             pipeline_revision="seungun-locked-v1",
         )
 
@@ -190,9 +203,10 @@ def test_expired_authorization_never_materializes_audio() -> None:
     assert seungun.calls == 0
 
 
-def test_unsupported_intonation_only_focus_never_materializes_audio() -> None:
-    payload = _request_payload(learningFocus="INTONATION")
-    payload["authorizationGrant"]["learningFocus"] = "INTONATION"  # type: ignore[index]
+@pytest.mark.parametrize("focus", ["INTONATION", "BOTH"])
+def test_unsupported_focus_never_materializes_audio(focus: str) -> None:
+    payload = _request_payload(learningFocus=focus)
+    payload["authorizationGrant"]["learningFocus"] = focus  # type: ignore[index]
     request = AnalysisRequest.from_payload(payload)
     authorizer = _Authorizer(_authorization())
     store = _ObjectStore()
@@ -254,6 +268,7 @@ def test_seungun_completed_result_keeps_unmeasured_scores_null() -> None:
         "strengthsText",
         "weaknessesText",
         "summaryFeedback",
+        "pronunciationEvidence",
         "workerRevision",
         "pipelineRevision",
         "audioSha256",
@@ -262,6 +277,19 @@ def test_seungun_completed_result_keeps_unmeasured_scores_null() -> None:
     assert result["status"] == "COMPLETED"
     assert result["outcome"] == "COACHING_READY"
     assert result["summaryFeedback"] == "승인된 Seungun 근거에 따른 피드백입니다."
+    assert result["pronunciationEvidence"] == {
+        "schemaVersion": "voice-coaching.pronunciation-evidence.v1",
+        "selectedPhone": "ㄱ",
+        "selectedExpectedIndex": 0,
+        "selectedStartMs": 100,
+        "selectedEndMs": 200,
+        "detectorScore": 0.91,
+        "operatingThreshold": 0.8,
+        "scoreSemantics": (
+            "detector_ranking_score_not_calibrated_correctness_confidence"
+        ),
+        "evidenceState": "frozen_detector_threshold_passed",
+    }
     assert result["overallScore"] is None
     assert result["pronunciationScore"] is None
     assert result["segments"] == []

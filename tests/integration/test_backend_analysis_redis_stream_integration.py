@@ -57,6 +57,7 @@ class _Seungun:
         return SeungunAnalysis(
             outcome=AnalysisOutcome.COMPLETED_NO_ISSUE,
             summary_feedback=None,
+            pronunciation_evidence=None,
             pipeline_revision="synthetic-seungun-v1",
         )
 

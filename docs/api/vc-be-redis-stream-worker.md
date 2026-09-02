@@ -15,7 +15,7 @@ VC-BE PostgreSQL outbox
   -> private S3-compatible object materialization
   -> isolated ffmpeg: 16 kHz mono signed PCM WAV
   -> pinned g2pK expected phones -> one frozen Seungun detector call
-  -> analysis:result:v1 -> XACK request
+  -> analysis:result:v1 (analysis-result.v2 JSON) -> XACK request
   -> VC-BE result consumer -> PostgreSQL
 ```
 
@@ -24,6 +24,8 @@ The exact cross-repository fields are authoritative in VC-BE
 versions, unknown keys, traversal, script integrity differences, grant/request
 binding differences and unsupported focus before any adapter runs. Legacy
 `voice-coaching.analysis-request.v1` and `v2` are deliberately unsupported.
+Result v2 requires a quiesced coordinated deployment: stop admission and the worker,
+drain or resolve pending entries, deploy both repositories, and only then resume.
 
 ## Signed authorization
 
@@ -61,8 +63,14 @@ The built-in production composition is
    preserves the detector-selected phone and uses the approved catalog
    fallback; no free-form model is in this composition.
 
-Completed responses leave transcript, numeric scores and segments absent
-unless a future approved Seungun mapping explicitly supplies them.
+`COACHING_READY` includes a `voice-coaching.pronunciation-evidence.v1` object
+containing the same-attempt Seungun-selected phone, expected-phone index, optional
+time window, threshold-passed detector ranking score and its explicit non-confidence
+semantics. A coaching result without this evidence fails contract construction.
+Completed responses leave transcript, numeric correctness scores and segments absent;
+future fields require an approved Seungun-owned mapping rather than placeholder data.
+The current production worker accepts only `PRONUNCIATION`; `INTONATION` and `BOTH`
+fail before media access until an approved intonation pipeline exists.
 
 ## Environment
 

@@ -12,6 +12,7 @@ from .domain import (
     AnalysisRequest,
     AnalysisWorkerResult,
     BackendAnalysisContractError,
+    PronunciationEvidence,
 )
 from .service import BackendAnalysisWorker
 
@@ -22,5 +23,6 @@ __all__ = [
     "AnalysisRequest",
     "AnalysisWorkerResult",
     "BackendAnalysisContractError",
+    "PronunciationEvidence",
     "BackendAnalysisWorker",
 ]

@@ -75,7 +75,7 @@ class BackendAnalysisWorker:
                 "분석 처리 권한을 확인할 수 없습니다.",
             )
 
-        if request.learning_focus not in {"PRONUNCIATION", "BOTH"}:
+        if request.learning_focus != "PRONUNCIATION":
             return self._failed(
                 request,
                 "analysis_focus_not_supported",
@@ -98,6 +98,7 @@ class BackendAnalysisWorker:
                     request=request,
                     outcome=analysis.outcome,
                     summary_feedback=analysis.summary_feedback,
+                    pronunciation_evidence=analysis.pronunciation_evidence,
                     worker_revision=self._worker_revision,
                     pipeline_revision=analysis.pipeline_revision,
                     audio_sha256=audio.sha256,

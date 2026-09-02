@@ -155,6 +155,11 @@ def test_preserves_one_seungun_selected_phone_as_grounded_feedback() -> None:
 
     assert result.outcome is AnalysisOutcome.COACHING_READY
     assert result.summary_feedback is not None and "‘ㄱ’" in result.summary_feedback
+    assert result.pronunciation_evidence is not None
+    assert result.pronunciation_evidence.selected_phone == "ㄱ"
+    assert result.pronunciation_evidence.selected_expected_index == 0
+    assert result.pronunciation_evidence.detector_score == 0.91
+    assert result.pronunciation_evidence.operating_threshold == 0.8
     assert result.pipeline_revision == "g2pk:2.0.0|seungun:frozen-v1"
     assert frontend.calls == decoder.calls == detector.calls == 1
 
@@ -168,6 +173,7 @@ def test_reports_no_issue_only_when_every_expected_phone_is_clean() -> None:
 
     assert result.outcome is AnalysisOutcome.COMPLETED_NO_ISSUE
     assert result.summary_feedback is None
+    assert result.pronunciation_evidence is None
 
 
 def test_expected_phone_failure_stops_before_audio_decode_or_detector() -> None:

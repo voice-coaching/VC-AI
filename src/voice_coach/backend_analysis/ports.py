@@ -13,7 +13,7 @@ from pathlib import Path
 import re
 from typing import Protocol, runtime_checkable
 
-from .domain import AnalysisOutcome, AnalysisRequest
+from .domain import AnalysisOutcome, AnalysisRequest, PronunciationEvidence
 
 
 class BackendAnalysisError(RuntimeError):
@@ -65,13 +65,22 @@ class SeungunAnalysis:
 
     outcome: AnalysisOutcome
     summary_feedback: str | None
+    pronunciation_evidence: PronunciationEvidence | None
     pipeline_revision: str
 
     def __post_init__(self) -> None:
         if not self.pipeline_revision or len(self.pipeline_revision) > 100:
             raise ValueError("Seungun pipeline revision is invalid")
-        if self.outcome is AnalysisOutcome.COACHING_READY and not self.summary_feedback:
-            raise ValueError("coaching-ready Seungun output requires grounded feedback")
+        if self.outcome is AnalysisOutcome.COACHING_READY and (
+            not self.summary_feedback or self.pronunciation_evidence is None
+        ):
+            raise ValueError(
+                "coaching-ready Seungun output requires grounded feedback and evidence"
+            )
+        if self.outcome is not AnalysisOutcome.COACHING_READY and (
+            self.summary_feedback is not None or self.pronunciation_evidence is not None
+        ):
+            raise ValueError("non-coaching Seungun output must not carry coaching evidence")
 
 
 @runtime_checkable

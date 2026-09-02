@@ -23,7 +23,7 @@ from voice_coach.pronunciation_feedback.seungun_bridge import (
     generate_grounded_phone_feedback,
 )
 
-from ..domain import AnalysisOutcome, AnalysisRequest
+from ..domain import AnalysisOutcome, AnalysisRequest, PronunciationEvidence
 from ..ports import BackendAnalysisError, MaterializedAudio, SeungunAnalysis
 
 
@@ -235,11 +235,34 @@ class SeungunBackendAnalysisAdapter:
             return SeungunAnalysis(
                 outcome=AnalysisOutcome.COMPLETED_NO_ISSUE,
                 summary_feedback=None,
+                pronunciation_evidence=None,
                 pipeline_revision=pipeline_revision,
+            )
+        location = feedback.payload.location
+        if (
+            location is None
+            or location.unit_type != "phone"
+            or feedback.payload.detector_score is None
+            or feedback.payload.operating_threshold is None
+            or feedback.payload.score_semantics is None
+        ):
+            raise BackendAnalysisError(
+                "seungun_detector_failed",
+                "분석을 안전하게 완료하지 못했습니다. 다시 시도해 주세요.",
             )
         return SeungunAnalysis(
             outcome=AnalysisOutcome.COACHING_READY,
             summary_feedback=feedback.message,
+            pronunciation_evidence=PronunciationEvidence(
+                selected_phone=location.target_unit,
+                selected_expected_index=location.unit_index,
+                selected_start_ms=location.start_ms,
+                selected_end_ms=location.end_ms,
+                detector_score=feedback.payload.detector_score,
+                operating_threshold=feedback.payload.operating_threshold,
+                score_semantics=feedback.payload.score_semantics,
+                evidence_state=feedback.payload.evidence_state,
+            ),
             pipeline_revision=pipeline_revision,
         )
 

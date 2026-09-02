@@ -20,7 +20,13 @@ ANALYSIS_REQUEST_SCHEMA_VERSION = "voice-coaching.analysis-request.v3"
 ANALYSIS_AUTHORIZATION_GRANT_VERSION = "voice-coaching.analysis-authorization.v2"
 ANALYSIS_AUTHORIZATION_PURPOSE = "pronunciation_coaching"
 ANALYSIS_AUTHORIZATION_DATA_CATEGORY = "learner_voice_recording"
-ANALYSIS_RESULT_SCHEMA_VERSION = "voice-coaching.analysis-result.v1"
+ANALYSIS_RESULT_SCHEMA_VERSION = "voice-coaching.analysis-result.v2"
+PRONUNCIATION_EVIDENCE_SCHEMA_VERSION = (
+    "voice-coaching.pronunciation-evidence.v1"
+)
+SEUNGUN_RANKING_SCORE_SEMANTICS = (
+    "detector_ranking_score_not_calibrated_correctness_confidence"
+)
 _SHA256 = re.compile(r"^[0-9a-f]{64}$")
 _LEARNING_FOCUSES = frozenset({"PRONUNCIATION", "INTONATION", "BOTH"})
 _JAVA_LONG_MAX = (1 << 63) - 1
@@ -87,6 +93,70 @@ class AnalysisOutcome(StrEnum):
     RERECORD_REQUIRED = "RERECORD_REQUIRED"
     UNCERTAIN = "UNCERTAIN"
     FAILED_CLOSED = "FAILED_CLOSED"
+
+
+@dataclass(frozen=True, slots=True)
+class PronunciationEvidence:
+    """One selected-phone decision owned by the same Seungun attempt."""
+
+    selected_phone: str
+    selected_expected_index: int
+    selected_start_ms: int | None
+    selected_end_ms: int | None
+    detector_score: float
+    operating_threshold: float
+    score_semantics: str
+    evidence_state: str
+
+    def __post_init__(self) -> None:
+        if (
+            not isinstance(self.selected_phone, str)
+            or not self.selected_phone.strip()
+            or len(self.selected_phone) > 16
+        ):
+            raise ValueError("selected phone is invalid")
+        if (
+            isinstance(self.selected_expected_index, bool)
+            or not isinstance(self.selected_expected_index, int)
+            or self.selected_expected_index < 0
+            or self.selected_expected_index > _JAVA_INT_MAX
+        ):
+            raise ValueError("selected expected index is invalid")
+        if (self.selected_start_ms is None) != (self.selected_end_ms is None):
+            raise ValueError("selected phone offsets must be paired")
+        if self.selected_start_ms is not None and (
+            self.selected_start_ms < 0
+            or self.selected_end_ms <= self.selected_start_ms
+        ):
+            raise ValueError("selected phone offsets are invalid")
+        if (
+            isinstance(self.detector_score, bool)
+            or not isinstance(self.detector_score, int | float)
+            or isinstance(self.operating_threshold, bool)
+            or not isinstance(self.operating_threshold, int | float)
+            or not 0.0
+            <= float(self.operating_threshold)
+            <= float(self.detector_score)
+            <= 1.0
+        ):
+            raise ValueError("selected phone detector values are invalid")
+        if self.score_semantics != SEUNGUN_RANKING_SCORE_SEMANTICS:
+            raise ValueError("selected phone score semantics are invalid")
+        if self.evidence_state != "frozen_detector_threshold_passed":
+            raise ValueError("selected phone evidence state is invalid")
+
+    def to_payload(self) -> dict[str, object | None]:
+        return {
+            "schemaVersion": PRONUNCIATION_EVIDENCE_SCHEMA_VERSION,
+            "selectedPhone": self.selected_phone,
+            "selectedExpectedIndex": self.selected_expected_index,
+            "selectedStartMs": self.selected_start_ms,
+            "selectedEndMs": self.selected_end_ms,
+            "detectorScore": self.detector_score,
+            "operatingThreshold": self.operating_threshold,
+            "scoreSemantics": self.score_semantics,
+            "evidenceState": self.evidence_state,
+        }
 
 
 @dataclass(frozen=True, slots=True)
@@ -320,6 +390,7 @@ class AnalysisWorkerResult:
     failure_code: str | None
     failure_reason: str | None
     summary_feedback: str | None
+    pronunciation_evidence: PronunciationEvidence | None
     worker_revision: str | None
     pipeline_revision: str | None
     audio_sha256: str | None
@@ -346,6 +417,7 @@ class AnalysisWorkerResult:
             failure_code=code,
             failure_reason=reason,
             summary_feedback=None,
+            pronunciation_evidence=None,
             worker_revision=worker_revision,
             pipeline_revision=pipeline_revision,
             audio_sha256=None,
@@ -359,12 +431,28 @@ class AnalysisWorkerResult:
         request: AnalysisRequest,
         outcome: AnalysisOutcome,
         summary_feedback: str | None,
+        pronunciation_evidence: PronunciationEvidence | None,
         worker_revision: str,
         pipeline_revision: str,
         audio_sha256: str,
     ) -> "AnalysisWorkerResult":
-        if outcome is AnalysisOutcome.COACHING_READY and not summary_feedback:
-            raise ValueError("coaching-ready result requires grounded feedback")
+        if outcome not in {
+            AnalysisOutcome.COACHING_READY,
+            AnalysisOutcome.COMPLETED_NO_ISSUE,
+        }:
+            raise ValueError("result v2 outcome is unsupported")
+        if outcome is AnalysisOutcome.COACHING_READY and (
+            not summary_feedback or pronunciation_evidence is None
+        ):
+            raise ValueError(
+                "coaching-ready result requires grounded feedback and pronunciation evidence"
+            )
+        if outcome is not AnalysisOutcome.COACHING_READY and (
+            summary_feedback is not None or pronunciation_evidence is not None
+        ):
+            raise ValueError(
+                "non-coaching result must not carry pronunciation coaching evidence"
+            )
         if summary_feedback is not None:
             _text(summary_feedback, maximum=20_000)
         _sha256(audio_sha256)
@@ -377,6 +465,7 @@ class AnalysisWorkerResult:
             failure_code=None,
             failure_reason=None,
             summary_feedback=summary_feedback,
+            pronunciation_evidence=pronunciation_evidence,
             worker_revision=worker_revision,
             pipeline_revision=pipeline_revision,
             audio_sha256=audio_sha256,
@@ -407,6 +496,11 @@ class AnalysisWorkerResult:
             "strengthsText": None,
             "weaknessesText": None,
             "summaryFeedback": self.summary_feedback,
+            "pronunciationEvidence": (
+                self.pronunciation_evidence.to_payload()
+                if self.pronunciation_evidence is not None
+                else None
+            ),
             "workerRevision": self.worker_revision,
             "pipelineRevision": self.pipeline_revision,
             "audioSha256": self.audio_sha256,
