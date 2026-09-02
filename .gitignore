@@ -35,6 +35,11 @@
 **/logs/
 /vendor/
 
+# Developer-local agent rules and architecture working notes. These files are
+# provisioned outside a product clone and must not be committed by base CI.
+/.codex/
+/docs/architecture/
+
 # Local export bundles and detailed evaluation receipts may contain copied
 # dependencies, machine paths, or row-level review data.  Publish only a
 # sanitized aggregate receipt through artifacts/public/.
