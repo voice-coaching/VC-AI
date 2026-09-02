@@ -216,6 +216,7 @@ def test_result_is_written_before_ack_and_pending_message_is_reclaimed() -> None
         )
         assert recovered.poll_once(block_ms=0) == 1
         assert client.xpending(settings.request_stream, settings.consumer_group)["pending"] == 0
+        assert client.xlen(settings.request_stream) == 0
         assert client.xlen(settings.result_stream) == 1
         result = json.loads(client.xrange(settings.result_stream)[0][1][b"payload"])
         assert result["status"] == "COMPLETED"
@@ -235,6 +236,7 @@ def test_malformed_request_goes_to_dlq_and_is_acked() -> None:
 
         assert adapter.poll_once(block_ms=0) == 1
         assert client.xpending(settings.request_stream, settings.consumer_group)["pending"] == 0
+        assert client.xlen(settings.request_stream) == 0
         assert client.xlen(settings.result_stream) == 0
         entry = client.xrange(settings.request_dlq_stream)[0][1]
         assert entry[b"failureCode"] == b"analysis_request_contract_invalid"
@@ -256,6 +258,8 @@ def test_existing_cancellation_tombstone_suppresses_result_and_acks() -> None:
 
         assert adapter.poll_once(block_ms=0) == 1
         assert client.xpending(settings.request_stream, settings.consumer_group)["pending"] == 0
+        assert client.xlen(settings.request_stream) == 0
         assert client.xlen(settings.result_stream) == 0
+        assert client.exists(cancellation_key) == 0
     finally:
         client.delete(*streams, cancellation_key)

@@ -284,6 +284,7 @@ class RedisStreamWorker:
         return len(entries)
 
     def _publish_then_ack(self, message_id: object, fields: object) -> None:
+        cancellation_key: str | None = None
         payload = _payload_field(fields)
         if payload is None:
             self._publish_request_dlq(message_id, None, "analysis_request_payload_missing")
@@ -310,6 +311,7 @@ class RedisStreamWorker:
                     request_event_id=str(request.event_id),
                     cancel_current=self._worker.cancel_current,
                 )
+                cancellation_key = cancellation.key
                 result = None
                 with _ProcessingLease(
                     client=self._client,
@@ -329,11 +331,21 @@ class RedisStreamWorker:
                         allow_nan=False,
                     ).encode("utf-8")
                     self._publish_result_if_active(cancellation.key, encoded)
-        self._client.xack(
+        self._acknowledge_and_delete(message_id, cancellation_key)
+
+    def _acknowledge_and_delete(
+        self, message_id: object, cancellation_key: str | None
+    ) -> None:
+        acknowledged = self._client.eval(
+            _ACKNOWLEDGE_AND_DELETE_SCRIPT,
+            1,
             self._settings.request_stream,
             self._settings.consumer_group,
             message_id,
+            cancellation_key or "",
         )
+        if acknowledged != 1:
+            raise RuntimeError("analysis_request_acknowledgement_unconfirmed")
 
     def _publish_result_if_active(self, cancellation_key: str, payload: bytes) -> bool:
         published = self._client.eval(
@@ -429,6 +441,17 @@ if redis.call('EXISTS', KEYS[1]) == 1 then
 end
 redis.call('XADD', KEYS[2], '*', 'payload', ARGV[1])
 return 1
+"""
+
+_ACKNOWLEDGE_AND_DELETE_SCRIPT = """
+local acknowledged = redis.call('XACK', KEYS[1], ARGV[1], ARGV[2])
+if acknowledged == 1 then
+    redis.call('XDEL', KEYS[1], ARGV[2])
+    if ARGV[3] ~= '' then
+        redis.call('DEL', ARGV[3])
+    end
+end
+return acknowledged
 """
 
 

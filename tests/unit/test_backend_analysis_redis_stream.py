@@ -30,6 +30,7 @@ class _FakeRedis:
         self.exists_calls = 0
         self.cancel_after_exists_calls: int | None = None
         self.cancel_on_eval = False
+        self.deleted: list[tuple[object, object]] = []
 
     def xgroup_create(self, *args: object, **kwargs: object) -> object:
         del args, kwargs
@@ -74,7 +75,14 @@ class _FakeRedis:
         return int(str(key) in self.cancelled_keys)
 
     def eval(self, script: object, key_count: object, *args: object) -> int:
-        del script
+        if "XACK" in str(script):
+            assert key_count == 1
+            stream, group, message_id, cancellation_key = args
+            self.acked.append((stream, group, message_id))
+            self.deleted.append((stream, message_id))
+            if cancellation_key:
+                self.cancelled_keys.discard(str(cancellation_key))
+            return 1
         assert key_count == 2
         cancellation_key, result_stream, payload = args
         if self.cancel_on_eval:
@@ -222,6 +230,7 @@ def test_terminal_result_is_published_before_request_is_acknowledged() -> None:
         ("analysis:request:v1", "analysis-workers", "worker-1", 0)
     ]
     assert client.acked == [("analysis:request:v1", "analysis-workers", b"1-0")]
+    assert client.deleted == [("analysis:request:v1", b"1-0")]
 
 
 def test_malformed_request_is_dead_lettered_then_acknowledged() -> None:
@@ -234,6 +243,7 @@ def test_malformed_request_is_dead_lettered_then_acknowledged() -> None:
     assert client.added[0][1]["failureCode"] == "analysis_request_contract_invalid"
     assert client.added[0][2] == {"maxlen": 10_000, "approximate": True}
     assert client.acked == [("analysis:request:v1", "analysis-workers", b"1-0")]
+    assert client.deleted == [("analysis:request:v1", b"1-0")]
 
 
 def test_oversized_request_is_not_copied_into_the_bounded_dlq() -> None:
@@ -256,6 +266,7 @@ def test_oversized_request_is_not_copied_into_the_bounded_dlq() -> None:
         )
     ]
     assert client.acked == [("analysis:request:v1", "analysis-workers", b"1-0")]
+    assert client.deleted == [("analysis:request:v1", b"1-0")]
 
 
 def test_lost_processing_lease_never_publishes_or_acknowledges_result() -> None:
@@ -282,6 +293,8 @@ def test_existing_cancellation_tombstone_skips_work_and_acknowledges_request() -
 
     assert client.added == []
     assert client.acked == [("analysis:request:v1", "analysis-workers", b"1-0")]
+    assert client.deleted == [("analysis:request:v1", b"1-0")]
+    assert client.cancelled_keys == set()
 
 
 def test_atomic_publish_suppresses_result_when_cancellation_wins_the_race() -> None:
@@ -293,6 +306,8 @@ def test_atomic_publish_suppresses_result_when_cancellation_wins_the_race() -> N
 
     assert client.added == []
     assert client.acked == [("analysis:request:v1", "analysis-workers", b"1-0")]
+    assert client.deleted == [("analysis:request:v1", b"1-0")]
+    assert client.cancelled_keys == set()
 
 
 def test_running_analysis_is_interrupted_after_tombstone_arrives() -> None:
@@ -319,3 +334,5 @@ def test_running_analysis_is_interrupted_after_tombstone_arrives() -> None:
     assert worker.cancelled.is_set()
     assert client.added == []
     assert client.acked == [("analysis:request:v1", "analysis-workers", b"1-0")]
+    assert client.deleted == [("analysis:request:v1", b"1-0")]
+    assert client.cancelled_keys == set()

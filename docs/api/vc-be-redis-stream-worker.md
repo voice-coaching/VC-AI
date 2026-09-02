@@ -155,7 +155,7 @@ AWS SDK credentials use the normal boto3 credential chain. Do not place keys
 in the JSON request or a tracked `.env.local`. Run only after all settings and
 the approved frozen artifacts are present:
 
-The worker Redis ACL must permit its Stream commands plus `EXISTS` and `EVAL`.
+The worker Redis ACL must permit its Stream commands plus `EXISTS`, `DEL`, and `EVAL`.
 The Lua script is fixed in code and only atomically checks the opaque cancellation
 key before adding the bounded result payload; no operator-supplied script is accepted.
 
@@ -192,7 +192,10 @@ healthcheck never includes request IDs, object keys, endpoints, or exception tex
   The final tombstone check and result `XADD` run atomically in one Redis script, so a
   cancellation that wins that Redis ordering cannot race into a result publication.
 - It writes a terminal result before `XACK`; result publication failure leaves
-  the request pending for later `XAUTOCLAIM`.
+  the request pending for later `XAUTOCLAIM`. Once the durable handoff exists, a fixed
+  Lua script performs request `XACK` and `XDEL` together and removes any observed
+  cancellation tombstone. VC-BE retains the event-to-Stream-ID index until its
+  terminal DB-aware retention sweep proves that cleanup is safe.
 - Malformed requests enter the restricted request DLQ before ACK. Replay is a
   deliberate operator action using a new Stream entry.
 - Unit tests cover authorization-before-media, Java/Python canonical HMAC
