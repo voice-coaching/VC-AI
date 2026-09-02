@@ -83,6 +83,7 @@ def create_app(runtime: TransformersHyperClovaRuntime):  # noqa: ANN201
             "object": "chat.completion",
             "created": int(time.time()),
             "model": runtime.model_id,
+            "revision": runtime.revision,
             "choices": [
                 {
                     "index": 0,
@@ -98,7 +99,15 @@ def create_app(runtime: TransformersHyperClovaRuntime):  # noqa: ANN201
 def _parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--config", type=Path, default=DEFAULT_CONFIG)
-    parser.add_argument("--host", default="127.0.0.1", choices=("127.0.0.1", "localhost"))
+    parser.add_argument(
+        "--host",
+        default="127.0.0.1",
+        choices=("127.0.0.1", "localhost", "0.0.0.0"),
+        help=(
+            "bind address; 0.0.0.0 is reserved for a container whose published "
+            "host port is restricted to loopback"
+        ),
+    )
     parser.add_argument("--port", type=int, default=8000)
     parser.add_argument("--gpu-memory-gib", type=int, default=110)
     return parser

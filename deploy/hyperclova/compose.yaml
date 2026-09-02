@@ -1,0 +1,40 @@
+services:
+  hyperclova-grounded-advice:
+    build:
+      context: ../..
+      dockerfile: deploy/hyperclova/Dockerfile
+    image: intelligentai/hyperclova-grounded-advice:4.52.4
+    restart: unless-stopped
+    gpus: all
+    ports:
+      - "127.0.0.1:${HYPERCLOVA_PORT:-8000}:8000"
+    volumes:
+      - type: bind
+        source: ${HYPERCLOVA_MODEL_DIR:-../../data/models/hyperclovax-seed-think-32b/a6cdfd3464d1b767259cad23e164eaf39d3e3960}
+        target: /app/data/models/hyperclovax-seed-think-32b/a6cdfd3464d1b767259cad23e164eaf39d3e3960
+        read_only: true
+    environment:
+      HF_HOME: /tmp/huggingface
+      HF_HUB_OFFLINE: "1"
+      TRANSFORMERS_OFFLINE: "1"
+    read_only: true
+    tmpfs:
+      - /tmp:rw,noexec,nosuid,nodev,size=2g
+    cap_drop:
+      - ALL
+    security_opt:
+      - no-new-privileges:true
+    healthcheck:
+      test:
+        - CMD
+        - python3.12
+        - -c
+        - >-
+          import json,urllib.request;
+          value=json.load(urllib.request.urlopen('http://127.0.0.1:8000/health',timeout=2));
+          assert value['status']=='ready';
+          assert value['revision']=='a6cdfd3464d1b767259cad23e164eaf39d3e3960'
+      interval: 15s
+      timeout: 5s
+      retries: 5
+      start_period: 10m

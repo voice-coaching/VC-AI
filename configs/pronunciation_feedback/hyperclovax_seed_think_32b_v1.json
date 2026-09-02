@@ -11,7 +11,7 @@
     "defaultEndpoint": "http://127.0.0.1:8000/v1",
     "thinking": false,
     "temperature": 0,
-    "maximumNewTokens": 128,
+    "maximumNewTokens": 256,
     "externalNetworkAllowedAtInference": false,
     "python": "3.12",
     "torch": "2.12.1+cu130",

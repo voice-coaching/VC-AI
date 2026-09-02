@@ -56,3 +56,25 @@ def test_validated_request_preserves_messages_and_token_limit() -> None:
 def test_server_rejects_requests_outside_grounded_policy(overrides: dict) -> None:
     with pytest.raises(CoachingPayloadError):
         server._validated_request(_request(**overrides), expected_model=MODEL_ID)
+
+
+def test_server_completion_attests_the_loaded_revision() -> None:
+    class _Runtime:
+        loaded = True
+        model_id = MODEL_ID
+        revision = "a" * 40
+
+        @staticmethod
+        def complete(*, messages, maximum_new_tokens):  # noqa: ANN001, ANN202
+            assert messages
+            assert maximum_new_tokens == 128
+            return "{}"
+
+    app = server.create_app(_Runtime())
+    route = next(
+        route for route in app.routes if route.path == "/v1/chat/completions"
+    )
+    response = route.endpoint(_request())
+
+    assert response["model"] == MODEL_ID
+    assert response["revision"] == "a" * 40

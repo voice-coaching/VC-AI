@@ -13,13 +13,13 @@ from dataclasses import dataclass
 from enum import StrEnum
 import json
 import re
-from typing import Any
+from typing import Any, Mapping
 
 from .coaching_payload import CoachingPayloadError
 from .domain import DiagnosticIssueDraft, PromptSpec
 
-GROUNDED_INPUT_SCHEMA_VERSION = "voice_coach.grounded_advice_input.v2"
-GROUNDED_OUTPUT_SCHEMA_VERSION = "voice_coach.grounded_advice_output.v2"
+GROUNDED_INPUT_SCHEMA_VERSION = "voice_coach.grounded_advice_input.v3"
+GROUNDED_OUTPUT_SCHEMA_VERSION = "voice_coach.grounded_advice_output.v3"
 MAXIMUM_GROUNDED_MESSAGE_CHARACTERS = 600
 
 _SHA256 = re.compile(r"\b[0-9a-f]{64}\b")
@@ -45,6 +45,8 @@ class GroundedAdviceStyle(StrEnum):
 
     DIRECT = "direct"
     FOCUS = "focus"
+    SUPPORTIVE = "supportive"
+    CONCISE = "concise"
 
 
 class CandidateDisclosure(StrEnum):
@@ -56,13 +58,22 @@ class CandidateDisclosure(StrEnum):
 
 @dataclass(frozen=True, slots=True)
 class GroundedLocation:
-    """A phone or syllable location already decided before the LLM."""
+    """A phone or syllable location already decided before the LLM.
+
+    Phone locations also carry a host-authored learner anchor.  The LLM must
+    copy that anchor instead of guessing which repeated phone in the sentence
+    the detector selected.
+    """
 
     unit_type: str
     unit_index: int
     target_unit: str
-    start_ms: int
-    end_ms: int
+    start_ms: int | None
+    end_ms: int | None
+    syllable_index: int | None = None
+    syllable_unit: str | None = None
+    word_unit: str | None = None
+    learner_anchor: str | None = None
 
     def __post_init__(self) -> None:
         if self.unit_type not in {"phone", "syllable"}:
@@ -71,8 +82,34 @@ class GroundedLocation:
             raise CoachingPayloadError("unit_index must not be negative")
         if not self.target_unit:
             raise CoachingPayloadError("target_unit must not be empty")
-        if self.start_ms < 0 or self.end_ms <= self.start_ms:
+        if (self.start_ms is None) != (self.end_ms is None):
+            raise CoachingPayloadError("location time range must be paired")
+        if self.start_ms is not None and (
+            self.start_ms < 0 or self.end_ms <= self.start_ms
+        ):
             raise CoachingPayloadError("location must be a positive forward range")
+        text_context = (
+            self.syllable_index,
+            self.syllable_unit,
+            self.word_unit,
+            self.learner_anchor,
+        )
+        if any(item is not None for item in text_context) and not all(
+            item is not None for item in text_context
+        ):
+            raise CoachingPayloadError("location learner text context must be complete")
+        if self.syllable_index is not None:
+            if self.syllable_index < 0:
+                raise CoachingPayloadError("syllable_index must not be negative")
+            assert self.syllable_unit is not None
+            assert self.word_unit is not None
+            assert self.learner_anchor is not None
+            if not re.fullmatch(r"[가-힣]", self.syllable_unit):
+                raise CoachingPayloadError("syllable_unit must be one Hangul syllable")
+            if not self.word_unit or not self.learner_anchor:
+                raise CoachingPayloadError("location learner text must not be empty")
+            _assert_privacy_safe(self.word_unit, field="location word unit")
+            _assert_privacy_safe(self.learner_anchor, field="location learner anchor")
 
 
 @dataclass(frozen=True, slots=True)
@@ -128,6 +165,12 @@ class GroundedCoachingPayload:
             _assert_privacy_safe(value, field=name)
         if not self.approved_claims:
             raise CoachingPayloadError("grounded payload needs an approved claim")
+        if self.issue_type == "phone_pronunciation_error" and (
+            self.location is None or self.location.learner_anchor is None
+        ):
+            raise CoachingPayloadError(
+                "phone feedback requires an exact learner syllable anchor"
+            )
         decision_pair = (self.severity, self.confidence)
         detector_triple = (
             self.detector_score,
@@ -182,6 +225,10 @@ class GroundedCoachingPayload:
                 "targetUnit": self.location.target_unit,
                 "startMs": self.location.start_ms,
                 "endMs": self.location.end_ms,
+                "syllableIndex": self.location.syllable_index,
+                "syllableUnit": self.location.syllable_unit,
+                "wordUnit": self.location.word_unit,
+                "learnerAnchor": self.location.learner_anchor,
             }
         return {
             "schemaVersion": self.schema_version,
@@ -196,9 +243,7 @@ class GroundedCoachingPayload:
                 "evidenceState": self.evidence_state,
                 "technicalEvidence": {
                     "severity": (
-                        round(self.severity, 4)
-                        if self.severity is not None
-                        else None
+                        round(self.severity, 4) if self.severity is not None else None
                     ),
                     "confidence": (
                         round(self.confidence, 4)
@@ -244,6 +289,183 @@ class GroundedCoachingPayload:
             allow_nan=False,
         )
 
+    @classmethod
+    def from_json_object(cls, value: object) -> GroundedCoachingPayload:
+        """Strictly reconstruct a payload returned across an application boundary."""
+
+        if not isinstance(value, Mapping):
+            raise CoachingPayloadError("grounded payload must be an object")
+        required = {
+            "schemaVersion",
+            "task",
+            "targetText",
+            "issue",
+            "approvedGuidance",
+            "claimScope",
+            "constraints",
+        }
+        if set(value) != required:
+            raise CoachingPayloadError("grounded payload schema differs")
+        if value["task"] != "select_approved_pronunciation_feedback_plan":
+            raise CoachingPayloadError("grounded payload task differs")
+        issue = value["issue"]
+        guidance = value["approvedGuidance"]
+        constraints = value["constraints"]
+        if not isinstance(issue, Mapping) or set(issue) != {
+            "issueId",
+            "type",
+            "location",
+            "observedCandidate",
+            "observedCandidateState",
+            "evidenceState",
+            "technicalEvidence",
+        }:
+            raise CoachingPayloadError("grounded payload issue schema differs")
+        technical = issue["technicalEvidence"]
+        if not isinstance(technical, Mapping) or set(technical) != {
+            "severity",
+            "confidence",
+            "detectorScore",
+            "operatingThreshold",
+            "scoreSemantics",
+        }:
+            raise CoachingPayloadError(
+                "grounded payload technical evidence schema differs"
+            )
+        if not isinstance(guidance, Mapping) or set(guidance) != {
+            "adviceId",
+            "claims",
+        }:
+            raise CoachingPayloadError("grounded payload guidance schema differs")
+        expected_constraints = {
+            "mayAddIssue": False,
+            "mayAddPhone": False,
+            "mayAddLocation": False,
+            "mayAddScore": False,
+            "mayAddArticulationFact": False,
+            "maximumIssues": 1,
+        }
+        if constraints != expected_constraints:
+            raise CoachingPayloadError("grounded payload constraints differ")
+
+        raw_location = issue["location"]
+        location = None
+        if raw_location is not None:
+            if not isinstance(raw_location, Mapping) or set(raw_location) != {
+                "unitType",
+                "unitIndex",
+                "targetUnit",
+                "startMs",
+                "endMs",
+                "syllableIndex",
+                "syllableUnit",
+                "wordUnit",
+                "learnerAnchor",
+            }:
+                raise CoachingPayloadError("grounded payload location schema differs")
+            if (
+                not isinstance(raw_location["unitType"], str)
+                or not isinstance(raw_location["targetUnit"], str)
+                or isinstance(raw_location["unitIndex"], bool)
+                or not isinstance(raw_location["unitIndex"], int)
+            ):
+                raise CoachingPayloadError("grounded payload location value is invalid")
+            for field in ("startMs", "endMs", "syllableIndex"):
+                raw = raw_location[field]
+                if raw is not None and (
+                    isinstance(raw, bool) or not isinstance(raw, int)
+                ):
+                    raise CoachingPayloadError(
+                        "grounded payload location value is invalid"
+                    )
+            for field in ("syllableUnit", "wordUnit", "learnerAnchor"):
+                raw = raw_location[field]
+                if raw is not None and not isinstance(raw, str):
+                    raise CoachingPayloadError(
+                        "grounded payload location value is invalid"
+                    )
+            location = GroundedLocation(
+                unit_type=raw_location["unitType"],
+                unit_index=raw_location["unitIndex"],
+                target_unit=raw_location["targetUnit"],
+                start_ms=raw_location["startMs"],
+                end_ms=raw_location["endMs"],
+                syllable_index=raw_location["syllableIndex"],
+                syllable_unit=raw_location["syllableUnit"],
+                word_unit=raw_location["wordUnit"],
+                learner_anchor=raw_location["learnerAnchor"],
+            )
+
+        raw_claims = guidance["claims"]
+        if not isinstance(raw_claims, list) or not raw_claims:
+            raise CoachingPayloadError("grounded payload claims must be an array")
+        claims: list[ApprovedAdviceClaim] = []
+        for raw_claim in raw_claims:
+            if not isinstance(raw_claim, Mapping) or set(raw_claim) != {
+                "claimId",
+                "text",
+            }:
+                raise CoachingPayloadError("grounded payload claim schema differs")
+            if not isinstance(raw_claim["claimId"], str) or not isinstance(
+                raw_claim["text"], str
+            ):
+                raise CoachingPayloadError("grounded payload claim value is invalid")
+            claims.append(
+                ApprovedAdviceClaim(
+                    claim_id=raw_claim["claimId"],
+                    text=raw_claim["text"],
+                )
+            )
+
+        def optional_float(field: str) -> float | None:
+            raw = technical[field]
+            if raw is None:
+                return None
+            if isinstance(raw, bool) or not isinstance(raw, int | float):
+                raise CoachingPayloadError(
+                    f"grounded payload {field} must be numeric or null"
+                )
+            return float(raw)
+
+        string_fields = {
+            "schemaVersion": value["schemaVersion"],
+            "targetText": value["targetText"],
+            "issueId": issue["issueId"],
+            "type": issue["type"],
+            "observedCandidateState": issue["observedCandidateState"],
+            "evidenceState": issue["evidenceState"],
+            "adviceId": guidance["adviceId"],
+            "claimScope": value["claimScope"],
+        }
+        if any(not isinstance(item, str) for item in string_fields.values()):
+            raise CoachingPayloadError("grounded payload string field has a wrong type")
+        observed = issue["observedCandidate"]
+        if observed is not None and not isinstance(observed, str):
+            raise CoachingPayloadError("grounded payload candidate has a wrong type")
+        score_semantics = technical["scoreSemantics"]
+        if score_semantics is not None and not isinstance(score_semantics, str):
+            raise CoachingPayloadError(
+                "grounded payload score semantics has a wrong type"
+            )
+        return cls(
+            schema_version=string_fields["schemaVersion"],
+            target_text=string_fields["targetText"],
+            issue_id=string_fields["issueId"],
+            issue_type=string_fields["type"],
+            location=location,
+            observed_candidate=observed,
+            observed_candidate_state=string_fields["observedCandidateState"],
+            evidence_state=string_fields["evidenceState"],
+            severity=optional_float("severity"),
+            confidence=optional_float("confidence"),
+            detector_score=optional_float("detectorScore"),
+            operating_threshold=optional_float("operatingThreshold"),
+            score_semantics=score_semantics,
+            advice_id=string_fields["adviceId"],
+            approved_claims=tuple(claims),
+            claim_scope=string_fields["claimScope"],
+        )
+
 
 @dataclass(frozen=True, slots=True)
 class GroundedAdvicePlan:
@@ -256,6 +478,7 @@ class GroundedAdvicePlan:
     selected_claim_ids: tuple[str, ...]
     style: GroundedAdviceStyle
     candidate_disclosure: CandidateDisclosure
+    learner_message: str | None = None
 
 
 def _assert_privacy_safe(value: str, *, field: str) -> None:
@@ -346,12 +569,13 @@ def parse_grounded_advice_plan(raw: str) -> GroundedAdvicePlan:
         "selectedClaimIds",
         "style",
         "candidateDisclosure",
+        "learnerMessage",
     }
     if set(document) != required:
         raise CoachingPayloadError("grounded generator response schema differs")
     if not all(
         isinstance(document[key], str)
-        for key in required - {"selectedClaimIds"}
+        for key in required - {"selectedClaimIds", "learnerMessage"}
     ):
         raise CoachingPayloadError("grounded generator string field has a wrong type")
     selected = document["selectedClaimIds"]
@@ -359,6 +583,9 @@ def parse_grounded_advice_plan(raw: str) -> GroundedAdvicePlan:
         isinstance(item, str) and item for item in selected
     ):
         raise CoachingPayloadError("selectedClaimIds must be a string array")
+    learner_message = document["learnerMessage"]
+    if learner_message is not None and not isinstance(learner_message, str):
+        raise CoachingPayloadError("learnerMessage must be a string or null")
     try:
         return GroundedAdvicePlan(
             schema_version=document["schemaVersion"],
@@ -367,12 +594,13 @@ def parse_grounded_advice_plan(raw: str) -> GroundedAdvicePlan:
             advice_id=document["adviceId"],
             selected_claim_ids=tuple(selected),
             style=GroundedAdviceStyle(document["style"]),
-            candidate_disclosure=CandidateDisclosure(
-                document["candidateDisclosure"]
-            ),
+            candidate_disclosure=CandidateDisclosure(document["candidateDisclosure"]),
+            learner_message=learner_message,
         )
     except ValueError as error:
-        raise CoachingPayloadError("grounded generator enum value is invalid") from error
+        raise CoachingPayloadError(
+            "grounded generator enum value is invalid"
+        ) from error
 
 
 def validate_grounded_advice_plan(
@@ -391,15 +619,66 @@ def validate_grounded_advice_plan(
         if plan.selected_claim_ids:
             raise CoachingPayloadError("an abstained plan must not select claims")
         if plan.candidate_disclosure is not CandidateDisclosure.OMIT:
-            raise CoachingPayloadError("an abstained plan must omit candidate disclosure")
+            raise CoachingPayloadError(
+                "an abstained plan must omit candidate disclosure"
+            )
+        if plan.learner_message is not None:
+            raise CoachingPayloadError("an abstained plan must omit learner message")
         return plan
-    if not plan.selected_claim_ids or not set(plan.selected_claim_ids) <= allowed:
-        raise CoachingPayloadError("grounded output selects an unapproved claim")
+    if set(plan.selected_claim_ids) != allowed:
+        raise CoachingPayloadError("grounded output must preserve every approved claim")
     if (
         plan.candidate_disclosure is CandidateDisclosure.MODEL_CANDIDATE
         and payload.observed_candidate is None
     ):
         raise CoachingPayloadError("grounded output invents an observed candidate")
+    if plan.learner_message is not None:
+        message = plan.learner_message.strip()
+        if not 40 <= len(message) <= MAXIMUM_GROUNDED_MESSAGE_CHARACTERS:
+            raise CoachingPayloadError("learner message length is outside policy")
+        if any(
+            term in message.lower()
+            for term in (
+                "detector",
+                "threshold",
+                "score",
+                "confidence",
+                "schema",
+                "claimid",
+            )
+        ):
+            raise CoachingPayloadError("learner message exposes internal terminology")
+        if payload.location is not None and (
+            payload.location.target_unit not in message
+        ):
+            raise CoachingPayloadError("learner message omits the target unit")
+        if (
+            payload.location is not None
+            and payload.location.learner_anchor is not None
+            and payload.location.learner_anchor not in message
+        ):
+            raise CoachingPayloadError(
+                "learner message omits the exact syllable anchor"
+            )
+        if (
+            any("원래 속도" in claim.text for claim in payload.approved_claims)
+            and "빠르게" in message
+        ):
+            raise CoachingPayloadError(
+                "learner message changes original speed to faster speech"
+            )
+        if (
+            plan.candidate_disclosure is CandidateDisclosure.MODEL_CANDIDATE
+            and payload.observed_candidate is not None
+            and (
+                payload.observed_candidate not in message
+                or not any(
+                    marker in message for marker in ("가능", "확정", "추정", "단정")
+                )
+            )
+        ):
+            raise CoachingPayloadError("learner message omits candidate uncertainty")
+        _assert_privacy_safe(message, field="learner message")
     return plan
 
 
@@ -411,6 +690,8 @@ def render_grounded_advice_message(
     validated = validate_grounded_advice_plan(payload=payload, plan=plan)
     if validated.status is GroundedPlanStatus.ABSTAINED:
         raise CoachingPayloadError("an abstained plan has no learner message")
+    if validated.learner_message is not None:
+        return validated.learner_message.strip()
     claims = {item.claim_id: item.text for item in payload.approved_claims}
     parts: list[str] = []
     target = payload.location.target_unit if payload.location is not None else None

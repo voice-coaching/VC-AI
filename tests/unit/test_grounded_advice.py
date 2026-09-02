@@ -19,6 +19,7 @@ from voice_coach.pronunciation_feedback.grounded_advice import (
     CandidateDisclosure,
     GroundedAdvicePlan,
     GroundedAdviceStyle,
+    GroundedLocation,
     GroundedPlanStatus,
     build_grounded_coaching_payload,
     parse_grounded_advice_plan,
@@ -108,6 +109,22 @@ def test_grounded_payload_exposes_only_approved_claim_and_bounded_candidate() ->
         assert forbidden not in serialized
 
 
+def test_grounded_payload_strict_round_trip() -> None:
+    payload = _payload()
+
+    assert type(payload).from_json_object(payload.to_json_object()) == payload
+
+    changed = payload.to_json_object()
+    changed["constraints"] = {**changed["constraints"], "mayAddPhone": True}
+    with pytest.raises(CoachingPayloadError, match="constraints differ"):
+        type(payload).from_json_object(changed)
+
+    changed = payload.to_json_object()
+    changed["issue"]["location"]["unitIndex"] = "0"
+    with pytest.raises(CoachingPayloadError, match="location value"):
+        type(payload).from_json_object(changed)
+
+
 def test_candidate_is_omitted_without_one_unambiguous_safe_evidence_value() -> None:
     ambiguous = _payload(
         issue=_issue(("heard_syllable=사", "heard_syllable=쌀", "gop_low"))
@@ -127,6 +144,10 @@ def test_response_parser_rejects_fences_prose_and_extra_fields() -> None:
         "selectedClaimIds": [CLAIM_ID],
         "style": "direct",
         "candidateDisclosure": "omit",
+        "learnerMessage": (
+            "이번에는 ‘쌀’의 받침을 끝까지 유지해 보세요. "
+            "천천히 한 번 말한 뒤 원래 속도로 다시 녹음해 비교해 보세요."
+        ),
     }
 
     assert parse_grounded_advice_plan(json.dumps(valid)).advice_id == ADVICE_ID
@@ -139,7 +160,7 @@ def test_response_parser_rejects_fences_prose_and_extra_fields() -> None:
 def test_plan_cannot_select_an_unknown_claim_or_invent_a_candidate() -> None:
     payload = _payload(issue=_issue(("gop_low",)))
 
-    with pytest.raises(CoachingPayloadError, match="unapproved claim"):
+    with pytest.raises(CoachingPayloadError, match="every approved claim"):
         validate_grounded_advice_plan(
             payload=payload,
             plan=_plan(
@@ -158,6 +179,104 @@ def test_renderer_uses_exact_claim_and_labels_candidate_as_non_ground_truth() ->
     assert "‘쌀’" in message and "‘사’" in message
     assert "확정한 전사가 아닙니다" in message
     assert "집중" in message
+
+
+def test_renderer_uses_validated_plain_language_learner_message() -> None:
+    learner_message = (
+        "이번에는 ‘쌀’의 받침을 끝까지 유지하는 데 집중해 보세요. "
+        "분석에서 ‘사’처럼 나타날 가능성이 있었지만 확정된 결과는 아니에요. "
+        "천천히 한 번 말한 뒤 원래 속도로 다시 녹음해 비교해 보세요."
+    )
+
+    message = render_grounded_advice_message(
+        payload=_payload(),
+        plan=_plan(
+            style=GroundedAdviceStyle.SUPPORTIVE,
+            learner_message=learner_message,
+        ),
+    )
+
+    assert message == learner_message
+
+
+def test_learner_message_rejects_internal_jargon_and_missing_target() -> None:
+    with pytest.raises(CoachingPayloadError, match="internal terminology"):
+        validate_grounded_advice_plan(
+            payload=_payload(),
+            plan=_plan(
+                learner_message=(
+                    "‘쌀’ 발음의 detector score가 기준보다 낮습니다. "
+                    "천천히 다시 말한 뒤 녹음해 비교해 보세요."
+                )
+            ),
+        )
+
+
+def test_learner_message_requires_disclosed_candidate_uncertainty() -> None:
+    with pytest.raises(CoachingPayloadError, match="candidate uncertainty"):
+        validate_grounded_advice_plan(
+            payload=_payload(),
+            plan=_plan(
+                learner_message=(
+                    "이번에는 ‘쌀’의 받침을 끝까지 유지해 보세요. "
+                    "천천히 한 번 말한 뒤 원래 속도로 다시 녹음해 비교해 보세요."
+                )
+            ),
+        )
+
+
+def test_learner_message_may_not_turn_original_speed_into_fast_speech() -> None:
+    payload = _payload(advice_message="천천히 말한 뒤 원래 속도로 다시 말해 보세요.")
+    with pytest.raises(CoachingPayloadError, match="faster speech"):
+        validate_grounded_advice_plan(
+            payload=payload,
+            plan=_plan(
+                learner_message=(
+                    "이번에는 ‘쌀’의 받침을 천천히 확인해 보세요. "
+                    "마지막에는 빠르게 말하고 다시 녹음해 비교해 보세요."
+                )
+            ),
+        )
+    with pytest.raises(CoachingPayloadError, match="omits the target unit"):
+        validate_grounded_advice_plan(
+            payload=_payload(),
+            plan=_plan(
+                learner_message=(
+                    "이번 발음은 조금 더 또렷하게 연습하면 좋아요. "
+                    "천천히 한 번 말한 뒤 원래 속도로 다시 녹음해 비교해 보세요."
+                )
+            ),
+        )
+
+
+def test_phone_learner_message_must_name_the_exact_word_and_syllable() -> None:
+    payload = replace(
+        _payload(),
+        issue_type="phone_pronunciation_error",
+        location=GroundedLocation(
+            unit_type="phone",
+            unit_index=9,
+            target_unit="ㅅ",
+            start_ms=2652,
+            end_ms=2673,
+            syllable_index=3,
+            syllable_unit="끗",
+            word_unit="깨끗이",
+            learner_anchor="‘깨끗이’의 두 번째 음절 ‘끗’",
+        ),
+    )
+
+    with pytest.raises(CoachingPayloadError, match="exact syllable anchor"):
+        validate_grounded_advice_plan(
+            payload=payload,
+            plan=_plan(
+                candidate_disclosure=CandidateDisclosure.OMIT,
+                learner_message=(
+                    "‘쌀을 깨끗이 씻어요’에서 ‘ㅅ’ 소리를 연습해 보세요. "
+                    "천천히 한 번 말한 뒤 원래 속도로 다시 녹음해 보세요."
+                ),
+            ),
+        )
 
 
 def test_abstention_has_no_message_and_fails_to_catalog_boundary() -> None:
