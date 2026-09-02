@@ -97,6 +97,9 @@ class _Authorizer:
 class _ObjectStore:
     def __init__(self) -> None:
         self.calls = 0
+        self.visual_calls = 0
+        self.audio: MaterializedAudio | None = None
+        self.visual_request: AnalysisRequest | None = None
 
     @contextmanager
     def materialize(
@@ -104,17 +107,20 @@ class _ObjectStore:
     ):
         del request, authorization
         self.calls += 1
-        yield MaterializedAudio(
+        self.audio = MaterializedAudio(
             path=Path("/restricted/attempt.wav"),
             byte_count=1234,
             sha256="a" * 64,
         )
+        yield self.audio
 
     @contextmanager
     def materialize_visual(
         self, request: AnalysisRequest, authorization: AnalysisAuthorization
     ):
-        del request, authorization
+        del authorization
+        self.visual_calls += 1
+        self.visual_request = request
         yield type(
             "MaterializedVideoStub",
             (),
@@ -341,9 +347,15 @@ def test_visual_supplement_cannot_change_seungun_selected_phone() -> None:
         }
     )
     request = AnalysisRequest.from_payload(payload)
+    store = _ObjectStore()
 
     class _Visual:
         def analyze(self, **kwargs: object) -> VisualSupplement:
+            assert kwargs["request"] is request
+            assert kwargs["request"] is store.visual_request
+            assert kwargs["audio"] is store.audio
+            assert kwargs["audio"].sha256 == request.audio_sha256  # type: ignore[union-attr]
+            assert kwargs["video"].sha256 == request.visual_input.sha256  # type: ignore[union-attr]
             assert kwargs["seungun"].pronunciation_evidence.selected_expected_index == 0  # type: ignore[union-attr]
             return VisualSupplement(
                 selected_expected_index=0,
@@ -356,13 +368,14 @@ def test_visual_supplement_cannot_change_seungun_selected_phone() -> None:
 
     result = BackendAnalysisWorker(
         authorization=_Authorizer(_authorization()),
-        object_store=_ObjectStore(),
+        object_store=store,
         seungun=_Seungun(),
         visual=_Visual(),
         event_id_factory=lambda: _RESULT_EVENT_ID,
         clock=lambda: _NOW,
     ).process(request).to_payload()
 
+    assert result["requestEventId"] == str(request.event_id)
     assert result["pronunciationEvidence"]["selectedExpectedIndex"] == 0  # type: ignore[index]
     assert result["visualSupplement"] == {
         "schemaVersion": "voice-coaching.visual-supplement.v1",
@@ -373,3 +386,4 @@ def test_visual_supplement_cannot_change_seungun_selected_phone() -> None:
         "upstreamPhoneAnchorRef": "f" * 64,
         "supplementSha256": "1" * 64,
     }
+    assert store.visual_calls == 1

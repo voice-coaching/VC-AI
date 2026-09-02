@@ -118,6 +118,57 @@ def test_projects_only_approved_same_attempt_action(monkeypatch, tmp_path: Path)
     assert captured["build"]["seungun_runtime_port"] is not None  # type: ignore[index]
 
 
+def test_cross_attempt_visual_digest_never_reaches_the_facade(
+    monkeypatch, tmp_path: Path
+) -> None:
+    landmark = tmp_path / "face_landmarker.task"
+    landmark.write_bytes(b"pinned-test-model")
+    monkeypatch.setattr(
+        visual_module,
+        "load_production_visual_release",
+        lambda path: SimpleNamespace(status="enabled"),
+    )
+    monkeypatch.setattr(
+        visual_module,
+        "build_local_video_attempt_facade",
+        lambda **kwargs: pytest.fail("cross-attempt visual reached facade"),
+    )
+    request = _visual_request()
+    analysis = SeungunAnalysis(
+        outcome=AnalysisOutcome.COACHING_READY,
+        summary_feedback="근거 기반 피드백",
+        pronunciation_evidence=PronunciationEvidence(
+            selected_phone="ㄱ",
+            selected_expected_index=0,
+            selected_start_ms=100,
+            selected_end_ms=200,
+            detector_score=0.91,
+            operating_threshold=0.8,
+            score_semantics="detector_ranking_score_not_calibrated_correctness_confidence",
+            evidence_state="frozen_detector_threshold_passed",
+        ),
+        pipeline_revision="pipeline-v1",
+    )
+    adapter = ProductionBackendVisualAnalysisAdapter(
+        BackendVisualSettings(
+            repository_root=tmp_path,
+            workspace_root=tmp_path / "visual-workspace",
+            nltk_data_root=tmp_path,
+            landmark_model_path=landmark,
+            production_release_root=tmp_path / "release",
+        )
+    )
+
+    supplement = adapter.analyze(
+        request=request,
+        audio=MaterializedAudio(tmp_path / "audio.wav", 4, "a" * 64),
+        video=MaterializedVideo(tmp_path / "video.mp4", 12, "c" * 64),
+        seungun=analysis,
+    )
+
+    assert supplement is None
+
+
 def test_rejects_symlinked_visual_workspace(monkeypatch, tmp_path: Path) -> None:
     landmark = tmp_path / "face_landmarker.task"
     landmark.write_bytes(b"pinned-test-model")

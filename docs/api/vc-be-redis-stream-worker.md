@@ -81,6 +81,14 @@ The built-in production composition is
    same selected index is emitted as `visualSupplement`; failure or uncertainty
    leaves the visual field absent without changing the audio result.
 
+VC-BE may accept H.264/HEVC QuickTime or MP4 and VP8/VP9 WebM uploads, but the worker
+receives only the backend canonical MP4 contract: exactly one H.264-or-HEVC video
+stream and one AAC audio stream. Real ffmpeg tests decode bounded RGB frames and
+derive PCM from both canonical codecs. The request object, materialized audio digest,
+materialized video digest, Seungun selected index, and result `requestEventId` are
+checked as one lineage; a cross-attempt visual digest is dropped before the visual
+facade and cannot change the audio result.
+
 `COACHING_READY` includes a `voice-coaching.pronunciation-evidence.v1` object
 containing the same-attempt Seungun-selected phone, expected-phone index, optional
 time window, threshold-passed detector ranking score and its explicit non-confidence
@@ -206,8 +214,13 @@ healthcheck never includes request IDs, object keys, endpoints, or exception tex
   deliberate operator action using a new Stream entry.
 - Unit tests cover authorization-before-media, Java/Python canonical HMAC
   parity, restricted storage cleanup, warm-process reuse/recycle/timeout,
+  H.264/HEVC canonical MP4 RGB/PCM decoding, same-attempt visual lineage,
   one-call Seungun ownership, and all
   failure mappings.
+- An approved private device capture can be checked without copying it into Git:
+  `VOICE_COACH_PRIVATE_VIDEO_SAMPLE=/private/path/capture.mp4 .venv/bin/python -m pytest -q tests/unit/test_ffmpeg_av_container.py`.
+  The current local smoke passed for one HEVC/AAC portrait capture. It is evidence for
+  that file and host ffmpeg build only, not a general device-compatibility claim.
 - A synthetic TLS Redis integration test covers real redis-py list-shaped
   replies, result-before-ACK, PEL reclaim and malformed-request DLQ. It is
   skipped unless `AI_TEST_REDIS_*` variables name an ephemeral test broker.

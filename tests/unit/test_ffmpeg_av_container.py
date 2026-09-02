@@ -4,6 +4,7 @@ from __future__ import annotations
 
 from datetime import UTC, datetime, timedelta
 import hashlib
+import os
 from pathlib import Path
 import shutil
 import stat
@@ -194,6 +195,44 @@ def test_hevc_aac_mp4_is_explicitly_allowlisted(tmp_path: Path) -> None:
         frame_count=3,
     )
     assert len(sample.frames) == 3
+    audio = adapter.extract_embedded_audio(asset, _container_policy())
+    assert audio.derivation_receipt.container_sha256 == asset.container_sha256
+    assert audio.derivation_receipt.pcm_sha256
+    store.delete(asset)
+
+
+@pytest.mark.skipif(not HAS_FFMPEG, reason="local ffmpeg/ffprobe required")
+@pytest.mark.skipif(
+    not os.environ.get("VOICE_COACH_PRIVATE_VIDEO_SAMPLE"),
+    reason="approved private device sample was not supplied",
+)
+def test_approved_private_device_capture_keeps_one_container_lineage(
+    tmp_path: Path,
+) -> None:
+    source = Path(os.environ["VOICE_COACH_PRIVATE_VIDEO_SAMPLE"]).resolve(strict=True)
+    store, asset = _admit(tmp_path, source)
+    adapter = FfmpegAvContainerAdapter(store)
+    policy = _container_policy(
+        maximum_duration_ms=5_000,
+        maximum_width=1_920,
+        maximum_height=1_920,
+        maximum_frame_count=200,
+        maximum_rgb_sample_bytes=20_000_000,
+        maximum_pcm_bytes=200_000,
+        subprocess_timeout_seconds=20.0,
+    )
+
+    probe = adapter.probe(asset, policy)
+    sample = adapter.decode_rgb24_sample(asset, policy, frame_count=3)
+    audio = adapter.extract_embedded_audio(asset, policy)
+
+    assert probe.container_sha256 == asset.container_sha256
+    assert sample.container_sha256 == asset.container_sha256
+    assert audio.derivation_receipt.container_sha256 == asset.container_sha256
+    assert sample.asset_handle_id == asset.handle_id
+    assert audio.asset_handle_id == asset.handle_id
+    assert probe.video_stream.codec_name in {"h264", "hevc"}
+    assert probe.audio_stream.codec_name == "aac"
     store.delete(asset)
 
 
