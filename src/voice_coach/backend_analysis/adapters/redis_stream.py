@@ -40,6 +40,10 @@ class _RedisClient(Protocol):
 
     def xclaim(self, *args: object, **kwargs: object) -> object: ...
 
+    def exists(self, *args: object, **kwargs: object) -> object: ...
+
+    def eval(self, *args: object, **kwargs: object) -> object: ...
+
 
 class RedisStreamSettings:
     """Environment-only Stream configuration with no URL-shaped secret."""
@@ -65,6 +69,8 @@ class RedisStreamSettings:
         maximum_request_payload_bytes: int = 64 * 1024,
         maximum_dlq_entries: int = 10_000,
         processing_heartbeat_interval_seconds: float = 60.0,
+        cancellation_key_prefix: str = "analysis:canceled:v1:",
+        cancellation_poll_interval_seconds: float = 0.25,
     ) -> None:
         if (
             not host
@@ -87,6 +93,14 @@ class RedisStreamSettings:
             or not math.isfinite(processing_heartbeat_interval_seconds)
             or not 0.1 <= processing_heartbeat_interval_seconds <= 300
             or processing_heartbeat_interval_seconds * 1000 >= claim_idle_ms
+            or not cancellation_key_prefix.endswith(":")
+            or len(cancellation_key_prefix) > 100
+            or any(
+                character not in "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789:_-"
+                for character in cancellation_key_prefix
+            )
+            or not math.isfinite(cancellation_poll_interval_seconds)
+            or not 0.05 <= cancellation_poll_interval_seconds <= 5
             or (
                 ca_cert_path is not None
                 and (
@@ -114,6 +128,8 @@ class RedisStreamSettings:
         self.maximum_request_payload_bytes = maximum_request_payload_bytes
         self.maximum_dlq_entries = maximum_dlq_entries
         self.processing_heartbeat_interval_seconds = processing_heartbeat_interval_seconds
+        self.cancellation_key_prefix = cancellation_key_prefix
+        self.cancellation_poll_interval_seconds = cancellation_poll_interval_seconds
 
     @classmethod
     def from_environment(cls, environment: dict[str, str] | None = None) -> "RedisStreamSettings":
@@ -138,6 +154,9 @@ class RedisStreamSettings:
             )
             processing_heartbeat_interval = float(
                 env.get("AI_ANALYSIS_PROCESSING_HEARTBEAT_INTERVAL_SECONDS", "60")
+            )
+            cancellation_poll_interval = float(
+                env.get("AI_ANALYSIS_CANCELLATION_POLL_INTERVAL_SECONDS", "0.25")
             )
             password = secret_text(
                 env,
@@ -166,6 +185,10 @@ class RedisStreamSettings:
             maximum_request_payload_bytes=maximum_payload,
             maximum_dlq_entries=maximum_dlq_entries,
             processing_heartbeat_interval_seconds=processing_heartbeat_interval,
+            cancellation_key_prefix=env.get(
+                "AI_ANALYSIS_CANCELLATION_KEY_PREFIX", "analysis:canceled:v1:"
+            ),
+            cancellation_poll_interval_seconds=cancellation_poll_interval,
         )
 
 
@@ -281,26 +304,51 @@ class RedisStreamWorker:
                     "analysis_request_contract_invalid",
                 )
             else:
+                cancellation = _CancellationMonitor(
+                    client=self._client,
+                    settings=self._settings,
+                    request_event_id=str(request.event_id),
+                    cancel_current=self._worker.cancel_current,
+                )
+                result = None
                 with _ProcessingLease(
                     client=self._client,
                     settings=self._settings,
                     message_id=message_id,
-                ) as lease:
-                    result = self._worker.process(request)
+                ) as lease, cancellation:
+                    if not cancellation.cancelled:
+                        result = self._worker.process(request)
                     lease.refresh_now()
-                encoded = json.dumps(
-                    result.to_payload(),
-                    ensure_ascii=False,
-                    sort_keys=True,
-                    separators=(",", ":"),
-                    allow_nan=False,
-                ).encode("utf-8")
-                self._client.xadd(self._settings.result_stream, {"payload": encoded})
+                    cancellation.refresh_now()
+                if result is not None and not cancellation.cancelled:
+                    encoded = json.dumps(
+                        result.to_payload(),
+                        ensure_ascii=False,
+                        sort_keys=True,
+                        separators=(",", ":"),
+                        allow_nan=False,
+                    ).encode("utf-8")
+                    self._publish_result_if_active(cancellation.key, encoded)
         self._client.xack(
             self._settings.request_stream,
             self._settings.consumer_group,
             message_id,
         )
+
+    def _publish_result_if_active(self, cancellation_key: str, payload: bytes) -> bool:
+        published = self._client.eval(
+            _PUBLISH_RESULT_IF_ACTIVE_SCRIPT,
+            2,
+            cancellation_key,
+            self._settings.result_stream,
+            payload,
+        )
+        if published == 1:
+            return True
+        if published == 0:
+            self._worker.cancel_current()
+            return False
+        raise RuntimeError("analysis_result_atomic_publish_failed")
 
     def _publish_request_dlq(
         self, message_id: object, payload: bytes | None, failure_code: str
@@ -373,6 +421,77 @@ class _ProcessingLease:
                 # The final synchronous refresh is authoritative. A transient
                 # failure here never ACKs or publishes by itself.
                 continue
+
+
+_PUBLISH_RESULT_IF_ACTIVE_SCRIPT = """
+if redis.call('EXISTS', KEYS[1]) == 1 then
+    return 0
+end
+redis.call('XADD', KEYS[2], '*', 'payload', ARGV[1])
+return 1
+"""
+
+
+class _CancellationMonitor:
+    """Observe a shared tombstone and interrupt the active model process."""
+
+    def __init__(
+        self,
+        *,
+        client: _RedisClient,
+        settings: RedisStreamSettings,
+        request_event_id: str,
+        cancel_current: object,
+    ) -> None:
+        self._client = client
+        self._interval = settings.cancellation_poll_interval_seconds
+        self._cancel_current = cancel_current
+        self.key = settings.cancellation_key_prefix + request_event_id
+        self._stop = threading.Event()
+        self._cancelled = threading.Event()
+        self._thread: threading.Thread | None = None
+
+    @property
+    def cancelled(self) -> bool:
+        return self._cancelled.is_set()
+
+    def __enter__(self) -> "_CancellationMonitor":
+        self.refresh_now()
+        if not self.cancelled:
+            self._thread = threading.Thread(
+                target=self._watch,
+                name="analysis-cancellation-monitor",
+                daemon=True,
+            )
+            self._thread.start()
+        return self
+
+    def __exit__(self, _type: object, _value: object, _traceback: object) -> None:
+        self._stop.set()
+        if self._thread is not None:
+            self._thread.join(timeout=1.0)
+
+    def refresh_now(self) -> None:
+        try:
+            exists = self._client.exists(self.key)
+        except Exception:
+            raise RuntimeError("analysis_cancellation_check_failed") from None
+        if exists not in (0, 1, False, True):
+            raise RuntimeError("analysis_cancellation_check_failed")
+        if bool(exists) and not self._cancelled.is_set():
+            self._cancelled.set()
+            cancel = self._cancel_current
+            if callable(cancel):
+                cancel()
+
+    def _watch(self) -> None:
+        while not self._stop.wait(self._interval):
+            try:
+                self.refresh_now()
+            except RuntimeError:
+                continue
+            if self.cancelled:
+                return
 
 
 def _payload_field(fields: object) -> bytes | None:

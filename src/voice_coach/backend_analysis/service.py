@@ -185,3 +185,11 @@ class BackendAnalysisWorker:
         close = getattr(self._seungun, "close", None)
         if callable(close):
             close()
+
+    def cancel_current(self) -> None:
+        """Best-effort interrupt for an externally revoked request generation."""
+
+        for component in (self._seungun, self._visual):
+            cancel = getattr(component, "cancel_current", None)
+            if callable(cancel):
+                cancel()

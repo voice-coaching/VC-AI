@@ -284,6 +284,11 @@ class SeungunBackendAnalysisAdapter:
         if callable(close):
             close()
 
+    def cancel_current(self) -> None:
+        cancel = getattr(self._detector, "cancel_current", None)
+        if callable(cancel):
+            cancel()
+
 
 def _analysis_snapshot(value: object) -> dict[str, object]:
     try:

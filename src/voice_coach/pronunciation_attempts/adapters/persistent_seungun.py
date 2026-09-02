@@ -174,6 +174,13 @@ class PersistentIsolatedFrozenSeungunDetectorAdapter:
         with self._lock:
             self._terminate()
 
+    def cancel_current(self) -> None:
+        """Interrupt the current inference without waiting for its request lock."""
+
+        process = self._process
+        if process is not None and process.poll() is None:
+            terminate_isolated_process(process)
+
     def _ensure_started(self) -> None:
         if (
             self._process is not None

@@ -77,6 +77,12 @@ class _FailResultOnce:
             raise ConnectionError("synthetic result publication failure")
         return self._client.xadd(stream, fields)
 
+    def eval(self, script: object, key_count: object, *args: object) -> object:
+        if args[1] == self._result_stream and not self._failed:
+            self._failed = True
+            raise ConnectionError("synthetic result publication failure")
+        return self._client.eval(script, key_count, *args)
+
 
 def _client():
     required = (
@@ -186,6 +192,8 @@ def test_result_is_written_before_ack_and_pending_message_is_reclaimed() -> None
     client = _client()
     settings = _settings(uuid4().hex)
     streams = [settings.request_stream, settings.result_stream, settings.request_dlq_stream]
+    request_event_id = uuid4()
+    cancellation_key = settings.cancellation_key_prefix + str(request_event_id)
     try:
         adapter = RedisStreamWorker(
             client=_FailResultOnce(client, settings.result_stream),
@@ -193,7 +201,7 @@ def test_result_is_written_before_ack_and_pending_message_is_reclaimed() -> None
             worker=_worker(),
         )
         adapter.ensure_consumer_group()
-        client.xadd(settings.request_stream, {"payload": _payload(uuid4())})
+        client.xadd(settings.request_stream, {"payload": _payload(request_event_id)})
 
         with pytest.raises(ConnectionError):
             adapter.poll_once(block_ms=0)
@@ -213,7 +221,7 @@ def test_result_is_written_before_ack_and_pending_message_is_reclaimed() -> None
         assert result["status"] == "COMPLETED"
         assert result["outcome"] == "COMPLETED_NO_ISSUE"
     finally:
-        client.delete(*streams)
+        client.delete(*streams, cancellation_key)
 
 
 def test_malformed_request_goes_to_dlq_and_is_acked() -> None:
@@ -232,3 +240,22 @@ def test_malformed_request_goes_to_dlq_and_is_acked() -> None:
         assert entry[b"failureCode"] == b"analysis_request_contract_invalid"
     finally:
         client.delete(*streams)
+
+
+def test_existing_cancellation_tombstone_suppresses_result_and_acks() -> None:
+    client = _client()
+    settings = _settings(uuid4().hex)
+    event_id = uuid4()
+    cancellation_key = settings.cancellation_key_prefix + str(event_id)
+    streams = [settings.request_stream, settings.result_stream, settings.request_dlq_stream]
+    try:
+        adapter = RedisStreamWorker(client=client, settings=settings, worker=_worker())
+        adapter.ensure_consumer_group()
+        client.set(cancellation_key, "1", ex=60)
+        client.xadd(settings.request_stream, {"payload": _payload(event_id)})
+
+        assert adapter.poll_once(block_ms=0) == 1
+        assert client.xpending(settings.request_stream, settings.consumer_group)["pending"] == 0
+        assert client.xlen(settings.result_stream) == 0
+    finally:
+        client.delete(*streams, cancellation_key)

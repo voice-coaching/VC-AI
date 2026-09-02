@@ -11,6 +11,7 @@ phone; visual feedback and LLMs cannot create or replace that decision.
 ```text
 VC-BE PostgreSQL outbox
   -> analysis:request:v1 (analysis-request.v4 JSON)
+  -> shared analysis:canceled:v1:<request-event-id> tombstone checks
   -> authorization HMAC verification (no media I/O before this point)
   -> private S3-compatible object materialization
   -> isolated ffmpeg: 16 kHz mono signed PCM WAV
@@ -135,6 +136,8 @@ VC-BE needs presign and HEAD; the worker needs GET only.
 | `AI_ANALYSIS_REQUEST_DLQ_STREAM` | N | Default `analysis:request:dlq:v1`. |
 | `AI_ANALYSIS_REQUEST_CONSUMER_GROUP` | N | Default `analysis-workers`. |
 | `AI_ANALYSIS_REQUEST_CONSUMER_NAME` | Y | Unique worker instance name. |
+| `AI_ANALYSIS_CANCELLATION_KEY_PREFIX` | N | Must match VC-BE; default `analysis:canceled:v1:`. The suffix is the opaque request event UUID. |
+| `AI_ANALYSIS_CANCELLATION_POLL_INTERVAL_SECONDS` | N | Running-job tombstone poll interval, default `0.25`, range `0.05..5`. |
 | `AI_ANALYSIS_PENDING_CLAIM_IDLE_MS` | N | Default `300000`. |
 | `AI_ANALYSIS_PROCESSING_HEARTBEAT_INTERVAL_SECONDS` | N | PEL lease refresh interval, default `60`; must remain below claim idle. |
 | `AI_ANALYSIS_REDIS_CONNECT_TIMEOUT_SECONDS` | N | Default `5`, maximum `30`. |
@@ -151,6 +154,10 @@ VC-BE needs presign and HEAD; the worker needs GET only.
 AWS SDK credentials use the normal boto3 credential chain. Do not place keys
 in the JSON request or a tracked `.env.local`. Run only after all settings and
 the approved frozen artifacts are present:
+
+The worker Redis ACL must permit its Stream commands plus `EXISTS` and `EVAL`.
+The Lua script is fixed in code and only atomically checks the opaque cancellation
+key before adding the bounded result payload; no operator-supplied script is accepted.
 
 ```bash
 .venv/bin/python scripts/run_backend_analysis_worker.py --once
@@ -179,6 +186,11 @@ healthcheck never includes request IDs, object keys, endpoints, or exception tex
   This prevents another healthy worker from reclaiming a long inference under the
   normal claim-idle policy. Duplicate execution after partitions remains harmless
   because VC-BE applies only the active request generation idempotently.
+- Before media access and throughout execution, the worker checks the shared
+  request-generation cancellation tombstone. A newly observed tombstone interrupts
+  the warm Seungun child process, suppresses the result, and ACKs the canceled request.
+  The final tombstone check and result `XADD` run atomically in one Redis script, so a
+  cancellation that wins that Redis ordering cannot race into a result publication.
 - It writes a terminal result before `XACK`; result publication failure leaves
   the request pending for later `XAUTOCLAIM`.
 - Malformed requests enter the restricted request DLQ before ACK. Replay is a

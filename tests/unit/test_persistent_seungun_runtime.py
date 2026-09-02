@@ -2,6 +2,8 @@ from __future__ import annotations
 
 from pathlib import Path
 import sys
+import threading
+import time
 
 import pytest
 
@@ -113,6 +115,41 @@ def test_request_timeout_kills_the_hung_isolated_process(tmp_path: Path) -> None
         adapter.close()
 
     assert error.value.code == "seungun_worker_failed"
+
+
+def test_cancel_current_interrupts_a_running_inference(tmp_path: Path) -> None:
+    target = _server(tmp_path, _HANGING_SERVER)
+    adapter = PersistentIsolatedFrozenSeungunDetectorAdapter(
+        repository_root=tmp_path,
+        device="cpu",
+        worker_python=sys.executable,
+        startup_timeout_seconds=5,
+        request_timeout_seconds=30,
+        server_target=(sys.executable, str(target)),
+    )
+    failures: list[BaseException] = []
+
+    def analyze() -> None:
+        try:
+            adapter.analyze(
+                audio_path=tmp_path / "attempt.wav",
+                expected_phones=("ㄱ",),
+            )
+        except BaseException as error:
+            failures.append(error)
+
+    thread = threading.Thread(target=analyze)
+    thread.start()
+    deadline = time.monotonic() + 5
+    while adapter._process is None and time.monotonic() < deadline:
+        time.sleep(0.01)
+    adapter.cancel_current()
+    thread.join(timeout=5)
+    adapter.close()
+
+    assert not thread.is_alive()
+    assert len(failures) == 1
+    assert isinstance(failures[0], PronunciationAttemptRuntimeError)
 
 
 def test_server_accepts_only_owner_read_only_absolute_audio(tmp_path: Path) -> None:

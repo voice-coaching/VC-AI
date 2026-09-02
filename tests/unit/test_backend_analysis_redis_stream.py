@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import hashlib
 import json
+import threading
 from uuid import UUID
 
 import pytest
@@ -25,6 +26,10 @@ class _FakeRedis:
         self.added: list[tuple[object, object, dict[str, object]]] = []
         self.acked: list[tuple[object, object, object]] = []
         self.claimed: list[tuple[object, object, object, object]] = []
+        self.cancelled_keys: set[str] = set()
+        self.exists_calls = 0
+        self.cancel_after_exists_calls: int | None = None
+        self.cancel_on_eval = False
 
     def xgroup_create(self, *args: object, **kwargs: object) -> object:
         del args, kwargs
@@ -58,6 +63,26 @@ class _FakeRedis:
         del kwargs
         self.claimed.append((stream, group, consumer, minimum_idle))
         return message_ids
+
+    def exists(self, key: object) -> int:
+        self.exists_calls += 1
+        if (
+            self.cancel_after_exists_calls is not None
+            and self.exists_calls >= self.cancel_after_exists_calls
+        ):
+            self.cancelled_keys.add(str(key))
+        return int(str(key) in self.cancelled_keys)
+
+    def eval(self, script: object, key_count: object, *args: object) -> int:
+        del script
+        assert key_count == 2
+        cancellation_key, result_stream, payload = args
+        if self.cancel_on_eval:
+            self.cancelled_keys.add(str(cancellation_key))
+        if str(cancellation_key) in self.cancelled_keys:
+            return 0
+        self.added.append((result_stream, {"payload": payload}, {}))
+        return 1
 
 
 class _LeaseLostRedis(_FakeRedis):
@@ -244,3 +269,53 @@ def test_lost_processing_lease_never_publishes_or_acknowledges_result() -> None:
 
     assert client.added == []
     assert client.acked == []
+
+
+def test_existing_cancellation_tombstone_skips_work_and_acknowledges_request() -> None:
+    client = _FakeRedis([[(b"analysis:request:v1", [(b"1-0", {b"payload": _payload()})])]])
+    client.cancelled_keys.add(
+        "analysis:canceled:v1:4adfe173-0691-4e89-b94e-a5c5c5085826"
+    )
+    adapter = RedisStreamWorker(client=client, settings=_settings(), worker=_worker())
+
+    assert adapter.poll_once(block_ms=0) == 1
+
+    assert client.added == []
+    assert client.acked == [("analysis:request:v1", "analysis-workers", b"1-0")]
+
+
+def test_atomic_publish_suppresses_result_when_cancellation_wins_the_race() -> None:
+    client = _FakeRedis([[(b"analysis:request:v1", [(b"1-0", {b"payload": _payload()})])]])
+    client.cancel_on_eval = True
+    adapter = RedisStreamWorker(client=client, settings=_settings(), worker=_worker())
+
+    assert adapter.poll_once(block_ms=0) == 1
+
+    assert client.added == []
+    assert client.acked == [("analysis:request:v1", "analysis-workers", b"1-0")]
+
+
+def test_running_analysis_is_interrupted_after_tombstone_arrives() -> None:
+    class _CancellableWorker:
+        def __init__(self) -> None:
+            self.cancelled = threading.Event()
+
+        def process(self, request: object):
+            assert self.cancelled.wait(timeout=2)
+            return _worker().process(request)  # type: ignore[arg-type]
+
+        def cancel_current(self) -> None:
+            self.cancelled.set()
+
+    settings = _settings()
+    settings.cancellation_poll_interval_seconds = 0.05
+    client = _FakeRedis([[(b"analysis:request:v1", [(b"1-0", {b"payload": _payload()})])]])
+    client.cancel_after_exists_calls = 2
+    worker = _CancellableWorker()
+    adapter = RedisStreamWorker(client=client, settings=settings, worker=worker)  # type: ignore[arg-type]
+
+    assert adapter.poll_once(block_ms=0) == 1
+
+    assert worker.cancelled.is_set()
+    assert client.added == []
+    assert client.acked == [("analysis:request:v1", "analysis-workers", b"1-0")]
