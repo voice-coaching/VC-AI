@@ -146,6 +146,7 @@ VC-BE needs presign and HEAD; the worker needs GET only.
 | `AI_ANALYSIS_REDIS_SOCKET_TIMEOUT_SECONDS` | N | Default `30`, maximum `300`. |
 | `AI_ANALYSIS_REDIS_HEALTH_CHECK_INTERVAL_SECONDS` | N | Default `30`, range `1..300`. |
 | `AI_ANALYSIS_MAXIMUM_REQUEST_PAYLOAD_BYTES` | N | Default `65536`, maximum `1048576`; oversized content is not copied to the DLQ. |
+| `AI_ANALYSIS_MAXIMUM_RESULT_PAYLOAD_BYTES` | N | Default `65536`, range `1024..1048576`; must match VC-BE's result consumer limit. Oversized or non-serializable results become a bounded terminal `FAILED` event. |
 | `AI_ANALYSIS_MAXIMUM_REQUEST_DLQ_ENTRIES` | N | Approximate DLQ cap, default `10000`; request/result streams are never trimmed before safe acknowledgement. |
 | `AI_ANALYSIS_MAX_CONSECUTIVE_POLL_FAILURES` | N | Default `5`; the supervisor restarts the worker after exhaustion. |
 | `AI_ANALYSIS_POLL_FAILURE_BACKOFF_SECONDS` | N | Default `5`, range `0.1..60`. |
@@ -160,6 +161,9 @@ the approved frozen artifacts are present:
 The worker Redis ACL must permit its Stream commands plus `EXISTS`, `DEL`, and `EVAL`.
 The Lua script is fixed in code and only atomically checks the opaque cancellation
 key before adding the bounded result payload; no operator-supplied script is accepted.
+The worker measures the UTF-8 JSON bytes before this call. If a normal result cannot
+be serialized or exceeds the configured result bound, it publishes a minimal learner-safe
+terminal `FAILED` result for the same request generation before acknowledging the request.
 
 ```bash
 .venv/bin/python scripts/run_backend_analysis_worker.py --once

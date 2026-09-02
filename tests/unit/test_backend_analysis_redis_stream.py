@@ -10,6 +10,7 @@ import pytest
 from voice_coach.backend_analysis.adapters.redis_stream import (
     RedisStreamSettings,
     RedisStreamWorker,
+    WorkerConfigurationError,
 )
 from voice_coach.backend_analysis.domain import AnalysisOutcome
 from voice_coach.backend_analysis.ports import (
@@ -139,7 +140,27 @@ class _Seungun:
         )
 
 
-def _settings() -> RedisStreamSettings:
+class _StaticResultWorker:
+    def __init__(self, payload: dict[str, object]) -> None:
+        self._payload = payload
+
+    def process(self, request: object) -> object:
+        del request
+
+        class _Result:
+            def __init__(self, payload: dict[str, object]) -> None:
+                self._payload = payload
+
+            def to_payload(self) -> dict[str, object]:
+                return self._payload
+
+        return _Result(self._payload)
+
+    def cancel_current(self) -> None:
+        return None
+
+
+def _settings(*, maximum_result_payload_bytes: int = 64 * 1024) -> RedisStreamSettings:
     return RedisStreamSettings(
         host="redis.private",
         port=6380,
@@ -152,6 +173,7 @@ def _settings() -> RedisStreamSettings:
         consumer_group="analysis-workers",
         consumer_name="worker-1",
         claim_idle_ms=300_000,
+        maximum_result_payload_bytes=maximum_result_payload_bytes,
     )
 
 
@@ -267,6 +289,47 @@ def test_oversized_request_is_not_copied_into_the_bounded_dlq() -> None:
     ]
     assert client.acked == [("analysis:request:v1", "analysis-workers", b"1-0")]
     assert client.deleted == [("analysis:request:v1", b"1-0")]
+
+
+@pytest.mark.parametrize(
+    ("unsafe_payload", "failure_code"),
+    [
+        ({"oversized": "x" * 2_000}, "analysis_result_payload_too_large"),
+        ({"notJsonSerializable": object()}, "analysis_result_encoding_failed"),
+    ],
+)
+def test_unsafe_result_is_replaced_by_bounded_terminal_failure_before_ack(
+    unsafe_payload: dict[str, object],
+    failure_code: str,
+) -> None:
+    client = _FakeRedis(
+        [[(b"analysis:request:v1", [(b"1-0", {b"payload": _payload()})])]]
+    )
+    settings = _settings(maximum_result_payload_bytes=1_024)
+    adapter = RedisStreamWorker(
+        client=client,
+        settings=settings,
+        worker=_StaticResultWorker(unsafe_payload),  # type: ignore[arg-type]
+    )
+
+    assert adapter.poll_once(block_ms=0) == 1
+
+    assert client.added[0][0] == "analysis:result:v1"
+    encoded = client.added[0][1]["payload"]
+    assert isinstance(encoded, bytes)
+    assert len(encoded) <= settings.maximum_result_payload_bytes
+    result = json.loads(encoded)
+    assert result["status"] == "FAILED"
+    assert result["failureCode"] == failure_code
+    assert result["requestEventId"] == "4adfe173-0691-4e89-b94e-a5c5c5085826"
+    assert result["analysisId"] == 35
+    assert client.acked == [("analysis:request:v1", "analysis-workers", b"1-0")]
+    assert client.deleted == [("analysis:request:v1", b"1-0")]
+
+
+def test_result_payload_limit_refuses_unsafe_configuration() -> None:
+    with pytest.raises(WorkerConfigurationError, match="analysis_stream_configuration_invalid"):
+        _settings(maximum_result_payload_bytes=1_023)
 
 
 def test_lost_processing_lease_never_publishes_or_acknowledges_result() -> None:

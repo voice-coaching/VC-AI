@@ -13,8 +13,9 @@ import os
 from pathlib import Path
 import threading
 from typing import Protocol
+from uuid import uuid4
 
-from ..domain import AnalysisRequest, BackendAnalysisContractError
+from ..domain import AnalysisRequest, AnalysisWorkerResult, BackendAnalysisContractError
 from ..secret_files import secret_text
 from ..service import BackendAnalysisWorker
 
@@ -67,6 +68,7 @@ class RedisStreamSettings:
         socket_timeout_seconds: float = 30.0,
         health_check_interval_seconds: int = 30,
         maximum_request_payload_bytes: int = 64 * 1024,
+        maximum_result_payload_bytes: int = 64 * 1024,
         maximum_dlq_entries: int = 10_000,
         processing_heartbeat_interval_seconds: float = 60.0,
         cancellation_key_prefix: str = "analysis:canceled:v1:",
@@ -89,6 +91,7 @@ class RedisStreamSettings:
             or not 1 <= socket_timeout_seconds <= 300
             or not 1 <= health_check_interval_seconds <= 300
             or not 1_024 <= maximum_request_payload_bytes <= 1024 * 1024
+            or not 1_024 <= maximum_result_payload_bytes <= 1024 * 1024
             or not 1 <= maximum_dlq_entries <= 1_000_000
             or not math.isfinite(processing_heartbeat_interval_seconds)
             or not 0.1 <= processing_heartbeat_interval_seconds <= 300
@@ -126,6 +129,7 @@ class RedisStreamSettings:
         self.socket_timeout_seconds = socket_timeout_seconds
         self.health_check_interval_seconds = health_check_interval_seconds
         self.maximum_request_payload_bytes = maximum_request_payload_bytes
+        self.maximum_result_payload_bytes = maximum_result_payload_bytes
         self.maximum_dlq_entries = maximum_dlq_entries
         self.processing_heartbeat_interval_seconds = processing_heartbeat_interval_seconds
         self.cancellation_key_prefix = cancellation_key_prefix
@@ -148,6 +152,9 @@ class RedisStreamSettings:
             )
             maximum_payload = int(
                 env.get("AI_ANALYSIS_MAXIMUM_REQUEST_PAYLOAD_BYTES", str(64 * 1024))
+            )
+            maximum_result_payload = int(
+                env.get("AI_ANALYSIS_MAXIMUM_RESULT_PAYLOAD_BYTES", str(64 * 1024))
             )
             maximum_dlq_entries = int(
                 env.get("AI_ANALYSIS_MAXIMUM_REQUEST_DLQ_ENTRIES", "10000")
@@ -183,6 +190,7 @@ class RedisStreamSettings:
             socket_timeout_seconds=socket_timeout,
             health_check_interval_seconds=health_interval,
             maximum_request_payload_bytes=maximum_payload,
+            maximum_result_payload_bytes=maximum_result_payload,
             maximum_dlq_entries=maximum_dlq_entries,
             processing_heartbeat_interval_seconds=processing_heartbeat_interval,
             cancellation_key_prefix=env.get(
@@ -323,15 +331,42 @@ class RedisStreamWorker:
                     lease.refresh_now()
                     cancellation.refresh_now()
                 if result is not None and not cancellation.cancelled:
-                    encoded = json.dumps(
-                        result.to_payload(),
-                        ensure_ascii=False,
-                        sort_keys=True,
-                        separators=(",", ":"),
-                        allow_nan=False,
-                    ).encode("utf-8")
+                    encoded = self._encode_result_or_terminal_fallback(result, request)
                     self._publish_result_if_active(cancellation.key, encoded)
         self._acknowledge_and_delete(message_id, cancellation_key)
+
+    def _encode_result_or_terminal_fallback(
+        self,
+        result: AnalysisWorkerResult,
+        request: AnalysisRequest,
+    ) -> bytes:
+        fallback_code: str
+        fallback_reason: str
+        try:
+            encoded = _encode_result(result)
+        except Exception:
+            fallback_code = "analysis_result_encoding_failed"
+            fallback_reason = (
+                "분석 결과를 안전하게 전송하지 못했습니다. 다시 시도해 주세요."
+            )
+        else:
+            if len(encoded) <= self._settings.maximum_result_payload_bytes:
+                return encoded
+            fallback_code = "analysis_result_payload_too_large"
+            fallback_reason = (
+                "분석 결과가 전송 한도를 초과했습니다. 다시 시도해 주세요."
+            )
+        fallback = AnalysisWorkerResult.failed(
+            event_id=uuid4(),
+            request=request,
+            code=fallback_code,
+            reason=fallback_reason,
+            worker_revision="redis-stream-boundary-v1",
+        )
+        encoded_fallback = _encode_result(fallback)
+        if len(encoded_fallback) > self._settings.maximum_result_payload_bytes:
+            raise RuntimeError("analysis_result_fallback_payload_too_large")
+        return encoded_fallback
 
     def _acknowledge_and_delete(
         self, message_id: object, cancellation_key: str | None
@@ -515,6 +550,16 @@ class _CancellationMonitor:
                 continue
             if self.cancelled:
                 return
+
+
+def _encode_result(result: AnalysisWorkerResult) -> bytes:
+    return json.dumps(
+        result.to_payload(),
+        ensure_ascii=False,
+        sort_keys=True,
+        separators=(",", ":"),
+        allow_nan=False,
+    ).encode("utf-8")
 
 
 def _payload_field(fields: object) -> bytes | None:
