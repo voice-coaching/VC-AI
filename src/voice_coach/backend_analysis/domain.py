@@ -16,8 +16,8 @@ from typing import Mapping
 from uuid import UUID
 
 
-ANALYSIS_REQUEST_SCHEMA_VERSION = "voice-coaching.analysis-request.v2"
-ANALYSIS_AUTHORIZATION_GRANT_VERSION = "voice-coaching.analysis-authorization.v1"
+ANALYSIS_REQUEST_SCHEMA_VERSION = "voice-coaching.analysis-request.v3"
+ANALYSIS_AUTHORIZATION_GRANT_VERSION = "voice-coaching.analysis-authorization.v2"
 ANALYSIS_AUTHORIZATION_PURPOSE = "pronunciation_coaching"
 ANALYSIS_AUTHORIZATION_DATA_CATEGORY = "learner_voice_recording"
 ANALYSIS_RESULT_SCHEMA_VERSION = "voice-coaching.analysis-result.v1"
@@ -35,6 +35,7 @@ _REQUEST_FIELDS = frozenset(
         "scriptText",
         "scriptSha256",
         "audioObjectKey",
+        "audioSha256",
         "mimeType",
         "fileSizeBytes",
         "durationMs",
@@ -52,6 +53,7 @@ _AUTHORIZATION_FIELDS = frozenset(
         "promptRevision",
         "scriptSha256",
         "audioObjectKeySha256",
+        "audioSha256",
         "mimeType",
         "fileSizeBytes",
         "durationMs",
@@ -98,9 +100,10 @@ class AnalysisAuthorizationGrant:
     prompt_revision: str
     script_sha256: str
     audio_object_key_sha256: str
-    mime_type: str | None
-    file_size_bytes: int | None
-    duration_ms: int | None
+    audio_sha256: str
+    mime_type: str
+    file_size_bytes: int
+    duration_ms: int
     learning_focus: str
     consent_receipt_sha256: str
     consent_policy_revision: str
@@ -127,11 +130,12 @@ class AnalysisAuthorizationGrant:
         prompt_revision = _text(payload["promptRevision"], maximum=100)
         script_sha256 = _sha256(payload["scriptSha256"])
         audio_object_key_sha256 = _sha256(payload["audioObjectKeySha256"])
-        mime_type = _optional_text(payload["mimeType"], maximum=100)
-        file_size_bytes = _optional_non_negative_int(
+        audio_sha256 = _sha256(payload["audioSha256"])
+        mime_type = _canonical_audio_mime(payload["mimeType"])
+        file_size_bytes = _positive_int_with_max(
             payload["fileSizeBytes"], maximum=_JAVA_LONG_MAX
         )
-        duration_ms = _optional_non_negative_int(
+        duration_ms = _positive_int_with_max(
             payload["durationMs"], maximum=_JAVA_INT_MAX
         )
         learning_focus = payload["learningFocus"]
@@ -162,6 +166,7 @@ class AnalysisAuthorizationGrant:
             prompt_revision=prompt_revision,
             script_sha256=script_sha256,
             audio_object_key_sha256=audio_object_key_sha256,
+            audio_sha256=audio_sha256,
             mime_type=mime_type,
             file_size_bytes=file_size_bytes,
             duration_ms=duration_ms,
@@ -195,6 +200,7 @@ class AnalysisAuthorizationGrant:
             ("promptRevision", self.prompt_revision),
             ("scriptSha256", self.script_sha256),
             ("audioObjectKeySha256", self.audio_object_key_sha256),
+            ("audioSha256", self.audio_sha256),
             ("mimeType", self.mime_type),
             ("fileSizeBytes", self.file_size_bytes),
             ("durationMs", self.duration_ms),
@@ -232,9 +238,10 @@ class AnalysisRequest:
     script_text: str
     script_sha256: str
     audio_object_key: str
-    mime_type: str | None
-    file_size_bytes: int | None
-    duration_ms: int | None
+    audio_sha256: str
+    mime_type: str
+    file_size_bytes: int
+    duration_ms: int
     learning_focus: str
     authorization_grant: AnalysisAuthorizationGrant
 
@@ -255,11 +262,12 @@ class AnalysisRequest:
         if hashlib.sha256(script_text.encode("utf-8")).hexdigest() != script_sha256:
             raise BackendAnalysisContractError("analysis_request_script_integrity_invalid")
         audio_object_key = _object_key(payload["audioObjectKey"])
-        mime_type = _optional_text(payload["mimeType"], maximum=100)
-        file_size_bytes = _optional_non_negative_int(
+        audio_sha256 = _sha256(payload["audioSha256"])
+        mime_type = _canonical_audio_mime(payload["mimeType"])
+        file_size_bytes = _positive_int_with_max(
             payload["fileSizeBytes"], maximum=_JAVA_LONG_MAX
         )
-        duration_ms = _optional_non_negative_int(
+        duration_ms = _positive_int_with_max(
             payload["durationMs"], maximum=_JAVA_INT_MAX
         )
         learning_focus = payload["learningFocus"]
@@ -276,6 +284,7 @@ class AnalysisRequest:
             or authorization.script_sha256 != script_sha256
             or authorization.audio_object_key_sha256
             != hashlib.sha256(audio_object_key.encode("utf-8")).hexdigest()
+            or authorization.audio_sha256 != audio_sha256
             or authorization.mime_type != mime_type
             or authorization.file_size_bytes != file_size_bytes
             or authorization.duration_ms != duration_ms
@@ -290,6 +299,7 @@ class AnalysisRequest:
             script_text=script_text,
             script_sha256=script_sha256,
             audio_object_key=audio_object_key,
+            audio_sha256=audio_sha256,
             mime_type=mime_type,
             file_size_bytes=file_size_bytes,
             duration_ms=duration_ms,
@@ -423,14 +433,18 @@ def _positive_int(value: object) -> int:
     return value
 
 
-def _optional_non_negative_int(value: object, *, maximum: int) -> int | None:
-    if value is None:
-        return None
+def _positive_int_with_max(value: object, *, maximum: int) -> int:
     if (
         isinstance(value, bool)
         or not isinstance(value, int)
-        or not 0 <= value <= maximum
+        or not 0 < value <= maximum
     ):
+        raise BackendAnalysisContractError("analysis_request_contract_invalid")
+    return value
+
+
+def _canonical_audio_mime(value: object) -> str:
+    if value != "audio/wav":
         raise BackendAnalysisContractError("analysis_request_contract_invalid")
     return value
 
@@ -439,12 +453,6 @@ def _text(value: object, *, maximum: int) -> str:
     if not isinstance(value, str) or not value.strip() or len(value) > maximum:
         raise BackendAnalysisContractError("analysis_request_contract_invalid")
     return value
-
-
-def _optional_text(value: object, *, maximum: int) -> str | None:
-    if value is None:
-        return None
-    return _text(value, maximum=maximum)
 
 
 def _sha256(value: object) -> str:

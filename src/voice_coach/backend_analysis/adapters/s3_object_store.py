@@ -5,6 +5,7 @@ from __future__ import annotations
 from contextlib import contextmanager
 from dataclasses import dataclass
 import hashlib
+import hmac
 import os
 from pathlib import Path
 import shutil
@@ -90,6 +91,11 @@ class S3CompatibleRestrictedObjectStore:
                 raise BackendAnalysisError(
                     "audio_metadata_mismatch",
                     "등록된 녹음 메타데이터와 일치하지 않습니다.",
+                )
+            if not hmac.compare_digest(digest, request.audio_sha256):
+                raise BackendAnalysisError(
+                    "audio_integrity_mismatch",
+                    "등록된 녹음의 무결성을 확인할 수 없습니다.",
                 )
             yield MaterializedAudio(
                 path=destination,

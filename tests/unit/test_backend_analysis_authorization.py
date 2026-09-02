@@ -26,7 +26,7 @@ _SECRET = b"s" * 32
 
 def _grant_payload(*, signature: str = "0" * 64) -> dict[str, object]:
     return {
-        "grantVersion": "voice-coaching.analysis-authorization.v1",
+        "grantVersion": "voice-coaching.analysis-authorization.v2",
         "keyId": "backend-test-v1",
         "requestEventId": _EVENT_ID,
         "analysisId": 35,
@@ -34,6 +34,7 @@ def _grant_payload(*, signature: str = "0" * 64) -> dict[str, object]:
         "promptRevision": "2026-09-02T00:00:00Z",
         "scriptSha256": "a" * 64,
         "audioObjectKeySha256": "7a8ccd3755d589e1a3d59811c8e1131a975bc5d6e53469fe8356686cfcfec39a",
+        "audioSha256": "d" * 64,
         "mimeType": "audio/wav",
         "fileSizeBytes": 1234,
         "durationMs": 1200,
@@ -56,7 +57,7 @@ def _request_payload(grant: dict[str, object]) -> dict[str, object]:
     grant = dict(grant)
     grant["scriptSha256"] = script_sha256
     return {
-        "schemaVersion": "voice-coaching.analysis-request.v2",
+        "schemaVersion": "voice-coaching.analysis-request.v3",
         "eventId": _EVENT_ID,
         "analysisId": 35,
         "contentId": 12,
@@ -64,6 +65,7 @@ def _request_payload(grant: dict[str, object]) -> dict[str, object]:
         "scriptText": script,
         "scriptSha256": script_sha256,
         "audioObjectKey": "recordings/users/9/sessions/7/attempt.wav",
+        "audioSha256": "d" * 64,
         "mimeType": "audio/wav",
         "fileSizeBytes": 1234,
         "durationMs": 1200,
@@ -93,7 +95,7 @@ def test_java_and_python_canonical_hmac_test_vector_match() -> None:
     grant = AnalysisAuthorizationGrant.from_payload(_grant_payload())
 
     assert hmac.new(_SECRET, grant.canonical_signing_input(), hashlib.sha256).hexdigest() == (
-        "11ad6131b706c345d16c491cc8534d0ec3f8a8a057763589eccd1293e21db55c"
+        "79f14f0ef0f388ef3efc30e6870662636694caafeb6767d078c9d166777c84bf"
     )
 
 

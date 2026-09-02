@@ -30,7 +30,7 @@ _RESULT_EVENT_ID = UUID("e917fda8-3c4f-4b7e-9094-7a1706081f1b")
 def _request_payload(**overrides: object) -> dict[str, object]:
     script = "안녕하세요. 오늘 날씨가 좋습니다."
     payload: dict[str, object] = {
-        "schemaVersion": "voice-coaching.analysis-request.v2",
+        "schemaVersion": "voice-coaching.analysis-request.v3",
         "eventId": str(_EVENT_ID),
         "analysisId": 35,
         "contentId": 12,
@@ -38,12 +38,13 @@ def _request_payload(**overrides: object) -> dict[str, object]:
         "scriptText": script,
         "scriptSha256": hashlib.sha256(script.encode("utf-8")).hexdigest(),
         "audioObjectKey": "recordings/50.wav",
+        "audioSha256": "a" * 64,
         "mimeType": "audio/wav",
         "fileSizeBytes": 1234,
         "durationMs": 1200,
         "learningFocus": "PRONUNCIATION",
         "authorizationGrant": {
-            "grantVersion": "voice-coaching.analysis-authorization.v1",
+            "grantVersion": "voice-coaching.analysis-authorization.v2",
             "keyId": "backend-test-v1",
             "requestEventId": str(_EVENT_ID),
             "analysisId": 35,
@@ -51,6 +52,7 @@ def _request_payload(**overrides: object) -> dict[str, object]:
             "promptRevision": "2026-09-02T00:00:00Z",
             "scriptSha256": hashlib.sha256(script.encode("utf-8")).hexdigest(),
             "audioObjectKeySha256": hashlib.sha256(b"recordings/50.wav").hexdigest(),
+            "audioSha256": "a" * 64,
             "mimeType": "audio/wav",
             "fileSizeBytes": 1234,
             "durationMs": 1200,

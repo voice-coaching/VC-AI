@@ -103,7 +103,7 @@ def _payload() -> bytes:
     script = "안녕하세요. 오늘 날씨가 좋습니다."
     return json.dumps(
         {
-            "schemaVersion": "voice-coaching.analysis-request.v2",
+            "schemaVersion": "voice-coaching.analysis-request.v3",
             "eventId": "4adfe173-0691-4e89-b94e-a5c5c5085826",
             "analysisId": 35,
             "contentId": 12,
@@ -111,12 +111,13 @@ def _payload() -> bytes:
             "scriptText": script,
             "scriptSha256": hashlib.sha256(script.encode("utf-8")).hexdigest(),
             "audioObjectKey": "recordings/50.wav",
+            "audioSha256": "a" * 64,
             "mimeType": "audio/wav",
             "fileSizeBytes": 1234,
             "durationMs": 1200,
             "learningFocus": "PRONUNCIATION",
             "authorizationGrant": {
-                "grantVersion": "voice-coaching.analysis-authorization.v1",
+                "grantVersion": "voice-coaching.analysis-authorization.v2",
                 "keyId": "backend-test-v1",
                 "requestEventId": "4adfe173-0691-4e89-b94e-a5c5c5085826",
                 "analysisId": 35,
@@ -124,6 +125,7 @@ def _payload() -> bytes:
                 "promptRevision": "2026-09-02T00:00:00Z",
                 "scriptSha256": hashlib.sha256(script.encode("utf-8")).hexdigest(),
                 "audioObjectKeySha256": hashlib.sha256(b"recordings/50.wav").hexdigest(),
+                "audioSha256": "a" * 64,
                 "mimeType": "audio/wav",
                 "fileSizeBytes": 1234,
                 "durationMs": 1200,

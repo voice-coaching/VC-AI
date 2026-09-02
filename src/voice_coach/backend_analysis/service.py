@@ -22,6 +22,7 @@ _SAFE_FAILURES = {
     "consent_evidence_expired": "분석 처리 권한이 만료되었습니다.",
     "consent_policy_not_permitted": "현재 처리 정책으로는 분석할 수 없습니다.",
     "audio_metadata_mismatch": "등록된 녹음 메타데이터와 일치하지 않습니다.",
+    "audio_integrity_mismatch": "등록된 녹음의 무결성을 확인할 수 없습니다.",
     "restricted_audio_unavailable": "승인된 녹음에 접근할 수 없습니다.",
     "audio_decode_unsupported": "지원되지 않는 녹음 형식입니다.",
     "analysis_focus_not_supported": "현재 학습 초점은 이 분석 파이프라인에서 지원하지 않습니다.",

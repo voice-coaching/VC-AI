@@ -38,8 +38,13 @@ class _Client:
         return self.response
 
 
-def _request(*, object_key: str = "recordings/users/9/attempt.wav") -> AnalysisRequest:
+def _request(
+    *,
+    object_key: str = "recordings/users/9/attempt.wav",
+    audio_sha256: str | None = None,
+) -> AnalysisRequest:
     now = datetime(2026, 9, 2, tzinfo=UTC)
+    expected_audio_sha256 = audio_sha256 or hashlib.sha256(b"RIFF").hexdigest()
     grant = AnalysisAuthorizationGrant(
         key_id="test-key",
         request_event_id=UUID("4adfe173-0691-4e89-b94e-a5c5c5085826"),
@@ -48,6 +53,7 @@ def _request(*, object_key: str = "recordings/users/9/attempt.wav") -> AnalysisR
         prompt_revision="revision-v1",
         script_sha256="a" * 64,
         audio_object_key_sha256=hashlib.sha256(object_key.encode()).hexdigest(),
+        audio_sha256=expected_audio_sha256,
         mime_type="audio/wav",
         file_size_bytes=4,
         duration_ms=1200,
@@ -70,6 +76,7 @@ def _request(*, object_key: str = "recordings/users/9/attempt.wav") -> AnalysisR
         script_text="연습 문장입니다.",
         script_sha256="a" * 64,
         audio_object_key=object_key,
+        audio_sha256=expected_audio_sha256,
         mime_type="audio/wav",
         file_size_bytes=4,
         duration_ms=1200,
@@ -132,6 +139,28 @@ def test_rejects_key_outside_prefix_before_s3_access(tmp_path: Path) -> None:
 
     assert error.value.code == "restricted_audio_unavailable"
     assert client.calls == []
+
+
+def test_rejects_download_whose_digest_differs_from_backend_claim(tmp_path: Path) -> None:
+    body = _Body(b"RIFF")
+    client = _Client({"Body": body, "ContentLength": 4, "ContentType": "audio/wav"})
+    store = S3CompatibleRestrictedObjectStore(
+        client,
+        S3ObjectStoreSettings(
+            bucket="private-recordings",
+            recordings_prefix="recordings/",
+            workspace_root=tmp_path / "restricted",
+        ),
+    )
+
+    with pytest.raises(BackendAnalysisError) as captured:
+        with store.materialize(
+            _request(audio_sha256="f" * 64), _authorization()
+        ):
+            raise AssertionError("digest mismatch must fail before yielding media")
+
+    assert captured.value.code == "audio_integrity_mismatch"
+    assert body.closed_by_adapter is True
 
 
 def test_metadata_mismatch_fails_closed_and_cleans_workspace(tmp_path: Path) -> None:

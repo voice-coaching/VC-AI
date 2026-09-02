@@ -103,7 +103,7 @@ def _payload(event_id: UUID) -> str:
     script_sha = hashlib.sha256(script.encode()).hexdigest()
     key = "recordings/synthetic.wav"
     grant = {
-        "grantVersion": "voice-coaching.analysis-authorization.v1",
+        "grantVersion": "voice-coaching.analysis-authorization.v2",
         "keyId": "synthetic-key-v1",
         "requestEventId": str(event_id),
         "analysisId": 35,
@@ -111,6 +111,7 @@ def _payload(event_id: UUID) -> str:
         "promptRevision": "synthetic-v1",
         "scriptSha256": script_sha,
         "audioObjectKeySha256": hashlib.sha256(key.encode()).hexdigest(),
+        "audioSha256": "a" * 64,
         "mimeType": "audio/wav",
         "fileSizeBytes": 4,
         "durationMs": 100,
@@ -127,7 +128,7 @@ def _payload(event_id: UUID) -> str:
     }
     return json.dumps(
         {
-            "schemaVersion": "voice-coaching.analysis-request.v2",
+            "schemaVersion": "voice-coaching.analysis-request.v3",
             "eventId": str(event_id),
             "analysisId": 35,
             "contentId": 12,
@@ -135,6 +136,7 @@ def _payload(event_id: UUID) -> str:
             "scriptText": script,
             "scriptSha256": script_sha,
             "audioObjectKey": key,
+            "audioSha256": "a" * 64,
             "mimeType": "audio/wav",
             "fileSizeBytes": 4,
             "durationMs": 100,

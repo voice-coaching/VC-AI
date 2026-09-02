@@ -10,7 +10,7 @@ phone; visual feedback and LLMs cannot create or replace that decision.
 
 ```text
 VC-BE PostgreSQL outbox
-  -> analysis:request:v1 (analysis-request.v2 JSON)
+  -> analysis:request:v1 (analysis-request.v3 JSON)
   -> authorization HMAC verification (no media I/O before this point)
   -> private S3-compatible object materialization
   -> isolated ffmpeg: 16 kHz mono signed PCM WAV
@@ -23,13 +23,14 @@ The exact cross-repository fields are authoritative in VC-BE
 `docs/api/ai-redis-stream-contract.md`. `AnalysisRequest` rejects unsupported
 versions, unknown keys, traversal, script integrity differences, grant/request
 binding differences and unsupported focus before any adapter runs. Legacy
-`voice-coaching.analysis-request.v1` is deliberately unsupported.
+`voice-coaching.analysis-request.v1` and `v2` are deliberately unsupported.
 
 ## Signed authorization
 
-Every v2 request contains `voice-coaching.analysis-authorization.v1`. It binds
+Every v3 request contains `voice-coaching.analysis-authorization.v2`. It binds
 the request event, analysis/content/prompt, script and object-key digests,
-registered media metadata, learning focus, opaque consent receipt, policy,
+the backend-calculated canonical audio digest, registered media metadata,
+learning focus, opaque consent receipt, policy,
 time window, purpose, data category, mandatory deletion and denied remote
 egress. The worker selects a key by `keyId`, reconstructs the documented
 length-prefixed canonical form, compares HMAC-SHA256 in constant time, and
@@ -48,7 +49,8 @@ The built-in production composition is
 1. `HmacAnalysisAuthorizationAdapter` verifies the signed grant.
 2. `S3CompatibleRestrictedObjectStore` accepts only one bucket and prefix,
    streams with a 20 MiB default bound, verifies Content-Length/MIME and the
-   registered byte count, writes mode `0400`, calculates SHA-256, closes the
+   registered byte count, writes mode `0400`, calculates SHA-256, compares it
+   to the signed backend claim, closes the
    response and recursively removes the mode `0700` attempt workspace.
 3. `RestrictedFfmpegAudioDecoder` runs bounded ffmpeg behind seccomp socket
    denial, receives raw PCM, writes a valid 16 kHz mono WAV header, validates
