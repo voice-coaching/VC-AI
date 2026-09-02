@@ -167,6 +167,23 @@ def test_extracts_unvalidated_sync_anchor_candidates_with_bound_receipt() -> Non
     assert len(result.lineage_receipt_sha256) == 64
 
 
+def test_uses_sufficient_audio_video_overlap_when_edge_frames_are_outside_pcm() -> None:
+    full_payload = _pcm()
+    # Retain 650 ms: six landmark windows overlap while the final two do not.
+    payload = full_payload[: 650 * 16 * 2]
+
+    result = _adapter(payload).measure(
+        audio=_audio(payload),
+        landmarks=_landmarks(),
+        probe=_probe(),
+    )
+
+    assert result.status == "candidate_unvalidated"
+    assert result.correlation is not None
+    assert result.anchors
+    assert result.reason_codes == ()
+
+
 def test_missing_landmarks_returns_value_free_unavailable_evidence() -> None:
     payload = _pcm()
 

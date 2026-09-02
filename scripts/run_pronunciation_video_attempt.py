@@ -12,9 +12,7 @@ import argparse
 from dataclasses import asdict, is_dataclass
 from enum import Enum
 import json
-import os
 from pathlib import Path
-import stat
 import sys
 import tempfile
 from typing import Any
@@ -35,19 +33,23 @@ from voice_coach.pronunciation_attempts.services.video_attempt_facade import (  
     VideoAttemptCommand,
     VideoAttemptStatus,
 )
-from voice_coach.visual_feedback.models.runtime_eligibility import (  # noqa: E402
-    load_automated_visual_runtime_eligibility,
-    load_visual_runtime_bundle,
+from voice_coach.pronunciation_feedback.adapters.advice_generator_hyperclova import (  # noqa: E402
+    DEFAULT_MODEL_ID as DEFAULT_ADVICE_MODEL_ID,
+    LocalHyperClovaAdviceGenerator,
 )
-from voice_coach.visual_feedback.models.runtime_policy_artifact import (  # noqa: E402
-    P8RuntimePolicyArtifact,
+from voice_coach.pronunciation_feedback.video_grounded_advice import (  # noqa: E402
+    generate_grounded_video_feedback,
 )
+from voice_coach.visual_feedback.adapters.production_visual_release import (  # noqa: E402
+    classify_production_visual_release_error,
+    load_production_visual_release,
+)
+from voice_coach.visual_feedback.errors import VisualFeedbackContractError  # noqa: E402
 
 
 DEFAULT_NLTK_DATA_ROOT = Path.home() / "nltk_data"
 LOCAL_TEST_PROMPT_ID = "LOCAL-TEST-RICE-CLEAN-V1"
 LOCAL_TEST_PROMPT_TEXT = "쌀을 깨끗이 씻어요"
-_MAXIMUM_RUNTIME_ARTIFACT_BYTES = 16 * 1024 * 1024
 
 
 def _source_file_descriptor(value: str) -> int:
@@ -81,58 +83,6 @@ def _jsonable(value: Any) -> Any:
 def _emit(value: object) -> None:
     json.dump(_jsonable(value), sys.stdout, ensure_ascii=False, indent=2)
     sys.stdout.write("\n")
-
-
-def _read_runtime_artifact(path: Path) -> object:
-    """Read one immutable aggregate artifact without following symlinks."""
-
-    descriptor = os.open(
-        path,
-        os.O_RDONLY | getattr(os, "O_CLOEXEC", 0) | getattr(os, "O_NOFOLLOW", 0),
-    )
-    try:
-        before = os.fstat(descriptor)
-        if (
-            not stat.S_ISREG(before.st_mode)
-            or before.st_uid != os.geteuid()
-            or before.st_nlink != 1
-            or stat.S_IMODE(before.st_mode) != 0o400
-            or before.st_size <= 0
-            or before.st_size > _MAXIMUM_RUNTIME_ARTIFACT_BYTES
-        ):
-            raise ValueError("visual runtime artifact identity differs")
-        payload = os.pread(descriptor, before.st_size, 0)
-        after = os.fstat(descriptor)
-        if len(payload) != before.st_size or (
-            before.st_dev,
-            before.st_ino,
-            before.st_size,
-            before.st_mtime_ns,
-            before.st_ctime_ns,
-        ) != (
-            after.st_dev,
-            after.st_ino,
-            after.st_size,
-            after.st_mtime_ns,
-            after.st_ctime_ns,
-        ):
-            raise ValueError("visual runtime artifact changed while reading")
-
-        def reject_duplicates(pairs: list[tuple[str, object]]) -> dict[str, object]:
-            result: dict[str, object] = {}
-            for key, value in pairs:
-                if key in result:
-                    raise ValueError("visual runtime artifact has duplicate keys")
-                result[key] = value
-            return result
-
-        return json.loads(
-            payload,
-            object_pairs_hook=reject_duplicates,
-            parse_constant=lambda _value: (_ for _ in ()).throw(ValueError()),
-        )
-    finally:
-        os.close(descriptor)
 
 
 def _parser() -> argparse.ArgumentParser:
@@ -170,10 +120,17 @@ def _parser() -> argparse.ArgumentParser:
     parser.add_argument("--nltk-data-root", type=Path, default=DEFAULT_NLTK_DATA_ROOT)
     parser.add_argument("--card-path", type=Path)
     parser.add_argument("--device", default="cuda")
-    parser.add_argument("--visual-runtime-bundle", type=Path)
-    parser.add_argument("--visual-runtime-eligibility", type=Path)
-    parser.add_argument("--video-qc-decision-policy", type=Path)
-    parser.add_argument("--av-sync-decision-policy", type=Path)
+    parser.add_argument("--advice-endpoint")
+    parser.add_argument("--advice-revision")
+    parser.add_argument("--advice-model-id", default=DEFAULT_ADVICE_MODEL_ID)
+    parser.add_argument(
+        "--production-visual-release",
+        type=Path,
+        help=(
+            "private immutable production visual release directory; individual "
+            "runtime artifacts are not accepted by this entrypoint"
+        ),
+    )
     return parser
 
 
@@ -187,43 +144,49 @@ def main(argv: list[str] | None = None) -> int:
             }
         )
         return 2
+    if bool(args.advice_endpoint) != bool(args.advice_revision):
+        _emit(
+            {
+                "status": "failed_closed",
+                "reason_codes": ["advice_generator_configuration_invalid"],
+            }
+        )
+        return 2
 
     try:
-        visual_paths = (
-            args.visual_runtime_bundle,
-            args.visual_runtime_eligibility,
-            args.video_qc_decision_policy,
-            args.av_sync_decision_policy,
+        advice_generator = (
+            LocalHyperClovaAdviceGenerator(
+                endpoint=args.advice_endpoint,
+                model_id=args.advice_model_id,
+                revision=args.advice_revision,
+            )
+            if args.advice_endpoint is not None
+            else None
         )
-        if any(path is not None for path in visual_paths) and not all(
-            path is not None for path in visual_paths
-        ):
-            raise ValueError("all visual runtime artifacts are required together")
         visual_bundle = None
-        visual_eligibility = None
         qc_decision_policy = None
         sync_decision_policy = None
-        if all(path is not None for path in visual_paths):
-            visual_bundle = load_visual_runtime_bundle(
-                _read_runtime_artifact(args.visual_runtime_bundle)
-            )
-            visual_eligibility = load_automated_visual_runtime_eligibility(
-                _read_runtime_artifact(args.visual_runtime_eligibility),
-                bundle=visual_bundle,
-            )
-            qc_artifact = P8RuntimePolicyArtifact.from_json_object(
-                _read_runtime_artifact(args.video_qc_decision_policy)
-            )
-            sync_artifact = P8RuntimePolicyArtifact.from_json_object(
-                _read_runtime_artifact(args.av_sync_decision_policy)
-            )
-            if (
-                qc_artifact.policy_kind != "video_qc_decision"
-                or sync_artifact.policy_kind != "av_sync_decision"
-            ):
-                raise ValueError("visual runtime decision policy kind differs")
-            qc_decision_policy = qc_artifact.policy_document.to_runtime_policy()
-            sync_decision_policy = sync_artifact.policy_document.to_runtime_policy()
+        visual_release_id = None
+        visual_release_status = "not_configured"
+        visual_release_reason_codes: tuple[str, ...] = ()
+        if args.production_visual_release is not None:
+            try:
+                release = load_production_visual_release(
+                    args.production_visual_release
+                )
+            except (OSError, VisualFeedbackContractError) as error:
+                visual_release_status = "failed_closed"
+                visual_release_reason_codes = (
+                    classify_production_visual_release_error(error),
+                )
+            else:
+                visual_release_id = release.release_id
+                visual_release_status = release.status
+                visual_release_reason_codes = release.reason_codes
+                if release.status == "enabled":
+                    visual_bundle = release.runtime_bundle
+                    qc_decision_policy = release.video_qc_decision_policy
+                    sync_decision_policy = release.av_sync_decision_policy
         video_locator = (
             str(args.video)
             if args.video is not None
@@ -253,7 +216,6 @@ def main(argv: list[str] | None = None) -> int:
                 video_qc_decision_policy=qc_decision_policy,
                 av_sync_decision_policy=sync_decision_policy,
                 visual_runtime_bundle=visual_bundle,
-                visual_runtime_eligibility=visual_eligibility,
             )
             result = facade.run(
                 VideoAttemptCommand(
@@ -271,7 +233,35 @@ def main(argv: list[str] | None = None) -> int:
         )
         return 2
 
-    _emit(result)
+    response = _jsonable(result)
+    assert isinstance(response, dict)
+    response["production_visual_release"] = {
+        "status": visual_release_status,
+        "release_id": visual_release_id,
+        "reason_codes": list(visual_release_reason_codes),
+    }
+    response["combined_feedback"] = None
+    if result.audio_result is not None and result.audio_result.get("status") == (
+        "coaching_ready"
+    ):
+        response["combined_feedback"] = _jsonable(
+            generate_grounded_video_feedback(
+                audio_result=result.audio_result,
+                visual_supplement=result.visual_supplement,
+                generator=advice_generator,
+                visual_failure_reason_codes=(
+                    visual_release_reason_codes
+                    or (
+                        (result.visual_stage_status.value, *result.reason_codes)
+                        if visual_release_status == "enabled"
+                        and result.status
+                        is VideoAttemptStatus.AUDIO_COMPLETED_VISUAL_UNAVAILABLE
+                        else ()
+                    )
+                ),
+            )
+        )
+    _emit(response)
     return (
         0
         if result.status

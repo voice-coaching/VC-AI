@@ -24,8 +24,7 @@ from voice_coach.pronunciation_feedback.adapters.expected_phones_subprocess impo
 from voice_coach.visual_feedback.models.binding import UpstreamReliabilityReceipt
 from voice_coach.visual_feedback.models.enums import UpstreamReliabilityStatus
 from voice_coach.visual_feedback.models.integrity import sha256_document
-from voice_coach.visual_feedback.models.runtime_eligibility import (
-    AutomatedVisualRuntimeEligibilityReceipt,
+from voice_coach.visual_feedback.models.runtime_contract import (
     VisualRuntimeBundle,
 )
 from voice_coach.visual_feedback.services.handoff import SeungunAttemptBindingFacade
@@ -125,17 +124,16 @@ def build_local_video_attempt_facade(
     video_qc_decision_policy: CalibratedVideoQcDecisionPolicy | None = None,
     av_sync_decision_policy: CalibratedAvSyncDecisionPolicy | None = None,
     visual_runtime_bundle: VisualRuntimeBundle | None = None,
-    visual_runtime_eligibility: AutomatedVisualRuntimeEligibilityReceipt | None = None,
 ) -> VideoAttemptFacade:
     """Build the local loop, enabling visual publication only from promoted state.
 
     The returned facade can complete Seungun audio feedback from a supported
     MP4.  The hash-pinned Seungun v1 result is eligible as an upstream sidecar
     anchor, without any correctness-confidence claim.  The facade may execute
-    the pinned MediaPipe landmark backend, but its independent visual
+    the pinned MediaPipe landmark backend, but its separate visual
     reliability adapter remains fail-closed unless the caller injects a strictly
-    reloadable P6/P8 runtime bundle, its exact eligibility receipt, and the
-    calibrated QC/A/V decision policies pinned by that bundle.
+    reloadable runtime bundle and the calibrated QC/A/V decision policies
+    pinned by that bundle.
     """
 
     root = Path(repository_root)
@@ -145,8 +143,6 @@ def build_local_video_attempt_facade(
         raise ValueError(
             "calibrated QC and A/V sync decision policies must be paired"
         )
-    if (visual_runtime_bundle is None) != (visual_runtime_eligibility is None):
-        raise ValueError("visual runtime bundle and eligibility must be paired")
     if visual_runtime_bundle is not None and video_qc_decision_policy is None:
         raise ValueError(
             "visual runtime requires calibrated QC and A/V sync decision policies"
@@ -202,7 +198,7 @@ def build_local_video_attempt_facade(
     # ``supported`` is deliberately narrow: the current hash-pinned Seungun v1
     # analysis is eligible to anchor the sidecar.  It does not turn the detector
     # ranking score into calibrated correctness confidence and does not authorize
-    # a visual claim without the independent visual calibration/evaluation gates.
+    # a visual claim without the compact visual calibration/evaluation receipts.
     upstream_reliability = UpstreamReliabilityReceipt.issue(
         status=UpstreamReliabilityStatus.SUPPORTED,
         policy_revision=_SEUNGUN_UPSTREAM_POLICY_REVISION,
@@ -324,10 +320,8 @@ def build_local_video_attempt_facade(
     visual_sidecar = (
         ProductionVisualSidecarAdapter(
             runtime_bundle=visual_runtime_bundle,
-            eligibility_receipt=visual_runtime_eligibility,
         )
         if visual_runtime_bundle is not None
-        and visual_runtime_eligibility is not None
         else None
     )
 

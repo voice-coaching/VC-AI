@@ -97,7 +97,7 @@ def test_cli_invalid_preopened_fd_is_path_free_after_consent() -> None:
     assert "987654" not in completed.stderr
 
 
-def test_cli_rejects_partial_visual_runtime_configuration() -> None:
+def test_cli_rejects_unpacked_visual_runtime_options() -> None:
     completed = _run(
         "--video-fd",
         "987654",
@@ -109,12 +109,27 @@ def test_cli_rejects_partial_visual_runtime_configuration() -> None:
     )
 
     assert completed.returncode == 2
+    assert "unrecognized arguments: --visual-runtime-bundle" in completed.stderr
+
+
+def test_cli_rejects_partial_clova_configuration_before_source_io() -> None:
+    completed = _run(
+        "--video-fd",
+        "987654",
+        "--prompt-id",
+        "R00-01",
+        "--consent-local-processing",
+        "--advice-endpoint",
+        "http://127.0.0.1:8000/v1",
+    )
+
+    assert completed.returncode == 2
     assert json.loads(completed.stdout) == {
         "status": "failed_closed",
-        "reason_codes": ["video_attempt_configuration_failed"],
+        "reason_codes": ["advice_generator_configuration_invalid"],
     }
-    assert "missing-runtime-bundle" not in completed.stdout
-    assert "missing-runtime-bundle" not in completed.stderr
+    assert "987654" not in completed.stdout
+    assert "987654" not in completed.stderr
 
 
 def test_cli_help_exposes_only_user_authority_inputs() -> None:
@@ -125,8 +140,12 @@ def test_cli_help_exposes_only_user_authority_inputs() -> None:
     assert "--video-fd" in completed.stdout
     assert "--prompt-id" in completed.stdout
     assert "--consent-local-processing" in completed.stdout
-    assert "--visual-runtime-bundle" in completed.stdout
-    assert "--visual-runtime-eligibility" in completed.stdout
+    assert "--production-visual-release" in completed.stdout
+    assert "--advice-endpoint" in completed.stdout
+    assert "--advice-revision" in completed.stdout
     assert "expected-phone" not in completed.stdout
     assert "binding-receipt" not in completed.stdout
     assert "reliability-receipt" not in completed.stdout
+    assert "visual-runtime-bundle" not in completed.stdout
+    assert "visual-runtime-eligibility" not in completed.stdout
+    assert "--visual-release" not in completed.stdout

@@ -2,9 +2,8 @@
 
 This module deliberately does not load artifacts from ambient paths and does
 not enable itself in the application composition root.  A caller must inject a
-fully promoted :class:`VisualRuntimeBundle` and its exact automated eligibility
-receipt.  Both values are serialized and strictly reloaded before they can be
-used.
+fully validated :class:`VisualRuntimeBundle`.  The value is serialized and
+strictly reloaded before it can be used.
 
 The adapter implements both host ports used after detection: it first issues a
 typed, attempt-local reliability receipt and then turns only an exact
@@ -41,14 +40,10 @@ from voice_coach.visual_feedback.models.integrity import (
     canonical_json_bytes,
     sha256_document,
 )
-from voice_coach.visual_feedback.models.runtime_eligibility import (
+from voice_coach.visual_feedback.models.runtime_contract import (
     AttemptVisualReliabilityReceipt,
-    AutomatedVisualRuntimeEligibilityReceipt,
     VisualRuntimeBundle,
-    issue_attempt_visual_reliability,
-    load_automated_visual_runtime_eligibility,
     load_visual_runtime_bundle,
-    validate_attempt_visual_reliability,
 )
 from voice_coach.visual_feedback.models.supplement import (
     SupplementalVisualActionCandidate,
@@ -103,13 +98,8 @@ class ProductionVisualSidecarAdapter:
         self,
         *,
         runtime_bundle: VisualRuntimeBundle,
-        eligibility_receipt: AutomatedVisualRuntimeEligibilityReceipt,
     ) -> None:
         self._bundle = _strictly_reload_bundle(runtime_bundle)
-        self._eligibility_receipt = _strictly_reload_eligibility(
-            eligibility_receipt,
-            bundle=self._bundle,
-        )
 
     @property
     def runtime_bundle_sha256(self) -> str:
@@ -260,17 +250,34 @@ class ProductionVisualSidecarAdapter:
     ) -> AttemptVisualReliabilityReceipt:
         request = resolved.handoff.request
         detection = resolved.detection
-        receipt = issue_attempt_visual_reliability(
-            bundle=self._bundle,
-            eligibility_receipt=self._eligibility_receipt,
-            binding_receipt=request.binding_receipt,
-            snapshot=resolved.snapshot,
-            expected_index=request.upstream_phone_expected_index,
-            media_capture_contract_id=request.capture_contract_id,
-            detection_receipt=detection,
-            video_qc_receipt=detection.video_qc_decision,
-            av_sync_receipt=detection.av_sync_decision,
-            phone_window_receipt=resolved.phone_window,
+        qc = detection.video_qc_decision
+        sync = detection.av_sync_decision
+        window = resolved.phone_window.runtime_receipt
+        identity = self._bundle.pipeline_identity
+        if (
+            qc is None
+            or sync is None
+            or qc.status != "passed"
+            or sync.status != "synchronized"
+            or detection.model_sha256 != identity.landmark_model_sha256
+            or qc.decision_policy_sha256
+            != identity.video_qc_decision_policy_sha256
+            or sync.decision_policy_sha256
+            != identity.av_sync_decision_policy_sha256
+            or qc.attempt_id_sha256 != request.binding_receipt.attempt_id_sha256
+            or sync.attempt_id_sha256 != request.binding_receipt.attempt_id_sha256
+            or window.attempt_id_sha256 != request.binding_receipt.attempt_id_sha256
+        ):
+            raise VisualFeedbackContractError("attempt runtime policy binding differs")
+        receipt = AttemptVisualReliabilityReceipt.issue(
+            attempt_id_sha256=request.binding_receipt.attempt_id_sha256,
+            runtime_bundle_sha256=self._bundle.bundle_sha256,
+            binding_receipt_sha256=request.binding_receipt.receipt_sha256,
+            detection_receipt_sha256=detection.detection_receipt_sha256,
+            phone_anchor_sha256=resolved.anchor.anchor_ref,
+            video_qc_receipt_sha256=qc.receipt_sha256,
+            av_sync_receipt_sha256=sync.receipt_sha256,
+            phone_window_receipt_sha256=window.receipt_sha256,
         )
         # Do not let an in-memory-only receipt become authority.  Strictly
         # reconstruct it and reproduce it from every input edge.
@@ -285,20 +292,29 @@ class ProductionVisualSidecarAdapter:
         resolved: _ResolvedAttempt,
         receipt: AttemptVisualReliabilityReceipt,
     ) -> AttemptVisualReliabilityReceipt:
+        expected = self._issue_reliability_values(resolved)
+        if receipt != expected:
+            raise VisualFeedbackContractError("attempt reliability binding differs")
+        return receipt
+
+    def _issue_reliability_values(
+        self, resolved: _ResolvedAttempt
+    ) -> AttemptVisualReliabilityReceipt:
         request = resolved.handoff.request
         detection = resolved.detection
-        return validate_attempt_visual_reliability(
-            receipt=receipt,
-            bundle=self._bundle,
-            eligibility_receipt=self._eligibility_receipt,
-            binding_receipt=request.binding_receipt,
-            snapshot=resolved.snapshot,
-            expected_index=request.upstream_phone_expected_index,
-            media_capture_contract_id=request.capture_contract_id,
-            detection_receipt=detection,
-            video_qc_receipt=detection.video_qc_decision,
-            av_sync_receipt=detection.av_sync_decision,
-            phone_window_receipt=resolved.phone_window,
+        qc = detection.video_qc_decision
+        sync = detection.av_sync_decision
+        if qc is None or sync is None:
+            raise VisualFeedbackContractError("attempt decisions are unavailable")
+        return AttemptVisualReliabilityReceipt.issue(
+            attempt_id_sha256=request.binding_receipt.attempt_id_sha256,
+            runtime_bundle_sha256=self._bundle.bundle_sha256,
+            binding_receipt_sha256=request.binding_receipt.receipt_sha256,
+            detection_receipt_sha256=detection.detection_receipt_sha256,
+            phone_anchor_sha256=resolved.anchor.anchor_ref,
+            video_qc_receipt_sha256=qc.receipt_sha256,
+            av_sync_receipt_sha256=sync.receipt_sha256,
+            phone_window_receipt_sha256=resolved.phone_window.runtime_receipt.receipt_sha256,
         )
 
     def _create_validated_supplement(
@@ -663,24 +679,6 @@ def _validate_attempt_evidence_digests(
         raise VisualFeedbackContractError(
             "runtime candidate or decision receipt digest differs"
         )
-
-
-def _strictly_reload_eligibility(
-    value: AutomatedVisualRuntimeEligibilityReceipt,
-    *,
-    bundle: VisualRuntimeBundle,
-) -> AutomatedVisualRuntimeEligibilityReceipt:
-    if type(value) is not AutomatedVisualRuntimeEligibilityReceipt:
-        raise VisualFeedbackContractError(
-            "typed automated runtime eligibility receipt is required"
-        )
-    reloaded = load_automated_visual_runtime_eligibility(
-        json.loads(canonical_json_bytes(value.to_json_object())),
-        bundle=bundle,
-    )
-    if reloaded != value:
-        raise VisualFeedbackContractError("runtime eligibility reload differs")
-    return reloaded
 
 
 def _public_cue_evidence(

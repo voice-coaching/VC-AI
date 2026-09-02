@@ -123,11 +123,9 @@ class UpstreamPhoneAnchor:
                 raise VisualFeedbackContractError("phone span must move forward")
         if self.observed_candidate is not None:
             require_text_token(self.observed_candidate, "observed_candidate")
-        if self.alignment_operation == "deletion" and (
-            self.start_ms is not None or self.observed_candidate is not None
-        ):
+        if self.alignment_operation == "deletion" and self.observed_candidate is not None:
             raise VisualFeedbackContractError(
-                "deletion evidence must not contain a span or candidate"
+                "deletion evidence must not contain an observed candidate"
             )
         if self.alignment_operation != "deletion" and (
             self.start_ms is None or self.observed_candidate is None

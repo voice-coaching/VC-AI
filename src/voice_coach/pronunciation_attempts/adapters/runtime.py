@@ -683,6 +683,10 @@ class FrozenSeungunRuntimeAdapter:
                 raise PronunciationAttemptRuntimeError(
                     "seungun_expected_phone_mismatch"
                 )
+            analysis = _recover_expected_phone_spans(
+                analysis,
+                audio_duration_ms=round(audio.sample_count / 16_000 * 1_000),
+            )
             return self._build_result(analysis=analysis, prompt=prompt)
         finally:
             _remove_restricted_wav_workspace(workspace=workspace, wav_path=wav_path)
@@ -1499,26 +1503,32 @@ class BlockedVisualReliabilityAdapter:
         sync_candidate = evidence.av_sync_candidate_evidence
         sync_decision = evidence.av_sync_decision
         if sync_candidate is None:
-            sync_reason = "content_av_sync_backend_not_configured"
+            sync_reasons = ("content_av_sync_backend_not_configured",)
         elif sync_decision is None and sync_candidate.status == "candidate_unvalidated":
-            sync_reason = "content_av_sync_candidate_not_calibrated"
+            sync_reasons = ("content_av_sync_candidate_not_calibrated",)
+        elif sync_candidate.status == "unavailable":
+            sync_reasons = sync_candidate.reason_codes or (
+                "content_av_sync_not_observed",
+            )
         elif sync_decision is not None and sync_decision.status == "failed":
-            sync_reason = "content_av_sync_decision_failed"
+            sync_reasons = ("content_av_sync_decision_failed",)
         else:
-            sync_reason = "content_av_sync_not_observed"
+            sync_reasons = ("content_av_sync_not_observed",)
         qc_evidence = evidence.video_qc_evidence
         qc_decision = evidence.video_qc_decision
         if qc_evidence is None:
-            qc_reason = "video_qc_backend_not_configured"
+            qc_reasons = ("video_qc_backend_not_configured",)
         elif qc_decision is None and qc_evidence.status == "candidate_unvalidated":
-            qc_reason = "video_qc_candidate_not_calibrated"
+            qc_reasons = ("video_qc_candidate_not_calibrated",)
+        elif qc_evidence.status == "unavailable":
+            qc_reasons = qc_evidence.reason_codes or ("video_qc_not_observed",)
         elif qc_decision is not None and qc_decision.status == "failed":
-            qc_reason = "video_qc_decision_failed"
+            qc_reasons = ("video_qc_decision_failed",)
         else:
-            qc_reason = "video_qc_not_observed"
+            qc_reasons = ("video_qc_not_observed",)
         reasons = [
-            qc_reason,
-            sync_reason,
+            *qc_reasons,
+            *sync_reasons,
             "p6_user_runtime_calibration_not_available",
             "p8_user_runtime_claim_catalog_not_available",
         ]
@@ -1567,6 +1577,90 @@ def _analysis_snapshot(
     if not isinstance(snapshot, dict) or snapshot.get("schema_version") != SEUNGUN_SCHEMA_VERSION:
         raise PronunciationAttemptRuntimeError("seungun_analysis_invalid")
     return snapshot
+
+
+def _recover_expected_phone_spans(
+    analysis: dict[str, object], *, audio_duration_ms: int
+) -> dict[str, object]:
+    """Add bounded host-estimated timing only where CTC reported a deletion.
+
+    The frozen detector deliberately has no observed span for a deletion.  A
+    visual retry still needs a bounded window, so the host interpolates the
+    expected phone slot from neighbouring observed spans.  The deletion
+    operation and absent observed candidate remain unchanged, and a notice
+    prevents the estimate from being confused with observed CTC evidence.
+    """
+
+    phones = analysis.get("phones")
+    if not isinstance(phones, list) or audio_duration_ms <= 0:
+        return analysis
+    timed_durations = [
+        phone["end_ms"] - phone["start_ms"]
+        for phone in phones
+        if isinstance(phone, dict)
+        and isinstance(phone.get("start_ms"), int)
+        and isinstance(phone.get("end_ms"), int)
+        and phone["end_ms"] > phone["start_ms"]
+    ]
+    estimate_ms = 100
+    if timed_durations:
+        ordered = sorted(timed_durations)
+        estimate_ms = ordered[len(ordered) // 2]
+    estimate_ms = max(40, min(240, estimate_ms))
+    recovered = False
+    for index, phone in enumerate(phones):
+        if (
+            not isinstance(phone, dict)
+            or phone.get("alignment_operation") != "deletion"
+            or phone.get("start_ms") is not None
+            or phone.get("end_ms") is not None
+        ):
+            continue
+        previous_end = next(
+            (
+                candidate.get("end_ms")
+                for candidate in reversed(phones[:index])
+                if isinstance(candidate, dict)
+                and isinstance(candidate.get("end_ms"), int)
+            ),
+            None,
+        )
+        next_start = next(
+            (
+                candidate.get("start_ms")
+                for candidate in phones[index + 1 :]
+                if isinstance(candidate, dict)
+                and isinstance(candidate.get("start_ms"), int)
+            ),
+            None,
+        )
+        if previous_end is not None and next_start is not None and next_start > previous_end:
+            start_ms, end_ms = previous_end, next_start
+        elif previous_end is not None:
+            start_ms = min(previous_end, max(0, audio_duration_ms - 1))
+            end_ms = min(audio_duration_ms, start_ms + estimate_ms)
+            if end_ms <= start_ms:
+                start_ms = max(0, end_ms - estimate_ms)
+        elif next_start is not None:
+            end_ms = max(1, min(next_start, audio_duration_ms))
+            start_ms = max(0, end_ms - estimate_ms)
+        else:
+            slot_count = max(1, len(phones))
+            start_ms = min(audio_duration_ms - 1, audio_duration_ms * index // slot_count)
+            end_ms = max(start_ms + 1, audio_duration_ms * (index + 1) // slot_count)
+        if end_ms > start_ms:
+            phone["start_ms"] = start_ms
+            phone["end_ms"] = end_ms
+            recovered = True
+    if recovered:
+        notices = analysis.get("notices")
+        if not isinstance(notices, list):
+            notices = []
+            analysis["notices"] = notices
+        notice = "deletion spans use host estimated expected-sequence timing, not observed CTC timing"
+        if notice not in notices:
+            notices.append(notice)
+    return analysis
 
 
 def _is_completed_no_issue(

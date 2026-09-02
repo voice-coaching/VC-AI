@@ -237,6 +237,37 @@ def test_runtime_returns_completed_no_issue_without_selected_index(
     assert result.audio_result["status"] == "completed_no_issue"
 
 
+def test_runtime_recovers_a_bounded_visual_span_for_a_deleted_phone(
+    tmp_path: Path,
+) -> None:
+    analysis = _analysis_document(has_error=True)
+    deleted = analysis["phones"][0]
+    deleted.update(
+        observed_candidate=None,
+        alignment_operation="deletion",
+        start_ms=None,
+        end_ms=None,
+    )
+    runtime = FrozenSeungunRuntimeAdapter(
+        media_store=_AudioStore(_PCM),  # type: ignore[arg-type]
+        detector=_RecordingDetector(analysis),
+        restricted_temp_root=tmp_path / "seungun-runtime",
+    )
+
+    result = runtime.analyze(audio=_audio(), prompt=_prompt())
+
+    recovered = result.analysis_evidence["phones"][0]
+    assert recovered["alignment_operation"] == "deletion"
+    assert recovered["observed_candidate"] is None
+    assert (recovered["start_ms"], recovered["end_ms"]) == (0, 100)
+    assert "host estimated expected-sequence timing" in " ".join(
+        result.analysis_evidence["notices"]
+    )
+    location = result.audio_result["grounded_payload"]["issue"]["location"]
+    assert location["startMs"] == 0
+    assert location["endMs"] == 100
+
+
 def test_runtime_failure_is_path_free_and_still_deletes_temp_wav(
     tmp_path: Path,
 ) -> None:

@@ -291,40 +291,64 @@ class LipAudioAvSyncAdapter:
             )
 
         audio_start_ms = _rounded_milliseconds(probe.audio_stream.start_time_us)
-        candidates: list[tuple[float, int, tuple[float, ...]]] = []
+        candidates: list[
+            tuple[
+                float,
+                int,
+                tuple[int, ...],
+                tuple[float, ...],
+                tuple[float, ...],
+            ]
+        ] = []
         maximum = self._policy.maximum_absolute_offset_ms
         for offset_ms in range(
             -maximum,
             maximum + 1,
             self._policy.offset_step_ms,
         ):
-            energies = tuple(
-                self._energy_at(
+            overlap = tuple(
+                (video_ms, aperture, energy)
+                for video_ms, aperture in zip(
+                    video_times, apertures, strict=True
+                )
+                if (
+                    energy := self._energy_at(
                     pcm,
                     absolute_audio_ms=video_ms - offset_ms,
                     audio_start_ms=audio_start_ms,
+                    )
                 )
-                for video_ms in video_times
+                is not None
             )
-            if any(energy is None for energy in energies):
+            if len(overlap) < self._policy.minimum_landmark_frames:
                 continue
-            numeric_energies = tuple(float(energy) for energy in energies)
-            correlation = _correlation(apertures, numeric_energies)
+            overlap_times = tuple(item[0] for item in overlap)
+            overlap_apertures = tuple(item[1] for item in overlap)
+            numeric_energies = tuple(float(item[2]) for item in overlap)
+            correlation = _correlation(overlap_apertures, numeric_energies)
             if correlation is not None:
-                candidates.append((correlation, offset_ms, numeric_energies))
+                candidates.append(
+                    (
+                        correlation,
+                        offset_ms,
+                        overlap_times,
+                        overlap_apertures,
+                        numeric_energies,
+                    )
+                )
         if not candidates:
             return self._unavailable(
                 reason="av_sync_audio_window_unavailable",
                 receipt_context=receipt_context,
             )
 
-        correlation, offset_ms, energies = max(
+        correlation, offset_ms, anchor_times, anchor_apertures, energies = max(
             candidates,
             key=lambda item: (item[0], -abs(item[1]), -item[1]),
         )
         anchors = _anchor_candidates(
-            video_times=video_times,
-            apertures=apertures,
+            video_times=anchor_times,
+            apertures=anchor_apertures,
             energies=energies,
             offset_ms=offset_ms,
             maximum_anchor_count=self._policy.maximum_anchor_count,

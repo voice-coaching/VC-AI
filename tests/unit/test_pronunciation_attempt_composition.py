@@ -107,12 +107,12 @@ def test_composition_rejects_only_one_calibrated_decision_policy(
         )
 
 
-def test_composition_rejects_only_one_visual_runtime_artifact(
+def test_composition_rejects_runtime_bundle_without_decision_policies(
     tmp_path: Path,
 ) -> None:
     repository_root = Path(__file__).resolve().parents[2]
 
-    with pytest.raises(ValueError, match="bundle and eligibility must be paired"):
+    with pytest.raises(ValueError, match="requires calibrated QC"):
         build_local_video_attempt_facade(
             repository_root=repository_root,
             restricted_media_root=tmp_path / "media",
