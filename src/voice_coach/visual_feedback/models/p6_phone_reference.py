@@ -25,7 +25,7 @@ from .integrity import (
     require_text_token,
     sha256_document,
 )
-from .runtime_eligibility import RuntimeVisualClaimPolicy
+from .runtime_contract import RuntimeVisualClaimPolicy
 
 
 P6_PHONE_REFERENCE_PRODUCER_SCHEMA_VERSION = (

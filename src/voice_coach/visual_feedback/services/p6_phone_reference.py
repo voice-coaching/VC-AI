@@ -38,7 +38,7 @@ from ..models.p6_phone_reference import (
     P6RuntimeCueParityReceipt,
 )
 from ..models.p6_geometry_schema import AIHUB68_KEYPOINT_NAMES
-from ..models.runtime_eligibility import (
+from ..models.runtime_contract import (
     RuntimeClaimBinding,
     RuntimeVisualClaimPolicy,
 )
