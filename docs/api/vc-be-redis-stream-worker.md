@@ -191,6 +191,48 @@ inference, the unacknowledged request remains in the PEL for reclaim. Repeated R
 poll failures use bounded backoff and exit after the configured limit. The state-file
 healthcheck never includes request IDs, object keys, endpoints, or exception text.
 
+### Release and rollback
+
+The image contains reviewed source and runtime packages only. Seungun weights,
+processor files, the promoted visual release, the face-landmarker model and the
+hash-pinned NLTK data remain immutable read-only deployment mounts. Build an image
+whose OCI revision label is the exact 40-character intelligentAI commit SHA:
+
+```bash
+docker build \
+  --file deploy/backend-analysis-worker/Dockerfile \
+  --build-arg VCS_REF="$(git rev-parse HEAD)" \
+  --tag "intelligentai/backend-analysis-worker:$(git rev-parse HEAD)" \
+  .
+```
+
+Deploy only inside the coordinated request-v4/result-v3 maintenance window described
+above. The explicit gate prevents an operator from treating this as an independently
+compatible rolling update:
+
+```bash
+AI_ANALYSIS_ROLLOUT_GATE=quiesced-request-v4-result-v3 \
+  scripts/deploy_backend_analysis_worker.sh deploy "$(git rev-parse HEAD)"
+```
+
+The script requires the checked-out HEAD to match that SHA with a clean worktree,
+verifies the resulting image revision, and waits for the Compose healthcheck. Readiness
+is written only after the frozen Seungun child has preloaded, the promoted visual
+release has loaded, and the Redis consumer group exists. If candidate health fails,
+the script restores the previously running image and requires it to become healthy.
+An explicit rollback to an already built prior revision uses:
+
+```bash
+AI_ANALYSIS_ROLLOUT_GATE=quiesced-request-v4-result-v3 \
+  scripts/deploy_backend_analysis_worker.sh rollback <prior-40-character-sha>
+```
+
+CI expands the production Compose contract, builds the complete code/runtime image
+without model artifacts, and imports the packaged transport, visual, scorer and
+Seungun modules. A deployment gate must still verify the real read-only artifacts,
+private S3-compatible store, consent/key issuer and TLS Redis combination; CI does not
+claim those controlled resources are available.
+
 ## Delivery and verification
 
 - The consumer reclaims PEL entries before new work. If a reclaimed batch

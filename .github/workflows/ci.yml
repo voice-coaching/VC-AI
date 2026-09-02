@@ -86,7 +86,7 @@ jobs:
   backend-analysis-worker-contract:
     name: Private worker contract (no model artifacts)
     runs-on: ubuntu-24.04
-    timeout-minutes: 15
+    timeout-minutes: 45
     steps:
       - name: Check out repository
         uses: actions/checkout@v7
@@ -117,6 +117,8 @@ jobs:
           SEUNGUN_MODEL_DIR: /tmp/synthetic-model
           SEUNGUN_PROCESSOR_DIR: /tmp/synthetic-processor
           G2PK_NLTK_DATA_DIR: /tmp/synthetic-nltk
+          VISUAL_PRODUCTION_RELEASE_DIR: /tmp/synthetic-visual-release
+          VISUAL_LANDMARK_MODEL_FILE: /tmp/synthetic-landmark-model
           ANALYSIS_REDIS_CA_CERT: /tmp/synthetic-ca.crt
           AI_ANALYSIS_OBJECT_STORAGE_BUCKET: synthetic-bucket
           AI_ANALYSIS_OBJECT_STORAGE_REGION: ap-northeast-2
@@ -124,6 +126,22 @@ jobs:
           AI_ANALYSIS_REDIS_HOST: redis.invalid
           AI_ANALYSIS_REQUEST_CONSUMER_NAME: ci-worker
         run: docker compose -f deploy/backend-analysis-worker/compose.yaml config --quiet
+
+      - name: Build production worker image without model artifacts
+        run: >-
+          docker build
+          --file deploy/backend-analysis-worker/Dockerfile
+          --build-arg VCS_REF="${GITHUB_SHA}"
+          --tag intelligentai/backend-analysis-worker:ci
+          .
+
+      - name: Verify packaged runtime dependencies
+        run: >-
+          docker run --rm -e MPLCONFIGDIR=/tmp/matplotlib
+          --entrypoint /app/.venv/bin/python
+          intelligentai/backend-analysis-worker:ci
+          -c "import boto3, mediapipe, redis, soundfile, torch, transformers;
+          import korean_phone_ctc"
 
       - name: Record controlled-runtime boundary
         if: always()
