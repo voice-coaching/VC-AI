@@ -108,6 +108,7 @@ jobs:
         run: >-
           python -m pytest
           tests/unit/test_backend_analysis*.py
+          tests/unit/test_persistent_seungun_runtime.py
           tests/integration/test_backend_analysis_redis_stream_integration.py
 
       - name: Validate worker Compose expansion

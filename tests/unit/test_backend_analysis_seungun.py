@@ -56,12 +56,16 @@ class _Detector:
     def __init__(self, analysis: dict[str, object]) -> None:
         self.analysis = analysis
         self.calls = 0
+        self.closed = False
 
     def analyze(self, *, audio_path: Path, expected_phones: tuple[str, ...]):
         self.calls += 1
         assert audio_path == Path("/restricted/decoded.wav")
         assert expected_phones == ("ㄱ", "ㅏ")
         return self.analysis
+
+    def close(self) -> None:
+        self.closed = True
 
 
 def _phone(index: int, expected: str, *, is_error: bool) -> dict[str, object]:
@@ -203,3 +207,16 @@ def test_mismatched_detector_phone_sequence_fails_closed() -> None:
         ).analyze(request=_request(), audio=_audio())
 
     assert error.value.code == "seungun_detector_failed"
+
+
+def test_close_releases_the_long_lived_detector() -> None:
+    detector = _Detector(_analysis(issue=False))
+    adapter = SeungunBackendAnalysisAdapter(
+        decoder=_Decoder(),
+        expected_phone_frontend=_Frontend(),
+        detector=detector,
+    )
+
+    adapter.close()
+
+    assert detector.closed is True

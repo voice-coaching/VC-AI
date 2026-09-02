@@ -14,7 +14,7 @@ VC-BE PostgreSQL outbox
   -> authorization HMAC verification (no media I/O before this point)
   -> private S3-compatible object materialization
   -> isolated ffmpeg: 16 kHz mono signed PCM WAV
-  -> pinned g2pK expected phones -> one frozen Seungun detector call
+  -> pinned g2pK expected phones -> one call to the warm frozen Seungun detector
   -> analysis:result:v1 (analysis-result.v2 JSON) -> XACK request
   -> VC-BE result consumer -> PostgreSQL
 ```
@@ -58,7 +58,12 @@ The built-in production composition is
    denial, receives raw PCM, writes a valid 16 kHz mono WAV header, validates
    it, and removes it on every exit.
 4. `SubprocessG2PKExpectedPhoneFrontend` supplies pinned expected phones and
-   `IsolatedFrozenSeungunDetectorAdapter` executes exactly once. A phone
+   `PersistentIsolatedFrozenSeungunDetectorAdapter` preloads the model once,
+   executes exactly one detector call per request, serializes access, and recycles
+   the isolated process after a bounded request count. The child retains seccomp
+   network denial, a 64 GiB address-space bound, a one-hour aggregate CPU limit,
+   request/startup timeouts, parent-death binding, bounded line-framed output, and
+   no stderr forwarding. A phone
    mismatch or malformed detector document fails closed. Grounded feedback
    preserves the detector-selected phone and uses the approved catalog
    fallback; no free-form model is in this composition.
@@ -103,6 +108,9 @@ VC-BE needs presign and HEAD; the worker needs GET only.
 | `AI_ANALYSIS_RESTRICTED_WORKSPACE_ROOT` | Y | Absolute local-only temporary root. |
 | `AI_ANALYSIS_NLTK_DATA_ROOT` | Y | Absolute approved NLTK data root for pinned g2pK. |
 | `AI_ANALYSIS_SEUNGUN_DEVICE` | N | `cpu` or `cuda`; default `cpu`. |
+| `AI_ANALYSIS_SEUNGUN_STARTUP_TIMEOUT_SECONDS` | N | Warm-model startup bound, default `300`, maximum `900`. |
+| `AI_ANALYSIS_SEUNGUN_REQUEST_TIMEOUT_SECONDS` | N | Per-request response bound, default `180`, maximum `600`. |
+| `AI_ANALYSIS_SEUNGUN_MAXIMUM_REQUESTS_PER_PROCESS` | N | Warm-process recycle cap, default `100`, maximum `1000`. |
 | `AI_ANALYSIS_FFMPEG_BINARY` | N | Absolute reviewed ffmpeg path; otherwise `PATH` discovery. |
 | `AI_ANALYSIS_REDIS_HOST` / `AI_ANALYSIS_REDIS_PORT` | Y | Dedicated private Stream Redis endpoint. |
 | `AI_ANALYSIS_REDIS_USERNAME` | N | Redis ACL identity. |
@@ -115,6 +123,7 @@ VC-BE needs presign and HEAD; the worker needs GET only.
 | `AI_ANALYSIS_REQUEST_CONSUMER_GROUP` | N | Default `analysis-workers`. |
 | `AI_ANALYSIS_REQUEST_CONSUMER_NAME` | Y | Unique worker instance name. |
 | `AI_ANALYSIS_PENDING_CLAIM_IDLE_MS` | N | Default `300000`. |
+| `AI_ANALYSIS_PROCESSING_HEARTBEAT_INTERVAL_SECONDS` | N | PEL lease refresh interval, default `60`; must remain below claim idle. |
 | `AI_ANALYSIS_REDIS_CONNECT_TIMEOUT_SECONDS` | N | Default `5`, maximum `30`. |
 | `AI_ANALYSIS_REDIS_SOCKET_TIMEOUT_SECONDS` | N | Default `30`, maximum `300`. |
 | `AI_ANALYSIS_REDIS_HEALTH_CHECK_INTERVAL_SECONDS` | N | Default `30`, range `1..300`. |
@@ -124,6 +133,7 @@ VC-BE needs presign and HEAD; the worker needs GET only.
 | `AI_ANALYSIS_POLL_FAILURE_BACKOFF_SECONDS` | N | Default `5`, range `0.1..60`. |
 | `AI_ANALYSIS_WORKER_STATE_PATH` | Production Y | Absolute path on a private writable runtime mount. Contains only status, timestamps and counters. |
 | `AI_ANALYSIS_WORKER_HEALTH_MAX_AGE_SECONDS` | N | Default `600`, range `5..3600`; it exceeds the current bounded decode, g2pK and detector path. |
+| `AI_ANALYSIS_WORKER_HEALTH_START_PERIOD` | Compose N | Docker health startup grace, default `5m`; keep it at least as large as the model startup timeout. |
 
 AWS SDK credentials use the normal boto3 credential chain. Do not place keys
 in the JSON request or a tracked `.env.local`. Run only after all settings and
@@ -140,7 +150,8 @@ and Redis password through external Docker secrets, and keeps only restricted me
 and the health state on bounded tmpfs mounts. Build or start it only in the approved
 GPU deployment environment; model weights and protected media never enter the image.
 
-The worker handles `SIGTERM`/`SIGINT` by stopping after the current poll. A result is
+The container health start period is five minutes so readiness is not asserted before
+the frozen model preload completes. The worker handles `SIGTERM`/`SIGINT` by stopping after the current poll. A result is
 still written before request ACK; if the supervisor's grace period expires during an
 inference, the unacknowledged request remains in the PEL for reclaim. Repeated Redis
 poll failures use bounded backoff and exit after the configured limit. The state-file
@@ -150,12 +161,18 @@ healthcheck never includes request IDs, object keys, endpoints, or exception tex
 
 - The consumer reclaims PEL entries before new work. If a reclaimed batch
   satisfies the requested count it returns without a second blocking read.
+- While a valid request is executing, the worker refreshes its PEL idle time with
+  `XCLAIM JUSTID`; it synchronously refreshes once more before result publication.
+  This prevents another healthy worker from reclaiming a long inference under the
+  normal claim-idle policy. Duplicate execution after partitions remains harmless
+  because VC-BE applies only the active request generation idempotently.
 - It writes a terminal result before `XACK`; result publication failure leaves
   the request pending for later `XAUTOCLAIM`.
 - Malformed requests enter the restricted request DLQ before ACK. Replay is a
   deliberate operator action using a new Stream entry.
 - Unit tests cover authorization-before-media, Java/Python canonical HMAC
-  parity, restricted storage cleanup, one-call Seungun ownership, and all
+  parity, restricted storage cleanup, warm-process reuse/recycle/timeout,
+  one-call Seungun ownership, and all
   failure mappings.
 - A synthetic TLS Redis integration test covers real redis-py list-shaped
   replies, result-before-ACK, PEL reclaim and malformed-request DLQ. It is

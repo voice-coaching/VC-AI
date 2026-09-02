@@ -4,6 +4,8 @@ import hashlib
 import json
 from uuid import UUID
 
+import pytest
+
 from voice_coach.backend_analysis.adapters.redis_stream import (
     RedisStreamSettings,
     RedisStreamWorker,
@@ -22,6 +24,7 @@ class _FakeRedis:
         self.responses = responses
         self.added: list[tuple[object, object, dict[str, object]]] = []
         self.acked: list[tuple[object, object, object]] = []
+        self.claimed: list[tuple[object, object, object, object]] = []
 
     def xgroup_create(self, *args: object, **kwargs: object) -> object:
         del args, kwargs
@@ -42,6 +45,25 @@ class _FakeRedis:
     def xack(self, stream: object, group: object, message_id: object) -> object:
         self.acked.append((stream, group, message_id))
         return 1
+
+    def xclaim(
+        self,
+        stream: object,
+        group: object,
+        consumer: object,
+        minimum_idle: object,
+        message_ids: list[object],
+        **kwargs: object,
+    ) -> object:
+        del kwargs
+        self.claimed.append((stream, group, consumer, minimum_idle))
+        return message_ids
+
+
+class _LeaseLostRedis(_FakeRedis):
+    def xclaim(self, *args: object, **kwargs: object) -> object:
+        del args, kwargs
+        return []
 
 
 class _Authorizer:
@@ -164,6 +186,9 @@ def test_terminal_result_is_published_before_request_is_acknowledged() -> None:
     assert client.added[0][0] == "analysis:result:v1"
     result = json.loads(client.added[0][1]["payload"])
     assert result["status"] == "COMPLETED"
+    assert client.claimed == [
+        ("analysis:request:v1", "analysis-workers", "worker-1", 0)
+    ]
     assert client.acked == [("analysis:request:v1", "analysis-workers", b"1-0")]
 
 
@@ -199,3 +224,16 @@ def test_oversized_request_is_not_copied_into_the_bounded_dlq() -> None:
         )
     ]
     assert client.acked == [("analysis:request:v1", "analysis-workers", b"1-0")]
+
+
+def test_lost_processing_lease_never_publishes_or_acknowledges_result() -> None:
+    client = _LeaseLostRedis(
+        [[(b"analysis:request:v1", [(b"1-0", {b"payload": _payload()})])]]
+    )
+    adapter = RedisStreamWorker(client=client, settings=_settings(), worker=_worker())
+
+    with pytest.raises(RuntimeError, match="analysis_request_lease_lost"):
+        adapter.poll_once(block_ms=0)
+
+    assert client.added == []
+    assert client.acked == []

@@ -6,8 +6,8 @@ import os
 from pathlib import Path
 from typing import Mapping
 
-from voice_coach.pronunciation_attempts.adapters.runtime import (
-    IsolatedFrozenSeungunDetectorAdapter,
+from voice_coach.pronunciation_attempts.adapters.persistent_seungun import (
+    PersistentIsolatedFrozenSeungunDetectorAdapter,
 )
 from voice_coach.pronunciation_feedback.adapters.expected_phones_subprocess import (
     SubprocessG2PKExpectedPhoneFrontend,
@@ -47,6 +47,15 @@ def create_worker(
         maximum_audio_bytes = int(
             env.get("AI_ANALYSIS_OBJECT_STORAGE_MAXIMUM_AUDIO_BYTES", str(20 * 1024 * 1024))
         )
+        seungun_startup_timeout = float(
+            env.get("AI_ANALYSIS_SEUNGUN_STARTUP_TIMEOUT_SECONDS", "300")
+        )
+        seungun_request_timeout = float(
+            env.get("AI_ANALYSIS_SEUNGUN_REQUEST_TIMEOUT_SECONDS", "180")
+        )
+        seungun_maximum_requests = int(
+            env.get("AI_ANALYSIS_SEUNGUN_MAXIMUM_REQUESTS_PER_PROCESS", "100")
+        )
     except (KeyError, TypeError, ValueError):
         raise ValueError("analysis_worker_production_configuration_invalid") from None
     if (
@@ -74,9 +83,13 @@ def create_worker(
         nltk_data_root=nltk_data_root,
         repository_root=repository_root,
     )
-    detector = IsolatedFrozenSeungunDetectorAdapter(
+    detector = PersistentIsolatedFrozenSeungunDetectorAdapter(
         repository_root=repository_root,
         device=device,
+        startup_timeout_seconds=seungun_startup_timeout,
+        request_timeout_seconds=seungun_request_timeout,
+        maximum_requests_per_process=seungun_maximum_requests,
+        start_immediately=True,
     )
     seungun = SeungunBackendAnalysisAdapter(
         decoder=RestrictedFfmpegAudioDecoder(

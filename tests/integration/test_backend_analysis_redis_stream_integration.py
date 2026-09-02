@@ -162,7 +162,8 @@ def _settings(suffix: str) -> RedisStreamSettings:
         request_dlq_stream=f"test:analysis:request:dlq:{suffix}",
         consumer_group=f"test-analysis-workers-{suffix}",
         consumer_name="worker-1",
-        claim_idle_ms=1,
+        claim_idle_ms=500,
+        processing_heartbeat_interval_seconds=0.1,
     )
 
 
@@ -192,7 +193,7 @@ def test_result_is_written_before_ack_and_pending_message_is_reclaimed() -> None
         assert client.xpending(settings.request_stream, settings.consumer_group)["pending"] == 1
         assert client.xlen(settings.result_stream) == 0
 
-        time.sleep(0.01)
+        time.sleep(0.51)
         recovered = RedisStreamWorker(
             client=client,
             settings=settings,

@@ -169,8 +169,21 @@ def _kill_process_group(process: subprocess.Popen[bytes]) -> None:
         pass
 
 
+def terminate_isolated_process(process: subprocess.Popen[bytes]) -> None:
+    """Terminate an isolated process group without exposing its command or output."""
+
+    if process.poll() is None:
+        try:
+            os.killpg(process.pid, signal.SIGTERM)
+            process.wait(timeout=1.0)
+        except (OSError, subprocess.TimeoutExpired):
+            pass
+    _kill_process_group(process)
+
+
 __all__ = [
     "IsolatedProcessError",
     "IsolatedProcessResult",
     "run_bounded_isolated_process",
+    "terminate_isolated_process",
 ]

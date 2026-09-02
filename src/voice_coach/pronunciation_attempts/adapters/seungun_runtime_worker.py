@@ -13,6 +13,7 @@ import sys
 
 _PROTOCOL_VERSION = "voice_coach.seungun_runtime_worker.v1"
 _DEVICE_PATTERN = re.compile(r"^(?:cpu|cuda(?::[0-9]+)?)$")
+_MAXIMUM_EXPECTED_PHONES = 4096
 
 
 class _WorkerError(RuntimeError):
@@ -51,6 +52,7 @@ def _request(value: object) -> tuple[Path, tuple[str, ...], str]:
     if (
         not isinstance(expected_value, list)
         or not expected_value
+        or len(expected_value) > _MAXIMUM_EXPECTED_PHONES
         or any(
             not isinstance(phone, str) or not phone or len(phone) > 16
             for phone in expected_value
@@ -74,26 +76,46 @@ def _request(value: object) -> tuple[Path, tuple[str, ...], str]:
     return audio_path, tuple(expected_value), device
 
 
-def _run(value: object) -> dict[str, object]:
-    _assert_network_isolated()
-    audio_path, expected_phones, device = _request(value)
+def _load_detector(*, repository_root: Path, device: str) -> object:
     try:
         from korean_phone_ctc.frozen_detector import FrozenPronunciationDetector
     except ImportError as error:
         raise _WorkerError("seungun_backend_unavailable") from error
-    repository_root = Path(__file__).resolve().parents[4]
     try:
-        detector = FrozenPronunciationDetector(
+        return FrozenPronunciationDetector(
             repository_root=repository_root,
             device=device,
         )
-        analysis = detector.analyze(
+    except Exception as error:
+        raise _WorkerError("seungun_backend_unavailable") from error
+
+
+def _analyze_detector(
+    detector: object, *, audio_path: Path, expected_phones: tuple[str, ...]
+) -> dict[str, object]:
+    try:
+        analysis = detector.analyze(  # type: ignore[attr-defined]
             audio_path=audio_path,
             expected_phones=expected_phones,
         )
         document = analysis.to_json_object()
     except Exception as error:
         raise _WorkerError("seungun_detector_failed") from error
+    if not isinstance(document, dict):
+        raise _WorkerError("seungun_detector_failed")
+    return document
+
+
+def _run(value: object) -> dict[str, object]:
+    _assert_network_isolated()
+    audio_path, expected_phones, device = _request(value)
+    repository_root = Path(__file__).resolve().parents[4]
+    detector = _load_detector(repository_root=repository_root, device=device)
+    document = _analyze_detector(
+        detector,
+        audio_path=audio_path,
+        expected_phones=expected_phones,
+    )
     return {
         "protocol_version": _PROTOCOL_VERSION,
         "status": "completed",

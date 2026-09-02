@@ -266,6 +266,11 @@ class SeungunBackendAnalysisAdapter:
             pipeline_revision=pipeline_revision,
         )
 
+    def close(self) -> None:
+        close = getattr(self._detector, "close", None)
+        if callable(close):
+            close()
+
 
 def _analysis_snapshot(value: object) -> dict[str, object]:
     try:

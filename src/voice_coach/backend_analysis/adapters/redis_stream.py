@@ -8,8 +8,10 @@ or external network dependency.
 from __future__ import annotations
 
 import json
+import math
 import os
 from pathlib import Path
+import threading
 from typing import Protocol
 
 from ..domain import AnalysisRequest, BackendAnalysisContractError
@@ -36,6 +38,8 @@ class _RedisClient(Protocol):
 
     def xack(self, *args: object, **kwargs: object) -> object: ...
 
+    def xclaim(self, *args: object, **kwargs: object) -> object: ...
+
 
 class RedisStreamSettings:
     """Environment-only Stream configuration with no URL-shaped secret."""
@@ -60,6 +64,7 @@ class RedisStreamSettings:
         health_check_interval_seconds: int = 30,
         maximum_request_payload_bytes: int = 64 * 1024,
         maximum_dlq_entries: int = 10_000,
+        processing_heartbeat_interval_seconds: float = 60.0,
     ) -> None:
         if (
             not host
@@ -72,11 +77,16 @@ class RedisStreamSettings:
             or not consumer_name
             or not 1 <= port <= 65_535
             or claim_idle_ms <= 0
+            or not math.isfinite(socket_connect_timeout_seconds)
             or not 0 < socket_connect_timeout_seconds <= 30
+            or not math.isfinite(socket_timeout_seconds)
             or not 1 <= socket_timeout_seconds <= 300
             or not 1 <= health_check_interval_seconds <= 300
             or not 1_024 <= maximum_request_payload_bytes <= 1024 * 1024
             or not 1 <= maximum_dlq_entries <= 1_000_000
+            or not math.isfinite(processing_heartbeat_interval_seconds)
+            or not 0.1 <= processing_heartbeat_interval_seconds <= 300
+            or processing_heartbeat_interval_seconds * 1000 >= claim_idle_ms
             or (
                 ca_cert_path is not None
                 and (
@@ -103,6 +113,7 @@ class RedisStreamSettings:
         self.health_check_interval_seconds = health_check_interval_seconds
         self.maximum_request_payload_bytes = maximum_request_payload_bytes
         self.maximum_dlq_entries = maximum_dlq_entries
+        self.processing_heartbeat_interval_seconds = processing_heartbeat_interval_seconds
 
     @classmethod
     def from_environment(cls, environment: dict[str, str] | None = None) -> "RedisStreamSettings":
@@ -124,6 +135,9 @@ class RedisStreamSettings:
             )
             maximum_dlq_entries = int(
                 env.get("AI_ANALYSIS_MAXIMUM_REQUEST_DLQ_ENTRIES", "10000")
+            )
+            processing_heartbeat_interval = float(
+                env.get("AI_ANALYSIS_PROCESSING_HEARTBEAT_INTERVAL_SECONDS", "60")
             )
             password = secret_text(
                 env,
@@ -151,6 +165,7 @@ class RedisStreamSettings:
             health_check_interval_seconds=health_interval,
             maximum_request_payload_bytes=maximum_payload,
             maximum_dlq_entries=maximum_dlq_entries,
+            processing_heartbeat_interval_seconds=processing_heartbeat_interval,
         )
 
 
@@ -266,7 +281,13 @@ class RedisStreamWorker:
                     "analysis_request_contract_invalid",
                 )
             else:
-                result = self._worker.process(request)
+                with _ProcessingLease(
+                    client=self._client,
+                    settings=self._settings,
+                    message_id=message_id,
+                ) as lease:
+                    result = self._worker.process(request)
+                    lease.refresh_now()
                 encoded = json.dumps(
                     result.to_payload(),
                     ensure_ascii=False,
@@ -296,6 +317,62 @@ class RedisStreamWorker:
             maxlen=self._settings.maximum_dlq_entries,
             approximate=True,
         )
+
+
+class _ProcessingLease:
+    """Refresh Stream pending idle time while one bounded analysis is running."""
+
+    def __init__(
+        self,
+        *,
+        client: _RedisClient,
+        settings: RedisStreamSettings,
+        message_id: object,
+    ) -> None:
+        self._client = client
+        self._settings = settings
+        self._message_id = message_id
+        self._stop = threading.Event()
+        self._thread: threading.Thread | None = None
+
+    def __enter__(self) -> "_ProcessingLease":
+        self._thread = threading.Thread(
+            target=self._heartbeat,
+            name="analysis-stream-lease",
+            daemon=True,
+        )
+        self._thread.start()
+        return self
+
+    def __exit__(self, _type: object, _value: object, _traceback: object) -> None:
+        self._stop.set()
+        if self._thread is not None:
+            self._thread.join(timeout=1.0)
+
+    def refresh_now(self) -> None:
+        try:
+            claimed = self._client.xclaim(
+                self._settings.request_stream,
+                self._settings.consumer_group,
+                self._settings.consumer_name,
+                0,
+                [self._message_id],
+                justid=True,
+            )
+        except Exception:
+            raise RuntimeError("analysis_request_lease_refresh_failed") from None
+        if not _contains_message_id(claimed, self._message_id):
+            raise RuntimeError("analysis_request_lease_lost")
+
+    def _heartbeat(self) -> None:
+        interval = self._settings.processing_heartbeat_interval_seconds
+        while not self._stop.wait(interval):
+            try:
+                self.refresh_now()
+            except RuntimeError:
+                # The final synchronous refresh is authoritative. A transient
+                # failure here never ACKs or publishes by itself.
+                continue
 
 
 def _payload_field(fields: object) -> bytes | None:
@@ -343,3 +420,10 @@ def _text(value: object) -> str:
     if isinstance(value, bytes):
         return value.decode("ascii", errors="replace")
     return str(value)
+
+
+def _contains_message_id(values: object, expected: object) -> bool:
+    if not isinstance(values, (list, tuple)):
+        return False
+    expected_text = _text(expected)
+    return any(_text(value) == expected_text for value in values)
