@@ -126,7 +126,7 @@ def _payload() -> bytes:
     script = "안녕하세요. 오늘 날씨가 좋습니다."
     return json.dumps(
         {
-            "schemaVersion": "voice-coaching.analysis-request.v3",
+            "schemaVersion": "voice-coaching.analysis-request.v4",
             "eventId": "4adfe173-0691-4e89-b94e-a5c5c5085826",
             "analysisId": 35,
             "contentId": 12,
@@ -140,7 +140,7 @@ def _payload() -> bytes:
             "durationMs": 1200,
             "learningFocus": "PRONUNCIATION",
             "authorizationGrant": {
-                "grantVersion": "voice-coaching.analysis-authorization.v2",
+                "grantVersion": "voice-coaching.analysis-authorization.v3",
                 "keyId": "backend-test-v1",
                 "requestEventId": "4adfe173-0691-4e89-b94e-a5c5c5085826",
                 "analysisId": 35,
@@ -155,6 +155,12 @@ def _payload() -> bytes:
                 "learningFocus": "PRONUNCIATION",
                 "consentReceiptSha256": "b" * 64,
                 "consentPolicyRevision": "voice-analysis-consent-v1",
+                "visualObjectKeySha256": None,
+                "visualSha256": None,
+                "visualMimeType": None,
+                "visualFileSizeBytes": None,
+                "visualConsentReceiptSha256": None,
+                "visualConsentPolicyRevision": None,
                 "issuedAtUtc": "2026-09-02T00:00:00Z",
                 "expiresAtUtc": "2026-09-02T00:05:00Z",
                 "purpose": "pronunciation_coaching",
@@ -163,6 +169,7 @@ def _payload() -> bytes:
                 "remoteEgressAllowed": False,
                 "signature": "c" * 64,
             },
+            "visualInput": None,
         },
         ensure_ascii=False,
     ).encode("utf-8")

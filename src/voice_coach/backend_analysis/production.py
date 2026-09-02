@@ -26,6 +26,10 @@ from .adapters.seungun import (
     RestrictedFfmpegAudioDecoder,
     SeungunBackendAnalysisAdapter,
 )
+from .adapters.visual import (
+    BackendVisualSettings,
+    ProductionBackendVisualAnalysisAdapter,
+)
 from .service import BackendAnalysisWorker
 
 
@@ -47,6 +51,16 @@ def create_worker(
         maximum_audio_bytes = int(
             env.get("AI_ANALYSIS_OBJECT_STORAGE_MAXIMUM_AUDIO_BYTES", str(20 * 1024 * 1024))
         )
+        maximum_visual_bytes = int(
+            env.get(
+                "AI_ANALYSIS_OBJECT_STORAGE_MAXIMUM_VISUAL_BYTES",
+                str(128 * 1024 * 1024),
+            )
+        )
+        visual_release_root_text = env.get("AI_ANALYSIS_VISUAL_RELEASE_ROOT", "")
+        visual_landmark_model_text = env.get(
+            "AI_ANALYSIS_VISUAL_LANDMARK_MODEL_PATH", ""
+        )
         seungun_startup_timeout = float(
             env.get("AI_ANALYSIS_SEUNGUN_STARTUP_TIMEOUT_SECONDS", "300")
         )
@@ -64,6 +78,7 @@ def create_worker(
         or not bucket
         or not nltk_data_root.is_absolute()
         or device not in {"cpu", "cuda"}
+        or bool(visual_release_root_text) != bool(visual_landmark_model_text)
     ):
         raise ValueError("analysis_worker_production_configuration_invalid")
 
@@ -77,6 +92,7 @@ def create_worker(
             recordings_prefix=recordings_prefix,
             workspace_root=workspace_root,
             maximum_audio_bytes=maximum_audio_bytes,
+            maximum_visual_bytes=maximum_visual_bytes,
         ),
     )
     expected_phone_frontend = SubprocessG2PKExpectedPhoneFrontend(
@@ -98,10 +114,22 @@ def create_worker(
         expected_phone_frontend=expected_phone_frontend,
         detector=detector,
     )
+    visual = None
+    if visual_release_root_text:
+        visual = ProductionBackendVisualAnalysisAdapter(
+            BackendVisualSettings(
+                repository_root=repository_root,
+                workspace_root=workspace_root / "visual-attempts",
+                nltk_data_root=nltk_data_root,
+                landmark_model_path=Path(visual_landmark_model_text),
+                production_release_root=Path(visual_release_root_text),
+            )
+        )
     return BackendAnalysisWorker(
         authorization=authorization,
         object_store=object_store,
         seungun=seungun,
+        visual=visual,
     )
 
 

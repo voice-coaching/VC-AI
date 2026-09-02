@@ -16,11 +16,12 @@ from typing import Mapping
 from uuid import UUID
 
 
-ANALYSIS_REQUEST_SCHEMA_VERSION = "voice-coaching.analysis-request.v3"
-ANALYSIS_AUTHORIZATION_GRANT_VERSION = "voice-coaching.analysis-authorization.v2"
+ANALYSIS_REQUEST_SCHEMA_VERSION = "voice-coaching.analysis-request.v4"
+ANALYSIS_AUTHORIZATION_GRANT_VERSION = "voice-coaching.analysis-authorization.v3"
 ANALYSIS_AUTHORIZATION_PURPOSE = "pronunciation_coaching"
 ANALYSIS_AUTHORIZATION_DATA_CATEGORY = "learner_voice_recording"
-ANALYSIS_RESULT_SCHEMA_VERSION = "voice-coaching.analysis-result.v2"
+ANALYSIS_RESULT_SCHEMA_VERSION = "voice-coaching.analysis-result.v3"
+VISUAL_SUPPLEMENT_SCHEMA_VERSION = "voice-coaching.visual-supplement.v1"
 PRONUNCIATION_EVIDENCE_SCHEMA_VERSION = (
     "voice-coaching.pronunciation-evidence.v1"
 )
@@ -46,6 +47,7 @@ _REQUEST_FIELDS = frozenset(
         "fileSizeBytes",
         "durationMs",
         "learningFocus",
+        "visualInput",
         "authorizationGrant",
     }
 )
@@ -66,6 +68,12 @@ _AUTHORIZATION_FIELDS = frozenset(
         "learningFocus",
         "consentReceiptSha256",
         "consentPolicyRevision",
+        "visualObjectKeySha256",
+        "visualSha256",
+        "visualMimeType",
+        "visualFileSizeBytes",
+        "visualConsentReceiptSha256",
+        "visualConsentPolicyRevision",
         "issuedAtUtc",
         "expiresAtUtc",
         "purpose",
@@ -75,6 +83,82 @@ _AUTHORIZATION_FIELDS = frozenset(
         "signature",
     }
 )
+
+
+@dataclass(frozen=True, slots=True)
+class AnalysisVisualInput:
+    """Consent-bound canonical video used only after Seungun selects a phone."""
+
+    object_key: str
+    sha256: str
+    mime_type: str
+    file_size_bytes: int
+    consent_receipt_sha256: str
+    consent_policy_revision: str
+
+    @classmethod
+    def from_payload(cls, payload: object) -> "AnalysisVisualInput":
+        fields = {
+            "objectKey",
+            "sha256",
+            "mimeType",
+            "fileSizeBytes",
+            "consentReceiptSha256",
+            "consentPolicyRevision",
+        }
+        if not isinstance(payload, Mapping) or set(payload) != fields:
+            raise BackendAnalysisContractError("analysis_visual_contract_invalid")
+        if payload["mimeType"] != "video/mp4":
+            raise BackendAnalysisContractError("analysis_visual_contract_invalid")
+        return cls(
+            object_key=_object_key(payload["objectKey"]),
+            sha256=_sha256(payload["sha256"]),
+            mime_type="video/mp4",
+            file_size_bytes=_positive_int_with_max(
+                payload["fileSizeBytes"], maximum=_JAVA_LONG_MAX
+            ),
+            consent_receipt_sha256=_sha256(payload["consentReceiptSha256"]),
+            consent_policy_revision=_text(
+                payload["consentPolicyRevision"], maximum=100
+            ),
+        )
+
+
+@dataclass(frozen=True, slots=True)
+class VisualSupplement:
+    """Bounded public projection of the approved internal visual supplement."""
+
+    selected_expected_index: int
+    evidence_relation: str
+    approved_claim_id: str
+    renderer_key: str
+    upstream_phone_anchor_ref: str
+    supplement_sha256: str
+
+    def __post_init__(self) -> None:
+        if (
+            isinstance(self.selected_expected_index, bool)
+            or not isinstance(self.selected_expected_index, int)
+            or not 0 <= self.selected_expected_index <= _JAVA_INT_MAX
+        ):
+            raise ValueError("visual selected phone index is invalid")
+        if self.evidence_relation != "supports_upstream":
+            raise ValueError("visual evidence may only support upstream evidence")
+        _safe_identifier(self.approved_claim_id)
+        _safe_identifier(self.renderer_key)
+        _sha256(self.upstream_phone_anchor_ref)
+        _sha256(self.supplement_sha256)
+
+    def to_payload(self) -> dict[str, object]:
+        return {
+            "schemaVersion": VISUAL_SUPPLEMENT_SCHEMA_VERSION,
+            "selectedExpectedIndex": self.selected_expected_index,
+            "evidenceRelation": self.evidence_relation,
+            "approvedClaimId": self.approved_claim_id,
+            "rendererKey": self.renderer_key,
+            "upstreamPhoneAnchorRef": self.upstream_phone_anchor_ref,
+            "supplementSha256": self.supplement_sha256,
+        }
 
 
 class BackendAnalysisContractError(ValueError):
@@ -177,6 +261,12 @@ class AnalysisAuthorizationGrant:
     learning_focus: str
     consent_receipt_sha256: str
     consent_policy_revision: str
+    visual_object_key_sha256: str | None
+    visual_sha256: str | None
+    visual_mime_type: str | None
+    visual_file_size_bytes: int | None
+    visual_consent_receipt_sha256: str | None
+    visual_consent_policy_revision: str | None
     issued_at_utc_text: str
     expires_at_utc_text: str
     purpose: str
@@ -213,6 +303,36 @@ class AnalysisAuthorizationGrant:
             raise BackendAnalysisContractError("analysis_authorization_contract_invalid")
         consent_receipt_sha256 = _sha256(payload["consentReceiptSha256"])
         consent_policy_revision = _text(payload["consentPolicyRevision"], maximum=100)
+        visual_claims = (
+            payload["visualObjectKeySha256"],
+            payload["visualSha256"],
+            payload["visualMimeType"],
+            payload["visualFileSizeBytes"],
+            payload["visualConsentReceiptSha256"],
+            payload["visualConsentPolicyRevision"],
+        )
+        if all(value is None for value in visual_claims):
+            visual_object_key_sha256 = None
+            visual_sha256 = None
+            visual_mime_type = None
+            visual_file_size_bytes = None
+            visual_consent_receipt_sha256 = None
+            visual_consent_policy_revision = None
+        elif any(value is None for value in visual_claims):
+            raise BackendAnalysisContractError("analysis_authorization_contract_invalid")
+        else:
+            visual_object_key_sha256 = _sha256(visual_claims[0])
+            visual_sha256 = _sha256(visual_claims[1])
+            if visual_claims[2] != "video/mp4":
+                raise BackendAnalysisContractError(
+                    "analysis_authorization_contract_invalid"
+                )
+            visual_mime_type = "video/mp4"
+            visual_file_size_bytes = _positive_int_with_max(
+                visual_claims[3], maximum=_JAVA_LONG_MAX
+            )
+            visual_consent_receipt_sha256 = _sha256(visual_claims[4])
+            visual_consent_policy_revision = _text(visual_claims[5], maximum=100)
         issued_at_utc_text = _utc_instant_text(payload["issuedAtUtc"])
         expires_at_utc_text = _utc_instant_text(payload["expiresAtUtc"])
         if _parse_utc(expires_at_utc_text) <= _parse_utc(issued_at_utc_text):
@@ -243,6 +363,12 @@ class AnalysisAuthorizationGrant:
             learning_focus=learning_focus,
             consent_receipt_sha256=consent_receipt_sha256,
             consent_policy_revision=consent_policy_revision,
+            visual_object_key_sha256=visual_object_key_sha256,
+            visual_sha256=visual_sha256,
+            visual_mime_type=visual_mime_type,
+            visual_file_size_bytes=visual_file_size_bytes,
+            visual_consent_receipt_sha256=visual_consent_receipt_sha256,
+            visual_consent_policy_revision=visual_consent_policy_revision,
             issued_at_utc_text=issued_at_utc_text,
             expires_at_utc_text=expires_at_utc_text,
             purpose=purpose,
@@ -277,6 +403,12 @@ class AnalysisAuthorizationGrant:
             ("learningFocus", self.learning_focus),
             ("consentReceiptSha256", self.consent_receipt_sha256),
             ("consentPolicyRevision", self.consent_policy_revision),
+            ("visualObjectKeySha256", self.visual_object_key_sha256),
+            ("visualSha256", self.visual_sha256),
+            ("visualMimeType", self.visual_mime_type),
+            ("visualFileSizeBytes", self.visual_file_size_bytes),
+            ("visualConsentReceiptSha256", self.visual_consent_receipt_sha256),
+            ("visualConsentPolicyRevision", self.visual_consent_policy_revision),
             ("issuedAtUtc", self.issued_at_utc_text),
             ("expiresAtUtc", self.expires_at_utc_text),
             ("purpose", self.purpose),
@@ -313,6 +445,7 @@ class AnalysisRequest:
     file_size_bytes: int
     duration_ms: int
     learning_focus: str
+    visual_input: AnalysisVisualInput | None
     authorization_grant: AnalysisAuthorizationGrant
 
     @classmethod
@@ -346,6 +479,11 @@ class AnalysisRequest:
         authorization = AnalysisAuthorizationGrant.from_payload(
             payload["authorizationGrant"]  # type: ignore[arg-type]
         )
+        visual_input = (
+            None
+            if payload["visualInput"] is None
+            else AnalysisVisualInput.from_payload(payload["visualInput"])
+        )
         if (
             authorization.request_event_id != event_id
             or authorization.analysis_id != analysis_id
@@ -359,6 +497,10 @@ class AnalysisRequest:
             or authorization.file_size_bytes != file_size_bytes
             or authorization.duration_ms != duration_ms
             or authorization.learning_focus != learning_focus
+            or not _visual_authorization_matches(
+                visual_input=visual_input,
+                authorization=authorization,
+            )
         ):
             raise BackendAnalysisContractError("analysis_authorization_binding_invalid")
         return cls(
@@ -374,6 +516,7 @@ class AnalysisRequest:
             file_size_bytes=file_size_bytes,
             duration_ms=duration_ms,
             learning_focus=learning_focus,
+            visual_input=visual_input,
             authorization_grant=authorization,
         )
 
@@ -394,6 +537,7 @@ class AnalysisWorkerResult:
     worker_revision: str | None
     pipeline_revision: str | None
     audio_sha256: str | None
+    visual_supplement: VisualSupplement | None
 
     @classmethod
     def failed(
@@ -421,6 +565,7 @@ class AnalysisWorkerResult:
             worker_revision=worker_revision,
             pipeline_revision=pipeline_revision,
             audio_sha256=None,
+            visual_supplement=None,
         )
 
     @classmethod
@@ -435,18 +580,25 @@ class AnalysisWorkerResult:
         worker_revision: str,
         pipeline_revision: str,
         audio_sha256: str,
+        visual_supplement: VisualSupplement | None = None,
     ) -> "AnalysisWorkerResult":
         if outcome not in {
             AnalysisOutcome.COACHING_READY,
             AnalysisOutcome.COMPLETED_NO_ISSUE,
         }:
-            raise ValueError("result v2 outcome is unsupported")
+            raise ValueError("result v3 outcome is unsupported")
         if outcome is AnalysisOutcome.COACHING_READY and (
             not summary_feedback or pronunciation_evidence is None
         ):
             raise ValueError(
                 "coaching-ready result requires grounded feedback and pronunciation evidence"
             )
+        if visual_supplement is not None and (
+            pronunciation_evidence is None
+            or visual_supplement.selected_expected_index
+            != pronunciation_evidence.selected_expected_index
+        ):
+            raise ValueError("visual supplement must bind Seungun selected phone")
         if outcome is not AnalysisOutcome.COACHING_READY and (
             summary_feedback is not None or pronunciation_evidence is not None
         ):
@@ -469,6 +621,7 @@ class AnalysisWorkerResult:
             worker_revision=worker_revision,
             pipeline_revision=pipeline_revision,
             audio_sha256=audio_sha256,
+            visual_supplement=visual_supplement,
         )
 
     def to_payload(self) -> dict[str, object | None]:
@@ -505,6 +658,11 @@ class AnalysisWorkerResult:
             "pipelineRevision": self.pipeline_revision,
             "audioSha256": self.audio_sha256,
             "segments": [],
+            "visualSupplement": (
+                self.visual_supplement.to_payload()
+                if self.visual_supplement is not None
+                else None
+            ),
         }
 
 
@@ -584,9 +742,42 @@ def _object_key(value: object) -> str:
         key.startswith(("/", "http://", "https://"))
         or "\\" in key
         or any(segment in {"", ".", ".."} for segment in key.split("/"))
+        or any(
+            segment.lower() in {"users", "sessions"}
+            for segment in key.split("/")
+        )
     ):
         raise BackendAnalysisContractError("analysis_request_contract_invalid")
     return key
+
+
+def _visual_authorization_matches(
+    *,
+    visual_input: AnalysisVisualInput | None,
+    authorization: AnalysisAuthorizationGrant,
+) -> bool:
+    if visual_input is None:
+        return authorization.visual_object_key_sha256 is None
+    return (
+        hashlib.sha256(visual_input.object_key.encode("utf-8")).hexdigest()
+        == authorization.visual_object_key_sha256
+        and visual_input.sha256 == authorization.visual_sha256
+        and visual_input.mime_type == authorization.visual_mime_type
+        and visual_input.file_size_bytes == authorization.visual_file_size_bytes
+        and visual_input.consent_receipt_sha256
+        == authorization.visual_consent_receipt_sha256
+        and visual_input.consent_policy_revision
+        == authorization.visual_consent_policy_revision
+    )
+
+
+def _safe_identifier(value: object) -> str:
+    if (
+        not isinstance(value, str)
+        or re.fullmatch(r"[A-Za-z0-9][A-Za-z0-9._:+-]{0,191}", value) is None
+    ):
+        raise ValueError("visual identifier is invalid")
+    return value
 
 
 def _stable_code(value: str) -> None:

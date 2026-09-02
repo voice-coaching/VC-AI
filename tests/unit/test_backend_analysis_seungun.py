@@ -31,7 +31,9 @@ class _Decoder:
     def decode(self, source: Path):
         self.calls += 1
         assert source == Path("/restricted/source.audio")
-        return nullcontext(DecodedWav(Path("/restricted/decoded.wav"), 1000))
+        return nullcontext(
+            DecodedWav(Path("/restricted/decoded.wav"), 1000, "e" * 64)
+        )
 
 
 class _Frontend:
@@ -113,6 +115,12 @@ def _request() -> AnalysisRequest:
         learning_focus="PRONUNCIATION",
         consent_receipt_sha256="b" * 64,
         consent_policy_revision="consent-v1",
+        visual_object_key_sha256=None,
+        visual_sha256=None,
+        visual_mime_type=None,
+        visual_file_size_bytes=None,
+        visual_consent_receipt_sha256=None,
+        visual_consent_policy_revision=None,
         issued_at_utc_text="2026-09-02T00:00:00Z",
         expires_at_utc_text="2026-09-02T00:05:00Z",
         purpose="pronunciation_coaching",
@@ -134,6 +142,7 @@ def _request() -> AnalysisRequest:
         file_size_bytes=4,
         duration_ms=1000,
         learning_focus="PRONUNCIATION",
+        visual_input=None,
         authorization_grant=grant,
     )
 

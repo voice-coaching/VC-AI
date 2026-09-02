@@ -61,6 +61,9 @@ from .adapters.runtime import (
 from .models import AvContainerPolicy, VideoAdmissionPolicy
 from .phone_window import PhoneWindowDecodePolicy
 from .services.video_attempt_facade import (
+    ConsentAuthorizationPort,
+    SeungunRuntimePort,
+    TrustedPromptPort,
     VideoAttemptFacade,
     VisualDetection,
     VisualReliabilityDecision,
@@ -124,6 +127,9 @@ def build_local_video_attempt_facade(
     video_qc_decision_policy: CalibratedVideoQcDecisionPolicy | None = None,
     av_sync_decision_policy: CalibratedAvSyncDecisionPolicy | None = None,
     visual_runtime_bundle: VisualRuntimeBundle | None = None,
+    consent_authority: ConsentAuthorizationPort | None = None,
+    trusted_prompt_port: TrustedPromptPort | None = None,
+    seungun_runtime_port: SeungunRuntimePort | None = None,
 ) -> VideoAttemptFacade:
     """Build the local loop, enabling visual publication only from promoted state.
 
@@ -158,13 +164,26 @@ def build_local_video_attempt_facade(
             != av_sync_decision_policy.policy_sha256
         ):
             raise ValueError("visual runtime policy identity differs")
+    injected_runtime = (
+        consent_authority,
+        trusted_prompt_port,
+        seungun_runtime_port,
+    )
+    if any(value is not None for value in injected_runtime) and not all(
+        value is not None for value in injected_runtime
+    ):
+        raise ValueError("injected video attempt authorities must be complete")
+    if all(value is not None for value in injected_runtime) and seungun_detector is not None:
+        raise ValueError("injected Seungun runtime and detector are mutually exclusive")
+    if all(value is None for value in injected_runtime) and seungun_detector is None:
+        raise ValueError("Seungun detector is required for local composition")
 
     media_store = LocalRestrictedVideoAdmissionAdapter(
         restricted_root=restricted_media_root,
         clock=clock,
     )
     container = FfmpegAvContainerAdapter(media_store)
-    consent = LocalExplicitConsentAuthority(
+    consent = consent_authority or LocalExplicitConsentAuthority(
         consent_token=LOCAL_CONSENT_REFERENCE,
         clock=clock,
         attempt_nonce=attempt_nonce,
@@ -177,7 +196,9 @@ def build_local_video_attempt_facade(
         # the frontend's optional ``|`` display boundary is not a model token.
         word_boundary_policy="drop",
     )
-    if fixed_local_prompt is None:
+    if trusted_prompt_port is not None:
+        prompt = trusted_prompt_port
+    elif fixed_local_prompt is None:
         prompt = R00TrustedPromptAdapter(
             catalog=R00PromptCatalog(card_path or root / DEFAULT_CARD_PATH),
             expected_phone_frontend=expected_phone_frontend,
@@ -190,9 +211,9 @@ def build_local_video_attempt_facade(
             normalized_text=fixed_local_prompt[1],
             expected_phone_frontend=expected_phone_frontend,
         )
-    seungun = FrozenSeungunRuntimeAdapter(
+    seungun = seungun_runtime_port or FrozenSeungunRuntimeAdapter(
         media_store=media_store,
-        detector=seungun_detector,
+        detector=seungun_detector,  # type: ignore[arg-type]
         restricted_temp_root=restricted_audio_root,
     )
     # ``supported`` is deliberately narrow: the current hash-pinned Seungun v1

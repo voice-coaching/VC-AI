@@ -3,7 +3,7 @@ services:
     build:
       context: ../..
       dockerfile: deploy/backend-analysis-worker/Dockerfile
-    image: intelligentai/backend-analysis-worker:result-v2
+    image: intelligentai/backend-analysis-worker:result-v3
     restart: unless-stopped
     init: true
     gpus: all
@@ -36,6 +36,14 @@ services:
         target: /app/runtime/nltk_data
         read_only: true
       - type: bind
+        source: ${VISUAL_PRODUCTION_RELEASE_DIR:?set VISUAL_PRODUCTION_RELEASE_DIR}
+        target: /app/runtime/visual-release
+        read_only: true
+      - type: bind
+        source: ${VISUAL_LANDMARK_MODEL_FILE:?set VISUAL_LANDMARK_MODEL_FILE}
+        target: /app/runtime/models/face_landmarker.task
+        read_only: true
+      - type: bind
         source: ${ANALYSIS_REDIS_CA_CERT:?set ANALYSIS_REDIS_CA_CERT}
         target: /run/analysis-ca/ca.crt
         read_only: true
@@ -57,6 +65,9 @@ services:
       AI_ANALYSIS_OBJECT_STORAGE_ENDPOINT: ${AI_ANALYSIS_OBJECT_STORAGE_ENDPOINT:-}
       AI_ANALYSIS_OBJECT_STORAGE_PATH_STYLE: ${AI_ANALYSIS_OBJECT_STORAGE_PATH_STYLE:-false}
       AI_ANALYSIS_OBJECT_STORAGE_RECORDINGS_PREFIX: ${AI_ANALYSIS_OBJECT_STORAGE_RECORDINGS_PREFIX:-recordings/}
+      AI_ANALYSIS_OBJECT_STORAGE_MAXIMUM_VISUAL_BYTES: ${AI_ANALYSIS_OBJECT_STORAGE_MAXIMUM_VISUAL_BYTES:-134217728}
+      AI_ANALYSIS_VISUAL_RELEASE_ROOT: /app/runtime/visual-release
+      AI_ANALYSIS_VISUAL_LANDMARK_MODEL_PATH: /app/runtime/models/face_landmarker.task
       AI_ANALYSIS_AUTHORIZATION_KEYS_FILE: /run/secrets/analysis_authorization_keys
       AI_ANALYSIS_CONSENT_POLICY_REVISION: ${AI_ANALYSIS_CONSENT_POLICY_REVISION:?set AI_ANALYSIS_CONSENT_POLICY_REVISION}
       AI_ANALYSIS_REDIS_HOST: ${AI_ANALYSIS_REDIS_HOST:?set AI_ANALYSIS_REDIS_HOST}

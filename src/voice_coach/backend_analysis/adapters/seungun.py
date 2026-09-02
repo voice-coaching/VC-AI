@@ -5,6 +5,7 @@ from __future__ import annotations
 from contextlib import AbstractContextManager, contextmanager
 from dataclasses import dataclass
 import json
+import hashlib
 import os
 from pathlib import Path
 import shutil
@@ -41,6 +42,7 @@ class FrozenDetector(Protocol):
 class DecodedWav:
     path: Path
     duration_ms: int
+    pcm_sha256: str
 
 
 class AudioDecoder(Protocol):
@@ -119,7 +121,11 @@ class RestrictedFfmpegAudioDecoder:
             self._write_restricted_wav(destination, completed.stdout)
             destination_created = True
             duration_ms = self._validate_wav(destination)
-            yield DecodedWav(path=destination, duration_ms=duration_ms)
+            yield DecodedWav(
+                path=destination,
+                duration_ms=duration_ms,
+                pcm_sha256=hashlib.sha256(completed.stdout).hexdigest(),
+            )
         except BackendAnalysisError:
             raise
         except (IsolatedProcessError, OSError, ValueError, wave.Error):
@@ -207,6 +213,7 @@ class SeungunBackendAnalysisAdapter:
                     expected_phones=expected.tokens,
                 )
                 analysis = _analysis_snapshot(raw)
+                analysis_pcm_sha256 = decoded.pcm_sha256
         except BackendAnalysisError:
             raise
         except Exception:
@@ -237,6 +244,9 @@ class SeungunBackendAnalysisAdapter:
                 summary_feedback=None,
                 pronunciation_evidence=None,
                 pipeline_revision=pipeline_revision,
+                analysis_evidence=analysis,
+                expected_phones=expected.tokens,
+                analysis_pcm_sha256=analysis_pcm_sha256,
             )
         location = feedback.payload.location
         if (
@@ -264,6 +274,9 @@ class SeungunBackendAnalysisAdapter:
                 evidence_state=feedback.payload.evidence_state,
             ),
             pipeline_revision=pipeline_revision,
+            analysis_evidence=analysis,
+            expected_phones=expected.tokens,
+            analysis_pcm_sha256=analysis_pcm_sha256,
         )
 
     def close(self) -> None:

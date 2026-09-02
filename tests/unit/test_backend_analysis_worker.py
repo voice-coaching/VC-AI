@@ -13,6 +13,7 @@ from voice_coach.backend_analysis.domain import (
     AnalysisRequest,
     BackendAnalysisContractError,
     PronunciationEvidence,
+    VisualSupplement,
 )
 from voice_coach.backend_analysis.ports import (
     AnalysisAuthorization,
@@ -31,7 +32,7 @@ _RESULT_EVENT_ID = UUID("e917fda8-3c4f-4b7e-9094-7a1706081f1b")
 def _request_payload(**overrides: object) -> dict[str, object]:
     script = "안녕하세요. 오늘 날씨가 좋습니다."
     payload: dict[str, object] = {
-        "schemaVersion": "voice-coaching.analysis-request.v3",
+        "schemaVersion": "voice-coaching.analysis-request.v4",
         "eventId": str(_EVENT_ID),
         "analysisId": 35,
         "contentId": 12,
@@ -45,7 +46,7 @@ def _request_payload(**overrides: object) -> dict[str, object]:
         "durationMs": 1200,
         "learningFocus": "PRONUNCIATION",
         "authorizationGrant": {
-            "grantVersion": "voice-coaching.analysis-authorization.v2",
+            "grantVersion": "voice-coaching.analysis-authorization.v3",
             "keyId": "backend-test-v1",
             "requestEventId": str(_EVENT_ID),
             "analysisId": 35,
@@ -60,6 +61,12 @@ def _request_payload(**overrides: object) -> dict[str, object]:
             "learningFocus": "PRONUNCIATION",
             "consentReceiptSha256": "b" * 64,
             "consentPolicyRevision": "voice-analysis-consent-v1",
+            "visualObjectKeySha256": None,
+            "visualSha256": None,
+            "visualMimeType": None,
+            "visualFileSizeBytes": None,
+            "visualConsentReceiptSha256": None,
+            "visualConsentPolicyRevision": None,
             "issuedAtUtc": "2026-09-02T00:00:00Z",
             "expiresAtUtc": "2026-09-02T00:05:00Z",
             "purpose": "pronunciation_coaching",
@@ -68,6 +75,7 @@ def _request_payload(**overrides: object) -> dict[str, object]:
             "remoteEgressAllowed": False,
             "signature": "c" * 64,
         },
+        "visualInput": None,
     }
     payload.update(overrides)
     return payload
@@ -101,6 +109,17 @@ class _ObjectStore:
             byte_count=1234,
             sha256="a" * 64,
         )
+
+    @contextmanager
+    def materialize_visual(
+        self, request: AnalysisRequest, authorization: AnalysisAuthorization
+    ):
+        del request, authorization
+        yield type(
+            "MaterializedVideoStub",
+            (),
+            {"path": Path("/restricted/source.mp4"), "byte_count": 12, "sha256": "d" * 64},
+        )()
 
 
 class _Seungun:
@@ -272,8 +291,9 @@ def test_seungun_completed_result_keeps_unmeasured_scores_null() -> None:
         "workerRevision",
         "pipelineRevision",
         "audioSha256",
-        "segments",
-    }
+            "segments",
+            "visualSupplement",
+        }
     assert result["status"] == "COMPLETED"
     assert result["outcome"] == "COACHING_READY"
     assert result["summaryFeedback"] == "승인된 Seungun 근거에 따른 피드백입니다."
@@ -295,3 +315,61 @@ def test_seungun_completed_result_keeps_unmeasured_scores_null() -> None:
     assert result["segments"] == []
     assert store.calls == 1
     assert seungun.calls == 1
+
+
+def test_visual_supplement_cannot_change_seungun_selected_phone() -> None:
+    payload = _request_payload()
+    visual_key = "recordings/analysis-video/00000000-0000-0000-0000-000000000001.mp4"
+    payload["visualInput"] = {
+        "objectKey": visual_key,
+        "sha256": "d" * 64,
+        "mimeType": "video/mp4",
+        "fileSizeBytes": 12,
+        "consentReceiptSha256": "e" * 64,
+        "consentPolicyRevision": "voice-video-processing-consent-v1",
+    }
+    grant = payload["authorizationGrant"]
+    assert isinstance(grant, dict)
+    grant.update(
+        {
+            "visualObjectKeySha256": hashlib.sha256(visual_key.encode()).hexdigest(),
+            "visualSha256": "d" * 64,
+            "visualMimeType": "video/mp4",
+            "visualFileSizeBytes": 12,
+            "visualConsentReceiptSha256": "e" * 64,
+            "visualConsentPolicyRevision": "voice-video-processing-consent-v1",
+        }
+    )
+    request = AnalysisRequest.from_payload(payload)
+
+    class _Visual:
+        def analyze(self, **kwargs: object) -> VisualSupplement:
+            assert kwargs["seungun"].pronunciation_evidence.selected_expected_index == 0  # type: ignore[union-attr]
+            return VisualSupplement(
+                selected_expected_index=0,
+                evidence_relation="supports_upstream",
+                approved_claim_id="lip.aperture.low",
+                renderer_key="lip_aperture_hint",
+                upstream_phone_anchor_ref="f" * 64,
+                supplement_sha256="1" * 64,
+            )
+
+    result = BackendAnalysisWorker(
+        authorization=_Authorizer(_authorization()),
+        object_store=_ObjectStore(),
+        seungun=_Seungun(),
+        visual=_Visual(),
+        event_id_factory=lambda: _RESULT_EVENT_ID,
+        clock=lambda: _NOW,
+    ).process(request).to_payload()
+
+    assert result["pronunciationEvidence"]["selectedExpectedIndex"] == 0  # type: ignore[index]
+    assert result["visualSupplement"] == {
+        "schemaVersion": "voice-coaching.visual-supplement.v1",
+        "selectedExpectedIndex": 0,
+        "evidenceRelation": "supports_upstream",
+        "approvedClaimId": "lip.aperture.low",
+        "rendererKey": "lip_aperture_hint",
+        "upstreamPhoneAnchorRef": "f" * 64,
+        "supplementSha256": "1" * 64,
+    }

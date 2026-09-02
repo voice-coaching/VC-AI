@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 from datetime import UTC, datetime, timedelta
+from dataclasses import replace
 import hashlib
 import io
 import os
@@ -16,6 +17,7 @@ from voice_coach.backend_analysis.adapters.s3_object_store import (
 from voice_coach.backend_analysis.domain import (
     AnalysisAuthorizationGrant,
     AnalysisRequest,
+    AnalysisVisualInput,
 )
 from voice_coach.backend_analysis.ports import AnalysisAuthorization, BackendAnalysisError
 
@@ -60,6 +62,12 @@ def _request(
         learning_focus="PRONUNCIATION",
         consent_receipt_sha256="b" * 64,
         consent_policy_revision="consent-v1",
+        visual_object_key_sha256=None,
+        visual_sha256=None,
+        visual_mime_type=None,
+        visual_file_size_bytes=None,
+        visual_consent_receipt_sha256=None,
+        visual_consent_policy_revision=None,
         issued_at_utc_text="2026-09-02T00:00:00Z",
         expires_at_utc_text="2026-09-02T00:05:00Z",
         purpose="pronunciation_coaching",
@@ -81,6 +89,7 @@ def _request(
         file_size_bytes=4,
         duration_ms=1200,
         learning_focus="PRONUNCIATION",
+        visual_input=None,
         authorization_grant=grant,
     )
 
@@ -182,4 +191,58 @@ def test_metadata_mismatch_fails_closed_and_cleans_workspace(tmp_path: Path) -> 
 
     assert error.value.code == "audio_metadata_mismatch"
     assert body.closed_by_adapter is True
+    assert list(root.iterdir()) == []
+
+
+def test_materializes_integrity_bound_visual_in_a_separate_workspace(
+    tmp_path: Path,
+) -> None:
+    visual_bytes = b"canonical-mp4"
+    visual_key = "recordings/analysis-video/00000000-0000-0000-0000-000000000001.mp4"
+    visual = AnalysisVisualInput(
+        object_key=visual_key,
+        sha256=hashlib.sha256(visual_bytes).hexdigest(),
+        mime_type="video/mp4",
+        file_size_bytes=len(visual_bytes),
+        consent_receipt_sha256="e" * 64,
+        consent_policy_revision="voice-video-processing-consent-v1",
+    )
+    base = _request()
+    grant = replace(
+        base.authorization_grant,
+        visual_object_key_sha256=hashlib.sha256(visual_key.encode()).hexdigest(),
+        visual_sha256=visual.sha256,
+        visual_mime_type=visual.mime_type,
+        visual_file_size_bytes=visual.file_size_bytes,
+        visual_consent_receipt_sha256=visual.consent_receipt_sha256,
+        visual_consent_policy_revision=visual.consent_policy_revision,
+    )
+    request = replace(base, visual_input=visual, authorization_grant=grant)
+    body = _Body(visual_bytes)
+    client = _Client(
+        {
+            "Body": body,
+            "ContentLength": len(visual_bytes),
+            "ContentType": "video/mp4",
+        }
+    )
+    root = tmp_path / "restricted"
+    store = S3CompatibleRestrictedObjectStore(
+        client,
+        S3ObjectStoreSettings(
+            bucket="private-recordings",
+            recordings_prefix="recordings/",
+            workspace_root=root,
+        ),
+    )
+
+    with store.materialize_visual(request, _authorization()) as materialized:
+        materialized_path = materialized.path
+        assert materialized.path.read_bytes() == visual_bytes
+        assert materialized.sha256 == visual.sha256
+        assert os.stat(materialized.path).st_mode & 0o777 == 0o400
+
+    assert client.calls == [{"Bucket": "private-recordings", "Key": visual_key}]
+    assert body.closed_by_adapter is True
+    assert materialized_path.exists() is False
     assert list(root.iterdir()) == []

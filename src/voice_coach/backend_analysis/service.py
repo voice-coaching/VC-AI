@@ -6,13 +6,16 @@ from collections.abc import Callable
 from datetime import UTC, datetime
 from uuid import UUID, uuid4
 
-from .domain import AnalysisRequest, AnalysisWorkerResult
+from .domain import AnalysisRequest, AnalysisWorkerResult, VisualSupplement
 from .ports import (
     AnalysisAuthorization,
     AnalysisAuthorizationPort,
     BackendAnalysisError,
     RestrictedObjectStorePort,
     SeungunAnalysisPort,
+    MaterializedAudio,
+    SeungunAnalysis,
+    VisualAnalysisPort,
 )
 
 
@@ -47,6 +50,7 @@ class BackendAnalysisWorker:
         authorization: AnalysisAuthorizationPort,
         object_store: RestrictedObjectStorePort,
         seungun: SeungunAnalysisPort,
+        visual: VisualAnalysisPort | None = None,
         event_id_factory: Callable[[], UUID] = uuid4,
         clock: Callable[[], datetime] | None = None,
         worker_revision: str = _WORKER_REVISION,
@@ -56,6 +60,7 @@ class BackendAnalysisWorker:
         self._authorization = authorization
         self._object_store = object_store
         self._seungun = seungun
+        self._visual = visual
         self._event_id_factory = event_id_factory
         self._clock = clock or (lambda: datetime.now(tz=UTC))
         self._worker_revision = worker_revision
@@ -93,6 +98,12 @@ class BackendAnalysisWorker:
                         "등록된 녹음 메타데이터와 일치하지 않습니다.",
                     )
                 analysis = self._seungun.analyze(request=request, audio=audio)
+                visual_supplement = self._visual_supplement(
+                    request=request,
+                    authorization=authorization,
+                    audio=audio,
+                    analysis=analysis,
+                )
                 return AnalysisWorkerResult.completed(
                     event_id=self._event_id_factory(),
                     request=request,
@@ -102,6 +113,7 @@ class BackendAnalysisWorker:
                     worker_revision=self._worker_revision,
                     pipeline_revision=analysis.pipeline_revision,
                     audio_sha256=audio.sha256,
+                    visual_supplement=visual_supplement,
                 )
         except BackendAnalysisError as error:
             return self._failed(request, error.code, error.reason)
@@ -111,6 +123,30 @@ class BackendAnalysisWorker:
                 "analysis_execution_failed_closed",
                 "분석을 안전하게 완료하지 못했습니다. 다시 시도해 주세요.",
             )
+
+    def _visual_supplement(
+        self,
+        *,
+        request: AnalysisRequest,
+        authorization: AnalysisAuthorization,
+        audio: MaterializedAudio,
+        analysis: SeungunAnalysis,
+    ) -> VisualSupplement | None:
+        if request.visual_input is None or self._visual is None:
+            return None
+        try:
+            with self._object_store.materialize_visual(
+                request, authorization
+            ) as video:
+                return self._visual.analyze(
+                    request=request,
+                    audio=audio,
+                    video=video,
+                    seungun=analysis,
+                )
+        except Exception:
+            # Visual evidence is optional and cannot erase an approved Seungun result.
+            return None
 
     def _validate_authorization(self, authorization: AnalysisAuthorization) -> None:
         if not authorization.receipt_sha256 or not authorization.policy_revision:

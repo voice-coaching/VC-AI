@@ -104,7 +104,7 @@ def _payload(event_id: UUID) -> str:
     script_sha = hashlib.sha256(script.encode()).hexdigest()
     key = "recordings/synthetic.wav"
     grant = {
-        "grantVersion": "voice-coaching.analysis-authorization.v2",
+        "grantVersion": "voice-coaching.analysis-authorization.v3",
         "keyId": "synthetic-key-v1",
         "requestEventId": str(event_id),
         "analysisId": 35,
@@ -119,6 +119,12 @@ def _payload(event_id: UUID) -> str:
         "learningFocus": "PRONUNCIATION",
         "consentReceiptSha256": "b" * 64,
         "consentPolicyRevision": "voice-analysis-consent-v1",
+        "visualObjectKeySha256": None,
+        "visualSha256": None,
+        "visualMimeType": None,
+        "visualFileSizeBytes": None,
+        "visualConsentReceiptSha256": None,
+        "visualConsentPolicyRevision": None,
         "issuedAtUtc": "2026-09-02T00:00:00Z",
         "expiresAtUtc": "2026-09-02T00:05:00Z",
         "purpose": "pronunciation_coaching",
@@ -129,7 +135,7 @@ def _payload(event_id: UUID) -> str:
     }
     return json.dumps(
         {
-            "schemaVersion": "voice-coaching.analysis-request.v3",
+            "schemaVersion": "voice-coaching.analysis-request.v4",
             "eventId": str(event_id),
             "analysisId": 35,
             "contentId": 12,
@@ -142,6 +148,7 @@ def _payload(event_id: UUID) -> str:
             "fileSizeBytes": 4,
             "durationMs": 100,
             "learningFocus": "PRONUNCIATION",
+            "visualInput": None,
             "authorizationGrant": grant,
         },
         ensure_ascii=False,

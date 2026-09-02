@@ -15,7 +15,12 @@ from typing import BinaryIO, Iterator, Mapping, Protocol
 from urllib.parse import urlparse
 
 from ..domain import AnalysisRequest
-from ..ports import AnalysisAuthorization, BackendAnalysisError, MaterializedAudio
+from ..ports import (
+    AnalysisAuthorization,
+    BackendAnalysisError,
+    MaterializedAudio,
+    MaterializedVideo,
+)
 
 
 class _S3Client(Protocol):
@@ -28,6 +33,7 @@ class S3ObjectStoreSettings:
     recordings_prefix: str
     workspace_root: Path
     maximum_audio_bytes: int = 20 * 1024 * 1024
+    maximum_visual_bytes: int = 128 * 1024 * 1024
 
     def __post_init__(self) -> None:
         forbidden_roots = {Path("/"), Path("/tmp"), Path.home()}
@@ -44,6 +50,7 @@ class S3ObjectStoreSettings:
             or not self.workspace_root.is_absolute()
             or self.workspace_root in forbidden_roots
             or self.maximum_audio_bytes <= 0
+            or self.maximum_visual_bytes <= 0
         ):
             raise ValueError("analysis_object_storage_configuration_invalid")
 
@@ -118,6 +125,80 @@ class S3CompatibleRestrictedObjectStore:
                     pass
             shutil.rmtree(workspace, ignore_errors=True)
 
+    @contextmanager
+    def materialize_visual(
+        self, request: AnalysisRequest, authorization: AnalysisAuthorization
+    ) -> Iterator[MaterializedVideo]:
+        del authorization
+        visual = request.visual_input
+        if visual is None:
+            raise BackendAnalysisError(
+                "restricted_visual_unavailable", "승인된 영상에 접근할 수 없습니다."
+            )
+        self._require_owned_key(visual.object_key)
+        if visual.file_size_bytes > self._settings.maximum_visual_bytes:
+            raise BackendAnalysisError(
+                "visual_metadata_mismatch", "등록된 영상 메타데이터와 일치하지 않습니다."
+            )
+        workspace = Path(
+            tempfile.mkdtemp(prefix="visual-", dir=self._settings.workspace_root)
+        )
+        os.chmod(workspace, 0o700)
+        destination = workspace / "source.mp4"
+        body: object | None = None
+        try:
+            response = self._client.get_object(
+                Bucket=self._settings.bucket,
+                Key=visual.object_key,
+            )
+            body = response.get("Body")
+            if body is None or not callable(getattr(body, "read", None)):
+                raise BackendAnalysisError(
+                    "restricted_visual_unavailable", "승인된 영상에 접근할 수 없습니다."
+                )
+            content_length = response.get("ContentLength")
+            content_type = response.get("ContentType")
+            if (
+                isinstance(content_length, bool)
+                or not isinstance(content_length, int)
+                or content_length != visual.file_size_bytes
+                or content_length > self._settings.maximum_visual_bytes
+                or not isinstance(content_type, str)
+                or content_type.partition(";")[0].strip().lower() != visual.mime_type
+            ):
+                raise BackendAnalysisError(
+                    "visual_metadata_mismatch", "등록된 영상 메타데이터와 일치하지 않습니다."
+                )
+            byte_count, digest = self._stream_to_restricted_file(
+                body,
+                destination,
+                maximum_bytes=self._settings.maximum_visual_bytes,
+                metadata_error_code="visual_metadata_mismatch",
+            )
+            if byte_count != visual.file_size_bytes:
+                raise BackendAnalysisError(
+                    "visual_metadata_mismatch", "등록된 영상 메타데이터와 일치하지 않습니다."
+                )
+            if not hmac.compare_digest(digest, visual.sha256):
+                raise BackendAnalysisError(
+                    "visual_integrity_mismatch", "등록된 영상의 무결성을 확인할 수 없습니다."
+                )
+            yield MaterializedVideo(destination, byte_count, digest)
+        except BackendAnalysisError:
+            raise
+        except Exception:
+            raise BackendAnalysisError(
+                "restricted_visual_unavailable", "승인된 영상에 접근할 수 없습니다."
+            ) from None
+        finally:
+            close = getattr(body, "close", None)
+            if callable(close):
+                try:
+                    close()
+                except Exception:
+                    pass
+            shutil.rmtree(workspace, ignore_errors=True)
+
     def _prepare_workspace_root(self) -> None:
         root = self._settings.workspace_root
         try:
@@ -178,8 +259,14 @@ class S3CompatibleRestrictedObjectStore:
             )
 
     def _stream_to_restricted_file(
-        self, body: BinaryIO, destination: Path
+        self,
+        body: BinaryIO,
+        destination: Path,
+        *,
+        maximum_bytes: int | None = None,
+        metadata_error_code: str = "audio_metadata_mismatch",
     ) -> tuple[int, str]:
+        maximum = maximum_bytes or self._settings.maximum_audio_bytes
         descriptor = os.open(
             destination,
             os.O_WRONLY | os.O_CREAT | os.O_EXCL | getattr(os, "O_NOFOLLOW", 0),
@@ -199,10 +286,10 @@ class S3CompatibleRestrictedObjectStore:
                             "승인된 녹음에 접근할 수 없습니다.",
                         )
                     total += len(chunk)
-                    if total > self._settings.maximum_audio_bytes:
+                    if total > maximum:
                         raise BackendAnalysisError(
-                            "audio_metadata_mismatch",
-                            "등록된 녹음 메타데이터와 일치하지 않습니다.",
+                            metadata_error_code,
+                            "등록된 미디어 메타데이터와 일치하지 않습니다.",
                         )
                     digest.update(chunk)
                     output.write(chunk)

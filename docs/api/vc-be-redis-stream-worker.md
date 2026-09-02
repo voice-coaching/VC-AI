@@ -10,12 +10,13 @@ phone; visual feedback and LLMs cannot create or replace that decision.
 
 ```text
 VC-BE PostgreSQL outbox
-  -> analysis:request:v1 (analysis-request.v3 JSON)
+  -> analysis:request:v1 (analysis-request.v4 JSON)
   -> authorization HMAC verification (no media I/O before this point)
   -> private S3-compatible object materialization
   -> isolated ffmpeg: 16 kHz mono signed PCM WAV
   -> pinned g2pK expected phones -> one call to the warm frozen Seungun detector
-  -> analysis:result:v1 (analysis-result.v2 JSON) -> XACK request
+  -> optional canonical MP4 -> same-attempt visual supplement after Seungun
+  -> analysis:result:v1 (analysis-result.v3 JSON) -> XACK request
   -> VC-BE result consumer -> PostgreSQL
 ```
 
@@ -23,18 +24,20 @@ The exact cross-repository fields are authoritative in VC-BE
 `docs/api/ai-redis-stream-contract.md`. `AnalysisRequest` rejects unsupported
 versions, unknown keys, traversal, script integrity differences, grant/request
 binding differences and unsupported focus before any adapter runs. Legacy
-`voice-coaching.analysis-request.v1` and `v2` are deliberately unsupported.
-Result v2 requires a quiesced coordinated deployment: stop admission and the worker,
+`voice-coaching.analysis-request.v1` through `v3` are deliberately unsupported.
+Result v3 requires a quiesced coordinated deployment: stop admission and the worker,
 drain or resolve pending entries, deploy both repositories, and only then resume.
 
 ## Signed authorization
 
-Every v3 request contains `voice-coaching.analysis-authorization.v2`. It binds
+Every v4 request contains `voice-coaching.analysis-authorization.v3`. It binds
 the request event, analysis/content/prompt, script and object-key digests,
 the backend-calculated canonical audio digest, registered media metadata,
-learning focus, opaque consent receipt, policy,
+learning focus, opaque voice consent receipt, policy,
 time window, purpose, data category, mandatory deletion and denied remote
-egress. The worker selects a key by `keyId`, reconstructs the documented
+egress. Optional visual input additionally binds its opaque canonical MP4 key,
+digest, size, MIME, and separate face-processing consent receipt and policy.
+The worker selects a key by `keyId`, reconstructs the documented
 length-prefixed canonical form, compares HMAC-SHA256 in constant time, and
 enforces a maximum ten-minute lifetime. Missing, unknown, altered, expired,
 future, or policy-incompatible grants fail before storage access.
@@ -53,7 +56,9 @@ The built-in production composition is
    streams with a 20 MiB default bound, verifies Content-Length/MIME and the
    registered byte count, writes mode `0400`, calculates SHA-256, compares it
    to the signed backend claim, closes the
-   response and recursively removes the mode `0700` attempt workspace.
+   response and recursively removes the mode `0700` attempt workspace. Visual
+   materialization uses its own 128 MiB bound and workspace with identical
+   metadata, integrity, and cleanup checks.
 3. `RestrictedFfmpegAudioDecoder` runs bounded ffmpeg behind seccomp socket
    denial, receives raw PCM, writes a valid 16 kHz mono WAV header, validates
    it, and removes it on every exit.
@@ -67,6 +72,11 @@ The built-in production composition is
    mismatch or malformed detector document fails closed. Grounded feedback
    preserves the detector-selected phone and uses the approved catalog
    fallback; no free-form model is in this composition.
+5. For a face-consented visual input, the promoted visual release reuses the exact
+   Seungun snapshot and decoded PCM digest after the selected phone exists. It never
+   invokes Seungun again. Only an allowlisted `supports_upstream` action with the
+   same selected index is emitted as `visualSupplement`; failure or uncertainty
+   leaves the visual field absent without changing the audio result.
 
 `COACHING_READY` includes a `voice-coaching.pronunciation-evidence.v1` object
 containing the same-attempt Seungun-selected phone, expected-phone index, optional
@@ -105,6 +115,7 @@ VC-BE needs presign and HEAD; the worker needs GET only.
 | `AI_ANALYSIS_OBJECT_STORAGE_PATH_STYLE` | N | Default `false`. |
 | `AI_ANALYSIS_OBJECT_STORAGE_RECORDINGS_PREFIX` | N | Default `recordings/`. |
 | `AI_ANALYSIS_OBJECT_STORAGE_MAXIMUM_AUDIO_BYTES` | N | Default `20971520`. |
+| `AI_ANALYSIS_OBJECT_STORAGE_MAXIMUM_VISUAL_BYTES` | N | Default `134217728`. |
 | `AI_ANALYSIS_RESTRICTED_WORKSPACE_ROOT` | Y | Absolute local-only temporary root. |
 | `AI_ANALYSIS_NLTK_DATA_ROOT` | Y | Absolute approved NLTK data root for pinned g2pK. |
 | `AI_ANALYSIS_SEUNGUN_DEVICE` | N | `cpu` or `cuda`; default `cpu`. |
@@ -112,6 +123,8 @@ VC-BE needs presign and HEAD; the worker needs GET only.
 | `AI_ANALYSIS_SEUNGUN_REQUEST_TIMEOUT_SECONDS` | N | Per-request response bound, default `180`, maximum `600`. |
 | `AI_ANALYSIS_SEUNGUN_MAXIMUM_REQUESTS_PER_PROCESS` | N | Warm-process recycle cap, default `100`, maximum `1000`. |
 | `AI_ANALYSIS_FFMPEG_BINARY` | N | Absolute reviewed ffmpeg path; otherwise `PATH` discovery. |
+| `AI_ANALYSIS_VISUAL_RELEASE_ROOT` | Production Y | Absolute immutable promoted visual release directory; pair with the landmark model. |
+| `AI_ANALYSIS_VISUAL_LANDMARK_MODEL_PATH` | Production Y | Absolute pinned MediaPipe model path; pair with the release root. |
 | `AI_ANALYSIS_REDIS_HOST` / `AI_ANALYSIS_REDIS_PORT` | Y | Dedicated private Stream Redis endpoint. |
 | `AI_ANALYSIS_REDIS_USERNAME` | N | Redis ACL identity. |
 | `AI_ANALYSIS_REDIS_PASSWORD` or `AI_ANALYSIS_REDIS_PASSWORD_FILE` | Y | Exactly one direct value or absolute regular-file secret. |
@@ -145,7 +158,7 @@ the approved frozen artifacts are present:
 
 The reviewed container definition is in `deploy/backend-analysis-worker`. It runs
 as UID/GID 10001, uses a read-only root filesystem, drops all capabilities, mounts
-the detector bundle/model/processor and NLTK data read-only, accepts the HMAC keyring
+the detector bundle/model/processor, visual release, landmark model and NLTK data read-only, accepts the HMAC keyring
 and Redis password through external Docker secrets, and keeps only restricted media
 and the health state on bounded tmpfs mounts. Build or start it only in the approved
 GPU deployment environment; model weights and protected media never enter the image.

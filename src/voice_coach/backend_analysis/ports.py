@@ -13,7 +13,12 @@ from pathlib import Path
 import re
 from typing import Protocol, runtime_checkable
 
-from .domain import AnalysisOutcome, AnalysisRequest, PronunciationEvidence
+from .domain import (
+    AnalysisOutcome,
+    AnalysisRequest,
+    PronunciationEvidence,
+    VisualSupplement,
+)
 
 
 class BackendAnalysisError(RuntimeError):
@@ -60,6 +65,21 @@ class MaterializedAudio:
 
 
 @dataclass(frozen=True, slots=True)
+class MaterializedVideo:
+    """A restricted canonical MP4 exposed only during visual processing."""
+
+    path: Path = field(repr=False)
+    byte_count: int
+    sha256: str
+
+    def __post_init__(self) -> None:
+        if not self.path.is_absolute() or self.byte_count < 0:
+            raise ValueError("materialized video metadata is invalid")
+        if re.fullmatch(r"[0-9a-f]{64}", self.sha256) is None:
+            raise ValueError("materialized video digest must be a lower-case SHA-256")
+
+
+@dataclass(frozen=True, slots=True)
 class SeungunAnalysis:
     """Authoritative audio outcome emitted by the Seungun-owned executor."""
 
@@ -67,6 +87,9 @@ class SeungunAnalysis:
     summary_feedback: str | None
     pronunciation_evidence: PronunciationEvidence | None
     pipeline_revision: str
+    analysis_evidence: object | None = field(default=None, repr=False)
+    expected_phones: tuple[str, ...] = ()
+    analysis_pcm_sha256: str | None = None
 
     def __post_init__(self) -> None:
         if not self.pipeline_revision or len(self.pipeline_revision) > 100:
@@ -81,6 +104,10 @@ class SeungunAnalysis:
             self.summary_feedback is not None or self.pronunciation_evidence is not None
         ):
             raise ValueError("non-coaching Seungun output must not carry coaching evidence")
+        if self.analysis_pcm_sha256 is not None and re.fullmatch(
+            r"[0-9a-f]{64}", self.analysis_pcm_sha256
+        ) is None:
+            raise ValueError("Seungun analysis PCM digest is invalid")
 
 
 @runtime_checkable
@@ -98,6 +125,10 @@ class RestrictedObjectStorePort(Protocol):
         self, request: AnalysisRequest, authorization: AnalysisAuthorization
     ) -> AbstractContextManager[MaterializedAudio]: ...
 
+    def materialize_visual(
+        self, request: AnalysisRequest, authorization: AnalysisAuthorization
+    ) -> AbstractContextManager[MaterializedVideo]: ...
+
 
 @runtime_checkable
 class SeungunAnalysisPort(Protocol):
@@ -106,3 +137,17 @@ class SeungunAnalysisPort(Protocol):
     def analyze(
         self, *, request: AnalysisRequest, audio: MaterializedAudio
     ) -> SeungunAnalysis: ...
+
+
+@runtime_checkable
+class VisualAnalysisPort(Protocol):
+    """Produce only a same-attempt supplement after Seungun has decided."""
+
+    def analyze(
+        self,
+        *,
+        request: AnalysisRequest,
+        audio: MaterializedAudio,
+        video: MaterializedVideo,
+        seungun: SeungunAnalysis,
+    ) -> VisualSupplement | None: ...
