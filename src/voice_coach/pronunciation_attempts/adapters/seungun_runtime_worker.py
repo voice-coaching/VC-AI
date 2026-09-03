@@ -82,10 +82,12 @@ def _load_detector(*, repository_root: Path, device: str) -> object:
     except ImportError as error:
         raise _WorkerError("seungun_backend_unavailable") from error
     try:
-        return FrozenPronunciationDetector(
+        detector = FrozenPronunciationDetector(
             repository_root=repository_root,
             device=device,
         )
+        detector.preload()
+        return detector
     except Exception as error:
         raise _WorkerError("seungun_backend_unavailable") from error
 

@@ -91,3 +91,18 @@ def test_frozen_bundle_hash_and_architecture_gate_passes() -> None:
     assert detector.config["operating_point"]["threshold"] == pytest.approx(
         0.8134703636169434
     )
+
+
+def test_preload_materializes_the_model_before_readiness(monkeypatch) -> None:
+    detector = FrozenPronunciationDetector(repository_root=ROOT)
+    called = False
+
+    def load() -> None:
+        nonlocal called
+        called = True
+
+    monkeypatch.setattr(detector, "_load", load)
+
+    detector.preload()
+
+    assert called is True

@@ -326,6 +326,11 @@ class FrozenPronunciationDetector:
         self._model = model.eval()
         self._state = state
 
+    def preload(self) -> None:
+        """Materialize all frozen inference state before runtime readiness."""
+
+        self._load()
+
     def _score_rows(self, rows: Sequence[DetectorRow]) -> NDArray[np.float32]:
         self._load()
         assert self._state is not None

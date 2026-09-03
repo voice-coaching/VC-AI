@@ -81,7 +81,7 @@ canonical_sources:
       sha256: 5b78d0fffd5421a2308c158cc850baeb41c909abfab603b5b958e0d889ca53f7
     - path: configs/experiments/e02_confidence_guard_v1.yaml
       scope: e00_static_contract
-      sha256: 6b89afe7b200b5cbf5f5a83243027d516d81fa4a9eb3d2fdf8336c3d22fa87d8
+      sha256: 2a06ede8d8be4840f5fcc0780fd3b9b08757a484c6b09f319da3201947443184
     - path: configs/coaching/e02_confidence_guard_input_v1.schema.json
       scope: e00_static_contract
       sha256: 2382601910d088ed3fb0b8d839bc38c6f992cf60fc592a8043ea586e76807e73
@@ -135,7 +135,7 @@ canonical_sources:
       sha256: 636fe47b02cbf9f31c4c62f519a603a275c46796fe5fbb8843ddb1d2bed59f10
     - path: seungun/src/korean_phone_ctc/frozen_detector.py
       scope: seungun_audio_canonical
-      sha256: 7bf233c8a538ecd5e2c8fea6da3adb9e2f9deb86b6ff13455995de66793f2098
+      sha256: 9ec9019491f0fb5b6b64616ae7936c33cebd3b5fe9dad4fcd98de4d7961f44e2
     - path: scripts/check_project_constraints.py
       scope: data_privacy_boundary
       sha256: 7c885d9d863d1a505bb074e5be33b63e262b191585bcf7a02a03162ca0f1ba86
@@ -174,7 +174,7 @@ predecessors:
   c02_e02:
     validation_order: 3
     config_path: configs/experiments/e02_confidence_guard_v1.yaml
-    config_sha256: 6b89afe7b200b5cbf5f5a83243027d516d81fa4a9eb3d2fdf8336c3d22fa87d8
+    config_sha256: 2a06ede8d8be4840f5fcc0780fd3b9b08757a484c6b09f319da3201947443184
     contract_path: src/voice_coach/evaluation/e02_confidence_guard_contract.py
     contract_sha256: f01e069a0026d52e14e760bf0b7f65f1ded9cd8aaf2624f52b77ce49fc89fff9
     c02_bundle_commit_path: artifacts/coaching/c02/commit.json

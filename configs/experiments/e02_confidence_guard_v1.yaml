@@ -68,7 +68,7 @@ canonical_sources:
       sha256: 636fe47b02cbf9f31c4c62f519a603a275c46796fe5fbb8843ddb1d2bed59f10
     - path: seungun/src/korean_phone_ctc/frozen_detector.py
       scope: seungun_audio_canonical
-      sha256: 7bf233c8a538ecd5e2c8fea6da3adb9e2f9deb86b6ff13455995de66793f2098
+      sha256: 9ec9019491f0fb5b6b64616ae7936c33cebd3b5fe9dad4fcd98de4d7961f44e2
     - path: scripts/check_project_constraints.py
       scope: data_privacy_boundary
       sha256: 7c885d9d863d1a505bb074e5be33b63e262b191585bcf7a02a03162ca0f1ba86
