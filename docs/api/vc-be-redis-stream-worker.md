@@ -1,5 +1,9 @@
 # VC-BE Redis Stream worker integration
 
+현재 구현·검증·운영 gate 요약은 아직 커밋되지 않은
+`docs/backend_analysis_production_implementation.md`를 참조한다. 이 문서는 필드와 실행
+계약의 정본이다.
+
 ## Scope and ownership
 
 `voice_coach.backend_analysis` is a private worker boundary for the VC-BE
@@ -116,6 +120,12 @@ VC-BE needs presign and HEAD; the worker needs GET only.
 | --- | --- | --- |
 | `VOICE_COACH_BACKEND_ANALYSIS_FACTORY` | Y | Set to `voice_coach.backend_analysis.production:create_worker`. |
 | `VOICE_COACH_REPOSITORY_ROOT` | Y | Absolute checked-out intelligentAI root. |
+| `AI_ANALYSIS_DEPLOYMENT_MANIFEST_PATH` | Y | Absolute in-container path of the private `voice-coaching.analysis-deployment.v1` manifest. |
+| `AI_ANALYSIS_DEPLOYMENT_MANIFEST_FILE` | Compose Y | Existing host manifest file bind-mounted read-only; never commit it. |
+| `AI_ANALYSIS_RELEASE_ID` | Y | Exact 40-character intelligentAI commit SHA also recorded in the image revision and manifest. |
+| `VOICE_COACH_BUILD_REVISION` | Image-provided | Build-time `VCS_REF`; startup requires it to equal `AI_ANALYSIS_RELEASE_ID`. Do not override it. |
+| `AI_ANALYSIS_ACTIVE_AUTHORIZATION_KEY_ID` | Y | Exact active VC-BE signing key ID; it must exist in the AI keyring and match the manifest. |
+| `AI_ANALYSIS_ARTIFACT_GID` | Y | Positive dedicated host group ID owning the manifest and all read-only model/data artifacts. |
 | `AI_ANALYSIS_AUTHORIZATION_KEYS_JSON` or `AI_ANALYSIS_AUTHORIZATION_KEYS_FILE` | Y | Exactly one direct value or absolute regular-file secret containing the JSON keyId-to-base64 keyring; each decoded secret is at least 32 bytes. |
 | `AI_ANALYSIS_CONSENT_POLICY_REVISION` | Y | Exact policy revision shared with VC-BE. |
 | `AI_ANALYSIS_AUTHORIZATION_MAX_TTL_SECONDS` | N | Default and maximum `600`. |
@@ -165,6 +175,49 @@ VC-BE needs presign and HEAD; the worker needs GET only.
 AWS SDK credentials use the normal boto3 credential chain. Do not place keys
 in the JSON request or a tracked `.env.local`. Run only after all settings and
 the approved frozen artifacts are present:
+
+Before creating the manifest, assign every deployment artifact to the dedicated
+artifact group. `check` makes no changes; `apply` preserves owner permissions, adds
+only group read/traverse, removes world access, and rejects symlinks, special files,
+group write, or an unexpected group. Use a reviewed staging copy for an owner-only
+visual release:
+
+```bash
+.venv/bin/python scripts/prepare_backend_analysis_artifact_access.py check \
+  --artifact-gid "${AI_ANALYSIS_ARTIFACT_GID}" \
+  --artifact /absolute/path/to/detector-bundle \
+  --artifact /absolute/path/to/seungun-model \
+  --artifact /absolute/path/to/seungun-processor \
+  --artifact /absolute/path/to/nltk-data \
+  --artifact /absolute/path/to/visual-release-staging \
+  --artifact /absolute/path/to/face-landmarker.task
+```
+
+Generate the manifest once, outside the repository, with the same artifact paths
+and the exact VC-BE key ID/policy. The output parent must be owned by the invoking
+operator, have the deployment group, deny group write and all world access, and either
+inherit that group or use it as the operator's effective group. An existing output is
+never replaced:
+
+```bash
+.venv/bin/python scripts/create_backend_analysis_deployment_attestation.py \
+  --release-id "${AI_ANALYSIS_RELEASE_ID}" \
+  --authorization-key-id "${AI_ANALYSIS_ACTIVE_AUTHORIZATION_KEY_ID}" \
+  --consent-policy-revision "${AI_ANALYSIS_CONSENT_POLICY_REVISION}" \
+  --worker-device cuda \
+  --artifact-gid "${AI_ANALYSIS_ARTIFACT_GID}" \
+  --detector-bundle /absolute/path/to/detector-bundle \
+  --seungun-model /absolute/path/to/seungun-model \
+  --seungun-processor /absolute/path/to/seungun-processor \
+  --nltk-data /absolute/path/to/nltk-data \
+  --visual-release /absolute/path/to/visual-release-staging \
+  --visual-landmark-model /absolute/path/to/face-landmarker.task \
+  --output /private/deployment/path/analysis-worker-manifest.json
+```
+
+This manifest binds content digests rather than paths and is verified before S3 or
+Redis use. Startup also performs a real model load on the configured device; merely
+spawning the isolated child no longer satisfies readiness.
 
 The worker Redis ACL must permit its Stream commands plus `EXISTS`, `DEL`, and `EVAL`.
 The Lua script is fixed in code and only atomically checks the opaque cancellation
@@ -229,8 +282,9 @@ AI_ANALYSIS_ROLLOUT_GATE=quiesced-request-v4-result-v3 \
 
 CI expands the production Compose contract, builds the complete code/runtime image
 without model artifacts, and imports the packaged transport, visual, scorer and
-Seungun modules. A deployment gate must still verify the real read-only artifacts,
-private S3-compatible store, consent/key issuer and TLS Redis combination; CI does not
+Seungun modules. The deployment manifest verifies the real read-only artifact set and
+VC-BE key/policy identity, but a deployment gate must still verify the private
+S3-compatible store, secret-manager injection and TLS Redis combination; CI does not
 claim those controlled resources are available.
 
 ## Delivery and verification
@@ -269,7 +323,8 @@ claim those controlled resources are available.
   `scripts/run_backend_analysis_redis_integration.sh` creates and removes a
   digest-pinned local Redis container and one-day synthetic TLS certificate.
 
-Current state: code and synthetic local integration are **verified**. Real
-object-store credentials, production consent/key issuance, restricted learner
-media and the frozen Seungun model runtime remain deployment verification work;
-they are not implied by the synthetic smoke.
+Current state: the consent issuer is implemented in VC-BE, and the local frozen
+Seungun artifact set has passed content-attested CUDA preload in the production
+composition. Real object-store/Redis credentials, production secret-manager injection,
+restricted learner media and a live Backend result handoff remain deployment
+verification work; they are not implied by the local smoke.
