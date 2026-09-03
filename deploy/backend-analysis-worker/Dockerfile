@@ -2,9 +2,6 @@ FROM nvidia/cuda:13.0.2-base-ubuntu24.04@sha256:2ab6381d970b211fb93853796dc6707e
 
 ARG VCS_REF=unknown
 
-LABEL org.opencontainers.image.revision="${VCS_REF}" \
-      org.opencontainers.image.source="https://github.com/voice-coaching/intelligentAI"
-
 ENV DEBIAN_FRONTEND=noninteractive \
     PYTHONDONTWRITEBYTECODE=1 \
     PYTHONUNBUFFERED=1 \
@@ -46,6 +43,11 @@ RUN python3.12 -m venv /app/.venv \
         'from importlib.metadata import version; import jpype, konlpy; assert version("g2pK") == "0.9.4"' \
     && chown -R root:root /app \
     && chmod -R a-w /app
+
+LABEL org.opencontainers.image.revision="${VCS_REF}" \
+      org.opencontainers.image.source="https://github.com/voice-coaching/intelligentAI"
+
+ENV VOICE_COACH_BUILD_REVISION=${VCS_REF}
 
 USER 10001:10001
 

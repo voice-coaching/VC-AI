@@ -85,6 +85,9 @@ def _run_deploy(
 set -eu
 printf '%s|%s\\n' "${AI_ANALYSIS_WORKER_IMAGE:-}" "$*" >> "${FAKE_DOCKER_LOG}"
 if [[ "$1" == "compose" ]]; then
+  if [[ "${AI_ANALYSIS_RELEASE_ID:-}" != "${FAKE_RELEASE}" ]]; then
+    exit 3
+  fi
   for argument in "$@"; do
     if [[ "$argument" == "ps" ]]; then
       if [[ "${FAKE_CURRENT:-0}" == "1" ]]; then printf '%s\\n' fake-container; fi

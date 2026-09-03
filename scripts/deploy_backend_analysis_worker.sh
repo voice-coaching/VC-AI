@@ -31,7 +31,8 @@ fi
 compose_with_image() {
   local image="$1"
   shift
-  AI_ANALYSIS_WORKER_IMAGE="${image}" docker compose \
+  AI_ANALYSIS_WORKER_IMAGE="${image}" \
+    AI_ANALYSIS_RELEASE_ID="${RELEASE_ID}" docker compose \
     --project-name "${PROJECT_NAME}" \
     --file "${COMPOSE_FILE}" \
     "$@"

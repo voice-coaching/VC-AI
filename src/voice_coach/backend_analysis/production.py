@@ -30,6 +30,7 @@ from .adapters.visual import (
     BackendVisualSettings,
     ProductionBackendVisualAnalysisAdapter,
 )
+from .deployment_attestation import verify_deployment_attestation
 from .service import BackendAnalysisWorker
 
 
@@ -82,9 +83,12 @@ def create_worker(
     ):
         raise ValueError("analysis_worker_production_configuration_invalid")
 
-    authorization = HmacAnalysisAuthorizationAdapter(
-        HmacAuthorizationSettings.from_environment(env)
+    authorization_settings = HmacAuthorizationSettings.from_environment(env)
+    verify_deployment_attestation(
+        env,
+        authorization_key_ids=authorization_settings.keys,
     )
+    authorization = HmacAnalysisAuthorizationAdapter(authorization_settings)
     object_store = S3CompatibleRestrictedObjectStore(
         create_s3_client_from_environment(env),
         S3ObjectStoreSettings(
@@ -123,6 +127,7 @@ def create_worker(
                 nltk_data_root=nltk_data_root,
                 landmark_model_path=Path(visual_landmark_model_text),
                 production_release_root=Path(visual_release_root_text),
+                artifact_group_id=int(env["AI_ANALYSIS_ARTIFACT_GID"]),
             )
         )
     return BackendAnalysisWorker(

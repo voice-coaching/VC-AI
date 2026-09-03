@@ -80,17 +80,26 @@ def _json_no_duplicates(payload: bytes, *, name: str) -> object:
         raise VisualFeedbackContractError(f"{name} is not strict JSON") from error
 
 
-def _open_release_directory(path: Path) -> int:
+def _open_release_directory(path: Path, *, trusted_group_id: int | None) -> int:
     absolute = path.absolute()
     try:
         before = os.lstat(absolute)
     except OSError as error:
         raise VisualFeedbackContractError("visual release directory is unavailable") from error
+    if trusted_group_id is not None and (
+        isinstance(trusted_group_id, bool)
+        or not 1 <= trusted_group_id <= 2_147_483_647
+    ):
+        raise VisualFeedbackContractError("visual release group is invalid")
     if (
         not stat.S_ISDIR(before.st_mode)
         or stat.S_ISLNK(before.st_mode)
-        or before.st_uid != os.geteuid()
-        or stat.S_IMODE(before.st_mode) & 0o077
+        or not _private_identity(
+            before,
+            trusted_group_id=trusted_group_id,
+            expected_owner_mode=0o700,
+            expected_group_mode=0o750,
+        )
     ):
         raise VisualFeedbackContractError("visual release directory is not private")
     try:
@@ -107,8 +116,12 @@ def _open_release_directory(path: Path) -> int:
         after = os.fstat(descriptor)
         if (
             not stat.S_ISDIR(after.st_mode)
-            or after.st_uid != os.geteuid()
-            or stat.S_IMODE(after.st_mode) & 0o077
+            or not _private_identity(
+                after,
+                trusted_group_id=trusted_group_id,
+                expected_owner_mode=0o700,
+                expected_group_mode=0o750,
+            )
             or (before.st_dev, before.st_ino) != (after.st_dev, after.st_ino)
         ):
             raise VisualFeedbackContractError("visual release directory identity differs")
@@ -118,7 +131,9 @@ def _open_release_directory(path: Path) -> int:
         raise
 
 
-def _read_private_file(directory_fd: int, filename: str) -> bytes:
+def _read_private_file(
+    directory_fd: int, filename: str, *, trusted_group_id: int | None
+) -> bytes:
     if filename not in {MANIFEST_FILENAME, *ARTIFACT_FILENAMES.values()}:
         raise VisualFeedbackContractError("visual release filename is not allowlisted")
     flags = os.O_RDONLY | os.O_CLOEXEC | getattr(os, "O_NOFOLLOW", 0)
@@ -130,9 +145,13 @@ def _read_private_file(directory_fd: int, filename: str) -> bytes:
         before = os.fstat(descriptor)
         if (
             not stat.S_ISREG(before.st_mode)
-            or before.st_uid != os.geteuid()
+            or not _private_identity(
+                before,
+                trusted_group_id=trusted_group_id,
+                expected_owner_mode=0o400,
+                expected_group_mode=0o440,
+            )
             or before.st_nlink != 1
-            or stat.S_IMODE(before.st_mode) != 0o400
             or before.st_size <= 0
             or before.st_size > _MAXIMUM_FILE_BYTES
         ):
@@ -244,12 +263,20 @@ def _validate_manifest(
     return release_id, release_sha256, status, reasons, artifacts
 
 
-def load_production_visual_release(path: str | Path) -> ProductionVisualRelease:
+def load_production_visual_release(
+    path: str | Path, *, trusted_group_id: int | None = None
+) -> ProductionVisualRelease:
     """Strictly load one complete release or fail before video source access."""
 
-    directory_fd = _open_release_directory(Path(path))
+    directory_fd = _open_release_directory(
+        Path(path), trusted_group_id=trusted_group_id
+    )
     try:
-        manifest_payload = _read_private_file(directory_fd, MANIFEST_FILENAME)
+        manifest_payload = _read_private_file(
+            directory_fd,
+            MANIFEST_FILENAME,
+            trusted_group_id=trusted_group_id,
+        )
         release_id, release_sha256, status, reasons, entries = _validate_manifest(
             _json_no_duplicates(manifest_payload, name="visual release manifest")
         )
@@ -257,7 +284,9 @@ def load_production_visual_release(path: str | Path) -> ProductionVisualRelease:
         for name, filename in (
             ARTIFACT_FILENAMES.items() if status == "enabled" else ()
         ):
-            payload = _read_private_file(directory_fd, filename)
+            payload = _read_private_file(
+                directory_fd, filename, trusted_group_id=trusted_group_id
+            )
             entry = require_mapping(entries[name], f"release artifact {name}")
             if hashlib.sha256(payload).hexdigest() != entry["sha256"]:
                 raise VisualFeedbackContractError("visual release artifact digest differs")
@@ -266,7 +295,6 @@ def load_production_visual_release(path: str | Path) -> ProductionVisualRelease:
             )
     finally:
         os.close(directory_fd)
-
     if status == "disabled":
         return ProductionVisualRelease(
             release_id=release_id,
@@ -310,6 +338,19 @@ def load_production_visual_release(path: str | Path) -> ProductionVisualRelease:
         video_qc_decision_policy=qc_policy,
         av_sync_decision_policy=sync_policy,
     )
+
+
+def _private_identity(
+    metadata: os.stat_result,
+    *,
+    trusted_group_id: int | None,
+    expected_owner_mode: int,
+    expected_group_mode: int,
+) -> bool:
+    mode = stat.S_IMODE(metadata.st_mode)
+    if trusted_group_id is None:
+        return metadata.st_uid == os.geteuid() and mode == expected_owner_mode
+    return metadata.st_gid == trusted_group_id and mode == expected_group_mode
 
 
 def classify_production_visual_release_error(error: Exception) -> str:

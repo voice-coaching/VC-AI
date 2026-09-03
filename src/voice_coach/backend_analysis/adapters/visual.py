@@ -54,6 +54,7 @@ class BackendVisualSettings:
     nltk_data_root: Path
     landmark_model_path: Path
     production_release_root: Path
+    artifact_group_id: int | None = None
 
     def __post_init__(self) -> None:
         for path in (
@@ -66,6 +67,11 @@ class BackendVisualSettings:
             if not path.is_absolute():
                 raise ValueError("backend_visual_configuration_invalid")
         if not self.landmark_model_path.is_file():
+            raise ValueError("backend_visual_configuration_invalid")
+        if self.artifact_group_id is not None and (
+            isinstance(self.artifact_group_id, bool)
+            or not 1 <= self.artifact_group_id <= 2_147_483_647
+        ):
             raise ValueError("backend_visual_configuration_invalid")
 
 
@@ -180,7 +186,10 @@ class ProductionBackendVisualAnalysisAdapter:
     def __init__(self, settings: BackendVisualSettings) -> None:
         self._settings = settings
         _prepare_workspace_root(settings.workspace_root)
-        release = load_production_visual_release(settings.production_release_root)
+        release = load_production_visual_release(
+            settings.production_release_root,
+            trusted_group_id=settings.artifact_group_id,
+        )
         if release.status != "enabled":
             raise ValueError("backend_visual_release_not_enabled")
         self._release = release

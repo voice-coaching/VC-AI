@@ -14,6 +14,8 @@ services:
       - ALL
     security_opt:
       - no-new-privileges:true
+    group_add:
+      - ${AI_ANALYSIS_ARTIFACT_GID:?set AI_ANALYSIS_ARTIFACT_GID}
     tmpfs:
       - /app/runtime/work:rw,noexec,nosuid,nodev,uid=10001,gid=10001,mode=0700,size=512m
       - /run/voice-coach-worker:rw,noexec,nosuid,nodev,uid=10001,gid=10001,mode=0700,size=1m
@@ -47,6 +49,10 @@ services:
         source: ${ANALYSIS_REDIS_CA_CERT:?set ANALYSIS_REDIS_CA_CERT}
         target: /run/analysis-ca/ca.crt
         read_only: true
+      - type: bind
+        source: ${AI_ANALYSIS_DEPLOYMENT_MANIFEST_FILE:?set AI_ANALYSIS_DEPLOYMENT_MANIFEST_FILE}
+        target: /run/analysis-deployment/manifest.json
+        read_only: true
     secrets:
       - analysis_authorization_keys
       - analysis_redis_password
@@ -56,6 +62,10 @@ services:
       AI_ANALYSIS_RESTRICTED_WORKSPACE_ROOT: /app/runtime/work
       AI_ANALYSIS_NLTK_DATA_ROOT: /app/runtime/nltk_data
       AI_ANALYSIS_SEUNGUN_DEVICE: ${AI_ANALYSIS_SEUNGUN_DEVICE:-cuda}
+      AI_ANALYSIS_DEPLOYMENT_MANIFEST_PATH: /run/analysis-deployment/manifest.json
+      AI_ANALYSIS_RELEASE_ID: ${AI_ANALYSIS_RELEASE_ID:?set AI_ANALYSIS_RELEASE_ID}
+      AI_ANALYSIS_ACTIVE_AUTHORIZATION_KEY_ID: ${AI_ANALYSIS_ACTIVE_AUTHORIZATION_KEY_ID:?set AI_ANALYSIS_ACTIVE_AUTHORIZATION_KEY_ID}
+      AI_ANALYSIS_ARTIFACT_GID: ${AI_ANALYSIS_ARTIFACT_GID:?set AI_ANALYSIS_ARTIFACT_GID}
       AI_ANALYSIS_SEUNGUN_STARTUP_TIMEOUT_SECONDS: ${AI_ANALYSIS_SEUNGUN_STARTUP_TIMEOUT_SECONDS:-300}
       AI_ANALYSIS_SEUNGUN_REQUEST_TIMEOUT_SECONDS: ${AI_ANALYSIS_SEUNGUN_REQUEST_TIMEOUT_SECONDS:-180}
       AI_ANALYSIS_SEUNGUN_MAXIMUM_REQUESTS_PER_PROCESS: ${AI_ANALYSIS_SEUNGUN_MAXIMUM_REQUESTS_PER_PROCESS:-100}

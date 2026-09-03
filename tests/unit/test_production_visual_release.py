@@ -130,6 +130,25 @@ def test_loads_one_private_release_and_returns_typed_runtime_values(
     assert loaded.av_sync_decision_policy.policy_revision == "sync_v1"
 
 
+def test_loads_a_release_shared_only_with_an_explicit_deployment_group(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    root = tmp_path / "release"
+    _write_release(root)
+    root.chmod(0o750)
+    for path in root.iterdir():
+        path.chmod(0o440)
+    _patch_typed_loaders(monkeypatch)
+
+    loaded = release.load_production_visual_release(
+        root, trusted_group_id=os.getgid()
+    )
+
+    assert loaded.status == "enabled"
+    with pytest.raises(VisualFeedbackContractError, match="not private"):
+        release.load_production_visual_release(root)
+
+
 def test_creates_and_loads_disabled_production_release(tmp_path: Path) -> None:
     parent = tmp_path / "releases"
     parent.mkdir(mode=0o700)

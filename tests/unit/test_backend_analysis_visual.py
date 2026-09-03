@@ -43,7 +43,9 @@ def test_projects_only_approved_same_attempt_action(monkeypatch, tmp_path: Path)
         runtime_bundle=object(),
     )
     monkeypatch.setattr(
-        visual_module, "load_production_visual_release", lambda path: release
+        visual_module,
+        "load_production_visual_release",
+        lambda path, **_kwargs: release,
     )
     captured: dict[str, object] = {}
 
@@ -126,7 +128,7 @@ def test_cross_attempt_visual_digest_never_reaches_the_facade(
     monkeypatch.setattr(
         visual_module,
         "load_production_visual_release",
-        lambda path: SimpleNamespace(status="enabled"),
+        lambda path, **_kwargs: SimpleNamespace(status="enabled"),
     )
     monkeypatch.setattr(
         visual_module,
@@ -179,7 +181,7 @@ def test_rejects_symlinked_visual_workspace(monkeypatch, tmp_path: Path) -> None
     monkeypatch.setattr(
         visual_module,
         "load_production_visual_release",
-        lambda path: SimpleNamespace(status="enabled"),
+        lambda path, **_kwargs: SimpleNamespace(status="enabled"),
     )
 
     with pytest.raises(ValueError, match="backend_visual_configuration_invalid"):

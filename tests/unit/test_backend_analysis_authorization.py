@@ -139,6 +139,13 @@ def test_verifies_signed_bound_grant() -> None:
     assert authorization.remote_egress_allowed is False
 
 
+def test_rejects_an_unsafe_policy_identifier_at_composition_time() -> None:
+    with pytest.raises(
+        ValueError, match="analysis_authorization_configuration_invalid"
+    ):
+        _settings("voice analysis latest")
+
+
 def test_rejects_tampered_signature_and_stale_policy() -> None:
     request = _signed_request()
     tampered_payload = _request_payload(_grant_payload(signature="f" * 64))

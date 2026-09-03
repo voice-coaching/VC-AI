@@ -17,6 +17,7 @@ from ..secret_files import secret_text
 
 
 _KEY_ID = re.compile(r"^[A-Za-z0-9._-]{1,100}$")
+_POLICY_REVISION = re.compile(r"^[A-Za-z0-9._-]{1,100}$")
 
 
 class HmacAuthorizationSettings:
@@ -35,8 +36,7 @@ class HmacAuthorizationSettings:
             not copied
             or any(_KEY_ID.fullmatch(key_id) is None for key_id in copied)
             or any(not isinstance(secret, bytes) or len(secret) < 32 for secret in copied.values())
-            or not consent_policy_revision
-            or len(consent_policy_revision) > 100
+            or _POLICY_REVISION.fullmatch(consent_policy_revision) is None
             or not 1 <= maximum_grant_ttl_seconds <= 600
             or not 0 <= allowed_clock_skew_seconds <= 60
         ):
