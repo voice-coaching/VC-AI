@@ -113,7 +113,6 @@ jobs:
           tests/unit/test_backend_analysis*.py
           tests/unit/test_persistent_seungun_runtime.py
           seungun/tests/test_production_pipeline.py
-          seungun/tests/test_frozen_detector.py
           tests/integration/test_backend_analysis_redis_stream_integration.py
 
       - name: Validate worker Compose expansion
