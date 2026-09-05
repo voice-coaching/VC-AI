@@ -24,6 +24,7 @@ from voice_coach.pronunciation_feedback.adapters.expected_phones_subprocess impo
 from voice_coach.visual_feedback.models.binding import UpstreamReliabilityReceipt
 from voice_coach.visual_feedback.models.enums import UpstreamReliabilityStatus
 from voice_coach.visual_feedback.models.integrity import sha256_document
+from voice_coach.visual_feedback.models.p6_geometry import P6GeometryArtifact
 from voice_coach.visual_feedback.models.runtime_contract import (
     VisualRuntimeBundle,
 )
@@ -35,6 +36,9 @@ from .adapters.calibrated_runtime_decisions import (
     CalibratedAvSyncDecisionPolicy,
     CalibratedVideoQcDecisionAdapter,
     CalibratedVideoQcDecisionPolicy,
+)
+from .adapters.closed_beta_lip_trajectory import (
+    ClosedBetaMediaPipeLipLandmarkAdapter,
 )
 from .adapters.lip_audio_av_sync import (
     LipAudioAvSyncAdapter,
@@ -127,6 +131,7 @@ def build_local_video_attempt_facade(
     video_qc_decision_policy: CalibratedVideoQcDecisionPolicy | None = None,
     av_sync_decision_policy: CalibratedAvSyncDecisionPolicy | None = None,
     visual_runtime_bundle: VisualRuntimeBundle | None = None,
+    closed_beta_lip_geometry_artifact: P6GeometryArtifact | None = None,
     consent_authority: ConsentAuthorizationPort | None = None,
     trusted_prompt_port: TrustedPromptPort | None = None,
     seungun_runtime_port: SeungunRuntimePort | None = None,
@@ -152,6 +157,13 @@ def build_local_video_attempt_facade(
     if visual_runtime_bundle is not None and video_qc_decision_policy is None:
         raise ValueError(
             "visual runtime requires calibrated QC and A/V sync decision policies"
+        )
+    if closed_beta_lip_geometry_artifact is not None and (
+        visual_runtime_bundle is None or landmark_model_path is None
+    ):
+        raise ValueError(
+            "closed-beta lip trajectory requires production visual runtime "
+            "and landmark model"
         )
     if visual_runtime_bundle is not None:
         identity = visual_runtime_bundle.pipeline_identity
@@ -238,21 +250,29 @@ def build_local_video_attempt_facade(
         context_id=_CONTEXT_ID,
     )
 
+    landmark_policy = MediaPipeLandmarkPolicy(
+        minimum_face_detection_confidence=0.5,
+        minimum_face_presence_confidence=0.5,
+        minimum_tracking_confidence=0.5,
+        maximum_frame_count=12,
+        maximum_total_rgb_bytes=80 * 1024 * 1024,
+        subprocess_timeout_seconds=120.0,
+        maximum_subprocess_output_bytes=2 * 1024 * 1024,
+    )
     if landmark_model_path is None:
         landmark_detector: object = _UnavailableLipLandmarkDetector()
+    elif closed_beta_lip_geometry_artifact is not None:
+        landmark_detector = ClosedBetaMediaPipeLipLandmarkAdapter(
+            model_path=landmark_model_path,
+            expected_model_sha256=OFFICIAL_FACE_LANDMARKER_SHA256,
+            policy=landmark_policy,
+            repository_root=root,
+        )
     else:
         landmark_detector = MediaPipeLipLandmarkAdapter(
             model_path=landmark_model_path,
             expected_model_sha256=OFFICIAL_FACE_LANDMARKER_SHA256,
-            policy=MediaPipeLandmarkPolicy(
-                minimum_face_detection_confidence=0.5,
-                minimum_face_presence_confidence=0.5,
-                minimum_tracking_confidence=0.5,
-                maximum_frame_count=12,
-                maximum_total_rgb_bytes=80 * 1024 * 1024,
-                subprocess_timeout_seconds=120.0,
-                maximum_subprocess_output_bytes=2 * 1024 * 1024,
-            ),
+            policy=landmark_policy,
             repository_root=root,
         )
 
@@ -341,6 +361,9 @@ def build_local_video_attempt_facade(
     visual_sidecar = (
         ProductionVisualSidecarAdapter(
             runtime_bundle=visual_runtime_bundle,
+            closed_beta_geometry_artifact=(
+                closed_beta_lip_geometry_artifact
+            ),
         )
         if visual_runtime_bundle is not None
         else None

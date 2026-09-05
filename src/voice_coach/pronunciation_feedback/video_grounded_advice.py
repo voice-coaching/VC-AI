@@ -12,7 +12,14 @@ from dataclasses import dataclass, replace
 from typing import Mapping
 
 from voice_coach.visual_feedback.errors import VisualFeedbackContractError
-from voice_coach.visual_feedback.models.enums import VisualFeedbackStatus
+from voice_coach.visual_feedback.models.enums import (
+    VisualCueState,
+    VisualFeedbackStatus,
+)
+from voice_coach.visual_feedback.models.p6_lip_trajectory import (
+    P6_LIP_TRAJECTORY_REVISION,
+    P6_VISIBLE_LIP_FEATURE_IDS,
+)
 from voice_coach.visual_feedback.models.supplement import VisualFeedbackSupplement
 
 from .coaching_payload import CoachingPayloadError
@@ -81,6 +88,10 @@ _VISUAL_FAILURE_TEXT = {
     ),
 }
 _VISUAL_FAILURE_CLAIM_ID = "VISUAL_FEEDBACK_UNAVAILABLE_REASON"
+_CLOSED_BETA_CLAIM_ID = "CLOSED_BETA_VISIBLE_LIP_GEOMETRY_OBSERVATION_V1"
+_CLOSED_BETA_REASON = "closed_beta_unvalidated_observation"
+_CLOSED_BETA_NOTICE = "closed_beta_lip_trajectory_observed"
+_CLOSED_BETA_TEMPORAL_CUE = "shape_change_rate_per_second"
 
 
 @dataclass(frozen=True, slots=True)
@@ -105,29 +116,107 @@ def _audio_payload(audio_result: Mapping[str, object]) -> GroundedCoachingPayloa
     )
 
 
-def _visual_claim(
+def _visual_claims(
     visual_supplement: Mapping[str, object] | None,
-) -> tuple[ApprovedAdviceClaim | None, str]:
+) -> tuple[tuple[ApprovedAdviceClaim, ...], str]:
     if visual_supplement is None:
-        return None, "not_available"
+        return (), "not_available"
     try:
         supplement = VisualFeedbackSupplement.from_json_object(visual_supplement)
     except VisualFeedbackContractError:
-        return None, "invalid_supplement"
-    if supplement.status is not VisualFeedbackStatus.VISUAL_FEEDBACK_READY:
-        return None, supplement.status.value
-    candidate = supplement.supplemental_action_candidate
-    if candidate is None:  # guarded by the supplement contract; defensive only
-        return None, "invalid_supplement"
-    key = (
-        candidate.action_id,
-        candidate.approved_claim_id,
-        candidate.renderer_key,
+        return (), "invalid_supplement"
+
+    claims: list[ApprovedAdviceClaim] = []
+    if supplement.status is VisualFeedbackStatus.VISUAL_FEEDBACK_READY:
+        candidate = supplement.supplemental_action_candidate
+        if candidate is None:  # guarded by contract; defensive only
+            return (), "invalid_supplement"
+        key = (
+            candidate.action_id,
+            candidate.approved_claim_id,
+            candidate.renderer_key,
+        )
+        text = _VISUAL_CLAIM_TEXT.get(key)
+        if text is None:
+            return (), "claim_renderer_not_allowlisted"
+        claims.append(ApprovedAdviceClaim(candidate.approved_claim_id, text))
+
+    beta_claim = _closed_beta_observation_claim(supplement)
+    if beta_claim is not None:
+        claims.append(beta_claim)
+    if not claims:
+        return (), supplement.status.value
+    return (
+        tuple(claims),
+        "admitted" if len(claims) > 1 else (
+            "closed_beta_observation_admitted"
+            if beta_claim is not None
+            else "admitted"
+        ),
     )
-    text = _VISUAL_CLAIM_TEXT.get(key)
-    if text is None:
-        return None, "claim_renderer_not_allowlisted"
-    return ApprovedAdviceClaim(candidate.approved_claim_id, text), "admitted"
+
+
+def _closed_beta_observation_claim(
+    supplement: VisualFeedbackSupplement,
+) -> ApprovedAdviceClaim | None:
+    if _CLOSED_BETA_NOTICE not in supplement.notices:
+        return None
+    allowed_ids = {*P6_VISIBLE_LIP_FEATURE_IDS, _CLOSED_BETA_TEMPORAL_CUE}
+    beta_evidence = tuple(
+        evidence
+        for evidence in supplement.cue_evidence
+        if evidence.cue_id in allowed_ids
+    )
+    cue_values = {evidence.cue_id: evidence for evidence in beta_evidence}
+    if (
+        len(cue_values) != len(beta_evidence)
+        or not set(P6_VISIBLE_LIP_FEATURE_IDS).issubset(cue_values)
+        or set(cue_values) - allowed_ids
+    ):
+        return None
+    artifact_digests = {
+        evidence.calibration_artifact_sha256 for evidence in beta_evidence
+    }
+    spans = {
+        (evidence.video_start_ms, evidence.video_end_ms)
+        for evidence in beta_evidence
+    }
+    if len(artifact_digests) != 1 or None in artifact_digests or len(spans) != 1:
+        return None
+    for evidence in beta_evidence:
+        backend = evidence.measurement_backend
+        if (
+            evidence.cue_state is not VisualCueState.OBSERVED
+            or evidence.measurement_value is None
+            or evidence.calibrated_deviation is not None
+            or evidence.reason_codes != (_CLOSED_BETA_REASON,)
+            or backend.backend_id != "closed_beta_p6_lip_trajectory"
+            or backend.backend_revision != P6_LIP_TRAJECTORY_REVISION
+            or backend.status != "observed"
+            or backend.reason_codes != (_CLOSED_BETA_REASON,)
+        ):
+            return None
+
+    value = {
+        cue_id: float(cue_values[cue_id].measurement_value)
+        for cue_id in P6_VISIBLE_LIP_FEATURE_IDS
+    }
+    parts = [
+        "클로즈드 베타 입술 관찰값이며 발음 정답이나 교정 행동의 정답 판정은 아니에요.",
+        f"화면 너비 대비 입 너비 {value['mouth_width_fraction']:.3f},",
+        "입 너비를 1로 환산했을 때 "
+        f"바깥 벌림 {value['outer_aperture_ratio']:.3f},",
+        f"안쪽 벌림 {value['inner_aperture_ratio']:.3f},",
+        f"바깥 면적 {value['outer_area_ratio']:.3f},",
+        f"안쪽 면적 {value['inner_area_ratio']:.3f},",
+        f"좌우 입꼬리 높이 차이 {value['corner_height_asymmetry_ratio']:.3f}로 관찰됐어요.",
+    ]
+    temporal = cue_values.get(_CLOSED_BETA_TEMPORAL_CUE)
+    if temporal is not None and temporal.measurement_value is not None:
+        parts.append(
+            f"구간 내 최대 모양 변화율은 {temporal.measurement_value:.3f}/초예요."
+        )
+    return ApprovedAdviceClaim(_CLOSED_BETA_CLAIM_ID, " ".join(parts))
 
 
 def build_grounded_video_payload(
@@ -139,8 +228,8 @@ def build_grounded_video_payload(
     """Admit only validated public claims into a combined coaching payload."""
 
     audio = _audio_payload(audio_result)
-    visual, visual_status = _visual_claim(visual_supplement)
-    if visual is None:
+    visual_claims, visual_status = _visual_claims(visual_supplement)
+    if not visual_claims:
         if visual_failure_reason_codes:
             reason_text = next(
                 (
@@ -162,12 +251,17 @@ def build_grounded_video_payload(
                 visual_status,
             )
         return audio, ("audio",), visual_status
-    if visual.claim_id in {claim.claim_id for claim in audio.approved_claims}:
+    audio_claim_ids = {claim.claim_id for claim in audio.approved_claims}
+    visual_claim_ids = {claim.claim_id for claim in visual_claims}
+    if (
+        len(visual_claim_ids) != len(visual_claims)
+        or audio_claim_ids & visual_claim_ids
+    ):
         raise CoachingPayloadError("audio and visual claim identities overlap")
     return (
         replace(
             audio,
-            approved_claims=(*audio.approved_claims, visual),
+            approved_claims=(*audio.approved_claims, *visual_claims),
         ),
         ("audio", "visual"),
         visual_status,

@@ -44,6 +44,10 @@ from voice_coach.visual_feedback.adapters.production_visual_release import (  # 
     classify_production_visual_release_error,
     load_production_visual_release,
 )
+from voice_coach.visual_feedback.adapters.p6_geometry_reload import (  # noqa: E402
+    P6GeometryReloadError,
+    load_p6_geometry_artifact,
+)
 from voice_coach.visual_feedback.errors import VisualFeedbackContractError  # noqa: E402
 
 
@@ -131,6 +135,14 @@ def _parser() -> argparse.ArgumentParser:
             "runtime artifacts are not accepted by this entrypoint"
         ),
     )
+    parser.add_argument(
+        "--closed-beta-lip-geometry-artifact",
+        type=Path,
+        help=(
+            "private immutable P6 geometry artifact; enables aggregate-only "
+            "40-point lip observations alongside an enabled production release"
+        ),
+    )
     return parser
 
 
@@ -169,6 +181,9 @@ def main(argv: list[str] | None = None) -> int:
         visual_release_id = None
         visual_release_status = "not_configured"
         visual_release_reason_codes: tuple[str, ...] = ()
+        closed_beta_geometry_artifact = None
+        closed_beta_status = "not_configured"
+        closed_beta_reason_codes: tuple[str, ...] = ()
         if args.production_visual_release is not None:
             try:
                 release = load_production_visual_release(
@@ -187,6 +202,35 @@ def main(argv: list[str] | None = None) -> int:
                     visual_bundle = release.runtime_bundle
                     qc_decision_policy = release.video_qc_decision_policy
                     sync_decision_policy = release.av_sync_decision_policy
+        if args.closed_beta_lip_geometry_artifact is not None:
+            if visual_bundle is None or args.landmark_model is None:
+                closed_beta_status = "failed_closed"
+                closed_beta_reason_codes = (
+                    "closed_beta_production_dependencies_unavailable",
+                )
+            else:
+                try:
+                    closed_beta_geometry_artifact = load_p6_geometry_artifact(
+                        args.closed_beta_lip_geometry_artifact,
+                        repository_root=REPOSITORY_ROOT,
+                    )
+                except (OSError, P6GeometryReloadError):
+                    closed_beta_status = "failed_closed"
+                    closed_beta_reason_codes = (
+                        "closed_beta_geometry_artifact_invalid",
+                    )
+                else:
+                    if (
+                        closed_beta_geometry_artifact.model_sha256
+                        != visual_bundle.pipeline_identity.landmark_model_sha256
+                    ):
+                        closed_beta_geometry_artifact = None
+                        closed_beta_status = "failed_closed"
+                        closed_beta_reason_codes = (
+                            "closed_beta_geometry_model_identity_mismatch",
+                        )
+                    else:
+                        closed_beta_status = "enabled"
         video_locator = (
             str(args.video)
             if args.video is not None
@@ -216,6 +260,9 @@ def main(argv: list[str] | None = None) -> int:
                 video_qc_decision_policy=qc_decision_policy,
                 av_sync_decision_policy=sync_decision_policy,
                 visual_runtime_bundle=visual_bundle,
+                closed_beta_lip_geometry_artifact=(
+                    closed_beta_geometry_artifact
+                ),
             )
             result = facade.run(
                 VideoAttemptCommand(
@@ -239,6 +286,28 @@ def main(argv: list[str] | None = None) -> int:
         "status": visual_release_status,
         "release_id": visual_release_id,
         "reason_codes": list(visual_release_reason_codes),
+    }
+    supplement_notices = (
+        ()
+        if result.visual_supplement is None
+        else tuple(result.visual_supplement.get("notices", ()))
+    )
+    closed_beta_attempt_status = "not_run"
+    if "closed_beta_lip_trajectory_observed" in supplement_notices:
+        closed_beta_attempt_status = "observed"
+    elif "closed_beta_lip_trajectory_unavailable" in supplement_notices:
+        closed_beta_attempt_status = "unavailable"
+    response["closed_beta_lip_trajectory"] = {
+        "status": closed_beta_status,
+        "attempt_status": closed_beta_attempt_status,
+        "geometry_artifact_sha256": (
+            None
+            if closed_beta_geometry_artifact is None
+            else closed_beta_geometry_artifact.artifact_sha256
+        ),
+        "reason_codes": list(closed_beta_reason_codes),
+        "contains_pronunciation_truth": False,
+        "contains_action_truth": False,
     }
     response["combined_feedback"] = None
     if result.audio_result is not None and result.audio_result.get("status") == (

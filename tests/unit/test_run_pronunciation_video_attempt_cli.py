@@ -61,6 +61,14 @@ def test_cli_missing_source_is_path_free_after_consent(tmp_path: Path) -> None:
     assert response["audio_result"] is None
     assert response["visual_supplement"] is None
     assert response["cleanup_status"] == "not_applicable"
+    assert response["closed_beta_lip_trajectory"] == {
+        "status": "not_configured",
+        "attempt_status": "not_run",
+        "geometry_artifact_sha256": None,
+        "reason_codes": [],
+        "contains_pronunciation_truth": False,
+        "contains_action_truth": False,
+    }
     assert str(private_locator) not in completed.stdout
     assert str(private_locator) not in completed.stderr
 
@@ -141,6 +149,7 @@ def test_cli_help_exposes_only_user_authority_inputs() -> None:
     assert "--prompt-id" in completed.stdout
     assert "--consent-local-processing" in completed.stdout
     assert "--production-visual-release" in completed.stdout
+    assert "--closed-beta-lip-geometry-artifact" in completed.stdout
     assert "--advice-endpoint" in completed.stdout
     assert "--advice-revision" in completed.stdout
     assert "expected-phone" not in completed.stdout

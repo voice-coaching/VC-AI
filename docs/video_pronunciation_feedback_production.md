@@ -100,8 +100,8 @@ digest를 고정한다. 릴리스 디렉터리는 소유자 전용이고 각 파
 
 생성기는 보정 2건·평가 2건의 digest를 compact receipt에 묶고 세 runtime
 산출물을 원자적으로 패키징한 뒤 strict reload한다. 대용량 데이터셋은 읽지
-않는다. 기존 `--visual-release` CLI와 개별 artifact 입력 방식은 제거했으며
-호환 경로로 남기지 않는다.
+않는다. 기존 `--visual-release` CLI와 production runtime bundle/QC/A·V
+artifact의 개별 입력 방식은 제거했으며 호환 경로로 남기지 않는다.
 
 실행 시에는 새 옵션만 사용한다.
 
@@ -116,6 +116,41 @@ exec 9<data/testvideo/testvideo1.mp4
   --nltk-data-root /home/cmsl-dgx01/nltk_data \
   --device cuda
 ```
+
+### 40점 입술 형상 closed beta
+
+기존 production release를 바꾸지 않고, 명시적으로 선택한 요청에만 40점 입술
+분석 overlay를 켤 수 있다. 기존 4점 worker와 source-pinned artifact는 그대로
+두며, 별도 격리 worker가 낸 얼굴 수와 공통 4점 좌표가 기존 worker 결과와
+일치할 때만 40점 후보를 채택한다.
+
+```bash
+exec 9<data/testvideo/testvideo1.mp4
+.venv/bin/python scripts/run_pronunciation_video_attempt.py \
+  --video-fd 9 \
+  --prompt-id LOCAL-TEST-RICE-CLEAN-V1 \
+  --consent-local-processing \
+  --landmark-model models/mediapipe/face_landmarker.task \
+  --production-visual-release artifacts/visual_feedback/releases/production_visual \
+  --closed-beta-lip-geometry-artifact \
+    artifacts/visual_feedback/p6/aihub68_geometry_artifact_v2.json \
+  --nltk-data-root /home/cmsl-dgx01/nltk_data \
+  --device cuda
+```
+
+성공하면 `closed_beta_lip_trajectory.status=enabled`,
+`attempt_status=observed`이고 공개 supplement에
+선택 음소 구간의 입 너비, 외곽/내곽 벌림, 외곽/내곽 면적, 입꼬리 높이 차이와
+가능한 경우 형상 변화율이 추가된다. 40/24점 배열과 영상 프레임은 supplement나
+LLM payload에 들어가지 않는다. 이 overlay는 관찰값을 설명할 뿐 새 음소,
+발음 정답, 교정 행동을 결정하지 않으므로 출력의
+`contains_pronunciation_truth`와 `contains_action_truth`는 모두 `false`다.
+
+artifact가 잘못됐거나 production 의존성이 없으면 overlay만 `failed_closed`로
+둔다. 설정은 유효하지만 해당 요청의 40점 worker 또는 기존 worker와의 parity가
+실패하면 `attempt_status=unavailable`과 supplement notice를 남긴다. 두 경우 모두
+기존 audio 및 검증된 4점 production 경로는 유지한다. 이 옵션은 로컬 production
+entrypoint 연결이며 외부 API 배포·트래픽 전환을 뜻하지 않는다.
 
 출력의 `production_visual_release.status`는 `enabled`, `disabled`,
 `failed_closed`, `not_configured` 중 하나다. `disabled` 또는 `failed_closed`이면
@@ -187,7 +222,7 @@ exec 9<data/testvideo/testvideo1.mp4
 동시 운영 시 GB10 통합 메모리를 Clova와 Seungun이 공유하므로 health뿐 아니라
 실제 동일 시도 실행을 배포 검증에 포함한다.
 
-## 현재 구현 상태 (2026-09-02)
+## 현재 구현 상태 (기존 release 2026-09-02, closed beta 2026-09-05)
 
 ### 현재 작업 범위
 
@@ -208,6 +243,8 @@ exec 9<data/testvideo/testvideo1.mp4
 - MediaPipe 입술 landmark, 영상 QC 후보 측정, 내용 기반 A·V 동기화 후보 측정
 - 최소 P6/P8 요약이 포함된 runtime bundle이 없을 때 시각 claim fail-closed
 - 40개 한국어 음소에 대한 외부 입술 벌림 claim과 enabled/disabled release 로더
+- 명시적 closed-beta 옵션에서 별도 격리 40점 추출, P6 24점 mapping, 6개 공개
+  형상 관찰값과 구간 변화율
 - 삭제 정렬 음소의 인접 음소 기반 예상 시간 구간 복원
 - Seungun + 승인된 시각 claim을 한 번의 grounded Clova 호출로 결합하는 계층
 - Clova의 모델 ID/revision 및 모든 claim 보존 검증, 정확 문구 폴백
@@ -228,6 +265,20 @@ exec 9<data/testvideo/testvideo1.mp4
 - 최종 문장: `‘깨끗이’의 두 번째 음절 ‘끗’에 해당하는 ‘ㅅ’ 소리를 천천히
   분리해 발음한 뒤 원래 속도로 다시 녹음해 보세요. 그리고 입술을 조금 덜
   벌리고 다시 발음해 보세요.`
+
+2026-09-05에 같은 production CLI에 40점 closed-beta 옵션을 추가해 다시
+확인함:
+
+- 종료 코드 `0`, 전체 상태 `audio_completed_visual_supplemented`, production
+  release `production_visual_v2/enabled`, closed beta `enabled/observed`
+- 기존 입술 벌림 action의 supporting evidence는 기존 4점 cue 한 건만 유지
+- 선택 음소 구간에서 화면 너비 대비 입 너비 `0.161`, 외곽 벌림 `0.305`,
+  내곽 벌림 `0.074`, 외곽 면적 `0.226`, 내곽 면적 `0.042`, 입꼬리 높이 차이
+  `0.002`, 최대 형상 변화율 `0.428/초`를 공개 aggregate로 생성
+- combined feedback에 위 관찰값과 “발음 정답이나 교정 행동의 정답 판정은
+  아님” 문구가 함께 포함됨
+- 외부 Clova endpoint는 사용하지 않아 generator 상태는 `catalog_fallback`이며,
+  제한 영상 사본과 PCM cleanup은 `completed`
 
 실제 `data/testvideo/testvideo2.mp4`로도 확인됨:
 
@@ -252,6 +303,9 @@ exec 9<data/testvideo/testvideo1.mp4
   과학적 claim은 아니다.
 - 현재 reference center/scale과 QC/A·V 임계값은 두 testvideo에 맞춘 소규모
   same-cohort 기준이다. 다양한 기기·조명·화자에 일반화됐다는 근거는 없다.
+- closed-beta의 6개 형상값과 변화율은 아직 음소별 pronunciation/action truth 및
+  사람 평가에 연결되지 않았다. 따라서 측정 설명은 가능하지만 해당 값만으로
+  “정확하다/틀렸다” 또는 새로운 교정 행동을 제시할 수 없다.
 - CLI는 내부 실행 경계다. 외부 프로덕션 API의 인증, 작업 큐, 동시성 제한,
   timeout/cancellation, 지표·감사 로그, 배포 rollback은 별도 서비스 계층에서
   구현하고 검증해야 한다.

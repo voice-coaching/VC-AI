@@ -40,6 +40,10 @@ from voice_coach.visual_feedback.models.integrity import (
     canonical_json_bytes,
     sha256_document,
 )
+from voice_coach.visual_feedback.models.p6_geometry import P6GeometryArtifact
+from voice_coach.visual_feedback.models.p6_lip_trajectory import (
+    P6_VISIBLE_LIP_FEATURE_IDS,
+)
 from voice_coach.visual_feedback.models.runtime_contract import (
     AttemptVisualReliabilityReceipt,
     VisualRuntimeBundle,
@@ -51,6 +55,10 @@ from voice_coach.visual_feedback.models.supplement import (
     VisualFeedbackSupplement,
 )
 from voice_coach.visual_feedback.services.handoff import SeungunVisualHandoff
+from voice_coach.visual_feedback.services.p6_lip_trajectory import (
+    P6LipTrajectoryError,
+    build_p6_lip_trajectory,
+)
 
 from ..phone_window import DensePhoneWindowEvidence, PolicyValidatedAvSyncOffset
 from ..services.video_attempt_facade import (
@@ -62,6 +70,7 @@ from .calibrated_runtime_decisions import (
     RuntimeAvSyncDecision,
     RuntimeVideoQcDecision,
 )
+from .closed_beta_lip_trajectory import ClosedBetaMediaPipeLandmarkBatch
 from .lip_audio_av_sync import AvSyncCandidateEvidence
 from .mediapipe_lip_landmarks import MediaPipeLandmarkBatch
 from .runtime import RuntimeVisualDetectionEvidence
@@ -72,6 +81,18 @@ _CUE_ID = "lip_aperture_ratio"
 _CUE_UNIT = "ratio"
 _CALIBRATION_CONTEXT_ID = "phone_center"
 _BACKEND_REVISION = "production_visual_sidecar_v1"
+_CLOSED_BETA_REASON = "closed_beta_unvalidated_observation"
+_CLOSED_BETA_UNAVAILABLE_NOTICE = "closed_beta_lip_trajectory_unavailable"
+_CLOSED_BETA_OBSERVED_NOTICE = "closed_beta_lip_trajectory_observed"
+_CLOSED_BETA_CUE_UNITS = {
+    "mouth_width_fraction": "image_fraction",
+    "outer_aperture_ratio": "ratio",
+    "inner_aperture_ratio": "ratio",
+    "outer_area_ratio": "ratio",
+    "inner_area_ratio": "ratio",
+    "corner_height_asymmetry_ratio": "ratio",
+    "shape_change_rate_per_second": "normalized_per_second",
+}
 _FORBIDDEN_FALLBACK_TOKENS = frozenset(
     {"airflow", "diagnosis", "glottis", "medical", "tongue", "velum"}
 )
@@ -98,8 +119,24 @@ class ProductionVisualSidecarAdapter:
         self,
         *,
         runtime_bundle: VisualRuntimeBundle,
+        closed_beta_geometry_artifact: P6GeometryArtifact | None = None,
     ) -> None:
         self._bundle = _strictly_reload_bundle(runtime_bundle)
+        self._closed_beta_geometry_artifact = (
+            None
+            if closed_beta_geometry_artifact is None
+            else _strictly_reload_p6_geometry_artifact(
+                closed_beta_geometry_artifact
+            )
+        )
+        if (
+            self._closed_beta_geometry_artifact is not None
+            and self._closed_beta_geometry_artifact.model_sha256
+            != self._bundle.pipeline_identity.landmark_model_sha256
+        ):
+            raise VisualFeedbackContractError(
+                "closed-beta geometry model identity differs"
+            )
 
     @property
     def runtime_bundle_sha256(self) -> str:
@@ -325,6 +362,7 @@ class ProductionVisualSidecarAdapter:
     ) -> VisualFeedbackSupplement:
         request = resolved.handoff.request
         anchor = resolved.anchor
+        beta_evidence, beta_status = self._closed_beta_cue_evidence(resolved)
         matching_rules = tuple(
             rule
             for rule in self._bundle.calibration_artifact.rules
@@ -337,7 +375,9 @@ class ProductionVisualSidecarAdapter:
                 resolved=resolved,
                 status=VisualFeedbackStatus.NO_SUPPORTED_LIP_CUE,
                 reason_codes=("selected_phone_has_no_supported_lip_cue",),
+                cue_evidence=beta_evidence,
                 reliability_receipt=reliability_receipt,
+                closed_beta_status=beta_status,
             )
         if len(matching_rules) != 1:
             raise VisualFeedbackContractError(
@@ -365,8 +405,9 @@ class ProductionVisualSidecarAdapter:
         )
         common = {
             "resolved": resolved,
-            "cue_evidence": (evidence,),
+            "cue_evidence": (evidence, *beta_evidence),
             "reliability_receipt": reliability_receipt,
+            "closed_beta_status": beta_status,
         }
         if calibrated.state is VisualCueState.OUT_OF_DISTRIBUTION:
             return self._supplement(
@@ -428,66 +469,8 @@ class ProductionVisualSidecarAdapter:
         rule: CalibrationRule,
     ) -> LipCueMeasurement:
         dense = resolved.phone_window
-        landmarks = dense.landmark_evidence
-        if type(landmarks) is not MediaPipeLandmarkBatch:
-            raise VisualFeedbackContractError(
-                "production center cue requires MediaPipe landmark evidence"
-            )
-        decode = dense.decode_receipt
-        tracking = dense.tracking_receipt
-        binding = resolved.handoff.request.binding_receipt
-        offset = resolved.detection.av_sync_evidence
-        if type(offset) is not PolicyValidatedAvSyncOffset:
-            raise VisualFeedbackContractError("validated A/V offset is unavailable")
-        expected_timestamps_ms = tuple(
-            timestamp_us // 1_000 for timestamp_us in decode.decoded_timestamps_us
-        )
-        actual_timestamps_ms = tuple(frame.timestamp_ms for frame in landmarks.frames)
-        expected_timestamps_sha256 = sha256_document(
-            {
-                "video_stream_index": decode.video_stream_index,
-                "timestamps_us": list(decode.decoded_timestamps_us),
-                "ffmpeg_revision": decode.ffmpeg_revision,
-            }
-        )
-        if (
-            actual_timestamps_ms != expected_timestamps_ms
-            or expected_timestamps_sha256 != tracking.sample_timestamps_sha256
-            or landmarks.evidence_sha256 != tracking.landmark_evidence_sha256
-            or landmarks.model_sha256
-            != self._bundle.pipeline_identity.landmark_model_sha256
-            or landmarks.container_sha256 != binding.video_source_sha256
-        ):
-            raise VisualFeedbackContractError(
-                "dense landmark timestamp or model lineage differs"
-            )
-
-        anchor = resolved.anchor
-        if anchor.start_ms is None or anchor.end_ms is None:
-            raise VisualFeedbackContractError("selected phone has no timed span")
-        mapped_start_ms = (
-            binding.audio_timebase.origin_offset_ms
-            + anchor.start_ms
-            + offset.offset_ms
-            - binding.video_timebase.origin_offset_ms
-        )
-        mapped_end_ms = (
-            binding.audio_timebase.origin_offset_ms
-            + anchor.end_ms
-            + offset.offset_ms
-            - binding.video_timebase.origin_offset_ms
-        )
-        runtime = dense.runtime_receipt
-        if (
-            mapped_start_ms < 0
-            or mapped_end_ms <= mapped_start_ms
-            or mapped_end_ms > binding.video_timebase.duration_ms
-            or runtime.video_start_ms > mapped_start_ms
-            or runtime.video_end_ms < mapped_end_ms
-        ):
-            raise VisualFeedbackContractError(
-                "selected phone span differs from the dense window"
-            )
+        landmarks = self._validated_landmark_batch(resolved)
+        mapped_start_ms, mapped_end_ms = self._mapped_phone_span(resolved)
         target_ms = (mapped_start_ms + mapped_end_ms) / 2.0
         center_frame = min(
             landmarks.frames,
@@ -526,6 +509,186 @@ class ProductionVisualSidecarAdapter:
             reason_codes=(),
             receipt=backend,
         )
+
+    def _validated_landmark_batch(
+        self,
+        resolved: _ResolvedAttempt,
+    ) -> MediaPipeLandmarkBatch:
+        dense = resolved.phone_window
+        landmarks = dense.landmark_evidence
+        if not isinstance(landmarks, MediaPipeLandmarkBatch):
+            raise VisualFeedbackContractError(
+                "production center cue requires MediaPipe landmark evidence"
+            )
+        decode = dense.decode_receipt
+        tracking = dense.tracking_receipt
+        binding = resolved.handoff.request.binding_receipt
+        expected_timestamps_ms = tuple(
+            timestamp_us // 1_000 for timestamp_us in decode.decoded_timestamps_us
+        )
+        actual_timestamps_ms = tuple(
+            frame.timestamp_ms for frame in landmarks.frames
+        )
+        expected_timestamps_sha256 = sha256_document(
+            {
+                "video_stream_index": decode.video_stream_index,
+                "timestamps_us": list(decode.decoded_timestamps_us),
+                "ffmpeg_revision": decode.ffmpeg_revision,
+            }
+        )
+        if (
+            actual_timestamps_ms != expected_timestamps_ms
+            or expected_timestamps_sha256 != tracking.sample_timestamps_sha256
+            or landmarks.evidence_sha256 != tracking.landmark_evidence_sha256
+            or landmarks.model_sha256
+            != self._bundle.pipeline_identity.landmark_model_sha256
+            or landmarks.container_sha256 != binding.video_source_sha256
+        ):
+            raise VisualFeedbackContractError(
+                "dense landmark timestamp or model lineage differs"
+            )
+        return landmarks
+
+    @staticmethod
+    def _mapped_phone_span(resolved: _ResolvedAttempt) -> tuple[int, int]:
+        dense = resolved.phone_window
+        binding = resolved.handoff.request.binding_receipt
+        offset = resolved.detection.av_sync_evidence
+        if type(offset) is not PolicyValidatedAvSyncOffset:
+            raise VisualFeedbackContractError(
+                "validated A/V offset is unavailable"
+            )
+        anchor = resolved.anchor
+        if anchor.start_ms is None or anchor.end_ms is None:
+            raise VisualFeedbackContractError("selected phone has no timed span")
+        mapped_start_ms = (
+            binding.audio_timebase.origin_offset_ms
+            + anchor.start_ms
+            + offset.offset_ms
+            - binding.video_timebase.origin_offset_ms
+        )
+        mapped_end_ms = (
+            binding.audio_timebase.origin_offset_ms
+            + anchor.end_ms
+            + offset.offset_ms
+            - binding.video_timebase.origin_offset_ms
+        )
+        runtime = dense.runtime_receipt
+        if (
+            mapped_start_ms < 0
+            or mapped_end_ms <= mapped_start_ms
+            or mapped_end_ms > binding.video_timebase.duration_ms
+            or runtime.video_start_ms > mapped_start_ms
+            or runtime.video_end_ms < mapped_end_ms
+        ):
+            raise VisualFeedbackContractError(
+                "selected phone span differs from the dense window"
+            )
+        return mapped_start_ms, mapped_end_ms
+
+    def _closed_beta_cue_evidence(
+        self,
+        resolved: _ResolvedAttempt,
+    ) -> tuple[tuple[VisualCueEvidence, ...], str]:
+        geometry_artifact = self._closed_beta_geometry_artifact
+        if geometry_artifact is None:
+            return (), "not_configured"
+        try:
+            landmarks = self._validated_landmark_batch(resolved)
+            if type(landmarks) is not ClosedBetaMediaPipeLandmarkBatch:
+                raise VisualFeedbackContractError(
+                    "closed-beta landmark evidence is unavailable"
+                )
+            start_ms, end_ms = self._mapped_phone_span(resolved)
+            selected_candidate_frames = tuple(
+                frame
+                for frame in landmarks.candidate_frames
+                if start_ms <= frame.timestamp_ms <= end_ms
+            )
+            if not selected_candidate_frames:
+                raise P6LipTrajectoryError("p6_trajectory_frames_missing")
+            binding = resolved.handoff.request.binding_receipt
+            trajectory = build_p6_lip_trajectory(
+                binding_receipt=binding,
+                video_source_sha256=landmarks.container_sha256,
+                source_landmark_evidence_sha256=landmarks.evidence_sha256,
+                geometry_artifact=geometry_artifact,
+                candidate_indices=landmarks.candidate_indices,
+                # Map the bounded dense window so the first selected-phone
+                # frame can carry a delta from its immediately preceding
+                # context frame.  Public static summaries below still use
+                # only timestamps inside the exact selected-phone span.
+                candidate_frames=landmarks.candidate_frames,
+            )
+            selected_frames = tuple(
+                frame
+                for frame in trajectory.frames
+                if start_ms <= frame.timestamp_ms <= end_ms
+            )
+            visible_shapes = tuple(
+                frame.visible_shape
+                for frame in selected_frames
+                if frame.visible_shape is not None
+            )
+            if not visible_shapes:
+                raise P6LipTrajectoryError("p6_trajectory_visible_shape_missing")
+            values = {
+                cue_id: sum(
+                    float(getattr(shape, cue_id)) for shape in visible_shapes
+                )
+                / len(visible_shapes)
+                for cue_id in P6_VISIBLE_LIP_FEATURE_IDS
+            }
+            change_rates = tuple(
+                float(frame.shape_change_rate_per_second)
+                for frame in selected_frames
+                if frame.shape_change_rate_per_second is not None
+            )
+            if change_rates:
+                values["shape_change_rate_per_second"] = max(change_rates)
+            receipt_sha256 = str(
+                trajectory.receipt_json_object()["receipt_sha256"]
+            )
+            backend = AdapterReceipt(
+                backend_id="closed_beta_p6_lip_trajectory",
+                backend_revision=trajectory.revision,
+                status="observed",
+                reason_codes=(_CLOSED_BETA_REASON,),
+            )
+            evidence = tuple(
+                VisualCueEvidence(
+                    evidence_id=sha256_document(
+                        {
+                            "schema_version": (
+                                "voice_coach.closed_beta_visible_lip_cue.v1"
+                            ),
+                            "binding_receipt_sha256": binding.receipt_sha256,
+                            "phone_anchor_sha256": resolved.anchor.anchor_ref,
+                            "trajectory_receipt_sha256": receipt_sha256,
+                            "cue_id": cue_id,
+                            "measurement_value": value,
+                            "video_start_ms": start_ms,
+                            "video_end_ms": end_ms,
+                        }
+                    ),
+                    cue_id=cue_id,
+                    cue_state=VisualCueState.OBSERVED,
+                    video_start_ms=start_ms,
+                    video_end_ms=end_ms,
+                    measurement_value=value,
+                    measurement_unit=_CLOSED_BETA_CUE_UNITS[cue_id],
+                    calibrated_deviation=None,
+                    measurement_backend=backend,
+                    calibration_artifact_sha256=(
+                        geometry_artifact.artifact_sha256
+                    ),
+                    reason_codes=(_CLOSED_BETA_REASON,),
+                )
+                for cue_id, value in values.items()
+            )
+        except (P6LipTrajectoryError, VisualFeedbackContractError):
+            return (), "unavailable"
+        return evidence, "observed"
 
     def _validate_claim_policy(self, claim: VisualClaim) -> None:
         policy = self._bundle.claim_policy
@@ -572,6 +735,7 @@ class ProductionVisualSidecarAdapter:
         reliability_receipt: AttemptVisualReliabilityReceipt | None = None,
         relation: VisualEvidenceRelation = VisualEvidenceRelation.NOT_COMPARABLE,
         candidate: SupplementalVisualActionCandidate | None = None,
+        closed_beta_status: str = "not_configured",
     ) -> VisualFeedbackSupplement:
         request = resolved.handoff.request
         visual_receipts = (
@@ -585,7 +749,7 @@ class ProductionVisualSidecarAdapter:
                 ),
             )
         )
-        calibration_receipts = (
+        calibration_receipts: tuple[AdapterReceipt, ...] = (
             ()
             if not cue_evidence
             else (
@@ -603,6 +767,25 @@ class ProductionVisualSidecarAdapter:
                 ),
             )
         )
+        if closed_beta_status == "observed":
+            geometry_artifact = self._closed_beta_geometry_artifact
+            if geometry_artifact is None:
+                raise VisualFeedbackContractError(
+                    "closed-beta geometry artifact is unavailable"
+                )
+            calibration_receipts = (
+                *calibration_receipts,
+                AdapterReceipt(
+                    backend_id="p6_lip_geometry_artifact",
+                    backend_revision=geometry_artifact.revision,
+                    status="loaded",
+                    reason_codes=("closed_beta_observation_only",),
+                ),
+            )
+        beta_notice = {
+            "observed": (_CLOSED_BETA_OBSERVED_NOTICE,),
+            "unavailable": (_CLOSED_BETA_UNAVAILABLE_NOTICE,),
+        }.get(closed_beta_status, ())
         return VisualFeedbackSupplement(
             status=status,
             reason_codes=reason_codes,
@@ -623,6 +806,7 @@ class ProductionVisualSidecarAdapter:
                 "upstream_evidence_unchanged",
                 "sidecar_owns_no_raw_media",
                 "host_owns_media_cleanup",
+                *beta_notice,
             ),
         )
 
@@ -635,6 +819,21 @@ def _strictly_reload_bundle(value: VisualRuntimeBundle) -> VisualRuntimeBundle:
     )
     if reloaded != value:
         raise VisualFeedbackContractError("visual runtime bundle reload differs")
+    return reloaded
+
+
+def _strictly_reload_p6_geometry_artifact(
+    value: P6GeometryArtifact,
+) -> P6GeometryArtifact:
+    if type(value) is not P6GeometryArtifact:
+        raise VisualFeedbackContractError(
+            "typed P6 geometry artifact is required"
+        )
+    reloaded = P6GeometryArtifact.from_json_object(
+        json.loads(canonical_json_bytes(value.to_json_object()))
+    )
+    if reloaded != value:
+        raise VisualFeedbackContractError("P6 geometry artifact reload differs")
     return reloaded
 
 

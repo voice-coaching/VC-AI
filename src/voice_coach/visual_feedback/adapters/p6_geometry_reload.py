@@ -4,7 +4,9 @@ from __future__ import annotations
 
 import json
 import math
+import os
 from pathlib import Path
+import stat
 import subprocess
 import sys
 
@@ -21,6 +23,7 @@ from .p6_geometry_reload_worker import LOADER_REVISION
 _ISOLATION_LAUNCHER = Path(__file__).parents[2] / (
     "pronunciation_attempts/adapters/network_isolated_exec.py"
 )
+_MAXIMUM_ARTIFACT_BYTES = 128 * 1024
 
 
 class P6GeometryReloadError(RuntimeError):
@@ -122,8 +125,89 @@ class P6GeometryReloadAdapter:
         )
 
 
+def load_p6_geometry_artifact(
+    path: str | Path,
+    *,
+    repository_root: str | Path | None = None,
+) -> P6GeometryArtifact:
+    """Load one private immutable artifact and reproduce it in isolation."""
+
+    descriptor = -1
+    try:
+        descriptor = os.open(
+            Path(path),
+            os.O_RDONLY | os.O_CLOEXEC | getattr(os, "O_NOFOLLOW", 0),
+        )
+        before = os.fstat(descriptor)
+        if (
+            not stat.S_ISREG(before.st_mode)
+            or before.st_nlink != 1
+            or before.st_uid != os.geteuid()
+            or before.st_size <= 0
+            or before.st_size > _MAXIMUM_ARTIFACT_BYTES
+            or stat.S_IMODE(before.st_mode) != 0o400
+        ):
+            raise P6GeometryReloadError("p6_artifact_file_not_private")
+        remaining = before.st_size
+        chunks: list[bytes] = []
+        while remaining:
+            chunk = os.read(descriptor, min(64 * 1024, remaining))
+            if not chunk:
+                raise P6GeometryReloadError("p6_artifact_file_changed")
+            chunks.append(chunk)
+            remaining -= len(chunk)
+        if os.read(descriptor, 1):
+            raise P6GeometryReloadError("p6_artifact_file_changed")
+        after = os.fstat(descriptor)
+        if (
+            before.st_dev,
+            before.st_ino,
+            before.st_size,
+            before.st_mtime_ns,
+            before.st_ctime_ns,
+        ) != (
+            after.st_dev,
+            after.st_ino,
+            after.st_size,
+            after.st_mtime_ns,
+            after.st_ctime_ns,
+        ):
+            raise P6GeometryReloadError("p6_artifact_file_changed")
+    except P6GeometryReloadError:
+        raise
+    except OSError:
+        raise P6GeometryReloadError("p6_artifact_file_unavailable") from None
+    finally:
+        if descriptor >= 0:
+            os.close(descriptor)
+
+    def reject_duplicate_keys(
+        pairs: list[tuple[str, object]],
+    ) -> dict[str, object]:
+        document: dict[str, object] = {}
+        for key, value in pairs:
+            if key in document:
+                raise P6GeometryReloadError("p6_artifact_json_invalid")
+            document[key] = value
+        return document
+
+    try:
+        document = json.loads(
+            b"".join(chunks).decode("utf-8", errors="strict"),
+            object_pairs_hook=reject_duplicate_keys,
+        )
+        artifact = P6GeometryArtifact.from_json_object(document)
+        P6GeometryReloadAdapter(repository_root=repository_root).reload(artifact)
+    except P6GeometryReloadError:
+        raise
+    except (UnicodeDecodeError, json.JSONDecodeError, ValueError):
+        raise P6GeometryReloadError("p6_artifact_json_invalid") from None
+    return artifact
+
+
 __all__ = [
     "P6GeometryReloadAdapter",
     "P6GeometryReloadError",
     "P6GeometryReloadReceipt",
+    "load_p6_geometry_artifact",
 ]
