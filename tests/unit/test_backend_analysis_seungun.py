@@ -2,6 +2,7 @@ from __future__ import annotations
 
 from contextlib import nullcontext
 import hashlib
+import json
 from pathlib import Path
 from uuid import UUID
 
@@ -98,6 +99,40 @@ def _analysis(*, issue: bool) -> dict[str, object]:
     }
 
 
+def _production_analysis(*, issue: bool) -> dict[str, object]:
+    evidence = _analysis(issue=issue)
+    digest = hashlib.sha256(
+        json.dumps(
+            evidence,
+            ensure_ascii=False,
+            sort_keys=True,
+            separators=(",", ":"),
+        ).encode("utf-8")
+    ).hexdigest()
+    return {
+        "schema_version": "korean_phone_ctc.production_analysis.v2",
+        "pipeline_revision": (
+            "frozen-v1|seungun_frozen_threshold_publication_v1"
+        ),
+        "detector_version": "frozen-v1",
+        "expected_phones": ["ㄱ", "ㅏ"],
+        "target_free_hypothesis": ["ㅋ", "ㅏ"],
+        "evidence_bundle": evidence,
+        "decision": {
+            "schema_version": "korean_phone_ctc.production_decision.v1",
+            "state": "coach_one" if issue else "no_issue",
+            "reason_codes": [
+                "frozen_detector_threshold_passed"
+                if issue
+                else "no_threshold_passed_phone"
+            ],
+            "policy_revision": "seungun_frozen_threshold_publication_v1",
+            "selected_expected_index": 0 if issue else None,
+            "evidence_bundle_sha256": digest,
+        },
+    }
+
+
 def _request() -> AnalysisRequest:
     key = "recordings/attempt.wav"
     grant = AnalysisAuthorizationGrant(
@@ -187,6 +222,59 @@ def test_reports_no_issue_only_when_every_expected_phone_is_clean() -> None:
     assert result.outcome is AnalysisOutcome.COMPLETED_NO_ISSUE
     assert result.summary_feedback is None
     assert result.pronunciation_evidence is None
+
+
+def test_accepts_v2_envelope_and_preserves_it_as_production_evidence() -> None:
+    envelope = _production_analysis(issue=True)
+    result = SeungunBackendAnalysisAdapter(
+        decoder=_Decoder(),
+        expected_phone_frontend=_Frontend(),
+        detector=_Detector(envelope),
+    ).analyze(request=_request(), audio=_audio())
+
+    assert result.outcome is AnalysisOutcome.COACHING_READY
+    assert result.production_evidence == envelope
+    assert result.analysis_evidence == envelope["evidence_bundle"]
+    assert result.pipeline_revision == (
+        "g2pk:2.0.0|seungun:"
+        "frozen-v1|seungun_frozen_threshold_publication_v1"
+    )
+
+
+def test_compacts_the_production_g2pk_backend_id_within_result_contract() -> None:
+    class _ProductionFrontend(_Frontend):
+        def expected_phones(self, normalized_text: str) -> ExpectedPhoneSequence:
+            result = super().expected_phones(normalized_text)
+            return ExpectedPhoneSequence(
+                tokens=result.tokens,
+                token_sha256=result.token_sha256,
+                backend_id="g2pk-expected-phones",
+                revision="0.9.4",
+            )
+
+    result = SeungunBackendAnalysisAdapter(
+        decoder=_Decoder(),
+        expected_phone_frontend=_ProductionFrontend(),
+        detector=_Detector(_production_analysis(issue=True)),
+    ).analyze(request=_request(), audio=_audio())
+
+    assert result.pipeline_revision.startswith("g2pk:0.9.4|seungun:")
+    assert len(result.pipeline_revision) <= 100
+
+
+def test_rejects_v2_envelope_when_decision_disagrees_with_selected_phone() -> None:
+    envelope = _production_analysis(issue=True)
+    assert isinstance(envelope["decision"], dict)
+    envelope["decision"]["selected_expected_index"] = 1
+
+    with pytest.raises(BackendAnalysisError) as error:
+        SeungunBackendAnalysisAdapter(
+            decoder=_Decoder(),
+            expected_phone_frontend=_Frontend(),
+            detector=_Detector(envelope),
+        ).analyze(request=_request(), audio=_audio())
+
+    assert error.value.code == "seungun_detector_failed"
 
 
 def test_expected_phone_failure_stops_before_audio_decode_or_detector() -> None:

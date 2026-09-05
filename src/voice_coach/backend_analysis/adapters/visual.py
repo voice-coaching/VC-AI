@@ -27,6 +27,9 @@ from voice_coach.pronunciation_attempts.services.video_attempt_facade import (
 from voice_coach.visual_feedback.adapters.production_visual_release import (
     load_production_visual_release,
 )
+from voice_coach.visual_feedback.adapters.p6_geometry_reload import (
+    load_p6_geometry_artifact,
+)
 from voice_coach.visual_feedback.models.binding import ConsentReceipt
 from voice_coach.visual_feedback.models.enums import ConsentDecision
 from voice_coach.visual_feedback.models.integrity import (
@@ -55,6 +58,7 @@ class BackendVisualSettings:
     landmark_model_path: Path
     production_release_root: Path
     artifact_group_id: int | None = None
+    closed_beta_geometry_artifact_path: Path | None = None
 
     def __post_init__(self) -> None:
         for path in (
@@ -67,6 +71,14 @@ class BackendVisualSettings:
             if not path.is_absolute():
                 raise ValueError("backend_visual_configuration_invalid")
         if not self.landmark_model_path.is_file():
+            raise ValueError("backend_visual_configuration_invalid")
+        if (
+            self.closed_beta_geometry_artifact_path is not None
+            and (
+                not self.closed_beta_geometry_artifact_path.is_absolute()
+                or not self.closed_beta_geometry_artifact_path.is_file()
+            )
+        ):
             raise ValueError("backend_visual_configuration_invalid")
         if self.artifact_group_id is not None and (
             isinstance(self.artifact_group_id, bool)
@@ -95,8 +107,12 @@ class _GrantConsentAuthority:
             attempt_id_sha256=attempt_id,
             decision=ConsentDecision.GRANTED,
             retention_policy_id=_RETENTION_POLICY,
-            issued_at_utc=grant.issued_at_utc_text,
-            expires_at_utc=grant.expires_at_utc_text,
+            # The video-attempt lineage canonicalizes timestamps to six
+            # fractional digits.  Reusing the JSON spelling (which may omit
+            # ``.000000``) makes equivalent Instants fail the exact receipt
+            # comparison in the handoff.
+            issued_at_utc=_canonical_utc_text(grant.issued_at),
+            expires_at_utc=_canonical_utc_text(grant.expires_at),
         )
         self._receipt = receipt
         self._authorization = VideoConsentAuthorization(
@@ -130,6 +146,10 @@ class _GrantConsentAuthority:
                 "visual_consent_unavailable", "영상 처리 권한을 확인할 수 없습니다."
             )
         return self._receipt
+
+
+def _canonical_utc_text(value: datetime) -> str:
+    return value.isoformat(timespec="microseconds").replace("+00:00", "Z")
 
 
 class _RequestPrompt:
@@ -193,6 +213,15 @@ class ProductionBackendVisualAnalysisAdapter:
         if release.status != "enabled":
             raise ValueError("backend_visual_release_not_enabled")
         self._release = release
+        self._closed_beta_geometry_artifact = (
+            load_p6_geometry_artifact(
+                settings.closed_beta_geometry_artifact_path,
+                repository_root=settings.repository_root,
+                trusted_group_id=settings.artifact_group_id,
+            )
+            if settings.closed_beta_geometry_artifact_path is not None
+            else None
+        )
 
     def analyze(
         self,
@@ -229,6 +258,9 @@ class ProductionBackendVisualAnalysisAdapter:
                 video_qc_decision_policy=self._release.video_qc_decision_policy,
                 av_sync_decision_policy=self._release.av_sync_decision_policy,
                 visual_runtime_bundle=self._release.runtime_bundle,
+                closed_beta_lip_geometry_artifact=(
+                    self._closed_beta_geometry_artifact
+                ),
                 consent_authority=authority,
                 trusted_prompt_port=prompt,
                 seungun_runtime_port=precomputed,
@@ -271,7 +303,83 @@ def _public_projection(
             candidate.get("upstream_phone_anchor_ref", "")
         ),
         supplement_sha256=hashlib.sha256(canonical).hexdigest(),
+        closed_beta_lip_observation=_closed_beta_lip_observation(
+            supplement,
+            selected_expected_index,
+        ),
     )
+
+
+def _closed_beta_lip_observation(
+    supplement: dict[str, object], selected_expected_index: int
+) -> dict[str, object] | None:
+    notices = supplement.get("notices")
+    if (
+        not isinstance(notices, list | tuple)
+        or "closed_beta_lip_trajectory_observed" not in notices
+    ):
+        return None
+    evidence = supplement.get("cue_evidence")
+    if not isinstance(evidence, list):
+        raise ValueError("closed beta visual evidence is invalid")
+    beta: list[dict[str, object]] = []
+    for item in evidence:
+        if not isinstance(item, dict):
+            continue
+        backend = item.get("measurement_backend")
+        if (
+            isinstance(backend, dict)
+            and backend.get("backend_id") == "closed_beta_p6_lip_trajectory"
+        ):
+            beta.append(item)
+    if not beta:
+        raise ValueError("closed beta visual evidence is unavailable")
+    start_ms = beta[0].get("video_start_ms")
+    end_ms = beta[0].get("video_end_ms")
+    geometry_sha256 = beta[0].get("calibration_artifact_sha256")
+    measurements: dict[str, object] = {}
+    for item in beta:
+        cue_id = item.get("cue_id")
+        measurement_value = item.get("measurement_value")
+        measurement_unit = item.get("measurement_unit")
+        if (
+            item.get("cue_state") != "observed"
+            or item.get("video_start_ms") != start_ms
+            or item.get("video_end_ms") != end_ms
+            or item.get("calibration_artifact_sha256") != geometry_sha256
+            or not isinstance(cue_id, str)
+            or cue_id in measurements
+            or isinstance(measurement_value, bool)
+            or not isinstance(measurement_value, int | float)
+            or not isinstance(measurement_unit, str)
+        ):
+            raise ValueError("closed beta visual evidence is invalid")
+        measurements[cue_id] = {
+            "value": float(measurement_value),
+            "unit": measurement_unit,
+        }
+    observation = {
+        "schemaVersion": "voice-coaching.closed-beta-lip-observation.v1",
+        "status": "OBSERVED",
+        "selectedExpectedIndex": selected_expected_index,
+        "videoStartMs": start_ms,
+        "videoEndMs": end_ms,
+        "geometryArtifactSha256": geometry_sha256,
+        "measurements": measurements,
+        "containsPronunciationTruth": False,
+        "containsActionTruth": False,
+    }
+    # Reuse the public contract validator before the observation leaves AI.
+    VisualSupplement(
+        selected_expected_index=selected_expected_index,
+        evidence_relation="supports_upstream",
+        approved_claim_id="closed_beta.validation",
+        renderer_key="closed_beta_validation",
+        upstream_phone_anchor_ref="0" * 64,
+        supplement_sha256="0" * 64,
+        closed_beta_lip_observation=observation,
+    )
+    return observation
 
 
 def _prepare_workspace_root(root: Path) -> None:

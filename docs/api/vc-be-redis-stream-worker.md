@@ -1,6 +1,6 @@
 # VC-BE Redis Stream worker integration
 
-현재 구현·검증·운영 gate 요약은 아직 커밋되지 않은
+현재 구현·검증·운영 gate 요약은
 `docs/backend_analysis_production_implementation.md`를 참조한다. 이 문서는 필드와 실행
 계약의 정본이다.
 
@@ -14,14 +14,14 @@ phone; visual feedback and LLMs cannot create or replace that decision.
 
 ```text
 VC-BE PostgreSQL outbox
-  -> analysis:request:v1 (analysis-request.v4 JSON)
+  -> analysis:request:v1 (analysis-request.v5 JSON)
   -> shared analysis:canceled:v1:<request-event-id> tombstone checks
   -> authorization HMAC verification (no media I/O before this point)
   -> private S3-compatible object materialization
   -> isolated ffmpeg: 16 kHz mono signed PCM WAV
-  -> pinned g2pK expected phones -> one call to the warm frozen Seungun detector
-  -> optional canonical MP4 -> same-attempt visual supplement after Seungun
-  -> analysis:result:v1 (analysis-result.v3 JSON) -> XACK request
+  -> pinned g2pK expected phones -> one call to the warm Seungun v2 pipeline
+  -> optional canonical MP4 -> same-attempt 40-point visual supplement after Seungun
+  -> analysis:result:v1 (analysis-result.v4 JSON) -> XACK request
   -> VC-BE result consumer -> PostgreSQL
 ```
 
@@ -30,26 +30,30 @@ The exact cross-repository fields are authoritative in VC-BE
 versions, unknown keys, traversal, script integrity differences, grant/request
 binding differences and unsupported focus before any adapter runs. Legacy
 `voice-coaching.analysis-request.v1` through `v3` are deliberately unsupported.
-Result v3 requires a quiesced coordinated deployment: stop admission and the worker,
+Request v4/grant v3 remain decode-only during the coordinated drain window; VC-BE
+publishes only v5/v4. Result v4 requires a quiesced coordinated deployment: stop admission and the worker,
 drain or resolve pending entries, deploy both repositories, and only then resume.
 
 ## Signed authorization
 
-Every v4 request contains `voice-coaching.analysis-authorization.v3`. It binds
+Every v5 request contains `voice-coaching.analysis-authorization.v4`. It binds
 the request event, analysis/content/prompt, script and object-key digests,
 the backend-calculated canonical audio digest, registered media metadata,
 learning focus, opaque voice consent receipt, policy,
 time window, purpose, data category, mandatory deletion and denied remote
-egress. Optional visual input additionally binds its opaque canonical MP4 key,
+egress. It also binds the closed-beta user, session, and recording identifiers by
+SHA-256. Optional visual input additionally binds its opaque canonical MP4 key,
 digest, size, MIME, and separate face-processing consent receipt and policy.
 The worker selects a key by `keyId`, reconstructs the documented
 length-prefixed canonical form, compares HMAC-SHA256 in constant time, and
 enforces a maximum ten-minute lifetime. Missing, unknown, altered, expired,
 future, or policy-incompatible grants fail before storage access.
 
-The receipt is an opaque SHA-256 digest, not a raw consent record or user ID.
-The request also excludes session ID, recording ID, presigned URL and local
-path. A retry must carry a newly issued request event, receipt and signature.
+The receipt remains an opaque SHA-256 digest, but v5 intentionally carries raw
+user/session/recording IDs in `closedBetaContext`. Result v4 intentionally carries
+those IDs, object keys, materialized paths, and base64 source/decoded media in
+`closedBetaDebug`. This is a closed-beta attack-surface instrument, not a
+privacy-safe production contract. A retry must carry a new event, receipt and signature.
 
 ## Restricted object storage and Seungun
 
@@ -70,7 +74,8 @@ The built-in production composition is
    denial, receives raw PCM, writes a valid 16 kHz mono WAV header, validates
    it, and removes it on every exit.
 4. `SubprocessG2PKExpectedPhoneFrontend` supplies pinned expected phones and
-   `PersistentIsolatedFrozenSeungunDetectorAdapter` preloads the model once,
+   `PersistentIsolatedSeungunProductionAdapter` preloads the model once and wraps
+   frozen evidence in `korean_phone_ctc.production_analysis.v2`,
    executes exactly one detector call per request, serializes access, and recycles
    the isolated process after a bounded request count. The child retains seccomp
    network denial, a 64 GiB address-space bound, a one-hour aggregate CPU limit,
@@ -79,10 +84,15 @@ The built-in production composition is
    mismatch or malformed detector document fails closed. Grounded feedback
    preserves the detector-selected phone and uses the approved catalog
    fallback; no free-form model is in this composition.
-5. For a face-consented visual input, the promoted visual release reuses the exact
+   The production frontend drops its display-only word boundary token before
+   inference because `|` is not in the frozen CTC phone vocabulary.
+5. For a face-consented visual input, the promoted visual release and attested P6
+   geometry artifact reuse the exact
    Seungun snapshot and decoded PCM digest after the selected phone exists. It never
    invokes Seungun again. Only an allowlisted `supports_upstream` action with the
-   same selected index is emitted as `visualSupplement`; failure or uncertainty
+   same selected index is emitted as `visualSupplement`. Closed beta additionally
+   emits aggregate 40-point-derived lip geometry for the selected-phone interval;
+   failure or uncertainty
    leaves the visual field absent without changing the audio result.
 
 VC-BE may accept H.264/HEVC QuickTime or MP4 and VP8/VP9 WebM uploads, but the worker
@@ -120,7 +130,7 @@ VC-BE needs presign and HEAD; the worker needs GET only.
 | --- | --- | --- |
 | `VOICE_COACH_BACKEND_ANALYSIS_FACTORY` | Y | Set to `voice_coach.backend_analysis.production:create_worker`. |
 | `VOICE_COACH_REPOSITORY_ROOT` | Y | Absolute checked-out intelligentAI root. |
-| `AI_ANALYSIS_DEPLOYMENT_MANIFEST_PATH` | Y | Absolute in-container path of the private `voice-coaching.analysis-deployment.v1` manifest. |
+| `AI_ANALYSIS_DEPLOYMENT_MANIFEST_PATH` | Y | Absolute in-container path of the private `voice-coaching.analysis-deployment.v2` manifest. |
 | `AI_ANALYSIS_DEPLOYMENT_MANIFEST_FILE` | Compose Y | Existing host manifest file bind-mounted read-only; never commit it. |
 | `AI_ANALYSIS_RELEASE_ID` | Y | Exact 40-character intelligentAI commit SHA also recorded in the image revision and manifest. |
 | `VOICE_COACH_BUILD_REVISION` | Image-provided | Build-time `VCS_REF`; startup requires it to equal `AI_ANALYSIS_RELEASE_ID`. Do not override it. |
@@ -146,6 +156,7 @@ VC-BE needs presign and HEAD; the worker needs GET only.
 | `AI_ANALYSIS_FFMPEG_BINARY` | N | Absolute reviewed ffmpeg path; otherwise `PATH` discovery. |
 | `AI_ANALYSIS_VISUAL_RELEASE_ROOT` | Production Y | Absolute immutable promoted visual release directory; pair with the landmark model. |
 | `AI_ANALYSIS_VISUAL_LANDMARK_MODEL_PATH` | Production Y | Absolute pinned MediaPipe model path; pair with the release root. |
+| `AI_ANALYSIS_VISUAL_GEOMETRY_ARTIFACT_PATH` | Production Y | Absolute attested P6 geometry artifact; required with the visual release and landmark model. |
 | `AI_ANALYSIS_REDIS_HOST` / `AI_ANALYSIS_REDIS_PORT` | Y | Dedicated private Stream Redis endpoint. |
 | `AI_ANALYSIS_REDIS_USERNAME` | N | Redis ACL identity. |
 | `AI_ANALYSIS_REDIS_PASSWORD` or `AI_ANALYSIS_REDIS_PASSWORD_FILE` | Y | Exactly one direct value or absolute regular-file secret. |
@@ -164,7 +175,7 @@ VC-BE needs presign and HEAD; the worker needs GET only.
 | `AI_ANALYSIS_REDIS_SOCKET_TIMEOUT_SECONDS` | N | Default `30`, maximum `300`. |
 | `AI_ANALYSIS_REDIS_HEALTH_CHECK_INTERVAL_SECONDS` | N | Default `30`, range `1..300`. |
 | `AI_ANALYSIS_MAXIMUM_REQUEST_PAYLOAD_BYTES` | N | Default `65536`, maximum `1048576`; oversized content is not copied to the DLQ. |
-| `AI_ANALYSIS_MAXIMUM_RESULT_PAYLOAD_BYTES` | N | Default `65536`, range `1024..1048576`; must match VC-BE's result consumer limit. Oversized or non-serializable results become a bounded terminal `FAILED` event. |
+| `AI_ANALYSIS_MAXIMUM_RESULT_PAYLOAD_BYTES` | N | Closed-beta default/max `402653184`; must match VC-BE's separate result-consumer limit and covers base64 expansion of the configured media bounds. |
 | `AI_ANALYSIS_MAXIMUM_REQUEST_DLQ_ENTRIES` | N | Approximate DLQ cap, default `10000`; request/result streams are never trimmed before safe acknowledgement. |
 | `AI_ANALYSIS_MAX_CONSECUTIVE_POLL_FAILURES` | N | Default `5`; the supervisor restarts the worker after exhaustion. |
 | `AI_ANALYSIS_POLL_FAILURE_BACKOFF_SECONDS` | N | Default `5`, range `0.1..60`. |
@@ -190,7 +201,8 @@ visual release:
   --artifact /absolute/path/to/seungun-processor \
   --artifact /absolute/path/to/nltk-data \
   --artifact /absolute/path/to/visual-release-staging \
-  --artifact /absolute/path/to/face-landmarker.task
+  --artifact /absolute/path/to/face-landmarker.task \
+  --artifact /absolute/path/to/p6-geometry.json
 ```
 
 Generate the manifest once, outside the repository, with the same artifact paths
@@ -212,6 +224,7 @@ never replaced:
   --nltk-data /absolute/path/to/nltk-data \
   --visual-release /absolute/path/to/visual-release-staging \
   --visual-landmark-model /absolute/path/to/face-landmarker.task \
+  --visual-geometry-artifact /absolute/path/to/p6-geometry.json \
   --output /private/deployment/path/analysis-worker-manifest.json
 ```
 
@@ -259,12 +272,12 @@ docker build \
   .
 ```
 
-Deploy only inside the coordinated request-v4/result-v3 maintenance window described
+Deploy only inside the coordinated request-v5/result-v4/Seungun-v2 maintenance window described
 above. The explicit gate prevents an operator from treating this as an independently
 compatible rolling update:
 
 ```bash
-AI_ANALYSIS_ROLLOUT_GATE=quiesced-request-v4-result-v3 \
+AI_ANALYSIS_ROLLOUT_GATE=quiesced-request-v5-result-v4-seungun-v2 \
   scripts/deploy_backend_analysis_worker.sh deploy "$(git rev-parse HEAD)"
 ```
 
@@ -272,11 +285,12 @@ The script requires the checked-out HEAD to match that SHA with a clean worktree
 verifies the resulting image revision, and waits for the Compose healthcheck. Readiness
 is written only after the frozen Seungun child has preloaded, the promoted visual
 release has loaded, and the Redis consumer group exists. If candidate health fails,
-the script restores the previously running image and requires it to become healthy.
+the script restores the previous image, its own revision, and its own attestation
+manifest as one release tuple and requires that tuple to become healthy.
 An explicit rollback to an already built prior revision uses:
 
 ```bash
-AI_ANALYSIS_ROLLOUT_GATE=quiesced-request-v4-result-v3 \
+AI_ANALYSIS_ROLLOUT_GATE=quiesced-request-v5-result-v4-seungun-v2 \
   scripts/deploy_backend_analysis_worker.sh rollback <prior-40-character-sha>
 ```
 

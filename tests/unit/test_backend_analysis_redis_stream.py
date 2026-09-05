@@ -230,6 +230,31 @@ def _payload() -> bytes:
     ).encode("utf-8")
 
 
+def _closed_beta_payload() -> bytes:
+    payload = json.loads(_payload())
+    context = {
+        "schemaVersion": "voice-coaching.closed-beta-context.v1",
+        "userId": 9,
+        "sessionId": 7,
+        "recordingId": 50,
+    }
+    binding = (
+        "schemaVersion:voice-coaching.closed-beta-context.v1\n"
+        "userId:9\n"
+        "sessionId:7\n"
+        "recordingId:50\n"
+    )
+    payload["schemaVersion"] = "voice-coaching.analysis-request.v5"
+    payload["closedBetaContext"] = context
+    payload["authorizationGrant"]["grantVersion"] = (
+        "voice-coaching.analysis-authorization.v4"
+    )
+    payload["authorizationGrant"]["closedBetaContextSha256"] = hashlib.sha256(
+        binding.encode("utf-8")
+    ).hexdigest()
+    return json.dumps(payload, ensure_ascii=False).encode("utf-8")
+
+
 def _worker() -> BackendAnalysisWorker:
     return BackendAnalysisWorker(
         authorization=_Authorizer(),
@@ -327,9 +352,34 @@ def test_unsafe_result_is_replaced_by_bounded_terminal_failure_before_ack(
     assert client.deleted == [("analysis:request:v1", b"1-0")]
 
 
+def test_closed_beta_result_fallback_preserves_v4_context_contract() -> None:
+    client = _FakeRedis(
+        [[(b"analysis:request:v1", [(b"1-0", {b"payload": _closed_beta_payload()})])]]
+    )
+    settings = _settings(maximum_result_payload_bytes=2_048)
+    adapter = RedisStreamWorker(
+        client=client,
+        settings=settings,
+        worker=_StaticResultWorker({"oversized": "x" * 3_000}),  # type: ignore[arg-type]
+    )
+
+    assert adapter.poll_once(block_ms=0) == 1
+
+    encoded = client.added[0][1]["payload"]
+    assert isinstance(encoded, bytes)
+    assert len(encoded) <= settings.maximum_result_payload_bytes
+    result = json.loads(encoded)
+    assert result["schemaVersion"] == "voice-coaching.analysis-result.v4"
+    assert result["failureCode"] == "analysis_result_payload_too_large"
+    assert result["closedBetaDebug"]["captureState"] == "UNAVAILABLE"
+    assert result["closedBetaDebug"]["context"]["userId"] == 9
+
+
 def test_result_payload_limit_refuses_unsafe_configuration() -> None:
     with pytest.raises(WorkerConfigurationError, match="analysis_stream_configuration_invalid"):
         _settings(maximum_result_payload_bytes=1_023)
+    with pytest.raises(WorkerConfigurationError, match="analysis_stream_configuration_invalid"):
+        _settings(maximum_result_payload_bytes=384 * 1024 * 1024 + 1)
 
 
 def test_lost_processing_lease_never_publishes_or_acknowledges_result() -> None:

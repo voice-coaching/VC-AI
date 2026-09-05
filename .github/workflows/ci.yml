@@ -105,10 +105,14 @@ jobs:
           -r requirements/backend-analysis-worker.txt
 
       - name: Verify worker unit and skipped external integration contracts
+        env:
+          PYTHONPATH: src:seungun/src
         run: >-
           python -m pytest
           tests/unit/test_backend_analysis*.py
           tests/unit/test_persistent_seungun_runtime.py
+          seungun/tests/test_production_pipeline.py
+          seungun/tests/test_frozen_detector.py
           tests/integration/test_backend_analysis_redis_stream_integration.py
 
       - name: Validate worker Compose expansion
@@ -119,6 +123,7 @@ jobs:
           G2PK_NLTK_DATA_DIR: /tmp/synthetic-nltk
           VISUAL_PRODUCTION_RELEASE_DIR: /tmp/synthetic-visual-release
           VISUAL_LANDMARK_MODEL_FILE: /tmp/synthetic-landmark-model
+          VISUAL_GEOMETRY_ARTIFACT_FILE: /tmp/synthetic-geometry-artifact
           ANALYSIS_REDIS_CA_CERT: /tmp/synthetic-ca.crt
           AI_ANALYSIS_DEPLOYMENT_MANIFEST_FILE: /tmp/synthetic-deployment-manifest.json
           AI_ANALYSIS_RELEASE_ID: ${{ github.sha }}

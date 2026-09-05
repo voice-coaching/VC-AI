@@ -2,11 +2,18 @@
 
 from __future__ import annotations
 
+import base64
 from collections.abc import Callable
+from dataclasses import dataclass
 from datetime import UTC, datetime
 from uuid import UUID, uuid4
 
-from .domain import AnalysisRequest, AnalysisWorkerResult, VisualSupplement
+from .domain import (
+    AnalysisRequest,
+    AnalysisWorkerResult,
+    ClosedBetaDebug,
+    VisualSupplement,
+)
 from .ports import (
     AnalysisAuthorization,
     AnalysisAuthorizationPort,
@@ -19,7 +26,7 @@ from .ports import (
 )
 
 
-_WORKER_REVISION = "vc-be-redis-worker-v1"
+_WORKER_REVISION = "vc-be-redis-worker-v2"
 _SAFE_FAILURES = {
     "consent_evidence_unavailable": "분석 처리 권한을 확인할 수 없습니다.",
     "consent_evidence_expired": "분석 처리 권한이 만료되었습니다.",
@@ -33,6 +40,13 @@ _SAFE_FAILURES = {
     "seungun_detector_failed": "분석을 안전하게 완료하지 못했습니다. 다시 시도해 주세요.",
     "analysis_execution_failed_closed": "분석을 안전하게 완료하지 못했습니다. 다시 시도해 주세요.",
 }
+
+
+@dataclass(frozen=True, slots=True)
+class _VisualCapture:
+    supplement: VisualSupplement | None
+    materialized_path: str | None
+    media_base64: str | None
 
 
 class BackendAnalysisWorker:
@@ -97,8 +111,13 @@ class BackendAnalysisWorker:
                         "audio_metadata_mismatch",
                         "등록된 녹음 메타데이터와 일치하지 않습니다.",
                     )
+                raw_audio_base64 = (
+                    base64.b64encode(audio.path.read_bytes()).decode("ascii")
+                    if request.closed_beta_context is not None
+                    else None
+                )
                 analysis = self._seungun.analyze(request=request, audio=audio)
-                visual_supplement = self._visual_supplement(
+                visual_capture = self._visual_supplement(
                     request=request,
                     authorization=authorization,
                     audio=audio,
@@ -113,7 +132,15 @@ class BackendAnalysisWorker:
                     worker_revision=self._worker_revision,
                     pipeline_revision=analysis.pipeline_revision,
                     audio_sha256=audio.sha256,
-                    visual_supplement=visual_supplement,
+                    visual_supplement=visual_capture.supplement,
+                    seungun_production_evidence=analysis.production_evidence,
+                    closed_beta_debug=self._closed_beta_debug(
+                        request=request,
+                        audio=audio,
+                        analysis=analysis,
+                        raw_audio_base64=raw_audio_base64,
+                        visual_capture=visual_capture,
+                    ),
                 )
         except BackendAnalysisError as error:
             return self._failed(request, error.code, error.reason)
@@ -131,22 +158,79 @@ class BackendAnalysisWorker:
         authorization: AnalysisAuthorization,
         audio: MaterializedAudio,
         analysis: SeungunAnalysis,
-    ) -> VisualSupplement | None:
-        if request.visual_input is None or self._visual is None:
-            return None
+    ) -> _VisualCapture:
+        if request.visual_input is None:
+            return _VisualCapture(None, None, None)
         try:
             with self._object_store.materialize_visual(
                 request, authorization
             ) as video:
-                return self._visual.analyze(
-                    request=request,
-                    audio=audio,
-                    video=video,
-                    seungun=analysis,
+                materialized_path = (
+                    str(video.path)
+                    if request.closed_beta_context is not None
+                    else None
+                )
+                media_base64 = (
+                    base64.b64encode(video.path.read_bytes()).decode("ascii")
+                    if request.closed_beta_context is not None
+                    else None
+                )
+                if self._visual is None:
+                    supplement = None
+                else:
+                    try:
+                        supplement = self._visual.analyze(
+                            request=request,
+                            audio=audio,
+                            video=video,
+                            seungun=analysis,
+                        )
+                    except Exception:
+                        supplement = None
+                return _VisualCapture(
+                    supplement,
+                    materialized_path,
+                    media_base64,
                 )
         except Exception:
             # Visual evidence is optional and cannot erase an approved Seungun result.
+            return _VisualCapture(None, None, None)
+
+    @staticmethod
+    def _closed_beta_debug(
+        *,
+        request: AnalysisRequest,
+        audio: MaterializedAudio,
+        analysis: SeungunAnalysis,
+        raw_audio_base64: str | None,
+        visual_capture: _VisualCapture,
+    ) -> ClosedBetaDebug | None:
+        context = request.closed_beta_context
+        if context is None:
             return None
+        video_expected = request.visual_input is not None
+        complete = (
+            raw_audio_base64 is not None
+            and analysis.decoded_audio_path is not None
+            and analysis.decoded_audio_media_base64 is not None
+            and (not video_expected or visual_capture.media_base64 is not None)
+        )
+        return ClosedBetaDebug(
+            context=context,
+            capture_state="COMPLETE" if complete else "PARTIAL",
+            audio_object_key=request.audio_object_key,
+            visual_object_key=(
+                request.visual_input.object_key
+                if request.visual_input is not None
+                else None
+            ),
+            materialized_audio_path=str(audio.path),
+            decoded_audio_path=analysis.decoded_audio_path,
+            materialized_video_path=visual_capture.materialized_path,
+            audio_media_base64=raw_audio_base64,
+            decoded_audio_media_base64=analysis.decoded_audio_media_base64,
+            video_media_base64=visual_capture.media_base64,
+        )
 
     def _validate_authorization(self, authorization: AnalysisAuthorization) -> None:
         if not authorization.receipt_sha256 or not authorization.policy_revision:
@@ -177,6 +261,19 @@ class BackendAnalysisWorker:
             code=code,
             reason=_SAFE_FAILURES[code],
             worker_revision=self._worker_revision,
+            closed_beta_debug=(
+                ClosedBetaDebug.unavailable(
+                    context=request.closed_beta_context,
+                    audio_object_key=request.audio_object_key,
+                    visual_object_key=(
+                        request.visual_input.object_key
+                        if request.visual_input is not None
+                        else None
+                    ),
+                )
+                if request.closed_beta_context is not None
+                else None
+            ),
         )
 
     def close(self) -> None:

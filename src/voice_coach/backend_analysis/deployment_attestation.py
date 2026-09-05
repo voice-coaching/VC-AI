@@ -19,7 +19,7 @@ import stat
 from typing import Any
 
 
-SCHEMA_VERSION = "voice-coaching.analysis-deployment.v1"
+SCHEMA_VERSION = "voice-coaching.analysis-deployment.v2"
 _SHA256 = re.compile(r"^[0-9a-f]{64}$")
 _RELEASE_ID = re.compile(r"^[0-9a-f]{40}$")
 _KEY_ID = re.compile(r"^[A-Za-z0-9._-]{1,100}$")
@@ -44,6 +44,7 @@ class DeploymentArtifactPaths:
     nltk_data: Path
     visual_release: Path | None = None
     visual_landmark_model: Path | None = None
+    visual_geometry_artifact: Path | None = None
 
     def records(self) -> tuple[tuple[str, str, Path], ...]:
         records: list[tuple[str, str, Path]] = [
@@ -52,13 +53,23 @@ class DeploymentArtifactPaths:
             ("seungunProcessor", "directory", self.seungun_processor),
             ("nltkData", "directory", self.nltk_data),
         ]
-        if (self.visual_release is None) != (self.visual_landmark_model is None):
+        visual_presence = {
+            self.visual_release is not None,
+            self.visual_landmark_model is not None,
+            self.visual_geometry_artifact is not None,
+        }
+        if len(visual_presence) != 1:
             raise DeploymentAttestationError()
-        if self.visual_release is not None and self.visual_landmark_model is not None:
+        if (
+            self.visual_release is not None
+            and self.visual_landmark_model is not None
+            and self.visual_geometry_artifact is not None
+        ):
             records.extend(
                 (
                     ("visualRelease", "directory", self.visual_release),
                     ("visualLandmarkModel", "file", self.visual_landmark_model),
+                    ("visualGeometryArtifact", "file", self.visual_geometry_artifact),
                 )
             )
         return tuple(records)
@@ -72,6 +83,9 @@ class DeploymentArtifactPaths:
             repository_root = Path(env["VOICE_COACH_REPOSITORY_ROOT"])
             visual_release_text = env.get("AI_ANALYSIS_VISUAL_RELEASE_ROOT", "")
             visual_model_text = env.get("AI_ANALYSIS_VISUAL_LANDMARK_MODEL_PATH", "")
+            visual_geometry_text = env.get(
+                "AI_ANALYSIS_VISUAL_GEOMETRY_ARTIFACT_PATH", ""
+            )
             paths = cls(
                 detector_bundle=(
                     repository_root
@@ -85,6 +99,9 @@ class DeploymentArtifactPaths:
                 nltk_data=Path(env["AI_ANALYSIS_NLTK_DATA_ROOT"]),
                 visual_release=(Path(visual_release_text) if visual_release_text else None),
                 visual_landmark_model=(Path(visual_model_text) if visual_model_text else None),
+                visual_geometry_artifact=(
+                    Path(visual_geometry_text) if visual_geometry_text else None
+                ),
             )
         except (KeyError, TypeError, ValueError):
             raise DeploymentAttestationError() from None

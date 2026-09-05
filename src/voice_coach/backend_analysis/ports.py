@@ -1,7 +1,10 @@
 """Ports for admitted VC-BE analysis work.
 
-No port takes a user ID, session ID, URL, raw consent document, or public file
-path.  The worker accepts only an opaque object key and locally issued evidence.
+The closed-beta v5 request deliberately carries user/session/recording binding
+context, and its result can return restricted local paths plus raw media for the
+authorized security study.  Storage access remains restricted to admitted
+object keys and locally issued evidence; these debug fields are not additional
+storage authorities.
 """
 
 from __future__ import annotations
@@ -88,8 +91,11 @@ class SeungunAnalysis:
     pronunciation_evidence: PronunciationEvidence | None
     pipeline_revision: str
     analysis_evidence: object | None = field(default=None, repr=False)
+    production_evidence: object | None = field(default=None, repr=False)
     expected_phones: tuple[str, ...] = ()
     analysis_pcm_sha256: str | None = None
+    decoded_audio_path: str | None = field(default=None, repr=False)
+    decoded_audio_media_base64: str | None = field(default=None, repr=False)
 
     def __post_init__(self) -> None:
         if not self.pipeline_revision or len(self.pipeline_revision) > 100:

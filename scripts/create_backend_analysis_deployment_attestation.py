@@ -27,6 +27,7 @@ def _arguments() -> argparse.Namespace:
     parser.add_argument("--nltk-data", type=Path, required=True)
     parser.add_argument("--visual-release", type=Path)
     parser.add_argument("--visual-landmark-model", type=Path)
+    parser.add_argument("--visual-geometry-artifact", type=Path)
     parser.add_argument("--output", type=Path, required=True)
     return parser.parse_args()
 
@@ -47,6 +48,7 @@ def main() -> int:
                 nltk_data=args.nltk_data,
                 visual_release=args.visual_release,
                 visual_landmark_model=args.visual_landmark_model,
+                visual_geometry_artifact=args.visual_geometry_artifact,
             ),
         )
         write_deployment_attestation(

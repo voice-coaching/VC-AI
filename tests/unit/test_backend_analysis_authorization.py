@@ -16,6 +16,7 @@ from voice_coach.backend_analysis.domain import (
     AnalysisAuthorizationGrant,
     AnalysisRequest,
     BackendAnalysisContractError,
+    ClosedBetaContext,
 )
 from voice_coach.backend_analysis.ports import BackendAnalysisError
 
@@ -94,6 +95,28 @@ def _signed_request() -> AnalysisRequest:
     return AnalysisRequest.from_payload(request_payload)
 
 
+def _signed_v5_request() -> AnalysisRequest:
+    request_payload = _request_payload(_grant_payload())
+    context_payload = {
+        "schemaVersion": "voice-coaching.closed-beta-context.v1",
+        "userId": 71,
+        "sessionId": 81,
+        "recordingId": 91,
+    }
+    context = ClosedBetaContext.from_payload(context_payload)
+    request_payload["schemaVersion"] = "voice-coaching.analysis-request.v5"
+    request_payload["closedBetaContext"] = context_payload
+    grant_payload = request_payload["authorizationGrant"]
+    assert isinstance(grant_payload, dict)
+    grant_payload["grantVersion"] = "voice-coaching.analysis-authorization.v4"
+    grant_payload["closedBetaContextSha256"] = context.binding_sha256()
+    unsigned = AnalysisAuthorizationGrant.from_payload(grant_payload)
+    grant_payload["signature"] = hmac.new(
+        _SECRET, unsigned.canonical_signing_input(), hashlib.sha256
+    ).hexdigest()
+    return AnalysisRequest.from_payload(request_payload)
+
+
 def _settings(policy: str = "voice-analysis-consent-v1") -> HmacAuthorizationSettings:
     return HmacAuthorizationSettings(
         keys={"backend-test-v1": _SECRET},
@@ -137,6 +160,57 @@ def test_verifies_signed_bound_grant() -> None:
     assert authorization.policy_revision == "voice-analysis-consent-v1"
     assert authorization.delete_on_completion is True
     assert authorization.remote_egress_allowed is False
+
+
+def test_v5_grant_binds_closed_beta_personal_context() -> None:
+    request = _signed_v5_request()
+
+    authorization = HmacAnalysisAuthorizationAdapter(
+        _settings(), clock=lambda: _NOW
+    ).authorize(request)
+
+    assert request.closed_beta_context is not None
+    assert request.closed_beta_context.user_id == 71
+    assert authorization.delete_on_completion is True
+
+
+def test_java_and_python_v4_closed_beta_hmac_vector_match() -> None:
+    payload = _grant_payload()
+    context = ClosedBetaContext(user_id=9, session_id=7, recording_id=50)
+    payload["grantVersion"] = "voice-coaching.analysis-authorization.v4"
+    payload["closedBetaContextSha256"] = context.binding_sha256()
+    grant = AnalysisAuthorizationGrant.from_payload(payload)
+
+    assert context.binding_sha256() == (
+        "5b2245ccdf512e9ff81f30351da1cfb38c0fc4787e58dc95d19217e997bae44c"
+    )
+    assert hmac.new(
+        _SECRET,
+        grant.canonical_signing_input(),
+        hashlib.sha256,
+    ).hexdigest() == (
+        "d3a25c63ba8631f80b520c8c739880d7416c0507be613c99a9478b228e367835"
+    )
+
+
+def test_v5_request_rejects_tampered_user_identifier_before_authorization() -> None:
+    request = _signed_v5_request()
+    context_payload = request.closed_beta_context.to_payload()  # type: ignore[union-attr]
+    context_payload["userId"] = 72
+    payload = _request_payload(_grant_payload())
+    payload["schemaVersion"] = "voice-coaching.analysis-request.v5"
+    payload["closedBetaContext"] = context_payload
+    grant = payload["authorizationGrant"]
+    assert isinstance(grant, dict)
+    grant["grantVersion"] = "voice-coaching.analysis-authorization.v4"
+    grant["closedBetaContextSha256"] = (
+        request.authorization_grant.closed_beta_context_sha256
+    )
+
+    with pytest.raises(BackendAnalysisContractError) as error:
+        AnalysisRequest.from_payload(payload)
+
+    assert error.value.code == "analysis_authorization_binding_invalid"
 
 
 def test_rejects_an_unsafe_policy_identifier_at_composition_time() -> None:

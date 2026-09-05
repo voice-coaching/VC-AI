@@ -19,8 +19,14 @@
 - `verified`: production visual release와 로컬 테스트 영상 한 건을 사용한 실제
   전체 시도에서 `audio_completed_visual_supplemented`, 6개 형상값 공개,
   grounded audio+visual 문장, 제한 작업공간 삭제 완료를 확인했다.
-- `blocked`: 현재 P6 geometry artifact의 `contains_pronunciation_truth`와
-  `contains_action_truth`를 `true`로 승격하는 변경은 근거 artifact가 없어 차단한다.
+- `implemented`: P6 geometry artifact는 production worker의 read-only mount와
+  deployment attestation에 포함되고, 선택 음소 구간의 aggregate 측정이 result v4로
+  전달된다.
+- `verified`: request-v5 Backend worker 경계에서 실제 CUDA Seungun v2와 testvideo1을
+  실행해 7개 aggregate 측정, raw audio/video digest 일치, 완전한 result-v4 직렬화를
+  확인했다. 이 한 표본은 일반화 성능 근거가 아니다.
+- `blocked`: `contains_pronunciation_truth`와 `contains_action_truth`를 `true`로
+  승격하는 변경은 근거 artifact가 없어 여전히 차단한다.
 
 AI Hub 68 geometry artifact는 24점 위치 mapping과 tracker 오차를 검증한
 artifact다. 발음 정답이나 특정 교정 행동이 적절하다는 정답을 수집·심사한

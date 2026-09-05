@@ -9,6 +9,7 @@ import pytest
 
 from voice_coach.pronunciation_attempts.adapters.persistent_seungun import (
     PersistentIsolatedFrozenSeungunDetectorAdapter,
+    PersistentIsolatedSeungunProductionAdapter,
 )
 from voice_coach.pronunciation_attempts.adapters.runtime import (
     PronunciationAttemptRuntimeError,
@@ -60,6 +61,39 @@ print(json.dumps({
 }, separators=(",", ":")), flush=True)
 for line in sys.stdin:
     time.sleep(60)
+'''
+
+_PRODUCTION_SERVER = r'''from __future__ import annotations
+import json
+import os
+import sys
+
+protocol = "voice_coach.seungun_runtime_server.v2"
+capabilities = {
+    "analysis_schema_version": "korean_phone_ctc.production_analysis.v2",
+    "decision_schema_version": "korean_phone_ctc.production_decision.v1",
+    "policy_revision": "seungun_frozen_threshold_publication_v1",
+    "frozen_analysis_schema_version": "korean_phone_ctc.pronunciation_analysis.v1",
+}
+print(json.dumps({
+    "protocol_version": protocol,
+    "status": "ready",
+    "network_isolation": "seccomp_socket_denied",
+    "capabilities": capabilities,
+}, separators=(",", ":")), flush=True)
+for line in sys.stdin:
+    request = json.loads(line)
+    print(json.dumps({
+        "protocol_version": protocol,
+        "request_id": request["request_id"],
+        "status": "completed",
+        "network_isolation": "seccomp_socket_denied",
+        "analysis": {
+            "schema_version": capabilities["analysis_schema_version"],
+            "expected_phones": request["expected_phones"],
+            "instance": str(os.getpid()),
+        },
+    }, separators=(",", ":")), flush=True)
 '''
 
 
@@ -115,6 +149,30 @@ def test_request_timeout_kills_the_hung_isolated_process(tmp_path: Path) -> None
         adapter.close()
 
     assert error.value.code == "seungun_worker_failed"
+
+
+def test_production_adapter_requires_v2_capabilities_and_returns_v2_analysis(
+    tmp_path: Path,
+) -> None:
+    target = _server(tmp_path, _PRODUCTION_SERVER)
+    adapter = PersistentIsolatedSeungunProductionAdapter(
+        repository_root=tmp_path,
+        device="cpu",
+        worker_python=sys.executable,
+        startup_timeout_seconds=5,
+        request_timeout_seconds=5,
+        server_target=(sys.executable, str(target)),
+    )
+    try:
+        analysis = adapter.analyze(
+            audio_path=tmp_path / "attempt.wav",
+            expected_phones=("ㄱ",),
+        )
+    finally:
+        adapter.close()
+
+    assert analysis["schema_version"] == "korean_phone_ctc.production_analysis.v2"
+    assert analysis["expected_phones"] == ["ㄱ"]
 
 
 def test_cancel_current_interrupts_a_running_inference(tmp_path: Path) -> None:

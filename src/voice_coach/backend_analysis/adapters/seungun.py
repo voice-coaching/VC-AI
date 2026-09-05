@@ -4,6 +4,7 @@ from __future__ import annotations
 
 from contextlib import AbstractContextManager, contextmanager
 from dataclasses import dataclass
+import base64
 import json
 import hashlib
 import os
@@ -26,6 +27,10 @@ from voice_coach.pronunciation_feedback.seungun_bridge import (
 
 from ..domain import AnalysisOutcome, AnalysisRequest, PronunciationEvidence
 from ..ports import BackendAnalysisError, MaterializedAudio, SeungunAnalysis
+
+
+_PRODUCTION_ANALYSIS_SCHEMA_VERSION = "korean_phone_ctc.production_analysis.v2"
+_PRODUCTION_DECISION_SCHEMA_VERSION = "korean_phone_ctc.production_decision.v1"
 
 
 class ExpectedPhoneFrontend(Protocol):
@@ -212,8 +217,20 @@ class SeungunBackendAnalysisAdapter:
                     audio_path=decoded.path,
                     expected_phones=expected.tokens,
                 )
-                analysis = _analysis_snapshot(raw)
+                production_evidence, analysis, production_decision = (
+                    _analysis_snapshot(raw)
+                )
                 analysis_pcm_sha256 = decoded.pcm_sha256
+                decoded_audio_path = (
+                    str(decoded.path)
+                    if request.closed_beta_context is not None
+                    else None
+                )
+                decoded_audio_media_base64 = (
+                    base64.b64encode(decoded.path.read_bytes()).decode("ascii")
+                    if request.closed_beta_context is not None
+                    else None
+                )
         except BackendAnalysisError:
             raise
         except Exception:
@@ -226,7 +243,11 @@ class SeungunBackendAnalysisAdapter:
                 "seungun_detector_failed",
                 "분석을 안전하게 완료하지 못했습니다. 다시 시도해 주세요.",
             )
-        pipeline_revision = _pipeline_revision(expected, analysis)
+        pipeline_revision = _pipeline_revision(
+            expected,
+            analysis,
+            production_evidence=production_evidence,
+        )
         try:
             feedback = generate_grounded_phone_feedback(
                 analysis=analysis,
@@ -234,7 +255,13 @@ class SeungunBackendAnalysisAdapter:
                 generator=None,
             )
         except CoachingPayloadError:
-            if not _is_completed_no_issue(analysis, expected.tokens):
+            if not _is_completed_no_issue(analysis, expected.tokens) or (
+                production_decision is not None
+                and (
+                    production_decision["state"] != "no_issue"
+                    or production_decision["selected_expected_index"] is not None
+                )
+            ):
                 raise BackendAnalysisError(
                     "seungun_detector_failed",
                     "분석을 안전하게 완료하지 못했습니다. 다시 시도해 주세요.",
@@ -245,8 +272,11 @@ class SeungunBackendAnalysisAdapter:
                 pronunciation_evidence=None,
                 pipeline_revision=pipeline_revision,
                 analysis_evidence=analysis,
+                production_evidence=production_evidence,
                 expected_phones=expected.tokens,
                 analysis_pcm_sha256=analysis_pcm_sha256,
+                decoded_audio_path=decoded_audio_path,
+                decoded_audio_media_base64=decoded_audio_media_base64,
             )
         location = feedback.payload.location
         if (
@@ -255,6 +285,15 @@ class SeungunBackendAnalysisAdapter:
             or feedback.payload.detector_score is None
             or feedback.payload.operating_threshold is None
             or feedback.payload.score_semantics is None
+        ):
+            raise BackendAnalysisError(
+                "seungun_detector_failed",
+                "분석을 안전하게 완료하지 못했습니다. 다시 시도해 주세요.",
+            )
+        if production_decision is not None and (
+            production_decision["state"] != "coach_one"
+            or production_decision["selected_expected_index"]
+            != location.unit_index
         ):
             raise BackendAnalysisError(
                 "seungun_detector_failed",
@@ -275,8 +314,11 @@ class SeungunBackendAnalysisAdapter:
             ),
             pipeline_revision=pipeline_revision,
             analysis_evidence=analysis,
+            production_evidence=production_evidence,
             expected_phones=expected.tokens,
             analysis_pcm_sha256=analysis_pcm_sha256,
+            decoded_audio_path=decoded_audio_path,
+            decoded_audio_media_base64=decoded_audio_media_base64,
         )
 
     def close(self) -> None:
@@ -290,7 +332,13 @@ class SeungunBackendAnalysisAdapter:
             cancel()
 
 
-def _analysis_snapshot(value: object) -> dict[str, object]:
+def _analysis_snapshot(
+    value: object,
+) -> tuple[
+    dict[str, object] | None,
+    dict[str, object],
+    dict[str, object] | None,
+]:
     try:
         raw = value if isinstance(value, Mapping) else value.to_json_object()  # type: ignore[attr-defined]
         snapshot = json.loads(
@@ -301,12 +349,59 @@ def _analysis_snapshot(value: object) -> dict[str, object]:
             "seungun_detector_failed",
             "분석을 안전하게 완료하지 못했습니다. 다시 시도해 주세요.",
         ) from None
-    if not isinstance(snapshot, dict) or snapshot.get("schema_version") != SEUNGUN_SCHEMA_VERSION:
+    if not isinstance(snapshot, dict):
         raise BackendAnalysisError(
             "seungun_detector_failed",
             "분석을 안전하게 완료하지 못했습니다. 다시 시도해 주세요.",
         )
-    return snapshot
+    if snapshot.get("schema_version") == SEUNGUN_SCHEMA_VERSION:
+        return None, snapshot, None
+    if snapshot.get("schema_version") != _PRODUCTION_ANALYSIS_SCHEMA_VERSION:
+        raise BackendAnalysisError(
+            "seungun_detector_failed",
+            "분석을 안전하게 완료하지 못했습니다. 다시 시도해 주세요.",
+        )
+    evidence = snapshot.get("evidence_bundle")
+    decision = snapshot.get("decision")
+    selected = (
+        decision.get("selected_expected_index")
+        if isinstance(decision, dict)
+        else None
+    )
+    if (
+        not isinstance(evidence, dict)
+        or evidence.get("schema_version") != SEUNGUN_SCHEMA_VERSION
+        or not isinstance(decision, dict)
+        or decision.get("schema_version") != _PRODUCTION_DECISION_SCHEMA_VERSION
+        or decision.get("state") not in {"coach_one", "no_issue"}
+        or (
+            selected is not None
+            and (
+                isinstance(selected, bool)
+                or not isinstance(selected, int)
+                or selected < 0
+            )
+        )
+    ):
+        raise BackendAnalysisError(
+            "seungun_detector_failed",
+            "분석을 안전하게 완료하지 못했습니다. 다시 시도해 주세요.",
+        )
+    evidence_sha256 = hashlib.sha256(
+        json.dumps(
+            evidence,
+            ensure_ascii=False,
+            sort_keys=True,
+            separators=(",", ":"),
+            allow_nan=False,
+        ).encode("utf-8")
+    ).hexdigest()
+    if decision.get("evidence_bundle_sha256") != evidence_sha256:
+        raise BackendAnalysisError(
+            "seungun_detector_failed",
+            "분석을 안전하게 완료하지 못했습니다. 다시 시도해 주세요.",
+        )
+    return snapshot, evidence, decision
 
 
 def _is_completed_no_issue(
@@ -327,15 +422,27 @@ def _is_completed_no_issue(
 
 
 def _pipeline_revision(
-    expected: ExpectedPhoneSequence, analysis: Mapping[str, object]
+    expected: ExpectedPhoneSequence,
+    analysis: Mapping[str, object],
+    *,
+    production_evidence: Mapping[str, object] | None,
 ) -> str:
-    detector = analysis.get("detector_version")
-    if not isinstance(detector, str) or not detector or len(detector) > 48:
+    detector = (
+        production_evidence.get("pipeline_revision")
+        if production_evidence is not None
+        else analysis.get("detector_version")
+    )
+    if not isinstance(detector, str) or not detector or len(detector) > 72:
         raise BackendAnalysisError(
             "seungun_detector_failed",
             "분석을 안전하게 완료하지 못했습니다. 다시 시도해 주세요.",
         )
-    revision = f"{expected.backend_id}:{expected.revision}|seungun:{detector}"
+    expected_backend = (
+        "g2pk"
+        if expected.backend_id == "g2pk-expected-phones"
+        else expected.backend_id
+    )
+    revision = f"{expected_backend}:{expected.revision}|seungun:{detector}"
     if len(revision) > 100:
         raise BackendAnalysisError(
             "seungun_detector_failed",

@@ -36,6 +36,9 @@ from test_backend_analysis_s3_object_store import _request
 def test_projects_only_approved_same_attempt_action(monkeypatch, tmp_path: Path) -> None:
     landmark = tmp_path / "face_landmarker.task"
     landmark.write_bytes(b"pinned-test-model")
+    geometry = tmp_path / "geometry.json"
+    geometry.write_bytes(b"closed-beta-geometry")
+    geometry_artifact = object()
     release = SimpleNamespace(
         status="enabled",
         video_qc_decision_policy=object(),
@@ -46,6 +49,11 @@ def test_projects_only_approved_same_attempt_action(monkeypatch, tmp_path: Path)
         visual_module,
         "load_production_visual_release",
         lambda path, **_kwargs: release,
+    )
+    monkeypatch.setattr(
+        visual_module,
+        "load_p6_geometry_artifact",
+        lambda path, **_kwargs: geometry_artifact,
     )
     captured: dict[str, object] = {}
 
@@ -59,6 +67,21 @@ def test_projects_only_approved_same_attempt_action(monkeypatch, tmp_path: Path)
                 visual_supplement={
                     "status": "visual_feedback_ready",
                     "evidence_relation": "supports_upstream",
+                    "notices": ["closed_beta_lip_trajectory_observed"],
+                    "cue_evidence": [
+                        {
+                            "cue_id": "inner_aperture_ratio",
+                            "cue_state": "observed",
+                            "video_start_ms": 100,
+                            "video_end_ms": 200,
+                            "measurement_value": 0.25,
+                            "measurement_unit": "ratio",
+                            "measurement_backend": {
+                                "backend_id": "closed_beta_p6_lip_trajectory"
+                            },
+                            "calibration_artifact_sha256": "2" * 64,
+                        }
+                    ],
                     "supplemental_action_candidate": {
                         "approved_claim_id": "lip.aperture.low",
                         "renderer_key": "lip_aperture_hint",
@@ -101,6 +124,7 @@ def test_projects_only_approved_same_attempt_action(monkeypatch, tmp_path: Path)
             nltk_data_root=tmp_path,
             landmark_model_path=landmark,
             production_release_root=tmp_path / "release",
+            closed_beta_geometry_artifact_path=geometry,
         )
     )
 
@@ -116,8 +140,38 @@ def test_projects_only_approved_same_attempt_action(monkeypatch, tmp_path: Path)
     assert supplement.approved_claim_id == "lip.aperture.low"
     assert supplement.renderer_key == "lip_aperture_hint"
     assert supplement.evidence_relation == "supports_upstream"
+    assert supplement.closed_beta_lip_observation == {
+        "schemaVersion": "voice-coaching.closed-beta-lip-observation.v1",
+        "status": "OBSERVED",
+        "selectedExpectedIndex": 0,
+        "videoStartMs": 100,
+        "videoEndMs": 200,
+        "geometryArtifactSha256": "2" * 64,
+        "measurements": {
+            "inner_aperture_ratio": {"value": 0.25, "unit": "ratio"}
+        },
+        "containsPronunciationTruth": False,
+        "containsActionTruth": False,
+    }
     assert captured["build"]["seungun_detector"] is None  # type: ignore[index]
     assert captured["build"]["seungun_runtime_port"] is not None  # type: ignore[index]
+    assert (
+        captured["build"]["closed_beta_lip_geometry_artifact"]  # type: ignore[index]
+        is geometry_artifact
+    )
+
+
+def test_visual_consent_receipt_uses_the_handoff_timestamp_canonical_form() -> None:
+    authority = visual_module._GrantConsentAuthority(_visual_request())
+
+    authorization = authority.authorize(
+        prompt_id="analysis-35",
+        consent_reference="backend_signed_visual_grant_v1",
+    )
+    receipt = authority.receipt_for(authorization)
+
+    assert receipt.issued_at_utc == "2026-09-02T00:00:00.000000Z"
+    assert receipt.expires_at_utc == "2026-09-02T00:05:00.000000Z"
 
 
 def test_cross_attempt_visual_digest_never_reaches_the_facade(

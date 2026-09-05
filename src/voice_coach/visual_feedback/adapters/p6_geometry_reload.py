@@ -129,6 +129,7 @@ def load_p6_geometry_artifact(
     path: str | Path,
     *,
     repository_root: str | Path | None = None,
+    trusted_group_id: int | None = None,
 ) -> P6GeometryArtifact:
     """Load one private immutable artifact and reproduce it in isolation."""
 
@@ -142,10 +143,22 @@ def load_p6_geometry_artifact(
         if (
             not stat.S_ISREG(before.st_mode)
             or before.st_nlink != 1
-            or before.st_uid != os.geteuid()
             or before.st_size <= 0
             or before.st_size > _MAXIMUM_ARTIFACT_BYTES
-            or stat.S_IMODE(before.st_mode) != 0o400
+            or (
+                trusted_group_id is None
+                and (
+                    before.st_uid != os.geteuid()
+                    or stat.S_IMODE(before.st_mode) != 0o400
+                )
+            )
+            or (
+                trusted_group_id is not None
+                and (
+                    before.st_gid != trusted_group_id
+                    or stat.S_IMODE(before.st_mode) not in {0o400, 0o440, 0o640}
+                )
+            )
         ):
             raise P6GeometryReloadError("p6_artifact_file_not_private")
         remaining = before.st_size

@@ -7,7 +7,7 @@ from pathlib import Path
 from typing import Mapping
 
 from voice_coach.pronunciation_attempts.adapters.persistent_seungun import (
-    PersistentIsolatedFrozenSeungunDetectorAdapter,
+    PersistentIsolatedSeungunProductionAdapter,
 )
 from voice_coach.pronunciation_feedback.adapters.expected_phones_subprocess import (
     SubprocessG2PKExpectedPhoneFrontend,
@@ -62,6 +62,9 @@ def create_worker(
         visual_landmark_model_text = env.get(
             "AI_ANALYSIS_VISUAL_LANDMARK_MODEL_PATH", ""
         )
+        visual_geometry_text = env.get(
+            "AI_ANALYSIS_VISUAL_GEOMETRY_ARTIFACT_PATH", ""
+        )
         seungun_startup_timeout = float(
             env.get("AI_ANALYSIS_SEUNGUN_STARTUP_TIMEOUT_SECONDS", "300")
         )
@@ -79,7 +82,14 @@ def create_worker(
         or not bucket
         or not nltk_data_root.is_absolute()
         or device not in {"cpu", "cuda"}
-        or bool(visual_release_root_text) != bool(visual_landmark_model_text)
+        or len(
+            {
+                bool(visual_release_root_text),
+                bool(visual_landmark_model_text),
+                bool(visual_geometry_text),
+            }
+        )
+        != 1
     ):
         raise ValueError("analysis_worker_production_configuration_invalid")
 
@@ -102,8 +112,12 @@ def create_worker(
     expected_phone_frontend = SubprocessG2PKExpectedPhoneFrontend(
         nltk_data_root=nltk_data_root,
         repository_root=repository_root,
+        # The frozen Seungun CTC vocabulary contains phones only.  Keeping the
+        # frontend's display-only ``|`` boundary makes every multi-word prompt
+        # fail closed as an unknown expected phone.
+        word_boundary_policy="drop",
     )
-    detector = PersistentIsolatedFrozenSeungunDetectorAdapter(
+    detector = PersistentIsolatedSeungunProductionAdapter(
         repository_root=repository_root,
         device=device,
         startup_timeout_seconds=seungun_startup_timeout,
@@ -127,6 +141,7 @@ def create_worker(
                 nltk_data_root=nltk_data_root,
                 landmark_model_path=Path(visual_landmark_model_text),
                 production_release_root=Path(visual_release_root_text),
+                closed_beta_geometry_artifact_path=Path(visual_geometry_text),
                 artifact_group_id=int(env["AI_ANALYSIS_ARTIFACT_GID"]),
             )
         )

@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 from contextlib import contextmanager
+import base64
 from datetime import UTC, datetime, timedelta
 import hashlib
 from pathlib import Path
@@ -12,6 +13,7 @@ from voice_coach.backend_analysis.domain import (
     AnalysisOutcome,
     AnalysisRequest,
     BackendAnalysisContractError,
+    ClosedBetaContext,
     PronunciationEvidence,
     VisualSupplement,
 )
@@ -299,6 +301,8 @@ def test_seungun_completed_result_keeps_unmeasured_scores_null() -> None:
         "audioSha256",
             "segments",
             "visualSupplement",
+            "seungunProductionEvidence",
+            "closedBetaDebug",
         }
     assert result["status"] == "COMPLETED"
     assert result["outcome"] == "COACHING_READY"
@@ -321,6 +325,75 @@ def test_seungun_completed_result_keeps_unmeasured_scores_null() -> None:
     assert result["segments"] == []
     assert store.calls == 1
     assert seungun.calls == 1
+
+
+def test_v5_closed_beta_result_serializes_ids_raw_paths_and_media(
+    tmp_path: Path,
+) -> None:
+    payload = _request_payload()
+    payload["schemaVersion"] = "voice-coaching.analysis-request.v5"
+    context_payload = {
+        "schemaVersion": "voice-coaching.closed-beta-context.v1",
+        "userId": 7,
+        "sessionId": 8,
+        "recordingId": 9,
+    }
+    context = ClosedBetaContext.from_payload(context_payload)
+    payload["closedBetaContext"] = context_payload
+    grant = payload["authorizationGrant"]
+    assert isinstance(grant, dict)
+    grant["grantVersion"] = "voice-coaching.analysis-authorization.v4"
+    grant["closedBetaContextSha256"] = context.binding_sha256()
+    request = AnalysisRequest.from_payload(payload)
+    source = tmp_path / "materialized-source.wav"
+    source.write_bytes(b"closed-beta-raw-audio")
+
+    class _RawStore(_ObjectStore):
+        @contextmanager
+        def materialize(self, request: object, authorization: object):
+            del request, authorization
+            self.calls += 1
+            yield MaterializedAudio(
+                path=source,
+                byte_count=1234,
+                sha256="a" * 64,
+            )
+
+    class _DebugSeungun(_Seungun):
+        def analyze(
+            self, *, request: AnalysisRequest, audio: MaterializedAudio
+        ) -> SeungunAnalysis:
+            result = super().analyze(request=request, audio=audio)
+            return SeungunAnalysis(
+                outcome=result.outcome,
+                summary_feedback=result.summary_feedback,
+                pronunciation_evidence=result.pronunciation_evidence,
+                pipeline_revision=result.pipeline_revision,
+                production_evidence={
+                    "schema_version": "korean_phone_ctc.production_analysis.v2"
+                },
+                decoded_audio_path=str(tmp_path / "decoded.wav"),
+                decoded_audio_media_base64=base64.b64encode(
+                    b"closed-beta-decoded-wav"
+                ).decode("ascii"),
+            )
+
+    result = _worker(
+        _Authorizer(_authorization()),
+        _RawStore(),
+        _DebugSeungun(),
+    ).process(request).to_payload()
+
+    debug = result["closedBetaDebug"]
+    assert isinstance(debug, dict)
+    assert result["schemaVersion"] == "voice-coaching.analysis-result.v4"
+    assert debug["captureState"] == "COMPLETE"
+    assert debug["context"] == context_payload
+    assert debug["materializedAudioPath"] == str(source)
+    assert base64.b64decode(debug["audioMediaBase64"]) == b"closed-beta-raw-audio"
+    assert base64.b64decode(debug["decodedAudioMediaBase64"]) == (
+        b"closed-beta-decoded-wav"
+    )
 
 
 def test_visual_supplement_cannot_change_seungun_selected_phone() -> None:
@@ -385,5 +458,6 @@ def test_visual_supplement_cannot_change_seungun_selected_phone() -> None:
         "rendererKey": "lip_aperture_hint",
         "upstreamPhoneAnchorRef": "f" * 64,
         "supplementSha256": "1" * 64,
+        "closedBetaLipObservation": None,
     }
     assert store.visual_calls == 1

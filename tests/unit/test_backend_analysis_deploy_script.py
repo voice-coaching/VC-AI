@@ -6,6 +6,7 @@ import subprocess
 
 
 _RELEASE = "a" * 40
+_PREVIOUS_RELEASE = "b" * 40
 
 
 def test_worker_deploy_activates_a_revision_labeled_healthy_image(
@@ -16,7 +17,7 @@ def test_worker_deploy_activates_a_revision_labeled_healthy_image(
     assert completed.returncode == 0
     assert f"Worker release {_RELEASE} is healthy." in completed.stdout
     assert "|build " in log
-    assert f"intelligentai/backend-analysis-worker:{_RELEASE}|compose " in log
+    assert f"intelligentai/backend-analysis-worker:{_RELEASE}|{_RELEASE}|" in log
     assert " up " in log
 
 
@@ -28,9 +29,10 @@ def test_worker_deploy_restores_the_previous_image_when_health_wait_fails(
     assert completed.returncode != 0
     assert "restoring the previous image" in completed.stderr
     assert "Previous worker image is healthy after rollback." in completed.stderr
-    assert f"intelligentai/backend-analysis-worker:{_RELEASE}|compose " in log
+    assert f"intelligentai/backend-analysis-worker:{_RELEASE}|{_RELEASE}|" in log
     assert (
-        f"intelligentai/backend-analysis-worker:rollback-before-{_RELEASE}|compose "
+        f"intelligentai/backend-analysis-worker:rollback-before-{_RELEASE}|"
+        f"{_PREVIOUS_RELEASE}|"
         in log
     )
 
@@ -65,7 +67,7 @@ def test_worker_rollback_activates_a_revision_labeled_prior_image(
     assert "|build " not in log
     assert "|image inspect --format " in log
     assert f" intelligentai/backend-analysis-worker:{_RELEASE}\n" in log
-    assert f"intelligentai/backend-analysis-worker:{_RELEASE}|compose " in log
+    assert f"intelligentai/backend-analysis-worker:{_RELEASE}|{_RELEASE}|" in log
 
 
 def _run_deploy(
@@ -83,9 +85,19 @@ def _run_deploy(
     docker.write_text(
         """#!/usr/bin/env bash
 set -eu
-printf '%s|%s\\n' "${AI_ANALYSIS_WORKER_IMAGE:-}" "$*" >> "${FAKE_DOCKER_LOG}"
+printf '%s|%s|%s|%s\\n' "${AI_ANALYSIS_WORKER_IMAGE:-}" \
+  "${AI_ANALYSIS_RELEASE_ID:-}" "${AI_ANALYSIS_DEPLOYMENT_MANIFEST_FILE:-}" \
+  "$*" >> "${FAKE_DOCKER_LOG}"
 if [[ "$1" == "compose" ]]; then
-  if [[ "${AI_ANALYSIS_RELEASE_ID:-}" != "${FAKE_RELEASE}" ]]; then
+  if [[ "${AI_ANALYSIS_WORKER_IMAGE:-}" == *"rollback-before"* ]]; then
+    expected_release="${FAKE_PREVIOUS_RELEASE}"
+    expected_manifest="${FAKE_PREVIOUS_MANIFEST}"
+  else
+    expected_release="${FAKE_RELEASE}"
+    expected_manifest="${FAKE_CANDIDATE_MANIFEST}"
+  fi
+  if [[ "${AI_ANALYSIS_RELEASE_ID:-}" != "${expected_release}" \
+    || "${AI_ANALYSIS_DEPLOYMENT_MANIFEST_FILE:-}" != "${expected_manifest}" ]]; then
     exit 3
   fi
   for argument in "$@"; do
@@ -104,11 +116,19 @@ if [[ "$1" == "compose" ]]; then
   exit 0
 fi
 if [[ "$1" == "inspect" ]]; then
-  printf '%s\\n' sha256:previous
+  if [[ "$*" == *".Mounts"* ]]; then
+    printf '%s\\n' "${FAKE_PREVIOUS_MANIFEST}"
+  else
+    printf '%s\\n' sha256:previous
+  fi
   exit 0
 fi
 if [[ "$1" == "image" && "$2" == "inspect" && "$*" == *"--format"* ]]; then
-  printf '%s\\n' "${FAKE_RELEASE}"
+  if [[ "$*" == *"sha256:previous"* ]]; then
+    printf '%s\\n' "${FAKE_PREVIOUS_RELEASE}"
+  else
+    printf '%s\\n' "${FAKE_RELEASE}"
+  fi
   exit 0
 fi
 exit 0
@@ -132,6 +152,10 @@ exit 1
         encoding="utf-8",
     )
     git.chmod(0o700)
+    candidate_manifest = tmp_path / "candidate-manifest.json"
+    previous_manifest = tmp_path / "previous-manifest.json"
+    candidate_manifest.write_text("{}\n", encoding="utf-8")
+    previous_manifest.write_text("{}\n", encoding="utf-8")
     environment = {
         **os.environ,
         "PATH": f"{binary_root}:/usr/bin:/bin",
@@ -139,8 +163,12 @@ exit 1
         "FAKE_CURRENT": "1" if current else "0",
         "FAKE_FAIL_CANDIDATE": "1" if fail_candidate else "0",
         "FAKE_RELEASE": _RELEASE,
+        "FAKE_PREVIOUS_RELEASE": _PREVIOUS_RELEASE,
+        "FAKE_CANDIDATE_MANIFEST": str(candidate_manifest),
+        "FAKE_PREVIOUS_MANIFEST": str(previous_manifest),
         "FAKE_CHECKED_OUT_RELEASE": checked_out_release,
-        "AI_ANALYSIS_ROLLOUT_GATE": "quiesced-request-v4-result-v3",
+        "AI_ANALYSIS_ROLLOUT_GATE": "quiesced-request-v5-result-v4-seungun-v2",
+        "AI_ANALYSIS_DEPLOYMENT_MANIFEST_FILE": str(candidate_manifest),
         "AI_ANALYSIS_DEPLOY_WAIT_TIMEOUT_SECONDS": "60",
     }
     script = Path("scripts/deploy_backend_analysis_worker.sh").resolve()

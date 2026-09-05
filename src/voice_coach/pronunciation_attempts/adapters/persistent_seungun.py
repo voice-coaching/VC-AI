@@ -21,6 +21,7 @@ from .runtime import PronunciationAttemptRuntimeError
 
 
 _SERVER_PROTOCOL_VERSION = "voice_coach.seungun_runtime_server.v1"
+_PRODUCTION_SERVER_PROTOCOL_VERSION = "voice_coach.seungun_runtime_server.v2"
 _DEVICE_PATTERN = re.compile(r"^(?:cpu|cuda(?::[0-9]+)?)$")
 _LAUNCHER = Path(__file__).with_name("network_isolated_exec.py")
 _MAXIMUM_REQUEST_BYTES = 65_536
@@ -42,6 +43,11 @@ class PersistentIsolatedFrozenSeungunDetectorAdapter:
         maximum_requests_per_process: int = 100,
         start_immediately: bool = False,
         server_target: Sequence[str] | None = None,
+        _protocol_version: str = _SERVER_PROTOCOL_VERSION,
+        _server_module: str = (
+            "voice_coach.pronunciation_attempts.adapters.seungun_runtime_server"
+        ),
+        _expected_capabilities: Mapping[str, object] | None = None,
     ) -> None:
         root = Path(repository_root)
         python = Path(worker_python or sys.executable).absolute()
@@ -70,6 +76,11 @@ class PersistentIsolatedFrozenSeungunDetectorAdapter:
         self._maximum_output_bytes = maximum_output_bytes
         self._maximum_requests_per_process = maximum_requests_per_process
         self._server_target = tuple(server_target) if server_target is not None else None
+        self._protocol_version = _protocol_version
+        self._server_module = _server_module
+        self._expected_capabilities = (
+            dict(_expected_capabilities) if _expected_capabilities is not None else None
+        )
         self._process: subprocess.Popen[bytes] | None = None
         self._stdout_buffer = bytearray()
         self._requests = 0
@@ -99,7 +110,7 @@ class PersistentIsolatedFrozenSeungunDetectorAdapter:
             raise PronunciationAttemptRuntimeError("seungun_worker_invalid")
         request_id = str(uuid4())
         request = {
-            "protocol_version": _SERVER_PROTOCOL_VERSION,
+            "protocol_version": self._protocol_version,
             "request_id": request_id,
             "audio_path": str(Path(audio_path).absolute()),
             "expected_phones": phones,
@@ -150,7 +161,7 @@ class PersistentIsolatedFrozenSeungunDetectorAdapter:
             if (
                 isinstance(response, dict)
                 and set(response) == completed_keys
-                and response["protocol_version"] == _SERVER_PROTOCOL_VERSION
+                and response["protocol_version"] == self._protocol_version
                 and response["request_id"] == request_id
                 and response["status"] == "completed"
                 and response["network_isolation"] == "seccomp_socket_denied"
@@ -160,7 +171,7 @@ class PersistentIsolatedFrozenSeungunDetectorAdapter:
             if (
                 isinstance(response, dict)
                 and set(response) == failed_keys
-                and response["protocol_version"] == _SERVER_PROTOCOL_VERSION
+                and response["protocol_version"] == self._protocol_version
                 and response["request_id"] == request_id
                 and response["status"] == "failed"
                 and isinstance(response["reason_code"], str)
@@ -196,7 +207,7 @@ class PersistentIsolatedFrozenSeungunDetectorAdapter:
             or (
                 str(self._worker_python),
                 "-m",
-                "voice_coach.pronunciation_attempts.adapters.seungun_runtime_server",
+                self._server_module,
                 "--device",
                 self._device,
             )
@@ -256,16 +267,23 @@ class PersistentIsolatedFrozenSeungunDetectorAdapter:
         except BaseException:
             self._terminate()
             raise
+        expected_ready_keys = {
+            "protocol_version",
+            "status",
+            "network_isolation",
+        }
+        if self._expected_capabilities is not None:
+            expected_ready_keys.add("capabilities")
         if not (
             isinstance(ready, dict)
-            and set(ready) == {
-                "protocol_version",
-                "status",
-                "network_isolation",
-            }
-            and ready["protocol_version"] == _SERVER_PROTOCOL_VERSION
+            and set(ready) == expected_ready_keys
+            and ready["protocol_version"] == self._protocol_version
             and ready["status"] == "ready"
             and ready["network_isolation"] == "seccomp_socket_denied"
+            and (
+                self._expected_capabilities is None
+                or ready["capabilities"] == self._expected_capabilities
+            )
         ):
             self._terminate()
             raise IsolatedProcessError("isolated_process_protocol_invalid")
@@ -378,4 +396,38 @@ class PersistentIsolatedFrozenSeungunDetectorAdapter:
                             pass
 
 
-__all__ = ["PersistentIsolatedFrozenSeungunDetectorAdapter"]
+class PersistentIsolatedSeungunProductionAdapter(
+    PersistentIsolatedFrozenSeungunDetectorAdapter
+):
+    """Strict client for the versioned Seungun production-analysis server."""
+
+    def __init__(self, **kwargs: object) -> None:
+        from korean_phone_ctc.production_pipeline import (
+            DECISION_SCHEMA_VERSION,
+            POLICY_REVISION,
+            SCHEMA_VERSION,
+        )
+        from korean_phone_ctc.frozen_detector import (
+            SCHEMA_VERSION as FROZEN_ANALYSIS_SCHEMA_VERSION,
+        )
+
+        super().__init__(
+            **kwargs,
+            _protocol_version=_PRODUCTION_SERVER_PROTOCOL_VERSION,
+            _server_module=(
+                "voice_coach.pronunciation_attempts.adapters."
+                "seungun_production_runtime_server"
+            ),
+            _expected_capabilities={
+                "analysis_schema_version": SCHEMA_VERSION,
+                "decision_schema_version": DECISION_SCHEMA_VERSION,
+                "policy_revision": POLICY_REVISION,
+                "frozen_analysis_schema_version": FROZEN_ANALYSIS_SCHEMA_VERSION,
+            },
+        )
+
+
+__all__ = [
+    "PersistentIsolatedFrozenSeungunDetectorAdapter",
+    "PersistentIsolatedSeungunProductionAdapter",
+]

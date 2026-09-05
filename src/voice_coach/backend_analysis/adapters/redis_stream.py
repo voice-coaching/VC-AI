@@ -15,9 +15,17 @@ import threading
 from typing import Protocol
 from uuid import uuid4
 
-from ..domain import AnalysisRequest, AnalysisWorkerResult, BackendAnalysisContractError
+from ..domain import (
+    AnalysisRequest,
+    AnalysisWorkerResult,
+    BackendAnalysisContractError,
+    ClosedBetaDebug,
+)
 from ..secret_files import secret_text
 from ..service import BackendAnalysisWorker
+
+
+_CLOSED_BETA_MAXIMUM_RESULT_PAYLOAD_BYTES = 384 * 1024 * 1024
 
 
 class WorkerConfigurationError(RuntimeError):
@@ -68,7 +76,7 @@ class RedisStreamSettings:
         socket_timeout_seconds: float = 30.0,
         health_check_interval_seconds: int = 30,
         maximum_request_payload_bytes: int = 64 * 1024,
-        maximum_result_payload_bytes: int = 64 * 1024,
+        maximum_result_payload_bytes: int = _CLOSED_BETA_MAXIMUM_RESULT_PAYLOAD_BYTES,
         maximum_dlq_entries: int = 10_000,
         processing_heartbeat_interval_seconds: float = 60.0,
         cancellation_key_prefix: str = "analysis:canceled:v1:",
@@ -91,7 +99,9 @@ class RedisStreamSettings:
             or not 1 <= socket_timeout_seconds <= 300
             or not 1 <= health_check_interval_seconds <= 300
             or not 1_024 <= maximum_request_payload_bytes <= 1024 * 1024
-            or not 1_024 <= maximum_result_payload_bytes <= 1024 * 1024
+            or not 1_024
+            <= maximum_result_payload_bytes
+            <= _CLOSED_BETA_MAXIMUM_RESULT_PAYLOAD_BYTES
             or not 1 <= maximum_dlq_entries <= 1_000_000
             or not math.isfinite(processing_heartbeat_interval_seconds)
             or not 0.1 <= processing_heartbeat_interval_seconds <= 300
@@ -154,7 +164,10 @@ class RedisStreamSettings:
                 env.get("AI_ANALYSIS_MAXIMUM_REQUEST_PAYLOAD_BYTES", str(64 * 1024))
             )
             maximum_result_payload = int(
-                env.get("AI_ANALYSIS_MAXIMUM_RESULT_PAYLOAD_BYTES", str(64 * 1024))
+                env.get(
+                    "AI_ANALYSIS_MAXIMUM_RESULT_PAYLOAD_BYTES",
+                    str(_CLOSED_BETA_MAXIMUM_RESULT_PAYLOAD_BYTES),
+                )
             )
             maximum_dlq_entries = int(
                 env.get("AI_ANALYSIS_MAXIMUM_REQUEST_DLQ_ENTRIES", "10000")
@@ -362,6 +375,19 @@ class RedisStreamWorker:
             code=fallback_code,
             reason=fallback_reason,
             worker_revision="redis-stream-boundary-v1",
+            closed_beta_debug=(
+                ClosedBetaDebug.unavailable(
+                    context=request.closed_beta_context,
+                    audio_object_key=request.audio_object_key,
+                    visual_object_key=(
+                        request.visual_input.object_key
+                        if request.visual_input is not None
+                        else None
+                    ),
+                )
+                if request.closed_beta_context is not None
+                else None
+            ),
         )
         encoded_fallback = _encode_result(fallback)
         if len(encoded_fallback) > self._settings.maximum_result_payload_bytes:

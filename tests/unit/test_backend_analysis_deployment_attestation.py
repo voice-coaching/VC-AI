@@ -206,6 +206,9 @@ def _artifacts(root: Path) -> DeploymentArtifactPaths:
     landmark = root / "landmark.task"
     landmark.write_bytes(b"landmark")
     landmark.chmod(0o640)
+    geometry = root / "geometry.json"
+    geometry.write_bytes(b"geometry")
+    geometry.chmod(0o640)
     return DeploymentArtifactPaths(
         detector_bundle=paths["detector"],
         seungun_model=paths["model"],
@@ -213,6 +216,7 @@ def _artifacts(root: Path) -> DeploymentArtifactPaths:
         nltk_data=paths["nltk"],
         visual_release=paths["visual"],
         visual_landmark_model=landmark,
+        visual_geometry_artifact=geometry,
     )
 
 
@@ -222,6 +226,7 @@ def _environment(root: Path, manifest_path: Path) -> dict[str, str]:
         "AI_ANALYSIS_NLTK_DATA_ROOT": str(root / "nltk"),
         "AI_ANALYSIS_VISUAL_RELEASE_ROOT": str(root / "visual"),
         "AI_ANALYSIS_VISUAL_LANDMARK_MODEL_PATH": str(root / "landmark.task"),
+        "AI_ANALYSIS_VISUAL_GEOMETRY_ARTIFACT_PATH": str(root / "geometry.json"),
         "AI_ANALYSIS_DEPLOYMENT_MANIFEST_PATH": str(manifest_path),
         "AI_ANALYSIS_RELEASE_ID": _RELEASE_ID,
         "VOICE_COACH_BUILD_REVISION": _RELEASE_ID,
