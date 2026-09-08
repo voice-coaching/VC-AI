@@ -222,6 +222,25 @@ exec 9<data/testvideo/testvideo1.mp4
 동시 운영 시 GB10 통합 메모리를 Clova와 Seungun이 공유하므로 health뿐 아니라
 실제 동일 시도 실행을 배포 검증에 포함한다.
 
+### A6000의 메모리 설정
+
+48GB VRAM의 A6000에서 약 66.6GB의 BF16 HyperCLOVA 가중치를 사용하려면 CPU로
+일부 가중치를 분산해야 한다. 서버 CLI는 `--gpu-memory-gib`와
+`--cpu-memory-gib`를 받으며, Compose에서는 각각 `HYPERCLOVA_GPU_MEMORY_GIB`와
+`HYPERCLOVA_CPU_MEMORY_GIB`로 설정한다. 기존 기본값은 GPU 110GiB, CPU 8GiB다.
+CPU 예산을 늘리는 것은 양자화나 가중치 변경을 수행하지 않는다.
+
+A6000의 초기 검증 후보는 GPU 40GiB, CPU 48GiB다. 이는 allocation의 상한이며
+메모리 예약 또는 실제 적재 성공을 의미하지 않는다. CPU RAM, KV cache와 같은
+동적 사용량, Seungun 동시 실행 여유, CPU offload에 따른 지연을 실제 호스트에서
+검증해야 한다. 모델 preload, `ready` health 및 grounded 응답 검증 전에는
+배포 완료로 판정하지 않는다.
+
+기존 PyTorch/CUDA 고정 버전도 별도로 확인한다. CUDA 12.8 기본 RunPod 이미지가
+있다는 이유로 현재 CUDA 13 wheel의 호스트 드라이버 호환성을 가정하거나
+PyTorch를 자동으로 하향하지 않는다. RunPod에서 컨테이너 중첩 실행과 read-only,
+loopback, 임시 저장소 및 프로세스 격리 경계를 재현했는지도 별도 검증 대상이다.
+
 ## 현재 구현 상태 (기존 release 2026-09-02, closed beta 2026-09-05)
 
 ### 현재 작업 범위

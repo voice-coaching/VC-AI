@@ -25,6 +25,7 @@ class TransformersHyperClovaRuntime:
         revision: str,
         device_map: str = "auto",
         gpu_memory_gib: int | None = None,
+        cpu_memory_gib: int = 8,
     ) -> None:
         directory = Path(model_dir).resolve()
         if not (directory / "config.json").is_file():
@@ -33,11 +34,14 @@ class TransformersHyperClovaRuntime:
             raise CoachingPayloadError("HyperCLOVA model and full revision are required")
         if gpu_memory_gib is not None and gpu_memory_gib <= 0:
             raise CoachingPayloadError("GPU memory limit must be positive")
+        if cpu_memory_gib <= 0:
+            raise CoachingPayloadError("CPU memory limit must be positive")
         self.model_dir = directory
         self.model_id = model_id
         self.revision = revision
         self.device_map = device_map
         self.gpu_memory_gib = gpu_memory_gib
+        self.cpu_memory_gib = cpu_memory_gib
         self._tokenizer: Any | None = None
         self._model: Any | None = None
         self._lock = threading.Lock()
@@ -58,7 +62,10 @@ class TransformersHyperClovaRuntime:
             ) from error
         maximum_memory = None
         if self.gpu_memory_gib is not None:
-            maximum_memory = {0: f"{self.gpu_memory_gib}GiB", "cpu": "8GiB"}
+            maximum_memory = {
+                0: f"{self.gpu_memory_gib}GiB",
+                "cpu": f"{self.cpu_memory_gib}GiB",
+            }
         os.environ.setdefault("HF_HUB_OFFLINE", "1")
         os.environ.setdefault("TRANSFORMERS_OFFLINE", "1")
         try:

@@ -110,6 +110,7 @@ def _parser() -> argparse.ArgumentParser:
     )
     parser.add_argument("--port", type=int, default=8000)
     parser.add_argument("--gpu-memory-gib", type=int, default=110)
+    parser.add_argument("--cpu-memory-gib", type=int, default=8)
     return parser
 
 
@@ -121,6 +122,7 @@ def main(argv: list[str] | None = None) -> int:
         model_id=document["modelId"],
         revision=document["revision"],
         gpu_memory_gib=args.gpu_memory_gib,
+        cpu_memory_gib=args.cpu_memory_gib,
     )
     runtime.load()
     import uvicorn
