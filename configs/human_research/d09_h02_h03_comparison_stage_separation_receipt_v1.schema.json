@@ -1,0 +1,158 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://voice-coach.local/schemas/d09_h02_h03_comparison_stage_separation_receipt_v1.schema.json",
+  "title": "D09 H02-H03 within-phase comparison and stage separation receipt",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_version",
+    "receipt_id",
+    "phase",
+    "status",
+    "stage_1",
+    "stage_2",
+    "stage_1_randomization_closed_at_utc",
+    "stage_2_activation_authorized_at_utc",
+    "stage_2_randomization_opened_at_utc",
+    "stage_2_activation_decision_receipt_sha256",
+    "stage_1_unblinded_effect_access_log_sha256",
+    "stage_1_unblinded_effect_access_count_before_stage_2_activation",
+    "stage_1_outcome_or_effect_available_at_stage_2_activation",
+    "stage_2_activation_basis",
+    "activation_time_order_verified",
+    "participant_intersection_count",
+    "audio_intersection_count",
+    "rating_intersection_count",
+    "shared_c3_participant_intersection_count",
+    "copied_or_cloned_row_count",
+    "comparison_participant_audio_rating_reuse_allowed",
+    "independent_participant_unit_parallel_comparisons",
+    "privacy_zone",
+    "binding_sha256"
+  ],
+  "properties": {
+    "schema_version": {
+      "const": "voice_coach.d09_h02_h03_comparison_stage_separation_receipt.v1"
+    },
+    "receipt_id": {"type": "string", "pattern": "^d09comparison_[0-9a-f]{32}$"},
+    "phase": {"enum": ["feasibility", "confirmatory"]},
+    "status": {"const": "zero_overlap_independent_parallel_comparisons"},
+    "stage_1": {"$ref": "#/$defs/stage1"},
+    "stage_2": {"$ref": "#/$defs/stage2"},
+    "stage_1_randomization_closed_at_utc": {"$ref": "#/$defs/utc"},
+    "stage_2_activation_authorized_at_utc": {"$ref": "#/$defs/utc"},
+    "stage_2_randomization_opened_at_utc": {"$ref": "#/$defs/utc"},
+    "stage_2_activation_decision_receipt_sha256": {"$ref": "#/$defs/sha256"},
+    "stage_1_unblinded_effect_access_log_sha256": {"$ref": "#/$defs/sha256"},
+    "stage_1_unblinded_effect_access_count_before_stage_2_activation": {"const": 0},
+    "stage_1_outcome_or_effect_available_at_stage_2_activation": {"const": false},
+    "stage_2_activation_basis": {
+      "const": "approval_safety_privacy_and_delivery_readiness_only"
+    },
+    "activation_time_order_verified": {"const": true},
+    "participant_intersection_count": {"const": 0},
+    "audio_intersection_count": {"const": 0},
+    "rating_intersection_count": {"const": 0},
+    "shared_c3_participant_intersection_count": {"const": 0},
+    "copied_or_cloned_row_count": {"const": 0},
+    "comparison_participant_audio_rating_reuse_allowed": {"const": false},
+    "independent_participant_unit_parallel_comparisons": {"const": true},
+    "privacy_zone": {"const": "A1_aggregate_comparison_stage_separation"},
+    "binding_sha256": {"$ref": "#/$defs/sha256"}
+  },
+  "$defs": {
+    "sha256": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
+    "utc": {
+      "type": "string",
+      "pattern": "^[0-9]{4}-[0-9]{2}-[0-9]{2}T[0-9]{2}:[0-9]{2}:[0-9]{2}Z$"
+    },
+    "stage1": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "comparison",
+        "allowed_conditions",
+        "randomization_receipt_sha256",
+        "participant_set_sha256",
+        "audio_set_sha256",
+        "rating_set_sha256",
+        "gate_receipt_sha256",
+        "s108_completion_sha256",
+        "e01_completion_sha256",
+        "c02_completion_sha256",
+        "e02_completion_sha256",
+        "c03_completion_sha256",
+        "e00_completion_sha256",
+        "r03_bank_sha256",
+        "r04_completion_sha256"
+      ],
+      "properties": {
+        "comparison": {"const": "c3_minus_c0"},
+        "allowed_conditions": {
+          "type": "array",
+          "prefixItems": [{"const": "C0"}, {"const": "C3"}],
+          "items": false,
+          "minItems": 2,
+          "maxItems": 2
+        },
+        "randomization_receipt_sha256": {"$ref": "#/$defs/sha256"},
+        "participant_set_sha256": {"$ref": "#/$defs/sha256"},
+        "audio_set_sha256": {"$ref": "#/$defs/sha256"},
+        "rating_set_sha256": {"$ref": "#/$defs/sha256"},
+        "gate_receipt_sha256": {"$ref": "#/$defs/sha256"},
+        "s108_completion_sha256": {"$ref": "#/$defs/sha256"},
+        "e01_completion_sha256": {"$ref": "#/$defs/sha256"},
+        "c02_completion_sha256": {"$ref": "#/$defs/sha256"},
+        "e02_completion_sha256": {"$ref": "#/$defs/sha256"},
+        "c03_completion_sha256": {"$ref": "#/$defs/sha256"},
+        "e00_completion_sha256": {"const": "0000000000000000000000000000000000000000000000000000000000000000"},
+        "r03_bank_sha256": {"const": "0000000000000000000000000000000000000000000000000000000000000000"},
+        "r04_completion_sha256": {"const": "0000000000000000000000000000000000000000000000000000000000000000"}
+      }
+    },
+    "stage2": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "comparison",
+        "allowed_conditions",
+        "randomization_receipt_sha256",
+        "participant_set_sha256",
+        "audio_set_sha256",
+        "rating_set_sha256",
+        "gate_receipt_sha256",
+        "s108_completion_sha256",
+        "e01_completion_sha256",
+        "c02_completion_sha256",
+        "e02_completion_sha256",
+        "c03_completion_sha256",
+        "e00_completion_sha256",
+        "r03_bank_sha256",
+        "r04_completion_sha256"
+      ],
+      "properties": {
+        "comparison": {"const": "c5_minus_c3"},
+        "allowed_conditions": {
+          "type": "array",
+          "prefixItems": [{"const": "C3"}, {"const": "C5"}],
+          "items": false,
+          "minItems": 2,
+          "maxItems": 2
+        },
+        "randomization_receipt_sha256": {"$ref": "#/$defs/sha256"},
+        "participant_set_sha256": {"$ref": "#/$defs/sha256"},
+        "audio_set_sha256": {"$ref": "#/$defs/sha256"},
+        "rating_set_sha256": {"$ref": "#/$defs/sha256"},
+        "gate_receipt_sha256": {"$ref": "#/$defs/sha256"},
+        "s108_completion_sha256": {"$ref": "#/$defs/sha256"},
+        "e01_completion_sha256": {"$ref": "#/$defs/sha256"},
+        "c02_completion_sha256": {"$ref": "#/$defs/sha256"},
+        "e02_completion_sha256": {"$ref": "#/$defs/sha256"},
+        "c03_completion_sha256": {"$ref": "#/$defs/sha256"},
+        "e00_completion_sha256": {"$ref": "#/$defs/sha256"},
+        "r03_bank_sha256": {"$ref": "#/$defs/sha256"},
+        "r04_completion_sha256": {"$ref": "#/$defs/sha256"}
+      }
+    }
+  }
+}

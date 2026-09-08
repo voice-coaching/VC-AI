@@ -1,0 +1,313 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://voice-coach.local/schemas/r02_hard_gate_report_v1.schema.json",
+  "title": "R02 blinded private candidate hard-gate report",
+  "description": "D1-only report. It contains no source label, plaintext, filesystem path, S1/S2 prediction, gold label, or public-release decision.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_version",
+    "report_id",
+    "status",
+    "privacy_zone",
+    "r01_completion_commit_sha256",
+    "r01_candidate_manifest_sha256",
+    "preregistration_sha256",
+    "asr_attestation_sha256",
+    "artifact_attestation_sha256",
+    "blind_gate_input",
+    "source_labels_present",
+    "same_gate_for_human_and_tts",
+    "input_candidate_count",
+    "results",
+    "eligible_candidate_ids",
+    "quarantined_candidate_ids",
+    "sentence_summaries",
+    "aggregate_transcript_error",
+    "failed_candidates_preserved_in_d1",
+    "r03_may_read_only_eligible_candidates",
+    "publication_allowed",
+    "r02_completion_claim_allowed"
+  ],
+  "properties": {
+    "schema_version": {
+      "const": "voice_coach.r02_hard_gate_report.v1"
+    },
+    "report_id": {
+      "type": "string",
+      "pattern": "^r02-hard-gate-[0-9a-f]{32}$"
+    },
+    "status": {
+      "const": "completed_private_gate"
+    },
+    "privacy_zone": {
+      "const": "D1_pseudonymized_restricted_experiment"
+    },
+    "r01_completion_commit_sha256": {
+      "$ref": "#/$defs/sha256"
+    },
+    "r01_candidate_manifest_sha256": {
+      "$ref": "#/$defs/sha256"
+    },
+    "preregistration_sha256": {
+      "$ref": "#/$defs/sha256"
+    },
+    "asr_attestation_sha256": {
+      "$ref": "#/$defs/sha256"
+    },
+    "artifact_attestation_sha256": {
+      "$ref": "#/$defs/sha256"
+    },
+    "blind_gate_input": {
+      "const": true
+    },
+    "source_labels_present": {
+      "const": false
+    },
+    "same_gate_for_human_and_tts": {
+      "const": true
+    },
+    "input_candidate_count": {
+      "type": "integer",
+      "minimum": 160,
+      "maximum": 320
+    },
+    "results": {
+      "type": "array",
+      "minItems": 160,
+      "maxItems": 320,
+      "items": {
+        "$ref": "#/$defs/candidateResult"
+      }
+    },
+    "eligible_candidate_ids": {
+      "type": "array",
+      "uniqueItems": true,
+      "items": {
+        "$ref": "#/$defs/candidateId"
+      }
+    },
+    "quarantined_candidate_ids": {
+      "type": "array",
+      "uniqueItems": true,
+      "items": {
+        "$ref": "#/$defs/candidateId"
+      }
+    },
+    "sentence_summaries": {
+      "type": "array",
+      "minItems": 20,
+      "maxItems": 20,
+      "items": {
+        "$ref": "#/$defs/sentenceSummary"
+      }
+    },
+    "aggregate_transcript_error": {
+      "$ref": "#/$defs/aggregateMetric"
+    },
+    "failed_candidates_preserved_in_d1": {
+      "const": true
+    },
+    "r03_may_read_only_eligible_candidates": {
+      "const": true
+    },
+    "publication_allowed": {
+      "const": false
+    },
+    "r02_completion_claim_allowed": {
+      "const": true
+    }
+  },
+  "$defs": {
+    "sha256": {
+      "type": "string",
+      "pattern": "^[0-9a-f]{64}$"
+    },
+    "candidateId": {
+      "type": "string",
+      "pattern": "^r01c_[0-9a-f]{32}$"
+    },
+    "sentenceId": {
+      "type": "string",
+      "pattern": "^R00-(0[1-9]|1[0-9]|20)$"
+    },
+    "gateResult": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "metric_id",
+        "metric_definition_sha256",
+        "value",
+        "threshold_operator",
+        "threshold_value",
+        "support",
+        "decision",
+        "evidence_sha256"
+      ],
+      "properties": {
+        "metric_id": {
+          "type": "string",
+          "minLength": 1
+        },
+        "metric_definition_sha256": {
+          "$ref": "#/$defs/sha256"
+        },
+        "value": {
+          "type": "number"
+        },
+        "threshold_operator": {
+          "enum": [
+            "le",
+            "lt",
+            "ge",
+            "gt"
+          ]
+        },
+        "threshold_value": {
+          "type": "number"
+        },
+        "support": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "decision": {
+          "enum": [
+            "pass",
+            "fail"
+          ]
+        },
+        "evidence_sha256": {
+          "$ref": "#/$defs/sha256"
+        }
+      }
+    },
+    "candidateResult": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "candidate_id",
+        "sentence_id",
+        "target_text_sha256",
+        "asr_content_match",
+        "acoustic_artifact",
+        "pause_rhythm",
+        "target_phone_coverage",
+        "overall_decision"
+      ],
+      "properties": {
+        "candidate_id": {
+          "$ref": "#/$defs/candidateId"
+        },
+        "sentence_id": {
+          "$ref": "#/$defs/sentenceId"
+        },
+        "target_text_sha256": {
+          "$ref": "#/$defs/sha256"
+        },
+        "asr_content_match": {
+          "$ref": "#/$defs/gateResult"
+        },
+        "acoustic_artifact": {
+          "$ref": "#/$defs/gateResult"
+        },
+        "pause_rhythm": {
+          "$ref": "#/$defs/gateResult"
+        },
+        "target_phone_coverage": {
+          "$ref": "#/$defs/gateResult"
+        },
+        "overall_decision": {
+          "enum": [
+            "eligible",
+            "quarantined"
+          ]
+        }
+      }
+    },
+    "aggregateMetric": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "metric_id",
+        "metric_definition_sha256",
+        "aggregation",
+        "value",
+        "threshold_operator",
+        "threshold_value",
+        "support",
+        "decision",
+        "evidence_sha256"
+      ],
+      "properties": {
+        "metric_id": {
+          "type": "string",
+          "minLength": 1
+        },
+        "metric_definition_sha256": {
+          "$ref": "#/$defs/sha256"
+        },
+        "aggregation": {
+          "type": "string",
+          "minLength": 1
+        },
+        "value": {
+          "type": "number"
+        },
+        "threshold_operator": {
+          "const": "le"
+        },
+        "threshold_value": {
+          "const": 0.02
+        },
+        "support": {
+          "type": "integer",
+          "minimum": 160,
+          "maximum": 320
+        },
+        "decision": {
+          "enum": [
+            "pass",
+            "fail"
+          ]
+        },
+        "evidence_sha256": {
+          "$ref": "#/$defs/sha256"
+        }
+      }
+    },
+    "sentenceSummary": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "sentence_id",
+        "input_count",
+        "eligible_count",
+        "quarantined_count",
+        "minimum_eligible_support_met"
+      ],
+      "properties": {
+        "sentence_id": {
+          "$ref": "#/$defs/sentenceId"
+        },
+        "input_count": {
+          "type": "integer",
+          "minimum": 8,
+          "maximum": 16
+        },
+        "eligible_count": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 16
+        },
+        "quarantined_count": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 16
+        },
+        "minimum_eligible_support_met": {
+          "type": "boolean"
+        }
+      }
+    }
+  }
+}

@@ -1,0 +1,41 @@
+{
+  "schema_version": "voice_coach.h00_official_document_attestation.v1",
+  "attestation_id": "TBD_H00_ATTESTATION",
+  "status": "TBD_EXTERNAL",
+  "privacy_zone": "A1_C1_public_summary_only",
+  "public_summary_only": true,
+  "institution_id_sha256": "TBD_EXTERNAL",
+  "protocol_version": "TBD_EXTERNAL",
+  "protocol_sha256": "TBD_EXTERNAL",
+  "official_determination_id_sha256": "TBD_EXTERNAL",
+  "official_determination_document_sha256": "TBD_EXTERNAL",
+  "restricted_official_document_locator_sha256": "TBD_EXTERNAL",
+  "restricted_archive_receipt_sha256": "TBD_EXTERNAL",
+  "custodian_role_id": "TBD_EXTERNAL",
+  "verification": {
+    "institution_official_source_verified": false,
+    "official_document_opened_by_authorized_custodian": false,
+    "document_hash_matches": false,
+    "protocol_version_matches": false,
+    "determination_id_matches_hashed_public_summary": false,
+    "signature_or_seal_verified": false,
+    "current_status_verified": false,
+    "scope_covers_participant_recruitment": false,
+    "scope_covers_informed_consent": false,
+    "scope_covers_audio_recording": false,
+    "scope_covers_randomized_intervention": false,
+    "scope_covers_pre_post_retention": false,
+    "pii_copied_to_attestation": false,
+    "participant_rows_copied_to_attestation": false,
+    "raw_locator_path_or_url_copied_to_attestation": false
+  },
+  "lifecycle": {
+    "attested_at_utc": "TBD_EXTERNAL",
+    "official_status_verified_at_utc": "TBD_EXTERNAL",
+    "expires_at_utc_or_status_code": "TBD_EXTERNAL",
+    "amendment_status": "TBD_EXTERNAL",
+    "current_amendment_sha256": "TBD_EXTERNAL",
+    "attestation_current": false
+  },
+  "binding_sha256": "TBD_H00_ATTESTATION"
+}

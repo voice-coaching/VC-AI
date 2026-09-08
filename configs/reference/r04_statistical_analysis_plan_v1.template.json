@@ -1,0 +1,53 @@
+{
+  "schema_version": "voice_coach.r04_statistical_analysis_plan.v1",
+  "sap_id": "TBD_PREREGISTRATION",
+  "status": "TBD_PREREGISTRATION",
+  "frozen_at_utc": "TBD_PREREGISTRATION",
+  "frozen_before_confirmatory_audio_or_rating_access": true,
+  "r04_preregistration_sha256": "TBD_PREREGISTRATION",
+  "pilot_nuisance_attestation_sha256": "TBD_EXTERNAL",
+  "sampling": {
+    "target_power": 0.8,
+    "two_sided_alpha": 0.05,
+    "listener_count_n": "TBD_PREREGISTRATION",
+    "exact_sample_size_formula_or_software": "TBD_PREREGISTRATION",
+    "pilot_variance_binding": "TBD_PREREGISTRATION",
+    "pilot_intra_listener_correlation_binding": "TBD_PREREGISTRATION",
+    "rater_population": "TBD_PREREGISTRATION",
+    "rater_inclusion_and_exclusion": "TBD_PREREGISTRATION",
+    "rater_training_and_quality_control": "TBD_PREREGISTRATION",
+    "adjudication_policy": "TBD_PREREGISTRATION"
+  },
+  "primary_analysis": {
+    "model_family": "ordinal_mixed_effects",
+    "listener_random_effect_required": true,
+    "sentence_random_effect_required": true,
+    "exact_estimand": "TBD_PREREGISTRATION",
+    "ordinal_link_function": "TBD_PREREGISTRATION",
+    "fixed_effects_formula": "TBD_PREREGISTRATION",
+    "random_effects_structure": "TBD_PREREGISTRATION",
+    "confidence_interval_definition": "TBD_PREREGISTRATION",
+    "missing_data_policy": "TBD_PREREGISTRATION",
+    "model_convergence_policy": "TBD_PREREGISTRATION"
+  },
+  "secondary_bootstrap": {
+    "secondary_only": true,
+    "resampling_unit": "TBD_PREREGISTRATION",
+    "replicates": "TBD_PREREGISTRATION",
+    "seed_commitment": "TBD_PREREGISTRATION",
+    "confidence_interval_method": "TBD_PREREGISTRATION"
+  },
+  "confirmatory_decision": {
+    "multiplicity_strategy": "TBD_PREREGISTRATION",
+    "superiority_margin": "TBD_PREREGISTRATION",
+    "superiority_comparator": "TBD_PREREGISTRATION",
+    "mos_dimension_decision_rule": "TBD_PREREGISTRATION",
+    "cmos_decision_rule": "TBD_PREREGISTRATION"
+  },
+  "approval": {
+    "decision": "TBD_PREREGISTRATION",
+    "statistician_role": "TBD_PREREGISTRATION",
+    "signed_receipt_sha256": "TBD_PREREGISTRATION",
+    "immutable_archive_receipt_sha256": "TBD_PREREGISTRATION"
+  }
+}

@@ -1,0 +1,20 @@
+{
+  "schema_version": "voice_coach.c03_institutional_expert_approval.v1",
+  "approval_id": "TBD_EXTERNAL_ATTESTATION",
+  "status": "TBD_EXTERNAL_ATTESTATION",
+  "protocol_sha256": "TBD_EXTERNAL_ATTESTATION",
+  "institutional_authority_receipt_sha256": "TBD_EXTERNAL_ATTESTATION",
+  "expert_evaluation_authority_receipt_sha256": "TBD_EXTERNAL_ATTESTATION",
+  "audio_use_approved": false,
+  "target_sentence_display_approved": false,
+  "top1_advice_display_approved": false,
+  "consent_or_lawful_basis_verified": false,
+  "withdrawal_process_verified": false,
+  "purpose_limitation_verified": false,
+  "retention_schedule_verified": false,
+  "access_control_verified": false,
+  "reviewer_confidentiality_required": true,
+  "reviewer_mapping_stored_separately": true,
+  "raw_audio_export_allowed": false,
+  "privacy_zone": "C1_public_template_only"
+}

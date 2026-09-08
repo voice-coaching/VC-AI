@@ -1,0 +1,217 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "voice_coach.d08_qc_report.v1",
+  "title": "D08 pseudonymized row-level QC report",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_version",
+    "report_id",
+    "status",
+    "metadata_manifest_sha256",
+    "qc_preregistration_sha256",
+    "privacy_zone",
+    "contains_r0_locator",
+    "contains_direct_identifiers",
+    "contains_free_text",
+    "publication_allowed",
+    "rows"
+  ],
+  "properties": {
+    "schema_version": {
+      "const": "voice_coach.d08_qc_report.v1"
+    },
+    "report_id": {
+      "type": "string",
+      "pattern": "^d08q_[0-9a-f]{32}$"
+    },
+    "status": {
+      "const": "qc_completed_pending_completion"
+    },
+    "metadata_manifest_sha256": {
+      "$ref": "#/$defs/sha256"
+    },
+    "qc_preregistration_sha256": {
+      "$ref": "#/$defs/sha256"
+    },
+    "privacy_zone": {
+      "const": "D1_pseudonymized_restricted_qc"
+    },
+    "contains_r0_locator": {
+      "const": false
+    },
+    "contains_direct_identifiers": {
+      "const": false
+    },
+    "contains_free_text": {
+      "const": false
+    },
+    "publication_allowed": {
+      "const": false
+    },
+    "rows": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "$ref": "#/$defs/qcRow"
+      }
+    }
+  },
+  "$defs": {
+    "sha256": {
+      "type": "string",
+      "pattern": "^[0-9a-f]{64}$"
+    },
+    "qcRow": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "recording_id",
+        "decoder_error_count",
+        "clipping_ratio",
+        "dc_offset_metric_id",
+        "dc_offset_value",
+        "dc_offset_pass",
+        "content_match_metric_id",
+        "content_match_value",
+        "content_match_pass",
+        "asr_used_for_triage_only",
+        "asr_used_as_final_qc",
+        "human_reviewer_pool_size",
+        "human_listener_confirmation_count",
+        "human_content_and_pronunciation_confirmed",
+        "noise_metric_id",
+        "noise_value",
+        "noise_pass",
+        "reverb_metric_id",
+        "reverb_value",
+        "reverb_pass",
+        "interruption_metric_id",
+        "interruption_value",
+        "interruption_pass",
+        "adjudication_required",
+        "adjudication_status",
+        "adjudication_receipt_sha256",
+        "final_qc_pass",
+        "exclusion_reason_code"
+      ],
+      "properties": {
+        "recording_id": {
+          "type": "string",
+          "pattern": "^d08r_[0-9a-f]{32}$"
+        },
+        "decoder_error_count": {
+          "const": 0
+        },
+        "clipping_ratio": {
+          "type": "number",
+          "minimum": 0,
+          "exclusiveMaximum": 0.001
+        },
+        "dc_offset_metric_id": {
+          "type": "string",
+          "minLength": 1
+        },
+        "dc_offset_value": {
+          "type": "number"
+        },
+        "dc_offset_pass": {
+          "type": "boolean"
+        },
+        "content_match_metric_id": {
+          "type": "string",
+          "minLength": 1
+        },
+        "content_match_value": {
+          "type": "number"
+        },
+        "content_match_pass": {
+          "type": "boolean"
+        },
+        "asr_used_for_triage_only": {
+          "const": true
+        },
+        "asr_used_as_final_qc": {
+          "const": false
+        },
+        "human_reviewer_pool_size": {
+          "const": 2
+        },
+        "human_listener_confirmation_count": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 2
+        },
+        "human_content_and_pronunciation_confirmed": {
+          "type": "boolean"
+        },
+        "noise_metric_id": {
+          "type": "string",
+          "minLength": 1
+        },
+        "noise_value": {
+          "type": "number"
+        },
+        "noise_pass": {
+          "type": "boolean"
+        },
+        "reverb_metric_id": {
+          "type": "string",
+          "minLength": 1
+        },
+        "reverb_value": {
+          "type": "number"
+        },
+        "reverb_pass": {
+          "type": "boolean"
+        },
+        "interruption_metric_id": {
+          "type": "string",
+          "minLength": 1
+        },
+        "interruption_value": {
+          "type": "number"
+        },
+        "interruption_pass": {
+          "type": "boolean"
+        },
+        "adjudication_required": {
+          "type": "boolean"
+        },
+        "adjudication_status": {
+          "enum": [
+            "not_required",
+            "completed"
+          ]
+        },
+        "adjudication_receipt_sha256": {
+          "oneOf": [
+            {
+              "type": "null"
+            },
+            {
+              "$ref": "#/$defs/sha256"
+            }
+          ]
+        },
+        "final_qc_pass": {
+          "type": "boolean"
+        },
+        "exclusion_reason_code": {
+          "enum": [
+            "none",
+            "clipping",
+            "decoder",
+            "dc_offset",
+            "content_mismatch",
+            "noise",
+            "reverb",
+            "interruption",
+            "human_review",
+            "adjudication"
+          ]
+        }
+      }
+    }
+  }
+}

@@ -1,0 +1,70 @@
+{
+  "schema_version": "voice_coach.r03_pareto_diversity_preregistration.v1",
+  "preregistration_id": "TBD_PREREGISTRATION",
+  "status": "TBD_PREREGISTRATION",
+  "registered_at_utc": "TBD_PREREGISTRATION",
+  "registered_by_role": "TBD_PREREGISTRATION",
+  "frozen_before_r02_eligible_data_access": true,
+  "r00_card_sha256": "08dc149ccf10006a587e6216dda0471c19b5c55eab6b320b4348587527d82c4d",
+  "r01_config_sha256": "bb8cc083b83714b6c8d283ad918cb1cceee76c64c176e98d6aba6d85d558488d",
+  "r02_config_sha256": "9824d024d5b49e1dea63575514206008a59a97075ea543ed3967003e3f34e473",
+  "objective_contract": {
+    "objective_ids": [
+      "naturalness",
+      "prosody_fit",
+      "pedagogical_clarity",
+      "diversity"
+    ],
+    "naturalness_measurement_source": "TBD_PREREGISTRATION",
+    "prosody_fit_measurement_source": "TBD_PREREGISTRATION",
+    "pedagogical_clarity_measurement_source": "TBD_PREREGISTRATION",
+    "diversity_measurement_source": "TBD_PREREGISTRATION",
+    "direction_by_objective": "TBD_PREREGISTRATION",
+    "missing_value_policy": "TBD_PREREGISTRATION"
+  },
+  "normalization_contract": {
+    "method": "TBD_PREREGISTRATION",
+    "fit_population": "TBD_PREREGISTRATION",
+    "fit_scope": "TBD_PREREGISTRATION",
+    "clipping_policy": "TBD_PREREGISTRATION",
+    "constant_objective_policy": "TBD_PREREGISTRATION"
+  },
+  "pareto_contract": {
+    "dominance_definition": "TBD_PREREGISTRATION",
+    "epsilon_or_tolerance": "TBD_PREREGISTRATION",
+    "tie_policy": "TBD_PREREGISTRATION",
+    "frontier_shortfall_policy": "TBD_PREREGISTRATION",
+    "frontier_overflow_policy": "TBD_PREREGISTRATION"
+  },
+  "diversity_contract": {
+    "distance_metric": "TBD_PREREGISTRATION",
+    "distance_feature_allowlist": "TBD_PREREGISTRATION",
+    "feature_weights": "TBD_PREREGISTRATION",
+    "minimum_separation": "TBD_PREREGISTRATION",
+    "cluster_or_subsampling_algorithm": "TBD_PREREGISTRATION",
+    "speaker_distance_policy": "TBD_PREREGISTRATION",
+    "speed_distance_policy": "TBD_PREREGISTRATION",
+    "pitch_distance_policy": "TBD_PREREGISTRATION"
+  },
+  "selection_contract": {
+    "seed": "TBD_PREREGISTRATION",
+    "candidate_order_policy": "TBD_PREREGISTRATION",
+    "selected_count_policy": "TBD_PREREGISTRATION",
+    "source_balance_tie_break_policy": "TBD_PREREGISTRATION",
+    "determinism_replay_count": "TBD_PREREGISTRATION"
+  },
+  "blindness_contract": {
+    "selector_source_kind_blind": true,
+    "selector_source_attestation_blind": true,
+    "selector_r04_label_blind": true,
+    "selector_mos_cmos_blind": true,
+    "selector_learning_outcome_blind": true,
+    "source_join_only_after_selection": true,
+    "outcome_driven_reselection_allowed": false
+  },
+  "approval": {
+    "decision": "TBD_PREREGISTRATION",
+    "protocol_sha256": "TBD_PREREGISTRATION",
+    "signed_receipt_sha256": "TBD_PREREGISTRATION"
+  }
+}

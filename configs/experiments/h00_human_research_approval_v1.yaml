@@ -1,0 +1,186 @@
+schema_version: 1
+
+experiment:
+  id: h00_human_research_approval_v1
+  stage: wp9_h00_official_human_research_determination
+  implementation_status: production_static_preflight_only
+  official_determination_created_by_this_package: false
+  institution_or_irb_decision_inferred: false
+  portal_submission_allowed: false
+  institution_contact_allowed: false
+  participant_recruitment_allowed: false
+  consent_collection_allowed: false
+  audio_recording_allowed: false
+  intervention_or_randomization_allowed: false
+  production_or_completion_claim_allowed: false
+
+canonical_sources:
+  access_scope: C1_public_or_A1_aggregate_static_pins_only
+  pins:
+    - path: configs/human_research/h00_human_research_approval_public_v1.schema.json
+      sha256: 39c0aaf985dcf013cdae2d8e0276b8b838da3bcb11c945e4b88abf83d6bc8a20
+    - path: configs/human_research/h00_human_research_approval_public_v1.template.json
+      sha256: 0f4754ee631e3c75c66ad942fc74b93092b87b8bf49ab02f94b2393bf6324b3d
+    - path: configs/human_research/h00_official_document_attestation_v1.schema.json
+      sha256: d157f4c68efa208116155392694d8319101a5fe8e374477c73e2a6ffb48619bc
+    - path: configs/human_research/h00_official_document_attestation_v1.template.json
+      sha256: e6214303e9d049c841571fe6ba61040bd3a0109d14c476f34b0f6838ef6df0a5
+    - path: configs/experiments/learning_effect_power_v1.yaml
+      sha256: 67737548ce1a22b7716fb5c58635f55a216ff7059fd709476198df3d5fb75c86
+    - path: artifacts/planning/learning_effect_power_sensitivity_v1.json
+      sha256: d63dc95bb4df4967775781def0386beb7ec959c396d847ae6b6e8c982dbce66d
+    - path: scripts/check_project_constraints.py
+      sha256: 7c885d9d863d1a505bb074e5be33b63e262b191585bcf7a02a03162ca0f1ba86
+
+official_approval:
+  approval_path: artifacts/external_attestations/h00/h00_human_research_approval_public_v1.json
+  approval_sha256: TBD_H00_APPROVAL
+  schema_path: configs/human_research/h00_human_research_approval_public_v1.schema.json
+  schema_sha256: 39c0aaf985dcf013cdae2d8e0276b8b838da3bcb11c945e4b88abf83d6bc8a20
+  template_path: configs/human_research/h00_human_research_approval_public_v1.template.json
+  template_sha256: 0f4754ee631e3c75c66ad942fc74b93092b87b8bf49ab02f94b2393bf6324b3d
+  required_schema_version: voice_coach.h00_human_research_approval_public.v1
+  required_status: active_official_determination
+  accepted_positive_determination_categories:
+    - approved
+    - exempt_or_waived_with_explicit_authorization
+    - equivalent_official_authorization
+  official_document_and_institution_source_required: true
+  actual_pilot_scope_required: true
+  recruitment_consent_recording_authorization_required: true
+  no_tbd_allowed_in_approved_artifact: true
+
+official_document_attestation:
+  attestation_path: artifacts/external_attestations/h00/h00_official_document_attestation_v1.json
+  attestation_sha256: TBD_H00_ATTESTATION
+  schema_path: configs/human_research/h00_official_document_attestation_v1.schema.json
+  schema_sha256: d157f4c68efa208116155392694d8319101a5fe8e374477c73e2a6ffb48619bc
+  template_path: configs/human_research/h00_official_document_attestation_v1.template.json
+  template_sha256: e6214303e9d049c841571fe6ba61040bd3a0109d14c476f34b0f6838ef6df0a5
+  required_schema_version: voice_coach.h00_official_document_attestation.v1
+  required_status: attested_and_active
+  restricted_locator_sha256_only: true
+  actual_locator_path_or_url_in_public_artifact_allowed: false
+  authorized_custodian_verification_required: true
+  no_tbd_allowed_in_approved_attestation: true
+
+study_contract:
+  comparisons:
+    - c3_minus_c0
+    - c5_minus_c3
+  design: participant_level_parallel_1_to_1_randomized
+  allocation_ratio: "1:1"
+  stratification_factors:
+    - l1
+    - baseline_comprehensibility_band
+  allocation_concealment_required: true
+  intervention_duration: P2W
+  timepoints:
+    - pre
+    - post_at_2_weeks
+    - retention_4_weeks_after_post
+  c0_c3_c5_manual_version_and_sha_required: true
+  manual_freeze_before_recruitment_required: true
+  participant_blinding_claim_allowed: false
+  blind_outcome_raters_required: true
+
+ethics_privacy_requirements:
+  audio_personal_and_sensitive_data_scope_required: true
+  purpose_limitation_required: true
+  retention_access_deletion_withdrawal_required: true
+  explicit_audio_recording_consent_required: true
+  ai_incorrect_feedback_risk_disclosure_required: true
+  human_escalation_required: true
+  recruitment_compensation_minors_policy_required: true
+  incident_response_required: true
+  pseudonym_key_separation_required: true
+  external_and_tts_transfer_policy_required: true
+  pause_stop_resume_policy_required: true
+  amendment_expiry_and_current_status_required: true
+  c1_a1_public_summary_must_be_pii_free: true
+  participant_row_or_raw_path_in_public_summary_allowed: false
+  raw_or_identifiable_data_publication_allowed: false
+
+unresolved_external_fields:
+  institution_form_and_body: TBD_EXTERNAL
+  official_determination_category: TBD_EXTERNAL
+  official_determination_id_sha256: TBD_EXTERNAL
+  protocol_version_and_sha256: TBD_EXTERNAL
+  c0_c3_c5_manual_versions_and_sha256: TBD_PREREGISTRATION
+  allocation_method_and_receipts: TBD_PREREGISTRATION
+  retention_duration_or_trigger: TBD_EXTERNAL
+  compensation_terms_and_withdrawal_treatment: TBD_EXTERNAL
+  minors_policy_and_protections: TBD_EXTERNAL
+  external_tts_cross_border_transfer_scope: TBD_EXTERNAL
+  amendment_expiry_and_current_status: TBD_EXTERNAL
+  official_signed_and_archive_receipts: TBD_EXTERNAL
+
+privacy_and_publication:
+  approval_artifact_zone: A1_C1_public_summary_only
+  attestation_artifact_zone: A1_C1_public_summary_only
+  full_official_document_zone: R1_restricted_official_archive
+  full_official_document_read_allowed_by_this_package: false
+  restricted_locator_resolution_allowed_by_this_package: false
+  public_artifact_may_contain_only_hashed_institution_and_determination_ids: true
+  forbidden_recursive_fields:
+    - name
+    - email
+    - phone
+    - address
+    - legal_name
+    - participant_id
+    - participant_rows
+    - raw_participants
+    - consent_records
+    - audio_path
+    - recording_path
+    - official_document_path
+    - official_document_locator
+    - portal_url
+    - url
+    - filename
+    - file_name
+    - approval_number
+    - form_contents
+    - document_contents
+    - free_text
+    - comment
+    - signature_image
+
+non_execution:
+  external_access_allowed: false
+  network_access_allowed: false
+  browser_access_allowed: false
+  portal_submission_allowed: false
+  institution_contact_allowed: false
+  official_decision_generation_allowed: false
+  participant_recruitment_allowed: false
+  participant_consent_collection_allowed: false
+  participant_randomization_allowed: false
+  participant_row_access_allowed: false
+  audio_recording_allowed: false
+  audio_read_or_write_allowed: false
+  personal_or_sensitive_data_access_allowed: false
+  intervention_delivery_allowed: false
+  model_access_allowed: false
+  gpu_access_allowed: false
+  external_or_tts_transfer_allowed: false
+  output_write_allowed: false
+  registry_or_commit_write_allowed: false
+  completion_or_publication_claim_allowed: false
+
+execution_order:
+  - validate_h00_static_config_sources_schemas_and_fail_closed_templates
+  - require_exact_h00_public_approval_sha_before_path_resolution
+  - validate_actual_public_approval_and_official_scope
+  - require_exact_official_document_attestation_sha_before_path_resolution
+  - validate_attestation_hash_chain_without_resolving_restricted_locator
+  - stop_before_external_browser_submission_contact_participant_audio_model_or_output
+
+outputs:
+  validation_report_path: artifacts/human_research/h00/h00_approval_validation_v1.json
+  registry_path: artifacts/experiment_registry/h00-human-research-approval-v1/metadata.json
+  failure_report_path: artifacts/human_research/h00/failure.json
+  no_overwrite: true
+  atomic_publish_required: true
+  write_enabled_in_this_package: false

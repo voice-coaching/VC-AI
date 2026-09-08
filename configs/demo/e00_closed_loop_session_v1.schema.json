@@ -1,0 +1,205 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://voice-coach.local/schemas/e00_closed_loop_session_v1.schema.json",
+  "title": "E00 restricted closed-loop session manifest",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_version",
+    "session_id",
+    "execution_mode",
+    "privacy_zone",
+    "target_text_sha256",
+    "authorization_sha256",
+    "preregistration_sha256",
+    "s108_completion_commit_sha256",
+    "s108_production_handoff_sha256",
+    "e01_completion_commit_sha256",
+    "c02_bundle_commit_sha256",
+    "c03_report_sha256",
+    "e02_preregistration_sha256",
+    "r03_bank_manifest_sha256",
+    "d08_completion_sha256",
+    "reference_handoff_sha256",
+    "attempt_1",
+    "attempt_2",
+    "same_scorer_contract",
+    "contains_direct_identifiers",
+    "contains_plain_target_or_transcript",
+    "contains_audio_bytes_or_paths",
+    "contains_numeric_model_scores",
+    "contains_locked_result_copy",
+    "contains_free_text",
+    "user_or_participant_data_fabricated",
+    "binding_sha256"
+  ],
+  "properties": {
+    "schema_version": {
+      "const": "voice_coach.e00_closed_loop_session.v1"
+    },
+    "session_id": {
+      "type": "string",
+      "pattern": "^e00session_[0-9a-f]{32}$"
+    },
+    "execution_mode": {
+      "enum": [
+        "human_authorized_demo",
+        "nonhuman_test_fixture"
+      ]
+    },
+    "privacy_zone": {
+      "const": "D1_pseudonymized_restricted_demo"
+    },
+    "target_text_sha256": {
+      "$ref": "#/$defs/sha256"
+    },
+    "authorization_sha256": {
+      "$ref": "#/$defs/sha256"
+    },
+    "preregistration_sha256": {
+      "$ref": "#/$defs/sha256"
+    },
+    "s108_completion_commit_sha256": {
+      "$ref": "#/$defs/sha256"
+    },
+    "s108_production_handoff_sha256": {
+      "$ref": "#/$defs/sha256"
+    },
+    "e01_completion_commit_sha256": {
+      "$ref": "#/$defs/sha256"
+    },
+    "c02_bundle_commit_sha256": {
+      "$ref": "#/$defs/sha256"
+    },
+    "c03_report_sha256": {
+      "$ref": "#/$defs/sha256"
+    },
+    "e02_preregistration_sha256": {
+      "$ref": "#/$defs/sha256"
+    },
+    "r03_bank_manifest_sha256": {
+      "$ref": "#/$defs/sha256"
+    },
+    "d08_completion_sha256": {
+      "$ref": "#/$defs/sha256"
+    },
+    "reference_handoff_sha256": {
+      "$ref": "#/$defs/sha256"
+    },
+    "attempt_1": {
+      "$ref": "#/$defs/attempt"
+    },
+    "attempt_2": {
+      "$ref": "#/$defs/attempt"
+    },
+    "same_scorer_contract": {
+      "$ref": "#/$defs/sameScorer"
+    },
+    "contains_direct_identifiers": {
+      "const": false
+    },
+    "contains_plain_target_or_transcript": {
+      "const": false
+    },
+    "contains_audio_bytes_or_paths": {
+      "const": false
+    },
+    "contains_numeric_model_scores": {
+      "const": false
+    },
+    "contains_locked_result_copy": {
+      "const": false
+    },
+    "contains_free_text": {
+      "const": false
+    },
+    "user_or_participant_data_fabricated": {
+      "const": false
+    },
+    "binding_sha256": {
+      "$ref": "#/$defs/sha256"
+    }
+  },
+  "$defs": {
+    "sha256": {
+      "type": "string",
+      "pattern": "^[0-9a-f]{64}$"
+    },
+    "attempt": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "attempt_id_sha256",
+        "audio_object_id_sha256",
+        "audio_content_sha256",
+        "diagnostic_handoff_sha256",
+        "scorer_identity_sha256",
+        "checkpoint_sha256",
+        "calibrator_sha256",
+        "threshold_policy_sha256",
+        "model_score_embedded",
+        "raw_audio_locator_embedded"
+      ],
+      "properties": {
+        "attempt_id_sha256": {
+          "$ref": "#/$defs/sha256"
+        },
+        "audio_object_id_sha256": {
+          "$ref": "#/$defs/sha256"
+        },
+        "audio_content_sha256": {
+          "$ref": "#/$defs/sha256"
+        },
+        "diagnostic_handoff_sha256": {
+          "$ref": "#/$defs/sha256"
+        },
+        "scorer_identity_sha256": {
+          "$ref": "#/$defs/sha256"
+        },
+        "checkpoint_sha256": {
+          "$ref": "#/$defs/sha256"
+        },
+        "calibrator_sha256": {
+          "$ref": "#/$defs/sha256"
+        },
+        "threshold_policy_sha256": {
+          "$ref": "#/$defs/sha256"
+        },
+        "model_score_embedded": {
+          "const": false
+        },
+        "raw_audio_locator_embedded": {
+          "const": false
+        }
+      }
+    },
+    "sameScorer": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "same_model_identity",
+        "same_checkpoint",
+        "same_calibrator",
+        "same_threshold_policy",
+        "result_based_model_or_threshold_change_allowed"
+      ],
+      "properties": {
+        "same_model_identity": {
+          "const": true
+        },
+        "same_checkpoint": {
+          "const": true
+        },
+        "same_calibrator": {
+          "const": true
+        },
+        "same_threshold_policy": {
+          "const": true
+        },
+        "result_based_model_or_threshold_change_allowed": {
+          "const": false
+        }
+      }
+    }
+  }
+}

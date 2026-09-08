@@ -1,0 +1,274 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "voice_coach.d08_completion.v1",
+  "title": "D08 aggregate completion artifact",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_version",
+    "completion_id",
+    "status",
+    "config_sha256",
+    "r00_card_sha256",
+    "h00_approval_sha256",
+    "individual_consent_attestation_sha256",
+    "recording_rights_attestation_sha256",
+    "qc_preregistration_sha256",
+    "metadata_manifest_sha256",
+    "qc_report_sha256",
+    "privacy_zone",
+    "contains_row_level_data",
+    "contains_direct_or_pseudonymous_ids",
+    "contains_audio_or_locator_hashes",
+    "contains_free_text",
+    "sentence_count",
+    "binding_minimum_distinct_speakers_per_sentence",
+    "planning_target_minimum_distinct_speakers_per_sentence",
+    "planning_target_met_all_sentences",
+    "same_equipment_and_space_verified",
+    "format_and_distance_verified",
+    "source_license_honesty_verified",
+    "qc_adjudication_contract_verified",
+    "sentences",
+    "totals",
+    "actual_recruitment_completed",
+    "actual_consent_completed",
+    "actual_recording_completed",
+    "actual_qc_completed",
+    "completion_claim_allowed",
+    "publication_allowed",
+    "implementation_git_commit"
+  ],
+  "properties": {
+    "schema_version": {
+      "const": "voice_coach.d08_completion.v1"
+    },
+    "completion_id": {
+      "type": "string",
+      "pattern": "^d08c_[0-9a-f]{32}$"
+    },
+    "status": {
+      "const": "completed"
+    },
+    "config_sha256": {
+      "$ref": "#/$defs/sha256"
+    },
+    "r00_card_sha256": {
+      "$ref": "#/$defs/sha256"
+    },
+    "h00_approval_sha256": {
+      "$ref": "#/$defs/sha256"
+    },
+    "individual_consent_attestation_sha256": {
+      "$ref": "#/$defs/sha256"
+    },
+    "recording_rights_attestation_sha256": {
+      "$ref": "#/$defs/sha256"
+    },
+    "qc_preregistration_sha256": {
+      "$ref": "#/$defs/sha256"
+    },
+    "metadata_manifest_sha256": {
+      "$ref": "#/$defs/sha256"
+    },
+    "qc_report_sha256": {
+      "$ref": "#/$defs/sha256"
+    },
+    "privacy_zone": {
+      "const": "A1_aggregate_review_required"
+    },
+    "contains_row_level_data": {
+      "const": false
+    },
+    "contains_direct_or_pseudonymous_ids": {
+      "const": false
+    },
+    "contains_audio_or_locator_hashes": {
+      "const": false
+    },
+    "contains_free_text": {
+      "const": false
+    },
+    "sentence_count": {
+      "const": 20
+    },
+    "binding_minimum_distinct_speakers_per_sentence": {
+      "type": "integer",
+      "minimum": 1
+    },
+    "planning_target_minimum_distinct_speakers_per_sentence": {
+      "const": 4
+    },
+    "planning_target_met_all_sentences": {
+      "type": "boolean"
+    },
+    "same_equipment_and_space_verified": {
+      "const": true
+    },
+    "format_and_distance_verified": {
+      "const": true
+    },
+    "source_license_honesty_verified": {
+      "const": true
+    },
+    "qc_adjudication_contract_verified": {
+      "const": true
+    },
+    "sentences": {
+      "type": "array",
+      "minItems": 20,
+      "maxItems": 20,
+      "items": {
+        "$ref": "#/$defs/sentenceSummary"
+      }
+    },
+    "totals": {
+      "$ref": "#/$defs/totals"
+    },
+    "actual_recruitment_completed": {
+      "const": true
+    },
+    "actual_consent_completed": {
+      "const": true
+    },
+    "actual_recording_completed": {
+      "const": true
+    },
+    "actual_qc_completed": {
+      "const": true
+    },
+    "completion_claim_allowed": {
+      "const": true
+    },
+    "publication_allowed": {
+      "const": false
+    },
+    "implementation_git_commit": {
+      "type": "string",
+      "pattern": "^[0-9a-f]{40}$"
+    }
+  },
+  "$defs": {
+    "sha256": {
+      "type": "string",
+      "pattern": "^[0-9a-f]{64}$"
+    },
+    "sentenceSummary": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "sentence_id",
+        "distinct_speaker_count",
+        "accepted_natural_take_count",
+        "accepted_clear_educational_take_count",
+        "accepted_take_count",
+        "speaker_floor_pass",
+        "planning_target_met",
+        "exact_take_pattern_pass",
+        "all_qc_pass"
+      ],
+      "properties": {
+        "sentence_id": {
+          "type": "string",
+          "pattern": "^R00-(0[1-9]|1[0-9]|20)$"
+        },
+        "distinct_speaker_count": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "accepted_natural_take_count": {
+          "type": "integer",
+          "minimum": 2
+        },
+        "accepted_clear_educational_take_count": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "accepted_take_count": {
+          "type": "integer",
+          "minimum": 3
+        },
+        "speaker_floor_pass": {
+          "const": true
+        },
+        "planning_target_met": {
+          "type": "boolean"
+        },
+        "exact_take_pattern_pass": {
+          "const": true
+        },
+        "all_qc_pass": {
+          "const": true
+        }
+      }
+    },
+    "totals": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "distinct_speaker_sentence_pairs",
+        "accepted_natural_take_count",
+        "accepted_clear_educational_take_count",
+        "accepted_take_count",
+        "failed_take_count",
+        "decoder_error_count",
+        "clipping_failure_count",
+        "dc_offset_failure_count",
+        "content_mismatch_failure_count",
+        "noise_failure_count",
+        "reverb_failure_count",
+        "interruption_failure_count",
+        "human_review_failure_count",
+        "adjudication_failure_count"
+      ],
+      "properties": {
+        "distinct_speaker_sentence_pairs": {
+          "type": "integer",
+          "minimum": 20
+        },
+        "accepted_natural_take_count": {
+          "type": "integer",
+          "minimum": 40
+        },
+        "accepted_clear_educational_take_count": {
+          "type": "integer",
+          "minimum": 20
+        },
+        "accepted_take_count": {
+          "type": "integer",
+          "minimum": 60
+        },
+        "failed_take_count": {
+          "const": 0
+        },
+        "decoder_error_count": {
+          "const": 0
+        },
+        "clipping_failure_count": {
+          "const": 0
+        },
+        "dc_offset_failure_count": {
+          "const": 0
+        },
+        "content_mismatch_failure_count": {
+          "const": 0
+        },
+        "noise_failure_count": {
+          "const": 0
+        },
+        "reverb_failure_count": {
+          "const": 0
+        },
+        "interruption_failure_count": {
+          "const": 0
+        },
+        "human_review_failure_count": {
+          "const": 0
+        },
+        "adjudication_failure_count": {
+          "const": 0
+        }
+      }
+    }
+  }
+}

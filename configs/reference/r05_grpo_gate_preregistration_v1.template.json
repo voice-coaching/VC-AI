@@ -1,0 +1,133 @@
+{
+  "schema_version": "voice_coach.r05_grpo_gate_preregistration.v1",
+  "preregistration_id": "TBD_PREREGISTRATION",
+  "status": "draft_not_approved",
+  "frozen_at": "TBD_PREREGISTRATION",
+  "independent_reviewer_role": "TBD_PREREGISTRATION",
+  "independent_review_attestation_sha256": "TBD_PREREGISTRATION",
+  "evidence_bindings": {
+    "s108_commit_sha256": "TBD_PREREGISTRATION",
+    "s203_commit_sha256": "TBD_PREREGISTRATION",
+    "r04_commit_sha256": "TBD_PREREGISTRATION",
+    "h00_approval_sha256": "TBD_PREREGISTRATION",
+    "h04_report_sha256": "TBD_PREREGISTRATION"
+  },
+  "gate_definitions": [
+    {
+      "gate_id": "s1_phone_f1",
+      "operator": "greater_than_or_equal",
+      "threshold": 0.8,
+      "metric_or_estimand_id": "TBD_PREREGISTRATION",
+      "artifact_pointer": "TBD_PREREGISTRATION",
+      "population_id": "TBD_PREREGISTRATION",
+      "alignment_id": "TBD_PREREGISTRATION",
+      "confidence_interval_method": "TBD_PREREGISTRATION",
+      "confidence_level": "TBD_PREREGISTRATION",
+      "decision_rule_id": "TBD_PREREGISTRATION",
+      "missing_or_invalid_policy": "TBD_PREREGISTRATION"
+    },
+    {
+      "gate_id": "s1_utterance_icc",
+      "operator": "greater_than_or_equal",
+      "threshold": 0.7,
+      "metric_or_estimand_id": "TBD_PREREGISTRATION",
+      "artifact_pointer": "TBD_PREREGISTRATION",
+      "population_id": "TBD_PREREGISTRATION",
+      "alignment_id": "TBD_PREREGISTRATION",
+      "confidence_interval_method": "TBD_PREREGISTRATION",
+      "confidence_level": "TBD_PREREGISTRATION",
+      "decision_rule_id": "TBD_PREREGISTRATION",
+      "missing_or_invalid_policy": "TBD_PREREGISTRATION"
+    },
+    {
+      "gate_id": "s2_severe_error_recall",
+      "operator": "greater_than_or_equal",
+      "threshold": 0.8,
+      "metric_or_estimand_id": "TBD_PREREGISTRATION",
+      "artifact_pointer": "TBD_PREREGISTRATION",
+      "population_id": "TBD_PREREGISTRATION",
+      "alignment_id": "TBD_PREREGISTRATION",
+      "confidence_interval_method": "TBD_PREREGISTRATION",
+      "confidence_level": "TBD_PREREGISTRATION",
+      "decision_rule_id": "TBD_PREREGISTRATION",
+      "missing_or_invalid_policy": "TBD_PREREGISTRATION"
+    },
+    {
+      "gate_id": "multi_reference_blind_superiority",
+      "operator": "preregistered_superiority",
+      "threshold": null,
+      "metric_or_estimand_id": "TBD_PREREGISTRATION",
+      "artifact_pointer": "TBD_PREREGISTRATION",
+      "population_id": "TBD_PREREGISTRATION",
+      "alignment_id": "TBD_PREREGISTRATION",
+      "confidence_interval_method": "TBD_PREREGISTRATION",
+      "confidence_level": "TBD_PREREGISTRATION",
+      "decision_rule_id": "TBD_PREREGISTRATION",
+      "superiority_comparator": "TBD_PREREGISTRATION",
+      "superiority_estimand": "TBD_PREREGISTRATION",
+      "superiority_margin": "TBD_PREREGISTRATION",
+      "blindness_attestation_sha256": "TBD_PREREGISTRATION",
+      "missing_or_invalid_policy": "TBD_PREREGISTRATION"
+    },
+    {
+      "gate_id": "actual_pilot_learning_effect_signal",
+      "operator": "preregistered_signal",
+      "threshold": null,
+      "metric_or_estimand_id": "TBD_PREREGISTRATION",
+      "artifact_pointer": "TBD_PREREGISTRATION",
+      "population_id": "TBD_PREREGISTRATION",
+      "alignment_id": "TBD_PREREGISTRATION",
+      "confidence_interval_method": "TBD_PREREGISTRATION",
+      "confidence_level": "TBD_PREREGISTRATION",
+      "decision_rule_id": "TBD_PREREGISTRATION",
+      "effect_estimand": "TBD_PREREGISTRATION",
+      "effect_size_definition": "TBD_PREREGISTRATION",
+      "signal_definition": "TBD_PREREGISTRATION",
+      "actual_participant_report_required": true,
+      "h01_planning_document_may_satisfy_gate": false,
+      "missing_or_invalid_policy": "TBD_PREREGISTRATION"
+    }
+  ],
+  "overall_decision_rule": {
+    "all_five_gates_required_for_go": true,
+    "any_failed_gate_outcome": "TBD_PREREGISTRATION",
+    "any_missing_or_invalid_gate_outcome": "TBD_PREREGISTRATION",
+    "posthoc_threshold_or_estimand_change_allowed": false,
+    "automatic_score_may_replace_blind_or_learning_gate": false
+  },
+  "multiplicity_and_missingness": {
+    "confirmatory_family": "TBD_PREREGISTRATION",
+    "multiplicity_control": "TBD_PREREGISTRATION",
+    "missing_data_policy": "TBD_PREREGISTRATION",
+    "sensitivity_analysis": "TBD_PREREGISTRATION"
+  },
+  "model_reward_license_safety": {
+    "exact_model_family": "TBD_PREREGISTRATION",
+    "exact_model_artifact_id": "TBD_PREREGISTRATION",
+    "exact_model_revision": "TBD_PREREGISTRATION",
+    "model_artifact_sha256": "TBD_PREREGISTRATION",
+    "code_license_id": "TBD_PREREGISTRATION",
+    "code_license_evidence_sha256": "TBD_PREREGISTRATION",
+    "weight_license_id": "TBD_PREREGISTRATION",
+    "weight_license_evidence_sha256": "TBD_PREREGISTRATION",
+    "training_data_license_id": "TBD_PREREGISTRATION",
+    "training_data_license_evidence_sha256": "TBD_PREREGISTRATION",
+    "reward_implementation_id": "TBD_PREREGISTRATION",
+    "reward_implementation_sha256": "TBD_PREREGISTRATION",
+    "best_of_n_or_rejection_sampling_directionality_rule": "TBD_PREREGISTRATION",
+    "reward_directionality_evidence_sha256": "TBD_PREREGISTRATION",
+    "reward_hacking_audit_protocol": "TBD_PREREGISTRATION",
+    "reward_hacking_pass_rule": "TBD_PREREGISTRATION",
+    "safety_evaluation_protocol": "TBD_PREREGISTRATION",
+    "safety_pass_rule": "TBD_PREREGISTRATION",
+    "rollback_rule": "TBD_PREREGISTRATION"
+  },
+  "integrity": {
+    "aggregate_only_decision": true,
+    "row_level_data_allowed": false,
+    "direct_identifiers_allowed": false,
+    "free_text_allowed": false,
+    "training_download_model_gpu_or_reward_execution_allowed": false,
+    "binding_sha256": "TBD_PREREGISTRATION"
+  }
+}

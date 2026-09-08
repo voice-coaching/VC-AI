@@ -1,0 +1,127 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "voice_coach.g04_t43_manifest.v1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_version",
+    "status",
+    "expected_count",
+    "selection_policy",
+    "counts",
+    "source",
+    "items",
+    "privacy"
+  ],
+  "properties": {
+    "schema_version": {"const": "voice_coach.g04_t43_manifest.v1"},
+    "status": {"const": "frozen_selection"},
+    "expected_count": {"const": 43},
+    "selection_policy": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "set_operation",
+        "alignment_drift_rule",
+        "ai_mismatch_outcomes",
+        "accuracy_denominator_allowed",
+        "alignment_parameters"
+      ],
+      "properties": {
+        "set_operation": {"const": "alignment_drift_union_ai_non_abstain_mismatch"},
+        "alignment_drift_rule": {"const": "alignment_record_error_count_gt_0"},
+        "ai_mismatch_outcomes": {
+          "const": [
+            "both_annotations_mismatch",
+            "realized_annotation_mismatch",
+            "target_annotation_mismatch"
+          ]
+        },
+        "accuracy_denominator_allowed": {"const": false},
+        "alignment_parameters": {
+          "const": {
+            "tolerance_seconds": 0.03,
+            "minimum_overlap_ratio": 0.5,
+            "preserve_one_to_many": false
+          }
+        }
+      }
+    },
+    "counts": {
+      "const": {
+        "alignment_drift_count": 19,
+        "ai_non_abstain_mismatch_count": 26,
+        "intersection_count": 2,
+        "union_count": 43
+      }
+    },
+    "source": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "worksheet_sha256",
+        "alignment_details_sha256",
+        "proxy_state_sha256",
+        "alignment_policy_source_sha256",
+        "align_intervals_source_sha256"
+      ],
+      "properties": {
+        "worksheet_sha256": {"$ref": "#/$defs/sha256"},
+        "alignment_details_sha256": {"$ref": "#/$defs/sha256"},
+        "proxy_state_sha256": {"$ref": "#/$defs/sha256"},
+        "alignment_policy_source_sha256": {"$ref": "#/$defs/sha256"},
+        "align_intervals_source_sha256": {"$ref": "#/$defs/sha256"}
+      }
+    },
+    "items": {
+      "type": "array",
+      "minItems": 43,
+      "maxItems": 43,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "item_sha256",
+          "selection_reasons",
+          "alignment_record_error_count",
+          "ai_annotation_fidelity"
+        ],
+        "properties": {
+          "item_sha256": {"$ref": "#/$defs/sha256"},
+          "selection_reasons": {
+            "type": "array",
+            "minItems": 1,
+            "maxItems": 2,
+            "uniqueItems": true,
+            "items": {
+              "enum": [
+                "alignment_recomputation_drift",
+                "ai_non_abstain_annotation_mismatch"
+              ]
+            }
+          },
+          "alignment_record_error_count": {"type": "integer", "minimum": 0},
+          "ai_annotation_fidelity": {
+            "enum": [
+              "consistent",
+              "target_annotation_mismatch",
+              "realized_annotation_mismatch",
+              "both_annotations_mismatch",
+              "uncertain"
+            ]
+          }
+        }
+      }
+    },
+    "privacy": {
+      "const": {
+        "item_ids_namespaced_sha256_only": true,
+        "raw_ids_paths_audio_or_annotations_included": false,
+        "storage_zone": "R1_restricted_manifest"
+      }
+    }
+  },
+  "$defs": {
+    "sha256": {"type": "string", "pattern": "^[0-9a-f]{64}$"}
+  }
+}

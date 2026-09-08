@@ -1,0 +1,238 @@
+schema_version: 1
+
+experiment:
+  id: r01_human_cosyvoice_candidates_v1
+  stage: wp7_r01_private_candidate_generation
+  implementation_status: static_preflight_only
+  actual_human_recording_allowed: false
+  actual_model_download_allowed: false
+  actual_tts_inference_allowed: false
+  actual_gpu_access_allowed: false
+  actual_audio_read_allowed: false
+  actual_audio_write_allowed: false
+  actual_manifest_write_allowed: false
+  grpo_allowed: false
+  fine_tuning_allowed: false
+  metric_generation_allowed: false
+  publication_allowed: false
+  completion_claim_allowed: false
+
+canonical_sources:
+  access_scope: C1_public_or_aggregate_only
+  pins:
+    - path: artifacts/reference/r00/r00_sentence_card_v1.validation.json
+      sha256: 95b4fd861a3c21222ff13859cfbc9c196e3fd06493852bca823d8a63dc2816dd
+    - path: configs/reference/r00_sentence_card_v1.schema.json
+      sha256: 1f8bcf0325414e1923cda0def9a973ac2f7be7bd85cca4ee869743ef862a7b92
+    - path: configs/reference/r01_candidate_manifest_v1.schema.json
+      sha256: 7ffe1b152276b12621575680d022d9b87cd9c19e7fe36374a3186cf7449e1470
+    - path: configs/reference/r01_cosyvoice_model_attestation_v1.template.json
+      sha256: 2ce20ac3fd17714ff487c47f45b227b490e75fa8bebe6e7596bb4ce8328abc2e
+    - path: configs/reference/r01_human_recording_attestation_v1.template.json
+      sha256: aeeebf426b86427f3f2a1f4fd1adc1f4382aa3ace6d88474feed3d8081ecd096
+    - path: data/reference/r00/CC0_NOTICE.txt
+      sha256: ffd86dc89cf0957dccc61f6ecb7af1c7ebbbdbff2bd87c951e54c40afc1262c9
+    - path: data/reference/r00/r00_sentence_card_v1.json
+      sha256: 08dc149ccf10006a587e6216dda0471c19b5c55eab6b320b4348587527d82c4d
+    - path: scripts/check_project_constraints.py
+      sha256: 7c885d9d863d1a505bb074e5be33b63e262b191585bcf7a02a03162ca0f1ba86
+    - path: scripts/validate_r00_sentence_card.py
+      sha256: 967517e74194936c91dad1eed4fcfb0c059b5480af32b8adfc9725fdb7d6e7d0
+
+predecessor_r00:
+  deep_validation_required: true
+  card_path: data/reference/r00/r00_sentence_card_v1.json
+  card_sha256: 08dc149ccf10006a587e6216dda0471c19b5c55eab6b320b4348587527d82c4d
+  schema_path: configs/reference/r00_sentence_card_v1.schema.json
+  schema_sha256: 1f8bcf0325414e1923cda0def9a973ac2f7be7bd85cca4ee869743ef862a7b92
+  notice_path: data/reference/r00/CC0_NOTICE.txt
+  notice_sha256: ffd86dc89cf0957dccc61f6ecb7af1c7ebbbdbff2bd87c951e54c40afc1262c9
+  validator_path: scripts/validate_r00_sentence_card.py
+  validator_sha256: 967517e74194936c91dad1eed4fcfb0c059b5480af32b8adfc9725fdb7d6e7d0
+  validation_report_path: artifacts/reference/r00/r00_sentence_card_v1.validation.json
+  validation_report_sha256: 95b4fd861a3c21222ff13859cfbc9c196e3fd06493852bca823d8a63dc2816dd
+  required_status: valid
+  required_sentence_count: 20
+  required_r00_completion_claim_allowed: true
+  required_r01_completion_claim_allowed: false
+  tts_or_audio_created_must_be_false: true
+  human_evaluation_completed_must_be_false: true
+
+external_attestations:
+  placeholder: TBD_EXTERNAL_ATTESTATION
+  validate_human_before_audio_or_data_resolution: true
+  validate_cosyvoice_before_model_or_environment_resolution: true
+  human:
+    path: artifacts/external_attestations/r01/human_recording_attestation_v1.json
+    sha256: TBD_EXTERNAL_ATTESTATION
+    required_status: approved_for_r01_recording
+    required_schema_version: voice_coach.r01_human_recording_attestation.v1
+  cosyvoice:
+    path: artifacts/external_attestations/r01/cosyvoice_model_attestation_v1.json
+    sha256: TBD_EXTERNAL_ATTESTATION
+    required_status: approved_for_r01_inference
+    required_schema_version: voice_coach.r01_cosyvoice_model_attestation.v1
+
+candidate_design:
+  sentence_ids:
+    - R00-01
+    - R00-02
+    - R00-03
+    - R00-04
+    - R00-05
+    - R00-06
+    - R00-07
+    - R00-08
+    - R00-09
+    - R00-10
+    - R00-11
+    - R00-12
+    - R00-13
+    - R00-14
+    - R00-15
+    - R00-16
+    - R00-17
+    - R00-18
+    - R00-19
+    - R00-20
+  candidates_per_sentence:
+    minimum: 8
+    planned: 12
+    maximum: 16
+  source_balance:
+    rule: exact_equal_human_and_cosyvoice_within_each_sentence
+    minimum_per_source_per_sentence: 4
+    planned_per_source_per_sentence: 6
+    maximum_per_source_per_sentence: 8
+  candidate_id:
+    scheme: cryptographically_random_uuid4_without_hyphens
+    prefix: r01c_
+    opaque_no_sentence_source_speaker_or_order_encoding: true
+    globally_unique: true
+  diversity_preservation:
+    dimensions:
+      - speaker
+      - speed
+      - pitch
+    minimum_distinct_speakers_per_source_per_sentence: 2
+    required_speed_buckets:
+      - slow
+      - neutral
+      - fast
+    required_pitch_buckets:
+      - low
+      - neutral
+      - high
+    preserve_all_design_cells_until_r02: true
+    posthoc_relabel_or_collapse_allowed: false
+
+human_recordings:
+  source_kind: human_recording
+  required_native_korean_speaker_attestation: true
+  exact_individual_consent_receipt_required: true
+  exact_recording_license_grant_required: true
+  exact_recording_protocol_required: true
+  expired_or_withdrawn_consent_allowed: false
+  raw_capture_zone: R0_restricted
+  identity_mapping_zone: R1_separate_access_controlled
+  pseudonymized_candidate_row_zone: D1_restricted_experiment
+  pseudonymized_candidate_audio_zone: D1_restricted_experiment
+  model_training_allowed: false
+  voice_cloning_allowed: false
+  public_release_allowed: false
+  commercial_use_allowed: false
+
+cosyvoice:
+  source_kind: cosyvoice_tts
+  ledger_observation:
+    canonical_repository: https://github.com/QwenAudio/CosyVoice
+    repository_revision: 074ca6dc9e80a2f424f1f74b48bdd7d3fea531cc
+    repository_license_spdx: Apache-2.0
+    repository_license_sha256: c71d239df91726fc519c6eb72d318ec65820627232b2f796219e87dcf35d0ab4
+    model_provider: FunAudioLLM
+    model_id: CosyVoice2-0.5B
+    model_revision: eec1ae6c79877dbd9379285cf8789c9e0879293d
+    model_card_license_metadata: apache-2.0
+    standalone_weight_license_file_observed: false
+    grpo_recipe_publicly_observed: true
+    grpo_effect_for_this_project_verified: false
+    authorization_inferred_from_ledger: false
+  authorization_decision: TBD_EXTERNAL_ATTESTATION
+  exact_weight_license_decision: TBD_EXTERNAL_ATTESTATION
+  exact_runtime_environment_lock_sha256: TBD_EXTERNAL_ATTESTATION
+  exact_local_weight_bundle_manifest_sha256: TBD_EXTERNAL_ATTESTATION
+  exact_gpu_machine_id: TBD_EXTERNAL_ATTESTATION
+  exact_gpu_device_uuid: TBD_EXTERNAL_ATTESTATION
+  exact_gpu_device_model: TBD_EXTERNAL_ATTESTATION
+  exact_gpu_visible_device_ordinal: TBD_EXTERNAL_ATTESTATION
+  network_download_allowed: false
+  local_files_only: true
+  inference_only: true
+  grpo_allowed: false
+  fine_tuning_allowed: false
+  voice_cloning_allowed: false
+
+privacy_and_consent:
+  manifest_zone: D1_pseudonymized_restricted_experiment
+  candidate_audio_zone: D1_pseudonymized_restricted_experiment
+  human_raw_capture_zone: R0_restricted
+  human_identity_mapping_zone: R1_separate_access_controlled
+  public_zone_allowed: false
+  namespaced_sha256_ids_required: true
+  plaintext_prompt_in_manifest_allowed: false
+  raw_speaker_identity_in_manifest_allowed: false
+  source_path_in_manifest_allowed: false
+  free_text_note_in_manifest_allowed: false
+  biometric_audio_remains_personal_data: true
+  consent_withdrawal_requires_quarantine_and_deletion: true
+  row_or_audio_export_requires_separate_authorization: true
+  forbidden_manifest_fields:
+    - speaker_name
+    - legal_name
+    - email
+    - phone
+    - address
+    - date_of_birth
+    - raw_speaker_id
+    - source_path
+    - audio_path
+    - recording_path
+    - target_text
+    - transcript
+    - free_text_note
+    - r02_score
+    - mos
+    - cmos
+
+publication_gate:
+  r01_candidate_manifest_is_internal_d1_only: true
+  r02_hard_gate_required_before_any_candidate_publication: true
+  r02_required_checks:
+    - asr_content_match
+    - artifact
+    - pause
+    - target_phone
+  r02_gate_status: not_run
+  publication_allowed: false
+  reference_bank_claim_allowed: false
+  quality_superiority_claim_allowed: false
+  learning_effect_claim_allowed: false
+
+execution_order:
+  - validate_r01_c1_config_source_pins_and_templates
+  - deep_validate_r00_completion_from_public_or_aggregate_evidence
+  - validate_exact_human_consent_license_and_recording_attestation
+  - validate_exact_cosyvoice_code_model_weight_license_attestation
+  - validate_exact_offline_runtime_environment_and_gpu_pin
+  - resolve_human_recording_and_candidate_data_paths
+  - resolve_local_cosyvoice_model_bundle
+  - stop_ready_for_separate_recording_and_inference_execution
+
+outputs:
+  candidate_manifest_schema_path: configs/reference/r01_candidate_manifest_v1.schema.json
+  candidate_manifest_path: data/processed/references/r01/r01_candidate_manifest_v1.json
+  candidate_audio_root: data/processed/references/r01/audio
+  failure_report_path: artifacts/experiments/r01_human_cosyvoice_candidates_v1/failure.json
+  no_overwrite: true
+  atomic_publish_required: true
+  write_enabled_in_this_package: false

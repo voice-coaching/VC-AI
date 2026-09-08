@@ -1,0 +1,205 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://voice-coach.local/schemas/e00_execution_authorization_v1.schema.json",
+  "title": "E00 human-or-fixture execution authorization",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_version",
+    "authorization_id",
+    "status",
+    "execution_mode",
+    "preregistration_sha256",
+    "human_authorization",
+    "fixture_authorization",
+    "privacy_zone",
+    "contains_direct_identifiers",
+    "contains_audio_or_locators",
+    "contains_free_text",
+    "binding_sha256"
+  ],
+  "properties": {
+    "schema_version": {
+      "const": "voice_coach.e00_execution_authorization.v1"
+    },
+    "authorization_id": {
+      "type": "string",
+      "pattern": "^e00auth_[0-9a-f]{32}$"
+    },
+    "status": {
+      "const": "active_authorization"
+    },
+    "execution_mode": {
+      "enum": [
+        "human_authorized_demo",
+        "nonhuman_test_fixture"
+      ]
+    },
+    "preregistration_sha256": {
+      "$ref": "#/$defs/sha256"
+    },
+    "human_authorization": {
+      "oneOf": [
+        {
+          "$ref": "#/$defs/humanAuthorization"
+        },
+        {
+          "type": "null"
+        }
+      ]
+    },
+    "fixture_authorization": {
+      "oneOf": [
+        {
+          "$ref": "#/$defs/fixtureAuthorization"
+        },
+        {
+          "type": "null"
+        }
+      ]
+    },
+    "privacy_zone": {
+      "const": "A1_C1_public_summary_only"
+    },
+    "contains_direct_identifiers": {
+      "const": false
+    },
+    "contains_audio_or_locators": {
+      "const": false
+    },
+    "contains_free_text": {
+      "const": false
+    },
+    "binding_sha256": {
+      "$ref": "#/$defs/sha256"
+    }
+  },
+  "allOf": [
+    {
+      "if": {
+        "properties": {
+          "execution_mode": {
+            "const": "human_authorized_demo"
+          }
+        }
+      },
+      "then": {
+        "properties": {
+          "human_authorization": {
+            "$ref": "#/$defs/humanAuthorization"
+          },
+          "fixture_authorization": {
+            "type": "null"
+          }
+        }
+      },
+      "else": {
+        "properties": {
+          "human_authorization": {
+            "type": "null"
+          },
+          "fixture_authorization": {
+            "$ref": "#/$defs/fixtureAuthorization"
+          }
+        }
+      }
+    }
+  ],
+  "$defs": {
+    "sha256": {
+      "type": "string",
+      "pattern": "^[0-9a-f]{64}$"
+    },
+    "humanAuthorization": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "h00_approval_sha256",
+        "h00_official_document_attestation_sha256",
+        "e00_scope_or_amendment_sha256",
+        "individual_consent_manifest_sha256",
+        "consent_active_for_recording_diagnostic_coaching_reference_rerecord",
+        "withdrawal_and_deletion_policy_active",
+        "human_escalation_available",
+        "authorization_current"
+      ],
+      "properties": {
+        "h00_approval_sha256": {
+          "$ref": "#/$defs/sha256"
+        },
+        "h00_official_document_attestation_sha256": {
+          "$ref": "#/$defs/sha256"
+        },
+        "e00_scope_or_amendment_sha256": {
+          "$ref": "#/$defs/sha256"
+        },
+        "individual_consent_manifest_sha256": {
+          "$ref": "#/$defs/sha256"
+        },
+        "consent_active_for_recording_diagnostic_coaching_reference_rerecord": {
+          "const": true
+        },
+        "withdrawal_and_deletion_policy_active": {
+          "const": true
+        },
+        "human_escalation_available": {
+          "const": true
+        },
+        "authorization_current": {
+          "const": true
+        }
+      }
+    },
+    "fixtureAuthorization": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "fixture_provenance_sha256",
+        "fixture_license_sha256",
+        "scope",
+        "contains_human_voice",
+        "contains_participant_or_user_data",
+        "represents_a_real_learner",
+        "human_user_data_fabricated",
+        "synthetic_or_nonhuman_label_explicit",
+        "licensed_d08_human_reference_outside_fixture_scope",
+        "pedagogical_or_clinical_claim_allowed"
+      ],
+      "properties": {
+        "fixture_provenance_sha256": {
+          "$ref": "#/$defs/sha256"
+        },
+        "fixture_license_sha256": {
+          "$ref": "#/$defs/sha256"
+        },
+        "scope": {
+          "description": "This authorization applies only to the learner attempt input fixture, not to the separately licensed D08 reference handoff.",
+          "const": "learner_attempt_input_fixture_only"
+        },
+        "contains_human_voice": {
+          "description": "False only for the learner attempt input fixture. It does not assert that the whole E00 session lacks human voice; the D08 reference is a separately consented and licensed human recording.",
+          "const": false
+        },
+        "contains_participant_or_user_data": {
+          "const": false
+        },
+        "represents_a_real_learner": {
+          "const": false
+        },
+        "human_user_data_fabricated": {
+          "const": false
+        },
+        "synthetic_or_nonhuman_label_explicit": {
+          "const": true
+        },
+        "licensed_d08_human_reference_outside_fixture_scope": {
+          "description": "The human D08 reference is governed by the independent exact lineage and rights handoff, outside this fixture authorization.",
+          "const": true
+        },
+        "pedagogical_or_clinical_claim_allowed": {
+          "const": false
+        }
+      }
+    }
+  }
+}

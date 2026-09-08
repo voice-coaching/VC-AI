@@ -1,0 +1,141 @@
+{
+  "schema_version": "voice_coach.e01_metamorphic_preregistration.v1",
+  "preregistration_id": "TBD_PREREGISTRATION",
+  "status": "draft_not_approved",
+  "frozen_at": "TBD_PREREGISTRATION",
+  "s108_commit_sha256": "TBD_S108_COMPLETION",
+  "selected_model_identity_sha256": "TBD_S108_COMPLETION",
+  "selected_checkpoint_sha256": "TBD_S108_COMPLETION",
+  "evaluation_population": {
+    "split_role": "phase3_non_holdout_e01_only",
+    "source_manifest_pointer": "TBD_PREREGISTRATION",
+    "source_manifest_sha256": "TBD_PREREGISTRATION",
+    "sampling_frame": "TBD_PREREGISTRATION",
+    "sampling_algorithm": "TBD_PREREGISTRATION",
+    "sample_size": "TBD_PREREGISTRATION",
+    "minimum_cases_per_perturbation": "TBD_PREREGISTRATION",
+    "slice_dimensions": "TBD_PREREGISTRATION",
+    "locked_test_allowed": false,
+    "s203_expert_holdout_allowed": false
+  },
+  "perturbations": [
+    {
+      "perturbation_id": "silence",
+      "operation": "add_leading_and_trailing_silence",
+      "exact_magnitude": {
+        "unit": "TBD_PREREGISTRATION",
+        "leading_levels": "TBD_PREREGISTRATION",
+        "trailing_levels": "TBD_PREREGISTRATION",
+        "waveform_fill_rule": "TBD_PREREGISTRATION",
+        "fade_rule": "TBD_PREREGISTRATION"
+      },
+      "expected_relation": {
+        "type": "TBD_PREREGISTRATION",
+        "output_metric_ids": "TBD_PREREGISTRATION",
+        "tolerance_or_margin": "TBD_PREREGISTRATION",
+        "comparison_rule": "TBD_PREREGISTRATION"
+      }
+    },
+    {
+      "perturbation_id": "gain",
+      "operation": "change_global_gain",
+      "exact_magnitude": {
+        "unit": "TBD_PREREGISTRATION",
+        "gain_levels": "TBD_PREREGISTRATION",
+        "clipping_policy": "TBD_PREREGISTRATION",
+        "normalization_policy": "TBD_PREREGISTRATION"
+      },
+      "expected_relation": {
+        "type": "TBD_PREREGISTRATION",
+        "output_metric_ids": "TBD_PREREGISTRATION",
+        "tolerance_or_margin": "TBD_PREREGISTRATION",
+        "comparison_rule": "TBD_PREREGISTRATION"
+      }
+    },
+    {
+      "perturbation_id": "duration",
+      "operation": "change_one_syllable_duration",
+      "exact_magnitude": {
+        "unit": "TBD_PREREGISTRATION",
+        "scale_levels": "TBD_PREREGISTRATION",
+        "target_syllable_selection": "TBD_PREREGISTRATION",
+        "time_stretch_algorithm": "TBD_PREREGISTRATION",
+        "pitch_preservation_rule": "TBD_PREREGISTRATION"
+      },
+      "expected_relation": {
+        "type": "TBD_PREREGISTRATION",
+        "output_metric_ids": "TBD_PREREGISTRATION",
+        "tolerance_or_margin": "TBD_PREREGISTRATION",
+        "comparison_rule": "TBD_PREREGISTRATION"
+      }
+    },
+    {
+      "perturbation_id": "f0",
+      "operation": "scale_global_f0",
+      "exact_magnitude": {
+        "unit": "TBD_PREREGISTRATION",
+        "scale_levels": "TBD_PREREGISTRATION",
+        "voicing_policy": "TBD_PREREGISTRATION",
+        "duration_preservation_rule": "TBD_PREREGISTRATION",
+        "resynthesis_algorithm": "TBD_PREREGISTRATION"
+      },
+      "expected_relation": {
+        "type": "TBD_PREREGISTRATION",
+        "output_metric_ids": "TBD_PREREGISTRATION",
+        "tolerance_or_margin": "TBD_PREREGISTRATION",
+        "comparison_rule": "TBD_PREREGISTRATION"
+      }
+    },
+    {
+      "perturbation_id": "phone",
+      "operation": "synthesize_specific_phone_replacement",
+      "exact_magnitude": {
+        "unit": "TBD_PREREGISTRATION",
+        "source_target_phone_policy": "TBD_PREREGISTRATION",
+        "replacement_count": "TBD_PREREGISTRATION",
+        "target_region_selection": "TBD_PREREGISTRATION",
+        "synthesis_algorithm": "TBD_PREREGISTRATION",
+        "content_preservation_rule": "TBD_PREREGISTRATION"
+      },
+      "expected_relation": {
+        "type": "TBD_PREREGISTRATION",
+        "output_metric_ids": "TBD_PREREGISTRATION",
+        "tolerance_or_margin": "TBD_PREREGISTRATION",
+        "comparison_rule": "TBD_PREREGISTRATION"
+      }
+    }
+  ],
+  "pass_gate": {
+    "metric": "metamorphic_expectation_pass_rate",
+    "operator": "greater_than_or_equal",
+    "threshold": 0.95,
+    "numerator_definition": "TBD_PREREGISTRATION",
+    "denominator_definition": "TBD_PREREGISTRATION",
+    "gate_statistic": "TBD_PREREGISTRATION",
+    "aggregation_scope": "TBD_PREREGISTRATION",
+    "case_weighting": "TBD_PREREGISTRATION",
+    "perturbation_weighting": "TBD_PREREGISTRATION",
+    "minimum_support": "TBD_PREREGISTRATION",
+    "invalid_case_policy": "TBD_PREREGISTRATION",
+    "missing_case_policy": "TBD_PREREGISTRATION",
+    "confidence_interval_method": "TBD_PREREGISTRATION",
+    "confidence_level": "TBD_PREREGISTRATION",
+    "multiplicity_control": "TBD_PREREGISTRATION",
+    "blocked_or_failed_rule": "TBD_PREREGISTRATION"
+  },
+  "execution_integrity": {
+    "deterministic_seed": "TBD_PREREGISTRATION",
+    "perturbation_implementation_sha256": "TBD_PREREGISTRATION",
+    "metric_implementation_sha256": "TBD_PREREGISTRATION",
+    "input_manifest_schema_sha256": "TBD_PREREGISTRATION",
+    "report_schema_sha256": "TBD_PREREGISTRATION",
+    "one_shot_execution_policy": "TBD_PREREGISTRATION",
+    "rerun_policy": "TBD_PREREGISTRATION",
+    "posthoc_magnitude_or_expectation_change_allowed": false,
+    "result_based_case_exclusion_allowed": false,
+    "locked_test_access_allowed": false,
+    "s203_expert_holdout_access_allowed": false,
+    "network_fallback_allowed": false,
+    "binding_sha256": "TBD_PREREGISTRATION"
+  }
+}

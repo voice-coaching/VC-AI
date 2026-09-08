@@ -1,0 +1,38 @@
+{
+  "schema_version": "voice_coach.d08_individual_consent_attestation.v1",
+  "attestation_id": "TBD_EXTERNAL_ATTESTATION",
+  "status": "TBD_EXTERNAL_ATTESTATION",
+  "signed_at_utc": "TBD_EXTERNAL_ATTESTATION",
+  "signed_by_role": "TBD_EXTERNAL_ATTESTATION",
+  "h00_approval_sha256": "TBD_EXTERNAL_ATTESTATION",
+  "consent_protocol": {
+    "protocol_id": "TBD_EXTERNAL_ATTESTATION",
+    "protocol_revision": "TBD_EXTERNAL_ATTESTATION",
+    "protocol_sha256": "TBD_EXTERNAL_ATTESTATION",
+    "consent_form_sha256": "TBD_EXTERNAL_ATTESTATION",
+    "voice_recording_allowed": "TBD_EXTERNAL_ATTESTATION",
+    "research_reference_use_allowed": "TBD_EXTERNAL_ATTESTATION",
+    "automated_qc_allowed": "TBD_EXTERNAL_ATTESTATION",
+    "human_listening_qc_allowed": "TBD_EXTERNAL_ATTESTATION",
+    "model_input_allowed": "TBD_EXTERNAL_ATTESTATION",
+    "third_party_provision_allowed": "TBD_EXTERNAL_ATTESTATION",
+    "public_release_allowed": false,
+    "commercial_use_allowed": false,
+    "withdrawal_deadline_policy_id": "TBD_EXTERNAL_ATTESTATION",
+    "withdrawal_process_sha256": "TBD_EXTERNAL_ATTESTATION",
+    "retention_policy_sha256": "TBD_EXTERNAL_ATTESTATION",
+    "deletion_protocol_sha256": "TBD_EXTERNAL_ATTESTATION"
+  },
+  "speaker_receipts": [],
+  "receipt_contract": {
+    "planning_target_minimum_distinct_speakers_per_sentence": 4,
+    "binding_completion_floor": "TBD_PREREGISTRATION",
+    "speaker_id_format": "namespaced_lowercase_sha256",
+    "direct_identifiers_allowed": false,
+    "identity_mapping_zone": "R1_separate_access_controlled",
+    "raw_audio_zone": "R0_restricted_raw_audio",
+    "each_receipt_requires_scope_decision_sha256": true,
+    "inactive_withdrawn_or_expired_receipts_prohibited": true
+  },
+  "completion_claim_allowed": false
+}

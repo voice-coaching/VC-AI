@@ -1,0 +1,16 @@
+{
+  "schema_version": "voice_coach.c03_reviewer_attestation_manifest.v1",
+  "status": "TBD_EXTERNAL_ATTESTATION",
+  "institutional_expert_approval_sha256": "TBD_EXTERNAL_ATTESTATION",
+  "reviewer_count": "TBD_ATTESTATION",
+  "qualification_policy_sha256": "TBD_ATTESTATION",
+  "rubric_sha256": "TBD_ATTESTATION",
+  "risk_taxonomy_sha256": "TBD_ATTESTATION",
+  "reviewers": [],
+  "every_reviewer_qualified": false,
+  "every_reviewer_confidentiality_attested": false,
+  "every_reviewer_blind_to_model_score": false,
+  "every_reviewer_blind_to_source_condition": false,
+  "reviewer_identity_mapping_stored_separately": true,
+  "privacy_zone": "C1_public_template_only"
+}

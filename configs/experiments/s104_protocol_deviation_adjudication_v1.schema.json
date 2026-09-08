@@ -1,0 +1,430 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "voice_coach.s104_protocol_deviation_adjudication.v1",
+  "title": "S104 protocol-deviation adjudication receipt",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_version",
+    "deviation_id",
+    "status",
+    "created_at",
+    "experiment",
+    "event",
+    "terminal_run",
+    "start_bindings",
+    "scorer_environment",
+    "bindings",
+    "code_path_audit",
+    "terminal_evidence",
+    "invalidating_conditions",
+    "decision",
+    "limitations",
+    "validator"
+  ],
+  "properties": {
+    "schema_version": {
+      "const": "voice_coach.s104_protocol_deviation_adjudication.v1"
+    },
+    "deviation_id": {
+      "const": "DEV-S104-001"
+    },
+    "status": {
+      "const": "adjudicated"
+    },
+    "created_at": {
+      "$ref": "#/$defs/timestampPair"
+    },
+    "experiment": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "experiment_id",
+        "registry_run_id",
+        "pid",
+        "process_started_at",
+        "registry_started_at",
+        "development_only",
+        "run_result",
+        "superseded_by_deviation_id"
+      ],
+      "properties": {
+        "experiment_id": {
+          "const": "aihub71490_wavlm_s104_adapter_v1"
+        },
+        "registry_run_id": {
+          "const": "aihub71490-wavlm-s104-adapter-v1-dev"
+        },
+        "pid": {
+          "const": 386918
+        },
+        "process_started_at": {
+          "$ref": "#/$defs/timestampPair"
+        },
+        "registry_started_at": {
+          "$ref": "#/$defs/timestampPair"
+        },
+        "development_only": {
+          "const": true
+        },
+        "run_result": {
+          "const": "invalidated"
+        },
+        "superseded_by_deviation_id": {
+          "const": "DEV-S104-003"
+        }
+      }
+    },
+    "terminal_run": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "experiment_id",
+        "registry_run_id",
+        "config_path",
+        "config_sha256",
+        "execution_lock_path",
+        "execution_lock_sha256",
+        "relationship_to_event_run",
+        "event_transient_edit_occurred_in_this_run"
+      ],
+      "properties": {
+        "experiment_id": {
+          "const": "aihub71490_wavlm_s104_adapter_v2_current_code"
+        },
+        "registry_run_id": {
+          "const": "aihub71490-wavlm-s104-adapter-v2-current-code-dev"
+        },
+        "config_path": {
+          "const": "configs/experiments/wavlm_s104_adapter_v2_current_code.yaml"
+        },
+        "config_sha256": {
+          "$ref": "#/$defs/sha256"
+        },
+        "execution_lock_path": {
+          "const": "artifacts/experiments/aihub71490_wavlm_s104_adapter_v2_current_code/execution_lock.json"
+        },
+        "execution_lock_sha256": {
+          "$ref": "#/$defs/sha256"
+        },
+        "relationship_to_event_run": {
+          "const": "clean_rerun_of_the_invalidated_event_run"
+        },
+        "event_transient_edit_occurred_in_this_run": {
+          "const": false
+        }
+      }
+    },
+    "event": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "target_path",
+        "implementation_role",
+        "change_kind",
+        "inserted_line_utf8",
+        "inserted_line_sha256",
+        "inserted_line_size_bytes",
+        "insert_at_byte_offset",
+        "before",
+        "during",
+        "after"
+      ],
+      "properties": {
+        "target_path": {
+          "const": "pyproject.toml"
+        },
+        "implementation_role": {
+          "const": "project_manifest"
+        },
+        "change_kind": {
+          "const": "single_line_insertion_then_exact_reversion"
+        },
+        "inserted_line_utf8": {
+          "const": "  \"markdown-it-py==4.2.0\",\n"
+        },
+        "inserted_line_sha256": {
+          "$ref": "#/$defs/sha256"
+        },
+        "inserted_line_size_bytes": {
+          "const": 27
+        },
+        "insert_at_byte_offset": {
+          "const": 289
+        },
+        "before": {
+          "$ref": "#/$defs/fileState"
+        },
+        "during": {
+          "$ref": "#/$defs/transientState"
+        },
+        "after": {
+          "$ref": "#/$defs/fileState"
+        }
+      }
+    },
+    "start_bindings": {
+      "$ref": "#/$defs/freeMapping"
+    },
+    "scorer_environment": {
+      "$ref": "#/$defs/freeMapping"
+    },
+    "bindings": {
+      "$ref": "#/$defs/freeMapping"
+    },
+    "code_path_audit": {
+      "$ref": "#/$defs/freeMapping"
+    },
+    "terminal_evidence": {
+      "$ref": "#/$defs/freeMapping"
+    },
+    "invalidating_conditions": {
+      "type": "array",
+      "minItems": 17,
+      "maxItems": 17,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "id",
+          "triggered",
+          "evidence_refs"
+        ],
+        "properties": {
+          "id": {
+            "type": "string",
+            "pattern": "^I(0[1-9]|1[0-7])_[A-Z0-9_]+$"
+          },
+          "triggered": {
+            "type": "boolean"
+          },
+          "evidence_refs": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "minLength": 1
+            }
+          }
+        }
+      }
+    },
+    "decision": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "value",
+        "rationale_code",
+        "adjudicated_at",
+        "scope"
+      ],
+      "properties": {
+        "value": {
+          "enum": [
+            "MINOR_ACCEPTED",
+            "INVALIDATING"
+          ]
+        },
+        "rationale_code": {
+          "enum": [
+            "ACCEPT_WITH_RATIONALE",
+            "RERUN_REQUIRED"
+          ]
+        },
+        "adjudicated_at": {
+          "$ref": "#/$defs/timestampPair"
+        },
+        "scope": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "s104_development_result_allowed",
+            "s105_development_predecessor_allowed",
+            "paper_dev_reporting_allowed",
+            "promotion_claim_allowed",
+            "locked_evidence_allowed",
+            "continuous_immutability_claim_allowed",
+            "rerun_required"
+          ],
+          "properties": {
+            "s104_development_result_allowed": {
+              "type": "boolean"
+            },
+            "s105_development_predecessor_allowed": {
+              "type": "boolean"
+            },
+            "paper_dev_reporting_allowed": {
+              "type": "boolean"
+            },
+            "promotion_claim_allowed": {
+              "type": "boolean"
+            },
+            "locked_evidence_allowed": {
+              "type": "boolean"
+            },
+            "continuous_immutability_claim_allowed": {
+              "const": false
+            },
+            "rerun_required": {
+              "type": "boolean"
+            }
+          }
+        }
+      }
+    },
+    "limitations": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "type": "string",
+        "minLength": 1
+      }
+    },
+    "validator": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "schema_path",
+        "schema_sha256",
+        "validator_path",
+        "validator_sha256",
+        "cli_path",
+        "cli_sha256"
+      ],
+      "properties": {
+        "schema_path": {
+          "const": "configs/experiments/s104_protocol_deviation_adjudication_v1.schema.json"
+        },
+        "schema_sha256": {
+          "$ref": "#/$defs/sha256"
+        },
+        "validator_path": {
+          "const": "src/voice_coach/reproducibility/s104_protocol_deviation.py"
+        },
+        "validator_sha256": {
+          "$ref": "#/$defs/sha256"
+        },
+        "cli_path": {
+          "const": "scripts/validate_s104_protocol_deviation.py"
+        },
+        "cli_sha256": {
+          "$ref": "#/$defs/sha256"
+        }
+      }
+    }
+  },
+  "$defs": {
+    "sha256": {
+      "type": "string",
+      "pattern": "^[0-9a-f]{64}$"
+    },
+    "timestampPair": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "utc",
+        "kst"
+      ],
+      "properties": {
+        "utc": {
+          "type": "string",
+          "minLength": 1
+        },
+        "kst": {
+          "type": "string",
+          "minLength": 1
+        }
+      }
+    },
+    "fileState": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "observed_at",
+        "sha256",
+        "size_bytes",
+        "mtime_ns",
+        "ctime_ns",
+        "evidence_source"
+      ],
+      "properties": {
+        "observed_at": {
+          "$ref": "#/$defs/timestampPair"
+        },
+        "sha256": {
+          "$ref": "#/$defs/sha256"
+        },
+        "size_bytes": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "mtime_ns": {
+          "type": [
+            "integer",
+            "null"
+          ],
+          "minimum": 0
+        },
+        "ctime_ns": {
+          "type": [
+            "integer",
+            "null"
+          ],
+          "minimum": 0
+        },
+        "evidence_source": {
+          "type": "string",
+          "minLength": 1
+        }
+      }
+    },
+    "transientState": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "started_at",
+        "ended_at",
+        "sha256",
+        "size_bytes",
+        "mtime_ns",
+        "ctime_ns",
+        "evidence_source"
+      ],
+      "properties": {
+        "started_at": {
+          "$ref": "#/$defs/timestampPair"
+        },
+        "ended_at": {
+          "$ref": "#/$defs/timestampPair"
+        },
+        "sha256": {
+          "$ref": "#/$defs/sha256"
+        },
+        "size_bytes": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "mtime_ns": {
+          "type": [
+            "integer",
+            "null"
+          ],
+          "minimum": 0
+        },
+        "ctime_ns": {
+          "type": [
+            "integer",
+            "null"
+          ],
+          "minimum": 0
+        },
+        "evidence_source": {
+          "type": "string",
+          "minLength": 1
+        }
+      }
+    },
+    "freeMapping": {
+      "type": "object"
+    }
+  }
+}

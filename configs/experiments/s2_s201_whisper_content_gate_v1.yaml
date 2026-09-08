@@ -1,0 +1,275 @@
+schema_version: 1
+
+experiment:
+  id: s2_s201_whisper_content_gate_v1
+  stage: s201_whisper_content_consistency_hard_gate
+  implementation_status: static_preflight_only
+  production_runner_implemented: false
+  actual_model_download_allowed: false
+  actual_inference_allowed: false
+  row_level_data_access_allowed: false
+  gpu_access_allowed: false
+  metric_generation_allowed: false
+  prediction_generation_allowed: false
+  result_generation_allowed: false
+  completion_claim_allowed: false
+
+canonical_sources:
+  access_scope: C1_code_config_docs_only
+  pins:
+    - path: scripts/check_project_constraints.py
+      sha256: 7c885d9d863d1a505bb074e5be33b63e262b191585bcf7a02a03162ca0f1ba86
+    - path: configs/experiments/s2_s200_independent_auditor_v1.yaml
+      sha256: d7a59577f19a1a366365973bb7d21d00f626f5f421289a366a9587b33400d575
+    - path: scripts/prepare_s2_s201_whisper_content.py
+      sha256: 0f10c1d9104e80152baba94e1764ffcc1af2b2c2f0147d20af656586ef22d2b2
+    - path: src/voice_coach/training/s2_s200_auditor_contract.py
+      sha256: 7d68e08e062275338fd2e3d6305f08b744da6a524e315931c214211d54d2feba
+    - path: src/voice_coach/training/s2_s201_whisper_contract.py
+      sha256: 88f0cd148129fd880b8af4322b30d21715e9aea26eea4d48bb2f64f130ad7667
+
+predecessors:
+  validate_before_threshold_attestation: true
+  validate_before_data_role_attestation: true
+  validate_before_model_path_resolution: true
+  validate_before_data_path_resolution: true
+  validate_before_output_path_resolution: true
+  s108_final:
+    commit_path: artifacts/experiments/aihub71490_wavlm_s108_final_s1_v1/commit.json
+    registry_path: artifacts/experiment_registry/aihub71490-wavlm-s108-final-s1-v1/metadata.json
+    artifact_root: artifacts/experiments/aihub71490_wavlm_s108_final_s1_v1
+    schema_version: voice_coach.wavlm_s108_final_s1_commit.v1
+    required_status: committed
+    required_decision: research_candidate_passed
+    required_locked_access_count: 1
+    required_locked_rerun_count: 0
+    required_artifact_names:
+      - final_s1_config
+      - final_s1_checkpoint
+      - final_fusion_checkpoint
+      - calibrator_parameters
+      - threshold_policy
+      - promotion_report
+      - source_chain
+      - independent_validation_receipt
+  s200_readiness_lock:
+    config_path: configs/experiments/s2_s200_independent_auditor_v1.yaml
+    lock_path: artifacts/experiments/aihub71490_s2_s200_independent_auditor_v1/readiness_lock.json
+    schema_version: voice_coach.s2_s200_readiness_lock.v1
+    required_status: readiness_contract_published
+    require_s108_commit_binding: true
+
+model:
+  identity:
+    provider: huggingface_hub
+    model_id: openai/whisper-large-v3
+    revision: 06f233fe06e710322aca913c1bc4249a0d71fce1
+    official_source_revision: 90fdc51112dc59242201d038a48add97ffd24b5d
+    architecture: WhisperForConditionalGeneration
+    weight_format: safetensors_only
+    pickle_weights_allowed: false
+    license: MIT
+    license_sha256: b5d65a59060e68c4ff940e1eddfa6f94b2d68fdf58ed7f4dd57721c997e35e9d
+    license_reaudit_before_acquisition: true
+  preprocessor:
+    processor_id: openai/whisper-large-v3
+    revision: 06f233fe06e710322aca913c1bc4249a0d71fce1
+    processor_class: WhisperProcessor
+    feature_extractor_class: WhisperFeatureExtractor
+    tokenizer_class: WhisperTokenizerFast
+    sampling_rate_hz: 16000
+    feature_size: 128
+    hop_length: 160
+    n_fft: 400
+    chunk_length_seconds: 30
+    configuration_source: same_exact_local_revision
+  offline_only:
+    local_files_only: true
+    hf_hub_offline_required: true
+    transformers_offline_required: true
+    network_fallback_allowed: false
+    automatic_download_allowed: false
+    execution_when_local_bundle_missing_allowed: false
+    bundle_root: models/whisper/openai_whisper_large_v3/06f233fe06e710322aca913c1bc4249a0d71fce1
+    attestation_path: artifacts/model_attestations/s2_s201_whisper_large_v3_06f233fe_v1.json
+    attestation_status: missing_local_bundle
+    attestation_sha256: TBD_LOCAL_BUNDLE
+
+transcript_normalization:
+  policy_id: ko_s201_nfc_literal_v1
+  ordered_steps:
+    - decode_utf8_strict
+    - unicode_nfc
+    - unicode_casefold
+    - replace_unicode_punctuation_with_space
+    - map_all_unicode_whitespace_to_ascii_space
+    - collapse_ascii_spaces
+    - strip_ascii_space
+  apply_identically_to_reference_and_hypothesis: true
+  unicode_normalization: NFC
+  latin_case_policy: unicode_casefold
+  punctuation_policy: all_unicode_general_category_P_to_space
+  digit_expansion: none
+  morphological_tokenizer: none
+  pronunciation_rewrite: none
+  spell_correction: none
+  word_unit: ascii_space_delimited_token
+  character_unit: unicode_codepoint_excluding_space
+  empty_reference_policy: invalid_item_fail_closed
+  raw_transcript_export_allowed: false
+
+language_and_decoding:
+  language: ko
+  language_token: <|ko|>
+  task: transcribe
+  language_detection_allowed: false
+  translation_allowed: false
+  forced_language_required: true
+  do_sample: false
+  temperature: 0.0
+  num_beams: 1
+  num_return_sequences: 1
+  return_timestamps: false
+  timestamp_features_allowed: false
+  condition_on_prev_tokens: false
+  fallback_temperatures: [0.0]
+  max_new_tokens: 448
+  generation_config_source: exact_local_bundle_revision
+
+determinism:
+  seed: 20260729
+  torch_deterministic_algorithms: true
+  cudnn_benchmark: false
+  cudnn_deterministic: true
+  allow_tf32: false
+  cublas_workspace_config: ":4096:8"
+  transformers_version: 5.14.1
+  torch_version: 2.12.1+cu130
+  tokenizers_version: 0.22.2
+  safetensors_version: 0.8.0
+
+hard_gate:
+  role: content_consistency_only
+  evaluated_before_s202: true
+  bypass_allowed: false
+  failed_content_rescue_by_s202_allowed: false
+  fine_phone_judgment_allowed: false
+  prosody_judgment_allowed: false
+  metrics:
+    wer:
+      formula: word_levenshtein_distance_over_reference_word_count
+      operator: less_than_or_equal
+      threshold: TBD_PREREGISTRATION
+    cer:
+      formula: codepoint_levenshtein_distance_over_reference_character_count
+      operator: less_than_or_equal
+      threshold: TBD_PREREGISTRATION
+    content_mismatch:
+      formula: TBD_PREREGISTRATION
+      operator: TBD_PREREGISTRATION
+      threshold: TBD_PREREGISTRATION
+  threshold_preregistration:
+    status: TBD_PREREGISTRATION
+    path: artifacts/preregistration/s2_s201_whisper_content_thresholds_v1.json
+    sha256: TBD_PREREGISTRATION
+    execution_allowed: false
+    must_be_frozen_before_data_or_model_path_resolution: true
+    native_external_benchmark_may_set_threshold: false
+
+data_roles:
+  s2_expert_content:
+    role: l2_content_gate_reference_and_evaluation
+    independent_from_s1: true
+    s1_label_or_prediction_allowed: false
+    fine_phone_or_prosody_label_allowed: false
+    row_access_before_attestation_allowed: false
+    partition_policy: preregistered_s2_expert_content_partitions
+    manifest_root: data/restricted/s2_expert_content
+    attestation_path: artifacts/external_evaluation/s2_s201_expert_content_attestation_v1.json
+    attestation_status: required_before_access
+    attestation_sha256: TBD_ATTESTATION
+  native_external_asr:
+    fleurs_ko_kr:
+      role: asr_external_evaluation_only
+      license: CC-BY-4.0
+      attribution_required: true
+      original_partition_required: true
+      learner_error_training_allowed: false
+      s2_expert_transcript_substitute_allowed: false
+      row_access_before_attestation_allowed: false
+      partition_policy: preserve_official_partition_names_and_hashes
+      manifest_root: data/external/fleurs_ko_kr
+      attestation_path: artifacts/external_evaluation/s2_s201_fleurs_ko_kr_attestation_v1.json
+      attestation_status: required_before_access
+      attestation_sha256: TBD_ATTESTATION
+    zeroth_korean:
+      role: asr_external_evaluation_only
+      license: CC-BY-4.0
+      attribution_required: true
+      original_partition_required: true
+      learner_error_training_allowed: false
+      s2_expert_transcript_substitute_allowed: false
+      row_access_before_attestation_allowed: false
+      partition_policy: preserve_official_partition_names_and_hashes
+      manifest_root: data/external/zeroth_korean
+      attestation_path: artifacts/external_evaluation/s2_s201_zeroth_korean_attestation_v1.json
+      attestation_status: required_before_access
+      attestation_sha256: TBD_ATTESTATION
+
+independence:
+  input_allowlist:
+    - item_id_sha256
+    - speaker_id_sha256
+    - audio_waveform
+    - canonical_prompt_text
+    - language_code
+  forbidden_s1_fields:
+    - realized_phone
+    - alignment_operation
+    - error_tag
+    - error_count
+    - phone_interval
+    - word_interval
+    - oracle_alignment
+    - predicted_alignment
+    - s1_prediction
+    - s1_score
+    - s1_logit
+    - s1_probability
+    - s1_confidence
+    - s1_threshold
+    - s1_label
+    - s1_wavlm_embedding
+    - s1_explicit_feature
+  s1_predictions_allowed: false
+  s1_labels_allowed: false
+  s1_features_allowed: false
+  s1_thresholds_allowed: false
+  oracle_alignment_allowed: false
+  predicted_alignment_allowed: false
+  whisper_timestamps_as_features_allowed: false
+  locked_test_access_allowed: false
+  alignment_mode: alignment_free_utterance
+
+execution_order:
+  - validate_c1_config_and_source_pins
+  - deep_validate_s108_final_passed_commit
+  - deep_validate_s200_readiness_lock
+  - validate_frozen_threshold_preregistration
+  - validate_data_license_partition_attestations
+  - validate_s2_expert_content_transcript_attestation
+  - validate_local_only_whisper_bundle
+  - validate_manifest_hashes_without_row_reads
+  - stop_ready_for_separate_runner_implementation
+
+outputs:
+  production_runner_in_scope: false
+  current_output_count: 0
+  output_path_resolution_allowed: false
+  future_artifacts:
+    - s201_config
+    - checkpoint_source_card
+    - transcript_normalization_policy
+    - aggregate_wer_cer_content_report
+    - privacy_safe_content_gate_predictions
+    - s201_commit

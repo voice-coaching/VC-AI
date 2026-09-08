@@ -1,0 +1,110 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://voice-coach.local/schemas/e00_reference_handoff_v1.schema.json",
+  "title": "E00 licensed R03 and D08 reference handoff",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_version",
+    "handoff_id",
+    "status",
+    "target_text_sha256",
+    "selected_candidate_row_sha256",
+    "r03_bank_manifest_sha256",
+    "d08_completion_sha256",
+    "d08_recording_rights_attestation_sha256",
+    "source_rights_attestation_sha256",
+    "selected_audio_object_id_sha256",
+    "selected_audio_sha256",
+    "d08_r03_lineage_receipt_sha256",
+    "source_kind",
+    "licensed_for_closed_loop_demo",
+    "r03_row_lineage_verified",
+    "d08_rights_binding_verified",
+    "exact_candidate_audio_rights_cross_match_verified",
+    "audio_locator_embedded",
+    "speaker_identity_embedded",
+    "source_condition_exposed_to_learner",
+    "score_payload_embedded",
+    "privacy_zone",
+    "binding_sha256"
+  ],
+  "properties": {
+    "schema_version": {
+      "const": "voice_coach.e00_reference_handoff.v1"
+    },
+    "handoff_id": {
+      "type": "string",
+      "pattern": "^e00ref_[0-9a-f]{32}$"
+    },
+    "status": {
+      "const": "authorized_for_single_demo_handoff"
+    },
+    "target_text_sha256": {
+      "$ref": "#/$defs/sha256"
+    },
+    "selected_candidate_row_sha256": {
+      "$ref": "#/$defs/sha256"
+    },
+    "r03_bank_manifest_sha256": {
+      "$ref": "#/$defs/sha256"
+    },
+    "d08_completion_sha256": {
+      "$ref": "#/$defs/sha256"
+    },
+    "d08_recording_rights_attestation_sha256": {
+      "$ref": "#/$defs/sha256"
+    },
+    "source_rights_attestation_sha256": {
+      "$ref": "#/$defs/sha256"
+    },
+    "selected_audio_object_id_sha256": {
+      "$ref": "#/$defs/sha256"
+    },
+    "selected_audio_sha256": {
+      "$ref": "#/$defs/sha256"
+    },
+    "d08_r03_lineage_receipt_sha256": {
+      "$ref": "#/$defs/sha256"
+    },
+    "source_kind": {
+      "const": "human_recording"
+    },
+    "licensed_for_closed_loop_demo": {
+      "const": true
+    },
+    "r03_row_lineage_verified": {
+      "const": true
+    },
+    "d08_rights_binding_verified": {
+      "const": true
+    },
+    "exact_candidate_audio_rights_cross_match_verified": {
+      "const": true
+    },
+    "audio_locator_embedded": {
+      "const": false
+    },
+    "speaker_identity_embedded": {
+      "const": false
+    },
+    "source_condition_exposed_to_learner": {
+      "const": false
+    },
+    "score_payload_embedded": {
+      "const": false
+    },
+    "privacy_zone": {
+      "const": "D1_pseudonymized_restricted_handoff"
+    },
+    "binding_sha256": {
+      "$ref": "#/$defs/sha256"
+    }
+  },
+  "$defs": {
+    "sha256": {
+      "type": "string",
+      "pattern": "^[0-9a-f]{64}$"
+    }
+  }
+}

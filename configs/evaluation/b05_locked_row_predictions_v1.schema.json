@@ -1,0 +1,220 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://voice-coach.local/schemas/b05_locked_row_predictions_v1.schema.json",
+  "title": "Restricted B05 locked-test Parquet prediction shard manifest",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_version",
+    "prediction_manifest_id",
+    "status",
+    "preregistration_sha256",
+    "batch_manifest_sha256",
+    "authorization_sha256",
+    "one_shot_transaction_id_sha256",
+    "b03_config_sha256",
+    "b03_report_sha256",
+    "b03_registry_sha256",
+    "b03_checkpoint_set_sha256",
+    "b03_feature_allowlist_sha256",
+    "phone_decision_threshold",
+    "seed_ensemble_definition",
+    "split",
+    "alignment_role",
+    "seeds",
+    "storage_format",
+    "phone_row_schema",
+    "utterance_row_schema",
+    "shards",
+    "phone_row_count",
+    "utterance_row_count",
+    "gold_labels_embedded",
+    "raw_audio_or_locator_embedded",
+    "direct_identifiers_embedded",
+    "free_text_embedded",
+    "publication_allowed",
+    "privacy_zone",
+    "binding_sha256"
+  ],
+  "properties": {
+    "schema_version": {
+      "const": "voice_coach.b05_locked_row_predictions.v1"
+    },
+    "prediction_manifest_id": {
+      "type": "string",
+      "pattern": "^b05pred_[0-9a-f]{32}$"
+    },
+    "status": {
+      "const": "sealed_before_joint_result_release"
+    },
+    "preregistration_sha256": {
+      "$ref": "#/$defs/sha256"
+    },
+    "batch_manifest_sha256": {
+      "$ref": "#/$defs/sha256"
+    },
+    "authorization_sha256": {
+      "$ref": "#/$defs/sha256"
+    },
+    "one_shot_transaction_id_sha256": {
+      "$ref": "#/$defs/sha256"
+    },
+    "b03_config_sha256": {
+      "$ref": "#/$defs/sha256"
+    },
+    "b03_report_sha256": {
+      "$ref": "#/$defs/sha256"
+    },
+    "b03_registry_sha256": {
+      "$ref": "#/$defs/sha256"
+    },
+    "b03_checkpoint_set_sha256": {
+      "$ref": "#/$defs/sha256"
+    },
+    "b03_feature_allowlist_sha256": {
+      "$ref": "#/$defs/sha256"
+    },
+    "phone_decision_threshold": {
+      "const": 0.5
+    },
+    "seed_ensemble_definition": {
+      "const": "no_prediction_ensemble_independent_seed_metrics_then_arithmetic_mean"
+    },
+    "split": {
+      "const": "locked_test"
+    },
+    "alignment_role": {
+      "const": "oracle_target_boundaries_locked_research_only"
+    },
+    "seeds": {
+      "const": [
+        42,
+        43,
+        44
+      ]
+    },
+    "storage_format": {
+      "const": "parquet_shards"
+    },
+    "phone_row_schema": {
+      "const": [
+        "row_id_sha256:string",
+        "utterance_id_sha256:string",
+        "speaker_id_sha256:string",
+        "target_phone_index:int64",
+        "seed:int64",
+        "error_probability:float64",
+        "predicted_binary_error:bool"
+      ]
+    },
+    "utterance_row_schema": {
+      "const": [
+        "row_id_sha256:string",
+        "utterance_id_sha256:string",
+        "speaker_id_sha256:string",
+        "outcome:string",
+        "seed:int64",
+        "predicted_score:float64"
+      ]
+    },
+    "shards": {
+      "type": "array",
+      "minItems": 12,
+      "items": {
+        "$ref": "#/$defs/shard"
+      }
+    },
+    "phone_row_count": {
+      "type": "integer",
+      "minimum": 3
+    },
+    "utterance_row_count": {
+      "type": "integer",
+      "minimum": 9
+    },
+    "gold_labels_embedded": {
+      "const": false
+    },
+    "raw_audio_or_locator_embedded": {
+      "const": false
+    },
+    "direct_identifiers_embedded": {
+      "const": false
+    },
+    "free_text_embedded": {
+      "const": false
+    },
+    "publication_allowed": {
+      "const": false
+    },
+    "privacy_zone": {
+      "const": "D1_pseudonymized_restricted_locked_predictions"
+    },
+    "binding_sha256": {
+      "$ref": "#/$defs/sha256"
+    }
+  },
+  "$defs": {
+    "sha256": {
+      "type": "string",
+      "pattern": "^[0-9a-f]{64}$"
+    },
+    "shard": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "task",
+        "outcome",
+        "seed",
+        "shard_index",
+        "relative_path",
+        "sha256",
+        "row_count"
+      ],
+      "properties": {
+        "task": {
+          "enum": [
+            "phone_binary_error",
+            "utterance_ordinal_score"
+          ]
+        },
+        "outcome": {
+          "oneOf": [
+            {
+              "enum": [
+                "pronunciation_score",
+                "fluency_score",
+                "comprehensibility_score"
+              ]
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "seed": {
+          "enum": [
+            42,
+            43,
+            44
+          ]
+        },
+        "shard_index": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "relative_path": {
+          "type": "string",
+          "pattern": "^[A-Za-z0-9][A-Za-z0-9._/-]*\\.parquet$"
+        },
+        "sha256": {
+          "$ref": "#/$defs/sha256"
+        },
+        "row_count": {
+          "type": "integer",
+          "minimum": 1
+        }
+      }
+    }
+  }
+}

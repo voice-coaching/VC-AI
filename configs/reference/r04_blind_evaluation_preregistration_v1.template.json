@@ -1,0 +1,81 @@
+{
+  "schema_version": "voice_coach.r04_blind_evaluation_preregistration.v1",
+  "preregistration_id": "TBD_PREREGISTRATION",
+  "status": "TBD_PREREGISTRATION",
+  "registered_at_utc": "TBD_PREREGISTRATION",
+  "registered_by_role": "TBD_PREREGISTRATION",
+  "frozen_before_pilot_or_audio_or_rating_access": true,
+  "r03_completion_commit_sha256": "TBD_R03_COMPLETION",
+  "r04_config_sha256": "TBD_R04_STATIC_PIN",
+  "evaluation_design": {
+    "sentence_count": 20,
+    "candidate_sources_allowed": [
+      "cosyvoice_tts",
+      "human_recording"
+    ],
+    "candidate_sources_required_minimum_count": 1,
+    "candidate_sources_rationale_ko": "TTS 단독 조건 집합으로도 설계가 성립한다. 이 연구의 대상이 TTS와 평가자 루프이기 때문이다. 사람 조건이 있으면 사람 대비 비교가 추가로 가능해질 뿐이며, 없다고 설계가 무효가 되지는 않는다.",
+    "r02_hard_gate_failures_excluded_without_rescue": true,
+    "mos_unit": "listener_x_sentence_x_candidate",
+    "cmos_unit": "listener_x_sentence_x_same_sentence_pair",
+    "mos_scale_minimum": 1,
+    "mos_scale_maximum": 5,
+    "mos_dimensions": [
+      "naturalness",
+      "clarity",
+      "target_phone_accuracy",
+      "pedagogical_suitability"
+    ],
+    "cmos_scale_minimum": -3,
+    "cmos_scale_maximum": 3,
+    "listener_population": "TBD_PREREGISTRATION",
+    "listener_inclusion_criteria": "TBD_PREREGISTRATION",
+    "listener_exclusion_criteria": "TBD_PREREGISTRATION",
+    "rater_training_protocol": "TBD_PREREGISTRATION",
+    "adjudication_policy": "TBD_PREREGISTRATION"
+  },
+  "blindness_and_randomization": {
+    "conceal_system_names": true,
+    "conceal_filenames_and_paths": true,
+    "conceal_synthesis_status": true,
+    "per_listener_within_sentence_randomization": true,
+    "fatigue_blocks_required": true,
+    "randomization_algorithm": "TBD_PREREGISTRATION",
+    "randomization_seed_commitment": "TBD_PREREGISTRATION",
+    "maximum_assignments_per_fatigue_block": "TBD_PREREGISTRATION",
+    "maximum_consecutive_same_sentence_assignments": "TBD_PREREGISTRATION",
+    "minimum_break_duration_policy": "TBD_PREREGISTRATION",
+    "cmos_pair_construction_policy": "TBD_PREREGISTRATION",
+    "carryover_control_policy": "TBD_PREREGISTRATION"
+  },
+  "power_and_sampling": {
+    "target_power": 0.8,
+    "two_sided_alpha": 0.05,
+    "pilot_variance_source": "TBD_PREREGISTRATION",
+    "pilot_intra_listener_correlation_source": "TBD_PREREGISTRATION",
+    "sample_size_method": "TBD_PREREGISTRATION",
+    "listener_count_n": "TBD_PREREGISTRATION",
+    "attrition_policy": "TBD_PREREGISTRATION",
+    "missing_rating_policy": "TBD_PREREGISTRATION"
+  },
+  "analysis_commitment": {
+    "primary_model_family": "ordinal_mixed_effects",
+    "listener_random_effect_required": true,
+    "sentence_random_effect_required": true,
+    "bootstrap_is_secondary_only": true,
+    "exact_primary_estimand": "TBD_PREREGISTRATION",
+    "ordinal_link_function": "TBD_PREREGISTRATION",
+    "confidence_interval_definition": "TBD_PREREGISTRATION",
+    "bootstrap_resampling_unit": "TBD_PREREGISTRATION",
+    "bootstrap_replicates": "TBD_PREREGISTRATION",
+    "bootstrap_seed_commitment": "TBD_PREREGISTRATION",
+    "multiplicity_strategy": "TBD_PREREGISTRATION",
+    "superiority_margin": "TBD_PREREGISTRATION",
+    "superiority_comparator": "TBD_PREREGISTRATION"
+  },
+  "approval": {
+    "decision": "TBD_PREREGISTRATION",
+    "protocol_sha256": "TBD_PREREGISTRATION",
+    "signed_receipt_sha256": "TBD_PREREGISTRATION"
+  }
+}

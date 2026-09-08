@@ -1,0 +1,484 @@
+schema_version: 1
+
+experiment:
+  id: aihub71490_wavlm_s106_stack_fusion_v1
+  stage: s106_stack_only_confidence_aware_fusion
+  task: phone_binary_error
+  stack_only: true
+  development_only: true
+  oracle_alignment: true
+  silver_label: true
+  promotion_decision_allowed: false
+  gpu_training_allowed_in_preflight: false
+
+predecessors:
+  validation_order: [s104, s105, b07]
+  resolve_stack_only_after_all_valid: true
+  deep_audit_access:
+    public_validator_call_order: [s104_direct, s105_with_nested_s104, b07]
+    validator_invocation_counts:
+      s104: 2
+      s105: 1
+      b07: 1
+    s104:
+      fit_metadata_read: true
+      dev_truth_read: true
+      per_seed_dev_predictions_read: true
+    s105:
+      manifest_reservation_labels_read: true
+      dev_predictions_read: true
+      nested_s104_full_validator: true
+    b07:
+      canonical_train_read: true
+      canonical_dev_read: true
+      stored_dev_predictions_read: true
+      full_train_selection_dev_recomputed_required: true
+    access_basis: pinned_public_validator_contract_inspection
+  s104:
+    config: configs/experiments/wavlm_s104_adapter_v2_current_code.yaml
+    config_sha256: 7a78e718954c45eb3ad03658b6da916a5c1163a51d683125daccd6c272be6434
+    commit_manifest: artifacts/experiments/aihub71490_wavlm_s104_adapter_v2_current_code/commit.json
+    commit_schema_version: voice_coach.wavlm_s104_adapter_commit.v1
+    report_schema_version: voice_coach.wavlm_s104_adapter_report.v1
+    independent_validator: voice_coach.training.wavlm_adapter_training.validate_s104_commit
+    validator_module:
+      path: src/voice_coach/training/wavlm_adapter_training.py
+      sha256: a7b41d507385c7f45b102f2d1603ad4214f0247ad9e0e08c6a3640f2df6bed80
+    required_validator_status: valid
+    required_commit_status: committed
+    required_report_status: completed
+    required_selected_candidate: base_plus
+  s105:
+    config: configs/experiments/wavlm_s105_hierarchy_v5_stream_cardinality.yaml
+    config_sha256: 9805384e147aec2741cdfd3d97ecd3452c7c2c60dc26e0141f2ac4415ae39443
+    commit_manifest: artifacts/experiments/aihub71490_wavlm_s105_hierarchy_v5_stream_cardinality/commit.json
+    commit_schema_version: voice_coach.wavlm_s105_hierarchy_commit.v1
+    comparison_report_schema_version: voice_coach.wavlm_s105_hierarchy_comparison.v1
+    comparison_report_relative_path: ablation_comparison_report.json
+    independent_validator: voice_coach.training.wavlm_hierarchy_training.validate_s105_commit
+    validator_module:
+      path: src/voice_coach/training/wavlm_hierarchy_training.py
+      sha256: e2f7269c757ddee82f33de6787df466b29cbe9e1e2b1fed90130eaaec1c53ad1
+    required_validator_status: valid
+    required_commit_status: committed
+    required_report_status: completed
+    control_variant: simple_head_control
+    candidate_variant: levelwise_multi_aspect_hierarchy
+    selection_rule: candidate_if_adoption_passed_else_control
+    selected_variant_must_match_commit: true
+  b07:
+    config: configs/experiments/b07_gop_acoustic_posterior_v1.yaml
+    config_sha256: bad4845448c12959e8da8ea66676702a1cf02f2021a743a215c440d6baf2f222
+    commit_manifest: artifacts/experiments/aihub71490_b07_gop_acoustic_posterior_v1/commit.json
+    commit_sha256: ff31a88e694d23c89996193646d7c062069c9e776b5ed72ef7fc354950f3907c
+    commit_schema_version: voice_coach.b07_gop_commit.v1
+    registry: artifacts/experiment_registry/aihub71490-b07-gop-acoustic-posterior-v1/metadata.json
+    registry_sha256: 5db35282cab879b3a05fa5a6b5cd9a5cac00c5469215ffc77a6dc34abf95eb12
+    registry_schema_version: voice_coach.b07_gop_registry.v1
+    generation_id: bc1a7eb174c6a8f69627292f30c9229235dcde8e10e69a7e07899847986d6e09
+    independent_validator: voice_coach.training.b07_gop_training.validate_b07_commit
+    validator_module:
+      path: src/voice_coach/training/b07_gop_training.py
+      sha256: 891389afb3bcaca18ec13d077d4ecf193e3876a04e25f96cc034e7db54b387ea
+    required_validator_status: valid
+    required_commit_status: committed
+    required_registry_status: completed
+    required_generation_artifact_count: 21
+    stack_projection: serialized_acoustic_and_error_checkpoint_only
+    dev_prediction_reuse_allowed: false
+
+explicit_component:
+  name: explicit
+  status: frozen
+  report:
+    path: artifacts/experiments/aihub71490_explicit_oracle_boundary_v1/report.json
+    sha256: a5c3ade0738777409bb57956b088e025081cb63886808c6d6fc87724d0875519
+    required_status: completed
+    required_experiment_id: aihub71490_explicit_oracle_boundary_v1
+  registry:
+    path: artifacts/experiment_registry/aihub71490-explicit-v1-dev-primary-20260729/metadata.json
+    sha256: 0445d69cb18fd9105a531a4e5d342d60c7cad94050c6a031c0d7ee3ef6e2141e
+    required_status: completed
+    required_run_id: aihub71490-explicit-v1-dev-primary-20260729
+    required_artifact_count: 13
+  config:
+    path: configs/experiments/explicit_baseline_v1.yaml
+    sha256: cff6439e6b99b5f725c4214dfe1dda64b20892e8b59fbd064d88d3542c2615bd
+  implementation:
+    path: scripts/train_explicit_baseline.py
+    sha256: fa066cb493fb8aa361bc40e4192c9cddb98857f587dc19d570ea45f64fbfb2b1
+  seeds: [42, 43, 44]
+  required_checkpoint_artifacts:
+    - seed_42_checkpoint
+    - seed_43_checkpoint
+    - seed_44_checkpoint
+
+components:
+  order: [explicit, s104_adapter, s105_selected_hierarchy, gop_acoustic_posterior]
+  explicit:
+    source: explicit_component
+    checkpoint_selection: all_preregistered_seeds
+    frozen_before_stack: true
+  s104_adapter:
+    source: validated_s104_commit
+    checkpoint_selection: all_preregistered_seeds
+    frozen_before_stack: true
+  s105_selected_hierarchy:
+    source: validated_s105_commit_selected_variant
+    selection_rule: candidate_if_adoption_passed_else_control
+    checkpoint_selection: all_preregistered_seeds
+    frozen_before_stack: true
+  gop_acoustic_posterior:
+    source: validated_b07_serialized_checkpoints
+    checkpoint_selection: all_preregistered_seeds
+    frozen_before_stack: true
+
+inputs:
+  component_bundle_commit: artifacts/experiments/aihub71490_wavlm_s106_stack_fusion_v1/component_bundle_commit.json
+  component_bundle_schema_version: voice_coach.wavlm_s106_component_bundle_commit.v3
+  component_generator_commit: artifacts/experiments/aihub71490_wavlm_s106_stack_fusion_v1/component_input_commit.json
+  component_generator_commit_schema_version: voice_coach.wavlm_s106_component_input_commit.v2
+  component_generator_registry: artifacts/experiment_registry/aihub71490-wavlm-s106-component-inputs-v1/metadata.json
+  component_generator_registry_schema_version: voice_coach.wavlm_s106_component_input_registry.v1
+  component_feature_freeze_receipt: artifacts/experiments/aihub71490_wavlm_s106_stack_fusion_v1/component_feature_freeze_receipt.json
+  component_feature_freeze_receipt_schema_version: voice_coach.wavlm_s106_component_feature_freeze.v1
+  required_status: committed
+  feature_identity_matrix:
+    exact_columns:
+      - utterance_id_sha256
+      - speaker_id_sha256
+      - phone_index
+      - split
+      - alignment_confidence
+      - qc_flagged
+      - reserved_prompt
+    format: parquet
+    row_key: [utterance_id_sha256, phone_index]
+    labels_present: false
+  label_matrix:
+    exact_columns:
+      - utterance_id_sha256
+      - speaker_id_sha256
+      - phone_index
+      - split
+      - reference_binary_error_label
+    format: parquet
+    row_key: [utterance_id_sha256, phone_index]
+    label_column: reference_binary_error_label
+    alignment_confidence_column: null
+    opened_after_feature_freeze: true
+  component_prediction:
+    exact_columns:
+      - utterance_id_sha256
+      - speaker_id_sha256
+      - phone_index
+      - split
+      - probability
+    format: parquet
+    row_key: [utterance_id_sha256, phone_index]
+    probability_column: probability
+    required_component_seed_file_count: 12
+
+data:
+  stack:
+    manifest: data/processed/aihub71490/manifests/aihub71490_modeling.parquet
+    manifest_sha256: 32f439ba10a035541f53b8a44f5d150b307e89f97387f09748704c3c78e85ef1
+    split_value: stack
+    source_scope: R1_operational_restricted
+    derived_output_scope: D1_restricted_internal
+    path_resolution_requires_valid_predecessors: true
+    row_read_requires_valid_predecessors: true
+    semantic_row_read_by_preflight: false
+    runner_filter_pushdown_required: true
+    runner_reject_non_stack_rows_after_projection: true
+  allowed_splits: [stack]
+  forbidden_splits: [train, dev, calibration, locked_test]
+  train_dev_reuse_for_fusion: false
+  fusion_feature_train_read: false
+  fusion_feature_dev_read: false
+  predecessor_audit_access_excluded_from_fusion_reuse_counters: true
+  calibration_access_allowed: false
+  locked_test_access_allowed: false
+  environment_files_allowed: false
+  exclude_qc_flagged: true
+  exclude_reserved_prompts: true
+  join:
+    row_keys: [utterance_id_sha256, phone_index]
+    speaker_key: speaker_id_sha256
+    require_namespaced_sha256_ids: true
+    exact_stack_universe: true
+    duplicate_key_policy: fail
+    cross_component_speaker_mismatch_policy: fail
+    component_missing_row_policy: explicit_missing_indicator
+
+stack_projection:
+  status: production_generator_ready_blocked_on_s104_s105_commits
+  predecessor_validation_before_stack_path: [s104, s105, b07]
+  component_order: [explicit, s104_adapter, s105_selected_hierarchy, gop_acoustic_posterior]
+  prediction_file_count: 12
+  maximum_batch_rows: 8192
+  feature_identity_built_before_label_open: true
+  feature_builder_receives_labels: false
+  binary_error_label_used_by_projectors: false
+  realized_phone_identity_used: false
+  b07_dev_predictions_reused: false
+  interfaces:
+    explicit: committed_phone_pipeline_predict_proba
+    s104_adapter: committed_adapter_phone_head_on_target_intervals
+    s105_selected_hierarchy: committed_selected_hierarchy_phone_head_on_target_intervals
+    gop_acoustic_posterior: serialized_acoustic_then_error_checkpoint
+  forbidden_source_artifacts:
+    - b07_dev_predictions.parquet
+    - s104_phone_dev_predictions.parquet
+    - s105_phone_dev_predictions.parquet
+  current_blockers:
+    - s104_validated_commit_absent
+    - s105_validated_commit_absent
+
+seed_aggregation:
+  occurs_before_stack_matrix_join: true
+  method: arithmetic_mean_probability
+  seeds: [42, 43, 44]
+  per_seed_channels_allowed: false
+  partial_seed_presence_policy: fail
+  probability_clip: [0.000001, 0.999999]
+  logit_derived_after_aggregation: true
+  uncertainty:
+    name: seed_probability_variance_population
+    computed_before_stack_matrix_join: true
+    denominator: population
+
+feature_contract:
+  task: phone_binary_error
+  exact_order:
+    - explicit__probability_mean
+    - explicit__logit_from_mean_probability
+    - explicit__margin_abs_2p_minus_1
+    - explicit__entropy_binary
+    - explicit__seed_probability_variance_population
+    - explicit__missing
+    - s104_adapter__probability_mean
+    - s104_adapter__logit_from_mean_probability
+    - s104_adapter__margin_abs_2p_minus_1
+    - s104_adapter__entropy_binary
+    - s104_adapter__seed_probability_variance_population
+    - s104_adapter__missing
+    - s105_selected_hierarchy__probability_mean
+    - s105_selected_hierarchy__logit_from_mean_probability
+    - s105_selected_hierarchy__margin_abs_2p_minus_1
+    - s105_selected_hierarchy__entropy_binary
+    - s105_selected_hierarchy__seed_probability_variance_population
+    - s105_selected_hierarchy__missing
+    - gop_acoustic_posterior__probability_mean
+    - gop_acoustic_posterior__logit_from_mean_probability
+    - gop_acoustic_posterior__margin_abs_2p_minus_1
+    - gop_acoustic_posterior__entropy_binary
+    - gop_acoustic_posterior__seed_probability_variance_population
+    - gop_acoustic_posterior__missing
+    - alignment__target_interval_confidence
+    - alignment__confidence_missing
+  allowed_semantics:
+    - component_probability
+    - component_logit
+    - component_margin
+    - component_entropy
+    - preregistered_seed_uncertainty
+    - component_missingness
+    - target_interval_alignment_confidence
+    - alignment_confidence_missingness
+  alignment_confidence:
+    source: reviewed_realized_independent_source_else_null
+    range: [0.0, 1.0]
+    current_source_available: false
+    absent_source_policy: force_null_and_missing_indicator
+    realized_phone_independent: true
+    operation_independent: true
+    error_tag_independent: true
+  missingness:
+    probability_imputation: 0.5
+    logit_imputation: 0.0
+    margin_imputation: 0.0
+    entropy_imputation: 0.6931471805599453
+    uncertainty_imputation: 0.0
+    confidence_imputation: 0.0
+    indicators_required: true
+  label_isolation:
+    training_target: reference_binary_error_label
+    target_storage: physically_separate_label_matrix
+    target_allowed_as_feature: false
+    feature_builder_receives_labels: false
+    final_fit_receives_labels_only_after_feature_freeze: true
+  forbidden_exact_names:
+    - reference_binary_error_label
+    - binary_error_label
+    - y
+    - y_true
+    - target_phone
+    - realized_phone
+    - realized_phoneme
+    - alignment_operation
+    - phone_alignment_operation
+    - error_tag
+    - error_type
+    - substitution_tag
+    - deletion_tag
+    - insertion_tag
+  forbidden_name_fragments:
+    - label
+    - ground_truth
+    - realized
+    - operation
+    - error_tag
+    - error_type
+    - substitution
+    - deletion
+    - insertion
+
+oof:
+  fold_count: 5
+  assignment_unit: speaker_id_sha256
+  assignment_namespace: voice-coach.aihub71490.s106-stack-fold.v1
+  assignment_rule: sha256_namespace_plus_speaker_modulo_fold_count
+  every_speaker_exactly_one_validation_fold: true
+  every_row_exactly_one_oof_prediction: true
+  train_validation_speaker_overlap_maximum: 0
+  nonempty_train_and_validation_required_per_fold: true
+  fold_models_never_fit_validation_speaker_or_label: true
+  oof_selection:
+    architecture: standardized_l2_logistic_regression
+    solver: lbfgs
+    l1_ratio: 0.0
+    maximum_iterations: 2000
+    tolerance: 0.00000001
+    class_weight: null
+    standardization_fit_scope: fold_training_rows_only
+    regularization_c_grid: [0.01, 0.1, 1.0, 10.0]
+    threshold_grid:
+      start: 0.10
+      stop: 0.90
+      step: 0.05
+    primary_metric: speaker_macro_phone_macro_f1
+    selection_scope: aggregate_oof_predictions_only
+    selection_passes: 1
+    tie_break:
+      - higher_primary_metric
+      - smaller_regularization_c
+      - threshold_closest_to_0_5
+      - lower_threshold
+  controls:
+    - explicit_only
+    - s104_adapter_only
+    - s105_selected_hierarchy_only
+    - gop_only
+    - unweighted_component_probability_mean
+  control_and_disagreement_threshold: 0.5
+  final_fit:
+    source: full_stack_after_oof_selection
+    selected_architecture_and_hyperparameters_frozen: true
+    refit_count: 1
+    in_sample_metrics_computed: false
+    in_sample_metrics_reported: false
+    evidence_role: checkpoint_only
+
+reporting:
+  allowed_evidence:
+    - oof_stack_predictions
+    - oof_aggregate_metrics
+    - component_controls
+    - component_disagreement
+    - missingness_summary
+    - selected_hyperparameters
+    - final_checkpoint_hash
+  forbidden_evidence:
+    - full_stack_in_sample_metric
+    - train_metric
+    - dev_metric
+    - calibration_metric
+    - locked_test_metric
+  result_status_before_s107: engineering_stack_only
+  deployment_claim_allowed: false
+
+runtime:
+  fusion_device: cpu
+  cuda_allowed: false
+  deterministic: true
+  sklearn_n_jobs: 1
+  thread_count: 1
+  environment_files_forbidden: true
+  temporary_generation_cleanup_required: true
+
+implementation:
+  preflight_script:
+    path: scripts/prepare_wavlm_s106_fusion.py
+    sha256: edc9d58f8960a3fbf18e83815131909a6bee4de7028653b185c0524ef7b0dfd6
+  training_script:
+    path: scripts/train_wavlm_s106_fusion.py
+    sha256: b1ed2979e086d32aa0fdbbed70e64bb9c5f8039617132cc48195edacc888d88c
+  contract_module:
+    path: src/voice_coach/training/wavlm_s106_fusion_contract.py
+    sha256: 08ec4af2c9e543b752c26b7ee648be5c944c1bc1d6019802844015a9cd6ec490
+  training_module:
+    path: src/voice_coach/training/wavlm_s106_fusion_training.py
+    sha256: e8366b150f507b12a48a7608fbbb2f9af619fcdd7eb10ffaceda4c9952d88097
+  component_projection_module:
+    path: src/voice_coach/training/wavlm_s106_component_projection.py
+    sha256: 5ab54f0e1fee4a1bbe49eedbc25ab5a5abd3667ab194c5ebf5729298c78056f5
+  component_generator_config:
+    path: configs/experiments/wavlm_s106_component_inputs_v1.yaml
+    sha256: feafe24c7bcd32130519b884e39bf27fe4ae77d372004de8137cf06d963572b0
+  component_generator_script:
+    path: scripts/generate_wavlm_s106_component_inputs.py
+    sha256: 249a97476ce9635dcf7fcc481a7cd1b13272a110c92e9eab927f4dba59cf4314
+  component_generator_module:
+    path: src/voice_coach/training/wavlm_s106_component_generator.py
+    sha256: 31b15dde4d4a2ae4ee0b069a6268a03e951cf0593b39a0e047cde64d4311df5b
+  project_manifest:
+    path: pyproject.toml
+    sha256: 87fbe75e3df2ad7f64494cafb3744e7cfb815cfe1b8e9ea8d774d8b990c35e71
+  scorer_lock:
+    path: requirements/scorer-lock-linux-aarch64-cu130.txt
+    sha256: f6c5b10c1028506d7361c83ad1e9aae0b1fafcf34f4e918e5b7123c51fac8cf2
+
+outputs:
+  execution_lock: artifacts/experiments/aihub71490_wavlm_s106_stack_fusion_v1/execution_lock.json
+  generation_root: artifacts/experiments/aihub71490_wavlm_s106_stack_fusion_v1/generations
+  commit_manifest: artifacts/experiments/aihub71490_wavlm_s106_stack_fusion_v1/commit.json
+  registry_root: artifacts/experiment_registry
+  planned_registry_run_id: aihub71490-wavlm-s106-stack-fusion-v1
+  atomic_publish: true
+  content_addressed_generation: true
+  unexpected_artifacts_allowed: false
+  row_level_outputs_access_scope: D1_restricted_internal
+  aggregate_report_access_scope: A1_aggregate
+  expected_artifact_count: 7
+  artifact_contract:
+    - name: stack_component_matrix
+      relative_path: stack_component_matrix.parquet
+      format: parquet
+      access_scope: D1_restricted_internal
+    - name: speaker_fold_manifest
+      relative_path: speaker_fold_manifest.json
+      format: json
+      access_scope: D1_restricted_internal
+    - name: oof_predictions
+      relative_path: oof_predictions.parquet
+      format: parquet
+      access_scope: D1_restricted_internal
+    - name: oof_aggregate_report
+      relative_path: oof_aggregate_report.json
+      format: json
+      access_scope: A1_aggregate
+    - name: component_disagreement_report
+      relative_path: component_disagreement_report.json
+      format: json
+      access_scope: A1_aggregate
+    - name: final_fusion_checkpoint
+      relative_path: final_fusion_checkpoint.json
+      format: json
+      access_scope: D1_restricted_internal
+    - name: stack_only_report
+      relative_path: stack_only_report.json
+      format: json
+      access_scope: A1_aggregate
+  registry_schema_version: 1
+  commit_schema_version: voice_coach.wavlm_s106_stack_fusion_commit.v2

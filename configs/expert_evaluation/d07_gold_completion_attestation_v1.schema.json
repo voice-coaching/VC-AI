@@ -1,0 +1,156 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://voice-coach.local/schemas/d07_gold_completion_attestation_v1.schema.json",
+  "title": "D07 aggregate completion attestation compatible with S108",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_version",
+    "status",
+    "aggregate_only",
+    "contains_identifiers",
+    "contains_rows",
+    "contains_audio",
+    "contains_labels",
+    "contains_predictions",
+    "locked_access_count",
+    "calibration_count",
+    "locked_gold_count",
+    "independent_rater_count",
+    "adjudicator_count",
+    "two_original_ratings_retained",
+    "adjudication_completed",
+    "scalar_agreement",
+    "taxonomy_agreement",
+    "agreement_gate_passed",
+    "label_definition_frozen",
+    "primary_definition_frozen",
+    "rubric_unchanged_after_locked_start",
+    "model_results_unseen",
+    "research_lead_approved",
+    "calibration_gold_sha256",
+    "sealed_locked_gold_sha256",
+    "reviewer_attestation_sha256",
+    "preregistration_sha256",
+    "calibration_report_sha256",
+    "g04_completion_attestation_sha256",
+    "locked_access_authorization_sha256",
+    "locked_evaluation_report_sha256",
+    "expert_locked_access_transaction_count",
+    "sensitivity_analysis_completed"
+  ],
+  "properties": {
+    "schema_version": {
+      "const": "voice_coach.d07_gold_completion_attestation.v1"
+    },
+    "status": {
+      "const": "completed"
+    },
+    "aggregate_only": {
+      "const": true
+    },
+    "contains_identifiers": {
+      "const": false
+    },
+    "contains_rows": {
+      "const": false
+    },
+    "contains_audio": {
+      "const": false
+    },
+    "contains_labels": {
+      "const": false
+    },
+    "contains_predictions": {
+      "const": false
+    },
+    "locked_access_count": {
+      "const": 0
+    },
+    "calibration_count": {
+      "const": 800
+    },
+    "locked_gold_count": {
+      "type": "integer",
+      "minimum": 200,
+      "maximum": 1200
+    },
+    "independent_rater_count": {
+      "const": 2
+    },
+    "adjudicator_count": {
+      "const": 1
+    },
+    "two_original_ratings_retained": {
+      "const": true
+    },
+    "adjudication_completed": {
+      "const": true
+    },
+    "scalar_agreement": {
+      "$ref": "#/$defs/signed"
+    },
+    "taxonomy_agreement": {
+      "$ref": "#/$defs/signed"
+    },
+    "agreement_gate_passed": {
+      "const": true
+    },
+    "label_definition_frozen": {
+      "const": true
+    },
+    "primary_definition_frozen": {
+      "const": true
+    },
+    "rubric_unchanged_after_locked_start": {
+      "const": true
+    },
+    "model_results_unseen": {
+      "const": true
+    },
+    "research_lead_approved": {
+      "const": true
+    },
+    "calibration_gold_sha256": {
+      "$ref": "#/$defs/sha256"
+    },
+    "sealed_locked_gold_sha256": {
+      "$ref": "#/$defs/sha256"
+    },
+    "reviewer_attestation_sha256": {
+      "$ref": "#/$defs/sha256"
+    },
+    "preregistration_sha256": {
+      "$ref": "#/$defs/sha256"
+    },
+    "calibration_report_sha256": {
+      "$ref": "#/$defs/sha256"
+    },
+    "g04_completion_attestation_sha256": {
+      "$ref": "#/$defs/sha256"
+    },
+    "locked_access_authorization_sha256": {
+      "$ref": "#/$defs/sha256"
+    },
+    "locked_evaluation_report_sha256": {
+      "$ref": "#/$defs/sha256"
+    },
+    "expert_locked_access_transaction_count": {
+      "const": 1
+    },
+    "sensitivity_analysis_completed": {
+      "const": true
+    }
+  },
+  "$defs": {
+    "sha256": {
+      "type": "string",
+      "pattern": "^[0-9a-f]{64}$"
+    },
+    "signed": {
+      "type": "number",
+      "minimum": -1,
+      "maximum": 1
+    }
+  }
+}

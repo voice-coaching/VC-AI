@@ -1,0 +1,27 @@
+{
+  "schema_version": "voice_coach.r04_listener_attestation_manifest.v1",
+  "manifest_id": "TBD_EXTERNAL",
+  "status": "TBD_EXTERNAL",
+  "human_research_approval_sha256": "TBD_EXTERNAL",
+  "r04_preregistration_sha256": "TBD_PREREGISTRATION",
+  "statistical_analysis_plan_sha256": "TBD_PREREGISTRATION",
+  "privacy_zone": "D1_pseudonymized_restricted_experiment",
+  "direct_identifiers_present": false,
+  "free_text_present": false,
+  "attestations": [
+    {
+      "listener_id_sha256": "TBD_EXTERNAL",
+      "consent_receipt_sha256": "TBD_EXTERNAL",
+      "eligibility_receipt_sha256": "TBD_EXTERNAL",
+      "training_completion_receipt_sha256": "TBD_EXTERNAL",
+      "listening_environment_receipt_sha256": "TBD_EXTERNAL",
+      "headphone_check_receipt_sha256": "TBD_EXTERNAL",
+      "source_blinding_acknowledged": true,
+      "attestation_status": "TBD_EXTERNAL"
+    }
+  ],
+  "approval": {
+    "decision": "TBD_EXTERNAL",
+    "signed_receipt_sha256": "TBD_EXTERNAL"
+  }
+}

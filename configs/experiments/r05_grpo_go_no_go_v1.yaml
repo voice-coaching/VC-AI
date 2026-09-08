@@ -1,0 +1,346 @@
+schema_version: 1
+
+experiment:
+  id: r05_grpo_go_no_go_v1
+  stage: wp7_r05_grpo_entry_decision
+  implementation_status: production_static_preflight_only
+  actual_grpo_training_allowed: false
+  actual_f5_or_styletts_execution_allowed: false
+  actual_model_or_weight_download_allowed: false
+  actual_model_access_allowed: false
+  actual_gpu_access_allowed: false
+  actual_reward_execution_allowed: false
+  actual_metric_computation_allowed: false
+  actual_effect_estimation_allowed: false
+  actual_decision_report_write_allowed: false
+  deployment_allowed: false
+  publication_allowed: false
+  completion_claim_allowed: false
+
+canonical_sources:
+  access_scope: C1_code_config_docs_only
+  pins:
+    - path: configs/reference/r05_grpo_decision_report_v1.schema.json
+      sha256: 22174e8c8e844fdb79b969e7e6800de741ce71e2f3349e3b4771cdf2bfad8c47
+    - path: configs/reference/r05_grpo_gate_preregistration_v1.template.json
+      sha256: 83b343a59050093c9698d278f52d2ece4c1a4dabc694410b7d3fbcf233faac4b
+    - path: configs/reference/r05_grpo_human_authorization_v1.template.json
+      sha256: 2480c83359549298d9a1b4a17ffa3f5f6eb755e3bf55364c8bb58a38b50e8645
+    - path: src/voice_coach/references/r05_grpo_decision_contract.py
+      sha256: 4cd45e9b42e5705df35a9a6ea2fecb55d8f2cfc4a1061cf1d264956d6ecc0381
+    - path: scripts/prepare_r05_grpo_go_no_go.py
+      sha256: 917b72f6429a80ced5db1f080b0cebb5d7ab33e6e6fc75318bf4be76b37e807d
+    - path: configs/experiments/s2_s202_independent_auditor_v1.yaml
+      sha256: de087beab2d099ba781d7b431e7684dc5c93d0b4977604ced1a1c184733effc5
+    - path: src/voice_coach/training/s2_s202_auditor_contract.py
+      sha256: 0ba78271b3d4d99ec3fff865e65bbe992428edfb587785021632677bc46fdaac
+    - path: configs/experiments/s2_s203_expert_holdout_audit_v1.yaml
+      sha256: e837e75e936b1a2e98bc1927d2762a8ade3fd8d73137e4cb7eb028b3c0ace56c
+    - path: src/voice_coach/training/s2_s203_holdout_contract.py
+      sha256: 35ee786e59b247c28eb2cd06e5e58c11096cb4ad7944b74c0ab6950b5d2f578b
+    - path: configs/experiments/learning_effect_power_v1.yaml
+      sha256: 67737548ce1a22b7716fb5c58635f55a216ff7059fd709476198df3d5fb75c86
+    - path: scripts/check_project_constraints.py
+      sha256: 7c885d9d863d1a505bb074e5be33b63e262b191585bcf7a02a03162ca0f1ba86
+
+gate_contract:
+  fixed_gate_ids:
+    - s1_phone_f1
+    - s1_utterance_icc
+    - s2_severe_error_recall
+    - multi_reference_blind_superiority
+    - actual_pilot_learning_effect_signal
+  s1_phone_f1:
+    operator: greater_than_or_equal
+    threshold: 0.80
+    exact_artifact_pointer: TBD_PREREGISTRATION
+    metric_or_estimand_id: TBD_PREREGISTRATION
+    population_id: TBD_PREREGISTRATION
+    alignment_id: TBD_PREREGISTRATION
+    confidence_interval_method: TBD_PREREGISTRATION
+    decision_rule_id: TBD_PREREGISTRATION
+  s1_utterance_icc:
+    operator: greater_than_or_equal
+    threshold: 0.70
+    exact_artifact_pointer: TBD_PREREGISTRATION
+    metric_or_estimand_id: TBD_PREREGISTRATION
+    population_id: TBD_PREREGISTRATION
+    alignment_id: TBD_PREREGISTRATION
+    confidence_interval_method: TBD_PREREGISTRATION
+    decision_rule_id: TBD_PREREGISTRATION
+  s2_severe_error_recall:
+    operator: greater_than_or_equal
+    threshold: 0.80
+    exact_artifact_pointer: TBD_PREREGISTRATION
+    metric_or_estimand_id: TBD_PREREGISTRATION
+    population_id: TBD_PREREGISTRATION
+    alignment_id: TBD_PREREGISTRATION
+    confidence_interval_method: TBD_PREREGISTRATION
+    decision_rule_id: TBD_PREREGISTRATION
+  multi_reference_blind_superiority:
+    operator: preregistered_superiority
+    threshold: null
+    exact_artifact_pointer: TBD_PREREGISTRATION
+    metric_or_estimand_id: TBD_PREREGISTRATION
+    population_id: TBD_PREREGISTRATION
+    alignment_id: TBD_PREREGISTRATION
+    confidence_interval_method: TBD_PREREGISTRATION
+    decision_rule_id: TBD_PREREGISTRATION
+    superiority_comparator: TBD_PREREGISTRATION
+    superiority_estimand: TBD_PREREGISTRATION
+    superiority_margin: TBD_PREREGISTRATION
+  actual_pilot_learning_effect_signal:
+    operator: preregistered_signal
+    threshold: null
+    exact_artifact_pointer: TBD_PREREGISTRATION
+    metric_or_estimand_id: TBD_PREREGISTRATION
+    population_id: TBD_PREREGISTRATION
+    alignment_id: TBD_PREREGISTRATION
+    confidence_interval_method: TBD_PREREGISTRATION
+    decision_rule_id: TBD_PREREGISTRATION
+    effect_estimand: TBD_PREREGISTRATION
+    effect_size_definition: TBD_PREREGISTRATION
+    signal_definition: TBD_PREREGISTRATION
+    actual_participant_report_required: true
+    h01_planning_document_may_satisfy_gate: false
+  all_five_required_for_go: true
+  automatic_score_substitution_allowed: false
+  posthoc_rule_change_allowed: false
+  missing_or_invalid_outcome: TBD_PREREGISTRATION
+  failed_gate_outcome: TBD_PREREGISTRATION
+
+predecessors:
+  s108_final:
+    validation_order: 1
+    deep_validation_required: true
+    delegate_config_path: configs/experiments/s2_s202_independent_auditor_v1.yaml
+    delegate_config_sha256: de087beab2d099ba781d7b431e7684dc5c93d0b4977604ced1a1c184733effc5
+    delegate_contract_path: src/voice_coach/training/s2_s202_auditor_contract.py
+    delegate_contract_sha256: 0ba78271b3d4d99ec3fff865e65bbe992428edfb587785021632677bc46fdaac
+    completion_commit_path: artifacts/experiments/aihub71490_wavlm_s108_final_s1_v1/commit.json
+    completion_commit_sha256: TBD_S108_COMPLETION
+    registry_path: artifacts/experiment_registry/aihub71490-wavlm-s108-final-s1-v1/metadata.json
+    required_schema_version: voice_coach.wavlm_s108_final_s1_commit.v1
+    required_status: committed
+    required_decision: research_candidate_passed
+    aggregate_only: true
+  s203_expert_holdout:
+    validation_order: 2
+    deep_validation_required: true
+    static_config_path: configs/experiments/s2_s203_expert_holdout_audit_v1.yaml
+    static_config_sha256: e837e75e936b1a2e98bc1927d2762a8ade3fd8d73137e4cb7eb028b3c0ace56c
+    static_contract_path: src/voice_coach/training/s2_s203_holdout_contract.py
+    static_contract_sha256: 35ee786e59b247c28eb2cd06e5e58c11096cb4ad7944b74c0ab6950b5d2f578b
+    completion_commit_path: TBD_PREREGISTRATION
+    completion_commit_sha256: TBD_S203_COMPLETION
+    registry_path: TBD_PREREGISTRATION
+    aggregate_report_path: TBD_PREREGISTRATION
+    required_commit_schema_version: TBD_PREREGISTRATION
+    required_report_schema_version: TBD_PREREGISTRATION
+    required_status: completed
+    required_actual_expert_holdout: true
+    h01_or_planning_artifact_may_satisfy: false
+    aggregate_only_for_r05: true
+  r04_blind_evaluation:
+    validation_order: 3
+    deep_validation_required: true
+    config_path: configs/experiments/r04_blind_multireference_evaluation_v1.yaml
+    config_sha256: TBD_R04_FINAL_SHA256
+    contract_path: src/voice_coach/references/r04_blind_evaluation_contract.py
+    contract_sha256: TBD_R04_FINAL_SHA256
+    completion_commit_path: artifacts/experiments/r04_blind_multireference_evaluation_v1/commit.json
+    completion_commit_sha256: TBD_R04_COMPLETION
+    registry_path: artifacts/experiment_registry/r04-blind-multireference-evaluation-v1/metadata.json
+    aggregate_report_path: artifacts/experiments/r04_blind_multireference_evaluation_v1/r04_aggregate_analysis_v1.json
+    required_commit_schema_version: TBD_R04_COMPLETION
+    required_report_schema_version: TBD_R04_COMPLETION
+    required_status: completed
+    required_blind_superiority_result: true
+    aggregate_only_for_r05: true
+
+external_evidence:
+  h00_human_research_approval:
+    validation_order: 4
+    deep_validation_required: true
+    approval_path: TBD_PREREGISTRATION
+    approval_sha256: TBD_EXTERNAL
+    required_schema_version: TBD_PREREGISTRATION
+    required_status: approved_and_active
+    approval_must_cover_actual_pilot: true
+    aggregate_only_for_r05: true
+  h04_actual_pilot_report:
+    validation_order: 5
+    deep_validation_required: true
+    report_path: TBD_PREREGISTRATION
+    report_sha256: TBD_H04_COMPLETION
+    required_schema_version: TBD_PREREGISTRATION
+    required_status: completed
+    actual_participant_data_required: true
+    pre_post_and_retention_required: true
+    h01_power_or_preregistration_may_satisfy: false
+    aggregate_only_for_r05: true
+
+independent_preregistration:
+  validation_order: 6
+  placeholder: TBD_PREREGISTRATION
+  template_path: configs/reference/r05_grpo_gate_preregistration_v1.template.json
+  template_sha256: 83b343a59050093c9698d278f52d2ece4c1a4dabc694410b7d3fbcf233faac4b
+  approved_artifact_path: TBD_PREREGISTRATION
+  approved_artifact_sha256: TBD_PREREGISTRATION
+  required_schema_version: voice_coach.r05_grpo_gate_preregistration.v1
+  required_status: approved_and_frozen
+  independent_review_required: true
+  unresolved_fields_must_fail_closed: true
+  must_bind_exact_predecessor_hashes: true
+
+human_authorization:
+  validation_order: 7
+  placeholder: TBD_EXTERNAL
+  template_path: configs/reference/r05_grpo_human_authorization_v1.template.json
+  template_sha256: 2480c83359549298d9a1b4a17ffa3f5f6eb755e3bf55364c8bb58a38b50e8645
+  approved_artifact_path: TBD_PREREGISTRATION
+  approved_artifact_sha256: TBD_EXTERNAL
+  required_schema_version: voice_coach.r05_grpo_human_authorization.v1
+  required_status: authorized
+  independent_authorizer_required: true
+  unresolved_fields_must_fail_closed: true
+  must_bind_config_preregistration_and_predecessors: true
+  authorization_created_by_this_package: false
+
+model_reward_license_safety:
+  exact_model_family: TBD_PREREGISTRATION
+  exact_model_artifact_id: TBD_PREREGISTRATION
+  exact_model_revision: TBD_PREREGISTRATION
+  model_artifact_sha256: TBD_PREREGISTRATION
+  code_license_id: TBD_PREREGISTRATION
+  code_license_evidence_sha256: TBD_PREREGISTRATION
+  weight_license_id: TBD_PREREGISTRATION
+  weight_license_evidence_sha256: TBD_PREREGISTRATION
+  training_data_license_id: TBD_PREREGISTRATION
+  training_data_license_evidence_sha256: TBD_PREREGISTRATION
+  reward_implementation_id: TBD_PREREGISTRATION
+  reward_implementation_sha256: TBD_PREREGISTRATION
+  reward_directionality_evidence_sha256: TBD_PREREGISTRATION
+  reward_hacking_audit_sha256: TBD_PREREGISTRATION
+  safety_review_sha256: TBD_PREREGISTRATION
+  rollback_plan_sha256: TBD_PREREGISTRATION
+  best_of_n_or_rejection_sampling_required_before_grpo: true
+  content_accuracy_hard_gate_required: true
+  key_phone_hard_gate_required: true
+  artifact_hard_gate_required: true
+  reward_must_not_be_collapsed_to_single_scalar_without_preregistered_rule: true
+  all_unresolved_values_fail_closed: true
+
+privacy_and_decision:
+  decision_input_zone: A1_aggregate_only
+  decision_report_zone: A1_aggregate_only
+  row_level_data_allowed: false
+  direct_identifiers_allowed: false
+  pseudonymous_row_ids_allowed: false
+  free_text_allowed: false
+  raw_audio_allowed: false
+  individual_ratings_allowed: false
+  participant_records_allowed: false
+  model_weights_allowed: false
+  aggregate_evidence_hashes_required: true
+  go_requires_all_five_gates_passed: true
+  go_requires_all_assurances_passed: true
+  missing_or_invalid_never_inferred_as_pass: true
+  publication_requires_separate_promotion: true
+  forbidden_recursive_fields:
+    - row_id
+    - row_ids
+    - row_id_sha256
+    - item_id
+    - item_ids
+    - item_id_sha256
+    - participant_id
+    - participant_ids
+    - participant_id_sha256
+    - listener_id
+    - listener_ids
+    - listener_id_sha256
+    - speaker_id
+    - speaker_ids
+    - speaker_id_sha256
+    - candidate_id
+    - candidate_ids
+    - candidate_id_sha256
+    - name
+    - email
+    - phone
+    - address
+    - free_text
+    - free_text_note
+    - comment
+    - transcript
+    - target_text
+    - audio_path
+    - model_path
+
+execution_order:
+  - validate_r05_c1_config_sources_schema_and_templates
+  - deep_validate_s108_final_completion
+  - deep_validate_s203_actual_expert_holdout_completion
+  - deep_validate_r04_actual_blind_evaluation_completion
+  - deep_validate_h00_actual_human_research_approval
+  - deep_validate_h04_actual_pilot_statistical_report
+  - validate_independent_frozen_r05_go_no_go_preregistration
+  - validate_independent_r05_human_authorization
+  - evaluate_five_gates_from_a1_aggregate_evidence_only
+  - stop_before_any_grpo_download_model_gpu_reward_or_training_execution
+
+outputs:
+  decision_schema_path: configs/reference/r05_grpo_decision_report_v1.schema.json
+  decision_report_path: artifacts/experiments/r05_grpo_go_no_go_v1/decision_report.json
+  commit_path: artifacts/experiments/r05_grpo_go_no_go_v1/commit.json
+  registry_path: artifacts/experiment_registry/r05-grpo-go-no-go-v1/metadata.json
+  failure_report_path: artifacts/experiments/r05_grpo_go_no_go_v1/failure.json
+  no_overwrite: true
+  atomic_completed_bundle_required: true
+  no_symlink: true
+  write_enabled_in_this_package: false
+  current_output_count: 0
+  completion_claim_allowed: false
+
+runtime:
+  config_only_required_counts:
+    predecessor_path_resolution_count: 0
+    predecessor_read_attempt_count: 0
+    predecessor_read_count: 0
+    external_evidence_path_resolution_count: 0
+    external_evidence_read_attempt_count: 0
+    external_evidence_read_count: 0
+    preregistration_path_resolution_count: 0
+    preregistration_read_attempt_count: 0
+    preregistration_read_count: 0
+    authorization_path_resolution_count: 0
+    authorization_read_attempt_count: 0
+    authorization_read_count: 0
+    aggregate_evidence_read_count: 0
+    row_level_data_read_count: 0
+    protected_data_read_count: 0
+    audio_read_count: 0
+    rating_read_count: 0
+    participant_record_read_count: 0
+    model_path_resolution_count: 0
+    model_weight_read_count: 0
+    model_download_count: 0
+    network_access_count: 0
+    gpu_access_count: 0
+    reward_execution_count: 0
+    grpo_training_count: 0
+    f5_or_styletts_execution_count: 0
+    metric_computation_count: 0
+    effect_estimation_count: 0
+    decision_evaluation_count: 0
+    output_path_resolution_count: 0
+    output_count: 0
+    publication_count: 0
+  cpu_only_static_validation: true
+  environment_file_read_allowed: false
+  network_allowed: false
+  model_allowed: false
+  gpu_allowed: false
+  reward_execution_allowed: false
+  training_allowed: false

@@ -1,0 +1,521 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "voice_coach.e01.phone_worker_receipt.v2",
+  "title": "E01 restricted phone-substitution worker receipt v2",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_version",
+    "status",
+    "privacy_zone",
+    "access_scope",
+    "case_id",
+    "case_sidecar_sha256",
+    "worker_implementation_sha256",
+    "runtime_identity_sha256",
+    "policy_bindings",
+    "role_outputs",
+    "edit_mask",
+    "invariants",
+    "observed_phone_bindings",
+    "independent_phone_verifier",
+    "stage_separation",
+    "relations",
+    "publication_allowed"
+  ],
+  "properties": {
+    "schema_version": {
+      "const": "voice_coach.e01.phone_worker_receipt.v2"
+    },
+    "status": {
+      "const": "completed_restricted_receipt"
+    },
+    "privacy_zone": {
+      "const": "D1_pseudonymized_restricted_non_locked"
+    },
+    "access_scope": {
+      "const": "phone_executor_and_independent_verifier_only"
+    },
+    "case_id": {
+      "type": "string",
+      "pattern": "^e01pc_[0-9a-f]{32}$"
+    },
+    "case_sidecar_sha256": {
+      "$ref": "#/$defs/sha256"
+    },
+    "worker_implementation_sha256": {
+      "$ref": "#/$defs/sha256"
+    },
+    "runtime_identity_sha256": {
+      "$ref": "#/$defs/sha256"
+    },
+    "policy_bindings": {
+      "$ref": "#/$defs/policyBindings"
+    },
+    "role_outputs": {
+      "$ref": "#/$defs/roleOutputs"
+    },
+    "edit_mask": {
+      "$ref": "#/$defs/editMask"
+    },
+    "invariants": {
+      "$ref": "#/$defs/invariants"
+    },
+    "observed_phone_bindings": {
+      "$ref": "#/$defs/observedPhoneBindings"
+    },
+    "independent_phone_verifier": {
+      "$ref": "#/$defs/independentPhoneVerifier"
+    },
+    "stage_separation": {
+      "$ref": "#/$defs/stageSeparation"
+    },
+    "relations": {
+      "$ref": "#/$defs/relations"
+    },
+    "publication_allowed": {
+      "const": false
+    }
+  },
+  "$defs": {
+    "sha256": {
+      "type": "string",
+      "pattern": "^(?!0{64}$)[0-9a-f]{64}$"
+    },
+    "policyBindings": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "preregistration_sha256",
+        "phone_case_policy_sha256",
+        "tolerance_policy_sha256",
+        "minimum_support_policy_sha256",
+        "invalid_case_policy_sha256",
+        "u_to_i_relation_policy_sha256",
+        "u_to_t_relation_policy_sha256",
+        "i_to_t_relation_policy_sha256"
+      ],
+      "properties": {
+        "preregistration_sha256": {
+          "$ref": "#/$defs/sha256"
+        },
+        "phone_case_policy_sha256": {
+          "$ref": "#/$defs/sha256"
+        },
+        "tolerance_policy_sha256": {
+          "$ref": "#/$defs/sha256"
+        },
+        "minimum_support_policy_sha256": {
+          "$ref": "#/$defs/sha256"
+        },
+        "invalid_case_policy_sha256": {
+          "$ref": "#/$defs/sha256"
+        },
+        "u_to_i_relation_policy_sha256": {
+          "$ref": "#/$defs/sha256"
+        },
+        "u_to_t_relation_policy_sha256": {
+          "$ref": "#/$defs/sha256"
+        },
+        "i_to_t_relation_policy_sha256": {
+          "$ref": "#/$defs/sha256"
+        }
+      }
+    },
+    "roleOutput": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "role",
+        "origin",
+        "pcm_sha256",
+        "outside_edit_mask_pcm_sha256",
+        "sample_count"
+      ],
+      "properties": {
+        "role": {
+          "enum": [
+            "U",
+            "I",
+            "T"
+          ]
+        },
+        "origin": {
+          "enum": [
+            "unmodified_source",
+            "identity_control_resynthesis",
+            "target_phone_treatment_resynthesis"
+          ]
+        },
+        "pcm_sha256": {
+          "$ref": "#/$defs/sha256"
+        },
+        "outside_edit_mask_pcm_sha256": {
+          "$ref": "#/$defs/sha256"
+        },
+        "sample_count": {
+          "type": "integer",
+          "minimum": 2,
+          "maximum": 2147483647
+        }
+      }
+    },
+    "roleOutputs": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "U",
+        "I",
+        "T"
+      ],
+      "properties": {
+        "U": {
+          "$ref": "#/$defs/roleOutput",
+          "properties": {
+            "role": {
+              "const": "U"
+            },
+            "origin": {
+              "const": "unmodified_source"
+            }
+          }
+        },
+        "I": {
+          "$ref": "#/$defs/roleOutput",
+          "properties": {
+            "role": {
+              "const": "I"
+            },
+            "origin": {
+              "const": "identity_control_resynthesis"
+            }
+          }
+        },
+        "T": {
+          "$ref": "#/$defs/roleOutput",
+          "properties": {
+            "role": {
+              "const": "T"
+            },
+            "origin": {
+              "const": "target_phone_treatment_resynthesis"
+            }
+          }
+        }
+      }
+    },
+    "editMask": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "edit_mask_sha256",
+        "masked_sample_count",
+        "outside_mask_sample_count"
+      ],
+      "properties": {
+        "edit_mask_sha256": {
+          "$ref": "#/$defs/sha256"
+        },
+        "masked_sample_count": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 2147483647
+        },
+        "outside_mask_sample_count": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 2147483647
+        }
+      }
+    },
+    "invariants": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "same_sample_count_u_i_t",
+        "u_i_outside_edit_mask_exact_identity",
+        "u_t_outside_edit_mask_exact_identity",
+        "i_t_outside_edit_mask_exact_identity",
+        "automatic_clipping_or_normalization_applied"
+      ],
+      "properties": {
+        "same_sample_count_u_i_t": {
+          "const": true
+        },
+        "u_i_outside_edit_mask_exact_identity": {
+          "const": true
+        },
+        "u_t_outside_edit_mask_exact_identity": {
+          "const": true
+        },
+        "i_t_outside_edit_mask_exact_identity": {
+          "const": true
+        },
+        "automatic_clipping_or_normalization_applied": {
+          "const": false
+        }
+      }
+    },
+    "observedPhoneBindings": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "u_source_phone_label_sha256",
+        "i_identity_phone_label_sha256",
+        "t_target_phone_label_sha256",
+        "i_keeps_u_phone",
+        "t_uses_donor_phone"
+      ],
+      "properties": {
+        "u_source_phone_label_sha256": {
+          "$ref": "#/$defs/sha256"
+        },
+        "i_identity_phone_label_sha256": {
+          "$ref": "#/$defs/sha256"
+        },
+        "t_target_phone_label_sha256": {
+          "$ref": "#/$defs/sha256"
+        },
+        "i_keeps_u_phone": {
+          "const": true
+        },
+        "t_uses_donor_phone": {
+          "const": true
+        }
+      }
+    },
+    "independentPhoneVerifier": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "verification_receipt_sha256",
+        "s1_model_identity_sha256",
+        "phone_verifier_model_identity_sha256",
+        "s1_training_lineage_sha256",
+        "phone_verifier_training_lineage_sha256",
+        "lineage_policy",
+        "s1_weights_accessed",
+        "s1_features_accessed",
+        "s1_predictions_accessed",
+        "s1_thresholds_accessed",
+        "trained_on_s1_outputs",
+        "human_observed_boundaries_used"
+      ],
+      "properties": {
+        "verification_receipt_sha256": {
+          "$ref": "#/$defs/sha256"
+        },
+        "s1_model_identity_sha256": {
+          "$ref": "#/$defs/sha256"
+        },
+        "phone_verifier_model_identity_sha256": {
+          "$ref": "#/$defs/sha256"
+        },
+        "s1_training_lineage_sha256": {
+          "$ref": "#/$defs/sha256"
+        },
+        "phone_verifier_training_lineage_sha256": {
+          "$ref": "#/$defs/sha256"
+        },
+        "lineage_policy": {
+          "const": "disjoint_from_s1_models_features_predictions_thresholds"
+        },
+        "s1_weights_accessed": {
+          "const": false
+        },
+        "s1_features_accessed": {
+          "const": false
+        },
+        "s1_predictions_accessed": {
+          "const": false
+        },
+        "s1_thresholds_accessed": {
+          "const": false
+        },
+        "trained_on_s1_outputs": {
+          "const": false
+        },
+        "human_observed_boundaries_used": {
+          "const": true
+        }
+      }
+    },
+    "stageSeparation": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "s201_role",
+        "s201_phone_gold_feature_or_target_used",
+        "s201_score_used_for_phone_decision",
+        "s202_role",
+        "s202_used_as_phone_gold",
+        "s202_phone_label_or_boundary_used",
+        "s202_score_used_for_phone_decision"
+      ],
+      "properties": {
+        "s201_role": {
+          "const": "content_consistency_routing_only"
+        },
+        "s201_phone_gold_feature_or_target_used": {
+          "const": false
+        },
+        "s201_score_used_for_phone_decision": {
+          "const": false
+        },
+        "s202_role": {
+          "const": "independent_utterance_quality_auditor_not_phone_gold"
+        },
+        "s202_used_as_phone_gold": {
+          "const": false
+        },
+        "s202_phone_label_or_boundary_used": {
+          "const": false
+        },
+        "s202_score_used_for_phone_decision": {
+          "const": false
+        }
+      }
+    },
+    "relationResult": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "source_role",
+        "comparison_role",
+        "expectation",
+        "relation_policy_sha256",
+        "status",
+        "invalid_reason_code"
+      ],
+      "properties": {
+        "source_role": {
+          "enum": [
+            "U",
+            "I"
+          ]
+        },
+        "comparison_role": {
+          "enum": [
+            "I",
+            "T"
+          ]
+        },
+        "expectation": {
+          "enum": [
+            "identity_control_invariance",
+            "targeted_phone_change"
+          ]
+        },
+        "relation_policy_sha256": {
+          "$ref": "#/$defs/sha256"
+        },
+        "status": {
+          "enum": [
+            "passed",
+            "failed",
+            "invalid"
+          ]
+        },
+        "invalid_reason_code": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "enum": [
+            "verifier_unavailable",
+            "metric_undefined",
+            "preregistered_quality_guard",
+            "other_preregistered",
+            null
+          ]
+        }
+      },
+      "allOf": [
+        {
+          "if": {
+            "properties": {
+              "status": {
+                "const": "invalid"
+              }
+            },
+            "required": [
+              "status"
+            ]
+          },
+          "then": {
+            "properties": {
+              "invalid_reason_code": {
+                "enum": [
+                  "verifier_unavailable",
+                  "metric_undefined",
+                  "preregistered_quality_guard",
+                  "other_preregistered"
+                ]
+              }
+            }
+          },
+          "else": {
+            "properties": {
+              "invalid_reason_code": {
+                "type": "null"
+              }
+            }
+          }
+        }
+      ]
+    },
+    "relations": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "U_to_I",
+        "U_to_T",
+        "I_to_T"
+      ],
+      "properties": {
+        "U_to_I": {
+          "$ref": "#/$defs/relationResult",
+          "properties": {
+            "source_role": {
+              "const": "U"
+            },
+            "comparison_role": {
+              "const": "I"
+            },
+            "expectation": {
+              "const": "identity_control_invariance"
+            }
+          }
+        },
+        "U_to_T": {
+          "$ref": "#/$defs/relationResult",
+          "properties": {
+            "source_role": {
+              "const": "U"
+            },
+            "comparison_role": {
+              "const": "T"
+            },
+            "expectation": {
+              "const": "targeted_phone_change"
+            }
+          }
+        },
+        "I_to_T": {
+          "$ref": "#/$defs/relationResult",
+          "properties": {
+            "source_role": {
+              "const": "I"
+            },
+            "comparison_role": {
+              "const": "T"
+            },
+            "expectation": {
+              "const": "targeted_phone_change"
+            }
+          }
+        }
+      }
+    }
+  }
+}

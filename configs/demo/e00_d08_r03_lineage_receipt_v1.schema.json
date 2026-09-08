@@ -1,0 +1,119 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://voice-coach.local/schemas/e00_d08_r03_lineage_receipt_v1.schema.json",
+  "title": "E00 exact D08 recording to R03 candidate lineage receipt",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_version",
+    "receipt_id",
+    "status",
+    "r03_bank_manifest_sha256",
+    "selected_candidate_row_sha256",
+    "target_text_sha256",
+    "selected_audio_object_id_sha256",
+    "selected_audio_sha256",
+    "source_audio_sha256",
+    "d08_completion_sha256",
+    "d08_metadata_manifest_sha256",
+    "d08_recording_metadata_row_sha256",
+    "d08_recording_audio_sha256",
+    "d08_recording_rights_attestation_sha256",
+    "source_rights_attestation_sha256",
+    "d08_recording_license_grant_sha256",
+    "source_recording_license_grant_sha256",
+    "candidate_audio_matches_d08_recording",
+    "candidate_rights_match_d08_rights",
+    "independent_r01_human_assumed_to_be_d08",
+    "audio_locator_embedded",
+    "speaker_identity_embedded",
+    "privacy_zone",
+    "binding_sha256"
+  ],
+  "properties": {
+    "schema_version": {
+      "const": "voice_coach.e00_d08_r03_lineage_receipt.v1"
+    },
+    "receipt_id": {
+      "type": "string",
+      "pattern": "^e00lineage_[0-9a-f]{32}$"
+    },
+    "status": {
+      "const": "exact_cross_lineage_verified"
+    },
+    "r03_bank_manifest_sha256": {
+      "$ref": "#/$defs/sha256"
+    },
+    "selected_candidate_row_sha256": {
+      "$ref": "#/$defs/sha256"
+    },
+    "target_text_sha256": {
+      "$ref": "#/$defs/sha256"
+    },
+    "selected_audio_object_id_sha256": {
+      "$ref": "#/$defs/sha256"
+    },
+    "selected_audio_sha256": {
+      "$ref": "#/$defs/sha256"
+    },
+    "source_audio_sha256": {
+      "description": "Restricted lineage service projection of the source audio content hash; it must equal both the selected R03 candidate audio hash and the D08 metadata-row audio hash.",
+      "$ref": "#/$defs/sha256"
+    },
+    "d08_completion_sha256": {
+      "$ref": "#/$defs/sha256"
+    },
+    "d08_metadata_manifest_sha256": {
+      "$ref": "#/$defs/sha256"
+    },
+    "d08_recording_metadata_row_sha256": {
+      "description": "Canonical hash of the exact restricted D08 metadata row used for the selected recording. The row itself, including speaker and locator fields, must not be embedded here.",
+      "$ref": "#/$defs/sha256"
+    },
+    "d08_recording_audio_sha256": {
+      "$ref": "#/$defs/sha256"
+    },
+    "d08_recording_rights_attestation_sha256": {
+      "$ref": "#/$defs/sha256"
+    },
+    "source_rights_attestation_sha256": {
+      "$ref": "#/$defs/sha256"
+    },
+    "d08_recording_license_grant_sha256": {
+      "description": "Per-recording license grant projected by the restricted D08 lineage service.",
+      "$ref": "#/$defs/sha256"
+    },
+    "source_recording_license_grant_sha256": {
+      "description": "Source-side license grant that must exactly equal the D08 metadata-row grant.",
+      "$ref": "#/$defs/sha256"
+    },
+    "candidate_audio_matches_d08_recording": {
+      "const": true
+    },
+    "candidate_rights_match_d08_rights": {
+      "const": true
+    },
+    "independent_r01_human_assumed_to_be_d08": {
+      "description": "An independent R01 human candidate is never treated as D08 without the exact metadata-row and rights receipt cross-match in this receipt.",
+      "const": false
+    },
+    "audio_locator_embedded": {
+      "const": false
+    },
+    "speaker_identity_embedded": {
+      "const": false
+    },
+    "privacy_zone": {
+      "const": "D1_pseudonymized_restricted_lineage"
+    },
+    "binding_sha256": {
+      "$ref": "#/$defs/sha256"
+    }
+  },
+  "$defs": {
+    "sha256": {
+      "type": "string",
+      "pattern": "^[0-9a-f]{64}$"
+    }
+  }
+}

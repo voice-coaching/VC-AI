@@ -1,0 +1,87 @@
+{
+  "schema_version": "voice_coach.d08_qc_preregistration.v1",
+  "preregistration_id": "d08-qc-prereg-2026-08-08",
+  "status": "registered",
+  "registered_at_utc": "2026-08-08T13:30:00+00:00",
+  "registered_by_role": "project_owner",
+  "authored_by": "claude_on_project_owner_instruction",
+  "authoring_note_ko": "이 사전등록의 임계값은 Claude가 프로젝트 맥락과 관련 문헌을 근거로 채웠다. 원래 계약은 사람이 정하도록 강제했으나 프로젝트 소유자가 그 제약을 면제했다(DEV-CLAUDE-010). 각 값의 근거는 rationale_ko에 적는다. 녹음 시작 전에 동결되며, 녹음 후 변경은 결과를 보고 기준을 맞춘 것이 되므로 금지한다.",
+  "frozen_before_recruitment_or_audio_access": true,
+  "r00_card_sha256": "08dc149ccf10006a587e6216dda0471c19b5c55eab6b320b4348587527d82c4d",
+  "speaker_contract": {
+    "planning_target_minimum_distinct_speakers_per_sentence": 4,
+    "binding_minimum_distinct_speakers_per_sentence": 3,
+    "binding_floor_rationale_ko": "d(x,R)의 tolerance는 exemplar 산포에서 유도되므로 화자 2명이면 산포가 두 사람의 개인차와 구별되지 않는다. 계획 목표는 4명이지만, 4를 구속 하한으로 두면 1명이 이탈했을 때 뱅크 전체가 무효가 된다. 3은 '산포가 개인차가 아니다'를 말할 수 있는 최소값이면서 이탈 1명을 견딘다.",
+    "target_shortfall_reporting_rule": "report_planned_and_achieved_speaker_count_per_sentence_and_mark_bank_low_confidence_below_planning_target",
+    "shortfall_rule_rationale_ko": "목표(4) 미달이지만 하한(3) 이상이면 뱅크를 쓰되 문장별로 계획 대비 실제 화자 수를 공개하고 LOW_CONFIDENCE로 표시한다. 하한 미달이면 그 문장의 화자 축 tolerance를 유도하지 않는다(MISSING). 미달을 숨기고 점수를 내는 것이 가장 나쁜 결과다."
+  },
+  "fixed_qc_gates": {
+    "clipping_ratio_operator": "<",
+    "clipping_ratio_threshold": 0.001,
+    "decoder_error_count_required": 0,
+    "human_reviewer_pool_size": 2,
+    "minimum_human_listener_confirmations": 1,
+    "asr_role": "candidate_triage_only_not_final_qc"
+  },
+  "measurement_contracts": {
+    "dc_offset": {
+      "metric_id": "mean_sample_amplitude_absolute_normalised_full_scale",
+      "unit": "fraction_of_full_scale",
+      "direction": "lower_is_better",
+      "threshold": 0.001,
+      "rationale_ko": "DC offset은 마이크·인터페이스의 결함 신호이며 무음 구간 검출과 에너지 측정을 함께 망가뜨린다. 전체 스케일의 0.1%는 24-bit 녹음에서 관측 가능한 하한보다 훨씬 크므로, 이를 넘으면 장비 문제로 보고 재녹음한다.",
+      "measured_over": "whole_file"
+    },
+    "content_match": {
+      "metric_id": "character_error_rate_against_r00_normalized_text",
+      "unit": "ratio",
+      "direction": "lower_is_better",
+      "threshold": 0.10,
+      "rationale_ko": "화자가 문장을 다르게 읽었는지 자동으로 걸러내기 위한 triage다. R00은 20개 고정 문장이므로 목표 텍스트가 정확히 알려져 있다. 한국어 읽기 음성 ASR의 통상 CER이 5% 안팎이므로 10%를 넘으면 인식기 오류보다 낭독 불일치를 의심하는 것이 타당하다.",
+      "escalation_ko": "임계값 초과는 자동 탈락이 아니라 사람 청취로 넘긴다. fixed_qc_gates.asr_role이 'candidate_triage_only_not_final_qc'인 이유가 이것이다.",
+      "measured_over": "marked_speech_region"
+    },
+    "noise": {
+      "metric_id": "a_weighted_speech_to_noise_ratio_active_vs_leading_silence",
+      "unit": "decibel",
+      "direction": "higher_is_better",
+      "threshold": 30.0,
+      "rationale_ko": "참조음은 학습자가 따라 듣는 기준이므로 학습자 녹음보다 조용해야 한다. 방음 부스 코퍼스(AI Hub 542)는 통상 35 dB 이상이 나오고, 조용한 실내 녹음은 30 dB 근처다. 30 dB는 '조용한 실내'를 통과시키되 에어컨·환풍기가 켜진 방을 거른다.",
+      "noise_estimated_from": "leading_and_trailing_silence_before_speech_onset",
+      "measured_over": "marked_speech_region_versus_silence"
+    },
+    "reverb": {
+      "metric_id": "reverberation_time_rt60_estimate",
+      "unit": "second",
+      "direction": "lower_is_better",
+      "threshold": 0.3,
+      "rationale_ko": "잔향은 참조음의 스펙트럼과 구간 경계를 흐려 d(x,R)의 duration·rhythm 축에 직접 영향을 준다. 음성 녹음용 소규모 실내의 통상 RT60은 0.2–0.4초이고, 근접 마이크(15–20 cm) 조건에서 0.3초는 일반 사무실을 통과시키되 울림이 큰 공간을 거른다.",
+      "measured_over": "whole_file"
+    },
+    "interruption": {
+      "metric_id": "maximum_internal_silence_gap_within_marked_speech",
+      "unit": "second",
+      "direction": "lower_is_better",
+      "threshold": 1.0,
+      "rationale_ko": "문장 중간에 1초를 넘는 무음이 있으면 낭독이 끊겼거나 재시작한 것이며, 그런 파일이 뱅크에 들어가면 duration 축의 tolerance를 잘못 넓힌다. R00 문장은 10–17음절로 한 호흡에 읽히므로 정상 낭독에서 1초 무음은 나오지 않는다.",
+      "additional_rule_ko": "발화가 파일 시작 0.1초 이내에 시작하거나 파일 끝 0.1초 이내에 끝나면 잘린 것으로 보고 함께 탈락시킨다.",
+      "measured_over": "marked_speech_region"
+    }
+  },
+  "adjudication_contract": {
+    "trigger_rule_id": "any_measurement_contract_threshold_breach_or_reviewer_disagreement",
+    "trigger_rationale_ko": "자동 측정이 하나라도 임계값을 넘거나, 2인 검토자의 판정이 갈리면 판정으로 넘긴다. 자동 측정만으로 탈락시키지 않는 이유는 측정이 틀릴 수 있고 재녹음 비용이 크기 때문이다.",
+    "decision_rule_id": "adjudicator_listens_and_decides_accept_or_rerecord_with_written_reason",
+    "adjudicator_role": "independent_reviewer_not_in_the_two_person_pool",
+    "independence_required": true,
+    "independence_rationale_ko": "판정자가 1차 검토자 중 한 명이면 자기 판정을 재확인하는 것이 되어 독립성이 없다. 녹음 세션 운영자도 제외한다 — 재녹음 비용을 부담하는 사람이 판정하면 통과 쪽으로 기운다.",
+    "receipt_required_when_triggered": true
+  },
+  "approval": {
+    "decision": "approved",
+    "protocol_sha256": "TBD_EXTERNAL_ATTESTATION",
+    "signed_receipt_sha256": "TBD_EXTERNAL_ATTESTATION",
+    "unresolved_note_ko": "protocol_sha256와 signed_receipt_sha256은 실제 문서에 서명한 뒤에만 채울 수 있다. Claude가 존재하지 않는 문서의 digest를 지어낼 수는 없다."
+  },
+  "completion_claim_allowed": false
+}

@@ -1,0 +1,193 @@
+schema_version: voice_coach.learning_effect_power_config.v1
+status: planning_only_no_empirical_pilot
+
+current_external_status:
+  irb_or_equivalent_approval_obtained: false
+  participants_recruited: false
+  learner_recordings_collected: false
+  empirical_pilot_nuisance_estimates_available: false
+  confirmatory_effect_estimate_available: false
+
+study:
+  id: voice_coach_learning_effect_c0_c3_c5_v1
+  purpose: feasibility_then_confirmatory_learning_effect
+  design: two_stage_parallel_pairwise_randomized
+  randomization_unit: participant
+  crossover_allowed: false
+  crossover_rejection_reason: persistent_learning_and_retention_carryover
+  allocation_ratio: [1, 1]
+  stratification_factors: [l1, baseline_comprehensibility_band]
+  arms:
+    C0:
+      role: time_and_content_matched_active_control
+      intervention: practice_without_structured_diagnostic_coaching
+    C3:
+      role: structured_feedback
+      intervention: c0_plus_evidence_constrained_structured_diagnostic_coaching
+    C5:
+      role: multi_reference_dual_loop
+      intervention: c3_plus_multi_reference_and_coached_reattempt_loop
+  stages:
+    - id: stage_1_c0_vs_c3
+      contrast: C3_minus_C0
+      arms: [C0, C3]
+      question: incremental_effect_of_structured_feedback
+    - id: stage_2_c3_vs_c5
+      contrast: C5_minus_C3
+      arms: [C3, C5]
+      question: incremental_effect_of_multi_reference_and_dual_loop
+  stage_2_activation:
+    based_on_unblinded_effect_estimate: false
+    requirements:
+      - irb_approved_version_covers_stage_2
+      - no_unresolved_safety_or_privacy_pause
+      - c3_and_c5_delivery_fidelity_ready
+      - stage_2_randomization_and_blind_rating_pipeline_validated
+  intervention_duration_weeks: 2
+  assessments:
+    - {id: pre, timing: before_randomized_intervention}
+    - {id: post, timing: end_of_week_2}
+    - {id: retention, timing: four_weeks_after_post}
+
+outcomes:
+  primary:
+    id: blind_expert_comprehensibility
+    scale: [1, 5]
+    timepoint: post
+    estimand: between_arm_difference_in_pre_to_post_change
+    aggregation_for_power: participant_level_mean_over_fixed_transfer_items_and_raters
+  key_secondary:
+    - id: blind_expert_comprehensibility_retention
+      timepoint: retention
+      estimand: between_arm_difference_in_pre_to_retention_change
+    - {id: blind_expert_phone_accuracy, timepoints: [post, retention]}
+    - {id: blind_expert_fluency, timepoints: [post, retention]}
+  exploratory:
+    - {id: learner_satisfaction, timepoints: [post]}
+    - {id: adherence_and_exposure, timepoints: [post]}
+
+blinding:
+  outcome_raters_blinded_to: [condition, timepoint, participant_identity]
+  minimum_independent_raters: 2
+  randomized_item_order_per_rater: true
+  masked_file_names: true
+  participant_blinding_feasible: false
+  analyst_arm_labels_masked_until_data_lock: true
+  rater_reliability_metrics: [icc_2_1, qwk, mae]
+  minimum_reliability_for_confirmatory_analysis: 0.70
+
+analysis:
+  primary_population: intention_to_treat_as_randomized
+  primary_model: linear_mixed_effects_approximation
+  fixed_effects: [condition, time, condition_by_time, l1, baseline]
+  random_intercepts: [participant, sentence, rater]
+  primary_contrasts:
+    - C3_minus_C0_at_post_relative_to_pre
+    - C5_minus_C3_at_post_relative_to_pre
+  retention_contrasts:
+    - C3_minus_C0_at_retention_relative_to_pre
+    - C5_minus_C3_at_retention_relative_to_pre
+  effect_reporting: [raw_mean_difference, standardized_mean_difference, 95_percent_ci]
+  missingness:
+    primary: likelihood_based_mixed_model_using_all_observed_itt_data
+    sensitivity:
+      - multilevel_multiple_imputation_under_mar
+      - delta_adjusted_pattern_mixture_under_mnar
+      - complete_case
+    forbidden: [last_observation_carried_forward, post_randomization_exclusion]
+    report_by_arm: [missing_count, missing_fraction, reason, timepoint]
+  per_protocol_sensitivity:
+    minimum_assigned_exposure_fraction: 0.80
+    primary_claim_allowed: false
+
+multiplicity:
+  method: holm
+  alpha_two_sided: 0.05
+  families:
+    primary_post:
+      members:
+        - C3_minus_C0_at_post_relative_to_pre
+        - C5_minus_C3_at_post_relative_to_pre
+    key_retention:
+      members:
+        - C3_minus_C0_at_retention_relative_to_pre
+        - C5_minus_C3_at_retention_relative_to_pre
+    secondary_by_outcome_and_timepoint:
+      members:
+        - phone_accuracy_post
+        - phone_accuracy_retention
+        - fluency_post
+        - fluency_retention
+  power_planning_family: primary_post
+  conservative_planning_alpha: 0.025
+
+power:
+  target_power: 0.80
+  test_sidedness: two_sided
+  approximation: two_arm_difference_in_repeated_change_scores
+  formula:
+    complete_per_arm: ceil(4*(1-correlation)*(z_alpha+z_power)^2/(raw_difference/outcome_sd)^2)
+    cluster_design_effect: 1+(((1+cluster_size_cv^2)*mean_cluster_size)-1)*cluster_icc
+    enrollment_per_arm: ceil(cluster_rounded_complete_per_arm/(1-attrition))
+  limitations:
+    - approximation_not_full_mixed_model_simulation
+    - nuisance_parameters_must_be_reestimated_from_pilot
+    - target_effects_are_sensitivity_assumptions_not_observed_effects
+    - final_design_requires_statistician_and_protocol_approval
+  sensitivity_grid:
+    provenance: assumed_sensitivity_without_empirical_pilot
+    raw_mean_difference_points: [0.15, 0.30, 0.45]
+    participant_level_outcome_sd: [0.60, 0.90, 1.20]
+    pre_followup_correlation: [0.30, 0.50, 0.70]
+    delivery_cluster_icc: [0.00, 0.05, 0.10]
+    attrition_fraction: [0.10, 0.20, 0.30]
+    mean_delivery_cluster_size: 10
+    delivery_cluster_size_cv: 0.25
+  empirical_pilot_input:
+    optional_schema_version: voice_coach.learning_effect_pilot_estimates.v1
+    nuisance_parameters_only: true
+    observed_treatment_effect_for_power_allowed: false
+    final_sample_size_auto_lock_allowed: false
+
+feasibility_pilot:
+  descriptive_initial_range_per_arm: [15, 20]
+  powered_efficacy_claim_allowed: false
+  objectives:
+    - recruitment_and_retention
+    - intervention_delivery_fidelity
+    - outcome_variance_and_correlation
+    - delivery_cluster_icc_if_clustered
+    - rater_reliability
+    - missingness_and_attrition
+
+exclusions:
+  before_randomization:
+    - consent_not_obtained
+    - eligibility_failure
+    - baseline_recording_hard_qc_failure_before_assignment
+    - duplicate_enrollment
+  after_randomization:
+    primary_itt_exclusion_allowed: false
+    retain_with_flags:
+      - nonadherence
+      - intervention_discontinuation
+      - protocol_deviation
+      - missing_followup
+    withdrawal_handling: follow_approved_consent_and_data_retention_choice
+
+stopping:
+  efficacy_or_futility_interim_testing: none
+  effect_based_early_stop_allowed: false
+  pause_or_stop_triggers:
+    - irb_or_institutional_suspension
+    - consent_or_privacy_breach
+    - unexpected_serious_intervention_related_harm
+    - randomization_or_data_integrity_failure
+    - intervention_condition_cannot_be_delivered_as_registered
+  restart_requires: documented_irb_and_principal_investigator_approval
+
+output:
+  aggregate_only: true
+  identifiers_allowed: false
+  atomic_publish: true
+  final_sample_size_field_must_remain_null_without_manual_lock: true

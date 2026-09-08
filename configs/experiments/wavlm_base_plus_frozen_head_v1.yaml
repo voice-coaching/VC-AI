@@ -1,0 +1,124 @@
+experiment:
+  id: aihub71490_wavlm_base_plus_frozen_head_v1
+  stage: frozen_head
+  development_only: true
+  status: provisional_until_manual_g0
+  seeds: [42, 43, 44]
+  primary_metric: phone_macro_f1
+
+encoder:
+  variant: base_plus
+  id: microsoft/wavlm-base-plus
+  revision: 4c66d4806a428f2e922ccfa1a962776e232d487b
+  hidden_size: 768
+  utterance_embedding_size: 1536
+  frozen: true
+  source_config_sha256: fea6df1c2700a3954fc07e70588aecc9055eeb28db2ff57151a2db0d19180ed4
+  source_checkpoint_sha256: 3bb273a6ace99408b50cfc81afdbb7ef2de02da2eab0234e18db608ce692fe51
+
+data:
+  feature_cache_root: data/processed/aihub71490/features/wavlm_base_plus_frozen_v1
+  feature_cache_report: data/processed/aihub71490/features/wavlm_base_plus_frozen_v1_report.json
+  explicit_utterance_labels: data/processed/aihub71490/features/explicit_utterance_train_dev_v1.parquet
+  explicit_utterance_labels_sha256: a9f99d66b200468dd23733b232265c035577c81e6bf7aaa565871c7f5863558f
+  modeling_manifest_sha256: 32f439ba10a035541f53b8a44f5d150b307e89f97387f09748704c3c78e85ef1
+  cache_builder_config_sha256: 3641d04c974363d615cbc914a3e9d80eff39f9c0e64bc338aa2ff04ab9fef1ba
+  cache_builder_sha256: 2acd48d4f7dbb735dab96cdf4b9222a654627a96cf6a068539f0480839a56dde
+  expected_source_rows: 322380
+  expected_output_rows:
+    utterance: 169837
+    phone: 2233039
+    word: 408790
+  training_splits: [train]
+  development_splits: [dev]
+  forbidden_metric_splits: [stack, calibration, locked_test]
+  primary_analysis_scope:
+    l1: [Chinese, Japanese]
+    gender: [F, M]
+  inner_validation:
+    source: train_speaker_sha256
+    modulus: 10
+    validation_buckets: [0, 1]
+
+inputs:
+  phone:
+    feature_columns: [embedding_mean, target_label]
+    label_columns: [binary_error_label]
+  utterance:
+    feature_columns: [embedding_mean_std]
+    label_source: explicit_privacy_safe_utterance_cache
+    label_columns:
+      - pronunciation_score
+      - fluency_score
+      - comprehensibility_score
+  prohibited_as_input:
+    - binary_error_label
+    - pronunciation_score
+    - fluency_score
+    - comprehensibility_score
+    - realized_phone_identity
+    - alignment_operation
+    - error_tag
+    - raw_utterance_id
+    - audio_path
+
+heads:
+  phone:
+    family: embedding_target_mlp
+    target_embedding_dim: 32
+    hidden_dim: 256
+    dropout: 0.10
+  utterance:
+    family: bounded_multitask_mlp
+    hidden_dim: 256
+    dropout: 0.10
+    score_range: [1, 5]
+
+optimization:
+  optimizer: AdamW
+  learning_rate: 0.0003
+  weight_decay: 0.01
+  gradient_clip_norm: 1.0
+  phone_batch_size: 8192
+  utterance_batch_size: 2048
+  parquet_batch_rows: 8192
+  phone_max_epochs: 12
+  utterance_max_epochs: 20
+  minimum_epochs: 3
+  early_stopping_patience: 3
+  phone_threshold_grid:
+    start: 0.10
+    stop: 0.90
+    step: 0.05
+
+evaluation:
+  development_only: true
+  dev_inference_passes_per_seed: 1
+  phone_metrics: [macro_f1, auprc]
+  utterance_metrics: [qwk, spearman, mae, icc_2_1]
+  phone_slices: [l1, gender, proficiency, target_label]
+  utterance_slices: [l1, gender, proficiency]
+  confusion_labels:
+    phone: [0, 1]
+    utterance: [1, 2, 3, 4, 5]
+  locked_test_evaluation_allowed: false
+
+runtime:
+  require_cuda: true
+  deterministic_algorithms: true
+  cublas_workspace_config: ":4096:8"
+  mixed_precision: false
+  environment_files_forbidden: true
+  streaming:
+    materialize_full_embedding_matrix: false
+    maximum_parquet_batch_rows: 8192
+    embedding_storage_dtype: float16
+    training_compute_dtype: float32
+
+outputs:
+  artifact_root: artifacts/experiments/aihub71490_wavlm_base_plus_frozen_head_v1
+  registry_root: artifacts/experiment_registry
+  atomic_publish: true
+  save_predictions: true
+  save_checkpoints: true
+  save_slice_metrics: true

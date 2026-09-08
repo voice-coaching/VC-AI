@@ -1,0 +1,37 @@
+{
+  "schema_version": "voice_coach.r04_pilot_nuisance_attestation.v1",
+  "attestation_id": "TBD_EXTERNAL",
+  "status": "TBD_EXTERNAL",
+  "pilot_protocol_sha256": "TBD_PREREGISTRATION",
+  "r04_preregistration_sha256": "TBD_PREREGISTRATION",
+  "pilot_completed_at_utc": "TBD_EXTERNAL",
+  "pilot_blinded_to_system_and_synthesis_status": true,
+  "pilot_data_excluded_from_confirmatory_evaluation": true,
+  "privacy_zone": "A1_aggregate_only",
+  "pilot_listener_count": "TBD_EXTERNAL",
+  "pilot_sentence_count": "TBD_EXTERNAL",
+  "pilot_rating_count": "TBD_EXTERNAL",
+  "variance_estimates": {
+    "naturalness": "TBD_EXTERNAL",
+    "clarity": "TBD_EXTERNAL",
+    "target_phone_accuracy": "TBD_EXTERNAL",
+    "pedagogical_suitability": "TBD_EXTERNAL",
+    "cmos": "TBD_EXTERNAL"
+  },
+  "intra_listener_correlation_estimates": {
+    "naturalness": "TBD_EXTERNAL",
+    "clarity": "TBD_EXTERNAL",
+    "target_phone_accuracy": "TBD_EXTERNAL",
+    "pedagogical_suitability": "TBD_EXTERNAL",
+    "cmos": "TBD_EXTERNAL"
+  },
+  "individual_ratings_present": false,
+  "listener_ids_present": false,
+  "audio_or_candidate_ids_present": false,
+  "source_labels_present": false,
+  "approval": {
+    "decision": "TBD_EXTERNAL",
+    "statistician_role": "TBD_EXTERNAL",
+    "signed_receipt_sha256": "TBD_EXTERNAL"
+  }
+}

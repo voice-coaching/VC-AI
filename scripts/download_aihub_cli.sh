@@ -13,9 +13,11 @@ Examples:
     475431,475432,475434,475435,475437,475439,475440
 
 Requirements:
-  - Official `aihubshell` must be on PATH.
+  - Official `aihubshell` must be on PATH for list mode.
   - AIHUB_API_KEY must be exported for download mode.
   - Dataset use approval must already be complete on the AI Hub portal.
+  - Download mode uses the credential-safe resumable Python client; the key is
+    never forwarded as a command-line argument.
 EOF
 }
 
@@ -42,15 +44,47 @@ else
   exit 2
 fi
 
-if [[ ! "$dataset_key" =~ ^[0-9]+$ ]]; then
-  echo "DATASET_KEY must contain digits only." >&2
+if [[ ! "$dataset_key" =~ ^[1-9][0-9]*$ ]]; then
+  echo "DATASET_KEY must be a canonical positive decimal." >&2
   exit 2
 fi
-if [[ "$mode" == "download" && ! "$file_keys" =~ ^[0-9]+(,[0-9]+)*$ ]]; then
+if [[ "$mode" == "download" && ! "$file_keys" =~ ^[1-9][0-9]*(,[1-9][0-9]*)*$ ]]; then
   echo "FILE_KEYS must be a comma-separated list of numeric keys." >&2
   exit 2
 fi
-if ! command -v aihubshell >/dev/null 2>&1; then
+
+script_directory=$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd -P)
+repository_root=$(cd "$script_directory/.." && pwd -P)
+if [[ -x "$repository_root/.venv/bin/python" ]]; then
+  guard_python_binary="$repository_root/.venv/bin/python"
+else
+  guard_python_binary=python3
+fi
+if [[ "$mode" == "download" ]]; then
+  "$guard_python_binary" \
+    "$script_directory/guard_aihub538_p8_generic_request.py" \
+    "$dataset_key" "$file_keys"
+fi
+
+if [[ -n "${VOICE_COACH_PYTHON:-}" ]]; then
+  python_binary=$VOICE_COACH_PYTHON
+elif [[ -x "$repository_root/.venv/bin/python" ]]; then
+  python_binary="$repository_root/.venv/bin/python"
+else
+  python_binary=python3
+fi
+
+if [[ "$mode" == "download" ]]; then
+  if [[ "$dataset_key" == "538" ]]; then
+    case ",$file_keys," in
+      *,54945,*|*,54946,*|*,54947,*|*,54948,*|*,54949,*|*,54951,*)
+        echo "AI Hub 538 calibration source keys require scripts/download_aihub538_authorized_sources.py and a feasible 0400 v5 receipt." >&2
+        exit 2
+        ;;
+    esac
+  fi
+fi
+if [[ "$mode" == "list" ]] && ! command -v aihubshell >/dev/null 2>&1; then
   echo "Official aihubshell was not found on PATH." >&2
   exit 1
 fi
@@ -73,11 +107,5 @@ echo "Available space: $((available_kib / 1024 / 1024)) GiB"
 echo "Dataset key: $dataset_key"
 echo "File keys: $file_keys"
 
-(
-  cd "$destination"
-  aihubshell \
-    -mode d \
-    -datasetkey "$dataset_key" \
-    -filekey "$file_keys" \
-    -aihubapikey "$AIHUB_API_KEY"
-)
+exec "$python_binary" "$script_directory/download_aihub_secure.py" \
+  "$dataset_key" "$file_keys" "$destination"

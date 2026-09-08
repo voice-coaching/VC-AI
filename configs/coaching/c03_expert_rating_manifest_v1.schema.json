@@ -1,0 +1,186 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://voice-coach.local/schemas/c03_expert_rating_manifest_v1.schema.json",
+  "title": "C03 blinded expert coaching rating manifest",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_version",
+    "manifest_id",
+    "item_manifest_sha256",
+    "reviewer_attestation_manifest_sha256",
+    "preregistration_sha256",
+    "privacy_zone",
+    "ratings"
+  ],
+  "properties": {
+    "schema_version": {
+      "const": "voice_coach.c03_expert_rating_manifest.v1"
+    },
+    "manifest_id": {
+      "type": "string",
+      "pattern": "^c03ratings_[0-9a-f]{32}$"
+    },
+    "item_manifest_sha256": {
+      "$ref": "#/$defs/sha256"
+    },
+    "reviewer_attestation_manifest_sha256": {
+      "$ref": "#/$defs/sha256"
+    },
+    "preregistration_sha256": {
+      "$ref": "#/$defs/sha256"
+    },
+    "privacy_zone": {
+      "const": "D1_pseudonymized_restricted_experiment"
+    },
+    "ratings": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "$ref": "#/$defs/rating"
+      }
+    }
+  },
+  "$defs": {
+    "sha256": {
+      "type": "string",
+      "pattern": "^[0-9a-f]{64}$"
+    },
+    "rating": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "rating_id",
+        "audit_item_id",
+        "reviewer_id_sha256",
+        "rating_role",
+        "original_rating_id_sha256",
+        "independent_review",
+        "reviewer_visible_fields",
+        "model_score_seen",
+        "source_condition_seen",
+        "location_accuracy",
+        "error_type_accuracy",
+        "advice_actionability",
+        "unsupported_claim",
+        "dangerous_expression",
+        "discriminatory_expression",
+        "speaker_identity_inference",
+        "medical_judgment",
+        "risk_taxonomy_sha256",
+        "risk_codes",
+        "rating_receipt_sha256"
+      ],
+      "properties": {
+        "rating_id": {
+          "type": "string",
+          "pattern": "^c03rating_[0-9a-f]{32}$"
+        },
+        "audit_item_id": {
+          "type": "string",
+          "pattern": "^c03item_[0-9a-f]{32}$"
+        },
+        "reviewer_id_sha256": {
+          "$ref": "#/$defs/sha256"
+        },
+        "rating_role": {
+          "enum": [
+            "original",
+            "adjudication"
+          ]
+        },
+        "original_rating_id_sha256": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/sha256"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "independent_review": {
+          "type": "boolean"
+        },
+        "reviewer_visible_fields": {
+          "type": "array",
+          "prefixItems": [
+            {
+              "const": "audio"
+            },
+            {
+              "const": "target_sentence"
+            },
+            {
+              "const": "top1_advice"
+            }
+          ],
+          "items": false,
+          "minItems": 3,
+          "maxItems": 3
+        },
+        "model_score_seen": {
+          "const": false
+        },
+        "source_condition_seen": {
+          "const": false
+        },
+        "location_accuracy": {
+          "$ref": "#/$defs/judgment"
+        },
+        "error_type_accuracy": {
+          "$ref": "#/$defs/judgment"
+        },
+        "advice_actionability": {
+          "enum": [
+            "actionable",
+            "not_actionable",
+            "uncertain",
+            "not_applicable"
+          ]
+        },
+        "unsupported_claim": {
+          "enum": [
+            "absent",
+            "present",
+            "uncertain"
+          ]
+        },
+        "dangerous_expression": {
+          "type": "boolean"
+        },
+        "discriminatory_expression": {
+          "type": "boolean"
+        },
+        "speaker_identity_inference": {
+          "type": "boolean"
+        },
+        "medical_judgment": {
+          "type": "boolean"
+        },
+        "risk_taxonomy_sha256": {
+          "$ref": "#/$defs/sha256"
+        },
+        "risk_codes": {
+          "type": "array",
+          "uniqueItems": true,
+          "items": {
+            "type": "string",
+            "pattern": "^[A-Za-z0-9][A-Za-z0-9_.:-]{0,63}$"
+          }
+        },
+        "rating_receipt_sha256": {
+          "$ref": "#/$defs/sha256"
+        }
+      }
+    },
+    "judgment": {
+      "enum": [
+        "correct",
+        "incorrect",
+        "uncertain",
+        "not_applicable"
+      ]
+    }
+  }
+}

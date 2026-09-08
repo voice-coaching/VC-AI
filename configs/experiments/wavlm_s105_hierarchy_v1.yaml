@@ -1,0 +1,296 @@
+schema_version: 1
+
+experiment:
+  id: aihub71490_wavlm_s105_hierarchy_v1
+  stage: s105_incremental_hierarchy
+  development_only: true
+  oracle_alignment: true
+  silver_label: true
+  promotion_decision_allowed: false
+  seeds: [42, 43, 44]
+
+predecessor:
+  stage: s104_adapter
+  config: configs/experiments/wavlm_s104_adapter_v2_current_code.yaml
+  config_sha256: 7a78e718954c45eb3ad03658b6da916a5c1163a51d683125daccd6c272be6434
+  commit_manifest: artifacts/experiments/aihub71490_wavlm_s104_adapter_v2_current_code/commit.json
+  commit_schema_version: voice_coach.wavlm_s104_adapter_commit.v1
+  report_schema_version: voice_coach.wavlm_s104_adapter_report.v1
+  checkpoint_schema_version: voice_coach.wavlm_s104_adapter_checkpoint.v1
+  required_status: committed
+  independent_validator: voice_coach.training.wavlm_adapter_training.validate_s104_commit
+  seed_checkpoint_binding: same_seed
+  s104_dev_metrics_may_configure_s105: false
+
+data:
+  zone_contract:
+    dataset_root: R0
+    modeling_manifest: R1
+    prompt_challenge_reservation: R1
+    explicit_utterance_labels: D1
+    predictions: D1
+    reports: A1
+  dataset_root: data/restricted/aihub/dataset-71490
+  modeling_manifest: data/processed/aihub71490/manifests/aihub71490_modeling.parquet
+  modeling_manifest_sha256: 32f439ba10a035541f53b8a44f5d150b307e89f97387f09748704c3c78e85ef1
+  prompt_challenge_reservation: data/processed/aihub71490/manifests/aihub71490_prompt_challenge.json
+  prompt_challenge_reservation_sha256: 3ea7f12ea76be07a0796d7e62f0c3727ca9858c0278df7c85ac1e08d9b653fa9
+  explicit_utterance_labels: data/processed/aihub71490/features/explicit_utterance_train_dev_v1.parquet
+  explicit_utterance_labels_sha256: a9f99d66b200468dd23733b232265c035577c81e6bf7aaa565871c7f5863558f
+  allowed_splits: [train, dev]
+  training_split: train
+  development_split: dev
+  forbidden_splits: [stack, calibration, locked_test]
+  exclude_qc_flagged: true
+  exclude_reserved_prompts: true
+  representation_source: online_raw_audio_all_encoder_layers
+  pooled_final_layer_cache_allowed: false
+  primary_analysis_scope:
+    l1: [Chinese, Japanese]
+    gender: [F, M]
+  inner_validation:
+    source: train_speaker_sha256
+    modulus: 10
+    validation_buckets: [0, 1]
+  interval_mapping:
+    phone_source: target_phone_intervals
+    word_source: word_intervals
+    rule: maximum_positive_overlap
+    tie_break: lowest_word_index
+    unassigned_phone_policy: utterance_orphan_bucket
+    zero_phone_word_policy: retain_unlabeled_representation
+  word_supervision:
+    role: unlabeled_intermediate_representation_only
+    word_loss_allowed: false
+    word_head_allowed: false
+    word_label_synthesis_allowed: false
+    word_pcc_status: not_evaluable
+
+variants:
+  order:
+    - simple_head_control
+    - flat_shared_multitask
+    - final_layer_hierarchy
+    - layerwise_weighted_hierarchy
+    - levelwise_multi_aspect_hierarchy
+  simple_head_control:
+    encoder_input: s104_same_seed_adapter
+    hidden_source: final_layer
+    phone_to_word_aggregation: none
+    word_to_utterance_aggregation: none
+    shared_multitask_projection: false
+    multi_aspect_attention: false
+  flat_shared_multitask:
+    encoder_input: s104_same_seed_adapter
+    hidden_source: final_layer
+    phone_to_word_aggregation: none
+    word_to_utterance_aggregation: none
+    shared_multitask_projection: true
+    multi_aspect_attention: false
+  final_layer_hierarchy:
+    encoder_input: s104_same_seed_adapter
+    hidden_source: final_layer
+    phone_to_word_aggregation: masked_attention
+    word_to_utterance_aggregation: masked_attention
+    shared_multitask_projection: true
+    multi_aspect_attention: false
+  layerwise_weighted_hierarchy:
+    encoder_input: s104_same_seed_adapter
+    hidden_source: learned_softmax_all_encoder_layers
+    phone_to_word_aggregation: masked_attention
+    word_to_utterance_aggregation: masked_attention
+    shared_multitask_projection: true
+    multi_aspect_attention: false
+  levelwise_multi_aspect_hierarchy:
+    encoder_input: s104_same_seed_adapter
+    hidden_source: learned_softmax_all_encoder_layers
+    phone_to_word_aggregation: levelwise_multi_aspect_attention
+    word_to_utterance_aggregation: levelwise_multi_aspect_attention
+    shared_multitask_projection: true
+    multi_aspect_attention: true
+  dimensions:
+    projection_dim: 256
+    phone_target_embedding_dim: 32
+    attention_hidden_dim: 128
+    attention_aspects: 4
+    dropout: 0.10
+    score_range: [1, 5]
+  encoder_update:
+    s104_adapter_frozen: true
+    backbone_frozen: true
+    hierarchy_heads_only: true
+
+optimization:
+  optimizer: AdamW
+  learning_rate: 0.0003
+  weight_decay: 0.01
+  gradient_clip_norm: 1.0
+  gradient_accumulation_utterances: 8
+  bounded_shuffle_buffer_utterances: 2048
+  maximum_epochs: 12
+  minimum_epochs: 3
+  early_stopping_patience: 3
+  phone_loss_weight: 1.0
+  utterance_loss_weight: 1.0
+  word_loss_weight: 0.0
+  phone_loss_reduction: mean_per_utterance
+  utterance_loss_reduction: mean_observed_outcomes_per_utterance
+  selection_data: train_inner_validation_only
+  refit_after_inner_selection: false
+  undefined_secondary_metric_policy: no_improvement
+  early_stopping_order:
+    - phone_macro_f1
+    - comprehensibility_score_icc_2_1
+    - earliest_epoch
+  phone_threshold_grid:
+    start: 0.10
+    stop: 0.90
+    step: 0.05
+  dev_may_select_variant_or_hyperparameters: false
+  oom_policy: fail_and_record_no_automatic_retry
+
+evaluation:
+  dev_inference_passes_per_variant_task_seed: 1
+  tasks: [phone_binary_error, utterance_scores]
+  primary_phone_metric: phone_macro_f1
+  primary_utterance_outcome: comprehensibility_score
+  primary_utterance_metric: icc_2_1
+  utterance_outcomes:
+    - pronunciation_score
+    - fluency_score
+    - comprehensibility_score
+  word_metric_status: not_evaluable
+  stack_access_allowed: false
+  calibration_access_allowed: false
+  locked_test_access_allowed: false
+
+adoption:
+  control_variant: simple_head_control
+  candidate_variant: levelwise_multi_aspect_hierarchy
+  primary_family:
+    - phone_macro_f1
+    - comprehensibility_score_icc_2_1
+  effect: candidate_minus_control
+  minimum_absolute_improvement: 0.03
+  improvement_rule: any_primary_point_estimate_gte_threshold
+  confidence_interval_use: descriptive_not_gate
+  p_value_use: descriptive_not_gate
+  bootstrap:
+    method: paired_speaker_cluster_percentile
+    unit: speaker_id_sha256
+    n_resamples: 5000
+    confidence_level: 0.95
+    seed: 42
+    p_value: two_sided_zero_with_plus_one_correction
+  multiplicity:
+    primary_method: holm
+    primary_alpha: 0.05
+    primary_family_size: 2
+    primary_family_scope: candidate_vs_control_two_primary_outcomes
+    incremental_method: holm
+    incremental_alpha: 0.05
+    incremental_family_size: 8
+    incremental_family_scope: four_adjacent_variant_pairs_by_two_primary_outcomes
+  subgroup:
+    metric: phone_macro_f1
+    axes: [l1, gender, proficiency]
+    fixed_groups:
+      l1: [Chinese, Japanese]
+      gender: [F, M]
+      proficiency: [Beginner, Intermediate, Advance, Fluent]
+    minimum_unique_speakers: 20
+    minimum_positive_phone_rows: 20
+    minimum_negative_phone_rows: 20
+    ineligible_group_policy: report_exclude_from_gate
+    difference: control_minus_candidate
+    worst_group_drop_definition: max_eligible_control_minus_candidate
+    maximum_exclusive: 0.05
+  adoption_gate:
+    require_point_improvement: true
+    require_worst_group_drop_lt_threshold: true
+    require_holm_significance: false
+
+runtime:
+  require_cuda_for_training: true
+  cpu_preflight_only: true
+  mixed_precision: bfloat16
+  gradient_checkpointing: true
+  deterministic_algorithms: true
+  cublas_workspace_config: ":4096:8"
+  sample_rate_hz: 16000
+  maximum_chunk_seconds: 20.0
+  wavlm_conv_kernels: [10, 3, 3, 3, 3, 2, 2]
+  wavlm_conv_strides: [5, 2, 2, 2, 2, 2, 2]
+  minimum_model_input_samples: 400
+  short_chunk_attention_policy: padded_receptive_field_marked_valid
+  frozen_s104_encoder_mode: eval
+  s104_adapter_gradient_allowed: false
+  shared_encoder_forward_across_variants: true
+  hidden_states_required: true
+  pooled_final_layer_cache_allowed: false
+  online_raw_audio_or_reviewed_all_layer_cache_required: true
+  environment_files_forbidden: true
+
+implementation:
+  preflight_script:
+    path: scripts/prepare_wavlm_s105_hierarchy.py
+    sha256: 0b92ad78ddc84aa2d8afa938db5a47b966d543e34fc17c3d7b94ae118b2210e6
+  trainer_script:
+    path: scripts/train_wavlm_s105_hierarchy.py
+    sha256: 9384deaf3a87a50a194d31068333c1d5815c1cb4b4aabcd51e93ffbd956d0b11
+  contract_module:
+    path: src/voice_coach/training/wavlm_hierarchy_contract.py
+    sha256: d3b87625d6561c933444ffff58061138418b5a5ef96bad04996c30065c24b545
+  training_module:
+    path: src/voice_coach/training/wavlm_hierarchy_training.py
+    sha256: e2f7269c757ddee82f33de6787df466b29cbe9e1e2b1fed90130eaaec1c53ad1
+  execution_module:
+    path: src/voice_coach/training/wavlm_hierarchy_execution.py
+    sha256: adaa8ceeb9f4dfade2e7944ff2ae438b68c73485439519b4f9678e4c151ec937
+  model_module:
+    path: src/voice_coach/models/wavlm_hierarchy.py
+    sha256: 42fdbd4c2bb5e95bbc22f1ffb434ff59d1f5474a62613777783baff5e2cedce8
+  metrics_module:
+    path: src/voice_coach/evaluation/metrics.py
+    sha256: b80550bf80629382431e1d9a3bf246ac57f17b0544642245ed7c3d7ec0f3c452
+  s104_validator_module:
+    path: src/voice_coach/training/wavlm_adapter_training.py
+    sha256: a7b41d507385c7f45b102f2d1603ad4214f0247ad9e0e08c6a3640f2df6bed80
+
+outputs:
+  execution_lock: artifacts/experiments/aihub71490_wavlm_s105_hierarchy_v1/execution_lock.json
+  generation_root: artifacts/experiments/aihub71490_wavlm_s105_hierarchy_v1/generations
+  commit_manifest: artifacts/experiments/aihub71490_wavlm_s105_hierarchy_v1/commit.json
+  registry_root: artifacts/experiment_registry
+  registry_run_id_prefix: aihub71490-wavlm-s105-hierarchy-v1
+  expected_variant_count: 5
+  expected_seed_count: 3
+  expected_artifacts_per_variant_seed: 5
+  expected_variant_aggregate_artifacts: 1
+  expected_global_artifacts: 2
+  expected_total_artifact_count: 82
+  expected_completed_registry_count: 5
+  expected_registry_artifact_count_per_variant: 16
+  per_variant_seed_artifacts:
+    - hierarchy_checkpoint
+    - phone_dev_predictions
+    - utterance_dev_predictions
+    - dev_slice_metrics
+    - resource_report
+  per_variant_aggregate_artifacts:
+    - variant_report
+  global_artifacts:
+    - ablation_comparison_report
+    - ablation_table
+  atomic_publish: true
+  content_addressed_generation: true
+  commit_pointer_required_for_visibility: true
+  failure_registry:
+    required: true
+    status: failed
+    failure_fields: [stage, exception_type, oom]
+    raw_identifier_or_path_allowed: false
+    partial_prediction_publish_allowed: false
+  unexpected_artifacts_allowed: false
+  row_level_outputs_access_scope: restricted_internal
+  aggregate_report_shareable: false

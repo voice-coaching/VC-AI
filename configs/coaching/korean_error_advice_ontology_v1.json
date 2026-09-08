@@ -1,0 +1,327 @@
+{
+  "schema_version": "voice_coach.korean_error_advice_ontology.v1",
+  "ontology_id": "aihub71490-korean-error-advice-v1",
+  "source": {
+    "dataset": "AI Hub 71490",
+    "aggregate_report_path": "data/processed/aihub71490/manifests/aihub71490_data_card.json",
+    "aggregate_report_sha256": "4ab53c6837b1a28fbf153dd3a351a195f6931a43694467114cea6c21b8a57b13",
+    "aggregate_schema_version": "aihub71490.data_card.v1",
+    "access_scope": "privacy_safe_aggregate_only",
+    "observed_error_interval_count": 176523,
+    "observed_unknown_error_tag_count": 0
+  },
+  "feature_separation": {
+    "allowed_label_roles": [
+      "supervision_label",
+      "evaluation_slice",
+      "human_audit_stratum"
+    ],
+    "prohibited_model_input_fields": [
+      "raw_error_tag",
+      "normalized_error_tag_id",
+      "error_interval",
+      "error_tag_count",
+      "realized_phone",
+      "alignment_operation"
+    ],
+    "rule": "Gold error annotations are labels and audit slices only; they are never model input features."
+  },
+  "target_phone_mapping": {
+    "empirical_status": "pending_privacy_safe_joint_aggregate",
+    "available_aggregate_evidence": [
+      "per_tag_interval_counts",
+      "target_phone_inventory_size",
+      "total_target_phone_occurrences"
+    ],
+    "unavailable_evidence": [
+      "tag_by_target_phone_joint_counts",
+      "row_level_tag_phone_assignments",
+      "expert_validated_target_phone_claims"
+    ],
+    "automatic_target_claim": "prohibited_without_positive_interval_overlap",
+    "interval_rules": {
+      "interval_semantics": "half_open",
+      "overlap_requirement": "strictly_positive_duration",
+      "primary_match": "maximum_overlap_duration",
+      "tie_breakers": [
+        "lowest_target_phone_index",
+        "lexicographic_target_phone_label"
+      ],
+      "multi_tag_rule": "preserve_each_source_error_interval_without_collapsing",
+      "unmatched_rule": "preserve_tag_with_null_target_and_abstain_from_target_phone_claim",
+      "other_rule": "preserve_other_and_route_to_expert_review",
+      "unknown_rule": "preserve_unknown_and_route_to_expert_review"
+    }
+  },
+  "coaching_policy": {
+    "priority_formula": "severity*confidence*comprehensibility_impact*trainability",
+    "allowed_top_k": [
+      1,
+      3
+    ],
+    "default_top_k": 1,
+    "ranking_tie_breakers": [
+      "start_ms",
+      "end_ms",
+      "issue_type",
+      "target",
+      "observed",
+      "evidence"
+    ],
+    "ranking_window_rule": "do_not_replace_blocked_top_k_items_with_lower_ranked_items",
+    "confidence_threshold": 0.75,
+    "confidence_threshold_status": "provisional_until_s107_calibration",
+    "below_confidence_action": "rerecord",
+    "unsupported_claim_action": "expert_review",
+    "empty_issue_action": "none",
+    "production_release": "prohibited_until_c03_expert_audit"
+  },
+  "human_validation": {
+    "expert_review_status": "pending",
+    "c03_completed": false,
+    "required_sample_count": 200,
+    "location_accuracy_gate": 0.9,
+    "type_accuracy_gate": 0.9,
+    "unsupported_claim_rate_gate": 0.02
+  },
+  "tags": [
+    {
+      "id": "initial_consonant",
+      "raw_label": "초성",
+      "observed_interval_count": 35198,
+      "target_scope": "onset_consonant",
+      "localization_policy": "phone_overlap_required",
+      "empirical_target_phone_support": null,
+      "advice": {
+        "advice_id": "KO_INITIAL_CONSONANT_RETRY_001",
+        "action": "draft_coach",
+        "message_ko": "표시된 초성 구간을 참조음과 비교한 뒤 같은 구간을 천천히 다시 읽어 보세요.",
+        "review_status": "engineering_draft"
+      }
+    },
+    {
+      "id": "final_consonant",
+      "raw_label": "종성",
+      "observed_interval_count": 44376,
+      "target_scope": "coda_consonant",
+      "localization_policy": "phone_overlap_required",
+      "empirical_target_phone_support": null,
+      "advice": {
+        "advice_id": "KO_FINAL_CONSONANT_RETRY_001",
+        "action": "draft_coach",
+        "message_ko": "표시된 받침 구간을 참조음과 비교하고 단어 끝을 덧붙이지 않도록 다시 읽어 보세요.",
+        "review_status": "engineering_draft"
+      }
+    },
+    {
+      "id": "vowel_error",
+      "raw_label": "모음오류",
+      "observed_interval_count": 22033,
+      "target_scope": "vowel",
+      "localization_policy": "phone_overlap_required",
+      "empirical_target_phone_support": null,
+      "advice": {
+        "advice_id": "KO_VOWEL_RETRY_001",
+        "action": "draft_coach",
+        "message_ko": "표시된 모음 구간의 소리를 참조음과 비교한 뒤 짧게 다시 녹음해 보세요.",
+        "review_status": "engineering_draft"
+      }
+    },
+    {
+      "id": "tensification",
+      "raw_label": "경음화",
+      "observed_interval_count": 13424,
+      "target_scope": "contextual_phone_sequence",
+      "localization_policy": "phone_overlap_required",
+      "empirical_target_phone_support": null,
+      "advice": {
+        "advice_id": "KO_TENSIFICATION_RETRY_001",
+        "action": "draft_coach",
+        "message_ko": "표시된 구간과 앞뒤 음소를 함께 들은 뒤 참조음의 소리 변화를 따라 다시 읽어 보세요.",
+        "review_status": "engineering_draft"
+      }
+    },
+    {
+      "id": "other",
+      "raw_label": "기타",
+      "observed_interval_count": 14451,
+      "target_scope": "unknown",
+      "localization_policy": "no_target_phone_claim",
+      "empirical_target_phone_support": null,
+      "advice": {
+        "advice_id": null,
+        "action": "abstain_expert_review",
+        "message_ko": null,
+        "review_status": "not_applicable"
+      }
+    },
+    {
+      "id": "repetition",
+      "raw_label": "반복",
+      "observed_interval_count": 12162,
+      "target_scope": "non_target_fluency_event",
+      "localization_policy": "no_target_phone_claim",
+      "empirical_target_phone_support": null,
+      "advice": {
+        "advice_id": "KO_REPETITION_RETRY_001",
+        "action": "draft_coach",
+        "message_ko": "표시된 반복 구간을 확인하고 각 어절을 한 번씩 이어서 다시 읽어 보세요.",
+        "review_status": "engineering_draft"
+      }
+    },
+    {
+      "id": "nasalization",
+      "raw_label": "비음화",
+      "observed_interval_count": 10006,
+      "target_scope": "contextual_phone_sequence",
+      "localization_policy": "phone_overlap_required",
+      "empirical_target_phone_support": null,
+      "advice": {
+        "advice_id": "KO_NASALIZATION_RETRY_001",
+        "action": "draft_coach",
+        "message_ko": "표시된 구간의 앞뒤 음소를 끊지 말고 참조음과 비교하며 다시 읽어 보세요.",
+        "review_status": "engineering_draft"
+      }
+    },
+    {
+      "id": "aspiration",
+      "raw_label": "격음화",
+      "observed_interval_count": 6438,
+      "target_scope": "contextual_phone_sequence",
+      "localization_policy": "phone_overlap_required",
+      "empirical_target_phone_support": null,
+      "advice": {
+        "advice_id": "KO_ASPIRATION_RETRY_001",
+        "action": "draft_coach",
+        "message_ko": "표시된 구간의 자음 소리를 참조음과 비교하고 같은 낱말을 다시 읽어 보세요.",
+        "review_status": "engineering_draft"
+      }
+    },
+    {
+      "id": "liquidization",
+      "raw_label": "유음화",
+      "observed_interval_count": 4156,
+      "target_scope": "contextual_phone_sequence",
+      "localization_policy": "phone_overlap_required",
+      "empirical_target_phone_support": null,
+      "advice": {
+        "advice_id": "KO_LIQUIDIZATION_RETRY_001",
+        "action": "draft_coach",
+        "message_ko": "표시된 구간과 이웃 자음을 함께 듣고 참조음의 연결을 따라 다시 읽어 보세요.",
+        "review_status": "engineering_draft"
+      }
+    },
+    {
+      "id": "liaison_rule",
+      "raw_label": "연음규칙",
+      "observed_interval_count": 3861,
+      "target_scope": "contextual_phone_sequence",
+      "localization_policy": "phone_overlap_required",
+      "empirical_target_phone_support": null,
+      "advice": {
+        "advice_id": "KO_LIAISON_RETRY_001",
+        "action": "draft_coach",
+        "message_ko": "표시된 음절 경계를 끊지 말고 참조음의 연결을 들으며 다시 읽어 보세요.",
+        "review_status": "engineering_draft"
+      }
+    },
+    {
+      "id": "boundary_intonation_error",
+      "raw_label": "경계억양 오류",
+      "observed_interval_count": 3177,
+      "target_scope": "prosodic_region",
+      "localization_policy": "prosodic_span_only",
+      "empirical_target_phone_support": null,
+      "advice": {
+        "advice_id": "KO_BOUNDARY_INTONATION_RETRY_001",
+        "action": "draft_coach",
+        "message_ko": "표시된 문장 경계의 높낮이를 참조음과 비교하고 의미 단위 전체를 다시 읽어 보세요.",
+        "review_status": "engineering_draft"
+      }
+    },
+    {
+      "id": "n_insertion",
+      "raw_label": "ㄴ-첨가",
+      "observed_interval_count": 2673,
+      "target_scope": "contextual_phone_sequence",
+      "localization_policy": "phone_overlap_required",
+      "empirical_target_phone_support": null,
+      "advice": {
+        "advice_id": "KO_N_INSERTION_RETRY_001",
+        "action": "draft_coach",
+        "message_ko": "표시된 단어 경계와 앞뒤 음소를 함께 듣고 참조음과 비교하며 다시 읽어 보세요.",
+        "review_status": "engineering_draft"
+      }
+    },
+    {
+      "id": "palatalization",
+      "raw_label": "구개음화",
+      "observed_interval_count": 2012,
+      "target_scope": "contextual_phone_sequence",
+      "localization_policy": "phone_overlap_required",
+      "empirical_target_phone_support": null,
+      "advice": {
+        "advice_id": "KO_PALATALIZATION_RETRY_001",
+        "action": "draft_coach",
+        "message_ko": "표시된 구간의 자음과 다음 모음을 함께 듣고 참조음과 비교하며 다시 읽어 보세요.",
+        "review_status": "engineering_draft"
+      }
+    },
+    {
+      "id": "stress_error",
+      "raw_label": "강세 오류",
+      "observed_interval_count": 1187,
+      "target_scope": "prosodic_region",
+      "localization_policy": "prosodic_span_only",
+      "empirical_target_phone_support": null,
+      "advice": {
+        "advice_id": "KO_STRESS_RETRY_001",
+        "action": "draft_coach",
+        "message_ko": "표시된 구간의 두드러짐을 참조음과 비교하고 문장 전체를 자연스럽게 다시 읽어 보세요.",
+        "review_status": "engineering_draft"
+      }
+    },
+    {
+      "id": "interjection",
+      "raw_label": "간투사",
+      "observed_interval_count": 793,
+      "target_scope": "non_target_fluency_event",
+      "localization_policy": "no_target_phone_claim",
+      "empirical_target_phone_support": null,
+      "advice": {
+        "advice_id": "KO_INTERJECTION_RETRY_001",
+        "action": "draft_coach",
+        "message_ko": "표시된 간투사 구간을 확인하고 목표 문장만 이어서 다시 읽어 보세요.",
+        "review_status": "engineering_draft"
+      }
+    },
+    {
+      "id": "vowel_insertion",
+      "raw_label": "모음삽입",
+      "observed_interval_count": 300,
+      "target_scope": "contextual_phone_sequence",
+      "localization_policy": "phone_overlap_required",
+      "empirical_target_phone_support": null,
+      "advice": {
+        "advice_id": "KO_VOWEL_INSERTION_RETRY_001",
+        "action": "draft_coach",
+        "message_ko": "표시된 자음 사이에 소리를 덧붙이지 않도록 참조음과 비교하며 다시 읽어 보세요.",
+        "review_status": "engineering_draft"
+      }
+    },
+    {
+      "id": "phoneme_deletion",
+      "raw_label": "음운탈락",
+      "observed_interval_count": 276,
+      "target_scope": "contextual_phone_sequence",
+      "localization_policy": "phone_overlap_required",
+      "empirical_target_phone_support": null,
+      "advice": {
+        "advice_id": "KO_PHONEME_DELETION_RETRY_001",
+        "action": "draft_coach",
+        "message_ko": "표시된 구간에서 빠진 소리가 있는지 참조음과 비교하고 천천히 다시 읽어 보세요.",
+        "review_status": "engineering_draft"
+      }
+    }
+  ]
+}

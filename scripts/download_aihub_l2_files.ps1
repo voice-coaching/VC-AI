@@ -4,6 +4,11 @@ param(
 )
 
 $ErrorActionPreference = 'Stop'
+. (Join-Path $PSScriptRoot 'aihub538_p8_guard.ps1')
+Assert-NoAihub538P8GenericFileKey -FileKeys $FileKeys
+if ($DatasetKey -eq 538) {
+  throw 'Dataset 538 is fail-closed in this legacy downloader. Use the typed Python label-audit, V5 source-prefix, or P8 one-shot entrypoint.'
+}
 $shell = Get-Command aihubshell -ErrorAction SilentlyContinue
 if ($null -eq $shell) {
   throw 'aihubshell was not found. Install the official AI Hub Shell after the portal approval is complete.'

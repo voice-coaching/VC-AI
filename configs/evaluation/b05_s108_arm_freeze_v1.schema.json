@@ -1,0 +1,122 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://voice-coach.local/schemas/b05_s108_arm_freeze_v1.schema.json",
+  "title": "S108 immutable arm freeze for the joint B05/S108 locked batch",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_version",
+    "freeze_id",
+    "status",
+    "g04_completion_sha256",
+    "d07_completion_sha256",
+    "s107_config_sha256",
+    "s107_commit_sha256",
+    "s108_no_locked_config_sha256",
+    "s108_no_locked_receipt_sha256",
+    "s108_model_identity_sha256",
+    "s108_checkpoint_sha256",
+    "s108_calibrator_sha256",
+    "s108_threshold_policy_sha256",
+    "s108_source_chain_sha256",
+    "s108_execution_spec_sha256",
+    "choices_frozen_before_locked_access",
+    "ready_for_joint_locked_batch",
+    "locked_results_unseen",
+    "locked_access_count",
+    "contains_identifiers",
+    "contains_rows",
+    "contains_audio",
+    "contains_labels",
+    "contains_predictions",
+    "privacy_zone",
+    "binding_sha256"
+  ],
+  "properties": {
+    "schema_version": {
+      "const": "voice_coach.b05_s108_arm_freeze.v1"
+    },
+    "freeze_id": {
+      "type": "string",
+      "pattern": "^b05s108freeze_[0-9a-f]{32}$"
+    },
+    "status": {
+      "const": "immutable_ready_for_joint_locked_batch"
+    },
+    "g04_completion_sha256": {
+      "$ref": "#/$defs/sha256"
+    },
+    "d07_completion_sha256": {
+      "$ref": "#/$defs/sha256"
+    },
+    "s107_config_sha256": {
+      "$ref": "#/$defs/sha256"
+    },
+    "s107_commit_sha256": {
+      "$ref": "#/$defs/sha256"
+    },
+    "s108_no_locked_config_sha256": {
+      "$ref": "#/$defs/sha256"
+    },
+    "s108_no_locked_receipt_sha256": {
+      "$ref": "#/$defs/sha256"
+    },
+    "s108_model_identity_sha256": {
+      "$ref": "#/$defs/sha256"
+    },
+    "s108_checkpoint_sha256": {
+      "$ref": "#/$defs/sha256"
+    },
+    "s108_calibrator_sha256": {
+      "$ref": "#/$defs/sha256"
+    },
+    "s108_threshold_policy_sha256": {
+      "$ref": "#/$defs/sha256"
+    },
+    "s108_source_chain_sha256": {
+      "$ref": "#/$defs/sha256"
+    },
+    "s108_execution_spec_sha256": {
+      "$ref": "#/$defs/sha256"
+    },
+    "choices_frozen_before_locked_access": {
+      "const": true
+    },
+    "ready_for_joint_locked_batch": {
+      "const": true
+    },
+    "locked_results_unseen": {
+      "const": true
+    },
+    "locked_access_count": {
+      "const": 0
+    },
+    "contains_identifiers": {
+      "const": false
+    },
+    "contains_rows": {
+      "const": false
+    },
+    "contains_audio": {
+      "const": false
+    },
+    "contains_labels": {
+      "const": false
+    },
+    "contains_predictions": {
+      "const": false
+    },
+    "privacy_zone": {
+      "const": "A1_aggregate_batch_readiness"
+    },
+    "binding_sha256": {
+      "$ref": "#/$defs/sha256"
+    }
+  },
+  "$defs": {
+    "sha256": {
+      "type": "string",
+      "pattern": "^[0-9a-f]{64}$"
+    }
+  }
+}

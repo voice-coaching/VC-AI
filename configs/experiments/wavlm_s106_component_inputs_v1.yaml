@@ -1,0 +1,159 @@
+schema_version: 1
+
+generator:
+  id: aihub71490_wavlm_s106_component_inputs_v1
+  stage: s106_production_component_inputs
+  main_config: configs/experiments/wavlm_s106_stack_fusion_v1.yaml
+  main_execution_lock: artifacts/experiments/aihub71490_wavlm_s106_stack_fusion_v1/execution_lock.json
+  status: production_ready
+  development_only: true
+  oracle_alignment: true
+  stack_only: true
+
+access_order:
+  - validate_s104
+  - validate_s105_with_nested_s104
+  - validate_b07
+  - validate_explicit
+  - resolve_stack
+  - scan_label_free_identity_target_and_word_intervals
+  - retain_eligible_raw_source_ids_in_memory_only
+  - probe_frozen_checkpoints
+  - materialize_private_immutable_model_and_config_snapshot
+  - initialize_gpu_and_models
+  - generate_identity_and_twelve_predictions
+  - publish_feature_freeze_receipt
+  - push_down_exact_eligible_source_ids_and_open_phone_alignments
+  - materialize_separate_label_matrix
+  - prepare_generator_commit_and_completed_registry
+  - publish_component_bundle_as_final_visibility_commit
+
+inputs:
+  stack_columns_before_feature_freeze:
+    - id
+    - speaker_id
+    - split
+    - audio_path
+    - pcm_sha256
+    - prompt_sha256
+    - qc_flags
+    - word_intervals
+    - target_phone_intervals
+  forbidden_before_feature_freeze:
+    - phone_alignments
+    - operation
+    - realized_phone_intervals
+    - realized_label
+    - error_intervals
+    - error_presence
+    - pronunciation_score
+    - fluency_score
+    - comprehensibility_score
+  label_materializer_columns:
+    - id
+    - speaker_id
+    - split
+    - target_phone_intervals
+    - phone_alignments
+  split: stack
+  dataset_root: data/restricted/aihub/dataset-71490
+  prompt_challenge_reservation: data/processed/aihub71490/manifests/aihub71490_prompt_challenge.json
+  prompt_challenge_reservation_sha256: 3ea7f12ea76be07a0796d7e62f0c3727ca9858c0278df7c85ac1e08d9b653fa9
+
+representations:
+  explicit: committed_explicit_phone_features
+  s104_adapter: adapter_applied_target_interval_pooled
+  s105_selected_hierarchy: adapter_applied_all_encoder_layers_target_interval_pooled
+  gop_acoustic_posterior: unadapted_wavlm_base_plus_target_interval_pooled_float16_roundtrip
+  adapted_forward_sharing:
+    s104_source: final_encoder_layer_from_s105_all_layer_pool
+    s105_source: all_encoder_layers_with_word_grouping
+  b07_forward_sharing_with_s104_or_s105: false
+
+outputs:
+  generation_root: artifacts/experiments/aihub71490_wavlm_s106_stack_fusion_v1/component_input_generations
+  staging_root: artifacts/experiments/aihub71490_wavlm_s106_stack_fusion_v1/.component_input_staging
+  feature_identity_matrix: artifacts/experiments/aihub71490_wavlm_s106_stack_fusion_v1/component_inputs/feature_identity.parquet
+  label_matrix: artifacts/experiments/aihub71490_wavlm_s106_stack_fusion_v1/component_inputs/labels.parquet
+  prediction_root: artifacts/experiments/aihub71490_wavlm_s106_stack_fusion_v1/stack_component_predictions
+  feature_freeze_receipt: artifacts/experiments/aihub71490_wavlm_s106_stack_fusion_v1/component_feature_freeze_receipt.json
+  component_bundle_commit: artifacts/experiments/aihub71490_wavlm_s106_stack_fusion_v1/component_bundle_commit.json
+  generator_commit: artifacts/experiments/aihub71490_wavlm_s106_stack_fusion_v1/component_input_commit.json
+  registry: artifacts/experiment_registry/aihub71490-wavlm-s106-component-inputs-v1/metadata.json
+  atomic_publish: true
+  content_addressed_generation: true
+  bundle_is_visibility_commit: true
+
+schemas:
+  feature_freeze_receipt: voice_coach.wavlm_s106_component_feature_freeze.v1
+  generator_commit: voice_coach.wavlm_s106_component_input_commit.v2
+  registry: voice_coach.wavlm_s106_component_input_registry.v1
+  prediction: voice_coach.wavlm_s106_stack_component_predictions.v2
+  bundle: voice_coach.wavlm_s106_component_bundle_commit.v3
+  feature_identity_columns:
+    - utterance_id_sha256
+    - speaker_id_sha256
+    - phone_index
+    - split
+    - alignment_confidence
+    - qc_flagged
+    - reserved_prompt
+  label_columns:
+    - utterance_id_sha256
+    - speaker_id_sha256
+    - phone_index
+    - split
+    - reference_binary_error_label
+  prediction_columns:
+    - utterance_id_sha256
+    - speaker_id_sha256
+    - phone_index
+    - split
+    - probability
+  row_key: [utterance_id_sha256, phone_index]
+
+runtime:
+  seeds: [42, 43, 44]
+  maximum_projection_batch_rows: 8192
+  sample_rate_hz: 16000
+  maximum_chunk_seconds: 20.0
+  adapted_inference_precision: bfloat16
+  unadapted_inference_precision: bfloat16
+  b07_embedding_storage_equivalence: float16_roundtrip_then_float32
+  stack_manifest_input_binding: held_no_follow_fd_projected_filter_no_disk_copy
+  audio_input_binding: held_no_follow_fd_same_bytes_pcm_hash_and_decode
+  model_input_binding: private_read_only_snapshot_from_hash_validated_bytes
+  label_matrix_staging: anonymous_unlinked_held_fd
+  production_publication_lock: crash_released_flock_single_writer
+  s104_s105_config_binding: private_read_only_copy_from_lock_canonical_source
+  production_dependency_injection_allowed: false
+  synthetic_schema_accepted_by_production_validator: false
+  deterministic_algorithms: true
+  cublas_workspace_config: ":4096:8"
+  parquet_compression: zstd
+  parquet_dictionary_encoding: false
+  parquet_statistics: true
+  environment_files_forbidden: true
+  gpu_resource_contract:
+    require_cuda: true
+    require_bfloat16: true
+    encoder_model_count: 4
+    adapted_encoder_model_count: 3
+    unadapted_encoder_model_count: 1
+    encoder_forwards_per_utterance: 4
+    adapted_forward_per_seed: 1
+    unadapted_forward_shared_across_b07_seeds: true
+    bounded_parquet_row_groups: true
+
+privacy:
+  source_scope: R1_operational_restricted
+  derived_scope: D1_restricted_internal
+  raw_ids_in_outputs: false
+  raw_ids_retained_only_transient_memory: true
+  raw_paths_in_outputs: false
+  target_labels_in_outputs: false
+  realized_phone_identity_in_outputs: false
+  operation_in_feature_outputs: false
+  labels_physically_separate: true
+  alignment_confidence_source_available: false
+  absent_alignment_confidence_policy: null_with_missing_indicator

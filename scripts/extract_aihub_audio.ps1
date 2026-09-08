@@ -9,11 +9,15 @@ if (-not (Test-Path -LiteralPath $datasetPath -PathType Container)) {
     throw "Dataset root does not exist: $datasetPath"
 }
 
-$tarCommand = Get-Command tar -ErrorAction Stop
-$tar = $tarCommand.Source
 $logRoot = Join-Path $datasetPath 'extraction-logs'
 New-Item -ItemType Directory -Force -Path $logRoot | Out-Null
 Add-Type -AssemblyName System.IO.Compression.FileSystem
+$pythonCommand = Get-Command python -ErrorAction Stop
+$python = $pythonCommand.Source
+$zipExtractor = Join-Path $PSScriptRoot 'extract_verified_zip.py'
+if (-not (Test-Path -LiteralPath $zipExtractor -PathType Leaf)) {
+    throw "Safe ZIP extractor does not exist: $zipExtractor"
+}
 
 $archiveOrder = @(
     'TS_Speech_sound_1.zip',
@@ -224,14 +228,11 @@ foreach ($archiveName in $archiveOrder) {
     }
 
     Write-Output "EXTRACTING: $archiveName expected_files=$($verification.ExpectedCount) verified_files=$($verification.VerifiedCount) missing_files=$($verification.MissingCount) size_mismatches=$($verification.SizeMismatchCount) additional_bytes=$($verification.RequiredAdditionalBytes)"
-    $stderr = Join-Path $logRoot ($archive.BaseName + '.audio-extraction.stderr.log')
-    $previousErrorActionPreference = $ErrorActionPreference
-    $ErrorActionPreference = 'Continue'
-    & $tar -xf $archive.FullName -C $destinationFull 2>> $stderr
-    $tarExitCode = $LASTEXITCODE
-    $ErrorActionPreference = $previousErrorActionPreference
-    if ($tarExitCode -ne 0) {
-        throw "Extraction failed for $archiveName, exit code $tarExitCode"
+    & $python $zipExtractor $archive.FullName $destinationFull `
+        --strip-leading-separators --no-fsync
+    $extractExitCode = $LASTEXITCODE
+    if ($extractExitCode -ne 0) {
+        throw "Extraction failed for $archiveName, exit code $extractExitCode"
     }
 
     Write-Output "VERIFYING: $archiveName"

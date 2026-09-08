@@ -1,0 +1,759 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://voice-coach.local/schemas/r00_sentence_card_v1.schema.json",
+  "title": "R00 fixed Korean practice-sentence card",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_version",
+    "card_id",
+    "status",
+    "created_date_kst",
+    "source_license",
+    "native_source_lineage_decisions",
+    "evidence_pins",
+    "selection_rule",
+    "phone_inventory",
+    "phonological_rule_inventory",
+    "tts_usage_policy",
+    "sentences",
+    "aggregate_checks",
+    "completion_boundary"
+  ],
+  "properties": {
+    "schema_version": {
+      "const": "voice_coach.r00_sentence_card.v1"
+    },
+    "card_id": {
+      "const": "voice-coach-r00-fixed-korean-sentences-v1"
+    },
+    "status": {
+      "const": "fixed_validated_sentence_text_only"
+    },
+    "created_date_kst": {
+      "type": "string",
+      "pattern": "^20[0-9]{2}-[0-9]{2}-[0-9]{2}$"
+    },
+    "source_license": {
+      "$ref": "#/$defs/sourceLicense"
+    },
+    "native_source_lineage_decisions": {
+      "type": "array",
+      "minItems": 4,
+      "maxItems": 4,
+      "uniqueItems": true,
+      "items": {
+        "$ref": "#/$defs/nativeSourceDecision"
+      }
+    },
+    "evidence_pins": {
+      "type": "array",
+      "minItems": 10,
+      "maxItems": 10,
+      "items": {
+        "$ref": "#/$defs/evidencePin"
+      }
+    },
+    "selection_rule": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "rule_id",
+        "frozen_before_r01",
+        "source_gate",
+        "normalization",
+        "sentence_count",
+        "syllable_count_range",
+        "word_count_range",
+        "difficulty_quota",
+        "coverage_requirements",
+        "duplicate_rule",
+        "privacy_and_content_rule",
+        "ordering_rule"
+      ],
+      "properties": {
+        "rule_id": {
+          "const": "r00-educational-stratified-selection-v1"
+        },
+        "frozen_before_r01": {
+          "const": true
+        },
+        "source_gate": {
+          "const": "project_original_cc0_only"
+        },
+        "normalization": {
+          "const": "NFKC_then_collapse_unicode_whitespace"
+        },
+        "sentence_count": {
+          "const": 20
+        },
+        "syllable_count_range": {
+          "$ref": "#/$defs/minMax"
+        },
+        "word_count_range": {
+          "$ref": "#/$defs/minMax"
+        },
+        "difficulty_quota": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "beginner",
+            "intermediate",
+            "advanced"
+          ],
+          "properties": {
+            "beginner": {
+              "const": 7
+            },
+            "intermediate": {
+              "const": 7
+            },
+            "advanced": {
+              "const": 6
+            }
+          }
+        },
+        "coverage_requirements": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "all_19_onset_consonants",
+            "all_18_observed_korean_vowels",
+            "all_7_surface_coda_classes",
+            "all_8_localizable_phonological_rules",
+            "prosody_target_count_minimum",
+            "exclude_spn_from_instruction",
+            "supplemental_medials"
+          ],
+          "properties": {
+            "all_19_onset_consonants": {
+              "const": true
+            },
+            "all_18_observed_korean_vowels": {
+              "const": true
+            },
+            "all_7_surface_coda_classes": {
+              "const": true
+            },
+            "all_8_localizable_phonological_rules": {
+              "const": true
+            },
+            "prosody_target_count_minimum": {
+              "type": "integer",
+              "minimum": 4
+            },
+            "exclude_spn_from_instruction": {
+              "const": true
+            },
+            "supplemental_medials": {
+              "type": "array",
+              "minItems": 3,
+              "maxItems": 3,
+              "uniqueItems": true,
+              "items": {
+                "type": "string"
+              }
+            }
+          }
+        },
+        "duplicate_rule": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "within_card",
+            "aihub_reserved_prompt_hashes",
+            "native_plaintext"
+          ],
+          "properties": {
+            "within_card": {
+              "const": "normalized_text_sha256_must_be_unique"
+            },
+            "aihub_reserved_prompt_hashes": {
+              "const": "exact_hash_intersection_must_be_zero"
+            },
+            "native_plaintext": {
+              "const": "must_not_be_opened_for_overlap_search"
+            }
+          }
+        },
+        "privacy_and_content_rule": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "pii_matches_must_be_zero",
+            "forbidden_terms_must_be_zero",
+            "ascii_letters_must_be_zero",
+            "decimal_digits_must_be_zero",
+            "urls_must_be_zero"
+          ],
+          "properties": {
+            "pii_matches_must_be_zero": {
+              "const": true
+            },
+            "forbidden_terms_must_be_zero": {
+              "const": true
+            },
+            "ascii_letters_must_be_zero": {
+              "const": true
+            },
+            "decimal_digits_must_be_zero": {
+              "const": true
+            },
+            "urls_must_be_zero": {
+              "const": true
+            }
+          }
+        },
+        "ordering_rule": {
+          "const": "fixed_sentence_id_ascending_after_stratum_matrix"
+        }
+      }
+    },
+    "phone_inventory": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "observed_target_label_count",
+        "observed_target_labels",
+        "instructional_target_labels",
+        "excluded_non_instructional_labels",
+        "onset_consonants",
+        "observed_korean_vowels",
+        "surface_coda_classes",
+        "supplemental_orthographic_medials",
+        "interpretation"
+      ],
+      "properties": {
+        "observed_target_label_count": {
+          "const": 38
+        },
+        "observed_target_labels": {
+          "$ref": "#/$defs/phoneList"
+        },
+        "instructional_target_labels": {
+          "$ref": "#/$defs/phoneList"
+        },
+        "excluded_non_instructional_labels": {
+          "type": "array",
+          "minItems": 1,
+          "maxItems": 1,
+          "items": {
+            "const": "spn"
+          }
+        },
+        "onset_consonants": {
+          "$ref": "#/$defs/phoneList"
+        },
+        "observed_korean_vowels": {
+          "$ref": "#/$defs/phoneList"
+        },
+        "surface_coda_classes": {
+          "$ref": "#/$defs/phoneList"
+        },
+        "supplemental_orthographic_medials": {
+          "$ref": "#/$defs/phoneList"
+        },
+        "interpretation": {
+          "type": "string",
+          "minLength": 1
+        }
+      }
+    },
+    "phonological_rule_inventory": {
+      "type": "array",
+      "minItems": 8,
+      "maxItems": 8,
+      "uniqueItems": true,
+      "items": {
+        "type": "string"
+      }
+    },
+    "tts_usage_policy": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "policy_id",
+        "license_noncommercial_only",
+        "allowed",
+        "prohibited_until_later_gates",
+        "audio_or_model_created_by_r00"
+      ],
+      "properties": {
+        "policy_id": {
+          "const": "r00-research-reference-text-only-v1"
+        },
+        "license_noncommercial_only": {
+          "const": false
+        },
+        "allowed": {
+          "type": "array",
+          "minItems": 4,
+          "uniqueItems": true,
+          "items": {
+            "type": "string"
+          }
+        },
+        "prohibited_until_later_gates": {
+          "type": "array",
+          "minItems": 5,
+          "uniqueItems": true,
+          "items": {
+            "type": "string"
+          }
+        },
+        "audio_or_model_created_by_r00": {
+          "const": false
+        }
+      }
+    },
+    "sentences": {
+      "type": "array",
+      "minItems": 20,
+      "maxItems": 20,
+      "items": {
+        "$ref": "#/$defs/sentence"
+      }
+    },
+    "aggregate_checks": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "sentence_count",
+        "unique_normalized_hash_count",
+        "aihub_reserved_prompt_hash_overlap_count",
+        "native_plaintext_files_read",
+        "pii_match_count",
+        "forbidden_content_match_count",
+        "difficulty_counts",
+        "covered_instructional_target_labels",
+        "covered_onset_consonants",
+        "covered_observed_korean_vowels",
+        "covered_surface_coda_classes",
+        "covered_supplemental_medials",
+        "covered_phonological_rules",
+        "covered_prosody_targets"
+      ],
+      "properties": {
+        "sentence_count": {
+          "const": 20
+        },
+        "unique_normalized_hash_count": {
+          "const": 20
+        },
+        "aihub_reserved_prompt_hash_overlap_count": {
+          "const": 0
+        },
+        "native_plaintext_files_read": {
+          "const": 0
+        },
+        "pii_match_count": {
+          "const": 0
+        },
+        "forbidden_content_match_count": {
+          "const": 0
+        },
+        "difficulty_counts": {
+          "type": "object"
+        },
+        "covered_instructional_target_labels": {
+          "$ref": "#/$defs/phoneList"
+        },
+        "covered_onset_consonants": {
+          "$ref": "#/$defs/phoneList"
+        },
+        "covered_observed_korean_vowels": {
+          "$ref": "#/$defs/phoneList"
+        },
+        "covered_surface_coda_classes": {
+          "$ref": "#/$defs/phoneList"
+        },
+        "covered_supplemental_medials": {
+          "$ref": "#/$defs/phoneList"
+        },
+        "covered_phonological_rules": {
+          "type": "array",
+          "uniqueItems": true,
+          "items": {
+            "type": "string"
+          }
+        },
+        "covered_prosody_targets": {
+          "type": "array",
+          "uniqueItems": true,
+          "items": {
+            "type": "string"
+          }
+        }
+      }
+    },
+    "completion_boundary": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "r00_completion_claim_allowed_after_validator_pass",
+        "r01_completed",
+        "tts_generated",
+        "human_reference_recorded",
+        "human_evaluation_completed",
+        "model_trained"
+      ],
+      "properties": {
+        "r00_completion_claim_allowed_after_validator_pass": {
+          "const": true
+        },
+        "r01_completed": {
+          "const": false
+        },
+        "tts_generated": {
+          "const": false
+        },
+        "human_reference_recorded": {
+          "const": false
+        },
+        "human_evaluation_completed": {
+          "const": false
+        },
+        "model_trained": {
+          "const": false
+        }
+      }
+    }
+  },
+  "$defs": {
+    "minMax": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "minimum",
+        "maximum"
+      ],
+      "properties": {
+        "minimum": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "maximum": {
+          "type": "integer",
+          "minimum": 1
+        }
+      }
+    },
+    "phoneList": {
+      "type": "array",
+      "uniqueItems": true,
+      "items": {
+        "type": "string",
+        "minLength": 1
+      }
+    },
+    "sourceLicense": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "source_type",
+        "source_id",
+        "source_uri",
+        "license_spdx",
+        "license_name",
+        "license_url",
+        "license_notice_path",
+        "license_applies_to",
+        "attribution_required",
+        "noncommercial_only",
+        "share_alike_required",
+        "redistribution_allowed",
+        "adaptation_allowed",
+        "corpus_text_derived"
+      ],
+      "properties": {
+        "source_type": {
+          "const": "project_original_controlled_sentences"
+        },
+        "source_id": {
+          "const": "voice-coach-r00-original-v1"
+        },
+        "source_uri": {
+          "const": "r00://project-original/voice-coach-r00-original-v1"
+        },
+        "license_spdx": {
+          "const": "CC0-1.0"
+        },
+        "license_name": {
+          "const": "CC0 1.0 Universal"
+        },
+        "license_url": {
+          "const": "https://creativecommons.org/publicdomain/zero/1.0/legalcode"
+        },
+        "license_notice_path": {
+          "const": "data/reference/r00/CC0_NOTICE.txt"
+        },
+        "license_applies_to": {
+          "const": "the_exact_20_sentence_texts_in_this_card"
+        },
+        "attribution_required": {
+          "const": false
+        },
+        "noncommercial_only": {
+          "const": false
+        },
+        "share_alike_required": {
+          "const": false
+        },
+        "redistribution_allowed": {
+          "const": true
+        },
+        "adaptation_allowed": {
+          "const": true
+        },
+        "corpus_text_derived": {
+          "const": false
+        }
+      }
+    },
+    "nativeSourceDecision": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "source_id",
+        "license_spdx",
+        "noncommercial_only",
+        "sentence_text_accessed",
+        "sentence_selected",
+        "decision"
+      ],
+      "properties": {
+        "source_id": {
+          "type": "string",
+          "minLength": 1
+        },
+        "license_spdx": {
+          "type": "string",
+          "minLength": 1
+        },
+        "noncommercial_only": {
+          "type": "boolean"
+        },
+        "sentence_text_accessed": {
+          "const": false
+        },
+        "sentence_selected": {
+          "const": false
+        },
+        "decision": {
+          "type": "string",
+          "minLength": 1
+        }
+      }
+    },
+    "evidencePin": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "path",
+        "sha256",
+        "access_class",
+        "values_read"
+      ],
+      "properties": {
+        "path": {
+          "type": "string",
+          "minLength": 1
+        },
+        "sha256": {
+          "type": "string",
+          "pattern": "^[0-9a-f]{64}$"
+        },
+        "access_class": {
+          "enum": [
+            "public_metadata",
+            "aggregate_metadata",
+            "public_source_code"
+          ]
+        },
+        "values_read": {
+          "type": "string",
+          "minLength": 1
+        }
+      }
+    },
+    "ruleTarget": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "taxonomy_stable_id",
+        "trigger_text",
+        "expected_realization_hangul",
+        "annotation_status"
+      ],
+      "properties": {
+        "taxonomy_stable_id": {
+          "type": "string",
+          "minLength": 1
+        },
+        "trigger_text": {
+          "type": "string",
+          "minLength": 1
+        },
+        "expected_realization_hangul": {
+          "type": "string",
+          "minLength": 1
+        },
+        "annotation_status": {
+          "const": "engineering_target_pending_human_pronunciation_review"
+        }
+      }
+    },
+    "sentence": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "sentence_id",
+        "selection_order",
+        "text",
+        "normalized_text",
+        "normalized_text_sha256",
+        "source_id",
+        "license_spdx",
+        "syllable_count",
+        "word_count",
+        "difficulty",
+        "difficulty_reason",
+        "target_phones",
+        "target_onsets",
+        "target_vowels",
+        "target_surface_codas",
+        "supplemental_medials",
+        "phonological_rule_targets",
+        "prosody_targets",
+        "duplicate_checks",
+        "pii_check",
+        "prohibited_content_check",
+        "tts_usage_policy_id"
+      ],
+      "properties": {
+        "sentence_id": {
+          "type": "string",
+          "pattern": "^R00-[0-9]{2}$"
+        },
+        "selection_order": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 20
+        },
+        "text": {
+          "type": "string",
+          "minLength": 1
+        },
+        "normalized_text": {
+          "type": "string",
+          "minLength": 1
+        },
+        "normalized_text_sha256": {
+          "type": "string",
+          "pattern": "^[0-9a-f]{64}$"
+        },
+        "source_id": {
+          "const": "voice-coach-r00-original-v1"
+        },
+        "license_spdx": {
+          "const": "CC0-1.0"
+        },
+        "syllable_count": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "word_count": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "difficulty": {
+          "enum": [
+            "beginner",
+            "intermediate",
+            "advanced"
+          ]
+        },
+        "difficulty_reason": {
+          "type": "string",
+          "minLength": 1
+        },
+        "target_phones": {
+          "$ref": "#/$defs/phoneList"
+        },
+        "target_onsets": {
+          "$ref": "#/$defs/phoneList"
+        },
+        "target_vowels": {
+          "$ref": "#/$defs/phoneList"
+        },
+        "target_surface_codas": {
+          "$ref": "#/$defs/phoneList"
+        },
+        "supplemental_medials": {
+          "$ref": "#/$defs/phoneList"
+        },
+        "phonological_rule_targets": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/ruleTarget"
+          }
+        },
+        "prosody_targets": {
+          "type": "array",
+          "minItems": 1,
+          "uniqueItems": true,
+          "items": {
+            "type": "string",
+            "minLength": 1
+          }
+        },
+        "duplicate_checks": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "within_card_unique",
+            "aihub_reserved_prompt_hash_collision",
+            "native_plaintext_overlap"
+          ],
+          "properties": {
+            "within_card_unique": {
+              "const": true
+            },
+            "aihub_reserved_prompt_hash_collision": {
+              "const": false
+            },
+            "native_plaintext_overlap": {
+              "const": "not_checked_prohibited_input"
+            }
+          }
+        },
+        "pii_check": {
+          "$ref": "#/$defs/scanResult"
+        },
+        "prohibited_content_check": {
+          "$ref": "#/$defs/scanResult"
+        },
+        "tts_usage_policy_id": {
+          "const": "r00-research-reference-text-only-v1"
+        }
+      }
+    },
+    "scanResult": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "status",
+        "matched_categories"
+      ],
+      "properties": {
+        "status": {
+          "const": "passed"
+        },
+        "matched_categories": {
+          "type": "array",
+          "maxItems": 0
+        }
+      }
+    }
+  }
+}

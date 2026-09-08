@@ -1,0 +1,20 @@
+{
+  "schema_version": "voice_coach.r04_randomization_manifest.v1",
+  "randomization_id": "TBD_EXTERNAL",
+  "status": "TBD_EXTERNAL",
+  "r03_completion_commit_sha256": "TBD_R03_COMPLETION",
+  "r03_bank_manifest_sha256": "TBD_R03_COMPLETION",
+  "r04_config_sha256": "TBD_R04_STATIC_PIN",
+  "r04_preregistration_sha256": "TBD_PREREGISTRATION",
+  "statistical_analysis_plan_sha256": "TBD_PREREGISTRATION",
+  "privacy_zone": "D1_pseudonymized_restricted_experiment",
+  "per_listener_within_sentence_randomization": true,
+  "fatigue_blocks_present": true,
+  "system_names_present": false,
+  "filenames_or_paths_present": false,
+  "synthesis_status_present": false,
+  "source_labels_present": false,
+  "ratings_present": false,
+  "stimuli": [],
+  "listener_schedules": []
+}

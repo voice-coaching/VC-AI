@@ -1,0 +1,178 @@
+{
+  "schema_version": "voice_coach.track_e_contract.v1",
+  "contract_id": "track-e-engineering-provisional-v1",
+  "claim_scope": "engineering_provisional",
+  "frozen_at_kst": "2026-08-06",
+  "cohort": "zh_ja_l1_korean_l2",
+  "status": "frozen",
+  "authority": {
+    "grants_research_completion_points": false,
+    "grants_validated_performance_claim": false,
+    "research_validated_requires_human_gate_receipt": true,
+    "note": "Track E results are engineering measurements. Any wording that presents them as validated performance is a stop condition."
+  },
+  "split_roles": {
+    "train": {
+      "role": "fit_model_parameters",
+      "threshold_derivation_allowed": false,
+      "read_allowed": true
+    },
+    "dev": {
+      "role": "model_and_variant_selection",
+      "threshold_derivation_allowed": false,
+      "read_allowed": true
+    },
+    "calibration": {
+      "role": "threshold_derivation_only",
+      "threshold_derivation_allowed": true,
+      "read_allowed": true,
+      "model_selection_allowed": false
+    },
+    "locked": {
+      "role": "forbidden_in_track_e",
+      "threshold_derivation_allowed": false,
+      "read_allowed": false
+    },
+    "expert_holdout": {
+      "role": "forbidden_in_track_e",
+      "threshold_derivation_allowed": false,
+      "read_allowed": false
+    }
+  },
+  "metric_definitions": {
+    "phone_macro_f1": {
+      "unit": "phone",
+      "definition": "unweighted mean of per-class binary F1 over the phone error label classes present in the evaluated split",
+      "label_source": "silver_oracle_alignment",
+      "aggregation": "macro_over_classes_then_mean_over_seeds",
+      "dispersion": "sample_standard_deviation_over_seeds"
+    },
+    "utterance_icc": {
+      "unit": "utterance",
+      "definition": "two-way random-effects intraclass correlation ICC(2,1) between predicted and reference utterance-level scores",
+      "aggregation": "single_estimate_per_seed_then_mean_over_seeds",
+      "dispersion": "sample_standard_deviation_over_seeds"
+    },
+    "content_wer": {
+      "unit": "word",
+      "definition": "Levenshtein word error rate between the CTC hypothesis and the normalized prompt text",
+      "tokenization": "whitespace_on_normalized_text",
+      "aggregation": "corpus_level_total_edits_over_total_reference_tokens"
+    },
+    "content_cer": {
+      "unit": "character",
+      "definition": "Levenshtein character error rate over precomposed Hangul syllable characters of the normalized text",
+      "tokenization": "nfc_syllable_characters",
+      "aggregation": "corpus_level_total_edits_over_total_reference_characters"
+    },
+    "ece": {
+      "unit": "probability",
+      "definition": "expected calibration error with equal-width bins over the predicted issue probability",
+      "bin_count": 10,
+      "binning": "equal_width_on_unit_interval",
+      "aggregation": "sample_weighted_mean_absolute_gap"
+    },
+    "issued_precision": {
+      "unit": "issued_coaching_item",
+      "definition": "fraction of coaching items the gate issued whose reference label agrees with the issued issue type at the issued syllable index",
+      "aggregation": "micro_over_issued_items"
+    }
+  },
+  "threshold_derivation_rules": {
+    "derivation_split": "calibration",
+    "derivation_order": [
+      "min_content_score",
+      "min_alignment_confidence",
+      "min_s1_confidence",
+      "min_s2_confidence",
+      "min_issue_confidence",
+      "min_issue_severity"
+    ],
+    "rounding": "half_up_to_4_decimal_places",
+    "clamp_interval": [0.0, 1.0],
+    "tie_break": "choose_the_more_conservative_higher_threshold",
+    "rules": {
+      "min_content_score": {
+        "statistic": "quantile",
+        "quantile": 0.05,
+        "population": "calibration_utterances_whose_reference_text_equals_the_prompt",
+        "objective": "reject_prompt_mismatch_before_any_pronunciation_judgement"
+      },
+      "min_alignment_confidence": {
+        "statistic": "quantile",
+        "quantile": 0.10,
+        "population": "calibration_utterances_passing_min_content_score",
+        "objective": "reject_unusable_alignment_before_span_attribution"
+      },
+      "min_s1_confidence": {
+        "statistic": "smallest_value_satisfying_target",
+        "target": {"metric": "issued_precision", "comparator": ">=", "value": 0.9},
+        "population": "calibration_utterances_passing_alignment_rules",
+        "fallback": "if_no_value_satisfies_the_target_the_profile_stays_uncalibrated"
+      },
+      "min_s2_confidence": {
+        "statistic": "quantile",
+        "quantile": 0.10,
+        "population": "calibration_utterances_with_an_approved_independent_audit",
+        "objective": "reject_low_confidence_independent_approval"
+      },
+      "min_issue_confidence": {
+        "statistic": "smallest_value_satisfying_target",
+        "target": {"metric": "issued_precision", "comparator": ">=", "value": 0.9},
+        "population": "calibration_issue_drafts_inside_the_advice_allowlist",
+        "fallback": "if_no_value_satisfies_the_target_the_profile_stays_uncalibrated"
+      },
+      "min_issue_severity": {
+        "statistic": "fixed",
+        "value": 0.0,
+        "objective": "severity_is_not_used_as_an_independent_veto_in_track_e"
+      }
+    },
+    "required_branches_rule": {
+      "statistic": "set",
+      "value": ["explicit", "s104_adapter", "s105_selected_hierarchy", "gop_acoustic_posterior"],
+      "objective": "a_missing_required_branch_must_end_the_attempt_as_uncertain_never_as_zero"
+    },
+    "post_hoc_change_policy": "changing any rule, metric definition, or gate threshold after observing a result invalidates every run that cited this contract hash"
+  },
+  "gate_thresholds": {
+    "s107_calibration": {
+      "ece": {"comparator": "<=", "value": 0.1},
+      "issued_precision": {"comparator": ">=", "value": 0.9}
+    },
+    "stage_c_content_backend_acceptance": {
+      "content_cer": {"comparator": "<=", "value": 0.2, "split": "dev"},
+      "content_wer": {"comparator": "<=", "value": 0.35, "split": "dev"},
+      "basis": "engineering_acceptance_bound_frozen_before_execution",
+      "on_violation": "stage_c_stays_backend_unavailable_and_e5_does_not_start"
+    },
+    "e01_metamorphic": {
+      "agreement_rate": {"comparator": ">=", "value": 0.95}
+    },
+    "e8_end_to_end": {
+      "coaching_ready_attempts": {"comparator": ">=", "value": 1},
+      "span_tuple_complete_for_every_issued_item": true
+    }
+  },
+  "access_instrumentation": {
+    "counters_that_must_be_zero": [
+      "locked_test_path_resolution_count",
+      "locked_test_read_count",
+      "expert_holdout_path_resolution_count",
+      "expert_holdout_read_count",
+      "human_rating_read_count",
+      "raw_audio_path_emitted_count",
+      "speaker_identifier_emitted_count"
+    ],
+    "on_nonzero": "failed_closed",
+    "receipt_requirement": "every Track E run receipt must cite contract_sha256 and report all counters above"
+  },
+  "stop_conditions": [
+    "locked_test_or_expert_holdout_read_count_is_nonzero",
+    "threshold_rule_metric_definition_or_gate_threshold_changed_after_observing_a_result",
+    "s1_and_s2_share_a_backend_id_alignment_path_or_split",
+    "checkpoint_config_or_manifest_hash_mismatch",
+    "raw_audio_path_speaker_identifier_or_secret_appears_in_a_response_log_or_artifact",
+    "engineering_provisional_result_described_as_validated_performance"
+  ]
+}

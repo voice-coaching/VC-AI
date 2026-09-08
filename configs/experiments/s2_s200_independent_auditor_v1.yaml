@@ -1,0 +1,438 @@
+schema_version: 1
+
+experiment:
+  id: aihub71490_s2_s200_independent_auditor_v1
+  stage: s200_static_independence_contract_and_data_card
+  implementation_status: static_contract_only
+  s200_completion_claim_allowed: false
+  s201_trainer_implemented: false
+  s202_trainer_implemented: false
+  actual_model_download_allowed: false
+  actual_model_training_allowed: false
+  gpu_access_allowed: false
+  row_level_data_access_allowed: false
+  protected_data_access_allowed: false
+  holdout_access_allowed: false
+  locked_test_access_allowed: false
+  metric_generation_allowed: false
+  result_generation_allowed: false
+
+canonical_sources:
+  access_scope: C1_code_and_policy_only
+  pins:
+    - path: scripts/check_project_constraints.py
+      sha256: 7c885d9d863d1a505bb074e5be33b63e262b191585bcf7a02a03162ca0f1ba86
+    - path: pyproject.toml
+      sha256: 87fbe75e3df2ad7f64494cafb3744e7cfb815cfe1b8e9ea8d774d8b990c35e71
+    - path: requirements/scorer-lock-linux-aarch64-cu130.txt
+      sha256: f6c5b10c1028506d7361c83ad1e9aae0b1fafcf34f4e918e5b7123c51fac8cf2
+    - path: scripts/prepare_s2_s200_auditor.py
+      sha256: 9b4e528f025743fe18dfcf7e6bb3a2ed3e57d3bcf05c76ce459ceac520a5b9d1
+    - path: src/voice_coach/training/s2_s200_auditor_contract.py
+      sha256: 7d68e08e062275338fd2e3d6305f08b744da6a524e315931c214211d54d2feba
+
+predecessor:
+  validate_before_external_evidence: true
+  validate_before_output_resolution: true
+  s108_final_research_candidate:
+    commit:
+      path: artifacts/experiments/aihub71490_wavlm_s108_final_s1_v1/commit.json
+      schema_version: voice_coach.wavlm_s108_final_s1_commit.v1
+      required_status: committed
+      required_decision: research_candidate_passed
+      required_research_candidate_completed: true
+      required_deployment_approved: false
+      required_locked_batch_access_count: 1
+      required_locked_batch_rerun_count: 0
+    registry:
+      path: artifacts/experiment_registry/aihub71490-wavlm-s108-final-s1-v1/metadata.json
+      schema_version: 1
+      run_id: aihub71490-wavlm-s108-final-s1-v1
+      required_status: completed
+    required_artifact_hash_names:
+      - final_s1_config
+      - final_s1_checkpoint
+      - final_fusion_checkpoint
+      - calibrator_parameters
+      - threshold_policy
+      - promotion_report
+      - source_chain
+      - independent_validation_receipt
+    allowed_alignment_modes:
+      - oracle_target_boundary
+      - predicted_alignment
+    alignment_mode_must_be_explicit: true
+    oracle_result_may_not_claim_predicted_or_deployment: true
+
+dag:
+  nodes:
+    - s200_independence_contract
+    - s201_whisper_content_consistency
+    - s202_independent_representation_auditor
+    - s203_expert_holdout_audit
+  edges:
+    - [s200_independence_contract, s201_whisper_content_consistency]
+    - [s201_whisper_content_consistency, s202_independent_representation_auditor]
+    - [s202_independent_representation_auditor, s203_expert_holdout_audit]
+  execution_order:
+    - s108_final_research_candidate
+    - s200_independence_contract
+    - s201_whisper_content_consistency
+    - s202_independent_representation_auditor
+    - s203_expert_holdout_audit
+  stop_after_first_incomplete: true
+  downstream_training_before_predecessor_forbidden: true
+  s201_and_s202_trainers_out_of_scope: true
+
+independence:
+  required_separation_dimensions:
+    - backbone
+    - alignment
+    - holdout
+    - objective
+    - training_labels
+    - model_features
+  s1_reference:
+    backbone_family: wavlm
+    alignment_provenance:
+      development: oracle_target_boundary
+      final: must_equal_s108_commit
+    selection_splits: [train, dev, stack, calibration, locked_test]
+    objective_families:
+      - phone_binary_classification
+      - utterance_ordinal_or_bounded_regression
+      - confidence_aware_fusion
+    label_families:
+      - aihub_target_realized_silver_phone
+      - aihub_holistic_score
+      - d07_s1_gold
+    feature_families:
+      - wavlm_hidden_state
+      - explicit_acoustic_feature
+      - s1_alignment_confidence
+      - s1_component_prediction
+  s2_contract:
+    content_backbone_family: whisper
+    auditor_backbone_family: hubert_or_separately_approved_non_wavlm
+    alignment_mode: alignment_free_utterance
+    model_selection_splits: [s2_auditor_train, s2_auditor_validation]
+    final_holdout_split: s2_expert_holdout
+    objective_families:
+      - transcript_content_consistency_hard_gate
+      - pairwise_preference
+      - ordinal_audit
+    training_label_families:
+      - s2_independent_expert_pairwise_preference
+      - s2_independent_expert_ordinal_rating
+    model_feature_families:
+      - whisper_transcript_consistency
+      - independent_ssl_representation
+      - s2_intrinsic_uncertainty
+  split_disjointness:
+    require_speaker_disjoint: true
+    require_item_disjoint: true
+    require_prompt_disjoint_challenge_report: true
+    require_rater_cohort_disjoint: true
+    forbidden_overlap_with_s1_splits: [train, dev, stack, calibration, locked_test]
+    overlap_counts_must_all_be_zero: true
+  alignment:
+    s1_oracle_boundaries_allowed_as_s2_input: false
+    s1_predicted_boundaries_allowed_as_s2_input: false
+    s1_alignment_confidence_allowed_as_s2_input: false
+    s2_phone_or_word_timestamp_feature_allowed: false
+    whisper_timestamps_allowed_as_model_feature: false
+    oracle_and_predicted_results_must_be_separate: true
+    undeclared_alignment_mode_forbidden: true
+  leakage:
+    s1_predictions_allowed_in_s201_or_s202: false
+    s1_predictions_allowed_for_s203_evaluation_join_only: true
+    s1_labels_allowed_in_s2_training_or_selection: false
+    s1_features_allowed_in_s2_training_or_selection: false
+    s1_thresholds_allowed_in_s2_training_or_selection: false
+    s2_holdout_labels_visible_before_freeze: false
+    forbidden_model_input_fields:
+      - realized_phone
+      - alignment_operation
+      - error_tag
+      - error_count
+      - phone_interval
+      - word_interval
+      - oracle_alignment
+      - predicted_alignment
+      - s1_prediction
+      - s1_score
+      - s1_logit
+      - s1_probability
+      - s1_confidence
+      - s1_threshold
+      - s1_label
+      - s1_wavlm_embedding
+      - s1_explicit_feature
+    evaluation_only_join_fields:
+      - item_id_sha256
+      - speaker_id_sha256
+      - frozen_s1_decision
+      - frozen_s2_decision
+      - adjudicated_s2_expert_gold
+
+s201:
+  role: whisper_transcript_content_consistency_hard_gate_only
+  implementation_status: not_implemented
+  model_family: whisper
+  exact_checkpoint_revision_status: must_be_pinned_in_s201_config
+  official_source:
+    repository_revision: 90fdc51112dc59242201d038a48add97ffd24b5d
+    license: MIT
+    license_sha256: b5d65a59060e68c4ff940e1eddfa6f94b2d68fdf58ed7f4dd57721c997e35e9d
+  input_allowlist:
+    - item_id_sha256
+    - speaker_id_sha256
+    - audio_waveform
+    - canonical_prompt_text
+    - language_code
+  normalized_transcript_policy_status: must_be_pinned_in_s201_config
+  wer_threshold_status: must_be_preregistered_in_s201_config
+  wer_threshold: null
+  execute_with_unresolved_threshold_allowed: false
+  decoding:
+    temperature: 0.0
+    sampling_allowed: false
+    timestamps_as_features_allowed: false
+  hard_gate:
+    evaluated_before_s202_decision: true
+    bypass_allowed: false
+    failed_content_may_not_be_rescued_by_s202: true
+    fine_phone_or_prosody_judgment_role_allowed: false
+  native_external_benchmarks:
+    - name: fleurs_ko_kr
+      role: asr_content_external_evaluation_only
+      license: CC-BY-4.0
+      learner_error_training_allowed: false
+    - name: zeroth_korean
+      role: asr_content_external_evaluation_only
+      license: CC-BY-4.0
+      learner_error_training_allowed: false
+  required_artifacts:
+    - s201_config
+    - checkpoint_source_card
+    - transcript_normalization_policy
+    - aggregate_wer_report
+    - privacy_safe_content_gate_predictions
+
+s202:
+  role: independent_acoustic_representation_pairwise_ordinal_auditor
+  implementation_status: not_implemented
+  backbone_policy:
+    preferred_family: hubert
+    allowed_families: [hubert, separately_approved_non_wavlm_ssl]
+    forbidden_families: [wavlm, whisper_as_sole_fine_phone_or_prosody_auditor]
+    exact_checkpoint_revision_status: must_be_pinned_in_s202_config
+    source_repository_revision: 3d262bb25690e4eb2e7d3c1309b1e9c406ca4b99
+    license: MIT
+    license_sha256: 52412d7bc7ce4157ea628bbaacb8829e0a9cb3c58f57f99176126bc8cf2bfc85
+  raw_input_allowlist:
+    - item_id_sha256
+    - speaker_id_sha256
+    - audio_waveform
+    - content_gate_pass
+  model_feature_allowlist:
+    - independent_ssl_hidden_state
+    - independent_ssl_attention_mask
+    - s2_intrinsic_uncertainty
+  routing_only_fields: [content_gate_pass]
+  objectives: [pairwise_preference, ordinal_audit]
+  labels:
+    allowed:
+      - s2_independent_expert_pairwise_preference
+      - s2_independent_expert_ordinal_rating
+    phone_derived_proxy_allowed: false
+    s1_prediction_derived_label_allowed: false
+    aihub_silver_label_allowed: false
+  output_states: [approve, disagreement, uncertain]
+  seed_contract:
+    training_seeds: [42, 43, 44]
+    seed_predictions_kept_separate: true
+    ensemble_policy_must_be_pinned_before_holdout: true
+  required_artifacts:
+    - s202_config
+    - data_and_label_card
+    - seed_checkpoints
+    - seed_predictions
+    - aggregate_dev_report
+
+s203:
+  role: frozen_s1_s2_expert_holdout_audit
+  implementation_status: not_implemented
+  expert_holdout_attestation:
+    path: artifacts/external_evaluation/s2_s203_expert_holdout_attestation_v1.json
+    schema_version: voice_coach.s2_s203_expert_holdout_attestation.v1
+    required_status: ready
+    minimum_item_count: 1000
+    maximum_item_count: 2000
+    independent_rater_count: 2
+    adjudicator_count: 1
+    rater_overlap_with_s1_count: 0
+    item_overlap_with_s1_selection_count: 0
+    speaker_overlap_with_s1_selection_count: 0
+  freeze_order:
+    - freeze_s108_s1
+    - freeze_s201_policy
+    - freeze_s202_seed_models_and_ensemble
+    - seal_s2_expert_holdout
+    - score_frozen_s1_and_s2
+    - join_predictions_for_evaluation_only
+    - open_adjudicated_gold
+    - compute_preregistered_metrics_once
+  primary_metrics:
+    serious_s1_misjudgment_recall:
+      gate: {operator: greater_than_or_equal, value: 0.80}
+    false_high_score_relative_reduction:
+      gate: {operator: greater_than_or_equal, value: 0.30}
+    normal_sample_referral_rate:
+      gate: {operator: less_than_or_equal, value: 0.15}
+    disagreement_expert_error_hit_rate:
+      gate: {operator: greater_than_or_equal, value: 0.60}
+  statistics:
+    gate_statistic: point_estimate
+    confidence_level: 0.95
+    cluster_unit: speaker_id_sha256
+    bootstrap_replicates: 5000
+    bootstrap_seed: 20260729
+    report_confidence_intervals: true
+  required_artifacts:
+    - s203_preregistration
+    - holdout_attestation
+    - frozen_s1_predictions
+    - frozen_s2_predictions
+    - disagreement_report
+    - expert_audit_report
+    - slice_and_failure_report
+  completion_requires_all_primary_gates: true
+  deployment_approval_created_by_s203: false
+
+data_card:
+  schema_version: voice_coach.s2_s200_data_card.v1
+  population_scope: korean_l2_chinese_and_japanese_l1_primary
+  research_role: independent_auditor_not_primary_scorer
+  unit_of_analysis: utterance_with_speaker_cluster
+  current_data_status: no_s2_row_level_data_accessed
+  current_model_status: no_s2_model_downloaded_or_trained
+  current_metric_status: no_s2_metric_or_result
+  intended_splits:
+    - s2_auditor_train
+    - s2_auditor_validation
+    - s2_expert_holdout
+  prohibited_reuse:
+    - s1_train
+    - s1_dev
+    - s1_stack
+    - s1_calibration
+    - s1_locked_test
+    - s1_labeler_cohort
+  labels:
+    source: independent_s2_experts
+    pairwise_and_ordinal_only: true
+    word_label_status: not_collected
+    phone_derived_word_label_allowed: false
+  limitations:
+    - exact_s201_checkpoint_and_wer_threshold_unresolved
+    - exact_s202_checkpoint_and_ensemble_policy_unresolved
+    - s108_final_research_candidate_missing
+    - s2_expert_holdout_missing
+    - no_actual_performance_evidence
+  allowed_claim: implementation_readiness_contract_only
+  forbidden_claims:
+    - s200_completed
+    - s2_independence_empirically_proven
+    - s201_wer_gate_passed
+    - s202_auditor_trained
+    - s203_metrics_observed
+    - deployment_ready
+
+privacy:
+  zone_contract:
+    raw_audio_and_expert_notes: R0
+    locator_and_rater_mapping: R1
+    pseudonymous_features_labels_predictions: D1
+    aggregate_reports_and_data_card: A1
+    code_config_docs: C1
+  allowed_identifiers: [item_id_sha256, speaker_id_sha256, reviewer_id_sha256]
+  raw_identifier_or_path_export_allowed: false
+  free_text_notes_as_model_input_allowed: false
+  public_row_level_release_allowed: false
+  aggregate_only_publication: true
+  consent_withdrawal_retention_destruction_plan_required: true
+  s203_developer_blinding_required: true
+
+licenses:
+  records:
+    - asset: aihub_71490
+      license_class: approval_based_restricted
+      role: frozen_s1_context_only_not_s2_training
+      redistribution_allowed: false
+    - asset: s2_expert_evaluation
+      license_class: separate_consent_and_institution_policy
+      role: s2_training_validation_and_expert_holdout
+      redistribution_allowed: false
+    - asset: whisper_code_and_weights
+      license_class: MIT
+      role: s201_content_gate_candidate
+      redistribution_requires_final_checkpoint_audit: true
+    - asset: fairseq_hubert_code_and_pretrained_models
+      license_class: MIT
+      role: s202_representation_candidate
+      redistribution_requires_final_checkpoint_audit: true
+    - asset: fleurs_ko_kr
+      license_class: CC-BY-4.0
+      role: s201_external_asr_evaluation_only
+      attribution_required: true
+    - asset: zeroth_korean
+      license_class: CC-BY-4.0
+      role: s201_external_asr_evaluation_only
+      attribution_required: true
+  exact_checkpoint_license_reaudit_required_before_download: true
+  data_license_reaudit_required_before_row_access: true
+
+reproducibility:
+  required_hash_algorithm: sha256
+  every_hash_must_be_lowercase_64_hex: true
+  config_and_source_pins_before_predecessor: true
+  predecessor_and_registry_hashes_before_external: true
+  external_attestation_hash_before_output: true
+  no_unpinned_model_download: true
+  registry_contracts:
+    s200:
+      run_id: aihub71490-s2-s200-independent-auditor-v1-readiness
+      allowed_statuses: [running, failed, completed]
+      completion_requires_readiness_lock: true
+    s201:
+      run_id: aihub71490-s2-s201-whisper-content-v1
+      allowed_statuses: [running, failed, completed]
+      completion_requires_artifact_hashes: true
+    s202:
+      run_id_pattern: aihub71490-s2-s202-auditor-v1-seed-{seed}
+      seeds: [42, 43, 44]
+      allowed_statuses: [running, failed, completed]
+      completion_requires_artifact_hashes: true
+    s203:
+      run_id: aihub71490-s2-s203-expert-holdout-v1
+      allowed_statuses: [running, failed, completed]
+      completion_requires_single_holdout_evaluation: true
+  immutable_commit_chain:
+    - s108_final_commit_sha256
+    - s200_readiness_lock_sha256
+    - s201_commit_sha256
+    - s202_commit_sha256
+    - s203_commit_sha256
+  failure_artifacts_preserved: true
+  result_based_reselection_allowed: false
+
+outputs:
+  readiness_lock_path: artifacts/experiments/aihub71490_s2_s200_independent_auditor_v1/readiness_lock.json
+  readiness_lock_schema_version: voice_coach.s2_s200_readiness_lock.v1
+  access_scope: A1_aggregate_contract_only
+  atomic_publish: true
+  no_overwrite: true
+  no_symlink: true
+  content_addressed_binding: true
+  current_expected_output_count: 0

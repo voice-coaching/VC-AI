@@ -1,0 +1,107 @@
+{
+  "schema_version": "voice_coach.b05_joint_locked_preregistration.v1",
+  "preregistration_id": "TBD_PREREGISTRATION",
+  "status": "draft_not_approved",
+  "frozen_before_any_locked_access": false,
+  "predecessor_bindings": {
+    "b03_config_sha256": "cff6439e6b99b5f725c4214dfe1dda64b20892e8b59fbd064d88d3542c2615bd",
+    "b03_report_sha256": "a5c3ade0738777409bb57956b088e025081cb63886808c6d6fc87724d0875519",
+    "b03_registry_sha256": "0445d69cb18fd9105a531a4e5d342d60c7cad94050c6a031c0d7ee3ef6e2141e",
+    "b03_checkpoint_set_sha256": "5a94575da57dfd936bced3eb0068ee5fe803cba1c69ee69b68377b21b67fefda",
+    "g04_completion_sha256": "TBD_G04_COMPLETION",
+    "d07_completion_sha256": "TBD_D07_COMPLETION",
+    "s107_commit_sha256": "TBD_S107_COMPLETION",
+    "s108_arm_freeze_sha256": "TBD_S108_ARM_FREEZE"
+  },
+  "b03_canonical_baseline": {
+    "seeds": [
+      42,
+      43,
+      44
+    ],
+    "checkpoint_set_sha256": "5a94575da57dfd936bced3eb0068ee5fe803cba1c69ee69b68377b21b67fefda",
+    "feature_allowlist_sha256": "6a0ac985f61c3208680780962741be7d084752e720e911522827d92366e20f2f",
+    "phone_decision_threshold": 0.5,
+    "threshold_origin": "b03_sklearn_predict_default_not_b06_posthoc",
+    "seed_ensemble_definition": "no_prediction_ensemble_independent_seed_metrics_then_arithmetic_mean",
+    "posthoc_b06_substitution_used": false,
+    "result_based_change_allowed": false
+  },
+  "s108_arm": {
+    "arm_freeze_sha256": "TBD_S108_ARM_FREEZE",
+    "model_identity_sha256": "TBD_S108_ARM_FREEZE",
+    "checkpoint_sha256": "TBD_S108_ARM_FREEZE",
+    "calibrator_sha256": "TBD_S108_ARM_FREEZE",
+    "threshold_policy_sha256": "TBD_S108_ARM_FREEZE",
+    "execution_spec_sha256": "TBD_S108_ARM_FREEZE",
+    "result_based_change_allowed": false
+  },
+  "joint_batch": {
+    "included_arms": [
+      "b05_explicit_baseline",
+      "s108_final_s1"
+    ],
+    "same_locked_batch_manifest_required": true,
+    "both_arms_immutable_before_access": true,
+    "first_arm_result_hidden_until_both_arms_sealed": true,
+    "authorized_locked_access_count": 1,
+    "rerun_after_success_allowed": false,
+    "rerun_after_failure_allowed": false,
+    "new_independent_test_set_required_for_any_new_run": true,
+    "joint_atomic_publication_required": true
+  },
+  "analysis_plan": {
+    "locked_population_definition_sha256": "TBD_PREREGISTRATION",
+    "phone_confusion_definition_sha256": "TBD_PREREGISTRATION",
+    "utterance_ordinal_confusion_definition_sha256": "TBD_PREREGISTRATION",
+    "slice_family_definition_sha256": "TBD_PREREGISTRATION",
+    "slice_axes": [
+      "l1",
+      "gender",
+      "proficiency",
+      "duration_bucket",
+      "target_phone",
+      "error_tag"
+    ],
+    "speaker_cluster_bootstrap_method": "TBD_PREREGISTRATION",
+    "bootstrap_repetitions": 5000,
+    "confidence_level": 0.95,
+    "multiple_comparison_correction": "holm",
+    "holm_family_definition_sha256": "TBD_PREREGISTRATION",
+    "missing_data_policy_sha256": "TBD_PREREGISTRATION",
+    "undefined_metric_policy_sha256": "TBD_PREREGISTRATION",
+    "minimum_support_policy_sha256": "TBD_PREREGISTRATION",
+    "minimum_support_thresholds": {
+      "phone_positive_count": null,
+      "phone_negative_count": null,
+      "utterance_row_count": null,
+      "slice_speaker_count": null,
+      "slice_row_count": null
+    },
+    "primary_estimands_sha256": "TBD_PREREGISTRATION",
+    "slice_result_keys": [],
+    "bootstrap_result_keys": [],
+    "holm_hypotheses": [],
+    "cluster_unit": "speaker_id_sha256"
+  },
+  "approvals": {
+    "protocol_owner_approved": false,
+    "statistics_owner_approved": false,
+    "privacy_owner_approved": false,
+    "signed_protocol_receipt_sha256": "TBD_APPROVAL",
+    "signed_statistics_receipt_sha256": "TBD_APPROVAL",
+    "signed_privacy_receipt_sha256": "TBD_APPROVAL"
+  },
+  "privacy_and_claims": {
+    "contains_identifiers": false,
+    "contains_rows": false,
+    "contains_audio": false,
+    "contains_labels": false,
+    "contains_predictions": false,
+    "contains_locked_results": false,
+    "b05_completion_claim_allowed_before_joint_receipt": false,
+    "s108_completion_claim_allowed_before_joint_receipt": false,
+    "deployment_claim_allowed": false
+  },
+  "binding_sha256": "TBD_PREREGISTRATION"
+}

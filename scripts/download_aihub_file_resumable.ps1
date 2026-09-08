@@ -5,6 +5,11 @@ param(
 )
 
 $ErrorActionPreference = 'Stop'
+. (Join-Path $PSScriptRoot 'aihub538_p8_guard.ps1')
+Assert-NoAihub538P8GenericFileKey -FileKeys ([string]$FileKey)
+if ($DatasetKey -eq 538) {
+  throw 'Dataset 538 is fail-closed in this legacy downloader. Use the typed Python label-audit, V5 source-prefix, or P8 one-shot entrypoint.'
+}
 $projectRoot = Split-Path -Parent $PSScriptRoot
 $envPath = Join-Path $projectRoot '.env.local'
 $destination = Join-Path $projectRoot "data\restricted\aihub\dataset-$DatasetKey"

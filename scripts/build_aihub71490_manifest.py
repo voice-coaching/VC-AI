@@ -248,6 +248,7 @@ def iter_modality_files(source_root: SourceRoot) -> Iterator[Path]:
                             subdirectories.append(Path(entry.path))
                         elif (
                             entry.is_file(follow_symlinks=False)
+                            and not entry.name.startswith(".")
                             and Path(entry.name).suffix.casefold() == expected_suffix.casefold()
                         ):
                             yield Path(entry.path)

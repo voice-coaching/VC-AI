@@ -1,0 +1,48 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://voice-coach.local/schemas/d09_h02_h03_blind_rating_v1.schema.json",
+  "title": "D09 H02-H03 restricted blind rating record",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_version",
+    "rating_record_id_sha256",
+    "blind_item_code_sha256",
+    "audio_object_id_sha256",
+    "rater_key_sha256",
+    "phase",
+    "outcome",
+    "score_1_to_5",
+    "rater_blinded_to_condition",
+    "rater_blinded_to_timepoint",
+    "rater_blinded_to_participant_identity",
+    "condition_field_present_in_rating_view",
+    "timepoint_field_present_in_rating_view",
+    "participant_identity_present_in_rating_view",
+    "adjudicated",
+    "adjudication_receipt_sha256",
+    "privacy_zone"
+  ],
+  "properties": {
+    "schema_version": {"const": "voice_coach.d09_h02_h03_blind_rating.v1"},
+    "rating_record_id_sha256": {"$ref": "#/$defs/sha256"},
+    "blind_item_code_sha256": {"$ref": "#/$defs/sha256"},
+    "audio_object_id_sha256": {"$ref": "#/$defs/sha256"},
+    "rater_key_sha256": {"$ref": "#/$defs/sha256"},
+    "phase": {"enum": ["feasibility", "confirmatory"]},
+    "outcome": {"enum": ["comprehensibility", "phone_accuracy", "fluency"]},
+    "score_1_to_5": {"type": "integer", "minimum": 1, "maximum": 5},
+    "rater_blinded_to_condition": {"const": true},
+    "rater_blinded_to_timepoint": {"const": true},
+    "rater_blinded_to_participant_identity": {"const": true},
+    "condition_field_present_in_rating_view": {"const": false},
+    "timepoint_field_present_in_rating_view": {"const": false},
+    "participant_identity_present_in_rating_view": {"const": false},
+    "adjudicated": {"type": "boolean"},
+    "adjudication_receipt_sha256": {"$ref": "#/$defs/sha256"},
+    "privacy_zone": {"const": "D1_pseudonymized_restricted_human_research"}
+  },
+  "$defs": {
+    "sha256": {"type": "string", "pattern": "^[0-9a-f]{64}$"}
+  }
+}

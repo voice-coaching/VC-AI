@@ -1,0 +1,172 @@
+name: Base clone CI
+
+on:
+  pull_request:
+  push:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: base-ci-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  markdown-links:
+    name: All tracked Markdown relative links
+    runs-on: ubuntu-24.04
+    timeout-minutes: 5
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v7
+        with:
+          persist-credentials: false
+
+      - name: Set up Python 3.12
+        uses: actions/setup-python@v7
+        with:
+          python-version: "3.12"
+
+      - name: Validate project constraints
+        run: python scripts/check_project_constraints.py
+
+      - name: Validate repository-current source pins
+        run: python scripts/check_source_pins.py
+
+  base-clone-contract:
+    name: Base install and API contract (no scorer or local artifacts)
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v7
+        with:
+          persist-credentials: false
+
+      - name: Set up Python 3.12
+        uses: actions/setup-python@v7
+        with:
+          python-version: "3.12"
+          cache: pip
+
+      - name: Install base package and test tools
+        run: python -m pip install -e ".[test]"
+
+      - name: Check installed dependency consistency
+        run: python -m pip check
+
+      - name: Confirm scorer runtime stays optional
+        run: >-
+          python -c
+          'import importlib.util;
+          assert importlib.util.find_spec("torch") is None,
+          "base CI unexpectedly installed optional torch"'
+
+      - name: Verify base API and dependency boundary
+        run: >-
+          python -m pytest
+          tests/integration/test_api.py
+          tests/unit/test_contracts.py
+          tests/unit/test_markdown_links.py
+          tests/unit/test_project_constraints.py
+          tests/unit/test_source_pins.py
+
+      - name: Record excluded research-runtime boundary
+        if: always()
+        run: |
+          {
+            echo "### CI scope"
+            echo
+            echo "This job verifies a clean base + test-extra installation and the API contract."
+            echo "It does not claim scorer, visual/GPU, restricted-data, checkpoint, ignored-artifact, or human-gate validation."
+            echo "Those suites require their declared optional dependencies and controlled local evidence."
+          } >> "$GITHUB_STEP_SUMMARY"
+
+  backend-analysis-worker-contract:
+    name: Private worker contract (no model artifacts)
+    runs-on: ubuntu-24.04
+    timeout-minutes: 45
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v7
+        with:
+          persist-credentials: false
+
+      - name: Set up Python 3.12
+        uses: actions/setup-python@v7
+        with:
+          python-version: "3.12"
+          cache: pip
+
+      - name: Install worker transport and test dependencies
+        run: >-
+          python -m pip install -e ".[test]"
+          numpy==2.5.1
+          -r requirements/backend-analysis-worker.txt
+
+      - name: Verify worker unit and skipped external integration contracts
+        env:
+          PYTHONPATH: src:seungun/src
+        run: >-
+          python -m pytest
+          tests/unit/test_backend_analysis*.py
+          tests/unit/test_persistent_seungun_runtime.py
+          seungun/tests/test_production_pipeline.py
+          tests/integration/test_backend_analysis_redis_stream_integration.py
+
+      - name: Validate worker Compose expansion
+        env:
+          SEUNGUN_DETECTOR_BUNDLE_DIR: /tmp/synthetic-detector
+          SEUNGUN_MODEL_DIR: /tmp/synthetic-model
+          SEUNGUN_PROCESSOR_DIR: /tmp/synthetic-processor
+          G2PK_NLTK_DATA_DIR: /tmp/synthetic-nltk
+          VISUAL_PRODUCTION_RELEASE_DIR: /tmp/synthetic-visual-release
+          VISUAL_LANDMARK_MODEL_FILE: /tmp/synthetic-landmark-model
+          VISUAL_GEOMETRY_ARTIFACT_FILE: /tmp/synthetic-geometry-artifact
+          ANALYSIS_REDIS_CA_CERT: /tmp/synthetic-ca.crt
+          AI_ANALYSIS_DEPLOYMENT_MANIFEST_FILE: /tmp/synthetic-deployment-manifest.json
+          AI_ANALYSIS_RELEASE_ID: ${{ github.sha }}
+          AI_ANALYSIS_ACTIVE_AUTHORIZATION_KEY_ID: synthetic-key-v1
+          AI_ANALYSIS_ARTIFACT_GID: "10001"
+          AI_ANALYSIS_OBJECT_STORAGE_BUCKET: synthetic-bucket
+          AI_ANALYSIS_OBJECT_STORAGE_REGION: ap-northeast-2
+          AI_ANALYSIS_CONSENT_POLICY_REVISION: synthetic-policy-v1
+          AI_ANALYSIS_REDIS_HOST: redis.invalid
+          AI_ANALYSIS_REQUEST_CONSUMER_NAME: ci-worker
+        run: docker compose -f deploy/backend-analysis-worker/compose.yaml config --quiet
+
+      - name: Build production worker image without model artifacts
+        run: >-
+          docker build
+          --file deploy/backend-analysis-worker/Dockerfile
+          --build-arg VCS_REF="${GITHUB_SHA}"
+          --tag intelligentai/backend-analysis-worker:ci
+          .
+
+      - name: Verify worker image revision binding
+        run: |
+          test "$(docker image inspect \
+            --format '{{ index .Config.Labels "org.opencontainers.image.revision" }}' \
+            intelligentai/backend-analysis-worker:ci)" = "${GITHUB_SHA}"
+          test "$(docker run --rm --entrypoint /bin/sh \
+            intelligentai/backend-analysis-worker:ci \
+            -c 'printf %s "$VOICE_COACH_BUILD_REVISION"')" = "${GITHUB_SHA}"
+
+      - name: Verify packaged runtime dependencies
+        run: >-
+          docker run --rm -e MPLCONFIGDIR=/tmp/matplotlib
+          --entrypoint /app/.venv/bin/python
+          intelligentai/backend-analysis-worker:ci
+          -c "import boto3, mediapipe, redis, soundfile, torch, transformers;
+          import korean_phone_ctc"
+
+      - name: Record controlled-runtime boundary
+        if: always()
+        run: |
+          {
+            echo "### Worker CI scope"
+            echo
+            echo "This job validates the transport, fail-closed contracts, and deployment manifest."
+            echo "It does not load restricted recordings or untracked Seungun model artifacts."
+          } >> "$GITHUB_STEP_SUMMARY"

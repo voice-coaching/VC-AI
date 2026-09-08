@@ -1,0 +1,60 @@
+{
+  "schema_version": "voice_coach.r01_cosyvoice_model_attestation.v1",
+  "attestation_id": "TBD_EXTERNAL_ATTESTATION",
+  "status": "TBD_EXTERNAL_ATTESTATION",
+  "signed_at_utc": "TBD_EXTERNAL_ATTESTATION",
+  "signed_by_role": "TBD_EXTERNAL_ATTESTATION",
+  "ledger_observation_only": {
+    "canonical_repository": "https://github.com/QwenAudio/CosyVoice",
+    "repository_revision": "074ca6dc9e80a2f424f1f74b48bdd7d3fea531cc",
+    "repository_license_spdx": "Apache-2.0",
+    "repository_license_sha256": "c71d239df91726fc519c6eb72d318ec65820627232b2f796219e87dcf35d0ab4",
+    "model_provider": "FunAudioLLM",
+    "model_id": "CosyVoice2-0.5B",
+    "model_revision": "eec1ae6c79877dbd9379285cf8789c9e0879293d",
+    "model_card_license_metadata": "apache-2.0",
+    "standalone_weight_license_file_observed": false,
+    "grpo_recipe_publicly_observed": true,
+    "grpo_effect_for_this_project_verified": false,
+    "authorization_inferred_from_ledger": false
+  },
+  "artifact_authorization": {
+    "decision": "TBD_EXTERNAL_ATTESTATION",
+    "exact_repository_url": "TBD_EXTERNAL_ATTESTATION",
+    "exact_repository_revision": "TBD_EXTERNAL_ATTESTATION",
+    "code_license_spdx": "TBD_EXTERNAL_ATTESTATION",
+    "code_license_evidence_sha256": "TBD_EXTERNAL_ATTESTATION",
+    "exact_model_provider": "TBD_EXTERNAL_ATTESTATION",
+    "exact_model_id": "TBD_EXTERNAL_ATTESTATION",
+    "exact_model_revision": "TBD_EXTERNAL_ATTESTATION",
+    "weight_manifest_sha256": "TBD_EXTERNAL_ATTESTATION",
+    "weight_license_spdx": "TBD_EXTERNAL_ATTESTATION",
+    "weight_license_evidence_sha256": "TBD_EXTERNAL_ATTESTATION",
+    "research_inference_use_allowed": "TBD_EXTERNAL_ATTESTATION",
+    "redistribution_allowed": "TBD_EXTERNAL_ATTESTATION",
+    "commercial_use_allowed": "TBD_EXTERNAL_ATTESTATION",
+    "grpo_allowed": false,
+    "fine_tuning_allowed": false,
+    "voice_cloning_allowed": false
+  },
+  "runtime_environment": {
+    "environment_lock_sha256": "TBD_EXTERNAL_ATTESTATION",
+    "container_image_digest": "TBD_EXTERNAL_ATTESTATION",
+    "python_version": "TBD_EXTERNAL_ATTESTATION",
+    "pytorch_version": "TBD_EXTERNAL_ATTESTATION",
+    "cuda_runtime_version": "TBD_EXTERNAL_ATTESTATION",
+    "cosyvoice_inference_entrypoint_sha256": "TBD_EXTERNAL_ATTESTATION",
+    "local_weight_bundle_manifest_sha256": "TBD_EXTERNAL_ATTESTATION",
+    "network_download_allowed": false,
+    "local_files_only": true
+  },
+  "gpu_pin": {
+    "machine_id": "TBD_EXTERNAL_ATTESTATION",
+    "device_uuid": "TBD_EXTERNAL_ATTESTATION",
+    "device_model": "TBD_EXTERNAL_ATTESTATION",
+    "visible_device_ordinal": "TBD_EXTERNAL_ATTESTATION",
+    "minimum_memory_bytes": "TBD_EXTERNAL_ATTESTATION",
+    "concurrent_training_process_allowed": false
+  },
+  "completion_claim_allowed": false
+}

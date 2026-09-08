@@ -1,0 +1,24 @@
+{
+  "schema_version": "voice_coach.r04_human_research_approval.v1",
+  "approval_id": "TBD_EXTERNAL",
+  "status": "TBD_EXTERNAL",
+  "approved_at_utc": "TBD_EXTERNAL",
+  "approving_body_role": "TBD_EXTERNAL",
+  "protocol_sha256": "TBD_EXTERNAL",
+  "consent_form_sha256": "TBD_EXTERNAL",
+  "listener_eligibility_protocol_sha256": "TBD_PREREGISTRATION",
+  "compensation_protocol_sha256": "TBD_PREREGISTRATION",
+  "withdrawal_protocol_sha256": "TBD_EXTERNAL",
+  "data_retention_policy_sha256": "TBD_EXTERNAL",
+  "privacy_review_sha256": "TBD_EXTERNAL",
+  "d1_pseudonymized_audio_and_ratings_approved": false,
+  "a1_aggregate_analysis_approved": false,
+  "direct_identifiers_allowed": false,
+  "free_text_collection_allowed": false,
+  "source_label_disclosure_to_listeners_allowed": false,
+  "approval": {
+    "decision": "TBD_EXTERNAL",
+    "signed_receipt_sha256": "TBD_EXTERNAL",
+    "immutable_archive_receipt_sha256": "TBD_EXTERNAL"
+  }
+}

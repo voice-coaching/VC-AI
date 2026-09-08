@@ -1,0 +1,54 @@
+{
+  "schema_version": "voice_coach.d08_recording_rights_attestation.v1",
+  "attestation_id": "TBD_EXTERNAL_ATTESTATION",
+  "status": "TBD_EXTERNAL_ATTESTATION",
+  "signed_at_utc": "TBD_EXTERNAL_ATTESTATION",
+  "signed_by_role": "TBD_EXTERNAL_ATTESTATION",
+  "h00_approval_sha256": "TBD_EXTERNAL_ATTESTATION",
+  "individual_consent_attestation_sha256": "TBD_EXTERNAL_ATTESTATION",
+  "source_classification": {
+    "source_kind": "TBD_EXTERNAL_ATTESTATION",
+    "source_kind_allowed_values": [
+      "newly_recorded_consented_adult_native_korean_human",
+      "cosyvoice_tts",
+      "licensed_corpus_audio"
+    ],
+    "tts_audio_used": "TBD_EXTERNAL_ATTESTATION",
+    "public_corpus_audio_used": "TBD_EXTERNAL_ATTESTATION",
+    "human_tts_source_label_required": true,
+    "source_label_rationale_ko": "TTS 사용은 허용된다 — 이 연구의 대상이 TTS와 평가자 루프이므로 합성 참조음은 대체물이 아니라 연구 대상이다. 유지되는 것은 **출처 표기**뿐이다: 어떤 음원이든 자신이 무엇인지 밝혀야 하고, 합성음은 학습자에게 합성음이라고 고지한다. 이것은 TTS 사용을 막지 않는다.",
+    "license_basis": "TBD_EXTERNAL_ATTESTATION"
+  },
+  "recording_protocol": {
+    "protocol_id": "TBD_EXTERNAL_ATTESTATION",
+    "protocol_revision": "TBD_EXTERNAL_ATTESTATION",
+    "protocol_sha256": "TBD_EXTERNAL_ATTESTATION",
+    "r00_card_sha256": "08dc149ccf10006a587e6216dda0471c19b5c55eab6b320b4348587527d82c4d",
+    "natural_take_count_per_speaker_sentence": 2,
+    "clear_educational_take_count_per_speaker_sentence": 1,
+    "sample_rate_hz": 48000,
+    "bit_depth": 24,
+    "channel_count": 1,
+    "container_format": "WAV",
+    "codec": "PCM",
+    "same_equipment_profile_required": true,
+    "same_microphone_profile_required": true,
+    "same_room_profile_required": true,
+    "mouth_to_microphone_distance_min_cm": 15,
+    "mouth_to_microphone_distance_max_cm": 20,
+    "equipment_profile_id_sha256": "TBD_EXTERNAL_ATTESTATION",
+    "microphone_profile_id_sha256": "TBD_EXTERNAL_ATTESTATION",
+    "room_profile_id_sha256": "TBD_EXTERNAL_ATTESTATION"
+  },
+  "speaker_rights_receipts": [],
+  "rights_contract": {
+    "each_speaker_requires_recording_license_grant_sha256": true,
+    "each_speaker_requires_all_20_sentence_permissions": true,
+    "active_nonwithdrawn_nonexpired_right_required": true,
+    "raw_audio_redistribution_allowed": false,
+    "public_release_allowed": false,
+    "commercial_use_allowed": false,
+    "source_and_license_must_be_explicit_per_reference": true
+  },
+  "completion_claim_allowed": false
+}

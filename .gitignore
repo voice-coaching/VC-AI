@@ -4,14 +4,59 @@
 /data/restricted/
 /data/cache/
 /data/processed/
-/artifacts/
+/data/models/
+/data/testvideo/
+/artifacts/*
 /models/
 /checkpoints/
 
+# Local user media, model weights, archives, and generated workspaces.  These
+# remain untracked even when they are placed outside the standard data roots.
+*.wav
+*.flac
+*.mp3
+*.mp4
+*.m4a
+*.mov
+*.webm
+*.pt
+*.pth
+*.ckpt
+*.safetensors
+*.onnx
+*.tar
+*.tar.gz
+*.zip
+*.b64
+*.docx
+*.pdf
+/build/
+/logs/
+**/logs/
+/vendor/
+
+# Developer-local agent rules and architecture working notes. These files are
+# provisioned outside a product clone and must not be committed by base CI.
+/.codex/
+/docs/architecture/
+
+# Local export bundles and detailed evaluation receipts may contain copied
+# dependencies, machine paths, or row-level review data.  Publish only a
+# sanitized aggregate receipt through artifacts/public/.
+/seungun/*bundle*/
+/seungun/*.tar.gz.sha256
+/seungun/long*_details.txt
+/seungun/*nonmatch_review.tsv
+
 # Local Python build/cache artifacts.
+.venv*/
 __pycache__/
 *.py[cod]
+*.egg-info/
 
 # Resumable-download state and temporary archives.
 *.part
 *.aria2
+
+# Single-writer flock files held by publishers at runtime.
+*.publish.lock

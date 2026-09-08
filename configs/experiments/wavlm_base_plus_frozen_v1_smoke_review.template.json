@@ -1,0 +1,27 @@
+{
+  "schema_version": "voice_coach.wavlm_smoke_review.v1",
+  "status": "pending",
+  "full_run_approved": false,
+  "smoke_report_sha256": "6faca0d2f5438e70f59363db3aa4e8f14ff5c1fcb8dd1f016c9d375dc0d09d9f",
+  "experiment_config_sha256": "3641d04c974363d615cbc914a3e9d80eff39f9c0e64bc338aa2ff04ab9fef1ba",
+  "builder_sha256": "2acd48d4f7dbb735dab96cdf4b9222a654627a96cf6a068539f0480839a56dde",
+  "review_checks": {
+    "pinned_local_model_and_preprocessing_verified": true,
+    "train_dev_qc_reserved_prompt_filter_verified": true,
+    "evaluation_metric_access_absent": true,
+    "frame_time_mapping_verified": true,
+    "float16_schema_and_label_roles_verified": true,
+    "privacy_audit_verified": true,
+    "atomic_failure_cleanup_verified": true,
+    "resource_capacity_accepted": false
+  },
+  "resource_review": {
+    "approved": false,
+    "peak_rss_bytes": 2084425728,
+    "estimated_full_cache_upper_bytes": 5711518423,
+    "max_row_group_rows": 2048
+  },
+  "reviewer": null,
+  "reviewed_at_utc": null,
+  "notes": "Set status=approved, full_run_approved=true, both resource approvals=true, reviewer, and reviewed_at_utc only after an accountable engineering review."
+}

@@ -1,0 +1,65 @@
+{
+  "schema_version": "voice_coach.r04_statistical_analysis_plan.v1",
+  "sap_id": "r04-sap-2026-08-09",
+  "status": "frozen",
+  "frozen_at_utc": "2026-08-09T00:45:00+00:00",
+  "authored_by": "claude_on_project_owner_instruction",
+  "authoring_note_ko": "이 계획은 R04 사전등록(r04_blind_evaluation_preregistration_v1.json)과 한 짝이며 그것과 모순되지 않아야 한다. 두 문서가 어긋나면 어느 쪽이 사전등록인지 사후에 고를 수 있게 되므로, 값이 겹치는 항목은 사전등록의 값을 그대로 옮긴다.",
+  "frozen_before_confirmatory_audio_or_rating_access": true,
+  "r04_preregistration_sha256": "TBD_EXTERNAL_ATTESTATION",
+  "pilot_nuisance_attestation_sha256": "TBD_EXTERNAL",
+  "sampling": {
+    "target_power": 0.8,
+    "two_sided_alpha": 0.05,
+    "listener_count_n": "determined_by_simulation_and_frozen_in_an_amendment_before_recruitment_minimum_24",
+    "exact_sample_size_formula_or_software": "monte_carlo_simulation_of_the_preregistered_cumulative_logit_mixed_model_1000_datasets_per_candidate_n_with_power_read_as_the_proportion_of_datasets_rejecting_at_alpha_0_05",
+    "software_rationale_ko": "닫힌 형태 공식은 평정이 청자·문장에 중첩된 구조를 다루지 못한다. 분석에 쓸 모형 그대로 데이터를 생성해 검정력을 읽으면 설계와 분석이 같은 가정 위에 선다.",
+    "pilot_variance_binding": "residual_and_random_effect_variances_taken_from_the_pilot_and_fixed_in_the_pilot_nuisance_attestation_before_the_confirmatory_run",
+    "pilot_intra_listener_correlation_binding": "icc_1_from_the_pilot_listener_random_effect_fixed_in_the_same_attestation",
+    "binding_rationale_ko": "분산을 본 실험 데이터에서 추정해 표본을 정하면 결과를 보고 설계를 고른 것이 된다. pilot에서 고정하고, pilot 참가자는 본 분석에서 제외한다.",
+    "rater_population": "adult_native_korean_speakers_without_professional_speech_pathology_training",
+    "rater_inclusion_and_exclusion": "include_self_reported_native_korean_from_birth_normal_hearing_headphone_listening_in_a_quiet_room_exclude_prior_exposure_to_this_project_or_its_audio_pilot_participation_or_failing_two_or_more_attention_checks",
+    "rater_training_and_quality_control": "written_scale_definition_plus_six_anchor_items_before_the_session_with_no_correctness_feedback_and_attention_checks_embedded_at_a_rate_of_one_per_twenty_items",
+    "attention_check_rationale_ko": "20항목당 1개는 청자가 눈치채지 않을 만큼 드물고 부주의를 잡아낼 만큼 잦다. 2회 이상 실패는 제외 기준이며, 이 규칙을 데이터를 보기 전에 고정한다.",
+    "adjudication_policy": "no_adjudication_of_listener_ratings_disagreement_is_the_measurement"
+  },
+  "primary_analysis": {
+    "model_family": "ordinal_mixed_effects",
+    "listener_random_effect_required": true,
+    "sentence_random_effect_required": true,
+    "exact_estimand": "difference_in_latent_mean_naturalness_between_reference_conditions_on_the_ordinal_scale_marginalised_over_listeners_and_sentences",
+    "ordinal_link_function": "cumulative_logit",
+    "fixed_effects_formula": "rating ~ condition + block_index",
+    "fixed_effects_rationale_ko": "condition이 관심 항이고, block_index는 피로 효과를 흡수한다. 청자 인구통계는 넣지 않는다 — 사전등록하지 않은 공변량을 넣으면 모형 선택의 자유도가 생긴다.",
+    "random_effects_structure": "(1 | listener) + (1 | sentence) + (1 | listener:sentence)",
+    "random_effects_rationale_ko": "같은 청자의 평정과 같은 문장에 대한 평정은 각각 상관된다. 두 무선효과만 넣으면 '이 청자가 이 문장을 어떻게 듣는가'라는 교호가 잔차로 흘러 구간이 좁아지므로 교호항을 함께 둔다.",
+    "confidence_interval_definition": "profile_likelihood_interval_at_95_percent",
+    "missing_data_policy": "missing_at_random_assumed_handled_by_the_model_without_imputation_with_missing_counts_reported_per_condition_and_per_listener",
+    "model_convergence_policy": "on_non_convergence_simplify_the_random_effects_in_the_preregistered_order_listener_sentence_interaction_first_then_sentence_and_report_every_simplification_applied_never_switch_model_family",
+    "convergence_rationale_ko": "수렴 실패 시 무엇을 어떤 순서로 줄일지 미리 정해두지 않으면, 결과가 나오는 조합을 찾을 때까지 바꾸게 된다. 순서를 고정하고 적용한 단순화를 전부 보고한다. 모형 계열 자체는 바꾸지 않는다 — 바꾸면 추정량이 달라진다."
+  },
+  "secondary_bootstrap": {
+    "secondary_only": true,
+    "resampling_unit": "listener",
+    "replicates": 2000,
+    "seed_commitment": "recorded_in_the_analysis_receipt_before_the_first_fit",
+    "confidence_interval_method": "bca_percentile",
+    "bootstrap_rationale_ko": "청자 단위 재표집은 청자 내 상관을 보존한다. 이차 확인용이며, 주 결론이 부트스트랩과 모형 사이에서 갈리면 그 사실 자체를 보고한다 — 유리한 쪽을 고르지 않는다."
+  },
+  "confirmatory_decision": {
+    "multiplicity_strategy": "holm_within_the_four_mos_dimensions_as_the_primary_family_cmos_reported_separately_as_a_secondary_family_without_correction_and_labelled_exploratory",
+    "superiority_margin": 0.0,
+    "superiority_comparator": "the_lowest_scoring_preregistered_reference_condition",
+    "mos_dimension_decision_rule": "a_dimension_is_declared_different_only_if_the_holm_adjusted_interval_excludes_zero_and_the_direction_matches_the_preregistered_estimand_otherwise_reported_as_no_detected_difference_never_as_equivalence",
+    "no_equivalence_rationale_ko": "차이를 찾지 못한 것과 같음을 보인 것은 다르다. 동등성을 주장하려면 동등성 마진을 사전에 정하고 그 검정을 했어야 하는데, 하지 않았다.",
+    "cmos_decision_rule": "cmos_is_reported_with_its_interval_as_a_secondary_descriptive_result_and_never_used_to_overturn_a_mos_conclusion",
+    "cmos_rationale_ko": "CMOS는 쌍 비교라 MOS와 질문이 다르다. MOS 결과가 원하는 방향이 아닐 때 CMOS로 갈아타는 것을 막기 위해 역할을 미리 이차로 못박는다."
+  },
+  "approval": {
+    "decision": "approved",
+    "statistician_role": "project_owner_acting_as_analyst_no_independent_statistician_engaged",
+    "statistician_note_ko": "독립 통계 검토자가 없다. 분석자와 연구자가 같은 사람이라는 사실을 한계로 공개한다.",
+    "signed_receipt_sha256": "TBD_EXTERNAL_ATTESTATION",
+    "immutable_archive_receipt_sha256": "TBD_EXTERNAL_ATTESTATION"
+  }
+}

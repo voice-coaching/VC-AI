@@ -1,0 +1,256 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://voice-coach.local/schemas/d07_calibration_agreement_report_v1.schema.json",
+  "title": "D07 calibration agreement and gate report",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_version",
+    "report_id",
+    "item_manifest_sha256",
+    "rating_manifest_sha256",
+    "reviewer_attestation_sha256",
+    "preregistration_sha256",
+    "privacy_zone",
+    "calibration_item_count",
+    "independent_rater_count",
+    "adjudicator_count",
+    "two_original_ratings_retained",
+    "adjudication_excluded_from_agreement",
+    "phone_agreement",
+    "score_agreement",
+    "ontology_agreement",
+    "gate",
+    "decision"
+  ],
+  "properties": {
+    "schema_version": {
+      "const": "voice_coach.d07_calibration_agreement_report.v1"
+    },
+    "report_id": {
+      "type": "string",
+      "pattern": "^d07cal_[0-9a-f]{32}$"
+    },
+    "item_manifest_sha256": {
+      "$ref": "#/$defs/sha256"
+    },
+    "rating_manifest_sha256": {
+      "$ref": "#/$defs/sha256"
+    },
+    "reviewer_attestation_sha256": {
+      "$ref": "#/$defs/sha256"
+    },
+    "preregistration_sha256": {
+      "$ref": "#/$defs/sha256"
+    },
+    "privacy_zone": {
+      "const": "A1_aggregate_only"
+    },
+    "calibration_item_count": {
+      "const": 800
+    },
+    "independent_rater_count": {
+      "const": 2
+    },
+    "adjudicator_count": {
+      "const": 1
+    },
+    "two_original_ratings_retained": {
+      "const": true
+    },
+    "adjudication_excluded_from_agreement": {
+      "const": true
+    },
+    "phone_agreement": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "macro_f1",
+        "cohens_kappa",
+        "prevalence"
+      ],
+      "properties": {
+        "macro_f1": {
+          "$ref": "#/$defs/unit"
+        },
+        "cohens_kappa": {
+          "$ref": "#/$defs/signed"
+        },
+        "prevalence": {
+          "$ref": "#/$defs/unit"
+        }
+      }
+    },
+    "score_agreement": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "pronunciation_score",
+        "comprehensibility_score",
+        "fluency_score"
+      ],
+      "properties": {
+        "pronunciation_score": {
+          "$ref": "#/$defs/scoreAgreement"
+        },
+        "comprehensibility_score": {
+          "$ref": "#/$defs/scoreAgreement"
+        },
+        "fluency_score": {
+          "$ref": "#/$defs/scoreAgreement"
+        }
+      }
+    },
+    "ontology_agreement": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "macro_agreement",
+        "krippendorff_alpha"
+      ],
+      "properties": {
+        "macro_agreement": {
+          "$ref": "#/$defs/unit"
+        },
+        "krippendorff_alpha": {
+          "$ref": "#/$defs/signed"
+        }
+      }
+    },
+    "gate": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "scalar_statistic_id",
+        "scalar_value",
+        "scalar_threshold",
+        "taxonomy_statistic_id",
+        "taxonomy_value",
+        "taxonomy_threshold",
+        "combination"
+      ],
+      "properties": {
+        "scalar_statistic_id": {
+          "$ref": "#/$defs/safeId"
+        },
+        "scalar_value": {
+          "$ref": "#/$defs/signed"
+        },
+        "scalar_threshold": {
+          "const": 0.7
+        },
+        "taxonomy_statistic_id": {
+          "$ref": "#/$defs/safeId"
+        },
+        "taxonomy_value": {
+          "$ref": "#/$defs/signed"
+        },
+        "taxonomy_threshold": {
+          "const": 0.65
+        },
+        "combination": {
+          "const": "scalar_gte_0_70_or_taxonomy_gte_0_65"
+        }
+      }
+    },
+    "decision": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "agreement_gate_passed",
+        "status",
+        "rubric_retraining_required",
+        "separate_resample_required",
+        "failed_sample_may_be_reused",
+        "rubric_frozen_for_locked_test",
+        "primary_definition_frozen_for_locked_test",
+        "eligible_for_locked_authorization",
+        "locked_test_rating_allowed_before_g04_and_one_shot_authorization"
+      ],
+      "properties": {
+        "agreement_gate_passed": {
+          "type": "boolean"
+        },
+        "status": {
+          "enum": [
+            "passed_ready_for_locked_authorization",
+            "failed_retrain_and_resample"
+          ]
+        },
+        "rubric_retraining_required": {
+          "type": "boolean"
+        },
+        "separate_resample_required": {
+          "type": "boolean"
+        },
+        "failed_sample_may_be_reused": {
+          "const": false
+        },
+        "rubric_frozen_for_locked_test": {
+          "type": "boolean"
+        },
+        "primary_definition_frozen_for_locked_test": {
+          "type": "boolean"
+        },
+        "eligible_for_locked_authorization": {
+          "type": "boolean"
+        },
+        "locked_test_rating_allowed_before_g04_and_one_shot_authorization": {
+          "const": false
+        }
+      }
+    }
+  },
+  "$defs": {
+    "sha256": {
+      "type": "string",
+      "pattern": "^[0-9a-f]{64}$"
+    },
+    "safeId": {
+      "type": "string",
+      "pattern": "^[A-Za-z0-9][A-Za-z0-9_.:-]{0,63}$"
+    },
+    "unit": {
+      "type": "number",
+      "minimum": 0,
+      "maximum": 1
+    },
+    "signed": {
+      "type": "number",
+      "minimum": -1,
+      "maximum": 1
+    },
+    "scoreAgreement": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "qwk",
+        "icc_2_1",
+        "mae",
+        "score_distribution"
+      ],
+      "properties": {
+        "qwk": {
+          "$ref": "#/$defs/signed"
+        },
+        "icc_2_1": {
+          "$ref": "#/$defs/signed"
+        },
+        "mae": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 4
+        },
+        "score_distribution": {
+          "type": "array",
+          "minItems": 5,
+          "maxItems": 5,
+          "items": {
+            "type": "integer",
+            "minimum": 0
+          }
+        }
+      }
+    }
+  }
+}

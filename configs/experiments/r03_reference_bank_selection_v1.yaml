@@ -1,0 +1,285 @@
+schema_version: 1
+
+experiment:
+  id: r03_reference_bank_selection_v1
+  stage: wp7_r03_pareto_diversity_reference_bank
+  implementation_status: production_static_preflight_only
+  actual_candidate_data_access_allowed: false
+  actual_audio_read_allowed: false
+  actual_audio_write_allowed: false
+  actual_model_access_allowed: false
+  actual_gpu_access_allowed: false
+  actual_metric_computation_allowed: false
+  actual_selection_allowed: false
+  actual_bank_write_allowed: false
+  r04_label_access_allowed: false
+  publication_allowed: false
+  completion_claim_allowed: false
+
+canonical_sources:
+  access_scope: C1_public_or_aggregate_static_pins_only
+  pins:
+    - path: artifacts/reference/r00/r00_sentence_card_v1.validation.json
+      sha256: 95b4fd861a3c21222ff13859cfbc9c196e3fd06493852bca823d8a63dc2816dd
+    - path: configs/experiments/r01_human_cosyvoice_candidates_v1.yaml
+      sha256: bb8cc083b83714b6c8d283ad918cb1cceee76c64c176e98d6aba6d85d558488d
+    - path: configs/experiments/r02_candidate_hard_gate_v1.yaml
+      sha256: 9824d024d5b49e1dea63575514206008a59a97075ea543ed3967003e3f34e473
+    - path: configs/reference/r00_sentence_card_v1.schema.json
+      sha256: 1f8bcf0325414e1923cda0def9a973ac2f7be7bd85cca4ee869743ef862a7b92
+    - path: configs/reference/r01_candidate_manifest_v1.schema.json
+      sha256: 7ffe1b152276b12621575680d022d9b87cd9c19e7fe36374a3186cf7449e1470
+    - path: configs/reference/r02_hard_gate_report_v1.schema.json
+      sha256: 60525a3b685574a3dce193a7423d77a811050c9c38d36b2c3ba947b71f06a92b
+    - path: configs/reference/r02_gate_preregistration_v1.template.json
+      sha256: 07b53aa937d0490116c4b8aeedc5d6aab1754479990404ccb318dd2dd98528c0
+    - path: configs/reference/r03_reference_bank_manifest_v1.schema.json
+      sha256: 2e6c4728943fbfb5519f7e961fca68da816b82e44fc65f003938644ade68ca83
+    - path: configs/reference/r03_pareto_diversity_preregistration_v1.template.json
+      sha256: 66920493f6eadbe4b9af79f02881fe83761bfafd92c1ffc41913c498797230c1
+    - path: scripts/check_project_constraints.py
+      sha256: 7c885d9d863d1a505bb074e5be33b63e262b191585bcf7a02a03162ca0f1ba86
+    - path: scripts/prepare_r01_human_cosyvoice_candidates.py
+      sha256: e0daf9c1b83db51a0501f5e3e7663ba8890a58a904dc5178a41e1f4b98d9bac5
+    - path: scripts/prepare_r02_candidate_hard_gate.py
+      sha256: c40ab4b0f829d0dae1d93fa5bf55e12e7e61933fffae8aa31c7aa904ee8e3be5
+    - path: scripts/validate_r00_sentence_card.py
+      sha256: 967517e74194936c91dad1eed4fcfb0c059b5480af32b8adfc9725fdb7d6e7d0
+    - path: src/voice_coach/references/r01_candidate_contract.py
+      sha256: 4b51682155ea165c67ac2dcf1fa236d7f70021acc211f54546f3545b576597be
+    - path: src/voice_coach/references/r02_hard_gate_contract.py
+      sha256: af16444a7d6f05150f2e790612fee2606d4d0618fcb30b512c70366afc879f51
+
+predecessor_r00:
+  deep_validation_required: true
+  card_path: data/reference/r00/r00_sentence_card_v1.json
+  card_sha256: 08dc149ccf10006a587e6216dda0471c19b5c55eab6b320b4348587527d82c4d
+  schema_path: configs/reference/r00_sentence_card_v1.schema.json
+  schema_sha256: 1f8bcf0325414e1923cda0def9a973ac2f7be7bd85cca4ee869743ef862a7b92
+  validator_path: scripts/validate_r00_sentence_card.py
+  validator_sha256: 967517e74194936c91dad1eed4fcfb0c059b5480af32b8adfc9725fdb7d6e7d0
+  validation_report_path: artifacts/reference/r00/r00_sentence_card_v1.validation.json
+  validation_report_sha256: 95b4fd861a3c21222ff13859cfbc9c196e3fd06493852bca823d8a63dc2816dd
+  required_status: valid
+  required_sentence_count: 20
+  required_completion_claim_allowed: true
+  raw_audio_or_row_read_allowed: false
+
+predecessor_r01:
+  deep_validation_required: true
+  validator_owner: r02_hard_gate_contract
+  config_path: configs/experiments/r01_human_cosyvoice_candidates_v1.yaml
+  config_sha256: bb8cc083b83714b6c8d283ad918cb1cceee76c64c176e98d6aba6d85d558488d
+  contract_path: src/voice_coach/references/r01_candidate_contract.py
+  contract_sha256: 4b51682155ea165c67ac2dcf1fa236d7f70021acc211f54546f3545b576597be
+  completion_commit_path: artifacts/experiments/r01_human_cosyvoice_candidates_v1/commit.json
+  completion_commit_sha256: TBD_R01_COMPLETION
+  registry_path: artifacts/experiment_registry/r01-human-cosyvoice-candidates-v1/metadata.json
+  candidate_manifest_path: data/processed/references/r01/r01_candidate_manifest_v1.json
+  required_commit_schema_version: voice_coach.r01_candidate_completion.v1
+  required_status: completed
+  required_sentence_count: 20
+  candidate_count_minimum: 160
+  candidate_count_maximum: 320
+  required_r02_hard_gate_status: not_run
+  publication_allowed_must_be_false: true
+
+predecessor_r02:
+  deep_validation_required: true
+  config_path: configs/experiments/r02_candidate_hard_gate_v1.yaml
+  config_sha256: 9824d024d5b49e1dea63575514206008a59a97075ea543ed3967003e3f34e473
+  contract_path: src/voice_coach/references/r02_hard_gate_contract.py
+  contract_sha256: af16444a7d6f05150f2e790612fee2606d4d0618fcb30b512c70366afc879f51
+  completion_commit_path: artifacts/experiments/r02_candidate_hard_gate_v1/commit.json
+  completion_commit_sha256: TBD_R02_COMPLETION
+  registry_path: artifacts/experiment_registry/r02-candidate-hard-gate-v1/metadata.json
+  report_path: artifacts/experiments/r02_candidate_hard_gate_v1/report.json
+  blinded_execution_manifest_path: artifacts/experiments/r02_candidate_hard_gate_v1/blinded_execution_manifest.json
+  eligible_manifest_path: artifacts/experiments/r02_candidate_hard_gate_v1/eligible_for_r03.json
+  quarantine_manifest_path: artifacts/experiments/r02_candidate_hard_gate_v1/quarantined.json
+  lineage_sidecar_path: artifacts/experiments/r02_candidate_hard_gate_v1/source_lineage_sidecar.json
+  required_commit_schema_version: voice_coach.r02_candidate_hard_gate_completion.v1
+  required_status: completed
+  required_sentence_count: 20
+  eligible_only_for_r03: true
+  quarantine_access_by_r03_allowed: false
+  publication_allowed_must_be_false: true
+
+preregistration:
+  placeholder: TBD_PREREGISTRATION
+  template_path: configs/reference/r03_pareto_diversity_preregistration_v1.template.json
+  template_sha256: 66920493f6eadbe4b9af79f02881fe83761bfafd92c1ffc41913c498797230c1
+  approved_artifact_path: artifacts/external_attestations/r03/r03_pareto_diversity_preregistration_v1.json
+  approved_artifact_sha256: TBD_PREREGISTRATION
+  required_schema_version: voice_coach.r03_pareto_diversity_preregistration.v1
+  required_status: approved_and_frozen
+  must_be_frozen_before_r02_eligible_data_access: true
+  unresolved_fields_must_fail_closed: true
+
+selection_contract:
+  sentence_ids:
+    - R00-01
+    - R00-02
+    - R00-03
+    - R00-04
+    - R00-05
+    - R00-06
+    - R00-07
+    - R00-08
+    - R00-09
+    - R00-10
+    - R00-11
+    - R00-12
+    - R00-13
+    - R00-14
+    - R00-15
+    - R00-16
+    - R00-17
+    - R00-18
+    - R00-19
+    - R00-20
+  selected_per_sentence:
+    minimum: 3
+    maximum: 5
+  objectives:
+    names_from_paper:
+      - naturalness
+      - prosody_fit
+      - pedagogical_clarity
+      - diversity
+    measurement_sources: TBD_PREREGISTRATION
+    direction_by_objective: TBD_PREREGISTRATION
+    missing_value_policy: TBD_PREREGISTRATION
+  normalization:
+    method: TBD_PREREGISTRATION
+    fit_population: TBD_PREREGISTRATION
+    fit_scope: TBD_PREREGISTRATION
+    clipping_policy: TBD_PREREGISTRATION
+    constant_objective_policy: TBD_PREREGISTRATION
+  pareto:
+    dominance_definition: TBD_PREREGISTRATION
+    epsilon_or_tolerance: TBD_PREREGISTRATION
+    tie_policy: TBD_PREREGISTRATION
+    frontier_shortfall_policy: TBD_PREREGISTRATION
+    frontier_overflow_policy: TBD_PREREGISTRATION
+  diversity:
+    distance_metric: TBD_PREREGISTRATION
+    distance_feature_allowlist: TBD_PREREGISTRATION
+    feature_weights: TBD_PREREGISTRATION
+    minimum_separation: TBD_PREREGISTRATION
+    cluster_or_subsampling_algorithm: TBD_PREREGISTRATION
+    speaker_distance_policy: TBD_PREREGISTRATION
+    speed_distance_policy: TBD_PREREGISTRATION
+    pitch_distance_policy: TBD_PREREGISTRATION
+    minimum_distinct_speakers_per_sentence: 2
+    minimum_distinct_speed_buckets_per_sentence: 2
+    minimum_distinct_pitch_buckets_per_sentence: 2
+  deterministic_selection:
+    seed: TBD_PREREGISTRATION
+    candidate_order_policy: TBD_PREREGISTRATION
+    selected_count_policy: TBD_PREREGISTRATION
+    source_balance_tie_break_policy: TBD_PREREGISTRATION
+    determinism_replay_count: TBD_PREREGISTRATION
+
+blindness_and_cherry_pick_controls:
+  selector_input_allowlist:
+    - candidate_id
+    - sentence_id
+    - target_text_sha256
+    - r02_eligible_row_sha256
+    - objective_vector
+    - speed_bucket
+    - pitch_bucket
+    - blinded_speaker_cluster_id_sha256
+  selector_input_denylist:
+    - source_kind
+    - source_attestation_sha256
+    - human_or_tts
+    - model_name
+    - r04_label
+    - r04_score
+    - mos
+    - cmos
+    - learner_outcome
+    - learning_gain
+    - retention
+    - publication_preference
+  source_kind_join_only_after_selection: true
+  per_sentence_sources_required_after_join:
+    - human_recording
+    - cosyvoice_tts
+  maximum_per_sentence_source_count_difference: 1
+  outcome_driven_reselection_allowed: false
+  r04_feedback_driven_reselection_allowed: false
+  posthoc_objective_or_threshold_change_allowed: false
+
+lineage_contract:
+  immutable_fields:
+    - candidate_id
+    - sentence_id
+    - target_text_sha256
+    - audio_object_id_sha256
+    - audio_sha256
+    - source_kind
+    - source_attestation_sha256
+    - speaker_id_sha256
+    - speed_bucket
+    - pitch_bucket
+    - r02_eligible_row_sha256
+  exact_join_to_r02_lineage_required: true
+  audio_content_read_for_lineage_check_allowed: false
+  quarantine_rows_allowed: false
+  duplicate_candidate_allowed: false
+
+privacy_and_publication:
+  bank_manifest_zone: D1_pseudonymized_restricted_experiment
+  selection_trace_zone: D1_pseudonymized_restricted_experiment
+  aggregate_report_zone: A1_aggregate_only
+  r04_raw_label_zone: not_accessible_to_r03
+  public_zone_allowed_before_r04: false
+  individual_candidate_rows_allowed_in_a1: false
+  candidate_ids_allowed_in_a1: false
+  speaker_ids_allowed_in_a1: false
+  audio_hashes_allowed_in_a1: false
+  source_or_audio_paths_allowed_anywhere: false
+  r04_completion_required_before_publication_review: true
+  publication_requires_separate_promotion: true
+  forbidden_recursive_fields:
+    - speaker_name
+    - legal_name
+    - raw_speaker_id
+    - source_path
+    - audio_path
+    - recording_path
+    - target_text
+    - transcript
+    - free_text_note
+    - r04_label
+    - r04_score
+    - mos
+    - cmos
+    - learner_outcome
+    - learning_gain
+    - retention
+
+execution_order:
+  - validate_r03_static_config_sources_schema_and_prereg_template
+  - deep_validate_r00_valid_completion
+  - deep_validate_r01_completed_candidate_generation
+  - deep_validate_r02_completed_hard_gate
+  - validate_frozen_r03_preregistration_without_tbd
+  - resolve_r02_eligible_candidate_aggregate_and_lineage_only
+  - verify_source_blind_selection_view_and_immutable_lineage
+  - stop_ready_for_separate_selection_execution
+
+outputs:
+  bank_schema_path: configs/reference/r03_reference_bank_manifest_v1.schema.json
+  bank_manifest_path: data/processed/references/r03/r03_reference_bank_manifest_v1.json
+  selection_trace_path: artifacts/experiments/r03_reference_bank_selection_v1/r03_selection_trace_v1.json
+  aggregate_report_path: artifacts/experiments/r03_reference_bank_selection_v1/r03_reference_bank_aggregate_v1.json
+  commit_path: artifacts/experiments/r03_reference_bank_selection_v1/commit.json
+  registry_path: artifacts/experiment_registry/r03-reference-bank-selection-v1/metadata.json
+  failure_report_path: artifacts/experiments/r03_reference_bank_selection_v1/failure.json
+  no_overwrite: true
+  atomic_publish_required: true
+  write_enabled_in_this_package: false

@@ -1,0 +1,101 @@
+experiment:
+  id: aihub71490_explicit_oracle_boundary_v1
+  status: provisional_until_manual_g0
+  seeds: [42, 43, 44]
+  primary_metric: phone_macro_f1
+
+data:
+  dataset_root: data/restricted/aihub/dataset-71490
+  modeling_manifest: data/processed/aihub71490/manifests/aihub71490_modeling.parquet
+  modeling_manifest_sha256: 32f439ba10a035541f53b8a44f5d150b307e89f97387f09748704c3c78e85ef1
+  prompt_challenge_reservation: data/processed/aihub71490/manifests/aihub71490_prompt_challenge.json
+  training_splits: [train]
+  tuning_splits: [dev]
+  forbidden_metric_splits: [stack, calibration, locked_test]
+  exclude_qc_flagged: true
+  exclude_reserved_prompts: true
+  exclude_primary_training_slices:
+    l1: ["Zhuang; Chuang"]
+    gender: ["O"]
+  primary_analysis_scope:
+    l1: ["Chinese", "Japanese"]
+    gender: ["F", "M"]
+  sample_rate_hz: 16000
+  max_chunk_seconds: 20
+
+supervision:
+  phone:
+    task: binary_error
+    positive_operations: [substitution, deletion]
+    ignore_operations: [insertion]
+    boundary_source: gold_textgrid_or_json
+    oracle_alignment: true
+  utterance:
+    outcomes:
+      - pronunciation_score
+      - fluency_score
+      - comprehensibility_score
+    valid_score_range: [1, 5]
+    mask_missing: true
+  leakage_rules:
+    - Gold realized-phone identity and gold alignment operation are labels only.
+    - Gold error tags are labels/slices only and are never input features.
+    - Oracle-boundary results must not be described as deployable alignment results.
+
+features:
+  utterance:
+    - audio_duration_seconds
+    - rms
+    - peak
+    - clipping_ratio
+    - zero_crossing_rate
+    - pause_count
+    - pause_ratio
+    - voiced_ratio
+    - f0_median_hz
+    - f0_range_hz
+    - word_count
+    - target_phone_count
+    - speech_rate_phones_per_second
+    - articulation_rate_phones_per_second
+    - target_phone_label_duration_npvi
+  phone:
+    - target_label
+    - previous_target_label
+    - next_target_label
+    - oracle_duration_seconds
+    - segment_rms
+    - segment_zero_crossing_rate
+
+models:
+  phone:
+    family: logistic_regression
+    class_weight: balanced
+    c_grid: [0.1, 1.0, 10.0]
+    max_iter: 1000
+  utterance:
+    families: [ridge, ordinal_logistic]
+    ridge_alpha_grid: [0.1, 1.0, 10.0, 100.0]
+
+evaluation:
+  development_only: true
+  phone_metrics: [macro_f1, auprc]
+  utterance_metrics: [qwk, spearman, mae, icc_2_1]
+  slices: [l1, gender, proficiency, duration_bucket, target_phone, error_tag]
+  cluster_key: speaker_id_sha256
+  bootstrap_repetitions: 5000
+  confidence_level: 0.95
+  multiple_comparison_correction: holm
+  smoke_gate_phone_macro_f1: 0.50
+  engineering_gate_phone_macro_f1: 0.60
+  locked_test_evaluation_allowed: false
+
+outputs:
+  feature_root: data/processed/aihub71490/features/explicit_v1
+  artifact_root: artifacts/experiments/aihub71490_explicit_oracle_boundary_v1
+  save_predictions: true
+  save_slice_metrics: true
+  save_confusion_matrix: true
+  record_data_hash: true
+  record_config_hash: true
+  record_git_state: true

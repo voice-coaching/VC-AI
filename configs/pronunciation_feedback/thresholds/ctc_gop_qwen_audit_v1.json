@@ -1,0 +1,2481 @@
+{
+ "analysis_profile": "ctc_gop_qwen_audit_v1",
+ "calibrated": true,
+ "claim_scope_note": "engineering_provisional. 합성 낭독 음성으로 고정한 임계값이다. 학습자 녹음과 전문가 라벨이 들어가지 않았으므로 '어떤 발음 오류가 코칭할 가치가 있는가'를 검증한 결과가 아니다.",
+ "cohort": "tts_rendered_r00_read_sentences_no_learner_speech",
+ "dataset_id": "r01-multi-speaker-v5-0279",
+ "freezing_rule": {
+  "audit_agreement_approve": 0.7,
+  "matched_rejection_quantile": 0.05,
+  "mismatch_headroom_quantile": 0.95,
+  "odds_to_coach": 7.0,
+  "source": "scripts/calibrate_pronunciation_feedback_profile.py",
+  "source_sha256": "e51f0626b8c749826402a64f682345954c15b664af1172fb4c9a8569a6ef4b81"
+ },
+ "frozen_at": "2026-08-08T18:43:02+00:00",
+ "manifest_sha256": "ce799fe5090cdf2438d5265552943abe688cc24996b3ed2ee67539a38781fd86",
+ "min_alignment_confidence": 0.92,
+ "min_content_score": 0.65,
+ "min_issue_confidence": 0.87,
+ "min_issue_severity": 0.85,
+ "min_s1_confidence": 0.78,
+ "min_s2_confidence": 0.58,
+ "required_branches": [
+  "fluency",
+  "rhythm",
+  "segmental"
+ ],
+ "rows": [
+  {
+   "alignment_confidence": 1.0,
+   "issue_count": 4,
+   "matched_content": 0.8364,
+   "mismatched_content": 0.2759,
+   "prompt_id": "R00-09",
+   "s1_confidence": 0.8815,
+   "s2_confidence": 0.9281,
+   "s2_matched_agreement": 0.9818,
+   "s2_mismatched_agreement": 0.2759
+  },
+  {
+   "alignment_confidence": 1.0,
+   "issue_count": 0,
+   "matched_content": 0.9355,
+   "mismatched_content": 0.3235,
+   "prompt_id": "R00-06",
+   "s1_confidence": 0.9761
+  },
+  {
+   "alignment_confidence": 1.0,
+   "issue_count": 4,
+   "matched_content": 0.8627,
+   "mismatched_content": 0.3922,
+   "prompt_id": "R00-12",
+   "s1_confidence": 0.9551
+  },
+  {
+   "alignment_confidence": 1.0,
+   "issue_count": 1,
+   "matched_content": 0.9355,
+   "mismatched_content": 0.3235,
+   "prompt_id": "R00-06",
+   "s1_confidence": 0.9345
+  },
+  {
+   "alignment_confidence": 0.9231,
+   "issue_count": 4,
+   "matched_content": 0.8696,
+   "mismatched_content": 0.2667,
+   "prompt_id": "R00-17",
+   "s1_confidence": 0.9149,
+   "s2_confidence": 0.9492,
+   "s2_matched_agreement": 0.9296,
+   "s2_mismatched_agreement": 0.2597
+  },
+  {
+   "alignment_confidence": 1.0,
+   "issue_count": 1,
+   "matched_content": 0.8772,
+   "mismatched_content": 0.3279,
+   "prompt_id": "R00-03",
+   "s1_confidence": 0.9475
+  },
+  {
+   "alignment_confidence": 1.0,
+   "issue_count": 1,
+   "matched_content": 0.8,
+   "mismatched_content": 0.3103,
+   "prompt_id": "R00-09",
+   "s1_confidence": 0.858
+  },
+  {
+   "alignment_confidence": 1.0,
+   "issue_count": 4,
+   "matched_content": 0.8462,
+   "mismatched_content": 0.3846,
+   "prompt_id": "R00-12",
+   "s1_confidence": 0.9276
+  },
+  {
+   "alignment_confidence": 1.0,
+   "issue_count": 0,
+   "matched_content": 0.8148,
+   "mismatched_content": 0.25,
+   "prompt_id": "R00-05",
+   "s1_confidence": 0.9089,
+   "s2_confidence": 0.9036,
+   "s2_matched_agreement": 0.9825,
+   "s2_mismatched_agreement": 0.2373
+  },
+  {
+   "alignment_confidence": 1.0,
+   "issue_count": 0,
+   "matched_content": 0.9315,
+   "mismatched_content": 0.2254,
+   "prompt_id": "R00-07",
+   "s1_confidence": 0.9373
+  },
+  {
+   "alignment_confidence": 1.0,
+   "issue_count": 1,
+   "matched_content": 0.9118,
+   "mismatched_content": 0.3333,
+   "prompt_id": "R00-11",
+   "s1_confidence": 0.9416
+  },
+  {
+   "alignment_confidence": 1.0,
+   "issue_count": 1,
+   "matched_content": 0.96,
+   "mismatched_content": 0.3659,
+   "prompt_id": "R00-19",
+   "s1_confidence": 0.9302
+  },
+  {
+   "alignment_confidence": 1.0,
+   "issue_count": 4,
+   "matched_content": 0.8,
+   "mismatched_content": 0.3125,
+   "prompt_id": "R00-10",
+   "s1_confidence": 0.8937,
+   "s2_confidence": 0.8625,
+   "s2_matched_agreement": 0.918,
+   "s2_mismatched_agreement": 0.3077
+  },
+  {
+   "alignment_confidence": 0.9412,
+   "issue_count": 2,
+   "matched_content": 0.8315,
+   "mismatched_content": 0.2564,
+   "prompt_id": "R00-20",
+   "s1_confidence": 0.8657
+  },
+  {
+   "alignment_confidence": 1.0,
+   "issue_count": 2,
+   "matched_content": 0.8627,
+   "mismatched_content": 0.3077,
+   "prompt_id": "R00-13",
+   "s1_confidence": 0.9141
+  },
+  {
+   "alignment_confidence": 1.0,
+   "issue_count": 3,
+   "matched_content": 0.8364,
+   "mismatched_content": 0.2759,
+   "prompt_id": "R00-09",
+   "s1_confidence": 0.8736
+  },
+  {
+   "alignment_confidence": 1.0,
+   "issue_count": 1,
+   "matched_content": 0.8451,
+   "mismatched_content": 0.2899,
+   "prompt_id": "R00-07",
+   "s1_confidence": 0.9356,
+   "s2_confidence": 0.8163,
+   "s2_matched_agreement": 0.8571,
+   "s2_mismatched_agreement": 0.3529
+  },
+  {
+   "alignment_confidence": 1.0,
+   "issue_count": 2,
+   "matched_content": 0.898,
+   "mismatched_content": 0.32,
+   "prompt_id": "R00-13",
+   "s1_confidence": 0.9431
+  },
+  {
+   "alignment_confidence": 1.0,
+   "issue_count": 1,
+   "matched_content": 0.9118,
+   "mismatched_content": 0.3333,
+   "prompt_id": "R00-11",
+   "s1_confidence": 0.9377
+  },
+  {
+   "alignment_confidence": 1.0,
+   "issue_count": 5,
+   "matched_content": 0.8462,
+   "mismatched_content": 0.3846,
+   "prompt_id": "R00-12",
+   "s1_confidence": 0.8882
+  },
+  {
+   "alignment_confidence": 0.9231,
+   "issue_count": 4,
+   "matched_content": 0.8696,
+   "mismatched_content": 0.2933,
+   "prompt_id": "R00-17",
+   "s1_confidence": 0.8219,
+   "s2_confidence": 0.9583,
+   "s2_matched_agreement": 0.9296,
+   "s2_mismatched_agreement": 0.2597
+  },
+  {
+   "alignment_confidence": 1.0,
+   "issue_count": 5,
+   "matched_content": 0.7347,
+   "mismatched_content": 0.3571,
+   "prompt_id": "R00-15",
+   "s1_confidence": 0.8793
+  },
+  {
+   "alignment_confidence": 1.0,
+   "issue_count": 3,
+   "matched_content": 0.8675,
+   "mismatched_content": 0.3038,
+   "prompt_id": "R00-18",
+   "s1_confidence": 0.9308
+  },
+  {
+   "alignment_confidence": 1.0,
+   "issue_count": 2,
+   "matched_content": 0.7059,
+   "mismatched_content": 0.3881,
+   "prompt_id": "R00-01",
+   "s1_confidence": 0.8866
+  },
+  {
+   "alignment_confidence": 1.0,
+   "issue_count": 5,
+   "matched_content": 0.8675,
+   "mismatched_content": 0.2278,
+   "prompt_id": "R00-18",
+   "s1_confidence": 0.9126,
+   "s2_confidence": 0.8548,
+   "s2_matched_agreement": 0.9157,
+   "s2_mismatched_agreement": 0.2785
+  },
+  {
+   "alignment_confidence": 1.0,
+   "issue_count": 2,
+   "matched_content": 0.9474,
+   "mismatched_content": 0.3279,
+   "prompt_id": "R00-03",
+   "s1_confidence": 0.9677
+  },
+  {
+   "alignment_confidence": 1.0,
+   "issue_count": 3,
+   "matched_content": 0.871,
+   "mismatched_content": 0.2727,
+   "prompt_id": "R00-16",
+   "s1_confidence": 0.8661
+  },
+  {
+   "alignment_confidence": 1.0,
+   "issue_count": 3,
+   "matched_content": 0.7857,
+   "mismatched_content": 0.2414,
+   "prompt_id": "R00-05",
+   "s1_confidence": 0.89
+  },
+  {
+   "alignment_confidence": 1.0,
+   "issue_count": 3,
+   "matched_content": 0.625,
+   "mismatched_content": 0.3636,
+   "prompt_id": "R00-15",
+   "s1_confidence": 0.8711,
+   "s2_confidence": 0.7368,
+   "s2_matched_agreement": 0.5517,
+   "s2_mismatched_agreement": 0.234
+  },
+  {
+   "alignment_confidence": 1.0,
+   "issue_count": 3,
+   "matched_content": 0.7077,
+   "mismatched_content": 0.3607,
+   "prompt_id": "R00-02",
+   "s1_confidence": 0.8601
+  },
+  {
+   "alignment_confidence": 1.0,
+   "issue_count": 6,
+   "matched_content": 0.697,
+   "mismatched_content": 0.2712,
+   "prompt_id": "R00-08",
+   "s1_confidence": 0.9552
+  },
+  {
+   "alignment_confidence": 1.0,
+   "issue_count": 2,
+   "matched_content": 0.7077,
+   "mismatched_content": 0.3607,
+   "prompt_id": "R00-02",
+   "s1_confidence": 0.8536
+  },
+  {
+   "alignment_confidence": 0.9412,
+   "issue_count": 4,
+   "matched_content": 0.764,
+   "mismatched_content": 0.2564,
+   "prompt_id": "R00-20",
+   "s1_confidence": 0.8746,
+   "s2_confidence": 0.896,
+   "s2_matched_agreement": 0.8409,
+   "s2_mismatched_agreement": 0.0519
+  },
+  {
+   "alignment_confidence": 1.0,
+   "issue_count": 2,
+   "matched_content": 0.9492,
+   "mismatched_content": 0.3077,
+   "prompt_id": "R00-06",
+   "s1_confidence": 0.9264
+  },
+  {
+   "alignment_confidence": 1.0,
+   "issue_count": 2,
+   "matched_content": 0.902,
+   "mismatched_content": 0.3077,
+   "prompt_id": "R00-13",
+   "s1_confidence": 0.8886
+  },
+  {
+   "alignment_confidence": 1.0,
+   "issue_count": 1,
+   "matched_content": 0.8116,
+   "mismatched_content": 0.2951,
+   "prompt_id": "R00-11",
+   "s1_confidence": 0.965
+  },
+  {
+   "alignment_confidence": 1.0,
+   "issue_count": 3,
+   "matched_content": 0.9231,
+   "mismatched_content": 0.3019,
+   "prompt_id": "R00-13",
+   "s1_confidence": 0.9296,
+   "s2_confidence": 0.4648,
+   "s2_matched_agreement": 0.3846,
+   "s2_mismatched_agreement": 0.3396
+  },
+  {
+   "alignment_confidence": 1.0,
+   "issue_count": 3,
+   "matched_content": 0.7407,
+   "mismatched_content": 0.2807,
+   "prompt_id": "R00-09",
+   "s1_confidence": 0.9001
+  },
+  {
+   "alignment_confidence": 1.0,
+   "issue_count": 2,
+   "matched_content": 0.902,
+   "mismatched_content": 0.3077,
+   "prompt_id": "R00-13",
+   "s1_confidence": 0.9067
+  },
+  {
+   "alignment_confidence": 1.0,
+   "issue_count": 1,
+   "matched_content": 0.8889,
+   "mismatched_content": 0.2807,
+   "prompt_id": "R00-09",
+   "s1_confidence": 0.8964
+  },
+  {
+   "alignment_confidence": 1.0,
+   "issue_count": 3,
+   "matched_content": 0.9231,
+   "mismatched_content": 0.3019,
+   "prompt_id": "R00-13",
+   "s1_confidence": 0.9223,
+   "s2_confidence": 0.621,
+   "s2_matched_agreement": 0.7692,
+   "s2_mismatched_agreement": 0.2642
+  },
+  {
+   "alignment_confidence": 1.0,
+   "issue_count": 3,
+   "matched_content": 0.7925,
+   "mismatched_content": 0.2,
+   "prompt_id": "R00-14",
+   "s1_confidence": 0.8261
+  },
+  {
+   "alignment_confidence": 1.0,
+   "issue_count": 2,
+   "matched_content": 0.8857,
+   "mismatched_content": 0.3377,
+   "prompt_id": "R00-19",
+   "s1_confidence": 0.9061
+  },
+  {
+   "alignment_confidence": 1.0,
+   "issue_count": 1,
+   "matched_content": 0.9067,
+   "mismatched_content": 0.3415,
+   "prompt_id": "R00-19",
+   "s1_confidence": 0.9419
+  },
+  {
+   "alignment_confidence": 1.0,
+   "issue_count": 1,
+   "matched_content": 0.9474,
+   "mismatched_content": 0.3279,
+   "prompt_id": "R00-03",
+   "s1_confidence": 0.9587,
+   "s2_confidence": 0.9339,
+   "s2_matched_agreement": 0.9825,
+   "s2_mismatched_agreement": 0.3279
+  },
+  {
+   "alignment_confidence": 1.0,
+   "issue_count": 2,
+   "matched_content": 0.8571,
+   "mismatched_content": 0.2414,
+   "prompt_id": "R00-05",
+   "s1_confidence": 0.8477
+  },
+  {
+   "alignment_confidence": 1.0,
+   "issue_count": 0,
+   "matched_content": 0.9492,
+   "mismatched_content": 0.3077,
+   "prompt_id": "R00-06",
+   "s1_confidence": 0.9584
+  },
+  {
+   "alignment_confidence": 1.0,
+   "issue_count": 1,
+   "matched_content": 0.8889,
+   "mismatched_content": 0.2807,
+   "prompt_id": "R00-09",
+   "s1_confidence": 0.92
+  },
+  {
+   "alignment_confidence": 0.9231,
+   "issue_count": 4,
+   "matched_content": 0.8657,
+   "mismatched_content": 0.274,
+   "prompt_id": "R00-17",
+   "s1_confidence": 0.9082,
+   "s2_confidence": 0.9536,
+   "s2_matched_agreement": 0.9296,
+   "s2_mismatched_agreement": 0.2597
+  },
+  {
+   "alignment_confidence": 1.0,
+   "issue_count": 3,
+   "matched_content": 0.8,
+   "mismatched_content": 0.3438,
+   "prompt_id": "R00-01",
+   "s1_confidence": 0.8243
+  },
+  {
+   "alignment_confidence": 1.0,
+   "issue_count": 3,
+   "matched_content": 0.8846,
+   "mismatched_content": 0.3019,
+   "prompt_id": "R00-13",
+   "s1_confidence": 0.9145
+  },
+  {
+   "alignment_confidence": 1.0,
+   "issue_count": 0,
+   "matched_content": 0.7879,
+   "mismatched_content": 0.3385,
+   "prompt_id": "R00-01",
+   "s1_confidence": 0.9391
+  },
+  {
+   "alignment_confidence": 1.0,
+   "issue_count": 2,
+   "matched_content": 0.7941,
+   "mismatched_content": 0.3,
+   "prompt_id": "R00-11",
+   "s1_confidence": 0.9048,
+   "s2_confidence": 0.7011,
+   "s2_matched_agreement": 0.806,
+   "s2_mismatched_agreement": 0.3051
+  },
+  {
+   "alignment_confidence": 1.0,
+   "issue_count": 1,
+   "matched_content": 0.9492,
+   "mismatched_content": 0.3077,
+   "prompt_id": "R00-06",
+   "s1_confidence": 0.9715
+  },
+  {
+   "alignment_confidence": 1.0,
+   "issue_count": 0,
+   "matched_content": 0.9118,
+   "mismatched_content": 0.3333,
+   "prompt_id": "R00-11",
+   "s1_confidence": 0.9713
+  },
+  {
+   "alignment_confidence": 1.0,
+   "issue_count": 3,
+   "matched_content": 0.6866,
+   "mismatched_content": 0.303,
+   "prompt_id": "R00-01",
+   "s1_confidence": 0.8103
+  },
+  {
+   "alignment_confidence": 1.0,
+   "issue_count": 1,
+   "matched_content": 0.8966,
+   "mismatched_content": 0.3333,
+   "prompt_id": "R00-05",
+   "s1_confidence": 0.8471,
+   "s2_confidence": 0.9151,
+   "s2_matched_agreement": 0.9825,
+   "s2_mismatched_agreement": 0.2373
+  },
+  {
+   "alignment_confidence": 1.0,
+   "issue_count": 3,
+   "matched_content": 0.8571,
+   "mismatched_content": 0.32,
+   "prompt_id": "R00-13",
+   "s1_confidence": 0.9482
+  },
+  {
+   "alignment_confidence": 1.0,
+   "issue_count": 2,
+   "matched_content": 0.7077,
+   "mismatched_content": 0.3607,
+   "prompt_id": "R00-02",
+   "s1_confidence": 0.8403
+  },
+  {
+   "alignment_confidence": 1.0,
+   "issue_count": 3,
+   "matched_content": 0.7429,
+   "mismatched_content": 0.1905,
+   "prompt_id": "R00-08",
+   "s1_confidence": 0.8925
+  },
+  {
+   "alignment_confidence": 1.0,
+   "issue_count": 3,
+   "matched_content": 0.7879,
+   "mismatched_content": 0.3692,
+   "prompt_id": "R00-01",
+   "s1_confidence": 0.8345,
+   "s2_confidence": 0.895,
+   "s2_matched_agreement": 0.9275,
+   "s2_mismatched_agreement": 0.3235
+  },
+  {
+   "alignment_confidence": 1.0,
+   "issue_count": 4,
+   "matched_content": 0.8193,
+   "mismatched_content": 0.2785,
+   "prompt_id": "R00-18",
+   "s1_confidence": 0.8635
+  },
+  {
+   "alignment_confidence": 1.0,
+   "issue_count": 1,
+   "matched_content": 0.807,
+   "mismatched_content": 0.2222,
+   "prompt_id": "R00-14",
+   "s1_confidence": 0.7416
+  },
+  {
+   "alignment_confidence": 1.0,
+   "issue_count": 2,
+   "matched_content": 0.8621,
+   "mismatched_content": 0.3548,
+   "prompt_id": "R00-03",
+   "s1_confidence": 0.8646
+  },
+  {
+   "alignment_confidence": 1.0,
+   "issue_count": 2,
+   "matched_content": 0.9091,
+   "mismatched_content": 0.2759,
+   "prompt_id": "R00-09",
+   "s1_confidence": 0.9412,
+   "s2_confidence": 0.7984,
+   "s2_matched_agreement": 0.8727,
+   "s2_mismatched_agreement": 0.2759
+  },
+  {
+   "alignment_confidence": 1.0,
+   "issue_count": 4,
+   "matched_content": 0.72,
+   "mismatched_content": 0.3509,
+   "prompt_id": "R00-15",
+   "s1_confidence": 0.7865
+  },
+  {
+   "alignment_confidence": 0.9231,
+   "issue_count": 5,
+   "matched_content": 0.8451,
+   "mismatched_content": 0.2597,
+   "prompt_id": "R00-17",
+   "s1_confidence": 0.9231
+  },
+  {
+   "alignment_confidence": 1.0,
+   "issue_count": 2,
+   "matched_content": 0.9091,
+   "mismatched_content": 0.2759,
+   "prompt_id": "R00-09",
+   "s1_confidence": 0.8986
+  },
+  {
+   "alignment_confidence": 0.9231,
+   "issue_count": 4,
+   "matched_content": 0.8696,
+   "mismatched_content": 0.2667,
+   "prompt_id": "R00-17",
+   "s1_confidence": 0.9096,
+   "s2_confidence": 0.9382,
+   "s2_matched_agreement": 0.9296,
+   "s2_mismatched_agreement": 0.2597
+  },
+  {
+   "alignment_confidence": 1.0,
+   "issue_count": 3,
+   "matched_content": 0.697,
+   "mismatched_content": 0.3385,
+   "prompt_id": "R00-01",
+   "s1_confidence": 0.893
+  },
+  {
+   "alignment_confidence": 1.0,
+   "issue_count": 1,
+   "matched_content": 0.9836,
+   "mismatched_content": 0.2985,
+   "prompt_id": "R00-06",
+   "s1_confidence": 0.9532
+  },
+  {
+   "alignment_confidence": 1.0,
+   "issue_count": 2,
+   "matched_content": 0.8493,
+   "mismatched_content": 0.3099,
+   "prompt_id": "R00-07",
+   "s1_confidence": 0.924
+  },
+  {
+   "alignment_confidence": 1.0,
+   "issue_count": 1,
+   "matched_content": 0.9836,
+   "mismatched_content": 0.2985,
+   "prompt_id": "R00-06",
+   "s1_confidence": 0.9607,
+   "s2_confidence": 0.9476,
+   "s2_matched_agreement": 0.9836,
+   "s2_mismatched_agreement": 0.2985
+  },
+  {
+   "alignment_confidence": 1.0,
+   "issue_count": 3,
+   "matched_content": 0.7742,
+   "mismatched_content": 0.303,
+   "prompt_id": "R00-16",
+   "s1_confidence": 0.8198
+  },
+  {
+   "alignment_confidence": 1.0,
+   "issue_count": 1,
+   "matched_content": 0.9123,
+   "mismatched_content": 0.339,
+   "prompt_id": "R00-05",
+   "s1_confidence": 0.93
+  },
+  {
+   "alignment_confidence": 1.0,
+   "issue_count": 3,
+   "matched_content": 0.8571,
+   "mismatched_content": 0.3729,
+   "prompt_id": "R00-02",
+   "s1_confidence": 0.9109
+  },
+  {
+   "alignment_confidence": 0.9412,
+   "issue_count": 5,
+   "matched_content": 0.875,
+   "mismatched_content": 0.2895,
+   "prompt_id": "R00-18",
+   "s1_confidence": 0.8764,
+   "s2_confidence": 0.8572,
+   "s2_matched_agreement": 0.9412,
+   "s2_mismatched_agreement": 0.2716
+  },
+  {
+   "alignment_confidence": 1.0,
+   "issue_count": 2,
+   "matched_content": 0.8,
+   "mismatched_content": 0.3607,
+   "prompt_id": "R00-02",
+   "s1_confidence": 0.9817
+  },
+  {
+   "alignment_confidence": 0.9412,
+   "issue_count": 5,
+   "matched_content": 0.8046,
+   "mismatched_content": 0.2632,
+   "prompt_id": "R00-20",
+   "s1_confidence": 0.8376
+  },
+  {
+   "alignment_confidence": 1.0,
+   "issue_count": 2,
+   "matched_content": 0.75,
+   "mismatched_content": 0.3,
+   "prompt_id": "R00-04",
+   "s1_confidence": 0.8829
+  },
+  {
+   "alignment_confidence": 0.9231,
+   "issue_count": 6,
+   "matched_content": 0.8529,
+   "mismatched_content": 0.2703,
+   "prompt_id": "R00-17",
+   "s1_confidence": 0.8675,
+   "s2_confidence": 0.8923,
+   "s2_matched_agreement": 0.8857,
+   "s2_mismatched_agreement": 0.2895
+  },
+  {
+   "alignment_confidence": 1.0,
+   "issue_count": 4,
+   "matched_content": 0.7879,
+   "mismatched_content": 0.2581,
+   "prompt_id": "R00-04",
+   "s1_confidence": 0.8827
+  },
+  {
+   "alignment_confidence": 1.0,
+   "issue_count": 6,
+   "matched_content": 0.6364,
+   "mismatched_content": 0.4923,
+   "prompt_id": "R00-01",
+   "s1_confidence": 0.8263
+  },
+  {
+   "alignment_confidence": 1.0,
+   "issue_count": 1,
+   "matched_content": 0.7302,
+   "mismatched_content": 0.3871,
+   "prompt_id": "R00-01",
+   "s1_confidence": 0.7641
+  },
+  {
+   "alignment_confidence": 1.0,
+   "issue_count": 2,
+   "matched_content": 0.7719,
+   "mismatched_content": 0.3279,
+   "prompt_id": "R00-03",
+   "s1_confidence": 0.8988,
+   "s2_confidence": 0.5884,
+   "s2_matched_agreement": 0.6129,
+   "s2_mismatched_agreement": 0.3636
+  },
+  {
+   "alignment_confidence": 1.0,
+   "issue_count": 1,
+   "matched_content": 0.8519,
+   "mismatched_content": 0.2807,
+   "prompt_id": "R00-09",
+   "s1_confidence": 0.9519
+  },
+  {
+   "alignment_confidence": 1.0,
+   "issue_count": 2,
+   "matched_content": 0.8214,
+   "mismatched_content": 0.3333,
+   "prompt_id": "R00-03",
+   "s1_confidence": 0.7975
+  },
+  {
+   "alignment_confidence": 1.0,
+   "issue_count": 2,
+   "matched_content": 0.7857,
+   "mismatched_content": 0.2642,
+   "prompt_id": "R00-14",
+   "s1_confidence": 0.741
+  },
+  {
+   "alignment_confidence": 1.0,
+   "issue_count": 2,
+   "matched_content": 0.6667,
+   "mismatched_content": 0.25,
+   "prompt_id": "R00-14",
+   "s1_confidence": 0.8271,
+   "s2_confidence": 0.8962,
+   "s2_matched_agreement": 0.9818,
+   "s2_mismatched_agreement": 0.2308
+  },
+  {
+   "alignment_confidence": 1.0,
+   "issue_count": 1,
+   "matched_content": 0.96,
+   "mismatched_content": 0.3659,
+   "prompt_id": "R00-19",
+   "s1_confidence": 0.9386
+  },
+  {
+   "alignment_confidence": 0.9,
+   "issue_count": 5,
+   "matched_content": 0.6538,
+   "mismatched_content": 0.2449,
+   "prompt_id": "R00-14",
+   "s1_confidence": 0.7996
+  },
+  {
+   "alignment_confidence": 0.9412,
+   "issue_count": 2,
+   "matched_content": 0.7473,
+   "mismatched_content": 0.3,
+   "prompt_id": "R00-20",
+   "s1_confidence": 0.8234
+  },
+  {
+   "alignment_confidence": 1.0,
+   "issue_count": 2,
+   "matched_content": 0.7353,
+   "mismatched_content": 0.3284,
+   "prompt_id": "R00-01",
+   "s1_confidence": 0.8346,
+   "s2_confidence": 0.841,
+   "s2_matched_agreement": 0.8857,
+   "s2_mismatched_agreement": 0.3478
+  },
+  {
+   "alignment_confidence": 1.0,
+   "issue_count": 4,
+   "matched_content": 0.566,
+   "mismatched_content": 0.24,
+   "prompt_id": "R00-14",
+   "s1_confidence": 0.7832
+  },
+  {
+   "alignment_confidence": 1.0,
+   "issue_count": 3,
+   "matched_content": 0.75,
+   "mismatched_content": 0.3636,
+   "prompt_id": "R00-15",
+   "s1_confidence": 0.7736
+  },
+  {
+   "alignment_confidence": 1.0,
+   "issue_count": 5,
+   "matched_content": 0.6154,
+   "mismatched_content": 0.2449,
+   "prompt_id": "R00-14",
+   "s1_confidence": 0.7836
+  },
+  {
+   "alignment_confidence": 1.0,
+   "issue_count": 3,
+   "matched_content": 0.7188,
+   "mismatched_content": 0.3,
+   "prompt_id": "R00-04",
+   "s1_confidence": 0.8878,
+   "s2_confidence": 0.7344,
+   "s2_matched_agreement": 0.6769,
+   "s2_mismatched_agreement": 0.2295
+  },
+  {
+   "alignment_confidence": 1.0,
+   "issue_count": 1,
+   "matched_content": 0.8767,
+   "mismatched_content": 0.2254,
+   "prompt_id": "R00-07",
+   "s1_confidence": 0.8858
+  },
+  {
+   "alignment_confidence": 1.0,
+   "issue_count": 2,
+   "matched_content": 0.6765,
+   "mismatched_content": 0.375,
+   "prompt_id": "R00-04",
+   "s1_confidence": 0.9138
+  },
+  {
+   "alignment_confidence": 1.0,
+   "issue_count": 3,
+   "matched_content": 0.7869,
+   "mismatched_content": 0.2769,
+   "prompt_id": "R00-16",
+   "s1_confidence": 0.8448
+  },
+  {
+   "alignment_confidence": 1.0,
+   "issue_count": 4,
+   "matched_content": 0.7667,
+   "mismatched_content": 0.3125,
+   "prompt_id": "R00-10",
+   "s1_confidence": 0.8053,
+   "s2_confidence": 0.8686,
+   "s2_matched_agreement": 0.9,
+   "s2_mismatched_agreement": 0.3125
+  },
+  {
+   "alignment_confidence": 1.0,
+   "issue_count": 1,
+   "matched_content": 0.8852,
+   "mismatched_content": 0.2985,
+   "prompt_id": "R00-06",
+   "s1_confidence": 0.955
+  },
+  {
+   "alignment_confidence": 1.0,
+   "issue_count": 5,
+   "matched_content": 0.625,
+   "mismatched_content": 0.3636,
+   "prompt_id": "R00-15",
+   "s1_confidence": 0.8627
+  },
+  {
+   "alignment_confidence": 1.0,
+   "issue_count": 2,
+   "matched_content": 0.7812,
+   "mismatched_content": 0.4,
+   "prompt_id": "R00-02",
+   "s1_confidence": 0.7858
+  },
+  {
+   "alignment_confidence": 1.0,
+   "issue_count": 5,
+   "matched_content": 0.875,
+   "mismatched_content": 0.2895,
+   "prompt_id": "R00-18",
+   "s1_confidence": 0.9351,
+   "s2_confidence": 0.7045,
+   "s2_matched_agreement": 0.8,
+   "s2_mismatched_agreement": 0.2558
+  },
+  {
+   "alignment_confidence": 0.9412,
+   "issue_count": 5,
+   "matched_content": 0.7955,
+   "mismatched_content": 0.2597,
+   "prompt_id": "R00-20",
+   "s1_confidence": 0.91
+  },
+  {
+   "alignment_confidence": 1.0,
+   "issue_count": 1,
+   "matched_content": 0.8475,
+   "mismatched_content": 0.3077,
+   "prompt_id": "R00-06",
+   "s1_confidence": 0.9797
+  },
+  {
+   "alignment_confidence": 1.0,
+   "issue_count": 3,
+   "matched_content": 0.8,
+   "mismatched_content": 0.2812,
+   "prompt_id": "R00-16",
+   "s1_confidence": 0.8964
+  },
+  {
+   "alignment_confidence": 1.0,
+   "issue_count": 4,
+   "matched_content": 0.697,
+   "mismatched_content": 0.3548,
+   "prompt_id": "R00-02",
+   "s1_confidence": 0.8242,
+   "s2_confidence": 0.9546,
+   "s2_matched_agreement": 0.9846,
+   "s2_mismatched_agreement": 0.4262
+  },
+  {
+   "alignment_confidence": 1.0,
+   "issue_count": 1,
+   "matched_content": 0.8116,
+   "mismatched_content": 0.3279,
+   "prompt_id": "R00-11",
+   "s1_confidence": 0.9012
+  },
+  {
+   "alignment_confidence": 0.9231,
+   "issue_count": 2,
+   "matched_content": 0.9014,
+   "mismatched_content": 0.2597,
+   "prompt_id": "R00-17",
+   "s1_confidence": 0.8859
+  },
+  {
+   "alignment_confidence": 0.9412,
+   "issue_count": 2,
+   "matched_content": 0.8315,
+   "mismatched_content": 0.2564,
+   "prompt_id": "R00-20",
+   "s1_confidence": 0.904
+  },
+  {
+   "alignment_confidence": 1.0,
+   "issue_count": 1,
+   "matched_content": 0.9455,
+   "mismatched_content": 0.2456,
+   "prompt_id": "R00-05",
+   "s1_confidence": 0.8311,
+   "s2_confidence": 0.7975,
+   "s2_matched_agreement": 0.8276,
+   "s2_mismatched_agreement": 0.2
+  },
+  {
+   "alignment_confidence": 0.9231,
+   "issue_count": 5,
+   "matched_content": 0.8571,
+   "mismatched_content": 0.2895,
+   "prompt_id": "R00-17",
+   "s1_confidence": 0.8667
+  },
+  {
+   "alignment_confidence": 1.0,
+   "issue_count": 1,
+   "matched_content": 0.96,
+   "mismatched_content": 0.3659,
+   "prompt_id": "R00-19",
+   "s1_confidence": 0.9452
+  },
+  {
+   "alignment_confidence": 1.0,
+   "issue_count": 3,
+   "matched_content": 0.8571,
+   "mismatched_content": 0.3729,
+   "prompt_id": "R00-02",
+   "s1_confidence": 0.9222
+  },
+  {
+   "alignment_confidence": 1.0,
+   "issue_count": 5,
+   "matched_content": 0.8,
+   "mismatched_content": 0.254,
+   "prompt_id": "R00-08",
+   "s1_confidence": 0.9156,
+   "s2_confidence": 0.3892,
+   "s2_matched_agreement": 0.3333,
+   "s2_mismatched_agreement": 0.2128
+  },
+  {
+   "alignment_confidence": 1.0,
+   "issue_count": 3,
+   "matched_content": 0.6957,
+   "mismatched_content": 0.3019,
+   "prompt_id": "R00-15",
+   "s1_confidence": 0.8574
+  },
+  {
+   "alignment_confidence": 1.0,
+   "issue_count": 2,
+   "matched_content": 0.9167,
+   "mismatched_content": 0.3797,
+   "prompt_id": "R00-19",
+   "s1_confidence": 0.9324
+  },
+  {
+   "alignment_confidence": 1.0,
+   "issue_count": 2,
+   "matched_content": 0.8767,
+   "mismatched_content": 0.325,
+   "prompt_id": "R00-19",
+   "s1_confidence": 0.9179
+  },
+  {
+   "alignment_confidence": 0.9231,
+   "issue_count": 3,
+   "matched_content": 0.8732,
+   "mismatched_content": 0.2597,
+   "prompt_id": "R00-17",
+   "s1_confidence": 0.8767,
+   "s2_confidence": 0.9426,
+   "s2_matched_agreement": 0.9296,
+   "s2_mismatched_agreement": 0.2597
+  },
+  {
+   "alignment_confidence": 1.0,
+   "issue_count": 2,
+   "matched_content": 0.7755,
+   "mismatched_content": 0.3929,
+   "prompt_id": "R00-15",
+   "s1_confidence": 0.8186
+  },
+  {
+   "alignment_confidence": 1.0,
+   "issue_count": 4,
+   "matched_content": 0.6545,
+   "mismatched_content": 0.3077,
+   "prompt_id": "R00-14",
+   "s1_confidence": 0.742
+  },
+  {
+   "alignment_confidence": 1.0,
+   "issue_count": 5,
+   "matched_content": 0.8696,
+   "mismatched_content": 0.2581,
+   "prompt_id": "R00-08",
+   "s1_confidence": 0.8994
+  },
+  {
+   "alignment_confidence": 1.0,
+   "issue_count": 2,
+   "matched_content": 0.75,
+   "mismatched_content": 0.3,
+   "prompt_id": "R00-04",
+   "s1_confidence": 0.8667,
+   "s2_confidence": 0.5212,
+   "s2_matched_agreement": 0.3385,
+   "s2_mismatched_agreement": 0.3279
+  },
+  {
+   "alignment_confidence": 1.0,
+   "issue_count": 4,
+   "matched_content": 0.8,
+   "mismatched_content": 0.2979,
+   "prompt_id": "R00-14",
+   "s1_confidence": 0.8343
+  },
+  {
+   "alignment_confidence": 1.0,
+   "issue_count": 1,
+   "matched_content": 0.8889,
+   "mismatched_content": 0.2143,
+   "prompt_id": "R00-05",
+   "s1_confidence": 0.8512
+  },
+  {
+   "alignment_confidence": 1.0,
+   "issue_count": 2,
+   "matched_content": 0.7385,
+   "mismatched_content": 0.3607,
+   "prompt_id": "R00-02",
+   "s1_confidence": 0.8465
+  },
+  {
+   "alignment_confidence": 1.0,
+   "issue_count": 1,
+   "matched_content": 0.7692,
+   "mismatched_content": 0.2909,
+   "prompt_id": "R00-09",
+   "s1_confidence": 0.9134,
+   "s2_confidence": 0.9277,
+   "s2_matched_agreement": 0.9091,
+   "s2_mismatched_agreement": 0.2759
+  },
+  {
+   "alignment_confidence": 0.9412,
+   "issue_count": 4,
+   "matched_content": 0.7273,
+   "mismatched_content": 0.3377,
+   "prompt_id": "R00-20",
+   "s1_confidence": 0.8316
+  },
+  {
+   "alignment_confidence": 1.0,
+   "issue_count": 0,
+   "matched_content": 0.8696,
+   "mismatched_content": 0.3279,
+   "prompt_id": "R00-11",
+   "s1_confidence": 0.9578
+  },
+  {
+   "alignment_confidence": 1.0,
+   "issue_count": 3,
+   "matched_content": 0.8116,
+   "mismatched_content": 0.2581,
+   "prompt_id": "R00-08",
+   "s1_confidence": 0.848
+  },
+  {
+   "alignment_confidence": 1.0,
+   "issue_count": 1,
+   "matched_content": 0.7077,
+   "mismatched_content": 0.3438,
+   "prompt_id": "R00-01",
+   "s1_confidence": 0.8338,
+   "s2_confidence": 0.8735,
+   "s2_matched_agreement": 0.8696,
+   "s2_mismatched_agreement": 0.3235
+  },
+  {
+   "alignment_confidence": 1.0,
+   "issue_count": 5,
+   "matched_content": 0.68,
+   "mismatched_content": 0.3509,
+   "prompt_id": "R00-15",
+   "s1_confidence": 0.7553
+  },
+  {
+   "alignment_confidence": 1.0,
+   "issue_count": 3,
+   "matched_content": 0.9057,
+   "mismatched_content": 0.2963,
+   "prompt_id": "R00-13",
+   "s1_confidence": 0.8753
+  },
+  {
+   "alignment_confidence": 1.0,
+   "issue_count": 2,
+   "matched_content": 0.8,
+   "mismatched_content": 0.3607,
+   "prompt_id": "R00-02",
+   "s1_confidence": 0.9542
+  },
+  {
+   "alignment_confidence": 1.0,
+   "issue_count": 1,
+   "matched_content": 0.9355,
+   "mismatched_content": 0.3235,
+   "prompt_id": "R00-06",
+   "s1_confidence": 0.9005,
+   "s2_confidence": 0.9515,
+   "s2_matched_agreement": 0.9836,
+   "s2_mismatched_agreement": 0.2985
+  },
+  {
+   "alignment_confidence": 1.0,
+   "issue_count": 1,
+   "matched_content": 0.9167,
+   "mismatched_content": 0.3797,
+   "prompt_id": "R00-19",
+   "s1_confidence": 0.9459
+  },
+  {
+   "alignment_confidence": 1.0,
+   "issue_count": 0,
+   "matched_content": 0.8986,
+   "mismatched_content": 0.3279,
+   "prompt_id": "R00-11",
+   "s1_confidence": 0.964
+  },
+  {
+   "alignment_confidence": 1.0,
+   "issue_count": 1,
+   "matched_content": 0.8852,
+   "mismatched_content": 0.2985,
+   "prompt_id": "R00-06",
+   "s1_confidence": 0.9663
+  },
+  {
+   "alignment_confidence": 1.0,
+   "issue_count": 6,
+   "matched_content": 0.7805,
+   "mismatched_content": 0.2308,
+   "prompt_id": "R00-18",
+   "s1_confidence": 0.894,
+   "s2_confidence": 0.8251,
+   "s2_matched_agreement": 0.8916,
+   "s2_mismatched_agreement": 0.2785
+  },
+  {
+   "alignment_confidence": 1.0,
+   "issue_count": 2,
+   "matched_content": 0.8966,
+   "mismatched_content": 0.3333,
+   "prompt_id": "R00-05",
+   "s1_confidence": 0.8831
+  },
+  {
+   "alignment_confidence": 0.9412,
+   "issue_count": 4,
+   "matched_content": 0.8462,
+   "mismatched_content": 0.2703,
+   "prompt_id": "R00-18",
+   "s1_confidence": 0.8845
+  },
+  {
+   "alignment_confidence": 1.0,
+   "issue_count": 5,
+   "matched_content": 0.7667,
+   "mismatched_content": 0.3438,
+   "prompt_id": "R00-16",
+   "s1_confidence": 0.8675
+  },
+  {
+   "alignment_confidence": 1.0,
+   "issue_count": 3,
+   "matched_content": 0.8462,
+   "mismatched_content": 0.3846,
+   "prompt_id": "R00-12",
+   "s1_confidence": 0.9357,
+   "s2_confidence": 0.7649,
+   "s2_matched_agreement": 0.84,
+   "s2_mismatched_agreement": 0.36
+  },
+  {
+   "alignment_confidence": 0.9333,
+   "issue_count": 4,
+   "matched_content": 0.806,
+   "mismatched_content": 0.2667,
+   "prompt_id": "R00-08",
+   "s1_confidence": 0.8908
+  },
+  {
+   "alignment_confidence": 1.0,
+   "issue_count": 2,
+   "matched_content": 0.7536,
+   "mismatched_content": 0.3235,
+   "prompt_id": "R00-01",
+   "s1_confidence": 0.8906
+  },
+  {
+   "alignment_confidence": 0.9412,
+   "issue_count": 2,
+   "matched_content": 0.7865,
+   "mismatched_content": 0.2564,
+   "prompt_id": "R00-20",
+   "s1_confidence": 0.847
+  },
+  {
+   "alignment_confidence": 1.0,
+   "issue_count": 1,
+   "matched_content": 0.8772,
+   "mismatched_content": 0.339,
+   "prompt_id": "R00-05",
+   "s1_confidence": 0.8876,
+   "s2_confidence": 0.899,
+   "s2_matched_agreement": 0.9825,
+   "s2_mismatched_agreement": 0.2373
+  },
+  {
+   "alignment_confidence": 1.0,
+   "issue_count": 4,
+   "matched_content": 0.7755,
+   "mismatched_content": 0.3571,
+   "prompt_id": "R00-15",
+   "s1_confidence": 0.9376
+  },
+  {
+   "alignment_confidence": 1.0,
+   "issue_count": 2,
+   "matched_content": 0.8333,
+   "mismatched_content": 0.3438,
+   "prompt_id": "R00-16",
+   "s1_confidence": 0.9102
+  },
+  {
+   "alignment_confidence": 1.0,
+   "issue_count": 4,
+   "matched_content": 0.8,
+   "mismatched_content": 0.2812,
+   "prompt_id": "R00-10",
+   "s1_confidence": 0.7297
+  },
+  {
+   "alignment_confidence": 0.9412,
+   "issue_count": 2,
+   "matched_content": 0.7586,
+   "mismatched_content": 0.2368,
+   "prompt_id": "R00-20",
+   "s1_confidence": 0.9053,
+   "s2_confidence": 0.8606,
+   "s2_matched_agreement": 0.8636,
+   "s2_mismatched_agreement": 0.0519
+  },
+  {
+   "alignment_confidence": 1.0,
+   "issue_count": 4,
+   "matched_content": 0.8276,
+   "mismatched_content": 0.2903,
+   "prompt_id": "R00-16",
+   "s1_confidence": 0.9299
+  },
+  {
+   "alignment_confidence": 1.0,
+   "issue_count": 1,
+   "matched_content": 0.8364,
+   "mismatched_content": 0.3103,
+   "prompt_id": "R00-09",
+   "s1_confidence": 0.8782
+  },
+  {
+   "alignment_confidence": 1.0,
+   "issue_count": 3,
+   "matched_content": 0.8125,
+   "mismatched_content": 0.2667,
+   "prompt_id": "R00-04",
+   "s1_confidence": 0.8235
+  },
+  {
+   "alignment_confidence": 1.0,
+   "issue_count": 5,
+   "matched_content": 0.64,
+   "mismatched_content": 0.386,
+   "prompt_id": "R00-15",
+   "s1_confidence": 0.8739,
+   "s2_confidence": 0.6986,
+   "s2_matched_agreement": 0.7857,
+   "s2_mismatched_agreement": 0.2222
+  },
+  {
+   "alignment_confidence": 1.0,
+   "issue_count": 3,
+   "matched_content": 0.8571,
+   "mismatched_content": 0.3729,
+   "prompt_id": "R00-02",
+   "s1_confidence": 0.885
+  },
+  {
+   "alignment_confidence": 1.0,
+   "issue_count": 1,
+   "matched_content": 0.8852,
+   "mismatched_content": 0.2985,
+   "prompt_id": "R00-06",
+   "s1_confidence": 0.9565
+  },
+  {
+   "alignment_confidence": 1.0,
+   "issue_count": 2,
+   "matched_content": 0.7879,
+   "mismatched_content": 0.3385,
+   "prompt_id": "R00-01",
+   "s1_confidence": 0.8359
+  },
+  {
+   "alignment_confidence": 1.0,
+   "issue_count": 5,
+   "matched_content": 0.7368,
+   "mismatched_content": 0.2951,
+   "prompt_id": "R00-10",
+   "s1_confidence": 0.8259,
+   "s2_confidence": 0.8672,
+   "s2_matched_agreement": 0.9,
+   "s2_mismatched_agreement": 0.3125
+  },
+  {
+   "alignment_confidence": 1.0,
+   "issue_count": 2,
+   "matched_content": 0.8364,
+   "mismatched_content": 0.3051,
+   "prompt_id": "R00-03",
+   "s1_confidence": 0.8696
+  },
+  {
+   "alignment_confidence": 1.0,
+   "issue_count": 1,
+   "matched_content": 0.8,
+   "mismatched_content": 0.3103,
+   "prompt_id": "R00-09",
+   "s1_confidence": 0.8848
+  },
+  {
+   "alignment_confidence": 0.9412,
+   "issue_count": 2,
+   "matched_content": 0.8315,
+   "mismatched_content": 0.3333,
+   "prompt_id": "R00-20",
+   "s1_confidence": 0.8853
+  },
+  {
+   "alignment_confidence": 1.0,
+   "issue_count": 2,
+   "matched_content": 0.8767,
+   "mismatched_content": 0.2254,
+   "prompt_id": "R00-07",
+   "s1_confidence": 0.9443,
+   "s2_confidence": 0.7593,
+   "s2_matched_agreement": 0.7536,
+   "s2_mismatched_agreement": 0.3582
+  },
+  {
+   "alignment_confidence": 1.0,
+   "issue_count": 4,
+   "matched_content": 0.7083,
+   "mismatched_content": 0.3333,
+   "prompt_id": "R00-12",
+   "s1_confidence": 0.9249
+  },
+  {
+   "alignment_confidence": 1.0,
+   "issue_count": 2,
+   "matched_content": 0.9231,
+   "mismatched_content": 0.3019,
+   "prompt_id": "R00-13",
+   "s1_confidence": 0.8979
+  },
+  {
+   "alignment_confidence": 0.9412,
+   "issue_count": 4,
+   "matched_content": 0.8539,
+   "mismatched_content": 0.2564,
+   "prompt_id": "R00-20",
+   "s1_confidence": 0.8517
+  },
+  {
+   "alignment_confidence": 1.0,
+   "issue_count": 4,
+   "matched_content": 0.8293,
+   "mismatched_content": 0.2821,
+   "prompt_id": "R00-18",
+   "s1_confidence": 0.8612,
+   "s2_confidence": 0.8177,
+   "s2_matched_agreement": 0.8916,
+   "s2_mismatched_agreement": 0.2785
+  },
+  {
+   "alignment_confidence": 1.0,
+   "issue_count": 2,
+   "matched_content": 0.9067,
+   "mismatched_content": 0.3415,
+   "prompt_id": "R00-19",
+   "s1_confidence": 0.9453
+  },
+  {
+   "alignment_confidence": 0.9412,
+   "issue_count": 3,
+   "matched_content": 0.7045,
+   "mismatched_content": 0.3377,
+   "prompt_id": "R00-20",
+   "s1_confidence": 0.8659
+  },
+  {
+   "alignment_confidence": 1.0,
+   "issue_count": 4,
+   "matched_content": 0.8116,
+   "mismatched_content": 0.2581,
+   "prompt_id": "R00-08",
+   "s1_confidence": 0.8838
+  },
+  {
+   "alignment_confidence": 0.9412,
+   "issue_count": 3,
+   "matched_content": 0.7865,
+   "mismatched_content": 0.2564,
+   "prompt_id": "R00-20",
+   "s1_confidence": 0.8395,
+   "s2_confidence": 0.8499,
+   "s2_matched_agreement": 0.8864,
+   "s2_mismatched_agreement": 0.2597
+  },
+  {
+   "alignment_confidence": 1.0,
+   "issue_count": 2,
+   "matched_content": 0.8889,
+   "mismatched_content": 0.2807,
+   "prompt_id": "R00-09",
+   "s1_confidence": 0.9293
+  },
+  {
+   "alignment_confidence": 1.0,
+   "issue_count": 4,
+   "matched_content": 0.8462,
+   "mismatched_content": 0.3846,
+   "prompt_id": "R00-12",
+   "s1_confidence": 0.939
+  },
+  {
+   "alignment_confidence": 1.0,
+   "issue_count": 3,
+   "matched_content": 0.8611,
+   "mismatched_content": 0.3291,
+   "prompt_id": "R00-19",
+   "s1_confidence": 0.8927
+  },
+  {
+   "alignment_confidence": 1.0,
+   "issue_count": 2,
+   "matched_content": 0.8525,
+   "mismatched_content": 0.3077,
+   "prompt_id": "R00-10",
+   "s1_confidence": 0.794,
+   "s2_confidence": 0.8613,
+   "s2_matched_agreement": 0.9333,
+   "s2_mismatched_agreement": 0.3125
+  },
+  {
+   "alignment_confidence": 1.0,
+   "issue_count": 4,
+   "matched_content": 0.7586,
+   "mismatched_content": 0.2903,
+   "prompt_id": "R00-10",
+   "s1_confidence": 0.7544
+  },
+  {
+   "alignment_confidence": 1.0,
+   "issue_count": 2,
+   "matched_content": 0.8529,
+   "mismatched_content": 0.3333,
+   "prompt_id": "R00-11",
+   "s1_confidence": 0.9302
+  },
+  {
+   "alignment_confidence": 1.0,
+   "issue_count": 3,
+   "matched_content": 0.6667,
+   "mismatched_content": 0.3333,
+   "prompt_id": "R00-12",
+   "s1_confidence": 0.8842
+  },
+  {
+   "alignment_confidence": 1.0,
+   "issue_count": 4,
+   "matched_content": 0.6364,
+   "mismatched_content": 0.4923,
+   "prompt_id": "R00-01",
+   "s1_confidence": 0.8949,
+   "s2_confidence": 0.858,
+   "s2_matched_agreement": 0.8358,
+   "s2_mismatched_agreement": 0.3636
+  },
+  {
+   "alignment_confidence": 1.0,
+   "issue_count": 6,
+   "matched_content": 0.85,
+   "mismatched_content": 0.2895,
+   "prompt_id": "R00-18",
+   "s1_confidence": 0.8781
+  },
+  {
+   "alignment_confidence": 1.0,
+   "issue_count": 2,
+   "matched_content": 0.75,
+   "mismatched_content": 0.3333,
+   "prompt_id": "R00-02",
+   "s1_confidence": 0.8318
+  },
+  {
+   "alignment_confidence": 1.0,
+   "issue_count": 1,
+   "matched_content": 0.9355,
+   "mismatched_content": 0.3235,
+   "prompt_id": "R00-06",
+   "s1_confidence": 0.9658
+  },
+  {
+   "alignment_confidence": 1.0,
+   "issue_count": 3,
+   "matched_content": 0.8462,
+   "mismatched_content": 0.3462,
+   "prompt_id": "R00-12",
+   "s1_confidence": 0.8653,
+   "s2_confidence": 0.6886,
+   "s2_matched_agreement": 0.6667,
+   "s2_mismatched_agreement": 0.3556
+  },
+  {
+   "alignment_confidence": 1.0,
+   "issue_count": 5,
+   "matched_content": 0.8571,
+   "mismatched_content": 0.254,
+   "prompt_id": "R00-08",
+   "s1_confidence": 0.9158
+  },
+  {
+   "alignment_confidence": 1.0,
+   "issue_count": 1,
+   "matched_content": 0.8696,
+   "mismatched_content": 0.3279,
+   "prompt_id": "R00-11",
+   "s1_confidence": 0.9722
+  },
+  {
+   "alignment_confidence": 1.0,
+   "issue_count": 2,
+   "matched_content": 0.8889,
+   "mismatched_content": 0.3797,
+   "prompt_id": "R00-19",
+   "s1_confidence": 0.9533
+  },
+  {
+   "alignment_confidence": 0.9412,
+   "issue_count": 5,
+   "matched_content": 0.8434,
+   "mismatched_content": 0.2532,
+   "prompt_id": "R00-18",
+   "s1_confidence": 0.9345,
+   "s2_confidence": 0.7854,
+   "s2_matched_agreement": 0.8696,
+   "s2_mismatched_agreement": 0.2955
+  },
+  {
+   "alignment_confidence": 1.0,
+   "issue_count": 1,
+   "matched_content": 0.7246,
+   "mismatched_content": 0.2769,
+   "prompt_id": "R00-04",
+   "s1_confidence": 0.9158
+  },
+  {
+   "alignment_confidence": 0.9231,
+   "issue_count": 2,
+   "matched_content": 0.8857,
+   "mismatched_content": 0.2632,
+   "prompt_id": "R00-17",
+   "s1_confidence": 0.9218
+  },
+  {
+   "alignment_confidence": 1.0,
+   "issue_count": 2,
+   "matched_content": 0.8493,
+   "mismatched_content": 0.3099,
+   "prompt_id": "R00-07",
+   "s1_confidence": 0.9338
+  },
+  {
+   "alignment_confidence": 1.0,
+   "issue_count": 1,
+   "matched_content": 0.8571,
+   "mismatched_content": 0.3333,
+   "prompt_id": "R00-03",
+   "s1_confidence": 0.793,
+   "s2_confidence": 0.9099,
+   "s2_matched_agreement": 0.9825,
+   "s2_mismatched_agreement": 0.3279
+  },
+  {
+   "alignment_confidence": 1.0,
+   "issue_count": 1,
+   "matched_content": 0.7586,
+   "mismatched_content": 0.3667,
+   "prompt_id": "R00-05",
+   "s1_confidence": 0.867
+  },
+  {
+   "alignment_confidence": 1.0,
+   "issue_count": 1,
+   "matched_content": 0.8493,
+   "mismatched_content": 0.2817,
+   "prompt_id": "R00-07",
+   "s1_confidence": 0.9325
+  },
+  {
+   "alignment_confidence": 1.0,
+   "issue_count": 5,
+   "matched_content": 0.7368,
+   "mismatched_content": 0.3279,
+   "prompt_id": "R00-10",
+   "s1_confidence": 0.8578
+  },
+  {
+   "alignment_confidence": 1.0,
+   "issue_count": 3,
+   "matched_content": 0.8169,
+   "mismatched_content": 0.2899,
+   "prompt_id": "R00-07",
+   "s1_confidence": 0.9031,
+   "s2_confidence": 0.8481,
+   "s2_matched_agreement": 0.8116,
+   "s2_mismatched_agreement": 0.3881
+  },
+  {
+   "alignment_confidence": 1.0,
+   "issue_count": 0,
+   "matched_content": 0.9123,
+   "mismatched_content": 0.339,
+   "prompt_id": "R00-05",
+   "s1_confidence": 0.8208
+  },
+  {
+   "alignment_confidence": 1.0,
+   "issue_count": 1,
+   "matched_content": 0.9315,
+   "mismatched_content": 0.2254,
+   "prompt_id": "R00-07",
+   "s1_confidence": 0.9367
+  },
+  {
+   "alignment_confidence": 0.9231,
+   "issue_count": 4,
+   "matched_content": 0.8857,
+   "mismatched_content": 0.2632,
+   "prompt_id": "R00-17",
+   "s1_confidence": 0.9231
+  },
+  {
+   "alignment_confidence": 1.0,
+   "issue_count": 4,
+   "matched_content": 0.878,
+   "mismatched_content": 0.2821,
+   "prompt_id": "R00-18",
+   "s1_confidence": 0.8938,
+   "s2_confidence": 0.7963,
+   "s2_matched_agreement": 0.8095,
+   "s2_mismatched_agreement": 0.275
+  },
+  {
+   "alignment_confidence": 1.0,
+   "issue_count": 4,
+   "matched_content": 0.7826,
+   "mismatched_content": 0.2581,
+   "prompt_id": "R00-08",
+   "s1_confidence": 0.8593
+  },
+  {
+   "alignment_confidence": 1.0,
+   "issue_count": 3,
+   "matched_content": 0.8125,
+   "mismatched_content": 0.4,
+   "prompt_id": "R00-02",
+   "s1_confidence": 0.827
+  },
+  {
+   "alignment_confidence": 1.0,
+   "issue_count": 4,
+   "matched_content": 0.6567,
+   "mismatched_content": 0.2667,
+   "prompt_id": "R00-08",
+   "s1_confidence": 0.9289
+  },
+  {
+   "alignment_confidence": 1.0,
+   "issue_count": 1,
+   "matched_content": 0.9825,
+   "mismatched_content": 0.3279,
+   "prompt_id": "R00-03",
+   "s1_confidence": 0.9561,
+   "s2_confidence": 0.9256,
+   "s2_matched_agreement": 0.9825,
+   "s2_mismatched_agreement": 0.3279
+  },
+  {
+   "alignment_confidence": 1.0,
+   "issue_count": 6,
+   "matched_content": 0.7857,
+   "mismatched_content": 0.3,
+   "prompt_id": "R00-18",
+   "s1_confidence": 0.892
+  },
+  {
+   "alignment_confidence": 1.0,
+   "issue_count": 1,
+   "matched_content": 0.9474,
+   "mismatched_content": 0.3279,
+   "prompt_id": "R00-03",
+   "s1_confidence": 0.8918
+  },
+  {
+   "alignment_confidence": 1.0,
+   "issue_count": 6,
+   "matched_content": 0.7536,
+   "mismatched_content": 0.2581,
+   "prompt_id": "R00-08",
+   "s1_confidence": 0.8898
+  },
+  {
+   "alignment_confidence": 1.0,
+   "issue_count": 2,
+   "matched_content": 0.8767,
+   "mismatched_content": 0.2254,
+   "prompt_id": "R00-07",
+   "s1_confidence": 0.9066,
+   "s2_confidence": 0.8367,
+   "s2_matched_agreement": 0.8571,
+   "s2_mismatched_agreement": 0.3824
+  },
+  {
+   "alignment_confidence": 0.9412,
+   "issue_count": 4,
+   "matched_content": 0.8889,
+   "mismatched_content": 0.2338,
+   "prompt_id": "R00-18",
+   "s1_confidence": 0.9039
+  },
+  {
+   "alignment_confidence": 1.0,
+   "issue_count": 1,
+   "matched_content": 0.7059,
+   "mismatched_content": 0.2812,
+   "prompt_id": "R00-04",
+   "s1_confidence": 0.9495
+  },
+  {
+   "alignment_confidence": 0.9231,
+   "issue_count": 3,
+   "matched_content": 0.8857,
+   "mismatched_content": 0.2632,
+   "prompt_id": "R00-17",
+   "s1_confidence": 0.9231
+  },
+  {
+   "alignment_confidence": 1.0,
+   "issue_count": 1,
+   "matched_content": 0.9041,
+   "mismatched_content": 0.2535,
+   "prompt_id": "R00-07",
+   "s1_confidence": 0.9118,
+   "s2_confidence": 0.756,
+   "s2_matched_agreement": 0.7397,
+   "s2_mismatched_agreement": 0.338
+  },
+  {
+   "alignment_confidence": 1.0,
+   "issue_count": 5,
+   "matched_content": 0.775,
+   "mismatched_content": 0.3158,
+   "prompt_id": "R00-18",
+   "s1_confidence": 0.92
+  },
+  {
+   "alignment_confidence": 1.0,
+   "issue_count": 5,
+   "matched_content": 0.8916,
+   "mismatched_content": 0.2278,
+   "prompt_id": "R00-18",
+   "s1_confidence": 0.9075
+  },
+  {
+   "alignment_confidence": 1.0,
+   "issue_count": 3,
+   "matched_content": 0.5769,
+   "mismatched_content": 0.2449,
+   "prompt_id": "R00-14",
+   "s1_confidence": 0.7417
+  },
+  {
+   "alignment_confidence": 1.0,
+   "issue_count": 4,
+   "matched_content": 0.7419,
+   "mismatched_content": 0.2727,
+   "prompt_id": "R00-16",
+   "s1_confidence": 0.8673,
+   "s2_confidence": 0.7583,
+   "s2_matched_agreement": 0.9032,
+   "s2_mismatched_agreement": 0.2727
+  },
+  {
+   "alignment_confidence": 1.0,
+   "issue_count": 3,
+   "matched_content": 0.72,
+   "mismatched_content": 0.4,
+   "prompt_id": "R00-12",
+   "s1_confidence": 0.8539
+  },
+  {
+   "alignment_confidence": 1.0,
+   "issue_count": 1,
+   "matched_content": 0.7692,
+   "mismatched_content": 0.375,
+   "prompt_id": "R00-01",
+   "s1_confidence": 0.8701
+  },
+  {
+   "alignment_confidence": 1.0,
+   "issue_count": 0,
+   "matched_content": 0.8116,
+   "mismatched_content": 0.3279,
+   "prompt_id": "R00-11",
+   "s1_confidence": 0.8921
+  },
+  {
+   "alignment_confidence": 0.9,
+   "issue_count": 4,
+   "matched_content": 0.7037,
+   "mismatched_content": 0.3529,
+   "prompt_id": "R00-14",
+   "s1_confidence": 0.7989,
+   "s2_confidence": 0.7636,
+   "s2_matched_agreement": 0.8929,
+   "s2_mismatched_agreement": 0.2642
+  },
+  {
+   "alignment_confidence": 1.0,
+   "issue_count": 5,
+   "matched_content": 0.7164,
+   "mismatched_content": 0.3333,
+   "prompt_id": "R00-08",
+   "s1_confidence": 0.9242
+  },
+  {
+   "alignment_confidence": 1.0,
+   "issue_count": 2,
+   "matched_content": 0.9231,
+   "mismatched_content": 0.3019,
+   "prompt_id": "R00-13",
+   "s1_confidence": 0.8577
+  },
+  {
+   "alignment_confidence": 0.9412,
+   "issue_count": 4,
+   "matched_content": 0.764,
+   "mismatched_content": 0.2564,
+   "prompt_id": "R00-20",
+   "s1_confidence": 0.8477
+  },
+  {
+   "alignment_confidence": 0.9286,
+   "issue_count": 3,
+   "matched_content": 0.806,
+   "mismatched_content": 0.3051,
+   "prompt_id": "R00-11",
+   "s1_confidence": 0.8915,
+   "s2_confidence": 0.7786,
+   "s2_matched_agreement": 0.6866,
+   "s2_mismatched_agreement": 0.1695
+  },
+  {
+   "alignment_confidence": 1.0,
+   "issue_count": 4,
+   "matched_content": 0.7667,
+   "mismatched_content": 0.3125,
+   "prompt_id": "R00-10",
+   "s1_confidence": 0.85
+  },
+  {
+   "alignment_confidence": 1.0,
+   "issue_count": 3,
+   "matched_content": 0.8197,
+   "mismatched_content": 0.3077,
+   "prompt_id": "R00-10",
+   "s1_confidence": 0.8263
+  },
+  {
+   "alignment_confidence": 1.0,
+   "issue_count": 3,
+   "matched_content": 0.7059,
+   "mismatched_content": 0.3284,
+   "prompt_id": "R00-01",
+   "s1_confidence": 0.9502
+  },
+  {
+   "alignment_confidence": 1.0,
+   "issue_count": 5,
+   "matched_content": 0.7826,
+   "mismatched_content": 0.2581,
+   "prompt_id": "R00-08",
+   "s1_confidence": 0.9085,
+   "s2_confidence": 0.89,
+   "s2_matched_agreement": 0.8451,
+   "s2_mismatched_agreement": 0.25
+  },
+  {
+   "alignment_confidence": 0.9231,
+   "issue_count": 5,
+   "matched_content": 0.8451,
+   "mismatched_content": 0.2597,
+   "prompt_id": "R00-17",
+   "s1_confidence": 0.9102
+  },
+  {
+   "alignment_confidence": 1.0,
+   "issue_count": 4,
+   "matched_content": 0.8675,
+   "mismatched_content": 0.3038,
+   "prompt_id": "R00-18",
+   "s1_confidence": 0.9116
+  },
+  {
+   "alignment_confidence": 1.0,
+   "issue_count": 2,
+   "matched_content": 0.7246,
+   "mismatched_content": 0.2941,
+   "prompt_id": "R00-01",
+   "s1_confidence": 0.8556
+  },
+  {
+   "alignment_confidence": 0.9231,
+   "issue_count": 5,
+   "matched_content": 0.8406,
+   "mismatched_content": 0.2933,
+   "prompt_id": "R00-17",
+   "s1_confidence": 0.8731,
+   "s2_confidence": 0.9209,
+   "s2_matched_agreement": 0.9296,
+   "s2_mismatched_agreement": 0.2597
+  },
+  {
+   "alignment_confidence": 1.0,
+   "issue_count": 2,
+   "matched_content": 0.8148,
+   "mismatched_content": 0.3448,
+   "prompt_id": "R00-03",
+   "s1_confidence": 0.8988
+  },
+  {
+   "alignment_confidence": 1.0,
+   "issue_count": 0,
+   "matched_content": 0.9123,
+   "mismatched_content": 0.3279,
+   "prompt_id": "R00-03",
+   "s1_confidence": 0.8975
+  },
+  {
+   "alignment_confidence": 1.0,
+   "issue_count": 1,
+   "matched_content": 0.9189,
+   "mismatched_content": 0.3457,
+   "prompt_id": "R00-19",
+   "s1_confidence": 0.9393
+  },
+  {
+   "alignment_confidence": 1.0,
+   "issue_count": 3,
+   "matched_content": 0.8846,
+   "mismatched_content": 0.3462,
+   "prompt_id": "R00-12",
+   "s1_confidence": 0.9171,
+   "s2_confidence": 0.8132,
+   "s2_matched_agreement": 0.7843,
+   "s2_mismatched_agreement": 0.3529
+  },
+  {
+   "alignment_confidence": 1.0,
+   "issue_count": 3,
+   "matched_content": 0.8364,
+   "mismatched_content": 0.2692,
+   "prompt_id": "R00-14",
+   "s1_confidence": 0.7354
+  },
+  {
+   "alignment_confidence": 1.0,
+   "issue_count": 4,
+   "matched_content": 0.75,
+   "mismatched_content": 0.3333,
+   "prompt_id": "R00-12",
+   "s1_confidence": 0.9119
+  },
+  {
+   "alignment_confidence": 1.0,
+   "issue_count": 1,
+   "matched_content": 0.9118,
+   "mismatched_content": 0.3333,
+   "prompt_id": "R00-11",
+   "s1_confidence": 0.9868
+  },
+  {
+   "alignment_confidence": 1.0,
+   "issue_count": 0,
+   "matched_content": 0.7576,
+   "mismatched_content": 0.3385,
+   "prompt_id": "R00-01",
+   "s1_confidence": 0.9201,
+   "s2_confidence": 0.8712,
+   "s2_matched_agreement": 0.8732,
+   "s2_mismatched_agreement": 0.3714
+  },
+  {
+   "alignment_confidence": 1.0,
+   "issue_count": 2,
+   "matched_content": 0.9153,
+   "mismatched_content": 0.3175,
+   "prompt_id": "R00-03",
+   "s1_confidence": 0.9345
+  },
+  {
+   "alignment_confidence": 1.0,
+   "issue_count": 0,
+   "matched_content": 0.9836,
+   "mismatched_content": 0.2985,
+   "prompt_id": "R00-06",
+   "s1_confidence": 0.9156
+  },
+  {
+   "alignment_confidence": 1.0,
+   "issue_count": 5,
+   "matched_content": 0.7826,
+   "mismatched_content": 0.2581,
+   "prompt_id": "R00-08",
+   "s1_confidence": 0.8871
+  },
+  {
+   "alignment_confidence": 1.0,
+   "issue_count": 1,
+   "matched_content": 0.8767,
+   "mismatched_content": 0.2254,
+   "prompt_id": "R00-07",
+   "s1_confidence": 0.9409,
+   "s2_confidence": 0.7583,
+   "s2_matched_agreement": 0.8406,
+   "s2_mismatched_agreement": 0.3881
+  },
+  {
+   "alignment_confidence": 1.0,
+   "issue_count": 2,
+   "matched_content": 0.8438,
+   "mismatched_content": 0.2667,
+   "prompt_id": "R00-04",
+   "s1_confidence": 0.8718
+  },
+  {
+   "alignment_confidence": 1.0,
+   "issue_count": 1,
+   "matched_content": 0.9123,
+   "mismatched_content": 0.3279,
+   "prompt_id": "R00-03",
+   "s1_confidence": 0.9237
+  },
+  {
+   "alignment_confidence": 0.9412,
+   "issue_count": 6,
+   "matched_content": 0.825,
+   "mismatched_content": 0.2632,
+   "prompt_id": "R00-18",
+   "s1_confidence": 0.8777
+  },
+  {
+   "alignment_confidence": 1.0,
+   "issue_count": 1,
+   "matched_content": 0.9041,
+   "mismatched_content": 0.2254,
+   "prompt_id": "R00-07",
+   "s1_confidence": 0.9249,
+   "s2_confidence": 0.7541,
+   "s2_matched_agreement": 0.7941,
+   "s2_mismatched_agreement": 0.3636
+  },
+  {
+   "alignment_confidence": 1.0,
+   "issue_count": 2,
+   "matched_content": 0.8493,
+   "mismatched_content": 0.2254,
+   "prompt_id": "R00-07",
+   "s1_confidence": 0.9207
+  },
+  {
+   "alignment_confidence": 1.0,
+   "issue_count": 1,
+   "matched_content": 0.96,
+   "mismatched_content": 0.3659,
+   "prompt_id": "R00-19",
+   "s1_confidence": 0.9802
+  },
+  {
+   "alignment_confidence": 1.0,
+   "issue_count": 4,
+   "matched_content": 0.6415,
+   "mismatched_content": 0.36,
+   "prompt_id": "R00-14",
+   "s1_confidence": 0.7931
+  },
+  {
+   "alignment_confidence": 1.0,
+   "issue_count": 4,
+   "matched_content": 0.7869,
+   "mismatched_content": 0.2769,
+   "prompt_id": "R00-16",
+   "s1_confidence": 0.8781,
+   "s2_confidence": 0.7517,
+   "s2_matched_agreement": 0.8387,
+   "s2_mismatched_agreement": 0.3333
+  },
+  {
+   "alignment_confidence": 1.0,
+   "issue_count": 3,
+   "matched_content": 0.7083,
+   "mismatched_content": 0.3273,
+   "prompt_id": "R00-15",
+   "s1_confidence": 0.8003
+  },
+  {
+   "alignment_confidence": 0.9375,
+   "issue_count": 2,
+   "matched_content": 0.8767,
+   "mismatched_content": 0.2254,
+   "prompt_id": "R00-07",
+   "s1_confidence": 0.9453
+  },
+  {
+   "alignment_confidence": 1.0,
+   "issue_count": 1,
+   "matched_content": 0.96,
+   "mismatched_content": 0.3659,
+   "prompt_id": "R00-19",
+   "s1_confidence": 0.963
+  },
+  {
+   "alignment_confidence": 1.0,
+   "issue_count": 0,
+   "matched_content": 0.9355,
+   "mismatched_content": 0.3235,
+   "prompt_id": "R00-06",
+   "s1_confidence": 0.9231,
+   "s2_confidence": 0.9585,
+   "s2_matched_agreement": 0.9836,
+   "s2_mismatched_agreement": 0.2985
+  },
+  {
+   "alignment_confidence": 0.9412,
+   "issue_count": 4,
+   "matched_content": 0.7865,
+   "mismatched_content": 0.2564,
+   "prompt_id": "R00-20",
+   "s1_confidence": 0.9072
+  },
+  {
+   "alignment_confidence": 1.0,
+   "issue_count": 4,
+   "matched_content": 0.8462,
+   "mismatched_content": 0.3462,
+   "prompt_id": "R00-12",
+   "s1_confidence": 0.9037
+  },
+  {
+   "alignment_confidence": 1.0,
+   "issue_count": 3,
+   "matched_content": 0.6122,
+   "mismatched_content": 0.3929,
+   "prompt_id": "R00-15",
+   "s1_confidence": 0.7579
+  },
+  {
+   "alignment_confidence": 1.0,
+   "issue_count": 2,
+   "matched_content": 0.8493,
+   "mismatched_content": 0.2254,
+   "prompt_id": "R00-07",
+   "s1_confidence": 0.9148,
+   "s2_confidence": 0.7741,
+   "s2_matched_agreement": 0.7826,
+   "s2_mismatched_agreement": 0.3284
+  },
+  {
+   "alignment_confidence": 1.0,
+   "issue_count": 1,
+   "matched_content": 0.8276,
+   "mismatched_content": 0.3333,
+   "prompt_id": "R00-05",
+   "s1_confidence": 0.8332
+  },
+  {
+   "alignment_confidence": 1.0,
+   "issue_count": 3,
+   "matched_content": 0.902,
+   "mismatched_content": 0.3077,
+   "prompt_id": "R00-13",
+   "s1_confidence": 0.9047
+  },
+  {
+   "alignment_confidence": 1.0,
+   "issue_count": 2,
+   "matched_content": 0.7077,
+   "mismatched_content": 0.3607,
+   "prompt_id": "R00-02",
+   "s1_confidence": 0.9097
+  },
+  {
+   "alignment_confidence": 1.0,
+   "issue_count": 1,
+   "matched_content": 0.9067,
+   "mismatched_content": 0.3415,
+   "prompt_id": "R00-19",
+   "s1_confidence": 0.9394,
+   "s2_confidence": 0.9581,
+   "s2_matched_agreement": 1.0,
+   "s2_mismatched_agreement": 0.3373
+  },
+  {
+   "alignment_confidence": 0.9,
+   "issue_count": 5,
+   "matched_content": 0.6545,
+   "mismatched_content": 0.2308,
+   "prompt_id": "R00-14",
+   "s1_confidence": 0.7164
+  },
+  {
+   "alignment_confidence": 1.0,
+   "issue_count": 4,
+   "matched_content": 0.8364,
+   "mismatched_content": 0.2759,
+   "prompt_id": "R00-09",
+   "s1_confidence": 0.8801
+  },
+  {
+   "alignment_confidence": 1.0,
+   "issue_count": 4,
+   "matched_content": 0.8,
+   "mismatched_content": 0.2979,
+   "prompt_id": "R00-14",
+   "s1_confidence": 0.8315
+  },
+  {
+   "alignment_confidence": 1.0,
+   "issue_count": 1,
+   "matched_content": 0.8219,
+   "mismatched_content": 0.2254,
+   "prompt_id": "R00-07",
+   "s1_confidence": 0.9322,
+   "s2_confidence": 0.8511,
+   "s2_matched_agreement": 0.8824,
+   "s2_mismatched_agreement": 0.3636
+  },
+  {
+   "alignment_confidence": 0.9231,
+   "issue_count": 5,
+   "matched_content": 0.8286,
+   "mismatched_content": 0.2632,
+   "prompt_id": "R00-17",
+   "s1_confidence": 0.9169
+  },
+  {
+   "alignment_confidence": 1.0,
+   "issue_count": 0,
+   "matched_content": 0.7647,
+   "mismatched_content": 0.3333,
+   "prompt_id": "R00-11",
+   "s1_confidence": 0.9454
+  },
+  {
+   "alignment_confidence": 1.0,
+   "issue_count": 1,
+   "matched_content": 0.9455,
+   "mismatched_content": 0.2759,
+   "prompt_id": "R00-09",
+   "s1_confidence": 0.8717
+  },
+  {
+   "alignment_confidence": 1.0,
+   "issue_count": 5,
+   "matched_content": 0.8916,
+   "mismatched_content": 0.2278,
+   "prompt_id": "R00-18",
+   "s1_confidence": 0.9254,
+   "s2_confidence": 0.8955,
+   "s2_matched_agreement": 0.9157,
+   "s2_mismatched_agreement": 0.2785
+  },
+  {
+   "alignment_confidence": 1.0,
+   "issue_count": 2,
+   "matched_content": 0.9118,
+   "mismatched_content": 0.3333,
+   "prompt_id": "R00-11",
+   "s1_confidence": 0.9609
+  },
+  {
+   "alignment_confidence": 1.0,
+   "issue_count": 2,
+   "matched_content": 0.8364,
+   "mismatched_content": 0.3051,
+   "prompt_id": "R00-03",
+   "s1_confidence": 0.8167
+  },
+  {
+   "alignment_confidence": 1.0,
+   "issue_count": 4,
+   "matched_content": 0.7826,
+   "mismatched_content": 0.2581,
+   "prompt_id": "R00-08",
+   "s1_confidence": 0.9296
+  },
+  {
+   "alignment_confidence": 1.0,
+   "issue_count": 1,
+   "matched_content": 0.7576,
+   "mismatched_content": 0.3385,
+   "prompt_id": "R00-01",
+   "s1_confidence": 0.9046,
+   "s2_confidence": 0.8602,
+   "s2_matched_agreement": 0.7606,
+   "s2_mismatched_agreement": 0.3429
+  },
+  {
+   "alignment_confidence": 1.0,
+   "issue_count": 2,
+   "matched_content": 0.8125,
+   "mismatched_content": 0.3667,
+   "prompt_id": "R00-02",
+   "s1_confidence": 0.9221
+  },
+  {
+   "alignment_confidence": 1.0,
+   "issue_count": 1,
+   "matched_content": 0.9315,
+   "mismatched_content": 0.2254,
+   "prompt_id": "R00-07",
+   "s1_confidence": 0.9531
+  }
+ ],
+ "schema_version": "voice_coach.pronunciation_feedback_thresholds.v1",
+ "split": {
+  "auditor_items": 70,
+  "matched_items": 279,
+  "mismatch_partner_rule": "next sentence in card order, cyclically",
+  "mismatched_content_p95": 0.3846,
+  "skipped_items": []
+ },
+ "threshold_set_id": "ctc_gop_qwen_audit_v1-20260808"
+}

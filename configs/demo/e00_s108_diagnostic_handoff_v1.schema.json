@@ -1,0 +1,109 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://voice-coach.local/schemas/e00_s108_diagnostic_handoff_v1.schema.json",
+  "title": "E00 actual S108 production diagnostic handoff",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_version",
+    "handoff_id",
+    "status",
+    "attempt_id_sha256",
+    "audio_content_sha256",
+    "s108_completion_commit_sha256",
+    "model_identity_sha256",
+    "checkpoint_sha256",
+    "calibrator_sha256",
+    "threshold_policy_sha256",
+    "production_inference_receipt_sha256",
+    "diagnostic_issue_manifest_sha256",
+    "input_role",
+    "actual_production_inference_executed",
+    "locked_test_row_audio_prediction_or_result_copied",
+    "locked_result_replay_used",
+    "score_or_threshold_embedded",
+    "source_split_or_condition_embedded",
+    "raw_audio_or_locator_embedded",
+    "eligible_for_e02_guard",
+    "privacy_zone",
+    "binding_sha256"
+  ],
+  "properties": {
+    "schema_version": {
+      "const": "voice_coach.e00_s108_diagnostic_handoff.v1"
+    },
+    "handoff_id": {
+      "type": "string",
+      "pattern": "^e00s108_[0-9a-f]{32}$"
+    },
+    "status": {
+      "const": "actual_production_diagnostic_handoff"
+    },
+    "attempt_id_sha256": {
+      "$ref": "#/$defs/sha256"
+    },
+    "audio_content_sha256": {
+      "$ref": "#/$defs/sha256"
+    },
+    "s108_completion_commit_sha256": {
+      "$ref": "#/$defs/sha256"
+    },
+    "model_identity_sha256": {
+      "$ref": "#/$defs/sha256"
+    },
+    "checkpoint_sha256": {
+      "$ref": "#/$defs/sha256"
+    },
+    "calibrator_sha256": {
+      "$ref": "#/$defs/sha256"
+    },
+    "threshold_policy_sha256": {
+      "$ref": "#/$defs/sha256"
+    },
+    "production_inference_receipt_sha256": {
+      "$ref": "#/$defs/sha256"
+    },
+    "diagnostic_issue_manifest_sha256": {
+      "$ref": "#/$defs/sha256"
+    },
+    "input_role": {
+      "enum": [
+        "authorized_human_demo_attempt",
+        "nonhuman_test_fixture_attempt"
+      ]
+    },
+    "actual_production_inference_executed": {
+      "const": true
+    },
+    "locked_test_row_audio_prediction_or_result_copied": {
+      "const": false
+    },
+    "locked_result_replay_used": {
+      "const": false
+    },
+    "score_or_threshold_embedded": {
+      "const": false
+    },
+    "source_split_or_condition_embedded": {
+      "const": false
+    },
+    "raw_audio_or_locator_embedded": {
+      "const": false
+    },
+    "eligible_for_e02_guard": {
+      "const": true
+    },
+    "privacy_zone": {
+      "const": "D1_pseudonymized_restricted_production_handoff"
+    },
+    "binding_sha256": {
+      "$ref": "#/$defs/sha256"
+    }
+  },
+  "$defs": {
+    "sha256": {
+      "type": "string",
+      "pattern": "^[0-9a-f]{64}$"
+    }
+  }
+}

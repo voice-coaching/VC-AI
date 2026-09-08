@@ -1,0 +1,364 @@
+schema_version: 1
+
+experiment:
+  id: d09_h02_h03_longitudinal_collection_v1
+  stage: wp1_d09_wp9_h02_h03_longitudinal_collection
+  implementation_status: production_static_preflight_only
+  actual_portal_or_institution_contact_allowed: false
+  actual_recruitment_or_consent_allowed: false
+  actual_participant_session_or_audio_access_allowed: false
+  actual_randomization_or_intervention_allowed: false
+  actual_model_api_reference_or_coaching_allowed: false
+  actual_blind_rating_or_metric_allowed: false
+  actual_output_or_publication_allowed: false
+  completion_claim_allowed: false
+
+canonical_sources:
+  access_scope: C1_public_or_A1_aggregate_static_pins_only
+  pins:
+    - path: configs/human_research/d09_h02_h03_comparison_stage_separation_receipt_v1.schema.json
+      sha256: 0fb394f52cd4bb813a40b4943baab85a40b94f7b5c2c7aaf2044712a5190a7ae
+    - path: configs/human_research/d09_h02_h03_audio_qc_v1.schema.json
+      sha256: 7838f6e63e52563fafe661cea1bd9b5a129bd9115aa06d32b5f50e5035893c7b
+    - path: configs/human_research/d09_h02_h03_audio_v1.schema.json
+      sha256: e18bd7b54ca6bf7c3a4dd41ff150152f51e9825ad3ce3283d3682794b7a68437
+    - path: configs/human_research/d09_h02_h03_blind_rating_v1.schema.json
+      sha256: 2e7ac28c5d1a16c4f5ea79fe6c5f715ffd1d12105981ef8b1d433346718f855a
+    - path: configs/human_research/d09_h02_h03_delivery_predecessor_receipt_v1.schema.json
+      sha256: 0752014f0669026ff936c648b63d3a692ab3a39fee2a41202127751c18404558
+    - path: configs/human_research/d09_h02_h03_disposition_v1.schema.json
+      sha256: 34697e3a4a859e96d71e8d43d5e9461acad5d8071a7eb5ea46b4f19317130509
+    - path: configs/human_research/d09_h02_h03_execution_authorization_v1.template.json
+      sha256: 2bb288e4f2e3ec61409c5ccc53636dbc8d8cb0ec6e908e26ad1a57f1400a0ca3
+    - path: configs/human_research/d09_h02_h03_intervention_exposure_v1.schema.json
+      sha256: 3027b732671da324e7f4d8bb75b60f944a5cc3e485e588b37198b7d5a416c5ee
+    - path: configs/human_research/d09_h02_h03_intervention_manual_v1.template.json
+      sha256: 1f991180fdfcf597ea26aec3ee678c423d3b82d8d42ecdfdca61ac175fd050a8
+    - path: configs/human_research/d09_h02_h03_operational_preregistration_v1.template.json
+      sha256: a934067916e175a1b36e7d23e3b23545997c85d3a735c3d00f52e950fedd0fa1
+    - path: configs/human_research/d09_h02_h03_participant_v1.schema.json
+      sha256: ed4758470ed69d004388e4388ac04074a66eee4dded91f3e739814b57c30a59f
+    - path: configs/human_research/d09_h02_h03_phase_separation_receipt_v1.schema.json
+      sha256: 26a864e75a496dec1ae5306c03c3a26e0ff052778307ac35e4b53a5a2dcde5e4
+    - path: configs/human_research/d09_h02_h03_randomization_v1.schema.json
+      sha256: edb9891b7c55ca0ac53570becd5984a564f0bed7d53422fab4ff01fcad8b48ce
+    - path: configs/human_research/d09_h02_h03_session_v1.schema.json
+      sha256: 4650b232da24edfaf2318d041f8c9aee3c4ebef6e18e8c602dc3d4f3451271cf
+    - path: configs/human_research/h04_feasibility_pilot_completion_v1.schema.json
+      sha256: 45de774d546c010bdc84d3f2d7645bb17a706bfe16506a2fef66469072f998f3
+    - path: configs/human_research/h04_h01_final_sample_size_lock_v1.schema.json
+      sha256: 4dac929f65defcd3d74f4f0b6cfacdf21ae9474f2294c105ca4b9b3b1c7138b3
+    - path: configs/human_research/h04_h02_h03_blind_bundle_completion_v1.schema.json
+      sha256: 4850e106b7048b5b233a08838c0ad2dd5f169567bf02d5b0124b21bc64cdbf59
+    - path: configs/human_research/h04_statistical_analysis_plan_v1.template.json
+      sha256: f693ed86b2a4a6e3650de7ea6c149ad77355cd97976d9df23a514c2f48fbe775
+    - path: configs/experiments/h04_learning_effect_analysis_v1.yaml
+      sha256: 579cf5ce9eec302d2aefca7bdf69acace30d778b8602711ccd1e8ddf907748ed
+    - path: src/voice_coach/human_research/h04_learning_effect_contract.py
+      sha256: 71d4c0a2fe17664aa8c8728c4cf95096ea9e6979bdb82db4de10eb9304f5d129
+    - path: configs/experiments/h00_human_research_approval_v1.yaml
+      sha256: 6029a79763e10c1d1af5a5470e99d0c58317ab00b75dc33fd1bba3e7e7e42959
+    - path: src/voice_coach/human_research/h00_approval_contract.py
+      sha256: 06580d68588a8cfe6ca7010dd8e9bbff2167f201ee82eb36f35b6f02689d80c3
+    - path: configs/experiments/wavlm_s108_no_locked_dry_run_v1.yaml
+      sha256: 7803feb6121568cf78a582cbacd7a848893a0655bdfc211bac9d35ecc1dd40cc
+    - path: src/voice_coach/training/wavlm_s108_dry_run.py
+      sha256: 78444cdf5fd89dae71186028fcdf1a9771488937d698417f0ac1d84cd1aeeb32
+    - path: configs/experiments/e01_metamorphic_robustness_v1.yaml
+      sha256: 67e4e61b42d9f15bbe19eae7b21484a92b5f094190be75747f448beeb5ee2745
+    - path: src/voice_coach/evaluation/e01_metamorphic_contract.py
+      sha256: b0a246adf9e9d9738f0fb672420353c6d2617cc29c839cd04bb467105c0d89c3
+    - path: configs/experiments/c02_deterministic_coaching_selection_v1.yaml
+      sha256: 5ebb7fb3b4754ecec46d47997dbddc6adcfe44ff5579daf66b5dd77875d244f9
+    - path: src/voice_coach/coaching/c02_selection_contract.py
+      sha256: 477bd1fb3683ec4d70c33f9c498cf949ca44a81f68b24ccab8a263248ea95da7
+    - path: configs/experiments/e02_confidence_guard_v1.yaml
+      sha256: 2a06ede8d8be4840f5fcc0780fd3b9b08757a484c6b09f319da3201947443184
+    - path: src/voice_coach/evaluation/e02_confidence_guard_contract.py
+      sha256: f01e069a0026d52e14e760bf0b7f65f1ded9cd8aaf2624f52b77ce49fc89fff9
+    - path: configs/experiments/c03_expert_coaching_audit_v1.yaml
+      sha256: 566607a7babb68e0bdcd86e03f1fa35269121cb3cfb5fe5cda0d55944e1efc92
+    - path: src/voice_coach/coaching/c03_expert_audit_contract.py
+      sha256: 5b78d0fffd5421a2308c158cc850baeb41c909abfab603b5b958e0d889ca53f7
+    - path: configs/experiments/e00_closed_loop_demo_v1.yaml
+      sha256: dcda58365ca249ea6fd1aada1ed25d4c9c7072382de4850151388142f6910a4c
+    - path: src/voice_coach/evaluation/e00_closed_loop_contract.py
+      sha256: 1d74038a7bc913bd03ba61712f0aaf469e3032e0dea02fda598fb90ca11e67f1
+    - path: configs/experiments/r03_reference_bank_selection_v1.yaml
+      sha256: be50473052f5b60c7236b9ae1b7af4c49231eabe51d891ff112ac91e201610d8
+    - path: src/voice_coach/references/r03_selection_contract.py
+      sha256: 3e7fbdaad254d55822c1b64cdd8084b252e7b2214f7107282f080875ff972406
+    - path: configs/experiments/r04_blind_multireference_evaluation_v1.yaml
+      sha256: 19beadb8d75030ed15acba975f0272208ef635fae237a11520b4d0d84318a23b
+    - path: src/voice_coach/references/r04_blind_evaluation_contract.py
+      sha256: 744fab1ec2ebcb069bb2510ffaf96ade715c6694adb2708a6a46cb5e8b854305
+    - path: configs/experiments/learning_effect_power_v1.yaml
+      sha256: 67737548ce1a22b7716fb5c58635f55a216ff7059fd709476198df3d5fb75c86
+
+predecessor_h00:
+  actual_official_authorization_required: true
+  config_path: configs/experiments/h00_human_research_approval_v1.yaml
+  config_sha256: 6029a79763e10c1d1af5a5470e99d0c58317ab00b75dc33fd1bba3e7e7e42959
+  contract_path: src/voice_coach/human_research/h00_approval_contract.py
+  contract_sha256: 06580d68588a8cfe6ca7010dd8e9bbff2167f201ee82eb36f35b6f02689d80c3
+  approval_path: artifacts/external_attestations/h00/h00_human_research_approval_public_v1.json
+  approval_sha256: TBD_H00_APPROVAL
+  attestation_path: artifacts/external_attestations/h00/h00_official_document_attestation_v1.json
+  attestation_sha256: TBD_H00_ATTESTATION
+  required_status: ready_for_separately_authorized_h00_human_operations
+  pilot_and_confirmatory_scope_required: true
+  recruitment_consent_audio_randomization_intervention_rating_scope_required: true
+  restricted_official_document_resolution_allowed: false
+
+h04_handoff:
+  config_path: configs/experiments/h04_learning_effect_analysis_v1.yaml
+  config_sha256: 579cf5ce9eec302d2aefca7bdf69acace30d778b8602711ccd1e8ddf907748ed
+  contract_path: src/voice_coach/human_research/h04_learning_effect_contract.py
+  contract_sha256: 71d4c0a2fe17664aa8c8728c4cf95096ea9e6979bdb82db4de10eb9304f5d129
+  feasibility_schema_path: configs/human_research/h04_feasibility_pilot_completion_v1.schema.json
+  feasibility_schema_sha256: 45de774d546c010bdc84d3f2d7645bb17a706bfe16506a2fef66469072f998f3
+  feasibility_completion_path: artifacts/human_research/h02_h03/feasibility/h04_feasibility_pilot_completion_v1.json
+  feasibility_completion_sha256: TBD_H02_H03_FEASIBILITY_PILOT
+  h01_schema_path: configs/human_research/h04_h01_final_sample_size_lock_v1.schema.json
+  h01_schema_sha256: 4dac929f65defcd3d74f4f0b6cfacdf21ae9474f2294c105ca4b9b3b1c7138b3
+  h01_lock_path: artifacts/human_research/h01/h01_final_sample_size_lock_v1.json
+  h01_lock_sha256: TBD_H01_SAMPLE_SIZE_LOCK
+  sap_template_path: configs/human_research/h04_statistical_analysis_plan_v1.template.json
+  sap_template_sha256: f693ed86b2a4a6e3650de7ea6c149ad77355cd97976d9df23a514c2f48fbe775
+  frozen_sap_path: artifacts/external_attestations/h04/h04_statistical_analysis_plan_v1.json
+  frozen_sap_sha256: TBD_H04_SAP
+  confirmatory_schema_path: configs/human_research/h04_h02_h03_blind_bundle_completion_v1.schema.json
+  confirmatory_schema_sha256: 4850e106b7048b5b233a08838c0ad2dd5f169567bf02d5b0124b21bc64cdbf59
+  confirmatory_completion_path: artifacts/human_research/h02_h03/h02_h03_blind_bundle_completion_v1.json
+  confirmatory_completion_sha256: TBD_H02_H03_COMPLETION
+  phase_separation_schema_path: configs/human_research/d09_h02_h03_phase_separation_receipt_v1.schema.json
+  phase_separation_schema_sha256: 26a864e75a496dec1ae5306c03c3a26e0ff052778307ac35e4b53a5a2dcde5e4
+  phase_separation_path: artifacts/human_research/h02_h03/d09_phase_separation_receipt_v1.json
+  phase_separation_sha256: TBD_PHASE_SEPARATION
+
+comparison_stage_separation:
+  schema_path: configs/human_research/d09_h02_h03_comparison_stage_separation_receipt_v1.schema.json
+  schema_sha256: 0fb394f52cd4bb813a40b4943baab85a40b94f7b5c2c7aaf2044712a5190a7ae
+  feasibility_receipt_path: artifacts/human_research/h02_h03/feasibility/d09_comparison_stage_separation_receipt_v1.json
+  feasibility_receipt_sha256: TBD_D09_FEASIBILITY_COMPARISON_STAGE_SEPARATION
+  confirmatory_receipt_path: artifacts/human_research/h02_h03/d09_comparison_stage_separation_receipt_v1.json
+  confirmatory_receipt_sha256: TBD_D09_CONFIRMATORY_COMPARISON_STAGE_SEPARATION
+  participant_audio_rating_overlap_or_reuse_allowed: false
+  shared_c3_participant_arm_allowed: false
+  stage_2_unblinded_effect_access_allowed: false
+
+delivery_predecessors:
+  receipt_schema_path: configs/human_research/d09_h02_h03_delivery_predecessor_receipt_v1.schema.json
+  receipt_schema_sha256: 0752014f0669026ff936c648b63d3a692ab3a39fee2a41202127751c18404558
+  receipt_path: artifacts/external_attestations/d09/d09_delivery_predecessor_receipt_v1.json
+  receipt_sha256: TBD_DELIVERY_PREDECESSORS
+  s108:
+    config_path: configs/experiments/wavlm_s108_no_locked_dry_run_v1.yaml
+    config_sha256: 7803feb6121568cf78a582cbacd7a848893a0655bdfc211bac9d35ecc1dd40cc
+    contract_path: src/voice_coach/training/wavlm_s108_dry_run.py
+    contract_sha256: 78444cdf5fd89dae71186028fcdf1a9771488937d698417f0ac1d84cd1aeeb32
+    completion_path: artifacts/experiments/aihub71490_wavlm_s108_final_s1_v1/commit.json
+    completion_sha256: TBD_S108_COMPLETION
+  e01:
+    config_path: configs/experiments/e01_metamorphic_robustness_v1.yaml
+    config_sha256: 67e4e61b42d9f15bbe19eae7b21484a92b5f094190be75747f448beeb5ee2745
+    contract_path: src/voice_coach/evaluation/e01_metamorphic_contract.py
+    contract_sha256: b0a246adf9e9d9738f0fb672420353c6d2617cc29c839cd04bb467105c0d89c3
+    completion_path: artifacts/experiments/e01_metamorphic_robustness_v1/commit.json
+    completion_sha256: TBD_E01_COMPLETION
+  c02:
+    config_path: configs/experiments/c02_deterministic_coaching_selection_v1.yaml
+    config_sha256: 5ebb7fb3b4754ecec46d47997dbddc6adcfe44ff5579daf66b5dd77875d244f9
+    contract_path: src/voice_coach/coaching/c02_selection_contract.py
+    contract_sha256: 477bd1fb3683ec4d70c33f9c498cf949ca44a81f68b24ccab8a263248ea95da7
+    completion_path: artifacts/coaching/c02/commit.json
+    completion_sha256: TBD_C02_COMPLETION
+  e02:
+    config_path: configs/experiments/e02_confidence_guard_v1.yaml
+    config_sha256: 2a06ede8d8be4840f5fcc0780fd3b9b08757a484c6b09f319da3201947443184
+    contract_path: src/voice_coach/evaluation/e02_confidence_guard_contract.py
+    contract_sha256: f01e069a0026d52e14e760bf0b7f65f1ded9cd8aaf2624f52b77ce49fc89fff9
+    completion_path: artifacts/evaluation/e02/commit.json
+    completion_sha256: TBD_E02_COMPLETION
+  c03:
+    config_path: configs/experiments/c03_expert_coaching_audit_v1.yaml
+    config_sha256: 566607a7babb68e0bdcd86e03f1fa35269121cb3cfb5fe5cda0d55944e1efc92
+    contract_path: src/voice_coach/coaching/c03_expert_audit_contract.py
+    contract_sha256: 5b78d0fffd5421a2308c158cc850baeb41c909abfab603b5b958e0d889ca53f7
+    report_path: artifacts/coaching/c03/c03_expert_audit_report_v1.json
+    report_sha256: TBD_C03_COMPLETION
+  e00:
+    config_path: configs/experiments/e00_closed_loop_demo_v1.yaml
+    config_sha256: dcda58365ca249ea6fd1aada1ed25d4c9c7072382de4850151388142f6910a4c
+    contract_path: src/voice_coach/evaluation/e00_closed_loop_contract.py
+    contract_sha256: 1d74038a7bc913bd03ba61712f0aaf469e3032e0dea02fda598fb90ca11e67f1
+    completion_path: artifacts/demo/e00/e00_closed_loop_completion_v1.json
+    completion_sha256: TBD_E00_COMPLETION
+    d08_rights_lineage_sha256: TBD_E00_D08_R03_LINEAGE
+  r03:
+    config_path: configs/experiments/r03_reference_bank_selection_v1.yaml
+    config_sha256: be50473052f5b60c7236b9ae1b7af4c49231eabe51d891ff112ac91e201610d8
+    contract_path: src/voice_coach/references/r03_selection_contract.py
+    contract_sha256: 3e7fbdaad254d55822c1b64cdd8084b252e7b2214f7107282f080875ff972406
+    bank_path: data/processed/references/r03/r03_reference_bank_manifest_v1.json
+    bank_sha256: TBD_R03_COMPLETION
+  r04:
+    config_path: configs/experiments/r04_blind_multireference_evaluation_v1.yaml
+    config_sha256: 19beadb8d75030ed15acba975f0272208ef635fae237a11520b4d0d84318a23b
+    contract_path: src/voice_coach/references/r04_blind_evaluation_contract.py
+    contract_sha256: 744fab1ec2ebcb069bb2510ffaf96ade715c6694adb2708a6a46cb5e8b854305
+    completion_path: artifacts/experiments/r04_blind_multireference_evaluation_v1/commit.json
+    completion_sha256: TBD_R04_COMPLETION
+  static_package_may_resolve_or_read_predecessor_artifacts: false
+
+data_contract:
+  participant_schema_path: configs/human_research/d09_h02_h03_participant_v1.schema.json
+  participant_schema_sha256: ed4758470ed69d004388e4388ac04074a66eee4dded91f3e739814b57c30a59f
+  session_schema_path: configs/human_research/d09_h02_h03_session_v1.schema.json
+  session_schema_sha256: 4650b232da24edfaf2318d041f8c9aee3c4ebef6e18e8c602dc3d4f3451271cf
+  audio_schema_path: configs/human_research/d09_h02_h03_audio_v1.schema.json
+  audio_schema_sha256: e18bd7b54ca6bf7c3a4dd41ff150152f51e9825ad3ce3283d3682794b7a68437
+  audio_qc_schema_path: configs/human_research/d09_h02_h03_audio_qc_v1.schema.json
+  audio_qc_schema_sha256: 7838f6e63e52563fafe661cea1bd9b5a129bd9115aa06d32b5f50e5035893c7b
+  randomization_schema_path: configs/human_research/d09_h02_h03_randomization_v1.schema.json
+  randomization_schema_sha256: edb9891b7c55ca0ac53570becd5984a564f0bed7d53422fab4ff01fcad8b48ce
+  intervention_exposure_schema_path: configs/human_research/d09_h02_h03_intervention_exposure_v1.schema.json
+  intervention_exposure_schema_sha256: 3027b732671da324e7f4d8bb75b60f944a5cc3e485e588b37198b7d5a416c5ee
+  blind_rating_schema_path: configs/human_research/d09_h02_h03_blind_rating_v1.schema.json
+  blind_rating_schema_sha256: 2e7ac28c5d1a16c4f5ea79fe6c5f715ffd1d12105981ef8b1d433346718f855a
+  disposition_schema_path: configs/human_research/d09_h02_h03_disposition_v1.schema.json
+  disposition_schema_sha256: 34697e3a4a859e96d71e8d43d5e9461acad5d8071a7eb5ea46b4f19317130509
+  participant_session_audio_qc_randomization_exposure_rating_disposition_zone: D1_pseudonymized_restricted_human_research
+  pseudonym_identity_key_zone: R0_direct_identifier_key_separate
+  restricted_locator_zone: R1_restricted_locator
+  aggregate_handoff_zone: A1_aggregate_only
+
+operational_preregistration:
+  template_path: configs/human_research/d09_h02_h03_operational_preregistration_v1.template.json
+  template_sha256: a934067916e175a1b36e7d23e3b23545997c85d3a735c3d00f52e950fedd0fa1
+  feasibility_path: artifacts/external_attestations/d09/d09_feasibility_operational_preregistration_v1.json
+  feasibility_sha256: TBD_D09_FEASIBILITY_PREREGISTRATION
+  confirmatory_path: artifacts/external_attestations/d09/d09_confirmatory_operational_preregistration_v1.json
+  confirmatory_sha256: TBD_D09_CONFIRMATORY_PREREGISTRATION
+  exact_eligibility_recruitment_n_qc_exposure_rating_anchors_adjudication_support_required: true
+  unresolved_fields_must_fail_closed: true
+
+intervention_manual:
+  template_path: configs/human_research/d09_h02_h03_intervention_manual_v1.template.json
+  template_sha256: 1f991180fdfcf597ea26aec3ee678c423d3b82d8d42ecdfdca61ac175fd050a8
+  feasibility_path: artifacts/external_attestations/d09/d09_feasibility_intervention_manual_v1.json
+  feasibility_sha256: TBD_D09_FEASIBILITY_MANUAL
+  confirmatory_path: artifacts/external_attestations/d09/d09_confirmatory_intervention_manual_v1.json
+  confirmatory_sha256: TBD_D09_CONFIRMATORY_MANUAL
+  c0_c3_c5_exact_version_and_hash_required: true
+  exposure_matching_required: true
+
+execution_authorization:
+  template_path: configs/human_research/d09_h02_h03_execution_authorization_v1.template.json
+  template_sha256: 2bb288e4f2e3ec61409c5ccc53636dbc8d8cb0ec6e908e26ad1a57f1400a0ca3
+  feasibility_path: artifacts/external_attestations/d09/d09_feasibility_execution_authorization_v1.json
+  feasibility_sha256: TBD_D09_FEASIBILITY_AUTHORIZATION
+  confirmatory_path: artifacts/external_attestations/d09/d09_confirmatory_execution_authorization_v1.json
+  confirmatory_sha256: TBD_D09_CONFIRMATORY_AUTHORIZATION
+  statistics_effect_or_publication_authorization_allowed: false
+
+phase_contract:
+  phase_a:
+    id: feasibility
+    per_arm_minimum: 15
+    per_arm_maximum: 20
+    efficacy_claim_allowed: false
+    h01_or_sap_required_before_phase: false
+    output_schema: voice_coach.h04_feasibility_pilot_completion.v1
+  phase_b:
+    id: confirmatory
+    final_n_source: actual_h01_manual_lock
+    feasibility_completion_h01_lock_public_prereg_and_sap_required_before_recruitment: true
+    pilot_participant_audio_rating_reuse_or_copy_allowed: false
+    output_schema: voice_coach.h04_h02_h03_blind_bundle_completion.v1
+  comparisons:
+    - id: c3_minus_c0
+      arms: [C0, C3]
+      allocation_ratio: "1:1"
+    - id: c5_minus_c3
+      arms: [C3, C5]
+      allocation_ratio: "1:1"
+  allocation_unit: participant
+  stratification: [l1, baseline_comprehensibility]
+  separate_stage_randomization_receipts_required: true
+  stage_1_delivery_gate_components: [S108, E01, C02, E02, C03]
+  stage_2_delivery_gate_components: [S108, E01, C02, E02, C03, E00, R03, R04]
+  comparison_participant_audio_rating_overlap_or_reuse_allowed: false
+  shared_c3_participant_arm_allowed: false
+  stage_2_activation_basis: approval_safety_privacy_and_delivery_readiness_only
+  unblinded_effect_activation_allowed: false
+  intervention_duration_days: 14
+  assessment_timepoints: [pre, post_at_2_weeks, retention_4_weeks_after_post]
+  retention_days_after_post: 28
+  fixed_practice_and_transfer_items_required: true
+  transfer_items_may_be_trained: false
+  minimum_independent_blind_raters: 2
+  rater_blind_dimensions: [condition, timepoint, participant_identity]
+  participant_blinding_claim_allowed: false
+
+governance:
+  consent_withdrawal_retention_deletion_required: true
+  compensation_and_minor_policy_required: true
+  incident_and_pause_stop_required: true
+  pseudonym_key_separation_required: true
+  adherence_missingness_protocol_deviation_preserved: true
+  adverse_feedback_preserved_and_aggregated: true
+  postrandomization_exclusion_allowed: false
+  public_participant_audio_rating_or_locator_allowed: false
+
+non_execution:
+  portal_or_institution_contact_allowed: false
+  recruitment_allowed: false
+  consent_allowed: false
+  participant_or_session_access_allowed: false
+  microphone_or_audio_access_allowed: false
+  qc_execution_allowed: false
+  randomization_allowed: false
+  model_or_gpu_access_allowed: false
+  api_or_network_access_allowed: false
+  intervention_or_reference_delivery_allowed: false
+  blind_rating_allowed: false
+  metric_statistics_or_effect_allowed: false
+  output_registry_or_commit_write_allowed: false
+  publication_or_completion_claim_allowed: false
+
+execution_order:
+  feasibility:
+    - validate_static_sources_schemas_and_fail_closed_templates
+    - require_exact_h00_approval_and_attestation_before_path_resolution
+    - deep_validate_actual_h00_scope
+    - validate_actual_delivery_predecessor_aggregate_receipt
+    - validate_frozen_feasibility_operational_preregistration
+    - validate_frozen_feasibility_c0_c3_c5_manual_bundle
+    - validate_active_feasibility_execution_authorization
+    - stop_before_recruitment_consent_randomization_audio_intervention_rating_metric_or_output
+  confirmatory:
+    - validate_static_sources_schemas_and_fail_closed_templates
+    - require_exact_h00_approval_and_attestation_before_path_resolution
+    - deep_validate_actual_h00_scope
+    - validate_actual_feasibility_completion
+    - validate_actual_h01_manual_final_n_lock
+    - validate_frozen_h04_sap
+    - validate_actual_delivery_predecessor_aggregate_receipt
+    - validate_frozen_confirmatory_operational_preregistration
+    - validate_frozen_confirmatory_c0_c3_c5_manual_bundle
+    - validate_active_confirmatory_execution_authorization
+    - stop_before_new_confirmatory_recruitment_randomization_audio_intervention_rating_metric_or_output
+
+outputs:
+  restricted_root: data/restricted/human_research/d09_h02_h03
+  feasibility_handoff_path: artifacts/human_research/h02_h03/feasibility/h04_feasibility_pilot_completion_v1.json
+  confirmatory_handoff_path: artifacts/human_research/h02_h03/h02_h03_blind_bundle_completion_v1.json
+  phase_separation_path: artifacts/human_research/h02_h03/d09_phase_separation_receipt_v1.json
+  feasibility_comparison_stage_separation_path: artifacts/human_research/h02_h03/feasibility/d09_comparison_stage_separation_receipt_v1.json
+  confirmatory_comparison_stage_separation_path: artifacts/human_research/h02_h03/d09_comparison_stage_separation_receipt_v1.json
+  registry_path: artifacts/experiment_registry/d09-h02-h03-longitudinal-collection-v1/metadata.json
+  failure_path: artifacts/human_research/d09_h02_h03/failure.json
+  no_overwrite: true
+  atomic_publish_required: true
+  write_enabled_in_this_package: false

@@ -1,0 +1,202 @@
+schema_version: 1
+
+experiment:
+  id: d08_native_multispeaker_reference_v1
+  stage: wp1_d08_native_multispeaker_reference
+  implementation_status: production_static_preflight_only
+  actual_recruitment_allowed: false
+  actual_consent_collection_allowed: false
+  actual_recording_allowed: false
+  actual_audio_read_allowed: false
+  actual_audio_write_allowed: false
+  actual_microphone_access_allowed: false
+  actual_model_access_allowed: false
+  actual_network_access_allowed: false
+  actual_gpu_access_allowed: false
+  actual_qc_execution_allowed: false
+  actual_output_write_allowed: false
+  publication_allowed: false
+  completion_claim_allowed: false
+
+canonical_sources:
+  access_scope: C1_public_or_aggregate_only
+  pins:
+    - path: artifacts/reference/r00/r00_sentence_card_v1.validation.json
+      sha256: 95b4fd861a3c21222ff13859cfbc9c196e3fd06493852bca823d8a63dc2816dd
+    - path: configs/reference/d08_completion_v1.schema.json
+      sha256: 1ae8e5d37e0ce25b7d5831e321c44d7bff8d9805c7c24a3f2367b73dad6ac59c
+    - path: configs/reference/d08_h00_institutional_approval_v1.template.json
+      sha256: 88321e78e556d53949f92cfdc8dadda6195fe8807ae235fe507544d4199693b1
+    - path: configs/reference/d08_individual_consent_attestation_v1.template.json
+      sha256: ae8bee17dd8e94db3efd86b5dbe277c77521ab3f89730a370dea15a4df05c193
+    - path: configs/reference/d08_qc_preregistration_v1.template.json
+      sha256: e1d7b3a6b81614852f76c809299eae490c75d8e0ac2855f90b569da146537472
+    - path: configs/reference/d08_qc_report_v1.schema.json
+      sha256: 4064c2260d3df57b9f41977bcbe303f393ea4d7c582c295b31e39a80df646aa6
+    - path: configs/reference/d08_recording_metadata_v1.schema.json
+      sha256: 6ae7bf0c6d30cf85e9f02fad37586d0dcb06baac7789e62f6310c4e20732364e
+    - path: configs/reference/d08_recording_rights_attestation_v1.template.json
+      sha256: 87708790d6dafa5f5a61e6836b13d8ba03e9f575058f03250cd46b5cd7a94d6a
+    - path: configs/reference/r00_sentence_card_v1.schema.json
+      sha256: 1f8bcf0325414e1923cda0def9a973ac2f7be7bd85cca4ee869743ef862a7b92
+    - path: data/reference/r00/CC0_NOTICE.txt
+      sha256: ffd86dc89cf0957dccc61f6ecb7af1c7ebbbdbff2bd87c951e54c40afc1262c9
+    - path: data/reference/r00/r00_sentence_card_v1.json
+      sha256: 08dc149ccf10006a587e6216dda0471c19b5c55eab6b320b4348587527d82c4d
+    - path: scripts/check_project_constraints.py
+      sha256: 7c885d9d863d1a505bb074e5be33b63e262b191585bcf7a02a03162ca0f1ba86
+    - path: scripts/prepare_d08_native_multispeaker_reference.py
+      sha256: f4a711e79f71fffab8b499151055423f6328e055b65f2ccaace97787350bbbf8
+    - path: scripts/validate_r00_sentence_card.py
+      sha256: 967517e74194936c91dad1eed4fcfb0c059b5480af32b8adfc9725fdb7d6e7d0
+    - path: src/voice_coach/references/d08_native_reference_contract.py
+      sha256: d6fcbbba25f9f7e48be5b98a39d7b27602b5ccd7dda32c85afcb85c2876495cb
+
+predecessor_r00:
+  deep_validation_required: true
+  card_path: data/reference/r00/r00_sentence_card_v1.json
+  card_sha256: 08dc149ccf10006a587e6216dda0471c19b5c55eab6b320b4348587527d82c4d
+  schema_path: configs/reference/r00_sentence_card_v1.schema.json
+  schema_sha256: 1f8bcf0325414e1923cda0def9a973ac2f7be7bd85cca4ee869743ef862a7b92
+  notice_path: data/reference/r00/CC0_NOTICE.txt
+  notice_sha256: ffd86dc89cf0957dccc61f6ecb7af1c7ebbbdbff2bd87c951e54c40afc1262c9
+  validator_path: scripts/validate_r00_sentence_card.py
+  validator_sha256: 967517e74194936c91dad1eed4fcfb0c059b5480af32b8adfc9725fdb7d6e7d0
+  validation_report_path: artifacts/reference/r00/r00_sentence_card_v1.validation.json
+  validation_report_sha256: 95b4fd861a3c21222ff13859cfbc9c196e3fd06493852bca823d8a63dc2816dd
+  required_status: valid
+  required_sentence_count: 20
+  required_r00_completion_claim_allowed: true
+  required_r01_completion_claim_allowed: false
+  tts_or_audio_created_must_be_false: true
+  human_evaluation_completed_must_be_false: true
+
+external_prerequisites:
+  external_placeholder: TBD_EXTERNAL_ATTESTATION
+  preregistration_placeholder: TBD_PREREGISTRATION
+  h00_institutional_approval:
+    path: artifacts/external_attestations/d08/h00_institutional_approval_v1.json
+    sha256: TBD_EXTERNAL_ATTESTATION
+    required_schema_version: voice_coach.d08_h00_institutional_approval.v1
+    required_status: approved_for_d08_recording
+  individual_consent:
+    path: artifacts/external_attestations/d08/individual_consent_attestation_v1.json
+    sha256: TBD_EXTERNAL_ATTESTATION
+    required_schema_version: voice_coach.d08_individual_consent_attestation.v1
+    required_status: approved_active_individual_consent
+  recording_rights:
+    path: artifacts/external_attestations/d08/recording_rights_attestation_v1.json
+    sha256: TBD_EXTERNAL_ATTESTATION
+    required_schema_version: voice_coach.d08_recording_rights_attestation.v1
+    required_status: approved_active_recording_rights
+  qc_preregistration:
+    path: artifacts/preregistration/d08/d08_qc_preregistration_v1.json
+    sha256: TBD_PREREGISTRATION
+    required_schema_version: voice_coach.d08_qc_preregistration.v1
+    required_status: registered_and_frozen
+
+recording_design:
+  sentence_count: 20
+  sentence_ids:
+    - R00-01
+    - R00-02
+    - R00-03
+    - R00-04
+    - R00-05
+    - R00-06
+    - R00-07
+    - R00-08
+    - R00-09
+    - R00-10
+    - R00-11
+    - R00-12
+    - R00-13
+    - R00-14
+    - R00-15
+    - R00-16
+    - R00-17
+    - R00-18
+    - R00-19
+    - R00-20
+  planning_target_minimum_distinct_speakers_per_sentence: 4
+  binding_completion_minimum_distinct_speakers_per_sentence: TBD_PREREGISTRATION
+  take_pattern:
+    natural_speed_take_count_per_speaker_sentence: 2
+    clear_educational_speed_take_count_per_speaker_sentence: 1
+    exact_take_pattern_required: true
+  audio_format:
+    sample_rate_hz: 48000
+    bit_depth: 24
+    channel_count: 1
+    container_format: WAV
+    codec: PCM
+  recording_setup:
+    same_equipment_profile_required: true
+    same_microphone_profile_required: true
+    same_room_profile_required: true
+    mouth_to_microphone_distance_min_cm: 15
+    mouth_to_microphone_distance_max_cm: 20
+    equipment_profile_id_sha256: TBD_EXTERNAL_ATTESTATION
+    microphone_profile_id_sha256: TBD_EXTERNAL_ATTESTATION
+    room_profile_id_sha256: TBD_EXTERNAL_ATTESTATION
+    session_metadata_required: true
+    take_metadata_required: true
+
+quality_control:
+  fixed_gates:
+    clipping_ratio_operator: <
+    clipping_ratio_threshold: 0.001
+    decoder_error_count_required: 0
+    asr_role: candidate_triage_only_not_final_qc
+    human_reviewer_pool_size: 2
+    minimum_human_listener_confirmations: 1
+    final_content_and_pronunciation_human_confirmation_required: true
+  preregistered_before_audio_access:
+    binding_speaker_floor: TBD_PREREGISTRATION
+    dc_offset_metric_unit_direction_threshold: TBD_PREREGISTRATION
+    content_match_metric_direction_threshold: TBD_PREREGISTRATION
+    noise_metric_unit_direction_threshold: TBD_PREREGISTRATION
+    reverb_metric_unit_direction_threshold: TBD_PREREGISTRATION
+    interruption_metric_unit_direction_threshold: TBD_PREREGISTRATION
+    qc_adjudication_trigger_and_decision_rule: TBD_PREREGISTRATION
+
+privacy_license_boundaries:
+  raw_audio_zone: R0_restricted_raw_audio
+  locator_and_identity_mapping_zone: R1_access_controlled_locator_metadata
+  pseudonymized_qc_and_embedding_zone: D1_restricted_experiment
+  aggregate_completion_zone: A1_aggregate_review_required
+  schema_code_documentation_zone: C1_public_code
+  raw_audio_publication_allowed: false
+  locator_manifest_publication_allowed: false
+  d1_row_publication_allowed: false
+  aggregate_requires_separate_release_review: true
+  namespaced_sha256_speaker_ids_required: true
+  direct_identity_in_metadata_or_qc_allowed: false
+  free_text_in_metadata_qc_or_completion_allowed: false
+  public_corpus_audio_may_be_disguised_as_human: false
+  tts_audio_may_be_disguised_as_human: false
+  explicit_human_tts_source_and_license_required: true
+  checksum_implies_license_or_publication_permission: false
+
+execution_order:
+  - validate_d08_c1_config_sources_schemas_and_templates
+  - deep_validate_actual_r00_completion
+  - validate_h00_or_equivalent_institutional_approval
+  - validate_active_individual_consent_attestation
+  - validate_recording_rights_source_license_attestation
+  - validate_frozen_qc_preregistration_without_tbd
+  - cross_validate_speaker_floor_protocol_and_attestation_bindings
+  - stop_before_r0_r1_d1_audio_microphone_model_network_gpu_or_output
+
+outputs:
+  metadata_schema_path: configs/reference/d08_recording_metadata_v1.schema.json
+  qc_schema_path: configs/reference/d08_qc_report_v1.schema.json
+  completion_schema_path: configs/reference/d08_completion_v1.schema.json
+  metadata_manifest_path: data/restricted/references/d08/d08_recording_metadata_v1.json
+  qc_report_path: data/processed/references/d08/d08_qc_report_v1.json
+  completion_path: artifacts/external_evaluation/d08/d08_completion_v1.json
+  completion_commit_path: artifacts/external_evaluation/d08/d08_completion_v1.commit.json
+  failure_report_path: artifacts/external_evaluation/d08/failure.json
+  no_overwrite: true
+  atomic_publish_required: true
+  write_enabled_in_this_package: false

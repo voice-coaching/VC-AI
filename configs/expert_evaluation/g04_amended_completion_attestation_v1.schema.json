@@ -1,0 +1,87 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "voice_coach.g04_amended_completion_attestation.v1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_version",
+    "status",
+    "aggregate_only",
+    "contains_identifiers",
+    "contains_rows",
+    "contains_audio",
+    "contains_labels",
+    "contains_predictions",
+    "locked_access_count",
+    "t43",
+    "i30",
+    "scorer_status",
+    "reviewer_attestation_sha256",
+    "reviewer_qualification_confirmed",
+    "research_lead_approved",
+    "consumer_contract_version"
+  ],
+  "properties": {
+    "schema_version": {"const": "voice_coach.g04_amended_completion_attestation.v1"},
+    "status": {"const": "passed"},
+    "aggregate_only": {"const": true},
+    "contains_identifiers": {"const": false},
+    "contains_rows": {"const": false},
+    "contains_audio": {"const": false},
+    "contains_labels": {"const": false},
+    "contains_predictions": {"const": false},
+    "locked_access_count": {"const": 0},
+    "t43": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "expected_count",
+        "completed_count",
+        "uncertain_count",
+        "unresolved_count",
+        "invalid_resolution_count",
+        "report_sha256"
+      ],
+      "properties": {
+        "expected_count": {"const": 43},
+        "completed_count": {"const": 43},
+        "uncertain_count": {"const": 0},
+        "unresolved_count": {"const": 0},
+        "invalid_resolution_count": {"const": 0},
+        "report_sha256": {"$ref": "#/$defs/sha256"}
+      }
+    },
+    "i30": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "expected_count",
+        "completed_count",
+        "phone_level_accuracy",
+        "minimum_phone_level_accuracy",
+        "total_phone_intervals",
+        "incorrect_phone_intervals",
+        "strata_valid",
+        "report_sha256"
+      ],
+      "properties": {
+        "expected_count": {"const": 30},
+        "completed_count": {"const": 30},
+        "phone_level_accuracy": {"type": "number", "minimum": 0.95, "maximum": 1},
+        "minimum_phone_level_accuracy": {"const": 0.95},
+        "total_phone_intervals": {"type": "integer", "minimum": 1},
+        "incorrect_phone_intervals": {"type": "integer", "minimum": 0},
+        "strata_valid": {"const": true},
+        "report_sha256": {"$ref": "#/$defs/sha256"}
+      }
+    },
+    "scorer_status": {"const": "passed"},
+    "reviewer_attestation_sha256": {"$ref": "#/$defs/sha256"},
+    "reviewer_qualification_confirmed": {"const": true},
+    "research_lead_approved": {"const": true},
+    "consumer_contract_version": {"const": "g04_t43_i30_v1"}
+  },
+  "$defs": {
+    "sha256": {"type": "string", "pattern": "^[0-9a-f]{64}$"}
+  }
+}

@@ -1,0 +1,103 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://voice-coach.local/schemas/d09_h02_h03_randomization_v1.schema.json",
+  "title": "D09 H02-H03 restricted participant randomization receipt",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_version",
+    "assignment_receipt_id_sha256",
+    "participant_key_sha256",
+    "phase",
+    "comparison",
+    "randomization_stage",
+    "assigned_condition",
+    "allocation_unit",
+    "allocation_ratio",
+    "l1_stratum_id",
+    "baseline_stratum_id",
+    "stage_randomization_receipt_sha256",
+    "stage_gate_receipt_sha256",
+    "s108_completion_sha256",
+    "e01_completion_sha256",
+    "c02_completion_sha256",
+    "e02_completion_sha256",
+    "c03_completion_sha256",
+    "e00_completion_sha256",
+    "r03_bank_sha256",
+    "r04_completion_sha256",
+    "allocation_concealed_until_assignment",
+    "stage_2_activation_basis",
+    "unblinded_effect_used_for_stage_2_activation",
+    "privacy_zone"
+  ],
+  "properties": {
+    "schema_version": {"const": "voice_coach.d09_h02_h03_randomization.v1"},
+    "assignment_receipt_id_sha256": {"$ref": "#/$defs/sha256"},
+    "participant_key_sha256": {"$ref": "#/$defs/sha256"},
+    "phase": {"enum": ["feasibility", "confirmatory"]},
+    "comparison": {"enum": ["c3_minus_c0", "c5_minus_c3"]},
+    "randomization_stage": {"enum": ["stage_1", "stage_2"]},
+    "assigned_condition": {"enum": ["C0", "C3", "C5"]},
+    "allocation_unit": {"const": "participant"},
+    "allocation_ratio": {"const": "1:1"},
+    "l1_stratum_id": {"$ref": "#/$defs/safeId"},
+    "baseline_stratum_id": {"$ref": "#/$defs/safeId"},
+    "stage_randomization_receipt_sha256": {"$ref": "#/$defs/sha256"},
+    "stage_gate_receipt_sha256": {"$ref": "#/$defs/sha256"},
+    "s108_completion_sha256": {"$ref": "#/$defs/sha256"},
+    "e01_completion_sha256": {"$ref": "#/$defs/sha256"},
+    "c02_completion_sha256": {"$ref": "#/$defs/sha256"},
+    "e02_completion_sha256": {"$ref": "#/$defs/sha256"},
+    "c03_completion_sha256": {"$ref": "#/$defs/sha256"},
+    "e00_completion_sha256": {"$ref": "#/$defs/sha256"},
+    "r03_bank_sha256": {"$ref": "#/$defs/sha256"},
+    "r04_completion_sha256": {"$ref": "#/$defs/sha256"},
+    "allocation_concealed_until_assignment": {"const": true},
+    "stage_2_activation_basis": {
+      "enum": [
+        "not_applicable_stage_1",
+        "approval_safety_privacy_and_delivery_readiness_only"
+      ]
+    },
+    "unblinded_effect_used_for_stage_2_activation": {"const": false},
+    "privacy_zone": {"const": "D1_pseudonymized_restricted_human_research"}
+  },
+  "allOf": [
+    {
+      "if": {
+        "properties": {"comparison": {"const": "c3_minus_c0"}},
+        "required": ["comparison"]
+      },
+      "then": {
+        "properties": {
+          "randomization_stage": {"const": "stage_1"},
+          "assigned_condition": {"enum": ["C0", "C3"]},
+          "stage_2_activation_basis": {"const": "not_applicable_stage_1"},
+          "e00_completion_sha256": {"const": "0000000000000000000000000000000000000000000000000000000000000000"},
+          "r03_bank_sha256": {"const": "0000000000000000000000000000000000000000000000000000000000000000"},
+          "r04_completion_sha256": {"const": "0000000000000000000000000000000000000000000000000000000000000000"}
+        }
+      }
+    },
+    {
+      "if": {
+        "properties": {"comparison": {"const": "c5_minus_c3"}},
+        "required": ["comparison"]
+      },
+      "then": {
+        "properties": {
+          "randomization_stage": {"const": "stage_2"},
+          "assigned_condition": {"enum": ["C3", "C5"]},
+          "stage_2_activation_basis": {
+            "const": "approval_safety_privacy_and_delivery_readiness_only"
+          }
+        }
+      }
+    }
+  ],
+  "$defs": {
+    "sha256": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
+    "safeId": {"type": "string", "pattern": "^[a-z0-9][a-z0-9_.:-]{0,127}$"}
+  }
+}

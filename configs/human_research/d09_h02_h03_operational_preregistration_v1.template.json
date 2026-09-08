@@ -1,0 +1,128 @@
+{
+  "schema_version": "voice_coach.d09_h02_h03_operational_preregistration.v1",
+  "preregistration_id": "TBD_PREREGISTRATION",
+  "phase": "TBD_PREREGISTRATION",
+  "status": "draft_unapproved",
+  "frozen_at_utc": "TBD_PREREGISTRATION",
+  "lineage": {
+    "h00_approval_sha256": "TBD_H00_APPROVAL",
+    "h00_attestation_sha256": "TBD_H00_ATTESTATION",
+    "protocol_sha256": "TBD_PREREGISTRATION",
+    "delivery_predecessor_receipt_sha256": "TBD_DELIVERY_PREDECESSORS",
+    "feasibility_completion_sha256": "TBD_PHASE_DEPENDENT",
+    "h01_final_sample_size_lock_sha256": "TBD_PHASE_DEPENDENT",
+    "frozen_sap_sha256": "TBD_PHASE_DEPENDENT"
+  },
+  "eligibility_and_recruitment": {
+    "exact_eligibility_rule_id": "TBD_PREREGISTRATION",
+    "exact_exclusion_rule_id": "TBD_PREREGISTRATION",
+    "exact_recruitment_channel_id": "TBD_PREREGISTRATION",
+    "exact_screening_workflow_id": "TBD_PREREGISTRATION",
+    "minor_policy_id": "TBD_PREREGISTRATION",
+    "compensation_schedule_id": "TBD_PREREGISTRATION",
+    "coercion_review_receipt_sha256": "TBD_PREREGISTRATION"
+  },
+  "sample_size": {
+    "stage_1_final_enrollment_per_arm": "TBD_PREREGISTRATION",
+    "stage_2_final_enrollment_per_arm": "TBD_PREREGISTRATION",
+    "feasibility_per_arm_minimum": 15,
+    "feasibility_per_arm_maximum": 20,
+    "confirmatory_n_must_equal_h01_lock": true,
+    "automatic_final_n_lock_allowed": false
+  },
+  "schedule_and_items": {
+    "intervention_duration_days": 14,
+    "post_timepoint": "end_of_two_week_intervention",
+    "retention_days_after_post": 28,
+    "timepoints": [
+      "pre",
+      "post_at_2_weeks",
+      "retention_4_weeks_after_post"
+    ],
+    "fixed_practice_item_card_sha256": "TBD_PREREGISTRATION",
+    "fixed_transfer_item_card_sha256": "TBD_PREREGISTRATION",
+    "same_assessment_items_across_timepoints": true,
+    "transfer_items_excluded_from_training": true
+  },
+  "randomization": {
+    "allocation_unit": "participant",
+    "allocation_ratio": "1:1",
+    "strata": [
+      "l1",
+      "baseline_comprehensibility"
+    ],
+    "allocation_concealment_workflow_id": "TBD_PREREGISTRATION",
+    "stage_1_comparison_id": "c3_minus_c0",
+    "stage_1_allowed_conditions": ["C0", "C3"],
+    "stage_1_randomization_receipt_rule_id": "TBD_PREREGISTRATION",
+    "stage_1_delivery_gate_components": ["S108", "E01", "C02", "E02", "C03"],
+    "stage_2_comparison_id": "c5_minus_c3",
+    "stage_2_allowed_conditions": ["C3", "C5"],
+    "stage_2_randomization_receipt_rule_id": "TBD_PREREGISTRATION",
+    "stage_2_delivery_gate_components": [
+      "S108", "E01", "C02", "E02", "C03", "E00", "R03", "R04"
+    ],
+    "stage_randomizations_separate": true,
+    "comparison_participant_audio_rating_reuse_allowed": false,
+    "stage_2_activation_basis": "approval_safety_privacy_and_delivery_readiness_only",
+    "stage_2_activation_time_order_rule_id": "TBD_PREREGISTRATION",
+    "stage_1_unblinded_effect_access_log_rule_id": "TBD_PREREGISTRATION",
+    "stage_1_unblinded_effect_access_count_before_activation": 0,
+    "stage_1_outcome_or_effect_available_at_activation": false,
+    "unblinded_effect_used_for_stage_2_activation": false
+  },
+  "audio_qc": {
+    "exact_recording_protocol_id": "TBD_PREREGISTRATION",
+    "exact_sample_rate_hz": "TBD_PREREGISTRATION",
+    "exact_duration_rule_id": "TBD_PREREGISTRATION",
+    "exact_snr_rule_id": "TBD_PREREGISTRATION",
+    "exact_clipping_rule_id": "TBD_PREREGISTRATION",
+    "exact_decode_rule_id": "TBD_PREREGISTRATION",
+    "baseline_hard_qc_before_randomization_only": true,
+    "postrandomization_qc_failure_preserved_as_missingness": true
+  },
+  "exposure_and_adherence": {
+    "exact_session_schedule_id": "TBD_PREREGISTRATION",
+    "exact_assigned_seconds_rule_id": "TBD_PREREGISTRATION",
+    "exact_assigned_item_count_rule_id": "TBD_PREREGISTRATION",
+    "exact_adherence_denominator_id": "TBD_PREREGISTRATION",
+    "exact_protocol_deviation_taxonomy_id": "TBD_PREREGISTRATION",
+    "nonadherence_retained_after_randomization": true
+  },
+  "blind_rating": {
+    "minimum_independent_raters": 2,
+    "rater_qualification_rule_id": "TBD_PREREGISTRATION",
+    "rating_anchor_version_id": "TBD_PREREGISTRATION",
+    "randomization_and_blocking_rule_id": "TBD_PREREGISTRATION",
+    "adjudication_rule_id": "TBD_PREREGISTRATION",
+    "minimum_support_rule_id": "TBD_PREREGISTRATION",
+    "raters_blinded_to_condition_timepoint_and_identity": true,
+    "participant_blinding_claim_allowed": false
+  },
+  "governance": {
+    "consent_withdrawal_workflow_id": "TBD_PREREGISTRATION",
+    "retention_and_deletion_schedule_id": "TBD_PREREGISTRATION",
+    "pseudonym_key_separation_workflow_id": "TBD_PREREGISTRATION",
+    "incident_response_workflow_id": "TBD_PREREGISTRATION",
+    "pause_stop_workflow_id": "TBD_PREREGISTRATION",
+    "adverse_feedback_taxonomy_id": "TBD_PREREGISTRATION",
+    "withdrawal_missingness_deviation_and_adverse_preserved": true
+  },
+  "privacy_and_claims": {
+    "participant_audio_rating_rows_zone": "D1_pseudonymized_restricted_human_research",
+    "pseudonym_key_zone": "R0_direct_identifier_key_separate",
+    "restricted_locator_zone": "R1_restricted_locator",
+    "aggregate_completion_zone": "A1_aggregate_only",
+    "feasibility_efficacy_claim_allowed": false,
+    "participant_audio_rating_reuse_across_phases_allowed": false,
+    "public_row_or_audio_release_allowed": false
+  },
+  "approval": {
+    "decision": "TBD_PREREGISTRATION",
+    "principal_investigator_receipt_sha256": "TBD_PREREGISTRATION",
+    "statistician_receipt_sha256": "TBD_PREREGISTRATION",
+    "data_custodian_receipt_sha256": "TBD_PREREGISTRATION",
+    "approved_and_frozen": false
+  },
+  "binding_sha256": "TBD_PREREGISTRATION"
+}

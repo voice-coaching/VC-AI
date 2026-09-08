@@ -1,0 +1,192 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://voice-coach.local/schemas/e02_confidence_guard_input_v1.schema.json",
+  "title": "E02 score-free confidence guard input",
+  "description": "D1 pseudonymized request gate input. It carries categorical assessments and immutable evidence receipts, never model scores, text, PII, audio, paths, advice, references, or generated actions.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_version",
+    "guard_input_id",
+    "privacy_zone",
+    "request_binding_sha256",
+    "lineage",
+    "assessments",
+    "evidence_provenance",
+    "inherited_safety",
+    "binding_sha256"
+  ],
+  "properties": {
+    "schema_version": {
+      "const": "voice_coach.e02_confidence_guard_input.v1"
+    },
+    "guard_input_id": {
+      "type": "string",
+      "pattern": "^e02in_[0-9a-f]{32}$"
+    },
+    "privacy_zone": {
+      "const": "D1_pseudonymized_restricted_api_guard"
+    },
+    "request_binding_sha256": {
+      "$ref": "#/$defs/sha256"
+    },
+    "lineage": {
+      "$ref": "#/$defs/lineage"
+    },
+    "assessments": {
+      "$ref": "#/$defs/assessments"
+    },
+    "evidence_provenance": {
+      "$ref": "#/$defs/evidenceProvenance"
+    },
+    "inherited_safety": {
+      "$ref": "#/$defs/inheritedSafety"
+    },
+    "binding_sha256": {
+      "$ref": "#/$defs/sha256"
+    }
+  },
+  "$defs": {
+    "sha256": {
+      "type": "string",
+      "pattern": "^[0-9a-f]{64}$"
+    },
+    "lineage": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "s107_completion_commit_sha256",
+        "s107_threshold_policy_report_sha256",
+        "c02_completion_commit_sha256",
+        "c02_preregistration_sha256",
+        "c02_diagnostic_input_sha256",
+        "c02_selection_output_sha256",
+        "e02_preregistration_sha256"
+      ],
+      "properties": {
+        "s107_completion_commit_sha256": {
+          "$ref": "#/$defs/sha256"
+        },
+        "s107_threshold_policy_report_sha256": {
+          "$ref": "#/$defs/sha256"
+        },
+        "c02_completion_commit_sha256": {
+          "$ref": "#/$defs/sha256"
+        },
+        "c02_preregistration_sha256": {
+          "$ref": "#/$defs/sha256"
+        },
+        "c02_diagnostic_input_sha256": {
+          "$ref": "#/$defs/sha256"
+        },
+        "c02_selection_output_sha256": {
+          "$ref": "#/$defs/sha256"
+        },
+        "e02_preregistration_sha256": {
+          "$ref": "#/$defs/sha256"
+        }
+      }
+    },
+    "assessments": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "domain_status",
+        "confidence_status",
+        "support_status",
+        "c02_selection_status",
+        "c02_abstain_all"
+      ],
+      "properties": {
+        "domain_status": {
+          "enum": [
+            "within_registered_domain",
+            "out_of_registered_domain"
+          ]
+        },
+        "confidence_status": {
+          "enum": [
+            "at_or_above_s107_policy",
+            "below_s107_policy"
+          ]
+        },
+        "support_status": {
+          "enum": [
+            "supported",
+            "unsupported"
+          ]
+        },
+        "c02_selection_status": {
+          "enum": [
+            "selected",
+            "abstained",
+            "no_issues"
+          ]
+        },
+        "c02_abstain_all": {
+          "type": "boolean"
+        }
+      }
+    },
+    "evidenceProvenance": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "domain_assessment_receipt_sha256",
+        "confidence_assessment_receipt_sha256",
+        "support_assessment_receipt_sha256",
+        "c02_selection_receipt_sha256"
+      ],
+      "properties": {
+        "domain_assessment_receipt_sha256": {
+          "$ref": "#/$defs/sha256"
+        },
+        "confidence_assessment_receipt_sha256": {
+          "$ref": "#/$defs/sha256"
+        },
+        "support_assessment_receipt_sha256": {
+          "$ref": "#/$defs/sha256"
+        },
+        "c02_selection_receipt_sha256": {
+          "$ref": "#/$defs/sha256"
+        }
+      }
+    },
+    "inheritedSafety": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "c02_blocked_top_k_no_backfill",
+        "c02_free_generation_used",
+        "c02_network_used",
+        "c02_runtime_model_used",
+        "automatic_advice_payload_present",
+        "automatic_reference_payload_present",
+        "automatic_corrective_action_payload_present"
+      ],
+      "properties": {
+        "c02_blocked_top_k_no_backfill": {
+          "const": true
+        },
+        "c02_free_generation_used": {
+          "const": false
+        },
+        "c02_network_used": {
+          "const": false
+        },
+        "c02_runtime_model_used": {
+          "const": false
+        },
+        "automatic_advice_payload_present": {
+          "const": false
+        },
+        "automatic_reference_payload_present": {
+          "const": false
+        },
+        "automatic_corrective_action_payload_present": {
+          "const": false
+        }
+      }
+    }
+  }
+}

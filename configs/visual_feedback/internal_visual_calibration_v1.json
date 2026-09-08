@@ -1,0 +1,25 @@
+{
+  "artifact_id": "internal_visual_calibration_v1",
+  "artifact_sha256": "ef9a9a55507e0fb0d84418df91b6f5aecfe7cce5e6df007b4444df59b800cb77",
+  "capture_contract_id": "internal_precomputed_landmarks_v1",
+  "population_id_sha256": "9c639f0f277af48370d45937fe57398be30e0ba12b24a8111f77b5f6c7c06e49",
+  "revision": "synthetic_contract_v1",
+  "rights_status": "approved",
+  "rules": [
+    {
+      "context_id": "phone_center",
+      "cue_id": "lip_aperture_ratio",
+      "expected_phones": [
+        "ㅏ"
+      ],
+      "feedback_minimum_absolute_deviation": 1.0,
+      "measurement_unit": "ratio",
+      "reference_center": 0.15,
+      "reference_scale": 0.05,
+      "support_maximum": 0.5,
+      "support_minimum": 0.02
+    }
+  ],
+  "schema_version": "voice_coach.visual_calibration.v1",
+  "scope": "synthetic_contract_only"
+}

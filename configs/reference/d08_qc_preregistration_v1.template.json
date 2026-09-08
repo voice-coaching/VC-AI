@@ -1,0 +1,67 @@
+{
+  "schema_version": "voice_coach.d08_qc_preregistration.v1",
+  "preregistration_id": "TBD_PREREGISTRATION",
+  "status": "TBD_PREREGISTRATION",
+  "registered_at_utc": "TBD_PREREGISTRATION",
+  "registered_by_role": "TBD_PREREGISTRATION",
+  "frozen_before_recruitment_or_audio_access": true,
+  "r00_card_sha256": "08dc149ccf10006a587e6216dda0471c19b5c55eab6b320b4348587527d82c4d",
+  "speaker_contract": {
+    "planning_target_minimum_distinct_speakers_per_sentence": 4,
+    "binding_minimum_distinct_speakers_per_sentence": "TBD_PREREGISTRATION",
+    "target_shortfall_reporting_rule": "TBD_PREREGISTRATION"
+  },
+  "fixed_qc_gates": {
+    "clipping_ratio_operator": "<",
+    "clipping_ratio_threshold": 0.001,
+    "decoder_error_count_required": 0,
+    "human_reviewer_pool_size": 2,
+    "minimum_human_listener_confirmations": 1,
+    "asr_role": "candidate_triage_only_not_final_qc"
+  },
+  "measurement_contracts": {
+    "dc_offset": {
+      "metric_id": "TBD_PREREGISTRATION",
+      "unit": "TBD_PREREGISTRATION",
+      "direction": "TBD_PREREGISTRATION",
+      "threshold": "TBD_PREREGISTRATION"
+    },
+    "content_match": {
+      "metric_id": "TBD_PREREGISTRATION",
+      "unit": "TBD_PREREGISTRATION",
+      "direction": "TBD_PREREGISTRATION",
+      "threshold": "TBD_PREREGISTRATION"
+    },
+    "noise": {
+      "metric_id": "TBD_PREREGISTRATION",
+      "unit": "TBD_PREREGISTRATION",
+      "direction": "TBD_PREREGISTRATION",
+      "threshold": "TBD_PREREGISTRATION"
+    },
+    "reverb": {
+      "metric_id": "TBD_PREREGISTRATION",
+      "unit": "TBD_PREREGISTRATION",
+      "direction": "TBD_PREREGISTRATION",
+      "threshold": "TBD_PREREGISTRATION"
+    },
+    "interruption": {
+      "metric_id": "TBD_PREREGISTRATION",
+      "unit": "TBD_PREREGISTRATION",
+      "direction": "TBD_PREREGISTRATION",
+      "threshold": "TBD_PREREGISTRATION"
+    }
+  },
+  "adjudication_contract": {
+    "trigger_rule_id": "TBD_PREREGISTRATION",
+    "decision_rule_id": "TBD_PREREGISTRATION",
+    "adjudicator_role": "TBD_PREREGISTRATION",
+    "independence_required": "TBD_PREREGISTRATION",
+    "receipt_required_when_triggered": true
+  },
+  "approval": {
+    "decision": "TBD_PREREGISTRATION",
+    "protocol_sha256": "TBD_PREREGISTRATION",
+    "signed_receipt_sha256": "TBD_PREREGISTRATION"
+  },
+  "completion_claim_allowed": false
+}

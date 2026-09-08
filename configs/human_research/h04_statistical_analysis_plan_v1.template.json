@@ -1,0 +1,120 @@
+{
+  "schema_version": "voice_coach.h04_statistical_analysis_plan.v1",
+  "sap_id": "TBD_H04_SAP",
+  "status": "draft_unapproved",
+  "registered_at_utc": "TBD_PREREGISTRATION",
+  "registered_by_role": "TBD_PREREGISTRATION",
+  "frozen_before_h02_h03_data_lock_condition_unmask_or_analysis": false,
+  "lineage": {
+    "h00_approval_sha256": "TBD_H00_APPROVAL",
+    "h00_attestation_sha256": "TBD_H00_ATTESTATION",
+    "h01_final_sample_size_lock_sha256": "TBD_H01_SAMPLE_SIZE_LOCK",
+    "protocol_sha256": "TBD_PREREGISTRATION"
+  },
+  "estimand_and_population": {
+    "primary_population": "intention_to_treat_as_randomized",
+    "intercurrent_event_policy": "retain_randomized_participants_with_nonadherence_discontinuation_deviation_or_missing_followup",
+    "primary_outcome": "blind_expert_comprehensibility_1_to_5",
+    "primary_time_comparison": "pre_to_post",
+    "key_time_comparison": "pre_to_retention",
+    "comparisons": [
+      "c3_minus_c0",
+      "c5_minus_c3"
+    ]
+  },
+  "primary_model": {
+    "primary_estimator": "likelihood_based_mixed_model_all_observed_itt",
+    "fixed_effect_formula": "score~condition*time+l1+baseline",
+    "random_intercepts": [
+      "participant",
+      "sentence",
+      "rater"
+    ],
+    "software_and_version_id": "TBD_PREREGISTRATION",
+    "software_environment_lock_sha256": "TBD_PREREGISTRATION",
+    "model_family_id": "TBD_PREREGISTRATION",
+    "ordinal_or_linear_choice_id": "TBD_PREREGISTRATION",
+    "outcome_support_id": "TBD_PREREGISTRATION",
+    "optimizer_id": "TBD_PREREGISTRATION",
+    "convergence_rule_id": "TBD_PREREGISTRATION",
+    "ci_method_id": "TBD_PREREGISTRATION",
+    "bootstrap_or_resampling_support_id": "TBD_PREREGISTRATION",
+    "fallback_model_policy_id": "TBD_PREREGISTRATION",
+    "model_selection_using_unblinded_effects_allowed": false
+  },
+  "confirmatory_contrasts": {
+    "primary_post": [
+      "c3_minus_c0_pre_to_post",
+      "c5_minus_c3_pre_to_post"
+    ],
+    "key_retention": [
+      "c3_minus_c0_pre_to_retention",
+      "c5_minus_c3_pre_to_retention"
+    ],
+    "required_effect_reporting": [
+      "raw_1_to_5_difference",
+      "standardized_effect",
+      "95_percent_confidence_interval"
+    ]
+  },
+  "missing_data": {
+    "primary": "likelihood_based_mixed_model_using_all_observed_itt_data",
+    "sensitivity_methods": [
+      "mar_multilevel_multiple_imputation",
+      "mnar_delta_adjusted_pattern_mixture",
+      "complete_case"
+    ],
+    "mi_imputation_count": "TBD_PREREGISTRATION",
+    "mi_model_id": "TBD_PREREGISTRATION",
+    "delta_grid": "TBD_PREREGISTRATION",
+    "pattern_mixture_model_id": "TBD_PREREGISTRATION",
+    "complete_case_definition_id": "TBD_PREREGISTRATION",
+    "last_observation_carried_forward_allowed": false,
+    "post_randomization_exclusion_allowed": false
+  },
+  "per_protocol_sensitivity": {
+    "minimum_assigned_exposure_fraction": 0.8,
+    "sensitivity_only": true,
+    "primary_claim_allowed": false,
+    "exact_exposure_denominator_and_window_id": "TBD_PREREGISTRATION"
+  },
+  "multiplicity": {
+    "method": "holm",
+    "alpha_two_sided": 0.05,
+    "families": [
+      "primary_post",
+      "key_retention",
+      "secondary"
+    ],
+    "primary_post_members": [
+      "c3_minus_c0_pre_to_post",
+      "c5_minus_c3_pre_to_post"
+    ],
+    "key_retention_members": [
+      "c3_minus_c0_pre_to_retention",
+      "c5_minus_c3_pre_to_retention"
+    ],
+    "secondary_family_member_ids": [
+      "phone_accuracy_post",
+      "phone_accuracy_retention",
+      "fluency_post",
+      "fluency_retention"
+    ]
+  },
+  "aggregate_reporting": {
+    "missingness_by_arm_time_and_coded_reason_required": true,
+    "withdrawal_by_arm_required": true,
+    "adverse_feedback_by_arm_required": true,
+    "ceiling_and_floor_by_arm_required": true,
+    "model_convergence_and_support_required": true,
+    "participant_rows_or_individual_scores_allowed": false,
+    "audio_transcript_raw_locator_or_free_text_allowed": false
+  },
+  "approval": {
+    "decision": "TBD_PREREGISTRATION",
+    "statistician_approval_receipt_sha256": "TBD_PREREGISTRATION",
+    "principal_investigator_approval_receipt_sha256": "TBD_PREREGISTRATION",
+    "approved_and_frozen": false
+  },
+  "binding_sha256": "TBD_PREREGISTRATION"
+}

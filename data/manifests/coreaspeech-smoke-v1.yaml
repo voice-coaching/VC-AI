@@ -1,0 +1,85 @@
+schema_version: voice_coach.external_dataset_manifest.v1
+
+dataset:
+  id: coreaspeech
+  repository: aanonyyy/F5I9N7A1
+  repository_type: huggingface_dataset
+  source_url: https://huggingface.co/datasets/aanonyyy/F5I9N7A1
+  revision: 950d6a50b2b3e338d141313d11440fe47b037745
+  access:
+    private: false
+    gated: false
+    authentication_required: false
+
+current_public_snapshot:
+  parquet_shards_present: 35
+  parquet_bytes: 160608482212
+  card_metadata_is_stale: true
+  stale_card_shard_count: 47
+  stale_card_download_bytes: 189523270766
+  note: >-
+    The current revision contains train-00001 through train-00035. Deleted
+    shards from an older revision must not be recovered or downloaded.
+
+research_policy:
+  research_only: true
+  commercial_use_allowed: false
+  redistribution_allowed: false
+  secondary_modification_allowed: false
+  voice_identity_reconstruction_allowed: false
+  artifact_distribution_allowed: false
+  intended_role: multispeaker_native_korean_tts_research_candidate
+  promotion_requires:
+    - full_local_audio_header_qc
+    - speaker_disjoint_split
+    - transcript_and_pronunciation_conditioning_audit
+    - license_and_output_lineage_review
+    - no_voice_identity_reconstruction_review
+
+smoke_snapshot:
+  downloaded_shards: 1
+  rows: 3592
+  speakers: 20
+  duration_hours: 15.506219
+  shard:
+    remote_path: data/train-00001-of-00047.parquet
+    bytes: 4754132131
+    sha256: 7ab69f26a19ff017deb9b697c4c175a223ef231034ca14639ac31e437e076c3b
+    parquet_magic_verified: true
+  aggregate_metadata_qc:
+    duration_seconds_min: 1.46
+    duration_seconds_median: 15.525
+    duration_seconds_p95: 28.0945
+    duration_seconds_max: 29.98
+    empty_text_rows: 0
+    empty_transcription_rows: 0
+    empty_pronunciation_rows: 0
+    empty_speaker_rows: 0
+  sampled_audio_header_qc:
+    sampled_rows: 12
+    decode_failures: 0
+    sample_rate_hz:
+      "48000": 12
+    channels:
+      "1": 12
+    formats:
+      WAV: 12
+    scope: sampled_only_not_full_shard
+  expected_audio_header:
+    sample_rate_hz: 48000
+    channels: 1
+    formats:
+      - WAV
+
+training_authorization:
+  current_status: qc_only
+  allowed_now:
+    - metadata_audit
+    - read_only_audio_header_qc
+    - local_research_loader_smoke
+  forbidden_now:
+    - full_training_claim
+    - production_model_promotion
+    - generated_voice_publication
+    - checkpoint_publication
+    - raw_or_derived_audio_redistribution

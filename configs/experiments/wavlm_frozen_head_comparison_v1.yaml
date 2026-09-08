@@ -1,0 +1,78 @@
+schema_version: 1
+
+experiment:
+  id: aihub71490_wavlm_frozen_head_comparison_v1
+  stage: frozen_head_comparison
+  development_only: true
+  oracle_alignment: true
+
+inputs:
+  base_plus_report: artifacts/experiments/aihub71490_wavlm_base_plus_frozen_head_v1/report.json
+  large_report: artifacts/experiments/aihub71490_wavlm_large_frozen_head_v1/report.json
+  expected_variants:
+    base_plus:
+      encoder_id: microsoft/wavlm-base-plus
+      training_config_path: configs/experiments/wavlm_base_plus_frozen_head_v1.yaml
+      training_config_sha256: 9d0b8de8e8f41c66028c4bf895cb653dc77e69b64cdce3b9f1f7d0c59e8e0291
+    large:
+      encoder_id: microsoft/wavlm-large
+      training_config_path: configs/experiments/wavlm_large_frozen_head_v1.yaml
+      training_config_sha256: 4d14af8626e2496af5b484fb92f29e51d27f88979ce8a50b6c3a3cda9a9b0e6e
+  expected_trainer_source_path: scripts/train_wavlm_frozen_head.py
+  expected_trainer_source_sha256: 0c0bd3b76e5e9bf0b9159c80c2d6267dde5ed2f74b88f88f639efecbe37d94a3
+  expected_head_source_path: src/voice_coach/models/wavlm_frozen_head.py
+  expected_head_source_sha256: e5cdad3ece84e0ff8320b7366a64f0255a4be1a52d9df39654fb714f8f62f78b
+  expected_modeling_manifest_sha256: 32f439ba10a035541f53b8a44f5d150b307e89f97387f09748704c3c78e85ef1
+  expected_explicit_utterance_labels_sha256: a9f99d66b200468dd23733b232265c035577c81e6bf7aaa565871c7f5863558f
+  expected_cache_rows:
+    utterance: 169837
+    phone: 2233039
+    word: 408790
+
+comparison:
+  seeds: [42, 43, 44]
+  primary_scope: primary_dev_paired
+  effect_direction: large_minus_base
+  require_identical_prediction_order: true
+  require_completed_source_registries: true
+  allowed_metric_split: dev
+  forbidden_splits: [stack, calibration, locked_test]
+
+bootstrap:
+  method: paired_speaker_cluster_percentile
+  n_resamples: 5000
+  confidence_level: 0.95
+  seed: 42
+  p_value: two_sided_zero_with_plus_one_correction
+
+gate:
+  metric: phone_macro_f1
+  absolute_improvement: 0.03
+  rule: point_estimate_gte_threshold
+
+multiplicity:
+  family: utterance_icc_2_1_across_outcomes
+  outcomes:
+    - pronunciation_score
+    - fluency_score
+    - comprehensibility_score
+  method: holm
+  alpha: 0.05
+
+event_f1:
+  unit: maximal_contiguous_positive_phone_index_run_within_utterance
+  match: one_to_one_any_phone_index_overlap
+  zero_event_policy: undefined
+
+privacy:
+  aggregate_only_output: true
+  input_access_scope: restricted_internal
+  shareable: false
+  environment_files_forbidden: true
+  raw_data_access_forbidden: true
+
+output:
+  generation_directory: artifacts/experiments/aihub71490_wavlm_frozen_head_comparison_v1/generations
+  commit_manifest: artifacts/experiments/aihub71490_wavlm_frozen_head_comparison_v1/commit.json
+  atomic_publish: true
+  create_execution_receipt: true

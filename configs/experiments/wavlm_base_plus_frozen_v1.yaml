@@ -1,0 +1,75 @@
+experiment:
+  id: aihub71490_wavlm_base_plus_frozen_v1
+  stage: feature_cache
+  development_only: true
+
+model:
+  id: microsoft/wavlm-base-plus
+  revision: 4c66d4806a428f2e922ccfa1a962776e232d487b
+  cache_dir: data/cache/huggingface/hub
+  local_files_only: true
+  frozen: true
+  hidden_size: 768
+  conv_kernel: [10, 3, 3, 3, 3, 2, 2]
+  conv_stride: [5, 2, 2, 2, 2, 2, 2]
+  do_normalize: false
+  return_attention_mask: true
+
+data:
+  dataset_root: data/restricted/aihub/dataset-71490
+  modeling_manifest: data/processed/aihub71490/manifests/aihub71490_modeling.parquet
+  modeling_manifest_sha256: 32f439ba10a035541f53b8a44f5d150b307e89f97387f09748704c3c78e85ef1
+  prompt_challenge_reservation: data/processed/aihub71490/manifests/aihub71490_prompt_challenge.json
+  allowed_splits: [train, dev]
+  forbidden_metric_splits: [stack, calibration, locked_test]
+  exclude_qc_flagged: true
+  exclude_reserved_prompts: true
+  sample_rate_hz: 16000
+  max_chunk_seconds: 20.0
+  chunk_boundary_source: target_phone_intervals
+
+features:
+  inference_precision: bfloat16
+  storage_precision: float16
+  utterance_pooling: mean_std
+  target_phone_pooling: mean
+  word_pooling: mean
+  phone_supervision:
+    task: binary_error
+    negative_operations: [match]
+    positive_operations: [substitution, deletion]
+    ignored_operations: [insertion]
+    label_role_only: true
+  prohibited_exports:
+    - raw_utterance_id
+    - raw_speaker_identity
+    - audio_path
+    - source_file_stem
+    - word_label
+    - realized_phone_identity
+    - alignment_operation
+    - error_tag
+    - holistic_score
+
+output:
+  root: data/processed/aihub71490/features/wavlm_base_plus_frozen_v1
+  report: data/processed/aihub71490/features/wavlm_base_plus_frozen_v1_report.json
+  utterance_shard_rows: 10000
+  phone_shard_rows: 250000
+  word_shard_rows: 100000
+  utterance_row_group_rows: 1024
+  phone_row_group_rows: 2048
+  word_row_group_rows: 2048
+  compression: zstd
+  atomic_publish: true
+
+full_run_gate:
+  require_explicit_baseline_dev_result: true
+  require_completed_smoke_review: true
+  require_resource_review: true
+  smoke_utterances: 100
+  resource_estimate_reference_rows:
+    utterance: 169837
+    phone: 2233039
+    word: 408790
+  resource_estimate_safety_factor: 1.25

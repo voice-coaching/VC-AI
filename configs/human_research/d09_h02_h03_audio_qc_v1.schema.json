@@ -1,0 +1,47 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://voice-coach.local/schemas/d09_h02_h03_audio_qc_v1.schema.json",
+  "title": "D09 H02-H03 restricted audio QC record",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_version",
+    "qc_record_id_sha256",
+    "audio_object_id_sha256",
+    "phase",
+    "timepoint",
+    "frozen_qc_policy_sha256",
+    "decode_passed",
+    "sample_rate_hz",
+    "duration_ms",
+    "clipping_fraction",
+    "snr_db",
+    "baseline_hard_qc_eligibility_only",
+    "postrandomization_exclusion_allowed",
+    "status",
+    "coded_reason_id",
+    "privacy_zone"
+  ],
+  "properties": {
+    "schema_version": {"const": "voice_coach.d09_h02_h03_audio_qc.v1"},
+    "qc_record_id_sha256": {"$ref": "#/$defs/sha256"},
+    "audio_object_id_sha256": {"$ref": "#/$defs/sha256"},
+    "phase": {"enum": ["feasibility", "confirmatory"]},
+    "timepoint": {"enum": ["pre", "post_at_2_weeks", "retention_4_weeks_after_post"]},
+    "frozen_qc_policy_sha256": {"$ref": "#/$defs/sha256"},
+    "decode_passed": {"type": "boolean"},
+    "sample_rate_hz": {"type": "integer", "minimum": 1},
+    "duration_ms": {"type": "integer", "minimum": 0},
+    "clipping_fraction": {"type": "number", "minimum": 0, "maximum": 1},
+    "snr_db": {"type": "number"},
+    "baseline_hard_qc_eligibility_only": {"type": "boolean"},
+    "postrandomization_exclusion_allowed": {"const": false},
+    "status": {"enum": ["passed", "failed_preserved_as_missingness"]},
+    "coded_reason_id": {"$ref": "#/$defs/safeId"},
+    "privacy_zone": {"const": "D1_pseudonymized_restricted_human_research"}
+  },
+  "$defs": {
+    "sha256": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
+    "safeId": {"type": "string", "pattern": "^[a-z0-9][a-z0-9_.:-]{0,127}$"}
+  }
+}

@@ -1,0 +1,385 @@
+# v4 is not edited. It never produced a bank: its first six cells were rejected by a
+# gate that was measuring the wrong quantity, and the run was stopped.
+schema_version: 2
+
+# v2 is NOT edited by this file. Its config, bank and receipt stay byte-identical,
+# because a receipt says "this bank came from this code and this contract" and
+# rewriting either turns a recorded run into a false claim. v2's bank is superseded
+# and must not be served; see `superseded_predecessor` below.
+
+experiment:
+  id: r01_multi_speaker_candidates_v5
+  stage: wp7_r01_reference_candidate_generation
+  supersedes: r01_multi_speaker_candidates_v4
+  claim_scope: engineering_provisional
+  decision_record: DEV-R01-005
+  decision_date_kst: 2026-08-09
+  decision_by_role: project_owner
+  amendment_reason: rate_gate_measured_whole_file_against_a_spoken_region_band
+  amendment_reason_ko: >-
+    v4의 게이트는 렌더링의 **파일 전체 길이**로 음절/초를 계산해, 코퍼스의
+    `SpeechEnd - SpeechStart`(발화 구간)로 측정한 밴드와 비교했다. TTS 출력에는 앞뒤
+    무음이 붙으므로 두 양은 비교 대상이 아니며, 정상 렌더링이 하한 바로 아래로 밀려
+    기각됐다. 같은 기준(발화 구간)으로 다시 재자 후보 12명 중 사용 가능이 3명에서
+    8명으로 바뀌었다.
+
+    함께 확인된 사실 하나 더: **생성은 결정적이다.** 같은 셀을 두 번 렌더하면 바이트
+    단위로 동일하다. 따라서 재시도는 아무것도 사지 못하며 max_attempts를 1로 낮춘다.
+    밴드를 벗어난 셀을 고치는 방법은 다른 prompt 화자뿐이다.
+  measured_conditions:
+    - condition: rate_on_whole_file_v4_gate
+      usable_of_twelve_candidates: 3
+      note: 앞뒤 무음이 포함되어 정상 렌더링이 하한 아래로 밀린다
+    - condition: rate_on_spoken_region_v5_gate
+      usable_of_twelve_candidates: 8
+      note: 밴드가 측정된 것과 같은 양이다
+    - condition: repeat_render_of_one_cell
+      byte_identical: true
+      note: 재시도는 무의미하다
+
+superseded_predecessor:
+  experiment_id: r01_multi_speaker_candidates_v4
+  status: abandoned_before_completion
+  bank_manifest_written: false
+  rejected_audio_kept: artifacts/reference/r01/multi_speaker_v4/audio/rejected
+  defects_measured:
+    cells_attempted: 6
+    cells_accepted: 3
+    cause_ko: >-
+      게이트가 파일 전체 길이로 속도를 쟀다. 기각된 3셀 중 일부는 실제 결함(토큰
+      상한까지 생성)이고 나머지는 측정 오류였다.
+  earlier_predecessors:
+    - r01_multi_speaker_candidates_v3
+    - r01_cosyvoice_only_candidates_v2
+
+claims_closed_by_this_amendment:
+  # Unchanged from v2: no human recording of the R00 sentences exists.
+  r04_human_versus_tts_comparison_available: false
+  r04_source_kind_blinding_meaningful: false
+  human_comparison_available: false
+  note_ko: >-
+    사람 후보는 여전히 0건이다. R00 20문장은 이 프로젝트가 직접 쓴 CC0 원문이므로
+    어떤 코퍼스도 그 문장의 사람 낭독을 갖고 있지 않다. AI Hub 542 화자는 prompt로
+    복제되었을 뿐이며, 이들이 R00 문장을 읽은 것이 아니다. 따라서 이 뱅크의
+    exemplar는 전부 합성음이고, R04의 "사람 대비" 조건은 D08 실녹음까지 열리지 않는다.
+
+claims_opened_by_this_amendment:
+  speaker_axis_tolerance_derivable: true
+  note_ko: >-
+    prompt 화자 6명(여 3 / 남 3, 연령대 3구간)으로 화자 축 산포가 생긴다.
+    다만 "유도 가능"은 "타당"과 다르다. 아래 tolerance_validity를 참조하라.
+
+known_limitations:
+  distinct_prompt_voices: 6
+  speaker_axis_diversity_available: true
+  prompt_voice_source: aihub542_validation_read_speech
+  prompt_voice_gender_balance: 2_female_4_male
+  prompt_voice_age_bands: 5
+  gender_balance_note_ko: >-
+    균형이 아니라 **선별의 결과**다. 후보 12명(여 6 / 남 6)을 화자별로 한 문장씩
+    렌더해 실측 밴드와 대조한 결과, 사용 가능한 8명은 여 2 / 남 6이었다.
+    이 계약은 그중 6명을 뽑되 여성 2명을 모두 포함했다.
+  generator_limitation_observed:
+    description_ko: >-
+      후보 12명 중 4명이 문장을 끝내지 못하고 모델의 토큰 상한까지 생성했다
+      (파일 14.40초 고정, 발화 구간 기준 0.90–1.19 음절/초). **그 4명이 전부
+      여성이었고, 남성은 6명 중 0명이었다.** prompt 파일 자체는 정상이다
+      (선언 길이와 실제 길이 일치, 48 kHz, 전사 일치).
+    affected_voices: 4
+    affected_voices_female: 4
+    affected_voices_male: 0
+    interpretation_ko: >-
+      CosyVoice2-0.5B가 이 코퍼스의 일부 여성 prompt에서 종료 토큰을 내지 못하는
+      것으로 보인다. 원인은 규명하지 않았다. 이 계약은 그 화자들을 **선별로 배제**할
+      뿐이며, 배제 사실과 성별 편중을 여기 남긴다.
+    consequence_ko: >-
+      뱅크의 화자 구성이 남성에 치우친다. f0 축이 절대 음역이 아니라 pitch range를
+      비교하도록 바뀌었으므로(F0_MEASUREMENT = voiced_pitch_range_semitones) 여성
+      학습자가 음역 때문에 감점되는 공정성 결함은 발생하지 않는다. 남는 비용은
+      대표성이며, 학습자 대상 기록에도 이 구성을 드러낸다.
+  pitch_axis_available: false
+  pitch_axis_note_ko: >-
+    v1이 요구한 pitch bucket 3종은 여전히 설계 축으로 존재하지 않는다. 화자 6명이
+    pitch 산포를 부수적으로 만들지만, 그것은 화자 축의 결과이지 독립적인 pitch 축이
+    아니다. 같은 화자를 pitch shift로 변형하는 것은 새 화자가 아니므로 계상하지 않는다.
+  f0_measurement: voiced_pitch_range_semitones
+  tolerance_validity_ko: >-
+    f0 축은 더 이상 절대 median F0(화자의 음역)를 비교하지 않는다. 음역은 학습자가
+    고른 것이 아니므로, 그것을 참조 뱅크와 비교하면 목소리를 이유로 감점하게 된다.
+    지금은 **유성 구간의 pitch 이동폭(semitone)** 을 비교하며, 이는 음역과 무관하고
+    L2에서 실제로 관찰되는 억양 평탄화를 잡아낸다. 따라서 이 뱅크가 남성에 치우쳐도
+    여성 학습자가 음역 때문에 밴드를 벗어나지 않는다.
+    다만 **이동폭의 tolerance가 타당한지는 측정으로 확인해야 한다** —
+    scripts/report_reference_bank_spread.py로 생성 후 축별 산포를 실측한다.
+
+runtime:
+  actual_model_download_allowed: false
+  actual_tts_inference_allowed: true
+  actual_gpu_access_allowed: false
+  gpu_note_ko: >-
+    S105 v5가 GPU를 점유 중이며 attestation의 concurrent_training_process_allowed는
+    false다. 생성은 CPU에서만 수행한다. 셀당 워커 프로세스가 새로 뜨므로 병렬로
+    돌리되, 각 워커의 스레드 수를 제한한다.
+  concurrent_workers_allowed: 6
+  threads_per_worker: 3
+  actual_audio_write_allowed: true
+  actual_manifest_write_allowed: true
+  actual_human_recording_allowed: false
+  environment_files_forbidden: true
+  locked_test_access_allowed: false
+  expert_holdout_access_allowed: false
+
+canonical_sources:
+  r00_card:
+    path: data/reference/r00/r00_sentence_card_v1.json
+    required_card_status: fixed_validated_sentence_text_only
+    required_sentence_count: 20
+    validation_report_path: artifacts/reference/r00/r00_sentence_card_v1.validation.json
+    required_validation_status: valid
+  cosyvoice_attestation:
+    path: artifacts/external_attestations/r01/cosyvoice_model_attestation_v1.json
+    sha256: fb4ff89c1268500fede2aa5db2be5ef257fa0c7354b886e94f81813acc412c43
+    required_status: approved_for_r01_inference
+  read_speech_rate_band:
+    # Measured, not chosen. The band decides which renderings may become references,
+    # so it comes from a population of real read speech and is pinned like any other
+    # source. Produced by scripts/measure_korean_read_speech_rate.py.
+    path: artifacts/reference/r01/korean_read_speech_rate_band_v1.json
+    sha256: 0d21af5481e9f0a52262ffd7977e47aebdde8c56573d325c505edb58eb364ff4
+  prompt_voice_manifest:
+    path: data/restricted/prompt_voices/aihub542_screened_v1/prompt_voices.json
+    sha256: ff0e968075b0eca6ba3801eff4263d94c12ae0fce18da4b59a485ff4adee6e23
+    screened_by:
+      script: scripts/screen_r01_prompt_voices.py
+      script_sha256: d0ad1783359d0fbb120d7646c1e5ccf276b86fae6b95d219007f243e23023ecf
+      selector: scripts/select_screened_prompt_voices.py
+      candidates_screened: 12
+      candidates_usable: 8
+  driver:
+    # The gate lives here, so it is pinned like any other source. v4 pinned only
+    # the generator and worker, and the gate defect was in the driver.
+    path: scripts/generate_r01_candidates.py
+    sha256: c50368fffd0a8734a4ee3b1f3c1e0734daccccf6b4a93a00f67205733148b3d5
+  generator_module:
+    # v2 pinned the path only, so module drift was undetectable. Pinned by digest
+    # here because this contract exists because of code that changed.
+    path: src/voice_coach/pronunciation_feedback/adapters/reference_generator.py
+    sha256: 813ba5a6b3f5abb4f62fbc742313df0c5c9e36c29ebfb43ab37a739f07de3804
+  worker:
+    path: scripts/cosyvoice_reference_worker.py
+    sha256: 80b0a24dba911db9b14007d8cb6fb15187d2ff75c2c73e67c61b9b6af889f6a2
+    inference_mode: zero_shot
+    inference_mode_reason_ko: >-
+      한국어 prompt로 한국어를 합성하므로 cross_lingual이 아니다. 워커는
+      prompt_text 없는 요청을 거부한다 — 전사가 없으면 모델에 prompt가 끝난
+      지점을 알려줄 것이 없다.
+    trimming_removed: true
+    trimming_removal_reason_ko: >-
+      진폭만으로는 문장 내부 휴지와 문장 종료를 구분할 수 없다. 느린 낭독은 어절
+      사이 휴지가 길어 가장 먼저 잘렸다.
+
+candidate_design:
+  sentence_ids_from: r00_card
+  expected_sentence_count: 20
+  source_balance:
+    rule: cosyvoice_multi_speaker
+    human_candidates_expected: 0
+    cosyvoice_candidates_per_sentence: 18
+  diversity_preservation:
+    dimensions:
+      - speed
+      - speaker
+    required_speed_buckets:
+      - slow
+      - neutral
+      - fast
+    required_distinct_speakers: 6
+    dimensions_declared_unavailable:
+      - pitch
+    preserve_all_design_cells_until_r02: true
+    posthoc_relabel_or_collapse_allowed: false
+  plausibility_gate:
+    # A rendering that ran away into babble or stopped mid-sentence sets the
+    # tolerance every learner of that sentence is scored against. So it is rejected
+    # and re-rendered, never repaired.
+    metric: hangul_syllables_per_second
+    band_source: canonical_sources.read_speech_rate_band
+    band_source_utterances: 1225582
+    band_scales_with_speed_bucket: true
+    max_attempts: 1
+    max_attempts_rationale_ko: >-
+      생성이 결정적임을 실측했다(같은 셀 2회 렌더 → 바이트 동일). 재시도는 같은
+      결과를 다시 얻을 뿐이므로 1로 둔다. 밴드를 벗어난 셀은 다른 prompt 화자로만
+      고칠 수 있다.
+    measured_on: spoken_region_not_whole_file
+    measured_on_rationale_ko: >-
+      밴드는 코퍼스의 SpeechEnd - SpeechStart로 측정했다. 렌더링을 파일 전체 길이로
+      재면 앞뒤 무음까지 세어 다른 양을 비교하게 된다. 오디오는 편집하지 않는다 —
+      측정만 발화 구간에서 한다.
+    rejected_audio_retained: true
+    rejected_audio_directory: rejected
+    repair_or_trim_allowed: false
+  candidate_id:
+    scheme: content_addressed_sha256
+    inputs:
+      - prompt_id
+      - normalized_text
+      - prompt_voice_id
+      - speed_bucket
+      - generator_id
+      - vendor_revision
+      - model_revision
+    overwrite_existing_allowed: false
+
+prompt_voices:
+  # Screened before use: each voice rendered R00-01 once and had to land inside the
+  # measured band. Four of twelve candidates ran to the model's token cap instead of
+  # ending the sentence, and every one of those was female — a limitation of this
+  # generator with this corpus, recorded in known_limitations rather than hidden by
+  # quietly dropping them.
+  #
+  # `prompt_text` is the corpus transcript verbatim, including its own orthography.
+  - prompt_voice_id: aihub542-74bdc77f2d8b2f56
+    audio_path: data/restricted/prompt_voices/aihub542_screened_v1/74bdc77f2d8b2f56f3491ae53df4f5c5ab92162fa2d6394cb7963e9464f7928d.wav
+    prompt_text: 현재 알람을 매일 반복으로 설정합니다.
+    prompt_syllable_count: 16
+    prompt_seconds: 3.28
+    screened_speech_rate_syllables_per_second: 5.1181
+    license_spdx: AIHub-Terms
+    rights_basis: >-
+      AI Hub 542 dataset use approved for this account; used as a zero-shot prompt
+      under DEV-R01-002 for non-commercial research. Generated audio is not
+      redistributed or published.
+    speaker_axis: aihub542-74bdc77f2d8b2f56
+    demographic_axis: Female/40~49
+    third_party_speaker_cloning: true
+  - prompt_voice_id: aihub542-98155a430872f4e4
+    audio_path: data/restricted/prompt_voices/aihub542_screened_v1/98155a430872f4e4b91f875790d4d4710a9e97b13c2099d60bf99409991c1991.wav
+    prompt_text: 간단한 볶음밥 레시피를 검색해볼게요.
+    prompt_syllable_count: 16
+    prompt_seconds: 3.4
+    screened_speech_rate_syllables_per_second: 4.8507
+    license_spdx: AIHub-Terms
+    rights_basis: >-
+      AI Hub 542 dataset use approved for this account; used as a zero-shot prompt
+      under DEV-R01-002 for non-commercial research. Generated audio is not
+      redistributed or published.
+    speaker_axis: aihub542-98155a430872f4e4
+    demographic_axis: Male/10~19
+    third_party_speaker_cloning: true
+  - prompt_voice_id: aihub542-bbcbd1978523d91b
+    audio_path: data/restricted/prompt_voices/aihub542_screened_v1/bbcbd1978523d91bbec9807f8d478cdf6e4d9c0e62f171a294a31329282edbc6.wav
+    prompt_text: 학교까지 예상 도착시간을 계산합니다.
+    prompt_syllable_count: 16
+    prompt_seconds: 3.82
+    screened_speech_rate_syllables_per_second: 4.2208
+    license_spdx: AIHub-Terms
+    rights_basis: >-
+      AI Hub 542 dataset use approved for this account; used as a zero-shot prompt
+      under DEV-R01-002 for non-commercial research. Generated audio is not
+      redistributed or published.
+    speaker_axis: aihub542-bbcbd1978523d91b
+    demographic_axis: Female/50~59
+    third_party_speaker_cloning: true
+  - prompt_voice_id: aihub542-2d5101c6391a3e5c
+    audio_path: data/restricted/prompt_voices/aihub542_screened_v1/2d5101c6391a3e5c34c28f48f95877867b3876bfa64e0be6e7bf734f6e71e95b.wav
+    prompt_text: 프런트 직원 불러서 도와드리겠습니다.
+    prompt_syllable_count: 16
+    prompt_seconds: 3.02
+    screened_speech_rate_syllables_per_second: 4.8507
+    license_spdx: AIHub-Terms
+    rights_basis: >-
+      AI Hub 542 dataset use approved for this account; used as a zero-shot prompt
+      under DEV-R01-002 for non-commercial research. Generated audio is not
+      redistributed or published.
+    speaker_axis: aihub542-2d5101c6391a3e5c
+    demographic_axis: Male/20~29
+    third_party_speaker_cloning: true
+  - prompt_voice_id: aihub542-52a6f1db06b293b3
+    audio_path: data/restricted/prompt_voices/aihub542_screened_v1/52a6f1db06b293b303ec9677f9cb96ac186b4183468b4bcabacee9376fa5ed51.wav
+    prompt_text: 영상 두 개가 동시에 보이게 해드릴게요.
+    prompt_syllable_count: 16
+    prompt_seconds: 2.67
+    screened_speech_rate_syllables_per_second: 4.6099
+    license_spdx: AIHub-Terms
+    rights_basis: >-
+      AI Hub 542 dataset use approved for this account; used as a zero-shot prompt
+      under DEV-R01-002 for non-commercial research. Generated audio is not
+      redistributed or published.
+    speaker_axis: aihub542-52a6f1db06b293b3
+    demographic_axis: Male/30~39
+    third_party_speaker_cloning: true
+  - prompt_voice_id: aihub542-fa93dd752d37377a
+    audio_path: data/restricted/prompt_voices/aihub542_screened_v1/fa93dd752d37377adb3f7b9e63dcb2bc51787badb10597dfabd58816ffdbec29.wav
+    prompt_text: 부대시설은 카페, 키즈 카페가 있습니다.
+    prompt_syllable_count: 16
+    prompt_seconds: 3.34
+    screened_speech_rate_syllables_per_second: 4.8872
+    license_spdx: AIHub-Terms
+    rights_basis: >-
+      AI Hub 542 dataset use approved for this account; used as a zero-shot prompt
+      under DEV-R01-002 for non-commercial research. Generated audio is not
+      redistributed or published.
+    speaker_axis: aihub542-fa93dd752d37377a
+    demographic_axis: Male/40~49
+    third_party_speaker_cloning: true
+
+cosyvoice:
+  source_kind: cosyvoice_tts
+  ledger_observation:
+    canonical_repository: https://github.com/FunAudioLLM/CosyVoice
+    repository_revision: 074ca6dc9e80a2f424f1f74b48bdd7d3fea531cc
+    repository_license_spdx: Apache-2.0
+    repository_license_sha256: c71d239df91726fc519c6eb72d318ec65820627232b2f796219e87dcf35d0ab4
+    model_provider: FunAudioLLM
+    model_id: CosyVoice2-0.5B
+    model_revision: eec1ae6c79877dbd9379285cf8789c9e0879293d
+    weight_manifest_sha256: d31bdef955351837f1337f65ce07eb422e27004341ad21af1bbaf9ab4c183651
+  authorization_decision: approved_for_non_commercial_research_inference
+  grpo_allowed: false
+  fine_tuning_allowed: false
+  voice_cloning_of_third_party_speakers_allowed: true
+  voice_cloning_scope: aihub542_prompt_only_non_commercial_no_redistribution
+  redistribution_allowed: false
+  commercial_use_allowed: false
+
+learner_facing:
+  synthetic_disclosure_required: true
+  synthetic_disclosure_ko: 이 참조 음성은 AI가 합성한 것입니다.
+  exemplar_without_rights_basis_playable: false
+
+outputs:
+  bank_manifest:
+    path: artifacts/reference/r01/multi_speaker_v5/bank.json
+    schema_version: voice_coach.reference_bank_store.v1
+  audio_dir: artifacts/reference/r01/multi_speaker_v5/audio
+  receipt:
+    path: artifacts/reference/r01/multi_speaker_v5/generation_receipt.json
+  selection_id_prefix: r01-multi-speaker-v5
+  selection_rule: r01_multi_speaker_v5_zero_shot_speed_by_speaker_cells_spoken_region_rate_gated
+
+execution_order:
+  - validate_r00_card_and_sentence_count
+  - validate_cosyvoice_attestation_status_and_digest
+  - validate_measured_speech_rate_band_digest_and_evidence
+  - validate_prompt_voice_rights_and_audio_presence
+  - synthesise_each_sentence_speaker_and_speed_cell
+  - reject_and_re_render_any_rendering_outside_the_band
+  - write_content_addressed_audio_without_overwrite
+  - write_bank_manifest_and_receipt
+
+stop_conditions:
+  - the r00 card status or its validation verdict differs from the contract
+  - the CosyVoice attestation digest or status differs
+  - the measured speech-rate band digest differs from the pin
+  - the band's utterance count differs from the count declared here
+  - a prompt voice has no rights basis or no readable audio
+  - the prompt voice count differs from distinct_prompt_voices
+  - a content-addressed output path already exists
+
+publication:
+  r02_hard_gate_passed: false
+  publication_allowed: false
+  note_ko: >-
+    이 뱅크는 R02의 하드 게이트(독립 ASR 내용 일치)를 통과하지 않았다.
+    속도 밴드는 "말한 시간이 사람 범위인가"만 본다. "무슨 말을 했는가"는 보지 않는다.

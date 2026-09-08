@@ -1,0 +1,109 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://voice-coach.local/schemas/b05_one_shot_authorization_v1.schema.json",
+  "title": "B05 and S108 joint one-shot locked access authorization",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_version",
+    "authorization_id",
+    "status",
+    "preregistration_sha256",
+    "batch_manifest_sha256",
+    "g04_completion_sha256",
+    "d07_completion_sha256",
+    "s107_commit_sha256",
+    "s108_arm_freeze_sha256",
+    "one_shot_transaction_id_sha256",
+    "prior_joint_locked_access_count",
+    "authorized_joint_locked_access_count",
+    "authorized_arms",
+    "both_arms_must_use_same_transaction",
+    "first_arm_result_visibility_before_both_sealed",
+    "failure_consumes_authorization",
+    "rerun_authorized",
+    "new_independent_test_set_required_for_new_authorization",
+    "protocol_owner_signed_receipt_sha256",
+    "data_custodian_signed_receipt_sha256",
+    "privacy_zone",
+    "binding_sha256"
+  ],
+  "properties": {
+    "schema_version": {
+      "const": "voice_coach.b05_one_shot_authorization.v1"
+    },
+    "authorization_id": {
+      "type": "string",
+      "pattern": "^b05auth_[0-9a-f]{32}$"
+    },
+    "status": {
+      "const": "authorized_one_shot_joint_batch"
+    },
+    "preregistration_sha256": {
+      "$ref": "#/$defs/sha256"
+    },
+    "batch_manifest_sha256": {
+      "$ref": "#/$defs/sha256"
+    },
+    "g04_completion_sha256": {
+      "$ref": "#/$defs/sha256"
+    },
+    "d07_completion_sha256": {
+      "$ref": "#/$defs/sha256"
+    },
+    "s107_commit_sha256": {
+      "$ref": "#/$defs/sha256"
+    },
+    "s108_arm_freeze_sha256": {
+      "$ref": "#/$defs/sha256"
+    },
+    "one_shot_transaction_id_sha256": {
+      "$ref": "#/$defs/sha256"
+    },
+    "prior_joint_locked_access_count": {
+      "const": 0
+    },
+    "authorized_joint_locked_access_count": {
+      "const": 1
+    },
+    "authorized_arms": {
+      "const": [
+        "b05_explicit_baseline",
+        "s108_final_s1"
+      ]
+    },
+    "both_arms_must_use_same_transaction": {
+      "const": true
+    },
+    "first_arm_result_visibility_before_both_sealed": {
+      "const": false
+    },
+    "failure_consumes_authorization": {
+      "const": true
+    },
+    "rerun_authorized": {
+      "const": false
+    },
+    "new_independent_test_set_required_for_new_authorization": {
+      "const": true
+    },
+    "protocol_owner_signed_receipt_sha256": {
+      "$ref": "#/$defs/sha256"
+    },
+    "data_custodian_signed_receipt_sha256": {
+      "$ref": "#/$defs/sha256"
+    },
+    "privacy_zone": {
+      "const": "C1_public_authorization_no_locator"
+    },
+    "binding_sha256": {
+      "$ref": "#/$defs/sha256"
+    }
+  },
+  "$defs": {
+    "sha256": {
+      "type": "string",
+      "pattern": "^[0-9a-f]{64}$"
+    }
+  }
+}

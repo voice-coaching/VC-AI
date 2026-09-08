@@ -1,0 +1,27 @@
+{
+  "schema_version": "voice_coach.b05_one_shot_authorization.v1",
+  "authorization_id": "TBD_AUTHORIZATION",
+  "status": "draft_not_authorized",
+  "preregistration_sha256": "TBD_PREREGISTRATION",
+  "batch_manifest_sha256": "TBD_BATCH_MANIFEST",
+  "g04_completion_sha256": "TBD_G04_COMPLETION",
+  "d07_completion_sha256": "TBD_D07_COMPLETION",
+  "s107_commit_sha256": "TBD_S107_COMPLETION",
+  "s108_arm_freeze_sha256": "TBD_S108_ARM_FREEZE",
+  "one_shot_transaction_id_sha256": "TBD_AUTHORIZATION",
+  "prior_joint_locked_access_count": 0,
+  "authorized_joint_locked_access_count": 0,
+  "authorized_arms": [
+    "b05_explicit_baseline",
+    "s108_final_s1"
+  ],
+  "both_arms_must_use_same_transaction": true,
+  "first_arm_result_visibility_before_both_sealed": false,
+  "failure_consumes_authorization": true,
+  "rerun_authorized": false,
+  "new_independent_test_set_required_for_new_authorization": true,
+  "protocol_owner_signed_receipt_sha256": "TBD_APPROVAL",
+  "data_custodian_signed_receipt_sha256": "TBD_APPROVAL",
+  "privacy_zone": "C1_public_authorization_no_locator",
+  "binding_sha256": "TBD_AUTHORIZATION"
+}

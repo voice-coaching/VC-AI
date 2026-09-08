@@ -1,0 +1,227 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://voice-coach.local/schemas/e02_confidence_guard_api_response_v1.schema.json",
+  "title": "E02 score-free API confidence guard response",
+  "description": "A deterministic score-free API guard envelope. Blocked reasons, hash provenance, and a coded safe next action are allowed. Model scores, PII, raw paths, free text, advice, reference payloads, and generated corrective actions are prohibited.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_version",
+    "response_id",
+    "status",
+    "privacy_zone",
+    "request_binding_sha256",
+    "lineage",
+    "blocked",
+    "blocked_reasons",
+    "safe_next_action",
+    "capability_decision",
+    "evidence_provenance",
+    "safety_receipt",
+    "binding_sha256"
+  ],
+  "properties": {
+    "schema_version": {
+      "const": "voice_coach.e02_confidence_guard_api_response.v1"
+    },
+    "response_id": {
+      "type": "string",
+      "pattern": "^e02resp_[0-9a-f]{32}$"
+    },
+    "status": {
+      "enum": [
+        "allowed_for_separate_renderer",
+        "blocked",
+        "no_correction"
+      ]
+    },
+    "privacy_zone": {
+      "const": "D1_pseudonymized_score_free_api_response"
+    },
+    "request_binding_sha256": {
+      "$ref": "#/$defs/sha256"
+    },
+    "lineage": {
+      "$ref": "#/$defs/lineage"
+    },
+    "blocked": {
+      "type": "boolean"
+    },
+    "blocked_reasons": {
+      "type": "array",
+      "maxItems": 4,
+      "uniqueItems": true,
+      "items": {
+        "enum": [
+          "out_of_domain",
+          "low_confidence",
+          "unsupported",
+          "abstain_all"
+        ]
+      }
+    },
+    "safe_next_action": {
+      "oneOf": [
+        {
+          "enum": [
+            "rerecord",
+            "expert_review"
+          ]
+        },
+        {
+          "type": "null"
+        }
+      ]
+    },
+    "capability_decision": {
+      "$ref": "#/$defs/capabilityDecision"
+    },
+    "evidence_provenance": {
+      "$ref": "#/$defs/evidenceProvenance"
+    },
+    "safety_receipt": {
+      "$ref": "#/$defs/safetyReceipt"
+    },
+    "binding_sha256": {
+      "$ref": "#/$defs/sha256"
+    }
+  },
+  "$defs": {
+    "sha256": {
+      "type": "string",
+      "pattern": "^[0-9a-f]{64}$"
+    },
+    "lineage": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "guard_input_sha256",
+        "s107_completion_commit_sha256",
+        "s107_threshold_policy_report_sha256",
+        "c02_completion_commit_sha256",
+        "c02_selection_output_sha256",
+        "e02_preregistration_sha256"
+      ],
+      "properties": {
+        "guard_input_sha256": {
+          "$ref": "#/$defs/sha256"
+        },
+        "s107_completion_commit_sha256": {
+          "$ref": "#/$defs/sha256"
+        },
+        "s107_threshold_policy_report_sha256": {
+          "$ref": "#/$defs/sha256"
+        },
+        "c02_completion_commit_sha256": {
+          "$ref": "#/$defs/sha256"
+        },
+        "c02_selection_output_sha256": {
+          "$ref": "#/$defs/sha256"
+        },
+        "e02_preregistration_sha256": {
+          "$ref": "#/$defs/sha256"
+        }
+      }
+    },
+    "capabilityDecision": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "automatic_coaching_advice_allowed",
+        "automatic_reference_allowed",
+        "automatic_corrective_action_allowed",
+        "separate_renderer_required"
+      ],
+      "properties": {
+        "automatic_coaching_advice_allowed": {
+          "type": "boolean"
+        },
+        "automatic_reference_allowed": {
+          "type": "boolean"
+        },
+        "automatic_corrective_action_allowed": {
+          "type": "boolean"
+        },
+        "separate_renderer_required": {
+          "type": "boolean"
+        }
+      }
+    },
+    "evidenceProvenance": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "domain_assessment_receipt_sha256",
+        "confidence_assessment_receipt_sha256",
+        "support_assessment_receipt_sha256",
+        "c02_selection_receipt_sha256"
+      ],
+      "properties": {
+        "domain_assessment_receipt_sha256": {
+          "$ref": "#/$defs/sha256"
+        },
+        "confidence_assessment_receipt_sha256": {
+          "$ref": "#/$defs/sha256"
+        },
+        "support_assessment_receipt_sha256": {
+          "$ref": "#/$defs/sha256"
+        },
+        "c02_selection_receipt_sha256": {
+          "$ref": "#/$defs/sha256"
+        }
+      }
+    },
+    "safetyReceipt": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "c02_no_backfill_inherited",
+        "c02_free_generation_prohibited",
+        "model_score_present",
+        "pii_present",
+        "raw_path_present",
+        "free_text_present",
+        "advice_payload_present",
+        "reference_payload_present",
+        "corrective_action_payload_present",
+        "api_executed_by_static_package",
+        "production_release_allowed"
+      ],
+      "properties": {
+        "c02_no_backfill_inherited": {
+          "const": true
+        },
+        "c02_free_generation_prohibited": {
+          "const": true
+        },
+        "model_score_present": {
+          "const": false
+        },
+        "pii_present": {
+          "const": false
+        },
+        "raw_path_present": {
+          "const": false
+        },
+        "free_text_present": {
+          "const": false
+        },
+        "advice_payload_present": {
+          "const": false
+        },
+        "reference_payload_present": {
+          "const": false
+        },
+        "corrective_action_payload_present": {
+          "const": false
+        },
+        "api_executed_by_static_package": {
+          "const": false
+        },
+        "production_release_allowed": {
+          "const": false
+        }
+      }
+    }
+  }
+}

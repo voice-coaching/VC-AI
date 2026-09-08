@@ -1,0 +1,102 @@
+experiment:
+  id: aihub71490_wavlm_large_frozen_v1
+  stage: feature_cache
+  development_only: true
+
+model:
+  id: microsoft/wavlm-large
+  revision: c1423ed94bb01d80a3f5ce5bc39f6026a0f4828c
+  cache_dir: data/cache/huggingface/hub
+  local_files_only: true
+  frozen: true
+  config_sha256: a3d8fe831aaf63d725b54a8ac36f3549cd4365c5086774b2c89cabbc6f9e129d
+  checkpoint_sha256: fdee460e529396ddb2f8c8e8ce0ad74cfb747b726bc6f612e666c7c1e1963c9d
+  preprocessor_config_sha256: 60ca5a31e13f69ee2fbf147504c8676db5f6398fd7a6b12294341dff838edfcf
+  hidden_size: 1024
+  num_hidden_layers: 24
+  num_attention_heads: 16
+  intermediate_size: 4096
+  conv_dim: [512, 512, 512, 512, 512, 512, 512]
+  conv_kernel: [10, 3, 3, 3, 3, 2, 2]
+  conv_stride: [5, 2, 2, 2, 2, 2, 2]
+  feat_extract_norm: layer
+  feat_extract_activation: gelu
+  hidden_activation: gelu
+  do_normalize: true
+  return_attention_mask: true
+
+data:
+  dataset_root: data/restricted/aihub/dataset-71490
+  modeling_manifest: data/processed/aihub71490/manifests/aihub71490_modeling.parquet
+  modeling_manifest_sha256: 32f439ba10a035541f53b8a44f5d150b307e89f97387f09748704c3c78e85ef1
+  prompt_challenge_reservation: data/processed/aihub71490/manifests/aihub71490_prompt_challenge.json
+  allowed_splits: [train, dev]
+  forbidden_metric_splits: [stack, calibration, locked_test]
+  exclude_qc_flagged: true
+  exclude_reserved_prompts: true
+  sample_rate_hz: 16000
+  max_chunk_seconds: 20.0
+  chunk_boundary_source: target_phone_intervals
+
+features:
+  cuda_autocast_precision: bfloat16
+  observed_model_output_dtype: record_at_runtime
+  storage_precision: float16
+  utterance_pooling: mean_std
+  target_phone_pooling: mean
+  word_pooling: mean
+  phone_supervision:
+    task: binary_error
+    negative_operations: [match]
+    positive_operations: [substitution, deletion]
+    ignored_operations: [insertion]
+    label_role_only: true
+  prohibited_exports:
+    - raw_utterance_id
+    - raw_speaker_identity
+    - audio_path
+    - source_file_stem
+    - word_label
+    - realized_phone_identity
+    - alignment_operation
+    - error_tag
+    - holistic_score
+
+output:
+  root: data/processed/aihub71490/features/wavlm_large_frozen_v1
+  report: data/processed/aihub71490/features/wavlm_large_frozen_v1_report.json
+  utterance_shard_rows: 10000
+  phone_shard_rows: 250000
+  word_shard_rows: 100000
+  utterance_row_group_rows: 1024
+  phone_row_group_rows: 2048
+  word_row_group_rows: 2048
+  compression: zstd
+  atomic_publish: true
+
+full_run_gate:
+  require_completed_base_plus_head_result: true
+  require_completed_smoke_review: true
+  require_resource_review: true
+  smoke_utterances: 100
+  base_plus_head_contract:
+    schema_version: voice_coach.wavlm_frozen_head_report.v1
+    experiment_id: aihub71490_wavlm_base_plus_frozen_head_v1
+    encoder_id: microsoft/wavlm-base-plus
+    encoder_revision: 4c66d4806a428f2e922ccfa1a962776e232d487b
+    seeds_completed: [42, 43, 44]
+    modeling_manifest_sha256: 32f439ba10a035541f53b8a44f5d150b307e89f97387f09748704c3c78e85ef1
+    prompt_reservation_sha256: 3ea7f12ea76be07a0796d7e62f0c3727ca9858c0278df7c85ac1e08d9b653fa9
+    cache_config_sha256: 3641d04c974363d615cbc914a3e9d80eff39f9c0e64bc338aa2ff04ab9fef1ba
+    cache_builder_sha256: 2acd48d4f7dbb735dab96cdf4b9222a654627a96cf6a068539f0480839a56dde
+    encoder_config_sha256: fea6df1c2700a3954fc07e70588aecc9055eeb28db2ff57151a2db0d19180ed4
+    encoder_checkpoint_sha256: 3bb273a6ace99408b50cfc81afdbb7ef2de02da2eab0234e18db608ce692fe51
+    head_config_sha256: 9d0b8de8e8f41c66028c4bf895cb653dc77e69b64cdce3b9f1f7d0c59e8e0291
+    trainer_source_sha256: 0c0bd3b76e5e9bf0b9159c80c2d6267dde5ed2f74b88f88f639efecbe37d94a3
+    head_model_source_sha256: e5cdad3ece84e0ff8320b7366a64f0255a4be1a52d9df39654fb714f8f62f78b
+    explicit_label_sha256: a9f99d66b200468dd23733b232265c035577c81e6bf7aaa565871c7f5863558f
+  resource_estimate_reference_rows:
+    utterance: 169837
+    phone: 2233039
+    word: 408790
+  resource_estimate_safety_factor: 1.25

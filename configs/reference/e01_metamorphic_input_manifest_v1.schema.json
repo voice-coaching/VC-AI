@@ -1,0 +1,138 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "voice_coach.e01_metamorphic_input_manifest.v1",
+  "title": "E01 restricted non-locked metamorphic input manifest",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_version",
+    "manifest_id",
+    "status",
+    "privacy_zone",
+    "split_role",
+    "contains_locked_test",
+    "contains_s203_expert_holdout",
+    "contains_raw_audio",
+    "contains_audio_or_model_paths",
+    "s108_commit_sha256",
+    "selected_model_identity_sha256",
+    "preregistration_sha256",
+    "deterministic_seed",
+    "case_count",
+    "cases"
+  ],
+  "properties": {
+    "schema_version": {
+      "const": "voice_coach.e01_metamorphic_input_manifest.v1"
+    },
+    "manifest_id": {
+      "type": "string",
+      "pattern": "^e01m_[0-9a-f]{32}$"
+    },
+    "status": {
+      "const": "frozen"
+    },
+    "privacy_zone": {
+      "const": "D1_pseudonymized_restricted_non_locked"
+    },
+    "split_role": {
+      "const": "phase3_non_holdout_e01_only"
+    },
+    "contains_locked_test": {
+      "const": false
+    },
+    "contains_s203_expert_holdout": {
+      "const": false
+    },
+    "contains_raw_audio": {
+      "const": false
+    },
+    "contains_audio_or_model_paths": {
+      "const": false
+    },
+    "s108_commit_sha256": {
+      "$ref": "#/$defs/sha256"
+    },
+    "selected_model_identity_sha256": {
+      "$ref": "#/$defs/sha256"
+    },
+    "preregistration_sha256": {
+      "$ref": "#/$defs/sha256"
+    },
+    "deterministic_seed": {
+      "type": "integer",
+      "minimum": 0
+    },
+    "case_count": {
+      "type": "integer",
+      "minimum": 1
+    },
+    "cases": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "$ref": "#/$defs/case"
+      }
+    }
+  },
+  "$defs": {
+    "sha256": {
+      "type": "string",
+      "pattern": "^[0-9a-f]{64}$"
+    },
+    "case": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "case_id",
+        "source_item_id_sha256",
+        "source_audio_object_id_sha256",
+        "source_audio_sha256",
+        "perturbation_id",
+        "parameter_set_sha256",
+        "expected_relation_id_sha256",
+        "target_region_sha256"
+      ],
+      "properties": {
+        "case_id": {
+          "type": "string",
+          "pattern": "^e01c_[0-9a-f]{32}$"
+        },
+        "source_item_id_sha256": {
+          "$ref": "#/$defs/sha256"
+        },
+        "source_audio_object_id_sha256": {
+          "$ref": "#/$defs/sha256"
+        },
+        "source_audio_sha256": {
+          "$ref": "#/$defs/sha256"
+        },
+        "perturbation_id": {
+          "enum": [
+            "silence",
+            "gain",
+            "duration",
+            "f0",
+            "phone"
+          ]
+        },
+        "parameter_set_sha256": {
+          "$ref": "#/$defs/sha256"
+        },
+        "expected_relation_id_sha256": {
+          "$ref": "#/$defs/sha256"
+        },
+        "target_region_sha256": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/sha256"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        }
+      }
+    }
+  }
+}

@@ -1,0 +1,124 @@
+services:
+  backend-analysis-worker:
+    build:
+      context: ../..
+      dockerfile: deploy/backend-analysis-worker/Dockerfile
+    image: ${AI_ANALYSIS_WORKER_IMAGE:-intelligentai/backend-analysis-worker:request-v5-result-v4-seungun-v2}
+    restart: unless-stopped
+    init: true
+    gpus: all
+    read_only: true
+    pids_limit: 256
+    stop_grace_period: 5m
+    cap_drop:
+      - ALL
+    security_opt:
+      - no-new-privileges:true
+    group_add:
+      - ${AI_ANALYSIS_ARTIFACT_GID:?set AI_ANALYSIS_ARTIFACT_GID}
+    tmpfs:
+      - /app/runtime/work:rw,noexec,nosuid,nodev,uid=10001,gid=10001,mode=0700,size=512m
+      - /run/voice-coach-worker:rw,noexec,nosuid,nodev,uid=10001,gid=10001,mode=0700,size=1m
+      - /tmp:rw,noexec,nosuid,nodev,uid=10001,gid=10001,mode=0700,size=64m
+    volumes:
+      - type: bind
+        source: ${SEUNGUN_DETECTOR_BUNDLE_DIR:?set SEUNGUN_DETECTOR_BUNDLE_DIR}
+        target: /app/seungun/artifacts/error_detector/final_pronunciation_detector_v1
+        read_only: true
+      - type: bind
+        source: ${SEUNGUN_MODEL_DIR:?set SEUNGUN_MODEL_DIR}
+        target: /app/seungun/checkpoints/xlsr300m_full_internal_v1/best_model
+        read_only: true
+      - type: bind
+        source: ${SEUNGUN_PROCESSOR_DIR:?set SEUNGUN_PROCESSOR_DIR}
+        target: /app/seungun/processor
+        read_only: true
+      - type: bind
+        source: ${G2PK_NLTK_DATA_DIR:?set G2PK_NLTK_DATA_DIR}
+        target: /app/runtime/nltk_data
+        read_only: true
+      - type: bind
+        source: ${VISUAL_PRODUCTION_RELEASE_DIR:?set VISUAL_PRODUCTION_RELEASE_DIR}
+        target: /app/runtime/visual-release
+        read_only: true
+      - type: bind
+        source: ${VISUAL_LANDMARK_MODEL_FILE:?set VISUAL_LANDMARK_MODEL_FILE}
+        target: /app/runtime/models/face_landmarker.task
+        read_only: true
+      - type: bind
+        source: ${VISUAL_GEOMETRY_ARTIFACT_FILE:?set VISUAL_GEOMETRY_ARTIFACT_FILE}
+        target: /app/runtime/visual-geometry/geometry.json
+        read_only: true
+      - type: bind
+        source: ${ANALYSIS_REDIS_CA_CERT:?set ANALYSIS_REDIS_CA_CERT}
+        target: /run/analysis-ca/ca.crt
+        read_only: true
+      - type: bind
+        source: ${AI_ANALYSIS_DEPLOYMENT_MANIFEST_FILE:?set AI_ANALYSIS_DEPLOYMENT_MANIFEST_FILE}
+        target: /run/analysis-deployment/manifest.json
+        read_only: true
+    secrets:
+      - analysis_authorization_keys
+      - analysis_redis_password
+    environment:
+      VOICE_COACH_BACKEND_ANALYSIS_FACTORY: voice_coach.backend_analysis.production:create_worker
+      VOICE_COACH_REPOSITORY_ROOT: /app
+      AI_ANALYSIS_RESTRICTED_WORKSPACE_ROOT: /app/runtime/work
+      AI_ANALYSIS_NLTK_DATA_ROOT: /app/runtime/nltk_data
+      AI_ANALYSIS_SEUNGUN_DEVICE: ${AI_ANALYSIS_SEUNGUN_DEVICE:-cuda}
+      AI_ANALYSIS_DEPLOYMENT_MANIFEST_PATH: /run/analysis-deployment/manifest.json
+      AI_ANALYSIS_RELEASE_ID: ${AI_ANALYSIS_RELEASE_ID:?set AI_ANALYSIS_RELEASE_ID}
+      AI_ANALYSIS_ACTIVE_AUTHORIZATION_KEY_ID: ${AI_ANALYSIS_ACTIVE_AUTHORIZATION_KEY_ID:?set AI_ANALYSIS_ACTIVE_AUTHORIZATION_KEY_ID}
+      AI_ANALYSIS_ARTIFACT_GID: ${AI_ANALYSIS_ARTIFACT_GID:?set AI_ANALYSIS_ARTIFACT_GID}
+      AI_ANALYSIS_SEUNGUN_STARTUP_TIMEOUT_SECONDS: ${AI_ANALYSIS_SEUNGUN_STARTUP_TIMEOUT_SECONDS:-300}
+      AI_ANALYSIS_SEUNGUN_REQUEST_TIMEOUT_SECONDS: ${AI_ANALYSIS_SEUNGUN_REQUEST_TIMEOUT_SECONDS:-180}
+      AI_ANALYSIS_SEUNGUN_MAXIMUM_REQUESTS_PER_PROCESS: ${AI_ANALYSIS_SEUNGUN_MAXIMUM_REQUESTS_PER_PROCESS:-100}
+      AI_ANALYSIS_FFMPEG_BINARY: /usr/bin/ffmpeg
+      AI_ANALYSIS_OBJECT_STORAGE_BUCKET: ${AI_ANALYSIS_OBJECT_STORAGE_BUCKET:?set AI_ANALYSIS_OBJECT_STORAGE_BUCKET}
+      AI_ANALYSIS_OBJECT_STORAGE_REGION: ${AI_ANALYSIS_OBJECT_STORAGE_REGION:?set AI_ANALYSIS_OBJECT_STORAGE_REGION}
+      AI_ANALYSIS_OBJECT_STORAGE_ENDPOINT: ${AI_ANALYSIS_OBJECT_STORAGE_ENDPOINT:-}
+      AI_ANALYSIS_OBJECT_STORAGE_PATH_STYLE: ${AI_ANALYSIS_OBJECT_STORAGE_PATH_STYLE:-false}
+      AI_ANALYSIS_OBJECT_STORAGE_RECORDINGS_PREFIX: ${AI_ANALYSIS_OBJECT_STORAGE_RECORDINGS_PREFIX:-recordings/}
+      AI_ANALYSIS_OBJECT_STORAGE_MAXIMUM_AUDIO_BYTES: ${AI_ANALYSIS_OBJECT_STORAGE_MAXIMUM_AUDIO_BYTES:-20971520}
+      AI_ANALYSIS_OBJECT_STORAGE_MAXIMUM_VISUAL_BYTES: ${AI_ANALYSIS_OBJECT_STORAGE_MAXIMUM_VISUAL_BYTES:-134217728}
+      AI_ANALYSIS_VISUAL_RELEASE_ROOT: /app/runtime/visual-release
+      AI_ANALYSIS_VISUAL_LANDMARK_MODEL_PATH: /app/runtime/models/face_landmarker.task
+      AI_ANALYSIS_VISUAL_GEOMETRY_ARTIFACT_PATH: /app/runtime/visual-geometry/geometry.json
+      AI_ANALYSIS_AUTHORIZATION_KEYS_FILE: /run/secrets/analysis_authorization_keys
+      AI_ANALYSIS_CONSENT_POLICY_REVISION: ${AI_ANALYSIS_CONSENT_POLICY_REVISION:?set AI_ANALYSIS_CONSENT_POLICY_REVISION}
+      AI_ANALYSIS_REDIS_HOST: ${AI_ANALYSIS_REDIS_HOST:?set AI_ANALYSIS_REDIS_HOST}
+      AI_ANALYSIS_REDIS_PORT: ${AI_ANALYSIS_REDIS_PORT:-6379}
+      AI_ANALYSIS_REDIS_USERNAME: ${AI_ANALYSIS_REDIS_USERNAME:-}
+      AI_ANALYSIS_REDIS_PASSWORD_FILE: /run/secrets/analysis_redis_password
+      AI_ANALYSIS_REDIS_SSL_ENABLED: "true"
+      AI_ANALYSIS_REDIS_CA_CERT: /run/analysis-ca/ca.crt
+      AI_ANALYSIS_REQUEST_CONSUMER_NAME: ${AI_ANALYSIS_REQUEST_CONSUMER_NAME:?set unique AI_ANALYSIS_REQUEST_CONSUMER_NAME}
+      AI_ANALYSIS_REQUEST_STREAM: ${AI_ANALYSIS_REQUEST_STREAM:-analysis:request:v1}
+      AI_ANALYSIS_RESULT_STREAM: ${AI_ANALYSIS_RESULT_STREAM:-analysis:result:v1}
+      AI_ANALYSIS_REQUEST_DLQ_STREAM: ${AI_ANALYSIS_REQUEST_DLQ_STREAM:-analysis:request:dlq:v1}
+      AI_ANALYSIS_REQUEST_CONSUMER_GROUP: ${AI_ANALYSIS_REQUEST_CONSUMER_GROUP:-analysis-workers}
+      AI_ANALYSIS_CANCELLATION_KEY_PREFIX: ${AI_ANALYSIS_CANCELLATION_KEY_PREFIX:-analysis:canceled:v1:}
+      AI_ANALYSIS_CANCELLATION_POLL_INTERVAL_SECONDS: ${AI_ANALYSIS_CANCELLATION_POLL_INTERVAL_SECONDS:-0.25}
+      AI_ANALYSIS_PROCESSING_HEARTBEAT_INTERVAL_SECONDS: ${AI_ANALYSIS_PROCESSING_HEARTBEAT_INTERVAL_SECONDS:-60}
+      AI_ANALYSIS_MAXIMUM_REQUEST_PAYLOAD_BYTES: ${AI_ANALYSIS_MAXIMUM_REQUEST_PAYLOAD_BYTES:-65536}
+      AI_ANALYSIS_MAXIMUM_RESULT_PAYLOAD_BYTES: ${AI_ANALYSIS_MAXIMUM_RESULT_PAYLOAD_BYTES:-402653184}
+      AI_ANALYSIS_MAXIMUM_REQUEST_DLQ_ENTRIES: ${AI_ANALYSIS_MAXIMUM_REQUEST_DLQ_ENTRIES:-10000}
+      AI_ANALYSIS_WORKER_STATE_PATH: /run/voice-coach-worker/state.json
+      AI_ANALYSIS_WORKER_HEALTH_MAX_AGE_SECONDS: ${AI_ANALYSIS_WORKER_HEALTH_MAX_AGE_SECONDS:-600}
+      MPLCONFIGDIR: /tmp/matplotlib
+    healthcheck:
+      test:
+        - CMD
+        - /app/.venv/bin/python
+        - -m
+        - voice_coach.backend_analysis.healthcheck
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: ${AI_ANALYSIS_WORKER_HEALTH_START_PERIOD:-5m}
+
+secrets:
+  analysis_authorization_keys:
+    external: true
+  analysis_redis_password:
+    external: true

@@ -1,0 +1,280 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "voice_coach.e01.phone_case_sidecar.v2",
+  "title": "E01 restricted phone-substitution case sidecar v2",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_version",
+    "status",
+    "privacy_zone",
+    "access_scope",
+    "case_id",
+    "contains_locked_test",
+    "contains_s203_expert_holdout",
+    "contains_raw_audio",
+    "contains_paths",
+    "role_graph",
+    "policy_bindings",
+    "human_observation",
+    "consent",
+    "lineage",
+    "restricted_material"
+  ],
+  "properties": {
+    "schema_version": {
+      "const": "voice_coach.e01.phone_case_sidecar.v2"
+    },
+    "status": {
+      "const": "frozen_before_execution"
+    },
+    "privacy_zone": {
+      "const": "D1_pseudonymized_restricted_non_locked"
+    },
+    "access_scope": {
+      "const": "phone_executor_and_independent_verifier_only"
+    },
+    "case_id": {
+      "type": "string",
+      "pattern": "^e01pc_[0-9a-f]{32}$"
+    },
+    "contains_locked_test": {
+      "const": false
+    },
+    "contains_s203_expert_holdout": {
+      "const": false
+    },
+    "contains_raw_audio": {
+      "const": false
+    },
+    "contains_paths": {
+      "const": false
+    },
+    "role_graph": {
+      "type": "array",
+      "prefixItems": [
+        {
+          "const": "U_to_I"
+        },
+        {
+          "const": "U_to_T"
+        },
+        {
+          "const": "I_to_T"
+        }
+      ],
+      "items": false,
+      "minItems": 3,
+      "maxItems": 3
+    },
+    "policy_bindings": {
+      "$ref": "#/$defs/policyBindings"
+    },
+    "human_observation": {
+      "$ref": "#/$defs/humanObservation"
+    },
+    "consent": {
+      "$ref": "#/$defs/consent"
+    },
+    "lineage": {
+      "$ref": "#/$defs/lineage"
+    },
+    "restricted_material": {
+      "$ref": "#/$defs/restrictedMaterial"
+    }
+  },
+  "$defs": {
+    "sha256": {
+      "type": "string",
+      "pattern": "^(?!0{64}$)[0-9a-f]{64}$"
+    },
+    "policyBindings": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "preregistration_sha256",
+        "phone_case_policy_sha256",
+        "tolerance_policy_sha256",
+        "minimum_support_policy_sha256",
+        "invalid_case_policy_sha256",
+        "u_to_i_relation_policy_sha256",
+        "u_to_t_relation_policy_sha256",
+        "i_to_t_relation_policy_sha256"
+      ],
+      "properties": {
+        "preregistration_sha256": {
+          "$ref": "#/$defs/sha256"
+        },
+        "phone_case_policy_sha256": {
+          "$ref": "#/$defs/sha256"
+        },
+        "tolerance_policy_sha256": {
+          "$ref": "#/$defs/sha256"
+        },
+        "minimum_support_policy_sha256": {
+          "$ref": "#/$defs/sha256"
+        },
+        "invalid_case_policy_sha256": {
+          "$ref": "#/$defs/sha256"
+        },
+        "u_to_i_relation_policy_sha256": {
+          "$ref": "#/$defs/sha256"
+        },
+        "u_to_t_relation_policy_sha256": {
+          "$ref": "#/$defs/sha256"
+        },
+        "i_to_t_relation_policy_sha256": {
+          "$ref": "#/$defs/sha256"
+        }
+      }
+    },
+    "humanObservation": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "boundary_source",
+        "source_boundary_annotation_sha256",
+        "donor_boundary_annotation_sha256",
+        "source_phone_label_sha256",
+        "donor_phone_label_sha256",
+        "source_and_donor_phone_differ",
+        "observers_independent_from_s1"
+      ],
+      "properties": {
+        "boundary_source": {
+          "const": "human_observed_adjudicated_not_expected_g2p"
+        },
+        "source_boundary_annotation_sha256": {
+          "$ref": "#/$defs/sha256"
+        },
+        "donor_boundary_annotation_sha256": {
+          "$ref": "#/$defs/sha256"
+        },
+        "source_phone_label_sha256": {
+          "$ref": "#/$defs/sha256"
+        },
+        "donor_phone_label_sha256": {
+          "$ref": "#/$defs/sha256"
+        },
+        "source_and_donor_phone_differ": {
+          "const": true
+        },
+        "observers_independent_from_s1": {
+          "const": true
+        }
+      }
+    },
+    "consent": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "consent_scope_sha256",
+        "source_derivative_processing_allowed",
+        "donor_derivative_processing_allowed",
+        "phone_splice_or_resynthesis_allowed",
+        "public_audio_release_allowed"
+      ],
+      "properties": {
+        "consent_scope_sha256": {
+          "$ref": "#/$defs/sha256"
+        },
+        "source_derivative_processing_allowed": {
+          "const": true
+        },
+        "donor_derivative_processing_allowed": {
+          "const": true
+        },
+        "phone_splice_or_resynthesis_allowed": {
+          "const": true
+        },
+        "public_audio_release_allowed": {
+          "const": false
+        }
+      }
+    },
+    "lineage": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "same_speaker_required",
+        "same_session_required",
+        "same_prompt_context_required",
+        "source_speaker_lineage_sha256",
+        "donor_speaker_lineage_sha256",
+        "source_session_lineage_sha256",
+        "donor_session_lineage_sha256",
+        "source_prompt_context_lineage_sha256",
+        "donor_prompt_context_lineage_sha256"
+      ],
+      "properties": {
+        "same_speaker_required": {
+          "const": true
+        },
+        "same_session_required": {
+          "const": true
+        },
+        "same_prompt_context_required": {
+          "const": true
+        },
+        "source_speaker_lineage_sha256": {
+          "$ref": "#/$defs/sha256"
+        },
+        "donor_speaker_lineage_sha256": {
+          "$ref": "#/$defs/sha256"
+        },
+        "source_session_lineage_sha256": {
+          "$ref": "#/$defs/sha256"
+        },
+        "donor_session_lineage_sha256": {
+          "$ref": "#/$defs/sha256"
+        },
+        "source_prompt_context_lineage_sha256": {
+          "$ref": "#/$defs/sha256"
+        },
+        "donor_prompt_context_lineage_sha256": {
+          "$ref": "#/$defs/sha256"
+        }
+      }
+    },
+    "restrictedMaterial": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "source_audio_pcm_sha256",
+        "donor_audio_pcm_sha256",
+        "source_region_sha256",
+        "donor_region_sha256",
+        "edit_mask_sha256",
+        "source_sample_count",
+        "edit_mask_sample_count"
+      ],
+      "properties": {
+        "source_audio_pcm_sha256": {
+          "$ref": "#/$defs/sha256"
+        },
+        "donor_audio_pcm_sha256": {
+          "$ref": "#/$defs/sha256"
+        },
+        "source_region_sha256": {
+          "$ref": "#/$defs/sha256"
+        },
+        "donor_region_sha256": {
+          "$ref": "#/$defs/sha256"
+        },
+        "edit_mask_sha256": {
+          "$ref": "#/$defs/sha256"
+        },
+        "source_sample_count": {
+          "type": "integer",
+          "minimum": 2,
+          "maximum": 2147483647
+        },
+        "edit_mask_sample_count": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 2147483647
+        }
+      }
+    }
+  }
+}

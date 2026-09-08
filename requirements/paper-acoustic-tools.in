@@ -1,0 +1,10 @@
+# Research-only Phase-1 acoustic feature environment.
+# Keep separate from the production/API and active GPU scorer environments.
+#
+# openSMILE's open-source core is restricted to private, research, and
+# educational use; a separate commercial license is required for products.
+opensmile==2.6.0
+
+# Parselmouth and Praat are GPL-licensed.  Do not bundle this environment into
+# a differently licensed production artifact without a license review.
+praat-parselmouth==0.4.7
