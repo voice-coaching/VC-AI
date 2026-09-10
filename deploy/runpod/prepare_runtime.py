@@ -39,7 +39,8 @@ def main() -> None:
         check=True,
     )
     overlay = WORKSPACE / "deployment/int8-overlay"
-    manifest = json.loads((overlay / "overlay-manifest.json").read_text())
+    manifest_bytes = (overlay / "overlay-manifest.json").read_bytes()
+    manifest = json.loads(manifest_bytes)
     for entry in manifest["files"]:
         relative = Path(entry["path"])
         if relative.is_absolute() or ".." in relative.parts:
@@ -87,6 +88,34 @@ def main() -> None:
     config_file = RUNTIME / "hyperclova-runtime.json"
     config_file.write_text(json.dumps(config, indent=2) + "\n")
     config_file.chmod(0o640)
+    visual_release = app / "artifacts/visual_feedback/releases/production_visual"
+    if visual_release.is_dir():
+        # This loader requires immutable group-readable files, not general 0640.
+        for name in ("release.json", "runtime_bundle.json", "video_qc_decision_policy.json", "av_sync_decision_policy.json"):
+            target = visual_release / name
+            if target.is_symlink() or not target.is_file():
+                raise SystemExit("Visual release file is unavailable")
+            target.chmod(0o440)
+    state_root = Path("/run/intelligentai")
+    state_root.mkdir(mode=0o750, exist_ok=True)
+    os.chown(state_root, 0, 10001)
+    state_root.chmod(0o750)
+    for name in ("worker", "worker/work", "worker/tmp"):
+        target = state_root / name
+        target.mkdir(mode=0o700, exist_ok=True)
+        os.chown(target, 10001, 10001)
+        target.chmod(0o700)
+    deployment = RUNTIME / "deployment.json"
+    deployment.write_text(json.dumps({
+        "sourceRevision": manifest.get("sourceRevision"),
+        "overlaySha256": hashlib.sha256(manifest_bytes).hexdigest(),
+        "baseRelease": manifest["base_release"],
+    }, sort_keys=True) + "\n")
+    os.chown(deployment, 0, 10001)
+    deployment.chmod(0o640)
+    worker_preparation = app / "deploy/runpod/prepare_worker.py"
+    if worker_preparation.is_file():
+        subprocess.run([str(RUNTIME / "envs/scorer/bin/python"), str(worker_preparation)], check=True)
     print("Ephemeral runtime prepared; no worker or inference requests started", flush=True)
 
 

@@ -19,7 +19,7 @@ Clova 실행 설정은 GPU 배치 예산 40GiB, CPU 예산 8GiB, INT8 threshold 
 
 서비스는 `127.0.0.1:8000`에만 바인딩한다. `/health`의 `quantization=bnb-int8`과 `maximum_input_tokens=4096`으로 설정을 확인할 수 있다. 모델 적재와 health는 한국어 설명 품질 또는 Seungun·영상 동시 실행 검증을 대신하지 않는다.
 
-이전 무결성 확인 후 Pod 시작 명령을 `bash /workspace/intelligentai/deployment/int8-overlay/deploy/runpod/boot.sh`로 설정한다. `boot.sh`는 이미지의 SSH 서비스를 먼저 시작하고 시스템 의존성·`/opt`를 재구성한 뒤 Clova를 시작한다. `deployment/int8-migration-verified.json`이 없으면 모델을 시작하지 않는다. 모델 시작 실패 시 자동 재시도하지 않고 SSH를 유지한다.
+Pod 시작 명령은 `bash /workspace/intelligentai/deployment/int8-overlay/deploy/runpod/boot.sh`다. `boot.sh`는 SSH를 먼저 시작하고 시스템 의존성·`/opt`를 재구성한 뒤 `run_services.sh`와 `supervise_services.py`를 시작한다. `deployment/int8-migration-verified.json`이 없으면 확인을 기다린다. 준비 실패는 최대 300초 간격으로 재시도하며 SSH를 유지한다. 중복 boot·manager·supervisor는 각각 잠금으로 막는다.
 
 RunPod 시작 스크립트는 호스트 CPU 수와 Pod CPU quota의 차이로 인한 과도한 스레드 생성을 막기 위해 `OMP_NUM_THREADS=4`, `MKL_NUM_THREADS=4`, `OPENBLAS_NUM_THREADS=1`을 지정한다.
 
@@ -38,9 +38,37 @@ docker compose -f deploy/hyperclova/compose.yaml \
   -f deploy/hyperclova/compose.int8.yaml up -d --build
 ```
 
-## Redis worker 경계
+## 추론 API와 전체 피드백 워커
 
-위 스크립트는 Redis 분석 worker를 시작하지 않는다. 기존 production 계약은 별도의 Redis TLS/인증, S3 media 접근 설정, authorization key 및 deployment attestation을 요구한다. 이 값을 임의 생성하거나 우회하지 않는다. 이관된 자산과 실행 환경을 준비한 뒤 실제 운영 설정을 연결해야 한다. 발음 판정 모델은 기존 Seungun을 유지한다.
+2026-09-10부터 [services.json](services.json)이 Clova 추론 API와 실제 Redis 분석 워커를 관리한다. Clova가 준비된 뒤에만 워커를 시작하고, 프로세스 종료·시작 시간 초과·연속 health 실패에는 10~300초의 대기 시간을 두고 재시도한다. 의존 서비스가 내려가면 워커를 정상 종료하고 의존성이 복원된 뒤 다시 시작한다. 종료 시 진행 중인 처리를 기다리며 제한시간 후 해당 프로세스 그룹을 종료한다.
+
+API는 기존 `127.0.0.1:8000/v1/chat/completions`이고, 음성·영상 분석 요청은 VC-BE의 기존 Redis 계약으로 받는다. 연구용 `voice_coach.api.app`의 Oracle API는 이 배포에서 실행하지 않는다. 워커는 `scorer` 환경과 UID/GID 10001을 사용하고, Clova는 별도 `hyperclova` 환경을 사용한다. `AI_ANALYSIS_CLOVA_ENABLED=true`이면 같은 시도의 Seungun·입술 분석 근거로 Clova를 호출한다. 생성 실패 시 검증된 카탈로그 피드백을 유지한다.
+
+Redis TLS/인증, 녹음용 S3 접근 설정, VC-BE와 같은 HMAC 키·동의 정책이 필요하다. 설정이 없으면 워커는 `blocked`로 대기하며 Clova는 계속 시작한다. `.env`의 B2 연구자료 자격증명은 녹음 저장소나 Redis 설정을 대신하지 않는다. 이번 배포에서 존재하지 않는 접속 값이나 새 HMAC 키를 생성하지 않는다.
+
+### 비밀 설정과 재부팅 복원
+
+[`worker.env.example`](worker.env.example)을 기준으로 root 전용 `/root/.config/intelligentai/analysis-worker.env`를 준비한다. 따옴표·변수 치환·여러 줄 값 없이 `KEY=VALUE`를 사용하고 파일은 `0600`, 부모는 `0700`으로 둔다. 키 JSON도 한 줄 문자열이며 backend의 기존 키 ID·비밀값·정책과 같아야 한다.
+
+컨테이너 재생성 후에도 자동 복원하려면 이 설정들을 **문자열 값의 JSON 객체**로 만들어 RunPod의 비공개 환경 설정 `RUNPOD_ANALYSIS_WORKER_ENV_JSON`에 주입한다. `.env` 파일만 `/root`에 만든 상태는 지속적인 비밀 공급원이 아니다. 부팅 시 `prepare_worker.py`가 제공된 값을 읽어 root 전용 사본을 만들며, 공유 `/workspace`와 복구 archive에는 넣지 않는다. B2 키를 이 설정에 추가하지 않는다.
+
+준비 단계는 승인된 overlay·자산의 해시와 Git 배포 revision, 활성 HMAC 키 ID·동의 정책·실행 device를 묶은 attestation을 생성하고, 실행용 `/run/intelligentai/analysis-worker.env`만 supervisor에 전달한다. 필수 설정이나 검증이 미완료면 실행용 파일을 생성하지 않는다. 기존 private source 파일을 갱신한 후 다음 명령으로 준비하면 supervisor가 설정을 다시 확인한다.
+
+```bash
+/opt/intelligentai/envs/scorer/bin/python /opt/intelligentai/app/deploy/runpod/prepare_worker.py
+```
+
+Custom Redis CA·별도 credential 파일을 선택하면 해당 파일도 재부팅 시 제공되고 UID 10001이 읽을 수 있어야 한다. 기본 template은 시스템 CA와 직접 주입된 자격증명을 사용한다. `services.json` 설정 변경은 manager를 정상 종료하고 `run_services.sh`를 다시 실행해 적용한다.
+
+### 상태와 배포 버전
+
+- `/health`: Clova 모델 상태, `process_id`, `deployment_revision`.
+- `/health/services`: 전체 서비스의 준비 상태. 모두 준비되면 HTTP 200, 설정 대기·시작 중·장애면 HTTP 503. 오래된 상태 파일도 준비 완료로 응답하지 않는다.
+- `/run/intelligentai/services.json`: 서비스별 PID·상태·재시작 횟수·고정 실패 코드. 설정값·자격증명은 포함하지 않는다.
+- `/run/intelligentai/logs/{clova,analysis-worker}.log`: 서비스별 최대 10MiB, 이전 로그 최대 3개. 원문 traceback과 비밀값을 억제한다.
+- `/opt/intelligentai/deployment.json`: source Git revision·overlay hash·원본 release. 부팅마다 Git 최신 코드를 받지 않고 마지막 배포본을 복원한다.
+
+영구 overlay를 갱신할 때는 각 파일 SHA-256과 `overlay-manifest.json`의 `sourceRevision`을 함께 기록한다. `prepare_runtime.py`는 검증한 파일만 `/opt`에 적용하고 영상 release의 `0440` 권한 및 UID 10001의 임시 작업 디렉터리를 복원한다. 배포 후 프로세스·버전·health 확인은 추론 품질·실제 Redis/S3 요청 검증과 별도다.
 
 실제 이전 상태와 원본 보존 여부는 [실행 기록](../../docs/runpod_b2_storage_migration_execution.md)을 따른다. 전체 원본 BF16 파일을 사용하는 실행 시 양자화이므로 디스크가 8bit 모델 크기로 자동 축소되는 것은 아니다.
 

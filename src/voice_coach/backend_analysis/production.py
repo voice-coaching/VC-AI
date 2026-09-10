@@ -31,13 +31,14 @@ from .adapters.visual import (
     ProductionBackendVisualAnalysisAdapter,
 )
 from .deployment_attestation import verify_deployment_attestation
+from .grounded_feedback import load_grounded_feedback
 from .service import BackendAnalysisWorker
 
 
 def create_worker(
     environment: Mapping[str, str] | None = None,
 ) -> BackendAnalysisWorker:
-    """Compose signed authorization, private S3, g2pK, and frozen Seungun."""
+    """Compose authorized Seungun/visual analysis and optional local Clova advice."""
 
     env = os.environ if environment is None else environment
     try:
@@ -98,6 +99,7 @@ def create_worker(
         env,
         authorization_key_ids=authorization_settings.keys,
     )
+    grounded_feedback = load_grounded_feedback(env, repository_root=repository_root)
     authorization = HmacAnalysisAuthorizationAdapter(authorization_settings)
     object_store = S3CompatibleRestrictedObjectStore(
         create_s3_client_from_environment(env),
@@ -150,6 +152,7 @@ def create_worker(
         object_store=object_store,
         seungun=seungun,
         visual=visual,
+        grounded_feedback=grounded_feedback,
     )
 
 

@@ -5,6 +5,7 @@ from __future__ import annotations
 
 import argparse
 import json
+import os
 from pathlib import Path
 import sys
 import time
@@ -73,6 +74,8 @@ def create_app(runtime: TransformersHyperClovaRuntime):  # noqa: ANN201
     def health() -> dict[str, Any]:
         return {
             "status": "ready" if runtime.loaded else "not_loaded",
+            "process_id": os.getpid(),
+            "deployment_revision": os.environ.get("VOICE_COACH_BUILD_REVISION"),
             "model": runtime.model_id,
             "revision": runtime.revision,
             "quantization": runtime.quantization,
@@ -84,6 +87,22 @@ def create_app(runtime: TransformersHyperClovaRuntime):  # noqa: ANN201
             "grounded_input_schema": GROUNDED_INPUT_SCHEMA_VERSION,
             "last_completion": runtime.last_completion,
         }
+
+    @app.get("/health/services")
+    def services_health():  # noqa: ANN202
+        from fastapi.responses import JSONResponse
+
+        path = Path("/run/intelligentai/services.json")
+        try:
+            metadata = path.lstat()
+            if path.is_symlink() or not path.is_file() or metadata.st_size > 65536 or not 0 <= time.time() - metadata.st_mtime <= 30:
+                raise ValueError
+            state = json.loads(path.read_text(encoding="utf-8"))
+            if not isinstance(state, dict) or state.get("schemaVersion") != "intelligentai.service-supervisor-state.v1":
+                raise ValueError
+            return JSONResponse(state, status_code=200 if state.get("ready") is True else 503)
+        except (OSError, ValueError, TypeError):
+            return JSONResponse({"status": "unavailable", "ready": False}, status_code=503)
 
     @app.post("/v1/chat/completions")
     def chat_completions(document: dict[str, Any]) -> dict[str, Any]:

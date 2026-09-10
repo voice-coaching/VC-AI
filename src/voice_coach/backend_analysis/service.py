@@ -3,8 +3,8 @@
 from __future__ import annotations
 
 import base64
-from collections.abc import Callable
-from dataclasses import dataclass
+from collections.abc import Callable, Mapping
+from dataclasses import dataclass, field
 from datetime import UTC, datetime
 from uuid import UUID, uuid4
 
@@ -14,6 +14,7 @@ from .domain import (
     ClosedBetaDebug,
     VisualSupplement,
 )
+from .grounded_feedback import BackendGroundedFeedback
 from .ports import (
     AnalysisAuthorization,
     AnalysisAuthorizationPort,
@@ -47,6 +48,7 @@ class _VisualCapture:
     supplement: VisualSupplement | None
     materialized_path: str | None
     media_base64: str | None
+    grounded_evidence: Mapping[str, object] | None = field(default=None, repr=False)
 
 
 class BackendAnalysisWorker:
@@ -65,6 +67,7 @@ class BackendAnalysisWorker:
         object_store: RestrictedObjectStorePort,
         seungun: SeungunAnalysisPort,
         visual: VisualAnalysisPort | None = None,
+        grounded_feedback: BackendGroundedFeedback | None = None,
         event_id_factory: Callable[[], UUID] = uuid4,
         clock: Callable[[], datetime] | None = None,
         worker_revision: str = _WORKER_REVISION,
@@ -75,6 +78,7 @@ class BackendAnalysisWorker:
         self._object_store = object_store
         self._seungun = seungun
         self._visual = visual
+        self._grounded_feedback = grounded_feedback
         self._event_id_factory = event_id_factory
         self._clock = clock or (lambda: datetime.now(tz=UTC))
         self._worker_revision = worker_revision
@@ -123,11 +127,19 @@ class BackendAnalysisWorker:
                     audio=audio,
                     analysis=analysis,
                 )
+                summary_feedback = analysis.summary_feedback
+                if self._grounded_feedback is not None:
+                    summary_feedback = self._grounded_feedback.render(
+                        request=request,
+                        analysis=analysis,
+                        visual_supplement=visual_capture.supplement,
+                        visual_evidence=visual_capture.grounded_evidence,
+                    )
                 return AnalysisWorkerResult.completed(
                     event_id=self._event_id_factory(),
                     request=request,
                     outcome=analysis.outcome,
-                    summary_feedback=analysis.summary_feedback,
+                    summary_feedback=summary_feedback,
                     pronunciation_evidence=analysis.pronunciation_evidence,
                     worker_revision=self._worker_revision,
                     pipeline_revision=analysis.pipeline_revision,
@@ -175,22 +187,41 @@ class BackendAnalysisWorker:
                     if request.closed_beta_context is not None
                     else None
                 )
+                grounded_evidence = None
                 if self._visual is None:
                     supplement = None
                 else:
                     try:
-                        supplement = self._visual.analyze(
-                            request=request,
-                            audio=audio,
-                            video=video,
-                            seungun=analysis,
+                        analyze_with_evidence = (
+                            getattr(self._visual, "analyze_with_grounded_evidence", None)
+                            if self._grounded_feedback is not None
+                            else None
                         )
+                        if callable(analyze_with_evidence):
+                            supplement, grounded_evidence = analyze_with_evidence(
+                                request=request, audio=audio, video=video, seungun=analysis
+                            )
+                            if (
+                                supplement is not None and not isinstance(supplement, VisualSupplement)
+                            ) or (
+                                grounded_evidence is not None and not isinstance(grounded_evidence, Mapping)
+                            ):
+                                raise ValueError("visual_grounded_evidence_invalid")
+                        else:
+                            supplement = self._visual.analyze(
+                                request=request,
+                                audio=audio,
+                                video=video,
+                                seungun=analysis,
+                            )
                     except Exception:
                         supplement = None
+                        grounded_evidence = None
                 return _VisualCapture(
                     supplement,
                     materialized_path,
                     media_base64,
+                    grounded_evidence,
                 )
         except Exception:
             # Visual evidence is optional and cannot erase an approved Seungun result.
