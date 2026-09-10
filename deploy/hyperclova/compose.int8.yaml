@@ -1,0 +1,16 @@
+# Apply after compose.yaml for the A6000 deployment.
+services:
+  hyperclova-grounded-advice:
+    command:
+      - --host
+      - 0.0.0.0
+      - --port
+      - "8000"
+      - --gpu-memory-gib
+      - "40"
+      - --cpu-memory-gib
+      - "8"
+      - --quantization
+      - bnb-int8
+      - --maximum-input-tokens
+      - "4096"

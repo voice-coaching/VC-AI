@@ -1,5 +1,12 @@
 # 영상 기반 발음 피드백 프로덕션 경계와 상태
 
+2026-09-09 새 RunPod A6000 INT8에서 두 실제 테스트 영상을 실행했다.
+MediaPipe 의존성과 Clova의 반복 로그·요청 처리를 보완한 뒤 두 영상의
+음성·입술·Clova 결합 결과가 모두 검증을 통과했다. Clova 생성은 약 33초였다.
+위 결과는 짧은 피드백 정책의 [실행 기록](runpod_clova_runtime_fix_20260909.md)이다.
+이후 적용한 관찰·연습 단계 보존과 분석 보완 계획은
+[상세 피드백 변경](clova_detailed_feedback_20260909.md)을 따른다.
+
 ## 결론
 
 P6은 고정 런타임과 보정 아티팩트를 비어 있지 않은 표본에서 확인했다는 최소
@@ -38,7 +45,7 @@ eligibility 계약은 존재하지 않는다.
 
 ### Clova 학습자 설명 정책
 
-호스트는 `voice_coach.grounded_advice_input.v3`을 만들 때 g2pK 기대 음소와
+호스트는 `voice_coach.grounded_advice_input.v4`를 만들 때 g2pK 기대 음소와
 원문 자모를 정렬해 선택 음소의 단어·음절 위치를 먼저 확정한다. 예를 들어
 `쌀을 깨끗이 씻어요`의 9번 기대 음소 `ㅅ`에는
 `‘깨끗이’의 두 번째 음절 ‘끗’`이라는 `learnerAnchor`를 넣는다. Clova가
@@ -46,19 +53,22 @@ eligibility 계약은 존재하지 않는다.
 
 Clova는 `voice_coach.grounded_advice_output.v3`에서 승인 claim을 선택하는 것에
 더해 `learnerMessage`를 작성한다. 메시지는 일반 사용자가 바로 이해할 수 있는
-쉬운 한국어 2~3문장으로 구성한다. 음소 오류의 첫 문장은 `learnerAnchor`를
+쉬운 한국어로 관찰·단어 연습·문장 재녹음·비교를 설명한다. 보통 4~8문장을
+권하며 최대 1,000자를 허용한다. 음소 오류의 첫 문장은 `learnerAnchor`를
 그대로 복사한 뒤 목표 음소를 명시해야 한다. 단어·음절 anchor가 빠지거나
-바뀐 응답은 코드 검증에서 거부한다. 승인 claim의 행동은 모두 보존하되,
-서로 모순되지 않는 범위에서 `천천히 한 번 -> 원래 속도로 한 번 -> 다시
-녹음해 비교`와 같은 일반적인 연습 순서를 추가할 수 있다.
+바뀐 응답은 코드 검증에서 거부한다. claim마다 `requiredFragments`를 지정해
+위치·핵심 관찰·단어 안에서의 연습·재녹음 비교·분석 한계가 본문에도 남도록
+검증한다. 필수 상세를 생략한 응답은 전체 승인 문구로 폴백한다. 기존 v3
+입력은 v4로 읽을 수 있으며 출력 계약은 v3를 유지한다.
 
 Seungun의 `observedCandidate`는 실제 전사가 아니므로 현재 제품 메시지에는
 노출하지 않는다. Clova는 detector, threshold, score, confidence, schema,
 claim ID 같은 내부 용어를 사용자에게 보여줄 수 없고, 승인 claim에 없는
 혀 위치·입술 모양·호흡법 등 새로운 조음 사실을 만들 수 없다. 출력은
-issue/advice identity, 전체 claim 보존, target 음소 포함, 길이, 개인정보와
-내부 용어를 코드로 재검증한다. 위반하거나 90초 안에 응답하지 않으면 승인
-원문으로 fail-safe fallback한다.
+issue/advice identity, 전체 claim ID와 필수 상세 보존, target 음소 포함, 길이,
+개인정보와 내부 용어를 코드로 재검증한다. 이는 자유 문장 전체의 의미 검증을
+대신하지 않는다. 위반하거나 클라이언트 기본 180초 안에 응답하지 않으면
+승인 원문으로 폴백한다. 서버 생성 상한은 150초, 출력 상한은 512토큰이다.
 
 ## Production visual release
 
@@ -223,6 +233,17 @@ exec 9<data/testvideo/testvideo1.mp4
 실제 동일 시도 실행을 배포 검증에 포함한다.
 
 ### A6000의 메모리 설정
+
+2026-09-09 RunPod 이전에서는 사용자가 A6000 + 8bit 구성을 선택했다.
+`--quantization bnb-int8 --gpu-memory-gib 40 --cpu-memory-gib 8
+--maximum-input-tokens 4096`을 사용하며 bitsandbytes 0.50.2를 고정한다.
+Docker에서는 `compose.yaml` 뒤에 `deploy/hyperclova/compose.int8.yaml`을 적용한다.
+기본 BF16 경로는 유지한다. 실행 시 INT8 변환이므로 원본 BF16 디스크 파일도 필요하다.
+실제 이전·적재 상태는 [실행 기록](runpod_b2_storage_migration_execution.md),
+재구성 방법은 [RunPod 배포 준비](../deploy/runpod/README.md)를 따른다.
+최초 영상 실행의 Clova 시간 초과는 반복 경고 로그를 억제한 후 해결됐다.
+원본 모델과 INT8 threshold 6.0은 유지했다. BF16 대비 양자화 품질과
+동시 사용자 처리 성능은 검증하지 않았다.
 
 48GB VRAM의 A6000에서 약 66.6GB의 BF16 HyperCLOVA 가중치를 사용하려면 CPU로
 일부 가중치를 분산해야 한다. 서버 CLI는 `--gpu-memory-gib`와

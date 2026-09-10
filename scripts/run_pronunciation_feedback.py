@@ -37,6 +37,7 @@ from voice_coach.pronunciation_feedback import (  # noqa: E402
 )
 from voice_coach.pronunciation_feedback.adapters.advice_generator_hyperclova import (  # noqa: E402
     DEFAULT_MODEL_ID,
+    DEFAULT_TIMEOUT_SECONDS,
     LocalHyperClovaAdviceGenerator,
 )
 from voice_coach.pronunciation_feedback.coaching_payload import (  # noqa: E402
@@ -205,7 +206,7 @@ def _add_pipeline_options(
     parser.add_argument(
         "--advice-timeout-seconds",
         type=float,
-        default=argparse.SUPPRESS if suppress else 30.0,
+        default=argparse.SUPPRESS if suppress else DEFAULT_TIMEOUT_SECONDS,
         help="single local generation timeout; the pipeline does not retry",
     )
 

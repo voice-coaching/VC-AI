@@ -17,6 +17,16 @@ if str(REPOSITORY_ROOT / "src") not in sys.path:
 
 from voice_coach.pronunciation_feedback.adapters.hyperclova_transformers_runtime import (  # noqa: E402
     TransformersHyperClovaRuntime,
+    HyperClovaBusyError,
+    HyperClovaDeadlineError,
+    MAXIMUM_GENERATION_SECONDS,
+    MAXIMUM_NEW_TOKENS,
+)
+from voice_coach.pronunciation_feedback.adapters.advice_generator_hyperclova import (  # noqa: E402
+    FEEDBACK_POLICY_REVISION,
+)
+from voice_coach.pronunciation_feedback.grounded_advice import (  # noqa: E402
+    GROUNDED_INPUT_SCHEMA_VERSION,
 )
 from voice_coach.pronunciation_feedback.coaching_payload import (  # noqa: E402
     CoachingPayloadError,
@@ -65,6 +75,14 @@ def create_app(runtime: TransformersHyperClovaRuntime):  # noqa: ANN201
             "status": "ready" if runtime.loaded else "not_loaded",
             "model": runtime.model_id,
             "revision": runtime.revision,
+            "quantization": runtime.quantization,
+            "quantized_linear_modules": runtime.quantized_linear_modules,
+            "maximum_input_tokens": runtime.maximum_input_tokens,
+            "maximum_generation_seconds": MAXIMUM_GENERATION_SECONDS,
+            "maximum_new_tokens": MAXIMUM_NEW_TOKENS,
+            "feedback_policy_revision": FEEDBACK_POLICY_REVISION,
+            "grounded_input_schema": GROUNDED_INPUT_SCHEMA_VERSION,
+            "last_completion": runtime.last_completion,
         }
 
     @app.post("/v1/chat/completions")
@@ -76,6 +94,10 @@ def create_app(runtime: TransformersHyperClovaRuntime):  # noqa: ANN201
             content = runtime.complete(
                 messages=messages, maximum_new_tokens=maximum_new_tokens
             )
+        except HyperClovaBusyError as error:
+            raise HTTPException(status_code=503, detail=str(error), headers={"Retry-After": "1"}) from error
+        except HyperClovaDeadlineError as error:
+            raise HTTPException(status_code=504, detail=str(error)) from error
         except CoachingPayloadError as error:
             raise HTTPException(status_code=422, detail=str(error)) from error
         return {
@@ -111,6 +133,8 @@ def _parser() -> argparse.ArgumentParser:
     parser.add_argument("--port", type=int, default=8000)
     parser.add_argument("--gpu-memory-gib", type=int, default=110)
     parser.add_argument("--cpu-memory-gib", type=int, default=8)
+    parser.add_argument("--quantization", choices=("bf16", "bnb-int8"), default="bf16")
+    parser.add_argument("--maximum-input-tokens", type=int, default=None)
     return parser
 
 
@@ -123,6 +147,8 @@ def main(argv: list[str] | None = None) -> int:
         revision=document["revision"],
         gpu_memory_gib=args.gpu_memory_gib,
         cpu_memory_gib=args.cpu_memory_gib,
+        quantization=args.quantization,
+        maximum_input_tokens=args.maximum_input_tokens,
     )
     runtime.load()
     import uvicorn

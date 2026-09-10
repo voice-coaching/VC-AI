@@ -1,4 +1,5 @@
 accelerate==1.14.0
+bitsandbytes==0.50.2
 fastapi==0.140.7
 importlib-metadata==8.7.1
 numpy==2.5.1

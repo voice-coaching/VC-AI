@@ -42,11 +42,86 @@ class GroundedPhoneFeedback:
     fallback_reason: str | None
 
 
-def _phone_claim(expected_phone: str, *, learner_anchor: str) -> str:
+def _phone_claims(
+    *,
+    phone: Mapping[str, Any],
+    expected_phone: str,
+    learner_anchor: str,
+    word_unit: str,
+    start_ms: int | None,
+) -> tuple[ApprovedAdviceClaim, ...]:
+    """Describe admitted evidence and a word-context practice sequence.
+
+    A phone token is an analysis label, not an instruction to pronounce a
+    written coda in isolation.  CTC substitutions/deletions are recognition
+    outcomes, not independently verified articulatory error diagnoses.  In
+    particular, recovered deletion times are host estimates, not acoustic
+    observations, and must not be presented as measured phone durations.
+    """
+
+    operation = phone.get("alignment_operation")
+    focus = (
+        f"음성 분석에서 {learner_anchor}에 연결된 ‘{expected_phone}’ 지점을 "
+        "다시 확인할 부분으로 골랐습니다."
+    )
+    focus_fragments = [learner_anchor]
+    if start_ms is not None and operation in {"correct", "substitution"}:
+        time_anchor = f"약 {start_ms / 1000:.2f}초"
+        focus += f" 자동 정렬 위치는 녹음 {time_anchor} 부근입니다."
+        focus_fragments.append(time_anchor)
+
+    if operation == "deletion":
+        observation = (
+            "음성 인식이 이 위치의 소리를 대응시키지 못했지만, "
+            "실제 생략 여부는 확정되지 않았습니다."
+        )
+        observation_fragment = "실제 생략 여부는 확정되지 않았습니다"
+    elif operation == "substitution":
+        observation = (
+            "음성 인식에서 다른 소리 후보가 나왔지만, "
+            "실제 대치 여부나 오류 원인은 확정되지 않았습니다."
+        )
+        observation_fragment = "실제 대치 여부나 오류 원인은 확정되지 않았습니다"
+    else:
+        observation = (
+            "이 분석은 재확인할 위치를 고른 것이며, "
+            "혀 위치나 구체적인 오류 원인은 확인되지 않았습니다."
+        )
+        observation_fragment = "구체적인 오류 원인은 확인되지 않았습니다"
+
+    word_practice = (
+        f"‘{word_unit}’ 전체를 소리를 끊지 않고 천천히 한 번 읽은 뒤, "
+        "같은 단어를 원래 속도로 한 번 더 읽어 보세요."
+    )
+    replay = (
+        "이어서 문장 전체를 다시 녹음하고, 처음 녹음과 번갈아 들으며 "
+        f"‘{word_unit}’의 앞뒤 소리가 이어지는 부분을 비교해 보세요."
+    )
     return (
-        f"{learner_anchor}에 해당하는 목표 음소 ‘{expected_phone}’ 소리를 "
-        "천천히 분리해 발음한 뒤 "
-        "원래 속도로 다시 녹음해 보세요."
+        ApprovedAdviceClaim(
+            PHONE_CLAIM_ID,
+            focus,
+            required_fragments=tuple(focus_fragments),
+        ),
+        ApprovedAdviceClaim(
+            f"{PHONE_ADVICE_ID}:WORD_PRACTICE",
+            word_practice,
+            required_fragments=(
+                f"‘{word_unit}’ 전체",
+                "소리를 끊지 않고",
+                "원래 속도",
+            ),
+        ),
+        ApprovedAdviceClaim(
+            f"{PHONE_ADVICE_ID}:SENTENCE_REPLAY",
+            replay,
+            required_fragments=("문장 전체를 다시 녹음", "처음 녹음과 번갈아"),
+        ),
+        ApprovedAdviceClaim(
+            f"{PHONE_ADVICE_ID}:EVIDENCE_LIMIT",
+            observation,
+            required_fragments=(observation_fragment,),
+        ),
     )
 
 
@@ -136,7 +211,7 @@ def build_grounded_payload_from_seungun(
     analysis: Mapping[str, Any],
     target_text: str,
 ) -> GroundedCoachingPayload:
-    """Select the top frozen-detector error and bind it to one generic claim."""
+    """Bind the selected detector issue to evidence and contextual practice."""
 
     phone = _selected_phone(analysis)
     expected_phone = phone.get("expected_phone")
@@ -170,9 +245,12 @@ def build_grounded_payload_from_seungun(
         word_unit=word_unit,
         learner_anchor=learner_anchor,
     )
-    claim = ApprovedAdviceClaim(
-        PHONE_CLAIM_ID,
-        _phone_claim(expected_phone, learner_anchor=learner_anchor),
+    claims = _phone_claims(
+        phone=phone,
+        expected_phone=expected_phone,
+        learner_anchor=learner_anchor,
+        word_unit=word_unit,
+        start_ms=start_ms,
     )
     return GroundedCoachingPayload(
         schema_version=GROUNDED_INPUT_SCHEMA_VERSION,
@@ -191,7 +269,7 @@ def build_grounded_payload_from_seungun(
         operating_threshold=float(phone["operating_threshold"]),
         score_semantics=SEUNGUN_SCORE_SEMANTICS,
         advice_id=PHONE_ADVICE_ID,
-        approved_claims=(claim,),
+        approved_claims=claims,
         claim_scope="engineering_provisional",
     )
 
@@ -202,12 +280,12 @@ def generate_grounded_phone_feedback(
     target_text: str,
     generator: GroundedAdviceGeneratorPort | None,
 ) -> GroundedPhoneFeedback:
-    """Generate through the constrained selector or return the exact claim."""
+    """Generate through the constrained selector or preserve every claim."""
 
     payload = build_grounded_payload_from_seungun(
         analysis=analysis, target_text=target_text
     )
-    source_message = payload.approved_claims[0].text
+    source_message = " ".join(claim.text for claim in payload.approved_claims)
     if generator is None:
         return GroundedPhoneFeedback(
             message=source_message,

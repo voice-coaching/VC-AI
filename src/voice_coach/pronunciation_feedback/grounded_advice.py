@@ -1,10 +1,9 @@
 """Grounded contract between a decided diagnosis and a local coaching LLM.
 
 The acoustic and policy stages have already finished when this module is used.
-The model is therefore allowed to select only an approved claim and a small
-presentation style.  It does not return prose that can introduce a new phone,
-location, score, or articulatory fact.  The learner-facing message is rendered
-deterministically from the selected claim text.
+The model rewrites approved claims without deciding new pronunciation facts.
+Host-authored required fragments keep observations and practice steps from
+disappearing during summarization. Invalid prose falls back to the source claims.
 """
 
 from __future__ import annotations
@@ -18,9 +17,10 @@ from typing import Any, Mapping
 from .coaching_payload import CoachingPayloadError
 from .domain import DiagnosticIssueDraft, PromptSpec
 
-GROUNDED_INPUT_SCHEMA_VERSION = "voice_coach.grounded_advice_input.v3"
+GROUNDED_INPUT_SCHEMA_VERSION = "voice_coach.grounded_advice_input.v4"
+_LEGACY_INPUT_SCHEMA_VERSION = "voice_coach.grounded_advice_input.v3"
 GROUNDED_OUTPUT_SCHEMA_VERSION = "voice_coach.grounded_advice_output.v3"
-MAXIMUM_GROUNDED_MESSAGE_CHARACTERS = 600
+MAXIMUM_GROUNDED_MESSAGE_CHARACTERS = 1000
 
 _SHA256 = re.compile(r"\b[0-9a-f]{64}\b")
 _PATH_LIKE = re.compile(
@@ -118,12 +118,22 @@ class ApprovedAdviceClaim:
 
     claim_id: str
     text: str
+    required_fragments: tuple[str, ...] = ()
 
     def __post_init__(self) -> None:
         if not self.claim_id or not self.text.strip():
             raise CoachingPayloadError("approved claims need an id and text")
         _assert_privacy_safe(self.claim_id, field="claim id")
         _assert_privacy_safe(self.text, field="claim text")
+        if not isinstance(self.required_fragments, tuple) or any(
+            not isinstance(fragment, str)
+            or not fragment.strip()
+            or fragment not in self.text
+            for fragment in self.required_fragments
+        ):
+            raise CoachingPayloadError("required fragments must come from claim text")
+        if len(set(self.required_fragments)) != len(self.required_fragments):
+            raise CoachingPayloadError("required fragments must be unique")
 
 
 @dataclass(frozen=True, slots=True)
@@ -266,7 +276,11 @@ class GroundedCoachingPayload:
             "approvedGuidance": {
                 "adviceId": self.advice_id,
                 "claims": [
-                    {"claimId": item.claim_id, "text": item.text}
+                    {
+                        "claimId": item.claim_id,
+                        "text": item.text,
+                        "requiredFragments": list(item.required_fragments),
+                    }
                     for item in self.approved_claims
                 ],
             },
@@ -306,6 +320,11 @@ class GroundedCoachingPayload:
         }
         if set(value) != required:
             raise CoachingPayloadError("grounded payload schema differs")
+        if value["schemaVersion"] not in (
+            GROUNDED_INPUT_SCHEMA_VERSION, _LEGACY_INPUT_SCHEMA_VERSION
+        ):
+            raise CoachingPayloadError("grounded input schema version differs")
+        legacy = value["schemaVersion"] == _LEGACY_INPUT_SCHEMA_VERSION
         if value["task"] != "select_approved_pronunciation_feedback_plan":
             raise CoachingPayloadError("grounded payload task differs")
         issue = value["issue"]
@@ -401,19 +420,25 @@ class GroundedCoachingPayload:
             raise CoachingPayloadError("grounded payload claims must be an array")
         claims: list[ApprovedAdviceClaim] = []
         for raw_claim in raw_claims:
-            if not isinstance(raw_claim, Mapping) or set(raw_claim) != {
-                "claimId",
-                "text",
-            }:
+            claim_fields = {"claimId", "text"}
+            if not legacy:
+                claim_fields.add("requiredFragments")
+            if not isinstance(raw_claim, Mapping) or set(raw_claim) != claim_fields:
                 raise CoachingPayloadError("grounded payload claim schema differs")
             if not isinstance(raw_claim["claimId"], str) or not isinstance(
                 raw_claim["text"], str
             ):
                 raise CoachingPayloadError("grounded payload claim value is invalid")
+            fragments = [] if legacy else raw_claim["requiredFragments"]
+            if not isinstance(fragments, list) or not all(
+                isinstance(fragment, str) for fragment in fragments
+            ):
+                raise CoachingPayloadError("required fragments must be a string array")
             claims.append(
                 ApprovedAdviceClaim(
                     claim_id=raw_claim["claimId"],
                     text=raw_claim["text"],
+                    required_fragments=tuple(fragments),
                 )
             )
 
@@ -448,7 +473,7 @@ class GroundedCoachingPayload:
                 "grounded payload score semantics has a wrong type"
             )
         return cls(
-            schema_version=string_fields["schemaVersion"],
+            schema_version=GROUNDED_INPUT_SCHEMA_VERSION,
             target_text=string_fields["targetText"],
             issue_id=string_fields["issueId"],
             issue_type=string_fields["type"],
@@ -469,7 +494,7 @@ class GroundedCoachingPayload:
 
 @dataclass(frozen=True, slots=True)
 class GroundedAdvicePlan:
-    """Constrained plan returned by the LLM; it contains no learner prose."""
+    """Constrained claim selection with optional validated learner prose."""
 
     schema_version: str
     status: GroundedPlanStatus
@@ -636,6 +661,9 @@ def validate_grounded_advice_plan(
         message = plan.learner_message.strip()
         if not 40 <= len(message) <= MAXIMUM_GROUNDED_MESSAGE_CHARACTERS:
             raise CoachingPayloadError("learner message length is outside policy")
+        for claim in payload.approved_claims:
+            if any(fragment not in message for fragment in claim.required_fragments):
+                raise CoachingPayloadError("learner message omits required claim detail")
         if any(
             term in message.lower()
             for term in (
