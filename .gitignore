@@ -38,9 +38,16 @@
 **/logs/
 /vendor/
 
-# Developer-local agent rules and architecture working notes. These files are
-# provisioned outside a product clone and must not be committed by base CI.
-/.codex/
+# Share only the reviewed agent guides. Other agent files, local state and
+# future additions stay ignored unless explicitly added to this allowlist.
+/.codex/*
+!/.codex/README.md
+!/.codex/backend-http.md
+!/.codex/runpod.md
+!/.codex/backblaze.md
+!/.codex/env.md
+
+# Local architecture working notes remain outside the product clone.
 /docs/architecture/
 
 # Local export bundles and detailed evaluation receipts may contain copied

@@ -6,6 +6,7 @@ import hashlib
 import json
 import os
 from pathlib import Path
+import re
 import shutil
 
 RUNTIME = Path("/opt/intelligentai")
@@ -17,6 +18,12 @@ PINNED_CODE = {
 
 
 def main() -> None:
+    deployment_file = RUNTIME / "deployment.json"
+    if deployment_file.is_file():
+        deployment = json.loads(deployment_file.read_text(encoding="utf-8"))
+        revision = deployment.get("sourceRevision")
+        if isinstance(revision, str) and re.fullmatch(r"[0-9a-f]{40}", revision):
+            os.environ["VOICE_COACH_BUILD_REVISION"] = revision
     os.environ.update(
         HF_HOME="/tmp/intelligentai-huggingface",
         HF_MODULES_CACHE="/tmp/intelligentai-huggingface/modules",

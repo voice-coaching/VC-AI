@@ -1,0 +1,77 @@
+{
+  "schemaVersion": "intelligentai.service-supervisor.v1",
+  "services": [
+    {
+      "name": "clova",
+      "command": ["/usr/bin/python3", "/opt/intelligentai/app/deploy/runpod/start_hyperclova.py"],
+      "cwd": "/opt/intelligentai/app",
+      "env": {"PYTHONUNBUFFERED": "1", "PYTHONDONTWRITEBYTECODE": "1"},
+      "dependsOn": [],
+      "health": {
+        "type": "http",
+        "url": "http://127.0.0.1:8000/health",
+        "jsonField": "status",
+        "acceptedValues": ["ready"],
+        "pidField": "process_id",
+        "timeoutSeconds": 3
+      },
+      "startupTimeoutSeconds": 1800,
+      "stopTimeoutSeconds": 240,
+      "log": {"path": "/run/intelligentai/logs/clova.log", "maximumBytes": 10485760, "backupCount": 3}
+    },
+    {
+      "name": "analysis-worker",
+      "command": ["/opt/intelligentai/envs/scorer/bin/python", "/opt/intelligentai/app/deploy/runpod/start_analysis_worker.py"],
+      "cwd": "/opt/intelligentai/app",
+      "runAsUser": 10001,
+      "runAsGroup": 10001,
+      "envFile": {"path": "/run/intelligentai/analysis-worker.env", "required": true},
+      "requiredEnv": ["AI_ANALYSIS_REDIS_HOST", "AI_ANALYSIS_REDIS_PORT", "AI_ANALYSIS_REDIS_PASSWORD", "AI_ANALYSIS_OBJECT_STORAGE_BUCKET", "AI_ANALYSIS_OBJECT_STORAGE_REGION", "AWS_ACCESS_KEY_ID", "AWS_SECRET_ACCESS_KEY", "AI_ANALYSIS_CONSENT_POLICY_REVISION", "AI_ANALYSIS_ACTIVE_AUTHORIZATION_KEY_ID", "AI_ANALYSIS_AUTHORIZATION_KEYS_JSON"],
+      "env": {
+        "VOICE_COACH_BACKEND_ANALYSIS_FACTORY": "voice_coach.backend_analysis.production:create_worker",
+        "VOICE_COACH_REPOSITORY_ROOT": "/opt/intelligentai/app",
+        "PYTHONPATH": "/opt/intelligentai/app/src:/opt/intelligentai/app/seungun/src",
+        "PYTHONUNBUFFERED": "1",
+        "PYTHONDONTWRITEBYTECODE": "1",
+        "HOME": "/run/intelligentai/worker",
+        "HF_HOME": "/run/intelligentai/worker/tmp/huggingface",
+        "HF_HUB_OFFLINE": "1",
+        "TRANSFORMERS_OFFLINE": "1",
+        "AWS_EC2_METADATA_DISABLED": "true",
+        "TOKENIZERS_PARALLELISM": "false",
+        "OMP_NUM_THREADS": "4",
+        "MKL_NUM_THREADS": "4",
+        "OPENBLAS_NUM_THREADS": "1",
+        "AI_ANALYSIS_RESTRICTED_WORKSPACE_ROOT": "/run/intelligentai/worker/work",
+        "AI_ANALYSIS_NLTK_DATA_ROOT": "/opt/intelligentai/app/runtime/nltk_data",
+        "AI_ANALYSIS_SEUNGUN_DEVICE": "cuda",
+        "AI_ANALYSIS_ARTIFACT_GID": "10001",
+        "AI_ANALYSIS_DEPLOYMENT_MANIFEST_PATH": "/opt/intelligentai/worker-deployment/manifest.json",
+        "AI_ANALYSIS_VISUAL_RELEASE_ROOT": "/opt/intelligentai/app/artifacts/visual_feedback/releases/production_visual",
+        "AI_ANALYSIS_VISUAL_LANDMARK_MODEL_PATH": "/opt/intelligentai/app/models/mediapipe/face_landmarker.task",
+        "AI_ANALYSIS_VISUAL_GEOMETRY_ARTIFACT_PATH": "/opt/intelligentai/app/artifacts/visual_feedback/p6/aihub68_geometry_artifact_v2.json",
+        "AI_ANALYSIS_WORKER_STATE_PATH": "/run/intelligentai/worker/state.json",
+        "AI_ANALYSIS_MAXIMUM_RESULT_PAYLOAD_BYTES": "1048576",
+        "AI_ANALYSIS_REQUEST_CONSUMER_NAME": "runpod-feedback",
+        "AI_ANALYSIS_REDIS_SSL_ENABLED": "true",
+        "AI_ANALYSIS_CLOVA_ENABLED": "true",
+        "AI_ANALYSIS_CLOVA_ENDPOINT": "http://127.0.0.1:8000/v1",
+        "AI_ANALYSIS_CLOVA_TIMEOUT_SECONDS": "180",
+        "TMPDIR": "/run/intelligentai/worker/tmp",
+        "MPLCONFIGDIR": "/run/intelligentai/worker/tmp/matplotlib"
+      },
+      "dependsOn": ["clova"],
+      "health": {
+        "type": "file",
+        "path": "/run/intelligentai/worker/state.json",
+        "schemaVersion": "voice-coaching.analysis-worker-state.v1",
+        "jsonField": "status",
+        "acceptedValues": ["ready"],
+        "maximumAgeSeconds": 600
+      },
+      "startupTimeoutSeconds": 900,
+      "stopTimeoutSeconds": 300,
+      "log": {"path": "/run/intelligentai/logs/analysis-worker.log", "maximumBytes": 10485760, "backupCount": 3}
+    }
+  ]
+}

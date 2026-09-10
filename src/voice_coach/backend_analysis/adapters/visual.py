@@ -231,6 +231,25 @@ class ProductionBackendVisualAnalysisAdapter:
         video: MaterializedVideo,
         seungun: SeungunAnalysis,
     ) -> VisualSupplement | None:
+        public, _ = self.analyze_with_grounded_evidence(
+            request=request, audio=audio, video=video, seungun=seungun
+        )
+        return public
+
+    def analyze_with_grounded_evidence(
+        self,
+        *,
+        request: AnalysisRequest,
+        audio: MaterializedAudio,
+        video: MaterializedVideo,
+        seungun: SeungunAnalysis,
+    ) -> tuple[VisualSupplement | None, dict[str, object] | None]:
+        """Retain validated aggregate evidence for local, same-attempt presentation.
+
+        The second value stays inside the service and is never serialized into
+        the backend result. This path reuses Seungun and executes visual only once.
+        """
+
         del audio
         visual = request.visual_input
         selected = seungun.pronunciation_evidence
@@ -240,7 +259,7 @@ class ProductionBackendVisualAnalysisAdapter:
             or video.sha256 != visual.sha256
             or seungun.outcome is not AnalysisOutcome.COACHING_READY
         ):
-            return None
+            return None, None
         authority = _GrantConsentAuthority(request)
         prompt = _RequestPrompt(request, seungun)
         precomputed = _PrecomputedSeungun(seungun)
@@ -277,8 +296,9 @@ class ProductionBackendVisualAnalysisAdapter:
             result.status is not VideoAttemptStatus.AUDIO_COMPLETED_VISUAL_SUPPLEMENTED
             or result.visual_supplement is None
         ):
-            return None
-        return _public_projection(result.visual_supplement, selected.selected_expected_index)
+            return None, None
+        public = _public_projection(result.visual_supplement, selected.selected_expected_index)
+        return public, result.visual_supplement
 
 
 def _public_projection(
