@@ -1,5 +1,8 @@
 # Downloaded research corpora: never commit or redistribute raw audio/labels.
-/.env.local
+# Credentials at any depth; only the placeholder template may be committed.
+.env
+.env.*
+!.env.example
 /data/raw/
 /data/restricted/
 /data/cache/
