@@ -1,0 +1,315 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:voice-coaching:runpod-analysis-result:v1",
+  "title": "RunPod HTTP analysis result v1",
+  "description": "HTTP result contract for Backend delivery. This schema specifies target behavior; it is not evidence that either server implements it.",
+  "$comment": "Derived from src/voice_coach/backend_analysis/domain.py at fb54a1b506e57a3d71913d5c81ab8bab4408dab2. Use an HTTP-specific serializer; the Redis serializer also emits unsupported score/STT/debug fields. Validate request/execution/recording identity, audio SHA, current lease and cross-field evidence relationships in application code. JSON input must reject duplicate keys and non-finite numbers before validation. Enforce the 1 MiB UTF-8 body limit outside JSON Schema.",
+  "$ref": "#/$defs/result",
+  "$defs": {
+    "uuid": {
+      "type": "string",
+      "format": "uuid",
+      "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+    },
+    "positiveLong": {
+      "type": "integer",
+      "minimum": 1,
+      "maximum": 9007199254740991,
+      "$comment": "Backend stores Java Long; HTTP v1 restricts IDs to the exact I-JSON integer range for interoperable RFC 8785 canonicalization."
+    },
+    "sha256": {
+      "type": "string",
+      "pattern": "^[0-9a-f]{64}$"
+    },
+    "revision": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 100,
+      "pattern": "\\S"
+    },
+    "safeIdentifier": {
+      "type": "string",
+      "pattern": "^[A-Za-z0-9][A-Za-z0-9._:+-]{0,191}$"
+    },
+    "expectedIndex": {
+      "type": "integer",
+      "minimum": 0,
+      "maximum": 2147483647
+    },
+    "offsetMs": {
+      "type": "integer",
+      "minimum": 0,
+      "maximum": 2147483647
+    },
+    "pronunciationEvidence": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "schemaVersion",
+        "selectedPhone",
+        "selectedExpectedIndex",
+        "selectedStartMs",
+        "selectedEndMs",
+        "detectorScore",
+        "operatingThreshold",
+        "scoreSemantics",
+        "evidenceState"
+      ],
+      "properties": {
+        "schemaVersion": {
+          "const": "voice-coaching.pronunciation-evidence.v1"
+        },
+        "selectedPhone": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 16,
+          "pattern": "\\S"
+        },
+        "selectedExpectedIndex": {
+          "$ref": "#/$defs/expectedIndex"
+        },
+        "selectedStartMs": {
+          "anyOf": [
+            { "$ref": "#/$defs/offsetMs" },
+            { "type": "null" }
+          ]
+        },
+        "selectedEndMs": {
+          "anyOf": [
+            { "$ref": "#/$defs/offsetMs" },
+            { "type": "null" }
+          ]
+        },
+        "detectorScore": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 1
+        },
+        "operatingThreshold": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 1
+        },
+        "scoreSemantics": {
+          "const": "detector_ranking_score_not_calibrated_correctness_confidence"
+        },
+        "evidenceState": {
+          "const": "frozen_detector_threshold_passed"
+        }
+      },
+      "oneOf": [
+        {
+          "properties": {
+            "selectedStartMs": { "type": "null" },
+            "selectedEndMs": { "type": "null" }
+          }
+        },
+        {
+          "properties": {
+            "selectedStartMs": { "$ref": "#/$defs/offsetMs" },
+            "selectedEndMs": { "$ref": "#/$defs/offsetMs" }
+          }
+        }
+      ],
+      "$comment": "Application validation: operatingThreshold <= detectorScore. Both offsets are null when unavailable; otherwise 0 <= selectedStartMs < selectedEndMs <= the canonical audio duration. selectedExpectedIndex and selectedPhone must identify the same authoritative Seungun selection. detectorScore is a ranking value, not a correctness probability or user score. Never substitute zero offsets for missing evidence."
+    },
+    "visualSupplement": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "schemaVersion",
+        "selectedExpectedIndex",
+        "evidenceRelation",
+        "approvedClaimId",
+        "rendererKey",
+        "upstreamPhoneAnchorRef",
+        "supplementSha256"
+      ],
+      "properties": {
+        "schemaVersion": {
+          "const": "voice-coaching.visual-supplement.v1"
+        },
+        "selectedExpectedIndex": {
+          "$ref": "#/$defs/expectedIndex"
+        },
+        "evidenceRelation": {
+          "const": "supports_upstream"
+        },
+        "approvedClaimId": {
+          "$ref": "#/$defs/safeIdentifier"
+        },
+        "rendererKey": {
+          "$ref": "#/$defs/safeIdentifier"
+        },
+        "upstreamPhoneAnchorRef": {
+          "$ref": "#/$defs/sha256"
+        },
+        "supplementSha256": {
+          "$ref": "#/$defs/sha256"
+        }
+      },
+      "$comment": "The HTTP projection intentionally omits closedBetaLipObservation. Application validation: selectedExpectedIndex must equal pronunciationEvidence.selectedExpectedIndex and the request must contain video. RunPod must verify same-attempt canonical media binding and the source supplement digest before projecting these fields. supplementSha256 hashes the approved internal visual supplement using its existing canonical serialization; it is not a hash of this smaller HTTP projection. Backend cannot recompute the internal supplement hash from this projection alone."
+    },
+    "failureCode": {
+      "type": "string",
+      "enum": [
+        "audio_metadata_mismatch",
+        "audio_integrity_mismatch",
+        "restricted_audio_unavailable",
+        "audio_decode_unsupported",
+        "analysis_focus_not_supported",
+        "seungun_backend_unavailable",
+        "seungun_detector_failed",
+        "analysis_execution_failed_closed"
+      ],
+      "$comment": "Preserves the non-consent analysis failures allowed by service.py. HTTP authentication, claim/lease/cancellation/deadline and callback delivery errors are transport/job-control responses, not invented analysis outcomes. Map unknown analysis exceptions to analysis_execution_failed_closed. Existing Redis-only consent failure codes are excluded from this HTTP contract."
+    },
+    "result": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "schemaVersion",
+        "eventId",
+        "requestId",
+        "executionId",
+        "workerInstanceId",
+        "analysisId",
+        "recordingId",
+        "status",
+        "outcome",
+        "summaryFeedback",
+        "pronunciationEvidence",
+        "visualSupplement",
+        "audioSha256",
+        "workerRevision",
+        "pipelineRevision",
+        "failureCode",
+        "failureReason"
+      ],
+      "properties": {
+        "schemaVersion": {
+          "const": "voice-coaching.runpod-analysis-result.v1"
+        },
+        "eventId": {
+          "$ref": "#/$defs/uuid"
+        },
+        "requestId": {
+          "$ref": "#/$defs/uuid"
+        },
+        "executionId": {
+          "$ref": "#/$defs/uuid"
+        },
+        "workerInstanceId": {
+          "$ref": "#/$defs/uuid"
+        },
+        "analysisId": {
+          "$ref": "#/$defs/positiveLong"
+        },
+        "recordingId": {
+          "$ref": "#/$defs/positiveLong"
+        },
+        "status": {
+          "enum": ["COMPLETED", "FAILED"]
+        },
+        "outcome": {
+          "enum": ["COACHING_READY", "COMPLETED_NO_ISSUE", null]
+        },
+        "summaryFeedback": {
+          "anyOf": [
+            {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 20000,
+              "pattern": "\\S"
+            },
+            { "type": "null" }
+          ]
+        },
+        "pronunciationEvidence": {
+          "anyOf": [
+            { "$ref": "#/$defs/pronunciationEvidence" },
+            { "type": "null" }
+          ]
+        },
+        "visualSupplement": {
+          "anyOf": [
+            { "$ref": "#/$defs/visualSupplement" },
+            { "type": "null" }
+          ]
+        },
+        "audioSha256": {
+          "anyOf": [
+            { "$ref": "#/$defs/sha256" },
+            { "type": "null" }
+          ]
+        },
+        "workerRevision": {
+          "$ref": "#/$defs/revision"
+        },
+        "pipelineRevision": {
+          "anyOf": [
+            { "$ref": "#/$defs/revision" },
+            { "type": "null" }
+          ]
+        },
+        "failureCode": {
+          "anyOf": [
+            { "$ref": "#/$defs/failureCode" },
+            { "type": "null" }
+          ]
+        },
+        "failureReason": {
+          "anyOf": [
+            {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 500,
+              "pattern": "\\S"
+            },
+            { "type": "null" }
+          ]
+        }
+      },
+      "oneOf": [
+        {
+          "properties": {
+            "status": { "const": "COMPLETED" },
+            "outcome": { "const": "COACHING_READY" },
+            "summaryFeedback": { "type": "string" },
+            "pronunciationEvidence": { "$ref": "#/$defs/pronunciationEvidence" },
+            "audioSha256": { "$ref": "#/$defs/sha256" },
+            "pipelineRevision": { "$ref": "#/$defs/revision" },
+            "failureCode": { "type": "null" },
+            "failureReason": { "type": "null" }
+          }
+        },
+        {
+          "properties": {
+            "status": { "const": "COMPLETED" },
+            "outcome": { "const": "COMPLETED_NO_ISSUE" },
+            "summaryFeedback": { "type": "null" },
+            "pronunciationEvidence": { "type": "null" },
+            "visualSupplement": { "type": "null" },
+            "audioSha256": { "$ref": "#/$defs/sha256" },
+            "pipelineRevision": { "$ref": "#/$defs/revision" },
+            "failureCode": { "type": "null" },
+            "failureReason": { "type": "null" }
+          }
+        },
+        {
+          "properties": {
+            "status": { "const": "FAILED" },
+            "outcome": { "type": "null" },
+            "summaryFeedback": { "type": "null" },
+            "pronunciationEvidence": { "type": "null" },
+            "visualSupplement": { "type": "null" },
+            "audioSha256": { "type": "null" },
+            "failureCode": { "$ref": "#/$defs/failureCode" },
+            "failureReason": { "type": "string" }
+          }
+        }
+      ],
+      "$comment": "Every listed field is present; unavailable values use explicit null. Backend must verify workerInstanceId equals the claim owner for the current requestId/executionId before accepting a new result. FAILED pipelineRevision may be null when no pipeline was established; workerRevision remains required. Do not include transcript, STT confidence, user scores, segments, local paths, media/base64, closed-beta debug, grants or signatures. Preserve the same eventId and exact normalized result content on redelivery; do not convert callback failure into a new analysis failure."
+    }
+  }
+}

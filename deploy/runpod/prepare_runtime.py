@@ -51,6 +51,11 @@ def main() -> None:
         target = app / relative
         target.parent.mkdir(parents=True, exist_ok=True)
         target.write_bytes(content)
+    if os.environ.get("AI_ANALYSIS_TRANSPORT") == "runpod_http":
+        subprocess.run(["python3", "-m", "pip", "install", "--no-index", "--require-hashes",
+            "--upgrade", "--target", str(RUNTIME / "http-python"),
+            "--find-links", str(WORKSPACE / "deployment/http-dependencies-v1_1"),
+            "-r", str(app / "deploy/runpod/http-requirements.lock")], check=True)
     assets = WORKSPACE / "runtime-assets"
     asset_manifest = json.loads((assets / "migration-manifest.json").read_text())
     for entry in asset_manifest["files"]:
@@ -113,8 +118,12 @@ def main() -> None:
     }, sort_keys=True) + "\n")
     os.chown(deployment, 0, 10001)
     deployment.chmod(0o640)
-    worker_preparation = app / "deploy/runpod/prepare_worker.py"
-    if worker_preparation.is_file():
+    mode = os.environ.get("AI_ANALYSIS_TRANSPORT", "redis_stream")
+    if mode not in {"runpod_http", "redis_stream", "disabled"}:
+        raise SystemExit("analysis_transport_invalid")
+    worker_preparation = app / ("deploy/runpod/prepare_http.py" if mode == "runpod_http"
+                                else "deploy/runpod/prepare_worker.py")
+    if mode != "disabled" and worker_preparation.is_file():
         subprocess.run([str(RUNTIME / "envs/scorer/bin/python"), str(worker_preparation)], check=True)
     print("Ephemeral runtime prepared; no worker or inference requests started", flush=True)
 

@@ -470,6 +470,9 @@ class VideoAttemptFacade:
                 visual_stage=VisualStageStatus.HANDOFF_FAILED,
             )
 
+        return self._run_visual_stages(asset=asset, probe=probe, handoff=handoff, audio_result=audio_result)
+
+    def _run_visual_stages(self, *, asset, probe, handoff, audio_result):
         try:
             sample = self._container_port.decode_rgb24_sample(
                 asset,
@@ -592,6 +595,25 @@ class VideoAttemptFacade:
             visual_supplement=visual_supplement,
             visual_stage_status=VisualStageStatus.COMPLETED,
         )
+
+    def run_http(self, *, video_locator, attempt_id_sha256, expected_sha256, prompt_id):
+        """Called only after HTTP authentication, current claim and S3 integrity checks."""
+        asset = self._media_store_port.admit_http(video_locator, attempt_id_sha256=attempt_id_sha256,
+            expected_sha256=expected_sha256, policy=self._admission_policy)
+        try:
+            probe = self._container_port.probe(asset, self._container_policy)
+            audio = self._container_port.extract_embedded_audio(asset, self._container_policy)
+            prompt = self._prompt_port.resolve(prompt_id=prompt_id)
+            seungun = self._seungun_port.analyze(audio=audio, prompt=prompt)
+            if seungun.selected_phone_expected_index is None:
+                return None
+            handoff = self._handoff_port.issue_http(asset=asset, probe=probe, audio=audio,
+                prompt=prompt, seungun_result=seungun)
+            draft = self._run_visual_stages(asset=asset, probe=probe, handoff=handoff,
+                                           audio_result=seungun.audio_result)
+            return draft.visual_supplement
+        finally:
+            self._media_store_port.delete(asset)
 
     def _finalize_cleanup(
         self,

@@ -6,6 +6,12 @@ mkdir -p /run/intelligentai
 exec 8>/run/intelligentai/manager.lock
 flock -n 8 || exit 0
 supervisor_pid=
+case "${AI_ANALYSIS_TRANSPORT:-redis_stream}" in
+    runpod_http) service_config=/opt/intelligentai/app/deploy/runpod/services.http.json ;;
+    redis_stream) service_config=/opt/intelligentai/app/deploy/runpod/services.json ;;
+    disabled) service_config=/opt/intelligentai/app/deploy/runpod/services.disabled.json ;;
+    *) echo "Invalid analysis transport"; exit 78 ;;
+esac
 stop() {
     trap - TERM INT
     if [[ -n "$supervisor_pid" ]]; then
@@ -17,7 +23,7 @@ stop() {
 trap stop TERM INT
 while true; do
     python3 /opt/intelligentai/app/deploy/runpod/supervise_services.py \
-        --config /opt/intelligentai/app/deploy/runpod/services.json --parent-pid "$$" 8>&- &
+        --config "$service_config" --parent-pid "$$" 8>&- &
     supervisor_pid=$!
     wait "$supervisor_pid" || true
     supervisor_pid=

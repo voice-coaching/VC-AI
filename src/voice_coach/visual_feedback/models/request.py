@@ -10,6 +10,7 @@ from .binding import (
     MediaTimebaseReceipt,
     RestrictedVideoHandle,
     SameAttemptBindingReceipt,
+    HttpSameAttemptBindingReceipt,
     SeungunAnalysisReference,
 )
 from .evidence import LipLandmarkFrame, SyncAnchor, VideoProbe
@@ -30,6 +31,29 @@ class VisualFeedbackRequest:
     video_handle: RestrictedVideoHandle
     binding_receipt: SameAttemptBindingReceipt
     consent_receipt: ConsentReceipt
+    capture_contract_id: str
+    population_id_sha256: str
+    context_id: str
+
+    def __post_init__(self) -> None:
+        require_integer(
+            self.upstream_phone_expected_index,
+            "upstream_phone_expected_index",
+            minimum=0,
+        )
+        require_safe_identifier(self.capture_contract_id, "capture_contract_id")
+        require_sha256(self.population_id_sha256, "population_id_sha256")
+        require_safe_identifier(self.context_id, "context_id")
+
+
+@dataclass(frozen=True, slots=True)
+class HttpVisualFeedbackRequest:
+    """Typed command for one optional visual supplement invocation."""
+
+    analysis_ref: SeungunAnalysisReference
+    upstream_phone_expected_index: int
+    video_handle: RestrictedVideoHandle
+    binding_receipt: HttpSameAttemptBindingReceipt
     capture_contract_id: str
     population_id_sha256: str
     context_id: str

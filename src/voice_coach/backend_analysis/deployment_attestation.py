@@ -20,6 +20,7 @@ from typing import Any
 
 
 SCHEMA_VERSION = "voice-coaching.analysis-deployment.v2"
+HTTP_SCHEMA_VERSION = "voice-coaching.analysis-http-deployment.v1"
 _SHA256 = re.compile(r"^[0-9a-f]{64}$")
 _RELEASE_ID = re.compile(r"^[0-9a-f]{40}$")
 _KEY_ID = re.compile(r"^[A-Za-z0-9._-]{1,100}$")
@@ -219,6 +220,35 @@ def verify_deployment_attestation(
             )
         ):
             raise DeploymentAttestationError()
+
+
+def create_http_deployment_attestation(*, release_id, worker_device, artifact_group_id, artifacts):
+    """Bind HTTP assets and runtime identity without Redis consent/key fields."""
+    if (not isinstance(release_id, str) or _RELEASE_ID.fullmatch(release_id) is None
+            or worker_device not in {"cpu", "cuda"} or type(artifact_group_id) is not int
+            or not 1 <= artifact_group_id <= 2_147_483_647):
+        raise DeploymentAttestationError()
+    return dict(schemaVersion=HTTP_SCHEMA_VERSION, releaseId=release_id, workerDevice=worker_device,
+                artifactGroupId=artifact_group_id,
+                artifacts={name: dict(kind=kind, sha256=_artifact_digest(path, kind=kind,
+                           artifact_group_id=artifact_group_id)) for name, kind, path in artifacts.records()})
+
+
+def verify_http_deployment_attestation(environment):
+    try:
+        release = environment["AI_ANALYSIS_RELEASE_ID"]
+        if release != environment["VOICE_COACH_BUILD_REVISION"]:
+            raise DeploymentAttestationError()
+        group = int(environment["AI_ANALYSIS_ARTIFACT_GID"])
+        expected = create_http_deployment_attestation(release_id=release,
+            worker_device=environment["AI_ANALYSIS_SEUNGUN_DEVICE"], artifact_group_id=group,
+            artifacts=DeploymentArtifactPaths.from_environment(environment))
+        document = _load_manifest(Path(environment["AI_ANALYSIS_DEPLOYMENT_MANIFEST_PATH"]),
+                                  artifact_group_id=group)
+        if document != expected:
+            raise DeploymentAttestationError()
+    except (KeyError, ValueError, TypeError):
+        raise DeploymentAttestationError() from None
 
 
 def write_deployment_attestation(

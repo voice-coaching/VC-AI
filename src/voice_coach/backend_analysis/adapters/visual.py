@@ -203,8 +203,9 @@ class _PrecomputedSeungun:
 class ProductionBackendVisualAnalysisAdapter:
     """Run only promoted visual evidence after the authoritative audio result."""
 
-    def __init__(self, settings: BackendVisualSettings) -> None:
+    def __init__(self, settings: BackendVisualSettings, *, http_admitted: bool = False) -> None:
         self._settings = settings
+        self._http_admitted = http_admitted
         _prepare_workspace_root(settings.workspace_root)
         release = load_production_visual_release(
             settings.production_release_root,
@@ -260,7 +261,7 @@ class ProductionBackendVisualAnalysisAdapter:
             or seungun.outcome is not AnalysisOutcome.COACHING_READY
         ):
             return None, None
-        authority = _GrantConsentAuthority(request)
+        authority = None if self._http_admitted else _GrantConsentAuthority(request)
         prompt = _RequestPrompt(request, seungun)
         precomputed = _PrecomputedSeungun(seungun)
         with tempfile.TemporaryDirectory(
@@ -283,8 +284,22 @@ class ProductionBackendVisualAnalysisAdapter:
                 consent_authority=authority,
                 trusted_prompt_port=prompt,
                 seungun_runtime_port=precomputed,
+                http_admitted=self._http_admitted,
                 clock=lambda: datetime.now(tz=UTC),
             )
+            if self._http_admitted:
+                attempt_digest = sha256_document({
+                    "schema_version": "voice_coach.http_video_execution.v1",
+                    "request_id": str(request.event_id), "execution_id": str(request.execution_id),
+                    "audio_sha256": request.audio_sha256, "video_sha256": visual.sha256,
+                    "selected_expected_index": selected.selected_expected_index,
+                })
+                supplement = facade.run_http(video_locator=str(video.path),
+                    attempt_id_sha256=attempt_digest, expected_sha256=visual.sha256,
+                    prompt_id=f"analysis-{request.analysis_id}")
+                if supplement is None:
+                    return None, None
+                return _public_projection(supplement, selected.selected_expected_index), supplement
             result = facade.run(
                 VideoAttemptCommand(
                     prompt_id=f"analysis-{request.analysis_id}",

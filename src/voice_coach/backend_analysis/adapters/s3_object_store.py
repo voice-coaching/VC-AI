@@ -80,7 +80,7 @@ class S3CompatibleRestrictedObjectStore:
 
     @contextmanager
     def materialize(
-        self, request: AnalysisRequest, authorization: AnalysisAuthorization
+        self, request: AnalysisRequest, authorization: AnalysisAuthorization | None = None
     ) -> Iterator[MaterializedAudio]:
         del authorization
         self._require_owned_key(request.audio_object_key)
@@ -156,7 +156,7 @@ class S3CompatibleRestrictedObjectStore:
 
     @contextmanager
     def materialize_visual(
-        self, request: AnalysisRequest, authorization: AnalysisAuthorization
+        self, request: AnalysisRequest, authorization: AnalysisAuthorization | None = None
     ) -> Iterator[MaterializedVideo]:
         del authorization
         visual = request.visual_input

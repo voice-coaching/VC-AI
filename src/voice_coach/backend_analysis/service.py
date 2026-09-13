@@ -63,7 +63,7 @@ class BackendAnalysisWorker:
     def __init__(
         self,
         *,
-        authorization: AnalysisAuthorizationPort,
+        authorization: AnalysisAuthorizationPort | None,
         object_store: RestrictedObjectStorePort,
         seungun: SeungunAnalysisPort,
         visual: VisualAnalysisPort | None = None,
@@ -98,6 +98,14 @@ class BackendAnalysisWorker:
                 "분석 처리 권한을 확인할 수 없습니다.",
             )
 
+        return self.process_admitted(request, authorization=authorization)
+
+    def process_admitted(self, request, *, authorization=None) -> AnalysisWorkerResult:
+        """Run the common core after the transport has admitted the request.
+
+        HTTP callers hold a Backend claim; Redis callers pass validated consent.
+        This method never creates or validates a substitute grant.
+        """
         if request.learning_focus != "PRONUNCIATION":
             return self._failed(
                 request,

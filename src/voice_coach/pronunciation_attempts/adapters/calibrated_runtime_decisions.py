@@ -17,7 +17,7 @@ import math
 from pathlib import Path
 import re
 
-from voice_coach.visual_feedback.models.binding import SameAttemptBindingReceipt
+from voice_coach.visual_feedback.models.binding import SameAttemptBindingReceipt, HttpSameAttemptBindingReceipt
 
 from .lip_audio_av_sync import AvSyncAnchorCandidate, AvSyncCandidateEvidence
 from .video_qc import VideoQcCandidateEvidence, VideoQcMetrics
@@ -411,7 +411,7 @@ class CalibratedVideoQcDecisionAdapter:
         binding_receipt: SameAttemptBindingReceipt,
     ) -> RuntimeVideoQcDecision:
         if not isinstance(candidate, VideoQcCandidateEvidence) or not isinstance(
-            binding_receipt, SameAttemptBindingReceipt
+            binding_receipt, (SameAttemptBindingReceipt, HttpSameAttemptBindingReceipt)
         ):
             raise ValueError("video QC decision requires typed lineage")
         if (
@@ -544,7 +544,7 @@ class CalibratedAvSyncDecisionAdapter:
         binding_receipt: SameAttemptBindingReceipt,
     ) -> RuntimeAvSyncDecision:
         if not isinstance(candidate, AvSyncCandidateEvidence) or not isinstance(
-            binding_receipt, SameAttemptBindingReceipt
+            binding_receipt, (SameAttemptBindingReceipt, HttpSameAttemptBindingReceipt)
         ):
             raise ValueError("A/V sync decision requires typed lineage")
         if (

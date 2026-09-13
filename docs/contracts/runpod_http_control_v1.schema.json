@@ -1,0 +1,542 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:voice-coaching:runpod-http-control:v1.1",
+  "title": "RunPod HTTP request and control contracts v1.1",
+  "description": "Target Backend–RunPod request and control contracts. This documentation does not establish implementation, deployment, or operational readiness.",
+  "$comment": "All declared fields are required; nullable fields must be explicit null. Reject duplicate JSON keys, invalid Unicode and non-finite numbers before schema validation. JSON Schema maxLength counts Unicode code points; application validation must additionally enforce the documented Java UTF-16 length limits for string fields. Enforce UTF-8 body limits, registered identity/object metadata, SHA-256, fixed callback/storage targets, UTC calendar validity, deadlines, lease ownership and state transitions outside JSON Schema. Request payload digests use the agreed RFC 8785 canonicalization rules in the companion contract; digest comparison is not a permission grant or signature.",
+  "$ref": "#/$defs/analysisRequest",
+  "$defs": {
+    "uuid": {
+      "type": "string",
+      "format": "uuid",
+      "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+    },
+    "positiveLong": {
+      "type": "integer",
+      "minimum": 1,
+      "maximum": 9007199254740991,
+      "$comment": "Backend uses Java Long; HTTP values are limited to exact I-JSON integers for interoperable RFC 8785 canonicalization."
+    },
+    "sha256": {
+      "type": "string",
+      "pattern": "^[0-9a-f]{64}$"
+    },
+    "utcTimestamp": {
+      "type": "string",
+      "format": "date-time",
+      "pattern": "^[0-9]{4}-(0[1-9]|1[0-2])-(0[1-9]|[12][0-9]|3[01])T([01][0-9]|2[0-3]):[0-5][0-9]:[0-5][0-9]\\.[0-9]{3}Z$",
+      "$comment": "Exactly UTC Z with three millisecond digits. Application parsing must reject nonexistent calendar dates; schema format assertion may not be enabled by every validator."
+    },
+    "durationMs": {
+      "type": "integer",
+      "minimum": 1,
+      "maximum": 2147483647
+    },
+    "objectKey": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 1000,
+      "pattern": "\\S",
+      "$comment": "Application validation requires an opaque relative canonical object key under the configured allowlisted prefix. Reject URL/absolute path/backslash, empty or dot/dot-dot segments and owner-identifying users/sessions segments; do not fetch arbitrary URLs."
+    },
+    "jobState": {
+      "type": "string",
+      "enum": [
+        "ACCEPTED",
+        "RUNNING",
+        "DELIVERING_RESULT",
+        "COMPLETED",
+        "FAILED",
+        "CANCELLING",
+        "CANCELLED"
+      ]
+    },
+    "controlReasonCode": {
+      "type": "string",
+      "enum": [
+        "UNAUTHENTICATED",
+        "FORBIDDEN",
+        "INVALID_JSON",
+        "VALIDATION_FAILED",
+        "PAYLOAD_TOO_LARGE",
+        "UNSUPPORTED_MEDIA_TYPE",
+        "TARGET_NOT_FOUND",
+        "UNKNOWN_EXECUTION",
+        "STALE_EXECUTION",
+        "PAYLOAD_DIGEST_MISMATCH",
+        "WORKER_CONFLICT",
+        "CLAIM_REQUIRED",
+        "LEASE_EXPIRED",
+        "DEADLINE_EXCEEDED",
+        "ANALYSIS_CANCELLED",
+        "ANALYSIS_TERMINAL",
+        "RESULT_EVENT_CONFLICT",
+        "RESULT_ALREADY_FINALIZED",
+        "CAPACITY_EXCEEDED",
+        "RATE_LIMITED",
+        "NOT_READY",
+        "DEPENDENCY_UNAVAILABLE",
+        "INTERNAL_ERROR"
+      ]
+    },
+    "audio": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "objectKey",
+        "mimeType",
+        "sha256",
+        "fileSizeBytes",
+        "durationMs"
+      ],
+      "properties": {
+        "objectKey": {
+          "$ref": "#/$defs/objectKey"
+        },
+        "mimeType": {
+          "const": "audio/wav"
+        },
+        "sha256": {
+          "$ref": "#/$defs/sha256"
+        },
+        "fileSizeBytes": {
+          "$ref": "#/$defs/positiveLong"
+        },
+        "durationMs": {
+          "$ref": "#/$defs/durationMs"
+        }
+      },
+      "$comment": "Canonical WAV metadata. Application verifies media byte size, SHA-256, duration, allowed size/duration limits and normalization policy."
+    },
+    "video": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "objectKey",
+        "mimeType",
+        "sha256",
+        "fileSizeBytes",
+        "durationMs"
+      ],
+      "properties": {
+        "objectKey": {
+          "$ref": "#/$defs/objectKey"
+        },
+        "mimeType": {
+          "const": "video/mp4"
+        },
+        "sha256": {
+          "$ref": "#/$defs/sha256"
+        },
+        "fileSizeBytes": {
+          "$ref": "#/$defs/positiveLong"
+        },
+        "durationMs": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/durationMs"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        }
+      },
+      "$comment": "Canonical MP4 from the same upload as audio. durationMs is explicit null when unavailable; do not invent a duration."
+    },
+    "analysisRequest": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "schemaVersion",
+        "requestId",
+        "executionId",
+        "analysisId",
+        "recordingId",
+        "contentId",
+        "learningFocus",
+        "promptRevision",
+        "scriptText",
+        "scriptSha256",
+        "audio",
+        "video",
+        "deadlineAt"
+      ],
+      "properties": {
+        "schemaVersion": {
+          "const": "voice-coaching.runpod-analysis-request.v1"
+        },
+        "requestId": {
+          "$ref": "#/$defs/uuid"
+        },
+        "executionId": {
+          "$ref": "#/$defs/uuid"
+        },
+        "analysisId": {
+          "$ref": "#/$defs/positiveLong"
+        },
+        "recordingId": {
+          "$ref": "#/$defs/positiveLong"
+        },
+        "contentId": {
+          "$ref": "#/$defs/positiveLong"
+        },
+        "learningFocus": {
+          "const": "PRONUNCIATION"
+        },
+        "promptRevision": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 100,
+          "pattern": "\\S"
+        },
+        "scriptText": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 10000,
+          "pattern": "\\S"
+        },
+        "scriptSha256": {
+          "$ref": "#/$defs/sha256"
+        },
+        "audio": {
+          "$ref": "#/$defs/audio"
+        },
+        "video": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/video"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "deadlineAt": {
+          "$ref": "#/$defs/utcTimestamp"
+        }
+      },
+      "$comment": "Maximum serialized UTF-8 request body is 65,536 bytes. scriptSha256 identifies exact UTF-8 scriptText bytes without additional Unicode/whitespace normalization. No grant, signature, consent evidence, policy revision, callback URL, bucket, original media, STT, scores or debug fields are accepted."
+    },
+    "claimRequest": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "requestId",
+        "executionId",
+        "workerInstanceId",
+        "requestPayloadSha256"
+      ],
+      "properties": {
+        "requestId": {
+          "$ref": "#/$defs/uuid"
+        },
+        "executionId": {
+          "$ref": "#/$defs/uuid"
+        },
+        "workerInstanceId": {
+          "$ref": "#/$defs/uuid"
+        },
+        "requestPayloadSha256": {
+          "$ref": "#/$defs/sha256"
+        }
+      },
+      "$comment": "Backend compares the digest to its immutable dispatched request payload and atomically verifies execution, owner, deadline and current lease. Client-controlled claimedUntil is not accepted."
+    },
+    "heartbeatRequest": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "requestId",
+        "executionId",
+        "workerInstanceId"
+      ],
+      "properties": {
+        "requestId": {
+          "$ref": "#/$defs/uuid"
+        },
+        "executionId": {
+          "$ref": "#/$defs/uuid"
+        },
+        "workerInstanceId": {
+          "$ref": "#/$defs/uuid"
+        }
+      },
+      "$comment": "Backend receive time is authoritative. Client-controlled heartbeatAt is not accepted. A heartbeat cannot create a claim or revive an expired lease."
+    },
+    "leaseResponse": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "analysisId",
+        "requestId",
+        "executionId",
+        "workerInstanceId",
+        "serverTime",
+        "leaseExpiresAt",
+        "continueProcessing"
+      ],
+      "properties": {
+        "analysisId": {
+          "$ref": "#/$defs/positiveLong"
+        },
+        "requestId": {
+          "$ref": "#/$defs/uuid"
+        },
+        "executionId": {
+          "$ref": "#/$defs/uuid"
+        },
+        "workerInstanceId": {
+          "$ref": "#/$defs/uuid"
+        },
+        "serverTime": {
+          "$ref": "#/$defs/utcTimestamp"
+        },
+        "leaseExpiresAt": {
+          "$ref": "#/$defs/utcTimestamp"
+        },
+        "continueProcessing": {
+          "const": true
+        }
+      },
+      "$comment": "Successful claim/heartbeat body, without the public API response envelope. Backend computes leaseExpiresAt, capped by the immutable execution deadline. Cancellation, expiry and conflicts use the error schema with the agreed HTTP status."
+    },
+    "jobAccepted": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "requestId",
+        "executionId",
+        "workerInstanceId",
+        "status"
+      ],
+      "properties": {
+        "requestId": {
+          "$ref": "#/$defs/uuid"
+        },
+        "executionId": {
+          "$ref": "#/$defs/uuid"
+        },
+        "workerInstanceId": {
+          "$ref": "#/$defs/uuid"
+        },
+        "status": {
+          "$ref": "#/$defs/jobState"
+        }
+      },
+      "$comment": "Authenticated submit acknowledgement, including idempotent redispatch of the same payload/execution. Status indicates current local execution state, not a replacement for Backend DB authority."
+    },
+    "jobStatus": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "requestId",
+        "executionId",
+        "workerInstanceId",
+        "status",
+        "reasonCode"
+      ],
+      "properties": {
+        "requestId": {
+          "$ref": "#/$defs/uuid"
+        },
+        "executionId": {
+          "$ref": "#/$defs/uuid"
+        },
+        "workerInstanceId": {
+          "$ref": "#/$defs/uuid"
+        },
+        "status": {
+          "$ref": "#/$defs/jobState"
+        },
+        "reasonCode": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/controlReasonCode"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        }
+      },
+      "$comment": "RunPod state for the exact requestId/executionId pair. Unknown or stale executions use the error schema; local terminal cache does not override Backend state."
+    },
+    "cancelRequest": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "executionId"
+      ],
+      "properties": {
+        "executionId": {
+          "$ref": "#/$defs/uuid"
+        }
+      },
+      "$comment": "requestId is supplied in the route. The cancellation targets only the supplied execution generation."
+    },
+    "cancelResponse": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "requestId",
+        "executionId",
+        "workerInstanceId",
+        "status"
+      ],
+      "properties": {
+        "requestId": {
+          "$ref": "#/$defs/uuid"
+        },
+        "executionId": {
+          "$ref": "#/$defs/uuid"
+        },
+        "workerInstanceId": {
+          "$ref": "#/$defs/uuid"
+        },
+        "status": {
+          "$ref": "#/$defs/jobState"
+        }
+      },
+      "$comment": "Same identity/status shape as jobAccepted; the HTTP status differentiates asynchronous cancellation acceptance from an already terminal execution."
+    },
+    "workerReadiness": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "status",
+        "contractVersion",
+        "serverTime"
+      ],
+      "properties": {
+        "status": {
+          "type": "string",
+          "enum": [
+            "ready",
+            "not_ready"
+          ]
+        },
+        "contractVersion": {
+          "const": "voice-coaching.runpod-http.v1.1"
+        },
+        "serverTime": {
+          "$ref": "#/$defs/utcTimestamp"
+        }
+      },
+      "$comment": "Authenticated Backend endpoint. Does not create a job or claim and does not call RunPod readiness, avoiding a dependency cycle."
+    },
+    "health": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "status"
+      ],
+      "properties": {
+        "status": {
+          "const": "alive"
+        }
+      },
+      "$comment": "Liveness only; not evidence of model, storage, callback or analysis readiness."
+    },
+    "readyz": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "status"
+      ],
+      "properties": {
+        "status": {
+          "type": "string",
+          "enum": [
+            "ready",
+            "not_ready"
+          ]
+        }
+      },
+      "$comment": "HTTP 200 means ready, HTTP 503 means not_ready. Execution-slot saturation alone does not make a prepared service unready."
+    },
+    "error": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "reasonCode",
+        "message",
+        "requestId",
+        "executionId",
+        "retryable"
+      ],
+      "properties": {
+        "reasonCode": {
+          "$ref": "#/$defs/controlReasonCode"
+        },
+        "message": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 500,
+          "pattern": "\\S"
+        },
+        "requestId": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/uuid"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "executionId": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/uuid"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "retryable": {
+          "type": "boolean"
+        }
+      },
+      "$comment": "Application maps reasonCode to the agreed HTTP status/retry policy. Use explicit null when a trusted valid request/execution identity is unavailable. message must not include tokens, raw media/script, credentials, local paths or internal exception details."
+    },
+    "resultAck": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "eventId",
+        "analysisId",
+        "requestId",
+        "executionId",
+        "status",
+        "serverTime"
+      ],
+      "properties": {
+        "eventId": {
+          "$ref": "#/$defs/uuid"
+        },
+        "analysisId": {
+          "$ref": "#/$defs/positiveLong"
+        },
+        "requestId": {
+          "$ref": "#/$defs/uuid"
+        },
+        "executionId": {
+          "$ref": "#/$defs/uuid"
+        },
+        "status": {
+          "type": "string",
+          "enum": [
+            "APPLIED",
+            "DUPLICATE"
+          ]
+        },
+        "serverTime": {
+          "$ref": "#/$defs/utcTimestamp"
+        }
+      },
+      "$comment": "HTTP 200 only after the new result transaction commits, or after the same immutable result event/payload is confirmed as already committed."
+    }
+  }
+}

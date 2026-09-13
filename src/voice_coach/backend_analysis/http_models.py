@@ -1,0 +1,180 @@
+"""Strict HTTP v1.1 boundary; no Redis grant or debug payload conversion."""
+from __future__ import annotations
+
+from dataclasses import dataclass
+from datetime import datetime
+from functools import lru_cache
+import hashlib
+import json
+from pathlib import Path
+from uuid import UUID
+
+from jsonschema import Draft202012Validator, FormatChecker
+import rfc8785
+
+from .domain import AnalysisWorkerResult
+
+CONTRACT = "voice-coaching.runpod-http.v1.1"
+MAX_CONTROL_BYTES = 65536
+MAX_RESULT_BYTES = 1048576
+
+
+class HttpFailure(Exception):
+    def __init__(self, status: int, code: str, *, retry_after: float = 1):
+        super().__init__(code)
+        self.status, self.code, self.retry_after = status, code, retry_after
+
+    def payload(self, request_id=None, execution_id=None):
+        return dict(reasonCode=self.code, message=self.code, requestId=request_id,
+                    executionId=execution_id, retryable=self.status in (429, 503, 502, 504))
+
+
+def _pairs(items):
+    result = {}
+    for key, value in items:
+        if key in result:
+            raise ValueError("duplicate key")
+        result[key] = value
+    return result
+
+
+def _invalid_constant(value):
+    raise ValueError("invalid number")
+
+
+def parse_json(raw: bytes):
+    try:
+        value = json.loads(raw.decode("utf-8"), object_pairs_hook=_pairs,
+                           parse_constant=_invalid_constant)
+        # JCS also rejects lone Unicode surrogates, out-of-range integers and NaN.
+        rfc8785.dumps(value)
+        return value
+    except (ValueError, UnicodeError, RecursionError):
+        raise HttpFailure(400, "INVALID_JSON") from None
+
+
+@lru_cache(maxsize=32)
+def validator(kind: str, result: bool = False):
+    root = Path(__file__).resolve().parents[3]
+    filename = "runpod_result_v1.schema.json" if result else "runpod_http_control_v1.schema.json"
+    schema = json.loads((root / "docs/contracts" / filename).read_text(encoding="utf-8"))
+    schema["$ref"] = "#/$defs/" + kind
+    return Draft202012Validator(schema, format_checker=FormatChecker())
+
+
+def validate(value, kind: str, *, result: bool = False):
+    check = validator(kind, result)
+    if not check.is_valid(value):
+        raise HttpFailure(422, "VALIDATION_FAILED")
+    _utf16_lengths(value, check.schema, check.schema)
+    return value
+
+
+def _utf16_lengths(value, node, root):
+    if "$ref" in node:
+        target = root
+        for part in node["$ref"].removeprefix("#/").split("/"):
+            target = target[part]
+        _utf16_lengths(value, target, root)
+    if isinstance(value, str) and "maxLength" in node:
+        if len(value.encode("utf-16-le")) // 2 > node["maxLength"]:
+            raise HttpFailure(422, "VALIDATION_FAILED")
+    if isinstance(value, dict):
+        for key, child in node.get("properties", {}).items():
+            if key in value:
+                _utf16_lengths(value[key], child, root)
+    for keyword in ("anyOf", "oneOf", "allOf"):
+        for child in node.get(keyword, []):
+            _utf16_lengths(value, child, root)
+
+
+def digest(value) -> str:
+    return hashlib.sha256(rfc8785.dumps(value)).hexdigest()
+
+
+def timestamp(value: str) -> datetime:
+    return datetime.fromisoformat(value.replace("Z", "+00:00"))
+
+
+def object_key(value: str, prefix: str):
+    if (not prefix or not prefix.endswith("/") or not value.startswith(prefix)
+            or ":" in value or "\\" in value or value.startswith("/")
+            or any(part in ("", ".", "..", "users", "sessions") for part in value.split("/"))
+            or any(ord(c) < 32 for c in value)):
+        raise HttpFailure(422, "VALIDATION_FAILED")
+
+
+@dataclass(frozen=True, slots=True)
+class HttpVisualInput:
+    object_key: str
+    sha256: str
+    mime_type: str
+    file_size_bytes: int
+    duration_ms: int | None
+
+
+@dataclass(frozen=True, slots=True)
+class AnalysisInput:
+    """Admitted media and prompt passed to the core, without authorization claims."""
+    event_id: UUID
+    execution_id: UUID
+    analysis_id: int
+    recording_id: int
+    content_id: int
+    prompt_revision: str
+    script_text: str
+    script_sha256: str
+    audio_object_key: str
+    audio_sha256: str
+    mime_type: str
+    file_size_bytes: int
+    duration_ms: int
+    learning_focus: str
+    visual_input: HttpVisualInput | None
+
+    @property
+    def closed_beta_context(self):
+        # Legacy core debug capture is never enabled by the HTTP transport.
+        return None
+
+    @classmethod
+    def from_payload(cls, body: dict, prefix: str):
+        validate(body, "analysisRequest")
+        for key, limit in (("scriptText", 20000), ("promptRevision", 100)):
+            if len(body[key].encode("utf-16-le")) // 2 > limit:
+                raise HttpFailure(422, "VALIDATION_FAILED")
+        audio, video = body["audio"], body["video"]
+        for media in (audio, video):
+            if media is not None:
+                object_key(media["objectKey"], prefix)
+                if len(media["objectKey"].encode("utf-16-le")) // 2 > 1000:
+                    raise HttpFailure(422, "VALIDATION_FAILED")
+        if hashlib.sha256(body["scriptText"].encode("utf-8")).hexdigest() != body["scriptSha256"]:
+            raise HttpFailure(422, "VALIDATION_FAILED")
+        return cls(UUID(body["requestId"]), UUID(body["executionId"]), body["analysisId"],
+                   body["recordingId"], body["contentId"], body["promptRevision"], body["scriptText"],
+                   body["scriptSha256"], audio["objectKey"], audio["sha256"], audio["mimeType"],
+                   audio["fileSizeBytes"], audio["durationMs"], body["learningFocus"],
+                   HttpVisualInput(object_key=video["objectKey"], sha256=video["sha256"],
+                                       mime_type=video["mimeType"], file_size_bytes=video["fileSizeBytes"],
+                                       duration_ms=video["durationMs"]) if video else None)
+
+
+def result_payload(result: AnalysisWorkerResult, request: AnalysisInput, worker_id: str):
+    evidence = result.pronunciation_evidence
+    if evidence and evidence.selected_end_ms is not None and evidence.selected_end_ms > request.duration_ms:
+        raise HttpFailure(422, "VALIDATION_FAILED")
+    visual = result.visual_supplement.to_payload() if result.visual_supplement else None
+    if visual:
+        visual = {k: v for k, v in visual.items() if k in validator("result", True).schema["$defs"]["visualSupplement"]["properties"]}
+    body = dict(schemaVersion="voice-coaching.runpod-analysis-result.v1", eventId=str(result.event_id),
+                requestId=str(request.event_id), executionId=str(request.execution_id),
+                workerInstanceId=worker_id, analysisId=request.analysis_id, recordingId=request.recording_id,
+                status=result.status, outcome=result.outcome.value if result.outcome else None,
+                summaryFeedback=result.summary_feedback, pronunciationEvidence=evidence.to_payload() if evidence else None,
+                visualSupplement=visual, audioSha256=result.audio_sha256, workerRevision=result.worker_revision,
+                pipelineRevision=result.pipeline_revision, failureCode=result.failure_code, failureReason=result.failure_reason)
+    validate(body, "result", result=True)
+    if len(rfc8785.dumps(body)) > MAX_RESULT_BYTES:
+        raise HttpFailure(413, "PAYLOAD_TOO_LARGE")
+    return body

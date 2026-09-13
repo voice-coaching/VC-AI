@@ -1,0 +1,97 @@
+{
+  "schemaVersion": "intelligentai.service-supervisor.v1",
+  "services": [
+    {
+      "name": "clova",
+      "command": [
+        "/usr/bin/python3",
+        "/opt/intelligentai/app/deploy/runpod/start_hyperclova.py"
+      ],
+      "cwd": "/opt/intelligentai/app",
+      "env": {
+        "PYTHONUNBUFFERED": "1",
+        "PYTHONDONTWRITEBYTECODE": "1"
+      },
+      "dependsOn": [],
+      "health": {
+        "type": "http",
+        "url": "http://127.0.0.1:8000/health",
+        "jsonField": "status",
+        "acceptedValues": [
+          "ready"
+        ],
+        "pidField": "process_id",
+        "timeoutSeconds": 3
+      },
+      "startupTimeoutSeconds": 1800,
+      "stopTimeoutSeconds": 240,
+      "log": {
+        "path": "/run/intelligentai/logs/clova.log",
+        "maximumBytes": 10485760,
+        "backupCount": 3
+      }
+    },
+    {
+      "name": "api",
+      "command": [
+        "/opt/intelligentai/envs/scorer/bin/python",
+        "/opt/intelligentai/app/deploy/runpod/start_analysis_http.py"
+      ],
+      "cwd": "/opt/intelligentai/app",
+      "runAsUser": 10001,
+      "runAsGroup": 10001,
+      "envFile": {
+        "path": "/run/intelligentai/analysis-http.env",
+        "required": true
+      },
+      "requiredEnv": [],
+      "env": {
+        "VOICE_COACH_REPOSITORY_ROOT": "/opt/intelligentai/app",
+        "PYTHONPATH": "/opt/intelligentai/app/src:/opt/intelligentai/app/seungun/src:/opt/intelligentai/http-python",
+        "PYTHONUNBUFFERED": "1",
+        "PYTHONDONTWRITEBYTECODE": "1",
+        "HOME": "/run/intelligentai/worker",
+        "HF_HOME": "/run/intelligentai/worker/tmp/huggingface",
+        "HF_HUB_OFFLINE": "1",
+        "TRANSFORMERS_OFFLINE": "1",
+        "AWS_EC2_METADATA_DISABLED": "true",
+        "TOKENIZERS_PARALLELISM": "false",
+        "OMP_NUM_THREADS": "4",
+        "MKL_NUM_THREADS": "4",
+        "OPENBLAS_NUM_THREADS": "1",
+        "AI_ANALYSIS_RESTRICTED_WORKSPACE_ROOT": "/run/intelligentai/worker/work",
+        "AI_ANALYSIS_NLTK_DATA_ROOT": "/opt/intelligentai/app/runtime/nltk_data",
+        "AI_ANALYSIS_SEUNGUN_DEVICE": "cuda",
+        "AI_ANALYSIS_ARTIFACT_GID": "10001",
+        "AI_ANALYSIS_DEPLOYMENT_MANIFEST_PATH": "/opt/intelligentai/http-deployment/manifest.json",
+        "AI_ANALYSIS_VISUAL_RELEASE_ROOT": "/opt/intelligentai/app/artifacts/visual_feedback/releases/production_visual",
+        "AI_ANALYSIS_VISUAL_LANDMARK_MODEL_PATH": "/opt/intelligentai/app/models/mediapipe/face_landmarker.task",
+        "AI_ANALYSIS_VISUAL_GEOMETRY_ARTIFACT_PATH": "/opt/intelligentai/app/artifacts/visual_feedback/p6/aihub68_geometry_artifact_v2.json",
+        "AI_ANALYSIS_MAXIMUM_RESULT_PAYLOAD_BYTES": "1048576",
+        "AI_ANALYSIS_CLOVA_ENABLED": "true",
+        "AI_ANALYSIS_CLOVA_ENDPOINT": "http://127.0.0.1:8000/v1",
+        "AI_ANALYSIS_CLOVA_TIMEOUT_SECONDS": "180",
+        "TMPDIR": "/run/intelligentai/worker/tmp",
+        "MPLCONFIGDIR": "/run/intelligentai/worker/tmp/matplotlib",
+        "AI_ANALYSIS_TRANSPORT": "runpod_http"
+      },
+      "dependsOn": [],
+      "health": {
+        "type": "http",
+        "url": "http://127.0.0.1:8080/health",
+        "jsonField": "status",
+        "acceptedValues": [
+          "alive"
+        ],
+        "timeoutSeconds": 3
+      },
+      "startupTimeoutSeconds": 120,
+      "stopTimeoutSeconds": 40,
+      "log": {
+        "path": "/run/intelligentai/logs/analysis-http.log",
+        "maximumBytes": 10485760,
+        "backupCount": 3
+      }
+    }
+  ]
+}

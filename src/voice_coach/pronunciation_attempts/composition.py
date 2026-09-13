@@ -61,6 +61,7 @@ from .adapters.runtime import (
     MediaPipeVisualDetectorBridge,
     R00TrustedPromptAdapter,
     SeungunVisualHandoffAdapter,
+    HttpSeungunVisualHandoffAdapter,
 )
 from .models import AvContainerPolicy, VideoAdmissionPolicy
 from .phone_window import PhoneWindowDecodePolicy
@@ -135,6 +136,7 @@ def build_local_video_attempt_facade(
     consent_authority: ConsentAuthorizationPort | None = None,
     trusted_prompt_port: TrustedPromptPort | None = None,
     seungun_runtime_port: SeungunRuntimePort | None = None,
+    http_admitted: bool = False,
 ) -> VideoAttemptFacade:
     """Build the local loop, enabling visual publication only from promoted state.
 
@@ -181,7 +183,7 @@ def build_local_video_attempt_facade(
         trusted_prompt_port,
         seungun_runtime_port,
     )
-    if any(value is not None for value in injected_runtime) and not all(
+    if not http_admitted and any(value is not None for value in injected_runtime) and not all(
         value is not None for value in injected_runtime
     ):
         raise ValueError("injected video attempt authorities must be complete")
@@ -190,12 +192,16 @@ def build_local_video_attempt_facade(
     if all(value is None for value in injected_runtime) and seungun_detector is None:
         raise ValueError("Seungun detector is required for local composition")
 
+    if http_admitted and (consent_authority is not None or trusted_prompt_port is None
+                          or seungun_runtime_port is None or seungun_detector is not None):
+        raise ValueError("http_visual_composition_invalid")
+
     media_store = LocalRestrictedVideoAdmissionAdapter(
         restricted_root=restricted_media_root,
         clock=clock,
     )
     container = FfmpegAvContainerAdapter(media_store)
-    consent = consent_authority or LocalExplicitConsentAuthority(
+    consent = None if http_admitted else consent_authority or LocalExplicitConsentAuthority(
         consent_token=LOCAL_CONSENT_REFERENCE,
         clock=clock,
         attempt_nonce=attempt_nonce,
@@ -236,7 +242,8 @@ def build_local_video_attempt_facade(
         status=UpstreamReliabilityStatus.SUPPORTED,
         policy_revision=_SEUNGUN_UPSTREAM_POLICY_REVISION,
     )
-    handoff = SeungunVisualHandoffAdapter(
+    handoff_type = HttpSeungunVisualHandoffAdapter if http_admitted else SeungunVisualHandoffAdapter
+    handoff = handoff_type(
         binding_facade=SeungunAttemptBindingFacade(),
         consent_receipts=consent,
         reliability_receipt=upstream_reliability,
