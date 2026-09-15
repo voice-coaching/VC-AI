@@ -4,6 +4,8 @@
 
 검토 기준은 VC-BE의 `46-refactor-ai-분석-연동을-redis-stream에서-runpod-http-callback으로-전환` 브랜치 `a0dbd1e84e9ba7be6d9fe62158a00c9d471f420f`와 intelligentAI `6618a396fb4d1c0d69ab76402bc2450a253be248`이다. 이후 브랜치 변경 시 구현 전에 차이를 다시 확인한다.
 
+2026-09-13 후속: AWS 수정은 담당자가 진행하고, RunPod의 코드 분리·기동·배포 순서는 [RunPod HTTP 수정 계획](runpod_http_implementation_plan_20260913.md)을 따른다. **현재 공통 DTO·시간·digest·오류·응답 형식의 기준은 [v1.1 계약 확정 회신](runpod_http_contract_v1_20260913.md)과 첨부 JSON Schema다.** 아래 초기 제안보다 확정 계약을 우선한다. 실제 관측은 [연결 인계 문서](runpod_http_handoff_20260913.md)와 구분한다.
+
 ## 1. 결정과 범위
 
 사용자의 결정에 따라 서비스 이용 단계에서 개인정보 동의를 완료한 사용자만 분석을 요청한다는 전제를 적용한다. **Backend–RunPod 요청·응답에는 동의 증빙, 동의 정책 revision, 요청별 처리 권한 grant·서명을 포함하지 않는다.** 이번 연결 작업에서 해당 검증 프로토콜을 새로 구현하지 않는다.
@@ -160,7 +162,7 @@ RunPod에는 분석 접수 API용 포트를 추가한다. 기존 Clova는 `127.0
 
 Backend callback은 전용 서버 인증 경로로 구성한다. `/api/internal/...`이라는 이름만으로 보호된다고 가정하거나 단순 permitAll로 열지 않는다. 양방향 HTTPS·서버 토큰 검증을 적용한다. 토큰과 저장소 설정은 프로세스 환경/비공개 주입원에서 복원한다.
 
-Pod 이전 시 HTTPS proxy URL의 Pod ID가 바뀔 수 있으므로 Backend endpoint 갱신·health 확인·작업 재배정 순서를 운영 문서에 포함한다. 이번 기능은 GPU를 자동 구매·시작·이전하는 기능까지 포함하지 않는다.
+Pod 이전 시 HTTPS proxy URL의 Pod ID가 바뀔 수 있으므로 실제 upstream 갱신·health 확인·작업 재배정 순서를 운영 문서에 포함한다. 2026-09-13에 할당된 고정 도메인 `https://ai.voice-coaching.site`를 사용하는 구성에서는 Backend endpoint를 유지하고 담당자가 Nginx upstream과 Host/SNI를 변경한다. 이번 기능은 GPU를 자동 구매·시작·이전하는 기능까지 포함하지 않는다.
 
 ## 7. 저장소별 구현 작업
 
