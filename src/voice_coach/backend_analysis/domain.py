@@ -717,6 +717,8 @@ class AnalysisWorkerResult:
     audio_sha256: str | None
     visual_supplement: VisualSupplement | None
     seungun_production_evidence: object | None = field(default=None, repr=False)
+    overall_score: float | None = None
+    scoring_evidence: dict | None = field(default=None, repr=False)
     closed_beta_debug: ClosedBetaDebug | None = field(default=None, repr=False)
 
     @classmethod
@@ -764,6 +766,8 @@ class AnalysisWorkerResult:
         audio_sha256: str,
         visual_supplement: VisualSupplement | None = None,
         seungun_production_evidence: object | None = None,
+        overall_score: float | None = None,
+        scoring_evidence: dict | None = None,
         closed_beta_debug: ClosedBetaDebug | None = None,
     ) -> "AnalysisWorkerResult":
         if outcome not in {
@@ -815,6 +819,8 @@ class AnalysisWorkerResult:
             audio_sha256=audio_sha256,
             visual_supplement=visual_supplement,
             seungun_production_evidence=seungun_production_evidence,
+            overall_score=overall_score,
+            scoring_evidence=scoring_evidence,
             closed_beta_debug=closed_beta_debug,
         )
 

@@ -174,6 +174,9 @@ def result_payload(result: AnalysisWorkerResult, request: AnalysisInput, worker_
                 summaryFeedback=result.summary_feedback, pronunciationEvidence=evidence.to_payload() if evidence else None,
                 visualSupplement=visual, audioSha256=result.audio_sha256, workerRevision=result.worker_revision,
                 pipelineRevision=result.pipeline_revision, failureCode=result.failure_code, failureReason=result.failure_reason)
+    if result.scoring_evidence is not None:
+        body.update(schemaVersion="voice-coaching.runpod-analysis-result.v2",
+                    overallScore=result.overall_score, scoringEvidence=result.scoring_evidence)
     validate(body, "result", result=True)
     if len(rfc8785.dumps(body)) > MAX_RESULT_BYTES:
         raise HttpFailure(413, "PAYLOAD_TOO_LARGE")
