@@ -119,8 +119,9 @@ class ClovaRubricScorer:
             # Only the scoring task reads the symlink target and includes the rubric.
             policy = {k: rubric[k] for k in ("rubricRevision", "evidenceUnits", "levels", "aggregation")}
             policy["criteria"] = [{k: c[k] for k in ("id", "label", "weight")} for c in rubric["criteria"]]
-            # Supply exact arithmetic operands, never the answer. The model still
-            # selects each level from the rubric and emits the overall score.
+            # The versioned rubric calculator owns numeric decisions. CLOVA gets
+            # the policy, source counts and worksheet to render the score response;
+            # its output must still pass independent worker and Backend checks.
             model_rows = [row | {
                 "evidenceUnits": criterion_units(row, rubric),
                 "possibleUnits": 4 * row["sampleCount"],
@@ -130,9 +131,18 @@ class ClovaRubricScorer:
                     for band in rubric["levels"]] if row["sampleCount"] else [],
             } for row in rows]
             total_weight = sum(c["weight"] for c, row in zip(rubric["criteria"], rows, strict=True) if row["sampleCount"])
+            worksheet_levels = [{"criterionId": row["criterionId"], "level": criterion_level(row, rubric)}
+                                for row in rows]
+            weighted_units = sum(c["weight"] * grade["level"]
+                                 for c, grade in zip(rubric["criteria"], worksheet_levels, strict=True)
+                                 if grade["level"] is not None)
+            worksheet_score = (Decimal(100 * weighted_units) / Decimal(4 * total_weight)).quantize(
+                Decimal("0.1"), rounding=ROUND_HALF_UP)
             payload = {"RUBRIC_JSON": policy, "INPUT_DATA": {
                 "criteria": model_rows, "applicableWeight": total_weight,
-                "aggregationDenominator": 4 * total_weight}}
+                "aggregationDenominator": 4 * total_weight},
+                "RUBRIC_RESULT": {"rubricRevision": RUBRIC, "criteria": worksheet_levels,
+                                  "overallScore": float(worksheet_score)}}
             body = dict(model=self.model_id, messages=[
                 {"role": "system", "content": system},
                 {"role": "user", "content": json.dumps(payload, ensure_ascii=False, separators=(",", ":"))},
