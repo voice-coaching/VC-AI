@@ -89,12 +89,17 @@ def detailed_evidence(analysis, rubric):
     return counts, rows
 
 
+def criterion_units(row, rubric):
+    return (4 * (row["sampleCount"] - row["deletedClear"] - row["deletedFlagged"])
+            if row["criterionId"] == "coverage"
+            else sum(row[state] * weight for state, weight in rubric["evidenceUnits"].items()))
+
+
 def criterion_level(row, rubric):
     n = row["sampleCount"]
     if n == 0:
         return None
-    units = (4 * (n - row["deletedClear"] - row["deletedFlagged"]) if row["criterionId"] == "coverage"
-             else sum(row[state] * weight for state, weight in rubric["evidenceUnits"].items()))
+    units = criterion_units(row, rubric)
     return next(band["level"] for band in rubric["levels"] if units * 100 >= band["minimumPercent"] * 4 * n)
 
 
@@ -114,7 +119,20 @@ class ClovaRubricScorer:
             # Only the scoring task reads the symlink target and includes the rubric.
             policy = {k: rubric[k] for k in ("rubricRevision", "evidenceUnits", "levels", "aggregation")}
             policy["criteria"] = [{k: c[k] for k in ("id", "label", "weight")} for c in rubric["criteria"]]
-            payload = {"RUBRIC_JSON": policy, "INPUT_DATA": {"criteria": rows}}
+            # Supply exact arithmetic operands, never the answer. The model still
+            # selects each level from the rubric and emits the overall score.
+            model_rows = [row | {
+                "evidenceUnits": criterion_units(row, rubric),
+                "possibleUnits": 4 * row["sampleCount"],
+                "minimumUnitsByLevel": [
+                    {"level": band["level"],
+                     "minimumUnits": (band["minimumPercent"] * 4 * row["sampleCount"] + 99) // 100}
+                    for band in rubric["levels"]] if row["sampleCount"] else [],
+            } for row in rows]
+            total_weight = sum(c["weight"] for c, row in zip(rubric["criteria"], rows, strict=True) if row["sampleCount"])
+            payload = {"RUBRIC_JSON": policy, "INPUT_DATA": {
+                "criteria": model_rows, "applicableWeight": total_weight,
+                "aggregationDenominator": 4 * total_weight}}
             body = dict(model=self.model_id, messages=[
                 {"role": "system", "content": system},
                 {"role": "user", "content": json.dumps(payload, ensure_ascii=False, separators=(",", ":"))},
