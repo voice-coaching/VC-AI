@@ -111,6 +111,8 @@ def _create_core(env, *, http):
         verify_deployment_attestation(env, authorization_key_ids=authorization_settings.keys)
         authorization = HmacAnalysisAuthorizationAdapter(authorization_settings)
     grounded_feedback = load_grounded_feedback(env, repository_root=repository_root)
+    from .clova_scoring import load_clova_scorer
+    clova_scorer = load_clova_scorer(env, repository_root=repository_root) if http else None
     object_store = S3CompatibleRestrictedObjectStore(
         create_s3_client_from_environment(env),
         S3ObjectStoreSettings(
@@ -164,6 +166,7 @@ def _create_core(env, *, http):
         seungun=seungun,
         visual=visual,
         grounded_feedback=grounded_feedback,
+        clova_scorer=clova_scorer,
         **({"worker_revision": env["VOICE_COACH_BUILD_REVISION"]} if http else {}),
     )
 

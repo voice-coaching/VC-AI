@@ -2,7 +2,7 @@
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "$id": "urn:voice-coaching:runpod-analysis-result:v1",
   "title": "RunPod HTTP analysis result v1",
-  "description": "HTTP result contract for Backend delivery. This schema specifies target behavior; it is not evidence that either server implements it.",
+  "description": "RunPod HTTP results: legacy v1 and scored v2. v2 requires validated CLOVA rubric evidence for every completed result; v1 forbids scoring fields.",
   "$comment": "Derived from src/voice_coach/backend_analysis/domain.py at fb54a1b506e57a3d71913d5c81ab8bab4408dab2. Use an HTTP-specific serializer; the Redis serializer also emits unsupported score/STT/debug fields. Validate request/execution/recording identity, audio SHA, current lease and cross-field evidence relationships in application code. JSON input must reject duplicate keys and non-finite numbers before validation. Enforce the 1 MiB UTF-8 body limit outside JSON Schema.",
   "$ref": "#/$defs/result",
   "$defs": {
@@ -70,14 +70,22 @@
         },
         "selectedStartMs": {
           "anyOf": [
-            { "$ref": "#/$defs/offsetMs" },
-            { "type": "null" }
+            {
+              "$ref": "#/$defs/offsetMs"
+            },
+            {
+              "type": "null"
+            }
           ]
         },
         "selectedEndMs": {
           "anyOf": [
-            { "$ref": "#/$defs/offsetMs" },
-            { "type": "null" }
+            {
+              "$ref": "#/$defs/offsetMs"
+            },
+            {
+              "type": "null"
+            }
           ]
         },
         "detectorScore": {
@@ -100,14 +108,22 @@
       "oneOf": [
         {
           "properties": {
-            "selectedStartMs": { "type": "null" },
-            "selectedEndMs": { "type": "null" }
+            "selectedStartMs": {
+              "type": "null"
+            },
+            "selectedEndMs": {
+              "type": "null"
+            }
           }
         },
         {
           "properties": {
-            "selectedStartMs": { "$ref": "#/$defs/offsetMs" },
-            "selectedEndMs": { "$ref": "#/$defs/offsetMs" }
+            "selectedStartMs": {
+              "$ref": "#/$defs/offsetMs"
+            },
+            "selectedEndMs": {
+              "$ref": "#/$defs/offsetMs"
+            }
           }
         }
       ],
@@ -188,7 +204,10 @@
       ],
       "properties": {
         "schemaVersion": {
-          "const": "voice-coaching.runpod-analysis-result.v1"
+          "enum": [
+            "voice-coaching.runpod-analysis-result.v1",
+            "voice-coaching.runpod-analysis-result.v2"
+          ]
         },
         "eventId": {
           "$ref": "#/$defs/uuid"
@@ -209,10 +228,17 @@
           "$ref": "#/$defs/positiveLong"
         },
         "status": {
-          "enum": ["COMPLETED", "FAILED"]
+          "enum": [
+            "COMPLETED",
+            "FAILED"
+          ]
         },
         "outcome": {
-          "enum": ["COACHING_READY", "COMPLETED_NO_ISSUE", null]
+          "enum": [
+            "COACHING_READY",
+            "COMPLETED_NO_ISSUE",
+            null
+          ]
         },
         "summaryFeedback": {
           "anyOf": [
@@ -222,25 +248,39 @@
               "maxLength": 20000,
               "pattern": "\\S"
             },
-            { "type": "null" }
+            {
+              "type": "null"
+            }
           ]
         },
         "pronunciationEvidence": {
           "anyOf": [
-            { "$ref": "#/$defs/pronunciationEvidence" },
-            { "type": "null" }
+            {
+              "$ref": "#/$defs/pronunciationEvidence"
+            },
+            {
+              "type": "null"
+            }
           ]
         },
         "visualSupplement": {
           "anyOf": [
-            { "$ref": "#/$defs/visualSupplement" },
-            { "type": "null" }
+            {
+              "$ref": "#/$defs/visualSupplement"
+            },
+            {
+              "type": "null"
+            }
           ]
         },
         "audioSha256": {
           "anyOf": [
-            { "$ref": "#/$defs/sha256" },
-            { "type": "null" }
+            {
+              "$ref": "#/$defs/sha256"
+            },
+            {
+              "type": "null"
+            }
           ]
         },
         "workerRevision": {
@@ -248,14 +288,22 @@
         },
         "pipelineRevision": {
           "anyOf": [
-            { "$ref": "#/$defs/revision" },
-            { "type": "null" }
+            {
+              "$ref": "#/$defs/revision"
+            },
+            {
+              "type": "null"
+            }
           ]
         },
         "failureCode": {
           "anyOf": [
-            { "$ref": "#/$defs/failureCode" },
-            { "type": "null" }
+            {
+              "$ref": "#/$defs/failureCode"
+            },
+            {
+              "type": "null"
+            }
           ]
         },
         "failureReason": {
@@ -266,50 +314,251 @@
               "maxLength": 500,
               "pattern": "\\S"
             },
-            { "type": "null" }
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "overallScore": {
+          "type": [
+            "number",
+            "null"
+          ],
+          "minimum": 0,
+          "maximum": 100,
+          "multipleOf": 0.1
+        },
+        "scoringEvidence": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/scoringEvidence"
+            },
+            {
+              "type": "null"
+            }
           ]
         }
       },
       "oneOf": [
         {
           "properties": {
-            "status": { "const": "COMPLETED" },
-            "outcome": { "const": "COACHING_READY" },
-            "summaryFeedback": { "type": "string" },
-            "pronunciationEvidence": { "$ref": "#/$defs/pronunciationEvidence" },
-            "audioSha256": { "$ref": "#/$defs/sha256" },
-            "pipelineRevision": { "$ref": "#/$defs/revision" },
-            "failureCode": { "type": "null" },
-            "failureReason": { "type": "null" }
+            "status": {
+              "const": "COMPLETED"
+            },
+            "outcome": {
+              "const": "COACHING_READY"
+            },
+            "summaryFeedback": {
+              "type": "string"
+            },
+            "pronunciationEvidence": {
+              "$ref": "#/$defs/pronunciationEvidence"
+            },
+            "audioSha256": {
+              "$ref": "#/$defs/sha256"
+            },
+            "pipelineRevision": {
+              "$ref": "#/$defs/revision"
+            },
+            "failureCode": {
+              "type": "null"
+            },
+            "failureReason": {
+              "type": "null"
+            }
           }
         },
         {
           "properties": {
-            "status": { "const": "COMPLETED" },
-            "outcome": { "const": "COMPLETED_NO_ISSUE" },
-            "summaryFeedback": { "type": "null" },
-            "pronunciationEvidence": { "type": "null" },
-            "visualSupplement": { "type": "null" },
-            "audioSha256": { "$ref": "#/$defs/sha256" },
-            "pipelineRevision": { "$ref": "#/$defs/revision" },
-            "failureCode": { "type": "null" },
-            "failureReason": { "type": "null" }
+            "status": {
+              "const": "COMPLETED"
+            },
+            "outcome": {
+              "const": "COMPLETED_NO_ISSUE"
+            },
+            "summaryFeedback": {
+              "type": "null"
+            },
+            "pronunciationEvidence": {
+              "type": "null"
+            },
+            "visualSupplement": {
+              "type": "null"
+            },
+            "audioSha256": {
+              "$ref": "#/$defs/sha256"
+            },
+            "pipelineRevision": {
+              "$ref": "#/$defs/revision"
+            },
+            "failureCode": {
+              "type": "null"
+            },
+            "failureReason": {
+              "type": "null"
+            }
           }
         },
         {
           "properties": {
-            "status": { "const": "FAILED" },
-            "outcome": { "type": "null" },
-            "summaryFeedback": { "type": "null" },
-            "pronunciationEvidence": { "type": "null" },
-            "visualSupplement": { "type": "null" },
-            "audioSha256": { "type": "null" },
-            "failureCode": { "$ref": "#/$defs/failureCode" },
-            "failureReason": { "type": "string" }
+            "status": {
+              "const": "FAILED"
+            },
+            "outcome": {
+              "type": "null"
+            },
+            "summaryFeedback": {
+              "type": "null"
+            },
+            "pronunciationEvidence": {
+              "type": "null"
+            },
+            "visualSupplement": {
+              "type": "null"
+            },
+            "audioSha256": {
+              "type": "null"
+            },
+            "failureCode": {
+              "$ref": "#/$defs/failureCode"
+            },
+            "failureReason": {
+              "type": "string"
+            }
           }
         }
       ],
-      "$comment": "Every listed field is present; unavailable values use explicit null. Backend must verify workerInstanceId equals the claim owner for the current requestId/executionId before accepting a new result. FAILED pipelineRevision may be null when no pipeline was established; workerRevision remains required. Do not include transcript, STT confidence, user scores, segments, local paths, media/base64, closed-beta debug, grants or signatures. Preserve the same eventId and exact normalized result content on redelivery; do not convert callback failure into a new analysis failure."
+      "$comment": "Every listed field is present; unavailable values use explicit null. Backend must verify workerInstanceId equals the claim owner for the current requestId/executionId before accepting a new result. FAILED pipelineRevision may be null when no pipeline was established; workerRevision remains required. Do not include transcript, STT confidence, user scores, segments, local paths, media/base64, closed-beta debug, grants or signatures. Preserve the same eventId and exact normalized result content on redelivery; do not convert callback failure into a new analysis failure.",
+      "allOf": [
+        {
+          "if": {
+            "properties": {
+              "schemaVersion": {
+                "const": "voice-coaching.runpod-analysis-result.v1"
+              }
+            }
+          },
+          "then": {
+            "not": {
+              "anyOf": [
+                {
+                  "required": [
+                    "overallScore"
+                  ]
+                },
+                {
+                  "required": [
+                    "scoringEvidence"
+                  ]
+                }
+              ]
+            }
+          },
+          "else": {
+            "required": [
+              "overallScore",
+              "scoringEvidence"
+            ],
+            "if": {
+              "properties": {
+                "status": {
+                  "const": "COMPLETED"
+                }
+              }
+            },
+            "then": {
+              "properties": {
+                "overallScore": {
+                  "type": "number"
+                },
+                "scoringEvidence": {
+                  "$ref": "#/$defs/scoringEvidence"
+                }
+              }
+            },
+            "else": {
+              "properties": {
+                "overallScore": {
+                  "type": "null"
+                },
+                "scoringEvidence": {
+                  "type": "null"
+                }
+              }
+            }
+          }
+        }
+      ]
+    },
+    "scoringEvidence": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "rubricRevision",
+        "generator",
+        "modelRevision",
+        "evidenceSha256",
+        "expectedPhoneCount",
+        "alignedPhoneCount",
+        "correctPhoneCount",
+        "unflaggedPhoneCount",
+        "alignmentScore",
+        "coverageScore",
+        "stabilityScore"
+      ],
+      "properties": {
+        "rubricRevision": {
+          "const": "clova-phone-rubric-v1"
+        },
+        "generator": {
+          "const": "hyperclova"
+        },
+        "modelRevision": {
+          "type": "string",
+          "pattern": "^[0-9a-f]{40}$"
+        },
+        "evidenceSha256": {
+          "$ref": "#/$defs/sha256"
+        },
+        "expectedPhoneCount": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 4096
+        },
+        "alignedPhoneCount": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 4096
+        },
+        "correctPhoneCount": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 4096
+        },
+        "unflaggedPhoneCount": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 4096
+        },
+        "alignmentScore": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 60,
+          "multipleOf": 0.1
+        },
+        "coverageScore": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 20,
+          "multipleOf": 0.1
+        },
+        "stabilityScore": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 20,
+          "multipleOf": 0.1
+        }
+      }
     }
   }
 }
