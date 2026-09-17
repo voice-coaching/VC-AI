@@ -4,6 +4,7 @@ from __future__ import annotations
 import hashlib
 import json
 import math
+import logging
 from decimal import Decimal, ROUND_HALF_UP
 from pathlib import Path
 from urllib.request import Request, urlopen
@@ -92,8 +93,11 @@ class ClovaRubricScorer:
         self.repository_root = repository_root
 
     def score(self, analysis):
+        phase = "load_policy"
+        diagnostic = {}
         try:
             system, rubric, rubric_digest, prompt_digest = load_scoring_prompt(self.repository_root)
+            phase = "collect_evidence"
             counts, rows = detailed_evidence(analysis, rubric)
             # Only the scoring task reads the symlink target and includes the rubric.
             policy = {k: rubric[k] for k in ("rubricRevision", "evidenceUnits", "levels", "aggregation")}
@@ -105,6 +109,7 @@ class ClovaRubricScorer:
             ], max_tokens=512, temperature=0, chat_template_kwargs={"thinking": False})
             req = Request(self.endpoint, data=json.dumps(body, ensure_ascii=False).encode(),
                           headers={"Content-Type": "application/json"}, method="POST")
+            phase = "model_completion"
             with urlopen(req, timeout=self.timeout) as response:
                 raw = response.read(65537)
             if len(raw) > 65536:
@@ -113,6 +118,7 @@ class ClovaRubricScorer:
             if document["choices"][0].get("finish_reason") != "stop":
                 raise ValueError("incomplete completion")
             result = _strict_json(_completion_content(document, expected_model=self.model_id, expected_revision=self.revision))
+            phase = "validate_fields"
             if not isinstance(result, dict) or set(result) != {"rubricRevision", "criteria", "overallScore"} or result["rubricRevision"] != RUBRIC:
                 raise ValueError("invalid score fields")
             levels = result["criteria"]
@@ -124,6 +130,9 @@ class ClovaRubricScorer:
                 if not isinstance(grade, dict) or set(grade) != {"criterionId", "level"} or grade["criterionId"] != row["criterionId"]:
                     raise ValueError("invalid criterion identity")
                 level = grade["level"]
+                phase = "validate_level"
+                diagnostic = {"criterion": row["criterionId"], "expectedLevel": expected,
+                              "actualLevel": level if level is None or type(level) is int else "invalid_type"}
                 if (level is not None and type(level) is not int) or level != expected:
                     raise ValueError("rubric level mismatch")
                 row["level"] = level
@@ -132,6 +141,9 @@ class ClovaRubricScorer:
                     denominator += criterion["weight"] * 4
             score = (Decimal(100 * numerator) / Decimal(denominator)).quantize(Decimal("0.1"), rounding=ROUND_HALF_UP)
             actual = result["overallScore"]
+            phase = "validate_total"
+            diagnostic = {"expectedScore": str(score),
+                          "actualScore": actual if type(actual) in (int, float) and math.isfinite(actual) else "invalid_type"}
             if type(actual) not in (float, int) or not math.isfinite(actual) or Decimal(str(actual)) != score:
                 raise ValueError("rubric arithmetic mismatch")
             evidence = dict(rubricRevision=RUBRIC, generator="hyperclova", modelRevision=self.revision,
@@ -139,7 +151,11 @@ class ClovaRubricScorer:
                 evidenceSha256=hashlib.sha256(json.dumps(analysis.analysis_evidence, ensure_ascii=False,
                     sort_keys=True, separators=(",", ":"), allow_nan=False).encode()).hexdigest(), **counts)
             return float(actual), evidence
-        except Exception:
+        except Exception as error:
+            # Only allowlisted phase names, types and numeric grades are logged.
+            # Never log input text, model output, paths, credentials, or exception messages.
+            logging.getLogger(__name__).warning("clova_scoring_rejected phase=%s error=%s diagnostic=%s",
+                                               phase, type(error).__name__, diagnostic)
             raise BackendAnalysisError("analysis_execution_failed_closed", "CLOVA 채점을 완료하지 못했습니다. 다시 시도해 주세요.") from None
 
 
