@@ -1,4 +1,6 @@
-# CLOVA overallScore 기준표 v1
+# CLOVA overallScore 기준표 v1 — 이전 계약
+
+상세 항목과 조건부 채점 프롬프트는 [v2 기준표](clova-detailed-scoring-v2.md)를 사용한다. 아래는 기존 저장 결과 호환을 위한 v1 기록이다.
 
 버전: `clova-phone-rubric-v1`. 서비스의 발음 학습·승급용 운영 기준이며, 사람 평가와 보정된 발음 정확도·확률·공인 시험 점수가 아니다. 억양·속도·입술 품질은 측정 근거가 없어 채점하지 않는다.
 
