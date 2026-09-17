@@ -50,7 +50,7 @@ canonical_sources:
       sha256: 201973a25e75da77ec86468a60094c22ac3d3376d936d5e2d089531d52b5d6d3
     - path: seungun/README.md
       scope: seungun_audio_canonical
-      sha256: bfb5d43869426388626a49b033422fb25f038232d1c31b96ec6331a924455636
+      sha256: 95c5710826aace484949f7a57182ca39a62894ce637f341684d394b5994f4e95
     - path: seungun/docs/CURRENT_PIPELINE_KO.md.md
       scope: seungun_audio_canonical
       sha256: fc9ca5126c7f8ce3245188602e2563c40ba3bfa72473cadcd74d80bf91cef495

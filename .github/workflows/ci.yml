@@ -31,6 +31,9 @@ jobs:
       - name: Validate project constraints
         run: python scripts/check_project_constraints.py
 
+      - name: Validate every tracked Markdown link, including research docs
+        run: python scripts/check_markdown_links.py
+
       - name: Validate repository-current source pins
         run: python scripts/check_source_pins.py
 

@@ -5,6 +5,7 @@ import hashlib
 import json
 import math
 import logging
+import re
 from decimal import Decimal, ROUND_HALF_UP
 from pathlib import Path
 from urllib.request import Request, urlopen
@@ -31,6 +32,17 @@ def _strict_json(raw):
     def constant(_):
         raise ValueError("non-finite number")
     return json.loads(raw, object_pairs_hook=pairs, parse_constant=constant)
+
+
+def _score_document(content):
+    """Accept one JSON value, optionally enclosed by one complete JSON fence.
+
+    Do not search for a JSON substring, remove prose/thoughts, repair syntax,
+    or coerce values. All field, duplicate-key and rubric checks still apply.
+    """
+    content = content.strip()
+    fenced = re.fullmatch(r"```(?:json)?[ \t]*\r?\n(.*?)\r?\n```", content, re.DOTALL)
+    return _strict_json(fenced.group(1) if fenced else content)
 
 
 def evidence_counts(analysis):
@@ -117,7 +129,11 @@ class ClovaRubricScorer:
             document = _strict_json(raw.decode("utf-8"))
             if document["choices"][0].get("finish_reason") != "stop":
                 raise ValueError("incomplete completion")
-            result = _strict_json(_completion_content(document, expected_model=self.model_id, expected_revision=self.revision))
+            content = _completion_content(document, expected_model=self.model_id, expected_revision=self.revision)
+            phase = "decode_score_json"
+            diagnostic = {"jsonFence": content.lstrip().startswith("```"),
+                          "objectStart": content.lstrip().startswith("{")}
+            result = _score_document(content)
             phase = "validate_fields"
             if not isinstance(result, dict) or set(result) != {"rubricRevision", "criteria", "overallScore"} or result["rubricRevision"] != RUBRIC:
                 raise ValueError("invalid score fields")
