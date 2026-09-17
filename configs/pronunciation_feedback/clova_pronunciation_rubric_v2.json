@@ -1,0 +1,167 @@
+{
+  "rubricRevision": "clova-phone-rubric-v2",
+  "scope": "evidence_bound_practice_score_not_calibrated_pronunciation_accuracy",
+  "evidenceUnits": {
+    "matchedClear": 4,
+    "matchedFlagged": 2,
+    "substitutedClear": 3,
+    "substitutedFlagged": 1,
+    "deletedClear": 0,
+    "deletedFlagged": 0
+  },
+  "levels": [
+    {
+      "level": 4,
+      "minimumPercent": 95,
+      "label": "매우 안정적인 분석 근거"
+    },
+    {
+      "level": 3,
+      "minimumPercent": 80,
+      "label": "대체로 안정적, 일부 재확인"
+    },
+    {
+      "level": 2,
+      "minimumPercent": 60,
+      "label": "부분적으로 안정적, 반복 연습"
+    },
+    {
+      "level": 1,
+      "minimumPercent": 40,
+      "label": "재확인 지점이 많음"
+    },
+    {
+      "level": 0,
+      "minimumPercent": 0,
+      "label": "안정적인 근거가 부족함"
+    }
+  ],
+  "criteria": [
+    {
+      "id": "vowels",
+      "label": "모음",
+      "weight": 25,
+      "phones": [
+        "ㅏ",
+        "ㅐ",
+        "ㅑ",
+        "ㅒ",
+        "ㅓ",
+        "ㅔ",
+        "ㅕ",
+        "ㅖ",
+        "ㅗ",
+        "ㅘ",
+        "ㅙ",
+        "ㅚ",
+        "ㅛ",
+        "ㅜ",
+        "ㅝ",
+        "ㅞ",
+        "ㅟ",
+        "ㅠ",
+        "ㅡ",
+        "ㅢ",
+        "ㅣ"
+      ]
+    },
+    {
+      "id": "plain_stops",
+      "label": "평음 파열음",
+      "weight": 10,
+      "phones": [
+        "ㄱ",
+        "ㄷ",
+        "ㅂ"
+      ]
+    },
+    {
+      "id": "tense_stops",
+      "label": "경음 파열음",
+      "weight": 10,
+      "phones": [
+        "ㄲ",
+        "ㄸ",
+        "ㅃ"
+      ]
+    },
+    {
+      "id": "aspirated_stops",
+      "label": "격음 파열음",
+      "weight": 10,
+      "phones": [
+        "ㅋ",
+        "ㅌ",
+        "ㅍ"
+      ]
+    },
+    {
+      "id": "fricatives",
+      "label": "마찰음",
+      "weight": 10,
+      "phones": [
+        "ㅅ",
+        "ㅆ",
+        "ㅎ"
+      ]
+    },
+    {
+      "id": "affricates",
+      "label": "파찰음",
+      "weight": 10,
+      "phones": [
+        "ㅈ",
+        "ㅉ",
+        "ㅊ"
+      ]
+    },
+    {
+      "id": "nasals",
+      "label": "비음",
+      "weight": 10,
+      "phones": [
+        "ㄴ",
+        "ㅁ",
+        "ㅇ"
+      ]
+    },
+    {
+      "id": "liquid",
+      "label": "유음",
+      "weight": 5,
+      "phones": [
+        "ㄹ"
+      ]
+    },
+    {
+      "id": "coverage",
+      "label": "기대 음소 대응 범위",
+      "weight": 10,
+      "phones": []
+    }
+  ],
+  "aggregation": {
+    "missingCategory": "not_applicable_exclude_weight",
+    "minimumPhoneCount": 1,
+    "rounding": "HALF_UP",
+    "decimalPlaces": 1,
+    "formula": "100 * sum(weight * level) / (4 * sum(applicable weights))"
+  },
+  "excludedDimensions": [
+    "intonation",
+    "stress",
+    "speaking_speed",
+    "pause_quality",
+    "lip_shape",
+    "speaker_traits",
+    "tongue_position"
+  ],
+  "limitations": [
+    "CTC substitution/deletion are candidates, not confirmed human errors.",
+    "Detector ranking scores are not correctness probabilities.",
+    "Groups describe expected model labels; coda neutralization or allophony is not diagnosed from spelling.",
+    "One occurrence is low sample evidence; no confidence bonus is awarded.",
+    "Different scripts have different applicable categories; scores are not equated across scripts.",
+    "No thresholds or weights have been validated against expert grading."
+  ]
+}

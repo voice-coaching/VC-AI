@@ -491,6 +491,16 @@
       ]
     },
     "scoringEvidence": {
+      "oneOf": [
+        {
+          "$ref": "#/$defs/scoringEvidenceV1"
+        },
+        {
+          "$ref": "#/$defs/scoringEvidenceV2"
+        }
+      ]
+    },
+    "scoringEvidenceV1": {
       "type": "object",
       "additionalProperties": false,
       "required": [
@@ -557,6 +567,142 @@
           "minimum": 0,
           "maximum": 20,
           "multipleOf": 0.1
+        }
+      }
+    },
+    "scoringEvidenceV2": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "rubricRevision",
+        "generator",
+        "modelRevision",
+        "evidenceSha256",
+        "expectedPhoneCount",
+        "alignedPhoneCount",
+        "correctPhoneCount",
+        "unflaggedPhoneCount",
+        "rubricSha256",
+        "promptSha256",
+        "criteria"
+      ],
+      "properties": {
+        "rubricRevision": {
+          "const": "clova-phone-rubric-v2"
+        },
+        "generator": {
+          "const": "hyperclova"
+        },
+        "modelRevision": {
+          "type": "string",
+          "pattern": "^[0-9a-f]{40}$"
+        },
+        "evidenceSha256": {
+          "$ref": "#/$defs/sha256"
+        },
+        "expectedPhoneCount": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 4096
+        },
+        "alignedPhoneCount": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 4096
+        },
+        "correctPhoneCount": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 4096
+        },
+        "unflaggedPhoneCount": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 4096
+        },
+        "rubricSha256": {
+          "$ref": "#/$defs/sha256"
+        },
+        "promptSha256": {
+          "$ref": "#/$defs/sha256"
+        },
+        "criteria": {
+          "type": "array",
+          "minItems": 9,
+          "maxItems": 9,
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+              "criterionId",
+              "sampleCount",
+              "matchedClear",
+              "matchedFlagged",
+              "substitutedClear",
+              "substitutedFlagged",
+              "deletedClear",
+              "deletedFlagged",
+              "level"
+            ],
+            "properties": {
+              "criterionId": {
+                "enum": [
+                  "vowels",
+                  "plain_stops",
+                  "tense_stops",
+                  "aspirated_stops",
+                  "fricatives",
+                  "affricates",
+                  "nasals",
+                  "liquid",
+                  "coverage"
+                ]
+              },
+              "sampleCount": {
+                "type": "integer",
+                "minimum": 0,
+                "maximum": 4096
+              },
+              "matchedClear": {
+                "type": "integer",
+                "minimum": 0,
+                "maximum": 4096
+              },
+              "matchedFlagged": {
+                "type": "integer",
+                "minimum": 0,
+                "maximum": 4096
+              },
+              "substitutedClear": {
+                "type": "integer",
+                "minimum": 0,
+                "maximum": 4096
+              },
+              "substitutedFlagged": {
+                "type": "integer",
+                "minimum": 0,
+                "maximum": 4096
+              },
+              "deletedClear": {
+                "type": "integer",
+                "minimum": 0,
+                "maximum": 4096
+              },
+              "deletedFlagged": {
+                "type": "integer",
+                "minimum": 0,
+                "maximum": 4096
+              },
+              "level": {
+                "type": [
+                  "integer",
+                  "null"
+                ],
+                "minimum": 0,
+                "maximum": 4
+              }
+            }
+          }
         }
       }
     }
