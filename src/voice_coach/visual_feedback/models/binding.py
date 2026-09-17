@@ -384,6 +384,202 @@ class SameAttemptBindingReceipt:
         )
 
 
+HTTP_BINDING_SCHEMA_VERSION = "voice_coach.http_same_attempt_binding.v1"
+
+
+@dataclass(frozen=True, slots=True)
+class HttpSameAttemptBindingReceipt:
+    """Binds HTTP execution identity and media; this is not a permission receipt."""
+
+    attempt_id_sha256: str
+    prompt_id_sha256: str
+    prompt_revision: str
+    expected_phone_sha256: str
+    analysis_sha256: str
+    audio_source_sha256: str
+    audio_derivation_receipt_sha256: str
+    video_source_sha256: str
+    audio_timebase: MediaTimebaseReceipt
+    video_timebase: MediaTimebaseReceipt
+    upstream_reliability_receipt_sha256: str
+    execution_binding_sha256: str
+    issued_at_utc: str
+    receipt_sha256: str
+    schema_version: str = HTTP_BINDING_SCHEMA_VERSION
+
+    def __post_init__(self) -> None:
+        if self.schema_version != HTTP_BINDING_SCHEMA_VERSION:
+            raise VisualFeedbackContractError("binding schema_version differs")
+        for name in (
+            "attempt_id_sha256",
+            "prompt_id_sha256",
+            "expected_phone_sha256",
+            "analysis_sha256",
+            "audio_source_sha256",
+            "audio_derivation_receipt_sha256",
+            "video_source_sha256",
+            "upstream_reliability_receipt_sha256",
+            "execution_binding_sha256",
+            "receipt_sha256",
+        ):
+            require_sha256(getattr(self, name), name)
+        require_safe_identifier(self.prompt_revision, "prompt_revision")
+        require_utc_timestamp(self.issued_at_utc, "issued_at_utc")
+        if self.receipt_sha256 != sha256_document(self.unsigned_json_object()):
+            raise VisualFeedbackContractError("same-attempt binding digest differs")
+
+    @classmethod
+    def issue(
+        cls,
+        *,
+        attempt_id_sha256: str,
+        prompt_id_sha256: str,
+        prompt_revision: str,
+        expected_phone_sha256: str,
+        analysis_sha256: str,
+        audio_source_sha256: str,
+        audio_derivation_receipt_sha256: str,
+        video_source_sha256: str,
+        audio_timebase: MediaTimebaseReceipt,
+        video_timebase: MediaTimebaseReceipt,
+        upstream_reliability_receipt_sha256: str,
+        execution_binding_sha256: str,
+        issued_at_utc: str,
+    ) -> HttpSameAttemptBindingReceipt:
+        unsigned = {
+            "schema_version": HTTP_BINDING_SCHEMA_VERSION,
+            "attempt_id_sha256": attempt_id_sha256,
+            "prompt_id_sha256": prompt_id_sha256,
+            "prompt_revision": prompt_revision,
+            "expected_phone_sha256": expected_phone_sha256,
+            "analysis_sha256": analysis_sha256,
+            "audio_source_sha256": audio_source_sha256,
+            "audio_derivation_receipt_sha256": audio_derivation_receipt_sha256,
+            "video_source_sha256": video_source_sha256,
+            "audio_timebase": audio_timebase.to_json_object(),
+            "video_timebase": video_timebase.to_json_object(),
+            "upstream_reliability_receipt_sha256": upstream_reliability_receipt_sha256,
+            "execution_binding_sha256": execution_binding_sha256,
+            "issued_at_utc": issued_at_utc,
+        }
+        return cls(
+            attempt_id_sha256=attempt_id_sha256,
+            prompt_id_sha256=prompt_id_sha256,
+            prompt_revision=prompt_revision,
+            expected_phone_sha256=expected_phone_sha256,
+            analysis_sha256=analysis_sha256,
+            audio_source_sha256=audio_source_sha256,
+            audio_derivation_receipt_sha256=audio_derivation_receipt_sha256,
+            video_source_sha256=video_source_sha256,
+            audio_timebase=audio_timebase,
+            video_timebase=video_timebase,
+            upstream_reliability_receipt_sha256=upstream_reliability_receipt_sha256,
+            execution_binding_sha256=execution_binding_sha256,
+            issued_at_utc=issued_at_utc,
+            receipt_sha256=sha256_document(unsigned),
+        )
+
+    def unsigned_json_object(self) -> dict[str, object]:
+        return {
+            "schema_version": self.schema_version,
+            "attempt_id_sha256": self.attempt_id_sha256,
+            "prompt_id_sha256": self.prompt_id_sha256,
+            "prompt_revision": self.prompt_revision,
+            "expected_phone_sha256": self.expected_phone_sha256,
+            "analysis_sha256": self.analysis_sha256,
+            "audio_source_sha256": self.audio_source_sha256,
+            "audio_derivation_receipt_sha256": (
+                self.audio_derivation_receipt_sha256
+            ),
+            "video_source_sha256": self.video_source_sha256,
+            "audio_timebase": self.audio_timebase.to_json_object(),
+            "video_timebase": self.video_timebase.to_json_object(),
+            "upstream_reliability_receipt_sha256": (
+                self.upstream_reliability_receipt_sha256
+            ),
+            "execution_binding_sha256": self.execution_binding_sha256,
+            "issued_at_utc": self.issued_at_utc,
+        }
+
+    def to_json_object(self) -> dict[str, object]:
+        return {**self.unsigned_json_object(), "receipt_sha256": self.receipt_sha256}
+
+    @classmethod
+    def from_json_object(cls, value: object) -> HttpSameAttemptBindingReceipt:
+        document = require_mapping(value, "binding_receipt")
+        expected_fields = {
+            "schema_version",
+            "attempt_id_sha256",
+            "prompt_id_sha256",
+            "prompt_revision",
+            "expected_phone_sha256",
+            "analysis_sha256",
+            "audio_source_sha256",
+            "audio_derivation_receipt_sha256",
+            "video_source_sha256",
+            "audio_timebase",
+            "video_timebase",
+            "upstream_reliability_receipt_sha256",
+            "execution_binding_sha256",
+            "issued_at_utc",
+            "receipt_sha256",
+        }
+        require_exact_keys(document, expected_fields, "binding_receipt")
+        return cls(
+            schema_version=require_non_empty_string(
+                document["schema_version"], "binding_receipt.schema_version"
+            ),
+            attempt_id_sha256=require_sha256(
+                document["attempt_id_sha256"], "binding_receipt.attempt_id_sha256"
+            ),
+            prompt_id_sha256=require_sha256(
+                document["prompt_id_sha256"], "binding_receipt.prompt_id_sha256"
+            ),
+            prompt_revision=require_safe_identifier(
+                document["prompt_revision"], "binding_receipt.prompt_revision"
+            ),
+            expected_phone_sha256=require_sha256(
+                document["expected_phone_sha256"],
+                "binding_receipt.expected_phone_sha256",
+            ),
+            analysis_sha256=require_sha256(
+                document["analysis_sha256"], "binding_receipt.analysis_sha256"
+            ),
+            audio_source_sha256=require_sha256(
+                document["audio_source_sha256"],
+                "binding_receipt.audio_source_sha256",
+            ),
+            audio_derivation_receipt_sha256=require_sha256(
+                document["audio_derivation_receipt_sha256"],
+                "binding_receipt.audio_derivation_receipt_sha256",
+            ),
+            video_source_sha256=require_sha256(
+                document["video_source_sha256"],
+                "binding_receipt.video_source_sha256",
+            ),
+            audio_timebase=MediaTimebaseReceipt.from_json_object(
+                document["audio_timebase"]
+            ),
+            video_timebase=MediaTimebaseReceipt.from_json_object(
+                document["video_timebase"]
+            ),
+            upstream_reliability_receipt_sha256=require_sha256(
+                document["upstream_reliability_receipt_sha256"],
+                "binding_receipt.upstream_reliability_receipt_sha256",
+            ),
+            execution_binding_sha256=require_sha256(
+                document["execution_binding_sha256"],
+                "binding_receipt.execution_binding_sha256",
+            ),
+            issued_at_utc=require_utc_timestamp(
+                document["issued_at_utc"], "binding_receipt.issued_at_utc"
+            ),
+            receipt_sha256=require_sha256(
+                document["receipt_sha256"], "binding_receipt.receipt_sha256"
+            ),
+        )
+
+
 @dataclass(frozen=True, slots=True)
 class ConsentReceipt:
     """Purpose-limited facial-video consent without a participant identifier."""

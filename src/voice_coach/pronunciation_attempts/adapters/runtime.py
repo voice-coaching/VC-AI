@@ -39,6 +39,7 @@ from voice_coach.visual_feedback.models.binding import (
     MediaTimebaseReceipt,
     RestrictedVideoHandle,
     SameAttemptBindingReceipt,
+    HttpSameAttemptBindingReceipt,
     UpstreamReliabilityReceipt,
 )
 from voice_coach.visual_feedback.models.enums import (
@@ -938,6 +939,70 @@ class SeungunVisualHandoffAdapter:
         )
 
 
+class HttpSeungunVisualHandoffAdapter(SeungunVisualHandoffAdapter):
+    """Server-admitted execution binding, without consent resolution."""
+
+    def issue_http(
+        self,
+        *,
+        asset: RestrictedVideoAsset,
+        probe: MediaProbe,
+        audio: RestrictedPcmAudio,
+        prompt: TrustedPrompt,
+        seungun_result: SeungunRuntimeResult,
+    ) -> HostVisualHandoff:
+        selected_index = seungun_result.selected_phone_expected_index
+        if selected_index is None:
+            raise PronunciationAttemptRuntimeError("selected_phone_unavailable")
+        now = _require_utc_clock(self._clock)
+        _validate_media_lineage(asset=asset, probe=probe, audio=audio)
+        audio_timebase = _audio_timebase(audio=audio, probe=probe)
+        video_timebase = _video_timebase(asset=asset, probe=probe)
+        video_handle = RestrictedVideoHandle(
+            handle_id=asset.handle_id,
+            attempt_id_sha256=asset.attempt_id_sha256,
+            source_sha256=asset.container_sha256,
+            timebase_sha256=video_timebase.timebase_sha256,
+        )
+        analysis = seungun_result.analysis_evidence
+        if not isinstance(analysis, Mapping) and not callable(
+            getattr(analysis, "to_json_object", None)
+        ):
+            raise PronunciationAttemptRuntimeError("seungun_analysis_invalid")
+        try:
+            visual_handoff = self._binding_facade.bind_http_completed_analysis(
+                analysis=analysis,
+                attempt_id_sha256=asset.attempt_id_sha256,
+                prompt_id_sha256=sha256_document({"prompt_id": prompt.prompt_id}),
+                prompt_revision=prompt.revision,
+                expected_phones=prompt.expected_phones,
+                audio_source_sha256=audio.derivation_receipt.pcm_sha256,
+                audio_timebase=audio_timebase,
+                video_handle=video_handle,
+                video_timebase=video_timebase,
+                reliability_receipt=self._reliability_receipt,
+                execution_binding_sha256=asset.attempt_id_sha256,
+                issued_at_utc=_utc_text(now),
+                upstream_phone_expected_index=selected_index,
+                capture_contract_id=self._capture_contract_id,
+                population_id_sha256=self._population_id_sha256,
+                context_id=self._context_id,
+                audio_derivation_receipt_sha256=(
+                    audio.derivation_receipt.receipt_sha256
+                ),
+            )
+        except PronunciationAttemptRuntimeError:
+            raise
+        except Exception:
+            raise PronunciationAttemptRuntimeError("visual_handoff_failed") from None
+        return HostVisualHandoff(
+            selected_phone_expected_index=selected_index,
+            binding_receipt=visual_handoff.request.binding_receipt,
+            payload=visual_handoff,
+            runtime_context=audio,
+        )
+
+
 class MediaPipeVisualDetectorBridge:
     """Wrap MediaPipe evidence without making a reliability statement."""
 
@@ -992,7 +1057,7 @@ class MediaPipeVisualDetectorBridge:
         handoff: HostVisualHandoff,
     ) -> VisualDetection:
         binding = handoff.binding_receipt
-        if not isinstance(binding, SameAttemptBindingReceipt):
+        if not isinstance(binding, (SameAttemptBindingReceipt, HttpSameAttemptBindingReceipt)):
             raise PronunciationAttemptRuntimeError(
                 "visual_detection_binding_invalid"
             )
@@ -1242,7 +1307,7 @@ class MediaPipeVisualDetectorBridge:
         if policy is None:
             return None
         if not isinstance(evidence, RuntimeVisualDetectionEvidence) or not isinstance(
-            binding, SameAttemptBindingReceipt
+            binding, (SameAttemptBindingReceipt, HttpSameAttemptBindingReceipt)
         ):
             raise PronunciationAttemptRuntimeError(
                 "phone_window_detection_lineage_invalid"
@@ -1356,7 +1421,7 @@ class MediaPipeVisualDetectorBridge:
         binding = handoff.binding_receipt
         policy = self._phone_window_policy
         if not isinstance(evidence, RuntimeVisualDetectionEvidence) or not isinstance(
-            binding, SameAttemptBindingReceipt
+            binding, (SameAttemptBindingReceipt, HttpSameAttemptBindingReceipt)
         ):
             raise PronunciationAttemptRuntimeError(
                 "phone_window_detection_lineage_invalid"
@@ -1493,7 +1558,7 @@ class BlockedVisualReliabilityAdapter:
         binding = handoff.binding_receipt
         if (
             not isinstance(evidence, RuntimeVisualDetectionEvidence)
-            or not isinstance(binding, SameAttemptBindingReceipt)
+            or not isinstance(binding, (SameAttemptBindingReceipt, HttpSameAttemptBindingReceipt))
             or evidence.binding_receipt_sha256 != binding.receipt_sha256
             or evidence.container_sha256 != binding.video_source_sha256
         ):

@@ -60,23 +60,23 @@ canonical_sources:
     - path: artifacts/experiment_registry/aihub71490-explicit-threshold-ablation-v1-20260729/metadata.json
       sha256: e9c6ba64729f0b4a8bab577f569444f0a1e5689795fde71fc28544d1bdb43c99
     - path: configs/experiments/d07_independent_expert_gold_v1.yaml
-      sha256: 14809ddb9786a11abeb01808ad851df5b2ec789d21806ecf80a00c7680fbae5b
+      sha256: 0329736dc3c7c2f31c9b8ebabb2410d39364c2bde660b12abcf0b1ff1da8bbca
     - path: configs/expert_evaluation/d07_gold_completion_attestation_v1.schema.json
       sha256: 13a72537ca460f0555cfc5d755db0f2ba132d31163f1e67584c8f585236dd198
     - path: src/voice_coach/evaluation/d07_expert_gold_contract.py
       sha256: 6ab8f7b52163ab8b07953ebd4b7e6961376435d2086bd0a36fac93bfa3b04492
     - path: configs/experiments/wavlm_s107_calibration_v1.yaml
-      sha256: c606f77b45c44a517ffff3118bba618ce3da7f0f7f571220c7e9ce15ac4e1966
+      sha256: 9bf0b40a63e5399d3eab2dd9eb82a269ec37a885a5d13977bc0b3793f57a6199
     - path: src/voice_coach/training/wavlm_s107_calibration_training.py
       sha256: 201973a25e75da77ec86468a60094c22ac3d3376d936d5e2d089531d52b5d6d3
     - path: configs/experiments/wavlm_s108_no_locked_dry_run_v1.yaml
-      sha256: 7803feb6121568cf78a582cbacd7a848893a0655bdfc211bac9d35ecc1dd40cc
+      sha256: 28a5fd50c187a3b14826b147b7e96ca2bf2021f10e720421216fbaf640db0c08
     - path: src/voice_coach/training/wavlm_s108_dry_run.py
       sha256: 78444cdf5fd89dae71186028fcdf1a9771488937d698417f0ac1d84cd1aeeb32
     - path: scripts/check_project_constraints.py
       sha256: 7c885d9d863d1a505bb074e5be33b63e262b191585bcf7a02a03162ca0f1ba86
     - path: pyproject.toml
-      sha256: 87fbe75e3df2ad7f64494cafb3744e7cfb815cfe1b8e9ea8d774d8b990c35e71
+      sha256: c18ea49da964dafcf3ead484c84b90e9cb5aee9086b23a8a233689b759c153d7
 
 b03_canonical_baseline:
   config_path: configs/experiments/explicit_baseline_v1.yaml
@@ -161,7 +161,7 @@ g04_gate:
 d07_gate:
   validation_order: 2
   config_path: configs/experiments/d07_independent_expert_gold_v1.yaml
-  config_sha256: 14809ddb9786a11abeb01808ad851df5b2ec789d21806ecf80a00c7680fbae5b
+  config_sha256: 0329736dc3c7c2f31c9b8ebabb2410d39364c2bde660b12abcf0b1ff1da8bbca
   contract_path: src/voice_coach/evaluation/d07_expert_gold_contract.py
   contract_sha256: 6ab8f7b52163ab8b07953ebd4b7e6961376435d2086bd0a36fac93bfa3b04492
   completion_path: artifacts/external_evaluation/d07_gold_completion_attestation_v1.json
@@ -178,7 +178,7 @@ d07_gate:
 s107_gate:
   validation_order: 3
   config_path: configs/experiments/wavlm_s107_calibration_v1.yaml
-  config_sha256: c606f77b45c44a517ffff3118bba618ce3da7f0f7f571220c7e9ce15ac4e1966
+  config_sha256: 9bf0b40a63e5399d3eab2dd9eb82a269ec37a885a5d13977bc0b3793f57a6199
   contract_path: src/voice_coach/training/wavlm_s107_calibration_training.py
   contract_sha256: 201973a25e75da77ec86468a60094c22ac3d3376d936d5e2d089531d52b5d6d3
   commit_path: artifacts/experiments/aihub71490_wavlm_s107_calibration_v1/commit.json
@@ -191,7 +191,7 @@ s107_gate:
 s108_arm_gate:
   validation_order: 4
   no_locked_config_path: configs/experiments/wavlm_s108_no_locked_dry_run_v1.yaml
-  no_locked_config_sha256: 7803feb6121568cf78a582cbacd7a848893a0655bdfc211bac9d35ecc1dd40cc
+  no_locked_config_sha256: 28a5fd50c187a3b14826b147b7e96ca2bf2021f10e720421216fbaf640db0c08
   no_locked_contract_path: src/voice_coach/training/wavlm_s108_dry_run.py
   no_locked_contract_sha256: 78444cdf5fd89dae71186028fcdf1a9771488937d698417f0ac1d84cd1aeeb32
   freeze_path: artifacts/external_evaluation/b05/b05_s108_arm_freeze_v1.json

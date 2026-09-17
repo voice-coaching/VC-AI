@@ -157,6 +157,28 @@ class RestrictedVideoAsset:
 
 
 @dataclass(frozen=True, slots=True)
+class HttpRestrictedVideoAsset:
+    """Opaque reference to an immutable copy in restricted local storage."""
+
+    handle_id: str
+    attempt_id_sha256: str
+    container_sha256: str
+    byte_count: int
+
+    def __post_init__(self) -> None:
+        _require_sha256(self.handle_id, "handle_id")
+        _require_sha256(self.attempt_id_sha256, "attempt_id_sha256")
+        _require_sha256(self.container_sha256, "container_sha256")
+        _require_positive_integer(self.byte_count, "byte_count")
+
+    @property
+    def source_sha256(self) -> str:
+        """Compatibility name used by same-attempt binding receipts."""
+
+        return self.container_sha256
+
+
+@dataclass(frozen=True, slots=True)
 class AvContainerPolicy:
     """All media geometry, duration, frame, and subprocess limits are injected."""
 

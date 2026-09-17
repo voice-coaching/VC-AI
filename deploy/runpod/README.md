@@ -1,5 +1,23 @@
 # RunPod A6000 INT8 배포 준비
 
+## HTTP v1.1 분석 서버
+
+`AI_ANALYSIS_TRANSPORT=runpod_http`를 Pod 프로세스 환경에 설정하면 `prepare_runtime.py`가 `prepare_http.py`를 실행하고 manager가 `services.http.json`을 선택한다. `redis_stream`은 기존 구성, `disabled`는 Clova만 시작한다. 미설정 시 기존 Redis 배포 호환성을 유지한다. HTTP와 Redis 분석 worker를 함께 실행하지 않는다.
+
+HTTP listener는 UID/GID 10001로 `0.0.0.0:8080`에서 실행된다. `/health`는 liveness, `/readyz`는 모델·자산·설정·저장소·Backend 계약 연결 상태다. 설정 누락 시 진단용 listener를 시작하고 업무 접수는 차단한다. 인증된 `/health/services`에서 준비 상태를 확인한다. 상세 API·배포 순서는 [보완계획](../../docs/runpod_http_implementation_plan_20260913.md), 필드·시간 계약은 [v1.1 계약](../../docs/runpod_http_contract_v1_20260913.md)을 따른다.
+
+비밀 공급원은 `RUNPOD_ANALYSIS_HTTP_ENV_JSON` 또는 root 전용 `/root/.config/intelligentai/analysis-http.env`다. 준비 단계가 `/run/intelligentai/analysis-http.env`를 생성한다. reset 복원에는 Pod의 지속 비밀 공급원이 필요하다. JSON/env 값을 소스·일반 archive에 넣지 않는다. 필수 연결 항목은 다음과 같다.
+
+- 서로 다른 `AI_ANALYSIS_API_TOKEN`, `AI_ANALYSIS_CALLBACK_TOKEN`과 `AI_ANALYSIS_CALLBACK_BASE_URL`.
+- `AI_ANALYSIS_OBJECT_STORAGE_BUCKET`, `AI_ANALYSIS_OBJECT_STORAGE_REGION`, `AI_ANALYSIS_OBJECT_STORAGE_RECORDINGS_PREFIX`, 필요 시 HTTPS endpoint와 path-style. 별도 제한 AWS SDK credential 공급.
+- `AI_ANALYSIS_READINESS_OBJECT_KEY`, `AI_ANALYSIS_READINESS_OBJECT_SHA256`, `AI_ANALYSIS_READINESS_OBJECT_SIZE_BYTES`. canonical prefix 내 작은 비사용자 객체이며 읽기 전용으로 사용한다.
+
+HTTP 배포 attestation은 `voice-coaching.analysis-http-deployment.v1`이며 실제 release·device·자산 hash·그룹 권한을 검증한다. Redis의 HMAC key ID나 consent policy를 생성하지 않는다. HTTP 영상도 별도 execution binding을 사용하고 기존 consent 진입점과 분리한다. 공통 `process_admitted`가 기존 분석 결과 객체를 생성하며 HTTP serializer가 별도 결과 Schema로 투영한다.
+
+추가 의존성은 `http-requirements.lock`의 wheel hash로 고정했다. `/workspace/intelligentai/deployment/http-dependencies-v1_1`의 wheel을 이용해 `/opt/intelligentai/http-python`에 오프라인 설치한다. 기존 scorer·Clova 패키지를 교체하지 않는다. 배포 archive에는 소스와 lock만 포함하고 복원 시 wheel 캐시도 별도로 준비한다.
+
+8080 기동 확인 후 실제 Pod의 기존 ports를 보존하면서 `8080/http`를 추가한다. 변경 시 reset이 발생할 수 있으므로 코드·모드·비밀 복원을 먼저 준비한다. Proxy URL은 `https://<현재 Pod ID>-8080.proxy.runpod.net`이다. `/readyz` 200과 양방향 연결을 확인하기 전에는 AWS Nginx preparing 503을 유지한다. 코드 컴파일·import·health 확인은 개발자의 실제 처리·품질 QA를 대신하지 않는다.
+
 이 디렉터리는 2026-09-09 이전에서 만든 `/workspace/intelligentai`를 사용한다. 원본 release는 보존하고 `deployment/int8-overlay/overlay-manifest.json`에 기록된 파일만 `/opt/intelligentai/app`에 덧씌운다. 모델 ID/revision은 유지하되 실행 형식은 bitsandbytes 0.50.2 LLM.int8이다.
 
 ## 적용 범위

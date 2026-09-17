@@ -23,7 +23,7 @@ from voice_coach.visual_feedback.adapters.seungun import (
 )
 from voice_coach.visual_feedback.errors import VisualFeedbackContractError
 from voice_coach.visual_feedback.models.artifacts import CalibrationRule, VisualClaim
-from voice_coach.visual_feedback.models.binding import SameAttemptBindingReceipt
+from voice_coach.visual_feedback.models.binding import SameAttemptBindingReceipt, HttpSameAttemptBindingReceipt
 from voice_coach.visual_feedback.models.enums import (
     VisualCueState,
     VisualEvidenceRelation,
@@ -224,7 +224,7 @@ class ProductionVisualSidecarAdapter:
         if (
             type(evidence) is not RuntimeVisualDetectionEvidence
             or type(payload) is not SeungunVisualHandoff
-            or type(binding) is not SameAttemptBindingReceipt
+            or type(binding) not in (SameAttemptBindingReceipt, HttpSameAttemptBindingReceipt)
             or type(evidence.phone_window_evidence) is not DensePhoneWindowEvidence
             or type(evidence.video_qc_evidence) is not VideoQcCandidateEvidence
             or type(evidence.video_qc_decision) is not RuntimeVideoQcDecision

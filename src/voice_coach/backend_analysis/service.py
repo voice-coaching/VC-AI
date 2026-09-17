@@ -63,11 +63,12 @@ class BackendAnalysisWorker:
     def __init__(
         self,
         *,
-        authorization: AnalysisAuthorizationPort,
+        authorization: AnalysisAuthorizationPort | None,
         object_store: RestrictedObjectStorePort,
         seungun: SeungunAnalysisPort,
         visual: VisualAnalysisPort | None = None,
         grounded_feedback: BackendGroundedFeedback | None = None,
+        clova_scorer=None,
         event_id_factory: Callable[[], UUID] = uuid4,
         clock: Callable[[], datetime] | None = None,
         worker_revision: str = _WORKER_REVISION,
@@ -79,6 +80,7 @@ class BackendAnalysisWorker:
         self._seungun = seungun
         self._visual = visual
         self._grounded_feedback = grounded_feedback
+        self._clova_scorer = clova_scorer
         self._event_id_factory = event_id_factory
         self._clock = clock or (lambda: datetime.now(tz=UTC))
         self._worker_revision = worker_revision
@@ -98,6 +100,14 @@ class BackendAnalysisWorker:
                 "분석 처리 권한을 확인할 수 없습니다.",
             )
 
+        return self.process_admitted(request, authorization=authorization)
+
+    def process_admitted(self, request, *, authorization=None) -> AnalysisWorkerResult:
+        """Run the common core after the transport has admitted the request.
+
+        HTTP callers hold a Backend claim; Redis callers pass validated consent.
+        This method never creates or validates a substitute grant.
+        """
         if request.learning_focus != "PRONUNCIATION":
             return self._failed(
                 request,
@@ -135,7 +145,11 @@ class BackendAnalysisWorker:
                         visual_supplement=visual_capture.supplement,
                         visual_evidence=visual_capture.grounded_evidence,
                     )
+                overall_score, scoring_evidence = (None, None)
+                if self._clova_scorer is not None:
+                    overall_score, scoring_evidence = self._clova_scorer.score(analysis)
                 return AnalysisWorkerResult.completed(
+                    overall_score=overall_score, scoring_evidence=scoring_evidence,
                     event_id=self._event_id_factory(),
                     request=request,
                     outcome=analysis.outcome,

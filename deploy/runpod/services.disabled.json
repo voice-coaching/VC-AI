@@ -1,0 +1,35 @@
+{
+  "schemaVersion": "intelligentai.service-supervisor.v1",
+  "services": [
+    {
+      "name": "clova",
+      "command": [
+        "/usr/bin/python3",
+        "/opt/intelligentai/app/deploy/runpod/start_hyperclova.py"
+      ],
+      "cwd": "/opt/intelligentai/app",
+      "env": {
+        "PYTHONUNBUFFERED": "1",
+        "PYTHONDONTWRITEBYTECODE": "1"
+      },
+      "dependsOn": [],
+      "health": {
+        "type": "http",
+        "url": "http://127.0.0.1:8000/health",
+        "jsonField": "status",
+        "acceptedValues": [
+          "ready"
+        ],
+        "pidField": "process_id",
+        "timeoutSeconds": 3
+      },
+      "startupTimeoutSeconds": 1800,
+      "stopTimeoutSeconds": 240,
+      "log": {
+        "path": "/run/intelligentai/logs/clova.log",
+        "maximumBytes": 10485760,
+        "backupCount": 3
+      }
+    }
+  ]
+}

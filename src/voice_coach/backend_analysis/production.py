@@ -40,7 +40,15 @@ def create_worker(
 ) -> BackendAnalysisWorker:
     """Compose authorized Seungun/visual analysis and optional local Clova advice."""
 
-    env = os.environ if environment is None else environment
+    return _create_core(os.environ if environment is None else environment, http=False)
+
+
+def create_http_core(environment: Mapping[str, str]) -> BackendAnalysisWorker:
+    """Only called by the HTTP executor after a validated deployment bootstrap."""
+    return _create_core(environment, http=True)
+
+
+def _create_core(env, *, http):
     try:
         repository_root = Path(env["VOICE_COACH_REPOSITORY_ROOT"])
         workspace_root = Path(env["AI_ANALYSIS_RESTRICTED_WORKSPACE_ROOT"])
@@ -94,13 +102,17 @@ def create_worker(
     ):
         raise ValueError("analysis_worker_production_configuration_invalid")
 
-    authorization_settings = HmacAuthorizationSettings.from_environment(env)
-    verify_deployment_attestation(
-        env,
-        authorization_key_ids=authorization_settings.keys,
-    )
+    if http:
+        from .deployment_attestation import verify_http_deployment_attestation
+        verify_http_deployment_attestation(env)
+        authorization = None
+    else:
+        authorization_settings = HmacAuthorizationSettings.from_environment(env)
+        verify_deployment_attestation(env, authorization_key_ids=authorization_settings.keys)
+        authorization = HmacAnalysisAuthorizationAdapter(authorization_settings)
     grounded_feedback = load_grounded_feedback(env, repository_root=repository_root)
-    authorization = HmacAnalysisAuthorizationAdapter(authorization_settings)
+    from .clova_scoring import load_clova_scorer
+    clova_scorer = load_clova_scorer(env, repository_root=repository_root) if http else None
     object_store = S3CompatibleRestrictedObjectStore(
         create_s3_client_from_environment(env),
         S3ObjectStoreSettings(
@@ -145,7 +157,8 @@ def create_worker(
                 production_release_root=Path(visual_release_root_text),
                 closed_beta_geometry_artifact_path=Path(visual_geometry_text),
                 artifact_group_id=int(env["AI_ANALYSIS_ARTIFACT_GID"]),
-            )
+            ),
+            http_admitted=http,
         )
     return BackendAnalysisWorker(
         authorization=authorization,
@@ -153,6 +166,8 @@ def create_worker(
         seungun=seungun,
         visual=visual,
         grounded_feedback=grounded_feedback,
+        clova_scorer=clova_scorer,
+        **({"worker_revision": env["VOICE_COACH_BUILD_REVISION"]} if http else {}),
     )
 
 

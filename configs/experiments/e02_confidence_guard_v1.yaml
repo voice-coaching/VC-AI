@@ -29,7 +29,7 @@ canonical_sources:
       sha256: 8b1e0490e3fbad3efe2f3ac8624187e32a386d35428bcd21a2c82f832bf0d4f9
     - path: configs/experiments/c02_deterministic_coaching_selection_v1.yaml
       scope: e02_static_contract
-      sha256: 5ebb7fb3b4754ecec46d47997dbddc6adcfe44ff5579daf66b5dd77875d244f9
+      sha256: f0a3eefc701800e83b34637b46bd4d0958e22b92888575e109ea515371347eff
     - path: configs/coaching/c02_diagnostic_issues_input_v1.schema.json
       scope: e02_static_contract
       sha256: cd2588ffac9ff10870977e125969c7709ecde25c050c4845ab0c9b9f1f1d7742
@@ -41,7 +41,7 @@ canonical_sources:
       sha256: 477bd1fb3683ec4d70c33f9c498cf949ca44a81f68b24ccab8a263248ea95da7
     - path: configs/experiments/wavlm_s107_calibration_v1.yaml
       scope: e02_static_contract
-      sha256: c606f77b45c44a517ffff3118bba618ce3da7f0f7f571220c7e9ce15ac4e1966
+      sha256: 9bf0b40a63e5399d3eab2dd9eb82a269ec37a885a5d13977bc0b3793f57a6199
     - path: src/voice_coach/training/wavlm_s107_calibration_contract.py
       scope: e02_static_contract
       sha256: 04909937b7b8eb4a135a0f7e44c7ec0afc8a438c29aae2d2cbe3de4dcdafac1e
@@ -83,7 +83,7 @@ predecessor_s107:
   deep_validation_required: true
   actual_completed_output_required: true
   config_path: configs/experiments/wavlm_s107_calibration_v1.yaml
-  config_sha256: c606f77b45c44a517ffff3118bba618ce3da7f0f7f571220c7e9ce15ac4e1966
+  config_sha256: 9bf0b40a63e5399d3eab2dd9eb82a269ec37a885a5d13977bc0b3793f57a6199
   contract_path: src/voice_coach/training/wavlm_s107_calibration_contract.py
   contract_sha256: 04909937b7b8eb4a135a0f7e44c7ec0afc8a438c29aae2d2cbe3de4dcdafac1e
   completion_validator_path: src/voice_coach/training/wavlm_s107_calibration_training.py
@@ -110,7 +110,7 @@ predecessor_c02:
   deep_validation_required: true
   actual_completed_bundle_required: true
   config_path: configs/experiments/c02_deterministic_coaching_selection_v1.yaml
-  config_sha256: 5ebb7fb3b4754ecec46d47997dbddc6adcfe44ff5579daf66b5dd77875d244f9
+  config_sha256: f0a3eefc701800e83b34637b46bd4d0958e22b92888575e109ea515371347eff
   contract_path: src/voice_coach/coaching/c02_selection_contract.py
   contract_sha256: 477bd1fb3683ec4d70c33f9c498cf949ca44a81f68b24ccab8a263248ea95da7
   bundle_schema_path: configs/coaching/e02_c02_coaching_bundle_commit_v1.schema.json

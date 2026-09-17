@@ -14,6 +14,7 @@ from ..models.binding import (
     MediaTimebaseReceipt,
     RestrictedVideoHandle,
     SameAttemptBindingReceipt,
+    HttpSameAttemptBindingReceipt,
     SeungunAnalysisReference,
     UpstreamReliabilityReceipt,
     expected_phone_sequence_sha256,
@@ -25,7 +26,7 @@ from ..models.integrity import (
     require_sha256,
     sha256_document,
 )
-from ..models.request import VisualFeedbackRequest
+from ..models.request import VisualFeedbackRequest, HttpVisualFeedbackRequest
 
 _REFERENCE_SCHEMA_VERSION = "voice_coach.seungun_visual_handoff_reference.v1"
 
@@ -183,6 +184,120 @@ class SeungunAttemptBindingFacade:
             video_handle=video_handle,
             binding_receipt=binding,
             consent_receipt=consent_receipt,
+            capture_contract_id=capture_contract_id,
+            population_id_sha256=population_id_sha256,
+            context_id=context_id,
+        )
+        return SeungunVisualHandoff(
+            request=request,
+            source_record=source_record,
+        )
+
+    def bind_http_completed_analysis(
+        self,
+        *,
+        analysis: Mapping[str, object] | PronunciationAnalysisLike,
+        attempt_id_sha256: str,
+        prompt_id_sha256: str,
+        prompt_revision: str,
+        expected_phones: Sequence[str],
+        audio_source_sha256: str,
+        audio_timebase: MediaTimebaseReceipt,
+        video_handle: RestrictedVideoHandle,
+        video_timebase: MediaTimebaseReceipt,
+        reliability_receipt: UpstreamReliabilityReceipt,
+        execution_binding_sha256: str,
+        issued_at_utc: str,
+        upstream_phone_expected_index: int,
+        capture_contract_id: str,
+        population_id_sha256: str,
+        context_id: str,
+        audio_derivation_receipt_sha256: str,
+    ) -> SeungunVisualHandoff:
+        """Create a consistent source/request pair from one completed analysis."""
+
+        attempt_id = require_sha256(attempt_id_sha256, "attempt_id_sha256")
+        if video_handle.attempt_id_sha256 != attempt_id:
+            raise VisualFeedbackContractError(
+                "video handle belongs to a different attempt"
+            )
+        if execution_binding_sha256 != attempt_id:
+            raise VisualFeedbackContractError("HTTP execution binding differs")
+        if video_handle.timebase_sha256 != video_timebase.timebase_sha256:
+            raise VisualFeedbackContractError(
+                "video handle and video timebase differ"
+            )
+        require_sha256(
+            audio_derivation_receipt_sha256,
+            "audio_derivation_receipt_sha256",
+        )
+
+        analysis_document = _canonical_analysis_snapshot(analysis)
+        analysis_sha256 = sha256_document(analysis_document)
+        reference = SeungunAnalysisReference(
+            reference_id=sha256_document(
+                {
+                    "schema_version": _REFERENCE_SCHEMA_VERSION,
+                    "attempt_id_sha256": attempt_id,
+                    "analysis_sha256": analysis_sha256,
+                }
+            ),
+            attempt_id_sha256=attempt_id,
+            analysis_sha256=analysis_sha256,
+        )
+        anchors = parse_seungun_analysis(
+            analysis_document,
+            analysis_ref=reference,
+        )
+        analysis_expected_phone_sha256 = expected_phone_sequence_sha256(
+            tuple(anchor.expected_phone for anchor in anchors)
+        )
+        supplied_expected_phone_sha256 = expected_phone_sequence_sha256(
+            expected_phones
+        )
+        if analysis_expected_phone_sha256 != supplied_expected_phone_sha256:
+            raise VisualFeedbackContractError(
+                "prompt expected phones differ from completed Seungun analysis"
+            )
+        if upstream_phone_expected_index >= len(anchors):
+            raise VisualFeedbackContractError(
+                "upstream phone index is absent from completed Seungun analysis"
+            )
+
+        binding = HttpSameAttemptBindingReceipt.issue(
+            attempt_id_sha256=attempt_id,
+            prompt_id_sha256=prompt_id_sha256,
+            prompt_revision=prompt_revision,
+            expected_phone_sha256=supplied_expected_phone_sha256,
+            analysis_sha256=analysis_sha256,
+            audio_source_sha256=audio_source_sha256,
+            audio_derivation_receipt_sha256=audio_derivation_receipt_sha256,
+            video_source_sha256=video_handle.source_sha256,
+            audio_timebase=audio_timebase,
+            video_timebase=video_timebase,
+            upstream_reliability_receipt_sha256=(
+                reliability_receipt.receipt_sha256
+            ),
+            execution_binding_sha256=execution_binding_sha256,
+            issued_at_utc=issued_at_utc,
+        )
+        source_record = SeungunAnalysisSourceRecord(
+            reference=reference,
+            analysis=analysis_document,
+            prompt_id_sha256=binding.prompt_id_sha256,
+            prompt_revision=binding.prompt_revision,
+            expected_phone_sha256=binding.expected_phone_sha256,
+            audio_source_sha256=binding.audio_source_sha256,
+            audio_timebase=binding.audio_timebase,
+            reliability_receipt=reliability_receipt,
+            binding_receipt_sha256=binding.receipt_sha256,
+            audio_derivation_receipt_sha256=audio_derivation_receipt_sha256,
+        )
+        request = HttpVisualFeedbackRequest(
+            analysis_ref=reference,
+            upstream_phone_expected_index=upstream_phone_expected_index,
+            video_handle=video_handle,
+            binding_receipt=binding,
             capture_contract_id=capture_contract_id,
             population_id_sha256=population_id_sha256,
             context_id=context_id,

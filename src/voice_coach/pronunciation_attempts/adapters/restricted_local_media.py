@@ -22,6 +22,7 @@ from ..models import (
     RestrictedMediaDeletionReceipt,
     RestrictedPcmAudio,
     RestrictedVideoAsset,
+    HttpRestrictedVideoAsset,
     VideoAdmissionPolicy,
     VideoConsentAuthorization,
     VideoConsentDecision,
@@ -178,6 +179,55 @@ class LocalRestrictedVideoAdmissionAdapter:
                 byte_count=byte_count,
                 consent_receipt_sha256=authorization.consent_receipt_sha256,
             )
+            record = _AssetRecord(
+                asset=asset,
+                workspace_path=workspace_path,
+                container_path=container_path,
+            )
+            with self._lock:
+                if handle_id in self._records or handle_id in self._deleted_assets:
+                    raise PronunciationAttemptMediaError(
+                        MediaErrorCode.RESTRICTED_WORKSPACE_UNAVAILABLE
+                    )
+                self._records[handle_id] = record
+            return asset
+        except BaseException:
+            if workspace_path is not None and container_path is not None:
+                self._cleanup_unregistered_workspace(
+                    workspace_path=workspace_path,
+                    paths=(container_path,),
+                )
+            raise
+        finally:
+            try:
+                os.close(source_fd)
+            except OSError:
+                pass
+
+    def admit_http(self, source_path, *, attempt_id_sha256, expected_sha256, policy):
+        """Copy already server-admitted media and verify its registered digest."""
+        self._ensure_restricted_root()
+        source_fd = self._open_regular_source(source_path, policy)
+        workspace_path: Path | None = None
+        container_path: Path | None = None
+
+        try:
+            initial_stat = self._validate_open_source(source_fd, policy)
+            handle_id, workspace_path, container_path = self._create_workspace()
+            container_sha256, byte_count = self._copy_and_hash(
+                source_fd=source_fd,
+                destination_path=container_path,
+                initial_stat=initial_stat,
+                maximum_source_bytes=policy.maximum_source_bytes,
+            )
+            asset = HttpRestrictedVideoAsset(
+                handle_id=handle_id,
+                attempt_id_sha256=attempt_id_sha256,
+                container_sha256=container_sha256,
+                byte_count=byte_count,
+            )
+            if container_sha256 != expected_sha256:
+                raise ValueError("http_video_integrity_mismatch")
             record = _AssetRecord(
                 asset=asset,
                 workspace_path=workspace_path,
