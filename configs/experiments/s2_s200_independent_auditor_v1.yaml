@@ -23,7 +23,7 @@ canonical_sources:
     - path: scripts/check_project_constraints.py
       sha256: 7c885d9d863d1a505bb074e5be33b63e262b191585bcf7a02a03162ca0f1ba86
     - path: pyproject.toml
-      sha256: 87fbe75e3df2ad7f64494cafb3744e7cfb815cfe1b8e9ea8d774d8b990c35e71
+      sha256: c18ea49da964dafcf3ead484c84b90e9cb5aee9086b23a8a233689b759c153d7
     - path: requirements/scorer-lock-linux-aarch64-cu130.txt
       sha256: f6c5b10c1028506d7361c83ad1e9aae0b1fafcf34f4e918e5b7123c51fac8cf2
     - path: scripts/prepare_s2_s200_auditor.py

@@ -41,7 +41,7 @@ canonical_sources:
     - path: configs/coaching/korean_error_advice_ontology_v1.json
       sha256: 1ba0c0198533abd51a3caa4b176f17aae17aa48d08899f6e7ced634a1eef0d60
     - path: configs/experiments/wavlm_s108_no_locked_dry_run_v1.yaml
-      sha256: 7803feb6121568cf78a582cbacd7a848893a0655bdfc211bac9d35ecc1dd40cc
+      sha256: 28a5fd50c187a3b14826b147b7e96ca2bf2021f10e720421216fbaf640db0c08
     - path: artifacts/evaluation/g04_amended_progress_v1.json
       sha256: f59ab54a5f2dbd9fefb2e061bbc0d4b1f7965272f5ff792750472ba69b36316e
     - path: scripts/check_project_constraints.py

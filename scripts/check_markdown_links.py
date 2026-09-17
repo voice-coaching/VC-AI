@@ -20,7 +20,9 @@ from urllib.parse import unquote, urlsplit
 
 _FENCE_PATTERN = re.compile(r"^\s{0,3}(`{3,}|~{3,})")
 _REFERENCE_PATTERN = re.compile(
-    r"^\s{0,3}\[[^\]]+\]:\s*(?:<(?P<angled>[^>]+)>|(?P<plain>\S+))"
+    # GFM footnote definitions contain prose, not reference-link destinations.
+    # Inline links in their body are still inspected by _inline_destinations.
+    r"^\s{0,3}\[(?!\^)[^\]]+\]:\s*(?:<(?P<angled>[^>]+)>|(?P<plain>\S+))"
 )
 _REMOTE_SCHEMES = frozenset(
     {"data", "ftp", "ftps", "http", "https", "irc", "mailto", "ssh", "tel"}

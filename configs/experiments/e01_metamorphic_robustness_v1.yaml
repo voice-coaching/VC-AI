@@ -32,13 +32,13 @@ canonical_sources:
     - path: scripts/prepare_e01_metamorphic_robustness.py
       sha256: 591153fe7812ca4e32a027e2da277483dcc4938b21cb77ed2a1fa9f22a437863
     - path: configs/experiments/wavlm_s108_no_locked_dry_run_v1.yaml
-      sha256: 7803feb6121568cf78a582cbacd7a848893a0655bdfc211bac9d35ecc1dd40cc
+      sha256: 28a5fd50c187a3b14826b147b7e96ca2bf2021f10e720421216fbaf640db0c08
     - path: configs/experiments/s2_s202_independent_auditor_v1.yaml
-      sha256: de087beab2d099ba781d7b431e7684dc5c93d0b4977604ced1a1c184733effc5
+      sha256: 8c50696009e9b382c192bca8db79947bb976f32e7586eb746e3c2dd416a88ba3
     - path: src/voice_coach/training/s2_s202_auditor_contract.py
       sha256: 0ba78271b3d4d99ec3fff865e65bbe992428edfb587785021632677bc46fdaac
     - path: configs/experiments/s2_s203_expert_holdout_audit_v1.yaml
-      sha256: e837e75e936b1a2e98bc1927d2762a8ade3fd8d73137e4cb7eb028b3c0ace56c
+      sha256: 69c1d1a8691e672e8de66d78baad08a791d55bd189c4a604a9dba84596b651b5
     - path: src/voice_coach/training/s2_s203_holdout_contract.py
       sha256: 35ee786e59b247c28eb2cd06e5e58c11096cb4ad7944b74c0ab6950b5d2f578b
     - path: scripts/check_project_constraints.py
@@ -48,7 +48,7 @@ predecessor_s108:
   validation_order: 1
   deep_validation_required: true
   delegate_config_path: configs/experiments/s2_s202_independent_auditor_v1.yaml
-  delegate_config_sha256: de087beab2d099ba781d7b431e7684dc5c93d0b4977604ced1a1c184733effc5
+  delegate_config_sha256: 8c50696009e9b382c192bca8db79947bb976f32e7586eb746e3c2dd416a88ba3
   delegate_contract_path: src/voice_coach/training/s2_s202_auditor_contract.py
   delegate_contract_sha256: 0ba78271b3d4d99ec3fff865e65bbe992428edfb587785021632677bc46fdaac
   completion_commit_path: artifacts/experiments/aihub71490_wavlm_s108_final_s1_v1/commit.json
