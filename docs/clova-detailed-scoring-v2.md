@@ -66,6 +66,8 @@ RunPod 재기동 overlay도 링크를 복원한다.
 CLOVA는 9개 `criterionId/level`과 `overallScore`를 출력한다. 워커와 백엔드는 같은
 기준표를 사용해 분류별 개수 합, coverage와의 일치, 평가 제외, 단계 경계, 최종 합산을
 검증한다. 근거·채점표·출력이 불일치하면 점수를 만들지 않고 실패 처리한다.
+모델이 JSON 전체를 코드펜스 하나로 감싼 경우 그 외피만 제거한다. 설명에서 JSON을
+추출하거나 잘못된 JSON·점수를 보정하지 않는다. 중복 키·추가 필드·기준표 불일치는 거절한다.
 
 HTTP 결과 v2는 유지하고 `scoringEvidence.rubricRevision`으로 기존 3항목 v1과
 상세 v2를 구분한다. v2는 `criteria`, `rubricSha256`, `promptSha256`을 추가하고
