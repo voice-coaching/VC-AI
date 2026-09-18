@@ -272,6 +272,7 @@ class _Draft:
     audio_result: Mapping[str, object] | None = None
     visual_supplement: Mapping[str, object] | None = None
     visual_stage_status: VisualStageStatus = VisualStageStatus.NOT_STARTED
+    decoded_sample_times_ms: tuple[float, ...] = ()
 
 
 class VideoAttemptFacade:
@@ -472,13 +473,15 @@ class VideoAttemptFacade:
 
         return self._run_visual_stages(asset=asset, probe=probe, handoff=handoff, audio_result=audio_result)
 
-    def _run_visual_stages(self, *, asset, probe, handoff, audio_result):
+    def _run_visual_stages(self, *, asset, probe, handoff, audio_result, decode_cache=None):
+        decoded_sample_times_ms = ()
         try:
-            sample = self._container_port.decode_rgb24_sample(
-                asset,
-                self._container_policy,
-                frame_count=self._visual_sample_frame_count,
-            )
+            sample = decode_cache.get("global_sample") if decode_cache is not None else None
+            if sample is None:
+                sample = self._container_port.decode_rgb24_sample(
+                    asset, self._container_policy, frame_count=self._visual_sample_frame_count)
+                if decode_cache is not None:
+                    decode_cache["global_sample"] = sample
         except Exception as error:
             return _audio_only(
                 audio_result=audio_result,
@@ -528,6 +531,7 @@ class VideoAttemptFacade:
                             request=phone_window_request,
                         )
                     )
+                    decoded_sample_times_ms = tuple(t / 1000 for t in phone_window.decode_receipt.decoded_timestamps_us)
                 except Exception as error:
                     return _audio_only(
                         audio_result=audio_result,
@@ -594,6 +598,7 @@ class VideoAttemptFacade:
             audio_result=audio_result,
             visual_supplement=visual_supplement,
             visual_stage_status=VisualStageStatus.COMPLETED,
+            decoded_sample_times_ms=decoded_sample_times_ms,
         )
 
     def run_http(self, *, video_locator, attempt_id_sha256, expected_sha256, prompt_id):
@@ -612,6 +617,43 @@ class VideoAttemptFacade:
             draft = self._run_visual_stages(asset=asset, probe=probe, handoff=handoff,
                                            audio_result=seungun.audio_result)
             return draft.visual_supplement
+        finally:
+            self._media_store_port.delete(asset)
+
+    def run_http_observations(self, *, video_locator, attempt_id_sha256, expected_sha256,
+                              prompt_id, expected_indices):
+        """Bounded host-admitted coaching windows, sharing decode and Seungun.
+
+        This is not a public endpoint. The backend coaching policy supplies the
+        indices; each window still goes through binding, QC, sync and reliability.
+        """
+        if len(expected_indices) > 3 or len(set(expected_indices)) != len(expected_indices):
+            raise ValueError("coaching_visual_candidate_limit")
+        asset = self._media_store_port.admit_http(video_locator, attempt_id_sha256=attempt_id_sha256,
+            expected_sha256=expected_sha256, policy=self._admission_policy)
+        try:
+            probe = self._container_port.probe(asset, self._container_policy)
+            audio = self._container_port.extract_embedded_audio(asset, self._container_policy)
+            prompt = self._prompt_port.resolve(prompt_id=prompt_id)
+            seungun = self._seungun_port.analyze(audio=audio, prompt=prompt)
+            rows = seungun.analysis_evidence["phones"]
+            observations = []
+            decode_cache = {}  # Request-local raw sample; never reuse candidate-bound receipts.
+            for index in expected_indices:
+                if type(index) is not int or not 0 <= index < len(rows):
+                    raise ValueError("coaching_visual_index_invalid")
+                row = rows[index]
+                if not row.get("is_error") or row.get("alignment_operation") == "deletion" or row.get("start_ms") is None:
+                    raise ValueError("coaching_visual_unadmitted_candidate")
+                selected = replace(seungun, selected_phone_expected_index=index)
+                handoff = self._handoff_port.issue_http(asset=asset, probe=probe, audio=audio,
+                    prompt=prompt, seungun_result=selected)
+                draft = self._run_visual_stages(asset=asset, probe=probe, handoff=handoff,
+                                               audio_result=seungun.audio_result, decode_cache=decode_cache)
+                observations.append(dict(expectedIndex=index, stage=draft.visual_stage_status.value,
+                    reasonCodes=list(draft.reason_codes), supplement=draft.visual_supplement,
+                    decodedSampleTimesMs=list(draft.decoded_sample_times_ms), videoDurationMs=probe.duration_ms))
+            return observations
         finally:
             self._media_store_port.delete(asset)
 

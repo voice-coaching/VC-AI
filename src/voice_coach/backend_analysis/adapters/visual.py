@@ -237,6 +237,59 @@ class ProductionBackendVisualAnalysisAdapter:
         )
         return public
 
+    def analyze_coaching_observations(self, *, request, audio, video, seungun):
+        """Return same-attempt observations even without an approved action."""
+        from ..coaching_evidence import build_coaching_input
+        from voice_coach.visual_feedback.models.supplement import VisualFeedbackSupplement
+        import math
+        if not self._http_admitted or request.visual_input is None or video.sha256 != request.visual_input.sha256:
+            raise ValueError("coaching_visual_binding_invalid")
+        source = build_coaching_input(analysis=seungun, text=request.script_text,
+                                     duration_ms=request.duration_ms)
+        indices = [int(c["evidenceIds"][0].split("-")[-1]) for c in source["candidates"][:3]]
+        if not indices:
+            return []
+        with tempfile.TemporaryDirectory(prefix="coaching-", dir=self._settings.workspace_root) as directory:
+            temporary_root = Path(directory)
+            facade = build_local_video_attempt_facade(
+                repository_root=self._settings.repository_root,
+                restricted_media_root=temporary_root / "media", restricted_audio_root=temporary_root / "audio",
+                nltk_data_root=self._settings.nltk_data_root, seungun_detector=None,
+                landmark_model_path=self._settings.landmark_model_path,
+                video_qc_decision_policy=self._release.video_qc_decision_policy,
+                av_sync_decision_policy=self._release.av_sync_decision_policy,
+                visual_runtime_bundle=self._release.runtime_bundle,
+                closed_beta_lip_geometry_artifact=self._closed_beta_geometry_artifact,
+                consent_authority=None, trusted_prompt_port=_RequestPrompt(request, seungun),
+                seungun_runtime_port=_PrecomputedSeungun(seungun), http_admitted=True,
+                clock=lambda: datetime.now(tz=UTC))
+            attempt = sha256_document(dict(request_id=str(request.event_id),
+                execution_id=str(request.execution_id), audio_sha256=audio.sha256,
+                video_sha256=video.sha256, policy="pronunciation-coaching-evidence-v1"))
+            captures = facade.run_http_observations(video_locator=str(video.path), attempt_id_sha256=attempt,
+                expected_sha256=video.sha256, prompt_id=f"analysis-{request.analysis_id}", expected_indices=indices)
+        observations = []
+        for capture in captures:
+            measures = []
+            supplement = capture["supplement"]
+            if supplement is not None:
+                # Strict aggregate schema; do not require or export action claims.
+                VisualFeedbackSupplement.from_json_object(supplement)
+                for cue in supplement["cue_evidence"]:
+                    value, start, end = cue.get("measurement_value"), cue.get("video_start_ms"), cue.get("video_end_ms")
+                    if (cue.get("cue_state") != "observed" or type(value) not in (int, float)
+                            or not math.isfinite(value) or type(start) is not int or type(end) is not int
+                            or not 0 <= start < end <= capture["videoDurationMs"]):
+                        continue
+                    measures.append(dict(cueId=cue["cue_id"], value=value, unit=cue["measurement_unit"],
+                        startMs=start, endMs=end, sampleCount=None,
+                        samplingProvenance="AGGREGATE_CONTRACT_NO_SAMPLE_TIMESTAMPS"))
+            observations.append(dict(expectedIndex=capture["expectedIndex"], stage=capture["stage"],
+                reasonCodes=capture["reasonCodes"], measurements=measures,
+                decodedSampleTimesMs=capture["decodedSampleTimesMs"],
+                samplingScope="DECODED_WINDOW_NOT_VALID_LANDMARK_COUNT"))
+        return observations
+
     def analyze_with_grounded_evidence(
         self,
         *,

@@ -719,6 +719,7 @@ class AnalysisWorkerResult:
     seungun_production_evidence: object | None = field(default=None, repr=False)
     overall_score: float | None = None
     scoring_evidence: dict | None = field(default=None, repr=False)
+    coaching: dict | None = field(default=None, repr=False)
     closed_beta_debug: ClosedBetaDebug | None = field(default=None, repr=False)
 
     @classmethod
@@ -768,6 +769,7 @@ class AnalysisWorkerResult:
         seungun_production_evidence: object | None = None,
         overall_score: float | None = None,
         scoring_evidence: dict | None = None,
+        coaching: dict | None = None,
         closed_beta_debug: ClosedBetaDebug | None = None,
     ) -> "AnalysisWorkerResult":
         if outcome not in {
@@ -821,6 +823,7 @@ class AnalysisWorkerResult:
             seungun_production_evidence=seungun_production_evidence,
             overall_score=overall_score,
             scoring_evidence=scoring_evidence,
+            coaching=coaching,
             closed_beta_debug=closed_beta_debug,
         )
 
