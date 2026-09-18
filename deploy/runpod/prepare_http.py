@@ -44,7 +44,12 @@ def main():
         if re.fullmatch(r"[0-9a-f]{40}", revision) is None:
             raise ValueError()
         values["VOICE_COACH_BUILD_REVISION"] = values["AI_ANALYSIS_RELEASE_ID"] = revision
-        if values.get("AI_ANALYSIS_CLOVA_FULL_EVIDENCE_ENABLED", "false") == "true":
+        coaching_enabled = values.get("AI_ANALYSIS_COACHING_ENABLED", "false") == "true"
+        needs_tokenizer = (
+            values.get("AI_ANALYSIS_COACHING_PROVIDER", "CLOVA") == "CLOVA" if coaching_enabled
+            else values.get("AI_ANALYSIS_CLOVA_FULL_EVIDENCE_ENABLED", "false") == "true"
+        )
+        if needs_tokenizer:
             model = json.loads((RUNTIME / "hyperclova-runtime.json").read_text())
             pin = json.loads((RUNTIME / "app/configs/pronunciation_feedback/hyperclovax_seed_think_32b_v1.json").read_text())
             if model["revision"] != pin["revision"] or model["modelId"] != pin["modelId"]:

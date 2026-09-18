@@ -167,6 +167,15 @@ class EvidenceBasedCoaching:
     def __init__(self, root, generator=None):
         self.system, self.prompt_digest = load_prompt(root)
         self.generator = generator
+        # Uvicorn configures its own loggers; an unconfigured root would drop
+        # this logger's INFO events. Install one secret-free, UTC stage stream.
+        if not LOG.handlers:
+            handler = logging.StreamHandler()
+            formatter = logging.Formatter("%(asctime)sZ %(levelname)s %(message)s", "%Y-%m-%dT%H:%M:%S")
+            formatter.converter = time.gmtime
+            handler.setFormatter(formatter)
+            LOG.addHandler(handler)
+            LOG.propagate = False
 
     def render(self, *, request, analysis, visual_state="NOT_PROVIDED", visual_observations=()):
         started = time.monotonic()
