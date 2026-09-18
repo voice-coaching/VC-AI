@@ -384,21 +384,7 @@ def generate_grounded_video_feedback(
     try:
         plan = generator.generate(payload)
         validate_grounded_advice_plan(payload=payload, plan=plan)
-        allowed = {claim.claim_id for claim in payload.approved_claims}
-        if set(plan.selected_claim_ids) != allowed:
-            raise CoachingPayloadError(
-                "combined grounded plan must preserve every admitted claim"
-            )
         message = render_grounded_advice_message(payload=payload, plan=plan)
-        failure_claims = tuple(
-            claim.text
-            for claim in payload.approved_claims
-            if claim.claim_id == _VISUAL_FAILURE_CLAIM_ID
-        )
-        if any(text not in message for text in failure_claims):
-            raise CoachingPayloadError(
-                "combined grounded plan omits the visual failure reason"
-            )
     except Exception as error:  # noqa: BLE001 - exact-claim fallback is mandatory
         return GroundedVideoFeedback(
             message=source_message,

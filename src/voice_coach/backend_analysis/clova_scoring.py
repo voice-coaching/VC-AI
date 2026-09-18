@@ -4,6 +4,8 @@ from __future__ import annotations
 import hashlib
 import json
 import math
+import logging
+import re
 from decimal import Decimal, ROUND_HALF_UP
 from pathlib import Path
 from urllib.request import Request, urlopen
@@ -13,17 +15,10 @@ from voice_coach.pronunciation_feedback.adapters.advice_generator_hyperclova imp
 )
 from .ports import BackendAnalysisError
 
-RUBRIC = "clova-phone-rubric-v1"
-PROMPT = """당신은 한국어 발음 학습 서비스의 기준표 채점기다. 입력은 현재 녹음의 전체 음소 분석 집계다.
-이 점수는 서비스 승급용 기준표 점수이며 실제 발음 정확도 확률이나 공인 평가 점수가 아니다.
-N=expectedPhoneCount, C=correctPhoneCount, A=alignedPhoneCount, U=unflaggedPhoneCount.
-기준표: alignmentScore=60*C/N, coverageScore=20*A/N, stabilityScore=20*U/N.
-각 항목을 소수점 첫째 자리까지 사사오입(HALF_UP)한 뒤 세 항목을 합해 overallScore를 만든다.
-correct는 CTC 정렬 일치, aligned는 CTC 삭제 후보가 아닌 음소, unflagged는 검출 임계값 미통과 음소다.
-CTC 후보를 실제 오류로 단정하거나 검출기 순위 점수를 정확도 확률로 바꾸지 않는다.
-억양, 속도, 입술, 음색, 개인 특성에 추가 점수를 부여하지 않는다. 추가 필드와 설명은 금지한다.
-다음 네 숫자 필드만 있는 JSON 객체 하나를 출력하라:
-{"alignmentScore":0.0,"coverageScore":0.0,"stabilityScore":0.0,"overallScore":0.0}"""
+from voice_coach.pronunciation_feedback.clova_prompt_routing import load_scoring_prompt
+
+RUBRIC = "clova-phone-rubric-v2"
+STATES = ("matchedClear", "matchedFlagged", "substitutedClear", "substitutedFlagged", "deletedClear", "deletedFlagged")
 
 
 def _strict_json(raw):
@@ -37,6 +32,17 @@ def _strict_json(raw):
     def constant(_):
         raise ValueError("non-finite number")
     return json.loads(raw, object_pairs_hook=pairs, parse_constant=constant)
+
+
+def _score_document(content):
+    """Accept one JSON value, optionally enclosed by one complete JSON fence.
+
+    Do not search for a JSON substring, remove prose/thoughts, repair syntax,
+    or coerce values. All field, duplicate-key and rubric checks still apply.
+    """
+    content = content.strip()
+    fenced = re.fullmatch(r"```(?:json)?[ \t]*\r?\n(.*?)\r?\n```", content, re.DOTALL)
+    return _strict_json(fenced.group(1) if fenced else content)
 
 
 def evidence_counts(analysis):
@@ -65,20 +71,92 @@ def evidence_counts(analysis):
     return counts
 
 
+def detailed_evidence(analysis, rubric):
+    counts = evidence_counts(analysis)
+    rows = []
+    expected_set = set(analysis.expected_phones)
+    policy_phones = [p for c in rubric["criteria"] for p in c["phones"]]
+    if len(policy_phones) != len(set(policy_phones)) or not expected_set <= set(policy_phones):
+        raise ValueError("unsupported or overlapping phone groups")
+    for criterion in rubric["criteria"]:
+        phones = [p for p in analysis.analysis_evidence["phones"]
+                  if criterion["id"] == "coverage" or p["expected_phone"] in criterion["phones"]]
+        row = dict(criterionId=criterion["id"], sampleCount=len(phones), **dict.fromkeys(STATES, 0))
+        for phone in phones:
+            state = {"correct": "matched", "substitution": "substituted", "deletion": "deleted"}[phone["alignment_operation"]]
+            row[state + ("Flagged" if phone["is_error"] else "Clear")] += 1
+        rows.append(row)
+    return counts, rows
+
+
+def criterion_units(row, rubric):
+    return (4 * (row["sampleCount"] - row["deletedClear"] - row["deletedFlagged"])
+            if row["criterionId"] == "coverage"
+            else sum(row[state] * weight for state, weight in rubric["evidenceUnits"].items()))
+
+
+def criterion_level(row, rubric):
+    n = row["sampleCount"]
+    if n == 0:
+        return None
+    units = criterion_units(row, rubric)
+    return next(band["level"] for band in rubric["levels"] if units * 100 >= band["minimumPercent"] * 4 * n)
+
+
 class ClovaRubricScorer:
-    def __init__(self, *, endpoint, model_id, revision, timeout):
+    def __init__(self, *, endpoint, model_id, revision, timeout, repository_root, rubric_revision=RUBRIC):
         self.endpoint = _completion_url(endpoint)
         self.model_id, self.revision, self.timeout = model_id, revision, timeout
+        self.repository_root = repository_root
+        if rubric_revision not in {RUBRIC, "clova-phone-rubric-v3"}:
+            raise ValueError("unsupported scoring rubric")
+        self.rubric_revision = rubric_revision
 
-    def score(self, analysis):
+    def score(self, analysis, *, video_requested=False, visual_supplement=None):
+        phase = "load_policy"
+        diagnostic = {}
         try:
-            counts = evidence_counts(analysis)
+            if self.rubric_revision == "clova-phone-rubric-v3":
+                phase = "hierarchy_scoring"
+                from .hierarchical_scoring import score_hierarchy
+                return score_hierarchy(self, analysis, video_requested=video_requested, visual_supplement=visual_supplement)
+            system, rubric, rubric_digest, prompt_digest = load_scoring_prompt(self.repository_root)
+            phase = "collect_evidence"
+            counts, rows = detailed_evidence(analysis, rubric)
+            # Only the scoring task reads the symlink target and includes the rubric.
+            policy = {k: rubric[k] for k in ("rubricRevision", "evidenceUnits", "levels", "aggregation")}
+            policy["criteria"] = [{k: c[k] for k in ("id", "label", "weight")} for c in rubric["criteria"]]
+            # The versioned rubric calculator owns numeric decisions. CLOVA gets
+            # the policy, source counts and worksheet to render the score response;
+            # its output must still pass independent worker and Backend checks.
+            model_rows = [row | {
+                "evidenceUnits": criterion_units(row, rubric),
+                "possibleUnits": 4 * row["sampleCount"],
+                "minimumUnitsByLevel": [
+                    {"level": band["level"],
+                     "minimumUnits": (band["minimumPercent"] * 4 * row["sampleCount"] + 99) // 100}
+                    for band in rubric["levels"]] if row["sampleCount"] else [],
+            } for row in rows]
+            total_weight = sum(c["weight"] for c, row in zip(rubric["criteria"], rows, strict=True) if row["sampleCount"])
+            worksheet_levels = [{"criterionId": row["criterionId"], "level": criterion_level(row, rubric)}
+                                for row in rows]
+            weighted_units = sum(c["weight"] * grade["level"]
+                                 for c, grade in zip(rubric["criteria"], worksheet_levels, strict=True)
+                                 if grade["level"] is not None)
+            worksheet_score = (Decimal(100 * weighted_units) / Decimal(4 * total_weight)).quantize(
+                Decimal("0.1"), rounding=ROUND_HALF_UP)
+            payload = {"RUBRIC_JSON": policy, "INPUT_DATA": {
+                "criteria": model_rows, "applicableWeight": total_weight,
+                "aggregationDenominator": 4 * total_weight},
+                "RUBRIC_RESULT": {"rubricRevision": RUBRIC, "criteria": worksheet_levels,
+                                  "overallScore": float(worksheet_score)}}
             body = dict(model=self.model_id, messages=[
-                {"role": "system", "content": PROMPT},
-                {"role": "user", "content": json.dumps(counts, sort_keys=True)},
-            ], max_tokens=256, temperature=0, chat_template_kwargs={"thinking": False})
+                {"role": "system", "content": system},
+                {"role": "user", "content": json.dumps(payload, ensure_ascii=False, separators=(",", ":"))},
+            ], max_tokens=512, temperature=0, chat_template_kwargs={"thinking": False})
             req = Request(self.endpoint, data=json.dumps(body, ensure_ascii=False).encode(),
                           headers={"Content-Type": "application/json"}, method="POST")
+            phase = "model_completion"
             with urlopen(req, timeout=self.timeout) as response:
                 raw = response.read(65537)
             if len(raw) > 65536:
@@ -86,23 +164,49 @@ class ClovaRubricScorer:
             document = _strict_json(raw.decode("utf-8"))
             if document["choices"][0].get("finish_reason") != "stop":
                 raise ValueError("incomplete completion")
-            result = _strict_json(_completion_content(document, expected_model=self.model_id, expected_revision=self.revision))
-            if not isinstance(result, dict) or set(result) != {"alignmentScore", "coverageScore", "stabilityScore", "overallScore"}:
+            content = _completion_content(document, expected_model=self.model_id, expected_revision=self.revision)
+            phase = "decode_score_json"
+            diagnostic = {"jsonFence": content.lstrip().startswith("```"),
+                          "objectStart": content.lstrip().startswith("{")}
+            result = _score_document(content)
+            phase = "validate_fields"
+            if not isinstance(result, dict) or set(result) != {"rubricRevision", "criteria", "overallScore"} or result["rubricRevision"] != RUBRIC:
                 raise ValueError("invalid score fields")
-            if any(type(v) not in (int, float) or not math.isfinite(v) for v in result.values()):
-                raise ValueError("invalid score numbers")
-            expected = {}
-            for name, count, weight in [("alignmentScore", "correctPhoneCount", 60), ("coverageScore", "alignedPhoneCount", 20), ("stabilityScore", "unflaggedPhoneCount", 20)]:
-                expected[name] = (Decimal(counts[count]*weight)/Decimal(counts["expectedPhoneCount"])).quantize(Decimal("0.1"), rounding=ROUND_HALF_UP)
-            expected["overallScore"] = sum(expected.values())
-            if any(Decimal(str(result[k])) != v for k,v in expected.items()):
+            levels = result["criteria"]
+            if not isinstance(levels, list) or len(levels) != len(rows):
+                raise ValueError("missing rubric criteria")
+            numerator, denominator = 0, 0
+            for row, grade, criterion in zip(rows, levels, rubric["criteria"], strict=True):
+                expected = criterion_level(row, rubric)
+                if not isinstance(grade, dict) or set(grade) != {"criterionId", "level"} or grade["criterionId"] != row["criterionId"]:
+                    raise ValueError("invalid criterion identity")
+                level = grade["level"]
+                phase = "validate_level"
+                diagnostic = {"criterion": row["criterionId"], "expectedLevel": expected,
+                              "actualLevel": level if level is None or type(level) is int else "invalid_type"}
+                if (level is not None and type(level) is not int) or level != expected:
+                    raise ValueError("rubric level mismatch")
+                row["level"] = level
+                if level is not None:
+                    numerator += criterion["weight"] * level
+                    denominator += criterion["weight"] * 4
+            score = (Decimal(100 * numerator) / Decimal(denominator)).quantize(Decimal("0.1"), rounding=ROUND_HALF_UP)
+            actual = result["overallScore"]
+            phase = "validate_total"
+            diagnostic = {"expectedScore": str(score),
+                          "actualScore": actual if type(actual) in (int, float) and math.isfinite(actual) else "invalid_type"}
+            if type(actual) not in (float, int) or not math.isfinite(actual) or Decimal(str(actual)) != score:
                 raise ValueError("rubric arithmetic mismatch")
             evidence = dict(rubricRevision=RUBRIC, generator="hyperclova", modelRevision=self.revision,
+                rubricSha256=rubric_digest, promptSha256=prompt_digest, criteria=rows,
                 evidenceSha256=hashlib.sha256(json.dumps(analysis.analysis_evidence, ensure_ascii=False,
                     sort_keys=True, separators=(",", ":"), allow_nan=False).encode()).hexdigest(), **counts)
-            evidence.update({k:float(v) for k,v in expected.items() if k != "overallScore"})
-            return float(expected["overallScore"]), evidence
-        except Exception:
+            return float(actual), evidence
+        except Exception as error:
+            # Only allowlisted phase names, types and numeric grades are logged.
+            # Never log input text, model output, paths, credentials, or exception messages.
+            logging.getLogger(__name__).warning("clova_scoring_rejected phase=%s error=%s diagnostic=%s",
+                                               phase, type(error).__name__, diagnostic)
             raise BackendAnalysisError("analysis_execution_failed_closed", "CLOVA 채점을 완료하지 못했습니다. 다시 시도해 주세요.") from None
 
 
@@ -118,5 +222,10 @@ def load_clova_scorer(env, *, repository_root):
     timeout = float(env.get("AI_ANALYSIS_CLOVA_TIMEOUT_SECONDS", "180"))
     if not math.isfinite(timeout) or not 0 < timeout <= 300:
         raise ValueError("invalid scoring timeout")
+    rubric_revision = env.get("AI_ANALYSIS_CLOVA_RUBRIC_REVISION", RUBRIC)
+    # Validate the opt-in hierarchy before accepting jobs; preserve the v2 startup path.
+    if rubric_revision != RUBRIC:
+        load_scoring_prompt(repository_root, rubric_revision)
     return ClovaRubricScorer(endpoint=env.get("AI_ANALYSIS_CLOVA_ENDPOINT", "http://127.0.0.1:8000/v1"),
-        model_id=config["modelId"], revision=config["revision"], timeout=timeout)
+        model_id=config["modelId"], revision=config["revision"], timeout=timeout, repository_root=repository_root,
+        rubric_revision=rubric_revision)

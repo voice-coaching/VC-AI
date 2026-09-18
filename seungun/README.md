@@ -22,11 +22,14 @@ gate 통과 근거가 아니다.
 삭제된 과거 문서를 복원하거나 추측하지 않는다. 현재 존재하는 다음 문서와
 계약만 사용한다.
 
-- [현재 발음 피드백 파이프라인](../docs/architecture/PRONUNCIATION_FEEDBACK_PIPELINE_KO.md)
-- [G04 음성 AI 프록시 결과](../docs/evaluation/G04_AUDIO_AI_PROXY_RESULT_2026-08-09_KO.md)
-- [연구 데이터 저장 원칙](../data/README.md)
-- [저장소 연구·데이터 거버넌스](../.codex/ai_rule_developer/GLOBAL_RULES.md)
-- [공개 수동 감사 집계](../docs/audit/aihub71490_manual_alignment_audit_public.tsv)
+- [발음 피드백 구현과 보완 계획](../docs/clova_detailed_feedback_20260909.md)
+- [연구 데이터 수집·저장 계획](../docs/backblaze_external_data_plan_20260909.md)
+- [현재 저장소 작업 지침](../AGENTS.md)
+- [수동 감사 관측을 포함한 작업 기록](docs/WORK_LOG_AND_FINDINGS_KO.md)
+
+이전에 연결했던 G04 결과 문서와 공개 수동 감사 집계 파일은 현재 저장소에 없다.
+위 작업 기록은 원 집계 파일의 대체 데이터가 아니며, 과거 결과를 다시 검증했다는
+의미도 아니다.
 
 ## 확인된 사실
 
