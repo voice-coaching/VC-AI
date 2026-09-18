@@ -93,4 +93,19 @@ AI 저장소 상대 경로 기준:
 
 ## 운영 적용 및 검증
 
-아래는 작업 완료 후 실제 적용 결과로 갱신한다. 코드 AST 검사와 정적 diff를 검토했으며 자동 회귀 QA·새 음성 분석은 아직 실행하지 않았다.
+2026-09-18 18:32 KST 최종 확인:
+
+- 전용 로컬 AI 브랜치: `fix/clova-feedback-expression-policy`.
+- 배포 코드 커밋: `bea2930e7cd65eeaa999a1163311c29f8f334a14`. 원격 push/PR은 이번 요청에서 실행하지 않았다.
+- 위 3개 Python 파일을 RunPod 실행 사본과 영구 overlay에 반영하고 manifest·deployment attestation을 갱신했다.
+- API 워커 PID 39791, worker revision은 위 배포 커밋. AWS에서 호출한 RunPod `/health/services`는 200, ready, executorReady=true.
+- AWS `/api/internal/ai/worker-readiness`도 200 ready.
+- 영구 overlay와 실행 사본 68개 파일의 manifest SHA-256 일치 확인.
+- CLOVA 모델 프로세스 PID 20312 및 모델 pin 유지. 새 피드백 system prompt는 API 워커가 매 요청에 전송하므로 모델을 다시 적재할 필요가 없다.
+- 모델 서버 `/health`의 `feedback_policy_revision`/`grounded_input_schema`는 모델 프로세스 시작 때 import한 예전 상수(v1/v4)를 계속 표시한다. 현재 워커의 실제 adapter import는 `evidence-explanation-v2-20260918`/입력 v5이며, 모델 서버는 전달된 messages로 생성한다. 기존 모델 서버 health의 정적 라벨을 새 워커 정책의 근거로 사용하지 않는다.
+- 배포 전 PROCESSING 0건, 최근 PENDING 0건. 남은 PENDING id=1은 2026-08-09 생성 기록이며 수정하지 않았다. outbox는 PUBLISHED 14건·FAILED 1건으로 신규 전달 대기는 없었다.
+- 배포 중 새 analyze/retry 접수만 잠시 보호했다. 작업 후 AWS nginx 원본을 바이트 단위로 복구했고 SHA-256 `777d581a1eb02ce80435e1d5b72a8bfd68108e33a329399330c877950a010331` 일치를 확인했다.
+- 원복 백업은 RunPod의 root 전용 `feedback-policy-20260918-bea2930` 디렉터리에 보존했다. 운영 비밀 설정의 값은 출력·문서화하지 않았다.
+- 배포 전 해시 차이는 기존 파일의 CRLF/LF 차이였으며 정규화한 코드가 기준 커밋과 동일함을 확인한 뒤 실제 바이트 해시로 재검증했다.
+
+검증 범위: Python AST, 실제 환경 adapter import, 정적 diff, 파일 무결성, 서비스 재기동과 양쪽 readiness. 저장소의 개발자 QA 지침에 따라 자동 회귀 QA는 실행하지 않았다. 새 음성 분석·CLOVA 생성·개선 문구 평가도 실행하지 않았다. 모델 서버 last_completion이 기존 호출 기록인 것을 확인했다. 이 배포가 더 정확한 개인별 피드백을 생성했다는 실증 결과는 아직 없다.
