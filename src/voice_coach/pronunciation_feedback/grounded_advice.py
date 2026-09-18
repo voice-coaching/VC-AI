@@ -17,7 +17,8 @@ from typing import Any, Mapping
 from .coaching_payload import CoachingPayloadError
 from .domain import DiagnosticIssueDraft, PromptSpec
 
-GROUNDED_INPUT_SCHEMA_VERSION = "voice_coach.grounded_advice_input.v5"
+GROUNDED_INPUT_SCHEMA_VERSION = "voice_coach.grounded_advice_input.v6"
+_EXPANDED_INPUT_SCHEMA_VERSION = "voice_coach.grounded_advice_input.v5"
 _PREVIOUS_INPUT_SCHEMA_VERSION = "voice_coach.grounded_advice_input.v4"
 _LEGACY_INPUT_SCHEMA_VERSION = "voice_coach.grounded_advice_input.v3"
 GROUNDED_OUTPUT_SCHEMA_VERSION = "voice_coach.grounded_advice_output.v3"
@@ -157,6 +158,7 @@ class GroundedCoachingPayload:
     advice_id: str
     approved_claims: tuple[ApprovedAdviceClaim, ...]
     claim_scope: str
+    feedback_evidence: dict[str, Any] | None = None
 
     def __post_init__(self) -> None:
         if self.schema_version != GROUNDED_INPUT_SCHEMA_VERSION:
@@ -174,6 +176,11 @@ class GroundedCoachingPayload:
             if not value:
                 raise CoachingPayloadError(f"{name} must not be empty")
             _assert_privacy_safe(value, field=name)
+        if self.feedback_evidence is not None and (
+            not isinstance(self.feedback_evidence, dict)
+            or self.feedback_evidence.get("schemaVersion") != "voice_coach.feedback_evidence.v1"
+        ):
+            raise CoachingPayloadError("feedback evidence schema differs")
         if not self.approved_claims:
             raise CoachingPayloadError("grounded payload needs an approved claim")
         if self.issue_type == "phone_pronunciation_error" and (
@@ -287,6 +294,7 @@ class GroundedCoachingPayload:
             },
             "claimScope": self.claim_scope,
             "constraints": {},
+            "feedbackEvidence": self.feedback_evidence,
         }
 
     def to_json(self) -> str:
@@ -312,10 +320,12 @@ class GroundedCoachingPayload:
             "claimScope",
             "constraints",
         }
+        if value.get("schemaVersion") == GROUNDED_INPUT_SCHEMA_VERSION:
+            required.add("feedbackEvidence")
         if set(value) != required:
             raise CoachingPayloadError("grounded payload schema differs")
         if value["schemaVersion"] not in (
-            GROUNDED_INPUT_SCHEMA_VERSION, _PREVIOUS_INPUT_SCHEMA_VERSION,
+            GROUNDED_INPUT_SCHEMA_VERSION, _EXPANDED_INPUT_SCHEMA_VERSION, _PREVIOUS_INPUT_SCHEMA_VERSION,
             _LEGACY_INPUT_SCHEMA_VERSION
         ):
             raise CoachingPayloadError("grounded input schema version differs")
@@ -360,7 +370,7 @@ class GroundedCoachingPayload:
             "maximumIssues": 1,
         }
         accepted_constraints = (
-            {} if value["schemaVersion"] == GROUNDED_INPUT_SCHEMA_VERSION
+            {} if value["schemaVersion"] in (GROUNDED_INPUT_SCHEMA_VERSION, _EXPANDED_INPUT_SCHEMA_VERSION)
             else expected_constraints
         )
         if constraints != accepted_constraints:
@@ -488,6 +498,7 @@ class GroundedCoachingPayload:
             advice_id=string_fields["adviceId"],
             approved_claims=tuple(claims),
             claim_scope=string_fields["claimScope"],
+            feedback_evidence=value.get("feedbackEvidence"),
         )
 
 
@@ -577,10 +588,12 @@ def build_grounded_coaching_payload(
 
 
 def parse_grounded_advice_plan(raw: str) -> GroundedAdvicePlan:
-    """Parse exact JSON and reject prose, fences, missing fields, or extras."""
+    """Parse one JSON object, optionally inside one complete JSON code fence."""
 
     try:
-        document = json.loads(raw.strip())
+        content = raw.strip()
+        fenced = re.fullmatch(r"```(?:json)?[ \t]*\r?\n(.*?)\r?\n```", content, re.DOTALL)
+        document = json.loads(fenced.group(1) if fenced else content)
     except (json.JSONDecodeError, UnicodeDecodeError) as error:
         raise CoachingPayloadError("grounded generator response is not JSON") from error
     if not isinstance(document, dict):
@@ -654,6 +667,8 @@ def validate_grounded_advice_plan(
     if (
         plan.candidate_disclosure is CandidateDisclosure.MODEL_CANDIDATE
         and payload.observed_candidate is None
+        and not any(row.get("observed_candidate") is not None for row in
+                    (payload.feedback_evidence or {}).get("audio", {}).get("phones", []))
     ):
         raise CoachingPayloadError("grounded output invents an observed candidate")
     if plan.learner_message is not None:

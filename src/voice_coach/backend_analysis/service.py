@@ -49,6 +49,7 @@ class _VisualCapture:
     materialized_path: str | None
     media_base64: str | None
     grounded_evidence: Mapping[str, object] | None = field(default=None, repr=False)
+    feedback_state: str = "UNAVAILABLE"
 
 
 class BackendAnalysisWorker:
@@ -137,14 +138,6 @@ class BackendAnalysisWorker:
                     audio=audio,
                     analysis=analysis,
                 )
-                summary_feedback = analysis.summary_feedback
-                if self._grounded_feedback is not None:
-                    summary_feedback = self._grounded_feedback.render(
-                        request=request,
-                        analysis=analysis,
-                        visual_supplement=visual_capture.supplement,
-                        visual_evidence=visual_capture.grounded_evidence,
-                    )
                 overall_score, scoring_evidence = (None, None)
                 if self._clova_scorer is not None:
                     if getattr(self._clova_scorer, "rubric_revision", None) == "clova-phone-rubric-v3":
@@ -153,6 +146,16 @@ class BackendAnalysisWorker:
                             visual_supplement=visual_capture.supplement)
                     else:
                         overall_score, scoring_evidence = self._clova_scorer.score(analysis)
+                summary_feedback = analysis.summary_feedback
+                if self._grounded_feedback is not None:
+                    summary_feedback = self._grounded_feedback.render(
+                        request=request,
+                        analysis=analysis,
+                        visual_supplement=visual_capture.supplement,
+                        visual_evidence=visual_capture.grounded_evidence,
+                        visual_state=visual_capture.feedback_state,
+                        overall_score=overall_score, scoring_evidence=scoring_evidence,
+                    )
                 return AnalysisWorkerResult.completed(
                     overall_score=overall_score, scoring_evidence=scoring_evidence,
                     event_id=self._event_id_factory(),
@@ -191,7 +194,7 @@ class BackendAnalysisWorker:
         analysis: SeungunAnalysis,
     ) -> _VisualCapture:
         if request.visual_input is None:
-            return _VisualCapture(None, None, None)
+            return _VisualCapture(None, None, None, feedback_state="NOT_PROVIDED")
         try:
             with self._object_store.materialize_visual(
                 request, authorization
@@ -207,8 +210,10 @@ class BackendAnalysisWorker:
                     else None
                 )
                 grounded_evidence = None
+                feedback_state = "NO_PUBLISHABLE_EVIDENCE"
                 if self._visual is None:
                     supplement = None
+                    feedback_state = "NOT_CONFIGURED"
                 else:
                     try:
                         analyze_with_evidence = (
@@ -236,15 +241,17 @@ class BackendAnalysisWorker:
                     except Exception:
                         supplement = None
                         grounded_evidence = None
+                        feedback_state = "EXTRACTION_FAILED"
                 return _VisualCapture(
                     supplement,
                     materialized_path,
                     media_base64,
                     grounded_evidence,
+                    feedback_state if supplement is None else "OBSERVED",
                 )
         except Exception:
             # Visual evidence is optional and cannot erase an approved Seungun result.
-            return _VisualCapture(None, None, None)
+            return _VisualCapture(None, None, None, feedback_state="VISUAL_INPUT_PROCESSING_FAILED")
 
     @staticmethod
     def _closed_beta_debug(
