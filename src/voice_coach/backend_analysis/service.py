@@ -50,6 +50,7 @@ class _VisualCapture:
     media_base64: str | None
     grounded_evidence: Mapping[str, object] | None = field(default=None, repr=False)
     feedback_state: str = "UNAVAILABLE"
+    coaching_observations: tuple = ()
 
 
 class BackendAnalysisWorker:
@@ -70,6 +71,7 @@ class BackendAnalysisWorker:
         visual: VisualAnalysisPort | None = None,
         grounded_feedback: BackendGroundedFeedback | None = None,
         clova_scorer=None,
+        coaching=None,
         event_id_factory: Callable[[], UUID] = uuid4,
         clock: Callable[[], datetime] | None = None,
         worker_revision: str = _WORKER_REVISION,
@@ -82,6 +84,7 @@ class BackendAnalysisWorker:
         self._visual = visual
         self._grounded_feedback = grounded_feedback
         self._clova_scorer = clova_scorer
+        self._coaching = coaching
         self._event_id_factory = event_id_factory
         self._clock = clock or (lambda: datetime.now(tz=UTC))
         self._worker_revision = worker_revision
@@ -139,7 +142,7 @@ class BackendAnalysisWorker:
                     analysis=analysis,
                 )
                 overall_score, scoring_evidence = (None, None)
-                if self._clova_scorer is not None:
+                if self._clova_scorer is not None and self._coaching is None:
                     if getattr(self._clova_scorer, "rubric_revision", None) == "clova-phone-rubric-v3":
                         overall_score, scoring_evidence = self._clova_scorer.score(
                             analysis, video_requested=request.visual_input is not None,
@@ -147,7 +150,18 @@ class BackendAnalysisWorker:
                     else:
                         overall_score, scoring_evidence = self._clova_scorer.score(analysis)
                 summary_feedback = analysis.summary_feedback
-                if self._grounded_feedback is not None:
+                coaching_document = None
+                if self._coaching is not None:
+                    coaching_document = self._coaching.render(request=request, analysis=analysis,
+                        visual_state=visual_capture.feedback_state,
+                        visual_observations=visual_capture.coaching_observations)
+                    # Legacy selected evidence remains provenance; new coaching
+                    # items alone carry the admitted learning agenda.
+                    if analysis.summary_feedback is not None:
+                        summary_feedback = coaching_document["summary"] + "\n" + "\n".join(
+                            f"{item['observation']} {item['action']} {item['practice']} {item['selfCheck']}"
+                            for item in coaching_document["items"])
+                elif self._grounded_feedback is not None:
                     summary_feedback = self._grounded_feedback.render(
                         request=request,
                         analysis=analysis,
@@ -157,6 +171,7 @@ class BackendAnalysisWorker:
                         overall_score=overall_score, scoring_evidence=scoring_evidence,
                     )
                 return AnalysisWorkerResult.completed(
+                    coaching=coaching_document,
                     overall_score=overall_score, scoring_evidence=scoring_evidence,
                     event_id=self._event_id_factory(),
                     request=request,
@@ -211,6 +226,14 @@ class BackendAnalysisWorker:
                 )
                 grounded_evidence = None
                 feedback_state = "NO_PUBLISHABLE_EVIDENCE"
+                if self._coaching is not None:
+                    if self._visual is None:
+                        return _VisualCapture(None, materialized_path, media_base64, feedback_state="NOT_CONFIGURED")
+                    observations = self._visual.analyze_coaching_observations(
+                        request=request, audio=audio, video=video, seungun=analysis)
+                    state = "OBSERVED_NOT_VALIDATED" if any(o["measurements"] for o in observations) else "NO_VALID_OBSERVATIONS"
+                    return _VisualCapture(None, materialized_path, media_base64,
+                        feedback_state=state, coaching_observations=tuple(observations))
                 if self._visual is None:
                     supplement = None
                     feedback_state = "NOT_CONFIGURED"
@@ -218,7 +241,7 @@ class BackendAnalysisWorker:
                     try:
                         analyze_with_evidence = (
                             getattr(self._visual, "analyze_with_grounded_evidence", None)
-                            if self._grounded_feedback is not None
+                            if self._grounded_feedback is not None or self._coaching is not None
                             else None
                         )
                         if callable(analyze_with_evidence):

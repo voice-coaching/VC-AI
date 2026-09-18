@@ -91,27 +91,16 @@ digest를 고정한다. 릴리스 디렉터리는 소유자 전용이고 각 파
 중복 JSON key, non-finite 수, digest drift, 정책 종류 및 runtime bundle의
 정책 identity 불일치를 모두 요청 영상에 접근하기 전에 거부한다.
 
-현재 enabled release는 두 testvideo를 보정과 평가에 함께 사용하고, Seungun
-고정 vocabulary의 한국어 음소 40개에 동일한 외부 입술 벌림 cue를 허용한다.
-이는 모든 음소의 내부 조음이 입술로 식별된다는 뜻이 아니다. 혀·성문·기류를
-추론하지 않고 화면에서 측정된 입술 벌림이 공통 기준보다 큰지 작은지만 말한다.
+2026-09-18 변경: 두 testvideo를 보정과 평가에 함께 사용하여 음소 40개에
+공통 입 벌림 기준을 배포하던 생성기를 폐기했다. 기존 생성기는 실제 평가 없이
+P8 violation_count=0을 기록했으므로 정확도 검증 근거가 아니다.
+`create_universal_lip_production_release.py`는 이제 NOT_EVALUATED로 종료하며
+새 release를 만들지 않는다. 기존 운영 artifact는 이 코드 수정으로 변경하지 않았다.
 
-```bash
-.venv/bin/python scripts/create_universal_lip_production_release.py \
-  --output-directory artifacts/visual_feedback/releases/production_visual \
-  --release-id production_visual_v2 \
-  --calibration-video data/testvideo/testvideo1.mp4 \
-  --calibration-video data/testvideo/testvideo2.mp4 \
-  --calibration-lip-aperture 0.07285225122514805 \
-  --calibration-lip-aperture 0.008025224045252148 \
-  --evaluation-video data/testvideo/testvideo1.mp4 \
-  --evaluation-video data/testvideo/testvideo2.mp4
-```
-
-생성기는 보정 2건·평가 2건의 digest를 compact receipt에 묶고 세 runtime
-산출물을 원자적으로 패키징한 뒤 strict reload한다. 대용량 데이터셋은 읽지
-않는다. 기존 `--visual-release` CLI와 production runtime bundle/QC/A·V
-artifact의 개별 입력 방식은 제거했으며 호환 경로로 남기지 않는다.
+독립 평가와 음소·문맥별 참조가 마련되기 전 새 코칭은 관측만 전달하고
+개인별 입 벌림 교정을 보류한다. [구현 범위와 이행 계약](evidence_based_coaching.md)을 참고한다.
+아래 실행 예시는 이미 승인된 release가 있는 경우의 입력 형식이며,
+폐기된 생성기로 새로운 release를 만들 수 있다는 의미가 아니다.
 
 실행 시에는 새 옵션만 사용한다.
 

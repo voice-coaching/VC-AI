@@ -32,7 +32,7 @@ def _tokens(value):
     return list(value)
 
 
-def _anchors(text, expected):
+def _anchors(text, expected, maximum_cells=None):
     slots = decompose_syllables(text)
     words = list(re.finditer(r"[가-힣]+", text))
     written, positions = [], []
@@ -46,6 +46,8 @@ def _anchors(text, expected):
     # Written roles are text alignment metadata, not proof of a phonetic role
     # after liaison/assimilation. Inserted expected tokens get no invented role.
     indices = [i for i,x in enumerate(expected) if x != "|"]
+    if maximum_cells is not None and (len(written) + 1) * (len(indices) + 1) > maximum_cells:
+        return [[i, *([None]*6), "unassessed"] for i in range(len(expected))]
     steps, _ = edit_alignment(written, [expected[i] for i in indices])
     result = {}
     for step in steps:
@@ -57,8 +59,8 @@ def _anchors(text, expected):
 
 
 def build_feedback_evidence(*, analysis, target_text, selected_index,
-                            visual_evidence=None, visual_state="NOT_PROVIDED",
-                            overall_score=None, scoring_evidence=None):
+                              visual_evidence=None, visual_state="NOT_PROVIDED",
+                              overall_score=None, scoring_evidence=None, maximum_alignment_cells=None):
     """Preserve every supported source row in memory before token selection."""
     if analysis.get("schema_version") != "korean_phone_ctc.pronunciation_analysis.v1":
         raise CoachingPayloadError("feedback evidence schema differs")
@@ -127,7 +129,7 @@ def build_feedback_evidence(*, analysis, target_text, selected_index,
     return dict(schemaVersion=SCHEMA, selectedExpectedIndex=selected_index,
         audio=dict(expectedPhones=expected, ctcHypothesis=_tokens(analysis.get("ctc_hypothesis")),
                    insertions=_tokens(analysis.get("insertions")), phones=phones,
-                   notices=list(notices), textAnchors=_anchors(target_text,expected)),
+                   notices=list(notices), textAnchors=_anchors(target_text,expected, maximum_alignment_cells)),
         visual=dict(status=visual_state,cues=cues,selectedExpectedIndex=selected_index if cues else None),
         scoring=score,
         accounting=dict(internalOnlyFields=list(INTERNAL_FIELDS), unknownPhoneFieldCount=len(unknown),

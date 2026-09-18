@@ -15,7 +15,9 @@ from typing import Any, Mapping
 from ..coaching_payload import CoachingPayloadError
 
 MAXIMUM_PROMPT_CHARACTERS = 64 * 1024
-MAXIMUM_NEW_TOKENS = 512
+# Bounded multi-item coaching needs more output than the legacy single message.
+# Legacy callers still request 512; the wall-clock generation deadline is unchanged.
+MAXIMUM_NEW_TOKENS = 2048
 MAXIMUM_GENERATION_SECONDS = 150.0
 
 
