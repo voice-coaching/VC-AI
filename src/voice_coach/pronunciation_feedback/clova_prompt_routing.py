@@ -13,10 +13,15 @@ RUBRIC_JSON을 적용한다. TASK_MODE=FEEDBACK에서는 채점 지시를 불러
 """
 
 
-def load_scoring_prompt(repository_root):
+def load_scoring_prompt(repository_root, revision="clova-phone-rubric-v2"):
+    if revision not in {"clova-phone-rubric-v2", "clova-phone-rubric-v3"}:
+        raise ValueError("unsupported rubric revision")
+    hierarchy = revision == "clova-phone-rubric-v3"
     root = Path(repository_root).resolve()
     link = root / SCORING_PROMPT_REF
-    target = link.parent / "pronunciation-v2.md"
+    if hierarchy:
+        link = link.with_name("active-hierarchy.md")
+    target = link.parent / ("pronunciation-hierarchy-v3.md" if hierarchy else "pronunciation-v2.md")
     # Git on Windows with core.symlinks=false checks out the link as its target text.
     # Both representations must name the one approved local target.
     if link.is_symlink():
@@ -27,11 +32,12 @@ def load_scoring_prompt(repository_root):
     if target.is_symlink() or not target.resolve().is_relative_to(root):
         raise ValueError("scoring prompt escapes repository")
     prompt = target.read_text(encoding="utf-8")
-    table = (root / "configs/pronunciation_feedback/clova_pronunciation_rubric_v2.json").read_text(encoding="utf-8")
-    if len(prompt.encode()) > 16000 or len(table.encode()) > 16000:
+    table = (root / f"configs/pronunciation_feedback/clova_pronunciation_rubric_{'v3' if hierarchy else 'v2'}.json").read_text(encoding="utf-8")
+    if len(prompt.encode()) > 16000 or len(table.encode()) > (64000 if hierarchy else 16000):
         raise ValueError("oversized scoring policy")
     rubric = json.loads(table)
-    if rubric["rubricRevision"] != "clova-phone-rubric-v2":
+    if rubric["rubricRevision"] != revision:
         raise ValueError("unexpected rubric revision")
-    return (SCORING_SYSTEM_REFERENCE + "\nTASK_MODE=SCORING\n" + prompt, rubric,
+    reference = SCORING_SYSTEM_REFERENCE.replace("scoring/active.md", "scoring/active-hierarchy.md") if hierarchy else SCORING_SYSTEM_REFERENCE
+    return (reference + "\nTASK_MODE=SCORING\n" + prompt, rubric,
             hashlib.sha256(table.encode()).hexdigest(), hashlib.sha256(prompt.encode()).hexdigest())

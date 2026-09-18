@@ -1,0 +1,468 @@
+{
+  "rubricRevision": "clova-phone-rubric-v3",
+  "scope": "evidence_bound_practice_score_not_calibrated_pronunciation_accuracy",
+  "evidenceUnits": {
+    "matchedClear": 4,
+    "matchedFlagged": 2,
+    "substitutedClear": 3,
+    "substitutedFlagged": 1,
+    "deletedClear": 0,
+    "deletedFlagged": 0
+  },
+  "levels": [
+    {
+      "level": 4,
+      "minimumPercent": 95,
+      "label": "매우 안정적인 분석 근거"
+    },
+    {
+      "level": 3,
+      "minimumPercent": 80,
+      "label": "대체로 안정적, 일부 재확인"
+    },
+    {
+      "level": 2,
+      "minimumPercent": 60,
+      "label": "부분적으로 안정적, 반복 연습"
+    },
+    {
+      "level": 1,
+      "minimumPercent": 40,
+      "label": "재확인 지점이 많음"
+    },
+    {
+      "level": 0,
+      "minimumPercent": 0,
+      "label": "안정적인 근거가 부족함"
+    }
+  ],
+  "criteria": [
+    {
+      "id": "vowels",
+      "label": "모음",
+      "weight": 25,
+      "phones": [
+        "ㅏ",
+        "ㅐ",
+        "ㅑ",
+        "ㅒ",
+        "ㅓ",
+        "ㅔ",
+        "ㅕ",
+        "ㅖ",
+        "ㅗ",
+        "ㅘ",
+        "ㅙ",
+        "ㅚ",
+        "ㅛ",
+        "ㅜ",
+        "ㅝ",
+        "ㅞ",
+        "ㅟ",
+        "ㅠ",
+        "ㅡ",
+        "ㅢ",
+        "ㅣ"
+      ]
+    },
+    {
+      "id": "plain_stops",
+      "label": "평음 파열음",
+      "weight": 10,
+      "phones": [
+        "ㄱ",
+        "ㄷ",
+        "ㅂ"
+      ]
+    },
+    {
+      "id": "tense_stops",
+      "label": "경음 파열음",
+      "weight": 10,
+      "phones": [
+        "ㄲ",
+        "ㄸ",
+        "ㅃ"
+      ]
+    },
+    {
+      "id": "aspirated_stops",
+      "label": "격음 파열음",
+      "weight": 10,
+      "phones": [
+        "ㅋ",
+        "ㅌ",
+        "ㅍ"
+      ]
+    },
+    {
+      "id": "fricatives",
+      "label": "마찰음",
+      "weight": 10,
+      "phones": [
+        "ㅅ",
+        "ㅆ",
+        "ㅎ"
+      ]
+    },
+    {
+      "id": "affricates",
+      "label": "파찰음",
+      "weight": 10,
+      "phones": [
+        "ㅈ",
+        "ㅉ",
+        "ㅊ"
+      ]
+    },
+    {
+      "id": "nasals",
+      "label": "비음",
+      "weight": 10,
+      "phones": [
+        "ㄴ",
+        "ㅁ",
+        "ㅇ"
+      ]
+    },
+    {
+      "id": "liquid",
+      "label": "유음",
+      "weight": 5,
+      "phones": [
+        "ㄹ"
+      ]
+    },
+    {
+      "id": "coverage",
+      "label": "기대 음소 대응 범위",
+      "weight": 10,
+      "phones": []
+    }
+  ],
+  "aggregation": {
+    "missingCategory": "not_applicable_exclude_weight",
+    "minimumPhoneCount": 1,
+    "rounding": "HALF_UP",
+    "decimalPlaces": 1,
+    "formula": "100 * sum(weight * level) / (4 * sum(applicable weights))"
+  },
+  "excludedDimensions": [
+    "intonation",
+    "stress",
+    "speaking_speed",
+    "pause_quality",
+    "lip_shape",
+    "speaker_traits",
+    "tongue_position"
+  ],
+  "limitations": [
+    "CTC substitution/deletion are candidates, not confirmed human errors.",
+    "Detector ranking scores are not correctness probabilities.",
+    "Groups describe expected model labels; coda neutralization or allophony is not diagnosed from spelling.",
+    "One occurrence is low sample evidence; no confidence bonus is awarded.",
+    "Different scripts have different applicable categories; scores are not equated across scripts.",
+    "No thresholds or weights have been validated against expert grading."
+  ],
+  "phoneCriteria": [
+    {
+      "id": "vowels.a",
+      "parentId": "vowels",
+      "phone": "ㅏ",
+      "label": "ㅏ 대응"
+    },
+    {
+      "id": "vowels.ae",
+      "parentId": "vowels",
+      "phone": "ㅐ",
+      "label": "ㅐ 대응"
+    },
+    {
+      "id": "vowels.ya",
+      "parentId": "vowels",
+      "phone": "ㅑ",
+      "label": "ㅑ 대응"
+    },
+    {
+      "id": "vowels.yae",
+      "parentId": "vowels",
+      "phone": "ㅒ",
+      "label": "ㅒ 대응"
+    },
+    {
+      "id": "vowels.eo",
+      "parentId": "vowels",
+      "phone": "ㅓ",
+      "label": "ㅓ 대응"
+    },
+    {
+      "id": "vowels.e",
+      "parentId": "vowels",
+      "phone": "ㅔ",
+      "label": "ㅔ 대응"
+    },
+    {
+      "id": "vowels.yeo",
+      "parentId": "vowels",
+      "phone": "ㅕ",
+      "label": "ㅕ 대응"
+    },
+    {
+      "id": "vowels.ye",
+      "parentId": "vowels",
+      "phone": "ㅖ",
+      "label": "ㅖ 대응"
+    },
+    {
+      "id": "vowels.o",
+      "parentId": "vowels",
+      "phone": "ㅗ",
+      "label": "ㅗ 대응"
+    },
+    {
+      "id": "vowels.wa",
+      "parentId": "vowels",
+      "phone": "ㅘ",
+      "label": "ㅘ 대응"
+    },
+    {
+      "id": "vowels.wae",
+      "parentId": "vowels",
+      "phone": "ㅙ",
+      "label": "ㅙ 대응"
+    },
+    {
+      "id": "vowels.oe",
+      "parentId": "vowels",
+      "phone": "ㅚ",
+      "label": "ㅚ 대응"
+    },
+    {
+      "id": "vowels.yo",
+      "parentId": "vowels",
+      "phone": "ㅛ",
+      "label": "ㅛ 대응"
+    },
+    {
+      "id": "vowels.u",
+      "parentId": "vowels",
+      "phone": "ㅜ",
+      "label": "ㅜ 대응"
+    },
+    {
+      "id": "vowels.wo",
+      "parentId": "vowels",
+      "phone": "ㅝ",
+      "label": "ㅝ 대응"
+    },
+    {
+      "id": "vowels.we",
+      "parentId": "vowels",
+      "phone": "ㅞ",
+      "label": "ㅞ 대응"
+    },
+    {
+      "id": "vowels.wi",
+      "parentId": "vowels",
+      "phone": "ㅟ",
+      "label": "ㅟ 대응"
+    },
+    {
+      "id": "vowels.yu",
+      "parentId": "vowels",
+      "phone": "ㅠ",
+      "label": "ㅠ 대응"
+    },
+    {
+      "id": "vowels.eu",
+      "parentId": "vowels",
+      "phone": "ㅡ",
+      "label": "ㅡ 대응"
+    },
+    {
+      "id": "vowels.ui",
+      "parentId": "vowels",
+      "phone": "ㅢ",
+      "label": "ㅢ 대응"
+    },
+    {
+      "id": "vowels.i",
+      "parentId": "vowels",
+      "phone": "ㅣ",
+      "label": "ㅣ 대응"
+    },
+    {
+      "id": "plain_stops.g",
+      "parentId": "plain_stops",
+      "phone": "ㄱ",
+      "label": "ㄱ 대응"
+    },
+    {
+      "id": "plain_stops.d",
+      "parentId": "plain_stops",
+      "phone": "ㄷ",
+      "label": "ㄷ 대응"
+    },
+    {
+      "id": "plain_stops.b",
+      "parentId": "plain_stops",
+      "phone": "ㅂ",
+      "label": "ㅂ 대응"
+    },
+    {
+      "id": "tense_stops.gg",
+      "parentId": "tense_stops",
+      "phone": "ㄲ",
+      "label": "ㄲ 대응"
+    },
+    {
+      "id": "tense_stops.dd",
+      "parentId": "tense_stops",
+      "phone": "ㄸ",
+      "label": "ㄸ 대응"
+    },
+    {
+      "id": "tense_stops.bb",
+      "parentId": "tense_stops",
+      "phone": "ㅃ",
+      "label": "ㅃ 대응"
+    },
+    {
+      "id": "aspirated_stops.k",
+      "parentId": "aspirated_stops",
+      "phone": "ㅋ",
+      "label": "ㅋ 대응"
+    },
+    {
+      "id": "aspirated_stops.t",
+      "parentId": "aspirated_stops",
+      "phone": "ㅌ",
+      "label": "ㅌ 대응"
+    },
+    {
+      "id": "aspirated_stops.p",
+      "parentId": "aspirated_stops",
+      "phone": "ㅍ",
+      "label": "ㅍ 대응"
+    },
+    {
+      "id": "fricatives.s",
+      "parentId": "fricatives",
+      "phone": "ㅅ",
+      "label": "ㅅ 대응"
+    },
+    {
+      "id": "fricatives.ss",
+      "parentId": "fricatives",
+      "phone": "ㅆ",
+      "label": "ㅆ 대응"
+    },
+    {
+      "id": "fricatives.h",
+      "parentId": "fricatives",
+      "phone": "ㅎ",
+      "label": "ㅎ 대응"
+    },
+    {
+      "id": "affricates.j",
+      "parentId": "affricates",
+      "phone": "ㅈ",
+      "label": "ㅈ 대응"
+    },
+    {
+      "id": "affricates.jj",
+      "parentId": "affricates",
+      "phone": "ㅉ",
+      "label": "ㅉ 대응"
+    },
+    {
+      "id": "affricates.ch",
+      "parentId": "affricates",
+      "phone": "ㅊ",
+      "label": "ㅊ 대응"
+    },
+    {
+      "id": "nasals.n",
+      "parentId": "nasals",
+      "phone": "ㄴ",
+      "label": "ㄴ 대응"
+    },
+    {
+      "id": "nasals.m",
+      "parentId": "nasals",
+      "phone": "ㅁ",
+      "label": "ㅁ 대응"
+    },
+    {
+      "id": "nasals.ng",
+      "parentId": "nasals",
+      "phone": "ㅇ",
+      "label": "ㅇ 대응"
+    },
+    {
+      "id": "liquid.r",
+      "parentId": "liquid",
+      "phone": "ㄹ",
+      "label": "ㄹ 대응"
+    }
+  ],
+  "visualCriteria": [
+    {
+      "id": "lip.inner_aperture",
+      "parentId": "lip_shape",
+      "label": "안쪽 벌림",
+      "measurementKey": "inner_aperture_ratio",
+      "description": "안쪽 입술 벌림을 입 너비로 나눈 관측값입니다. 크다고 발음이 좋은 것은 아닙니다."
+    },
+    {
+      "id": "lip.outer_aperture",
+      "parentId": "lip_shape",
+      "label": "바깥쪽 벌림",
+      "measurementKey": "outer_aperture_ratio",
+      "description": "바깥쪽 입술 벌림을 입 너비로 나눈 관측값입니다. 음소별 비교 기준 검증 전에는 채점하지 않습니다."
+    },
+    {
+      "id": "lip.inner_area",
+      "parentId": "lip_shape",
+      "label": "안쪽 개구 면적",
+      "measurementKey": "inner_area_ratio",
+      "description": "안쪽 입술 개구 면적을 입 너비의 제곱으로 나눈 관측값입니다."
+    },
+    {
+      "id": "lip.outer_area",
+      "parentId": "lip_shape",
+      "label": "바깥 윤곽 면적",
+      "measurementKey": "outer_area_ratio",
+      "description": "바깥 입술 윤곽 면적을 입 너비의 제곱으로 나눈 관측값입니다."
+    },
+    {
+      "id": "lip.closure_extent",
+      "parentId": "lip_motion",
+      "label": "입술 닫힘 정도",
+      "measurementKey": null,
+      "description": "음소 문맥에 따른 닫힘 정도입니다. 추가 시계열 계측과 검증된 기준이 필요합니다."
+    },
+    {
+      "id": "lip.opening_transition",
+      "parentId": "lip_motion",
+      "label": "열림 전환",
+      "measurementKey": null,
+      "description": "문맥별 열림 방향과 변화량입니다. 시작·끝 구간 및 비교 기준이 필요합니다."
+    },
+    {
+      "id": "lip.closing_transition",
+      "parentId": "lip_motion",
+      "label": "닫힘 전환",
+      "measurementKey": null,
+      "description": "문맥별 닫힘 방향과 변화량입니다. 시작·끝 구간 및 비교 기준이 필요합니다."
+    },
+    {
+      "id": "lip.change_profile",
+      "parentId": "lip_motion",
+      "label": "움직임 변화율 패턴",
+      "measurementKey": null,
+      "description": "여러 프레임의 변화율 분포입니다. 현재 최대 변화율 하나만으로 채점하지 않습니다."
+    }
+  ],
+  "visualScoringEnabled": false
+}

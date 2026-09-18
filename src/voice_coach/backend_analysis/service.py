@@ -147,7 +147,12 @@ class BackendAnalysisWorker:
                     )
                 overall_score, scoring_evidence = (None, None)
                 if self._clova_scorer is not None:
-                    overall_score, scoring_evidence = self._clova_scorer.score(analysis)
+                    if getattr(self._clova_scorer, "rubric_revision", None) == "clova-phone-rubric-v3":
+                        overall_score, scoring_evidence = self._clova_scorer.score(
+                            analysis, video_requested=request.visual_input is not None,
+                            visual_supplement=visual_capture.supplement)
+                    else:
+                        overall_score, scoring_evidence = self._clova_scorer.score(analysis)
                 return AnalysisWorkerResult.completed(
                     overall_score=overall_score, scoring_evidence=scoring_evidence,
                     event_id=self._event_id_factory(),

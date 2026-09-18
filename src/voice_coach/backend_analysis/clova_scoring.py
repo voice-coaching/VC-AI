@@ -104,15 +104,22 @@ def criterion_level(row, rubric):
 
 
 class ClovaRubricScorer:
-    def __init__(self, *, endpoint, model_id, revision, timeout, repository_root):
+    def __init__(self, *, endpoint, model_id, revision, timeout, repository_root, rubric_revision=RUBRIC):
         self.endpoint = _completion_url(endpoint)
         self.model_id, self.revision, self.timeout = model_id, revision, timeout
         self.repository_root = repository_root
+        if rubric_revision not in {RUBRIC, "clova-phone-rubric-v3"}:
+            raise ValueError("unsupported scoring rubric")
+        self.rubric_revision = rubric_revision
 
-    def score(self, analysis):
+    def score(self, analysis, *, video_requested=False, visual_supplement=None):
         phase = "load_policy"
         diagnostic = {}
         try:
+            if self.rubric_revision == "clova-phone-rubric-v3":
+                phase = "hierarchy_scoring"
+                from .hierarchical_scoring import score_hierarchy
+                return score_hierarchy(self, analysis, video_requested=video_requested, visual_supplement=visual_supplement)
             system, rubric, rubric_digest, prompt_digest = load_scoring_prompt(self.repository_root)
             phase = "collect_evidence"
             counts, rows = detailed_evidence(analysis, rubric)
@@ -215,5 +222,10 @@ def load_clova_scorer(env, *, repository_root):
     timeout = float(env.get("AI_ANALYSIS_CLOVA_TIMEOUT_SECONDS", "180"))
     if not math.isfinite(timeout) or not 0 < timeout <= 300:
         raise ValueError("invalid scoring timeout")
+    rubric_revision = env.get("AI_ANALYSIS_CLOVA_RUBRIC_REVISION", RUBRIC)
+    # Validate the opt-in hierarchy before accepting jobs; preserve the v2 startup path.
+    if rubric_revision != RUBRIC:
+        load_scoring_prompt(repository_root, rubric_revision)
     return ClovaRubricScorer(endpoint=env.get("AI_ANALYSIS_CLOVA_ENDPOINT", "http://127.0.0.1:8000/v1"),
-        model_id=config["modelId"], revision=config["revision"], timeout=timeout, repository_root=repository_root)
+        model_id=config["modelId"], revision=config["revision"], timeout=timeout, repository_root=repository_root,
+        rubric_revision=rubric_revision)

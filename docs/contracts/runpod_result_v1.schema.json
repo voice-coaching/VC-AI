@@ -497,6 +497,9 @@
         },
         {
           "$ref": "#/$defs/scoringEvidenceV2"
+        },
+        {
+          "$ref": "#/$defs/scoringEvidenceV3"
         }
       ]
     },
@@ -700,6 +703,385 @@
                 ],
                 "minimum": 0,
                 "maximum": 4
+              }
+            }
+          }
+        }
+      }
+    },
+    "scoringEvidenceV3": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "rubricRevision",
+        "generator",
+        "modelRevision",
+        "evidenceSha256",
+        "expectedPhoneCount",
+        "alignedPhoneCount",
+        "correctPhoneCount",
+        "unflaggedPhoneCount",
+        "rubricSha256",
+        "promptSha256",
+        "criteria",
+        "phoneCriteria",
+        "visualObservation",
+        "attentionCriterionIds"
+      ],
+      "properties": {
+        "rubricRevision": {
+          "const": "clova-phone-rubric-v3"
+        },
+        "generator": {
+          "const": "hyperclova"
+        },
+        "modelRevision": {
+          "type": "string",
+          "pattern": "^[0-9a-f]{40}$"
+        },
+        "evidenceSha256": {
+          "$ref": "#/$defs/sha256"
+        },
+        "expectedPhoneCount": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 4096
+        },
+        "alignedPhoneCount": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 4096
+        },
+        "correctPhoneCount": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 4096
+        },
+        "unflaggedPhoneCount": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 4096
+        },
+        "rubricSha256": {
+          "$ref": "#/$defs/sha256"
+        },
+        "promptSha256": {
+          "$ref": "#/$defs/sha256"
+        },
+        "criteria": {
+          "type": "array",
+          "minItems": 9,
+          "maxItems": 9,
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+              "criterionId",
+              "sampleCount",
+              "matchedClear",
+              "matchedFlagged",
+              "substitutedClear",
+              "substitutedFlagged",
+              "deletedClear",
+              "deletedFlagged",
+              "level"
+            ],
+            "properties": {
+              "criterionId": {
+                "enum": [
+                  "vowels",
+                  "plain_stops",
+                  "tense_stops",
+                  "aspirated_stops",
+                  "fricatives",
+                  "affricates",
+                  "nasals",
+                  "liquid",
+                  "coverage"
+                ]
+              },
+              "sampleCount": {
+                "type": "integer",
+                "minimum": 0,
+                "maximum": 4096
+              },
+              "matchedClear": {
+                "type": "integer",
+                "minimum": 0,
+                "maximum": 4096
+              },
+              "matchedFlagged": {
+                "type": "integer",
+                "minimum": 0,
+                "maximum": 4096
+              },
+              "substitutedClear": {
+                "type": "integer",
+                "minimum": 0,
+                "maximum": 4096
+              },
+              "substitutedFlagged": {
+                "type": "integer",
+                "minimum": 0,
+                "maximum": 4096
+              },
+              "deletedClear": {
+                "type": "integer",
+                "minimum": 0,
+                "maximum": 4096
+              },
+              "deletedFlagged": {
+                "type": "integer",
+                "minimum": 0,
+                "maximum": 4096
+              },
+              "level": {
+                "type": [
+                  "integer",
+                  "null"
+                ],
+                "minimum": 0,
+                "maximum": 4
+              }
+            }
+          }
+        },
+        "phoneCriteria": {
+          "type": "array",
+          "minItems": 40,
+          "maxItems": 40,
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+              "criterionId",
+              "sampleCount",
+              "matchedClear",
+              "matchedFlagged",
+              "substitutedClear",
+              "substitutedFlagged",
+              "deletedClear",
+              "deletedFlagged",
+              "level"
+            ],
+            "properties": {
+              "criterionId": {
+                "enum": [
+                  "vowels.a",
+                  "vowels.ae",
+                  "vowels.ya",
+                  "vowels.yae",
+                  "vowels.eo",
+                  "vowels.e",
+                  "vowels.yeo",
+                  "vowels.ye",
+                  "vowels.o",
+                  "vowels.wa",
+                  "vowels.wae",
+                  "vowels.oe",
+                  "vowels.yo",
+                  "vowels.u",
+                  "vowels.wo",
+                  "vowels.we",
+                  "vowels.wi",
+                  "vowels.yu",
+                  "vowels.eu",
+                  "vowels.ui",
+                  "vowels.i",
+                  "plain_stops.g",
+                  "plain_stops.d",
+                  "plain_stops.b",
+                  "tense_stops.gg",
+                  "tense_stops.dd",
+                  "tense_stops.bb",
+                  "aspirated_stops.k",
+                  "aspirated_stops.t",
+                  "aspirated_stops.p",
+                  "fricatives.s",
+                  "fricatives.ss",
+                  "fricatives.h",
+                  "affricates.j",
+                  "affricates.jj",
+                  "affricates.ch",
+                  "nasals.n",
+                  "nasals.m",
+                  "nasals.ng",
+                  "liquid.r"
+                ]
+              },
+              "sampleCount": {
+                "type": "integer",
+                "minimum": 0,
+                "maximum": 4096
+              },
+              "matchedClear": {
+                "type": "integer",
+                "minimum": 0,
+                "maximum": 4096
+              },
+              "matchedFlagged": {
+                "type": "integer",
+                "minimum": 0,
+                "maximum": 4096
+              },
+              "substitutedClear": {
+                "type": "integer",
+                "minimum": 0,
+                "maximum": 4096
+              },
+              "substitutedFlagged": {
+                "type": "integer",
+                "minimum": 0,
+                "maximum": 4096
+              },
+              "deletedClear": {
+                "type": "integer",
+                "minimum": 0,
+                "maximum": 4096
+              },
+              "deletedFlagged": {
+                "type": "integer",
+                "minimum": 0,
+                "maximum": 4096
+              },
+              "level": {
+                "type": [
+                  "integer",
+                  "null"
+                ],
+                "minimum": 0,
+                "maximum": 4
+              }
+            }
+          }
+        },
+        "attentionCriterionIds": {
+          "type": "array",
+          "minItems": 0,
+          "maxItems": 3,
+          "uniqueItems": true,
+          "items": {
+            "enum": [
+              "vowels.a",
+              "vowels.ae",
+              "vowels.ya",
+              "vowels.yae",
+              "vowels.eo",
+              "vowels.e",
+              "vowels.yeo",
+              "vowels.ye",
+              "vowels.o",
+              "vowels.wa",
+              "vowels.wae",
+              "vowels.oe",
+              "vowels.yo",
+              "vowels.u",
+              "vowels.wo",
+              "vowels.we",
+              "vowels.wi",
+              "vowels.yu",
+              "vowels.eu",
+              "vowels.ui",
+              "vowels.i",
+              "plain_stops.g",
+              "plain_stops.d",
+              "plain_stops.b",
+              "tense_stops.gg",
+              "tense_stops.dd",
+              "tense_stops.bb",
+              "aspirated_stops.k",
+              "aspirated_stops.t",
+              "aspirated_stops.p",
+              "fricatives.s",
+              "fricatives.ss",
+              "fricatives.h",
+              "affricates.j",
+              "affricates.jj",
+              "affricates.ch",
+              "nasals.n",
+              "nasals.m",
+              "nasals.ng",
+              "liquid.r"
+            ]
+          }
+        },
+        "visualObservation": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "status",
+            "selectedExpectedIndex",
+            "videoStartMs",
+            "videoEndMs",
+            "supplementSha256",
+            "measurements"
+          ],
+          "properties": {
+            "status": {
+              "enum": [
+                "NOT_PROVIDED",
+                "UNAVAILABLE",
+                "NOT_VALIDATED"
+              ]
+            },
+            "selectedExpectedIndex": {
+              "type": [
+                "integer",
+                "null"
+              ],
+              "minimum": 0,
+              "maximum": 4095
+            },
+            "videoStartMs": {
+              "type": [
+                "integer",
+                "null"
+              ],
+              "minimum": 0,
+              "maximum": 180000
+            },
+            "videoEndMs": {
+              "type": [
+                "integer",
+                "null"
+              ],
+              "minimum": 1,
+              "maximum": 180000
+            },
+            "supplementSha256": {
+              "anyOf": [
+                {
+                  "$ref": "#/$defs/sha256"
+                },
+                {
+                  "type": "null"
+                }
+              ]
+            },
+            "measurements": {
+              "type": "object",
+              "additionalProperties": false,
+              "properties": {
+                "inner_aperture_ratio": {
+                  "type": "number",
+                  "minimum": 0,
+                  "maximum": 1000000
+                },
+                "outer_aperture_ratio": {
+                  "type": "number",
+                  "minimum": 0,
+                  "maximum": 1000000
+                },
+                "inner_area_ratio": {
+                  "type": "number",
+                  "minimum": 0,
+                  "maximum": 1000000
+                },
+                "outer_area_ratio": {
+                  "type": "number",
+                  "minimum": 0,
+                  "maximum": 1000000
+                }
               }
             }
           }
