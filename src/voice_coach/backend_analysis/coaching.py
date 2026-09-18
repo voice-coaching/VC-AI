@@ -60,7 +60,7 @@ def guidance_for(candidate, facts):
         action = "목표 소리를 짧게 이어 낸 뒤 뒤의 모음에 연결해 보세요. 숨이 이어지는 소리를 비교하되 이나 턱에 과하게 힘을 주지 마세요."
     return dict(guidanceId=f"practice-{phone}-{role or 'unknown'}", revision="basic-practice-v1",
         scope="GENERAL_TARGET_PRACTICE_NOT_PERSONAL_CAUSE", action=action,
-        practice=f"‘{word}’을 천천히 한 번, 자연스러운 속도로 한 번 말하고 문장 안에서 이어 말해 보세요.",
+        practice=f"‘{word}’ 부분을 천천히 한 번, 자연스러운 속도로 한 번 말하고 문장 안에서 이어 말해 보세요.",
         selfCheck=f"두 번 말한 ‘{word}’의 목표 소리가 유지되는지 같은 부분을 번갈아 들어 보세요. 분석 후보와 실제 들리는 소리가 다르면 오류로 단정하지 마세요.")
 
 
@@ -144,9 +144,12 @@ def render_document(source, view, generated, *, provider, fallback, prompt_diges
             claimScope=candidate["claimScope"]))
     limited = source["coverage"]["reviewOnlyPhoneCount"] > 0
     status = "READY" if items else "LIMITED_EVIDENCE" if limited else "NO_ACTIONABLE_ISSUE"
-    summary = ("확인할 소리를 짧게 연습하고 같은 단어를 다시 비교해 보세요." if items else
+    summary = (f"연습 항목 {len(items)}개를 안내합니다. 같은 단어를 짧게 연습하고 다시 비교해 보세요." if items else
                "정렬 근거가 불확실해 특정 소리를 잘못 발음했다고 판단하지 않았습니다." if limited else
                "평가 가능한 구간에서 우선 교정할 근거를 찾지 못했습니다. 전체 발음의 완벽함을 보증하는 결과는 아닙니다.")
+    if items and limited:
+        summary += (f" 기대 소리 {source['coverage']['expectedPhoneCount']}개 중 "
+                    f"{source['coverage']['reviewOnlyPhoneCount']}개는 정렬 등 근거가 불확실해 판단을 보류했습니다.")
     limitations = []
     if limited:
         limitations.append("정렬이 모호하거나 국소 근거가 없는 소리는 확정 오류와 점수에서 보류했습니다.")
@@ -196,10 +199,18 @@ class EvidenceBasedCoaching:
                 stage = "validation"
                 rows = validate_generated(result, view)
                 fallback = None
-            except Exception:
+            except Exception as error:
                 # No exception body, prompt, media or secret in the log. Never
                 # restore legacy uncertain selected-phone advice on failure.
                 fallback = {"packing": "INPUT_BUDGET", "generation": "GENERATION_FAILED", "validation": "OUTPUT_REJECTED"}[stage]
+                # Stable local validator codes only; never log provider bodies.
+                reason = str(error) if type(error) is ValueError else "unclassified"
+                if reason not in {"coaching_output_shape", "coaching_output_count", "coaching_item_shape",
+                                  "coaching_item_binding", "coaching_text_invalid", "coaching_unsupported_text",
+                                  "coaching_candidate_coverage"}:
+                    reason = "unclassified"
+                LOG.warning("coaching_fallback analysis=%s request=%s stage=%s reason=%s",
+                            request.analysis_id, request.event_id, stage, reason)
                 rows = template_rows(view)
         result = render_document(source, view, rows, provider=provider,
                                  fallback=fallback, prompt_digest=self.prompt_digest)

@@ -600,10 +600,22 @@ class ProductionVisualSidecarAdapter:
                     "closed-beta landmark evidence is unavailable"
                 )
             start_ms, end_ms = self._mapped_phone_span(resolved)
+            # Candidate geometry stores integer milliseconds, but the decoder
+            # retains microsecond presentation times. Flooring 966.667 ms to
+            # 966 must not admit a frame beyond a phone span ending at 966 ms.
+            exact_times = {
+                timestamp_us // 1_000: timestamp_us
+                for timestamp_us in resolved.phone_window.decode_receipt.decoded_timestamps_us
+            }
+
+            def inside_phone(frame):
+                timestamp_us = exact_times.get(frame.timestamp_ms)
+                return timestamp_us is not None and start_ms * 1_000 <= timestamp_us <= end_ms * 1_000
+
             selected_candidate_frames = tuple(
                 frame
                 for frame in landmarks.candidate_frames
-                if start_ms <= frame.timestamp_ms <= end_ms
+                if inside_phone(frame)
             )
             if not selected_candidate_frames:
                 raise P6LipTrajectoryError("p6_trajectory_frames_missing")
@@ -623,7 +635,7 @@ class ProductionVisualSidecarAdapter:
             selected_frames = tuple(
                 frame
                 for frame in trajectory.frames
-                if start_ms <= frame.timestamp_ms <= end_ms
+                if inside_phone(frame)
             )
             visible_shapes = tuple(
                 frame.visible_shape
