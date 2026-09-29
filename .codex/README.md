@@ -11,6 +11,8 @@
 
 상세 설계·실행 이력은 루트 `docs/`, 기동·복원 절차는 [deploy/runpod](../deploy/runpod/README.md), 실제 동작은 해당 revision의 소스가 정본이다. 안내에 DTO·제안값·코드 상수를 중복 기재하지 않는다.
 
+현재 배포 흐름·GPT provider·전문가 사례·영상 관찰·점수 계약은 [2026-09-28 실제 배포 파이프라인](../docs/runpod_deployed_pipeline_20260928.md)에 관측 시각과 파일 hash를 함께 기록했다. Clova/Redis 시기의 문서와 소스가 checkout에 남아 있으므로 현재 상태는 이 관측과 대상 Pod에서 재확인한다. 과거 배포 절차는 [Clova 이력](../deploy/runpod/README.legacy-clova.md)으로 분리했다.
+
 로컬 관측은 선택 자료인 `.codex/local/state.json`, 과거 이력은 `.codex/local/history.md`에 둔다. 다른 clone에는 없을 수 있다. 없으면 미확인으로 취급하고 현재 작업에 필요한 경우에만 조회한다. 기존 `session-state.md`는 위치 안내만 남긴다.
 
 상태 기록은 자동 갱신되지 않는다. 각 관측의 대상, 원본 시각, source, lastObserved, lastCheck, 코드/배포 revision, evidence를 유지한다. 조회 실패를 이전 성공으로 덮어쓰지 않고 모르는 시각·revision은 null로 둔다. [상세 형식·개정 기록](../docs/codex_document_revision_plan_20260910.md)을 따른다.

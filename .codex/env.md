@@ -10,9 +10,10 @@
 | 외부 수집·배치 | `B2_*_PREFIX`, `RUNPOD_EXTERNAL_CACHE_*`는 후속 수집기 연결용 제안. 인증 자체의 필수값은 아님 |
 | RunPod 관리 API | 별도 관리 키를 현재 요청 프로세스에 주입. SSH/분석 서버/B2 키와 구분 |
 | SSH | 해당 PC의 private key와 Pod에 등록한 public key. 경로와 현재 주소를 [접속 안내](runpod.md)로 확인 |
-| 기존 Redis worker | [worker.env.example](../deploy/runpod/worker.env.example)과 [기존 배포 복원](../deploy/runpod/README.md#기존-redis-worker-비밀-설정과-재부팅-복원) |
+| 과거 Redis worker | [worker.env.example](../deploy/runpod/worker.env.example)과 [과거 배포 복원](../deploy/runpod/README.legacy-clova.md#기존-redis-worker-비밀-설정과-재부팅-복원). 현재 HTTP 운영 설정으로 적용하지 않음 |
 | 사용자 녹음 저장소 | intelligentAI의 `AI_ANALYSIS_OBJECT_STORAGE_*`/AWS credential chain, VC-BE의 `OBJECT_STORAGE_*`. 같은 canonical 객체의 역할별 접근 확인 |
-| 새 HTTP 서버·callback | 변수 이름·방향·transport는 [HTTP 계획](../docs/runpod_http_callback_revision_plan_20260910.md)의 제안. 양쪽 parser와 기동 구성을 함께 변경해야 함 |
+| HTTP 서버·callback | [현재 배포 안내](../deploy/runpod/README.md)와 실제 배포 parser를 대조. 별도 양방향 서버 토큰과 저장소 설정 |
+| GPT 코칭 | `OPENAI_API_KEY`와 `AI_ANALYSIS_COACHING_*`. 실제 provider/model과 필수값은 [배포 파이프라인](../docs/runpod_deployed_pipeline_20260928.md) 참조. RunPod 관리 키와 구분 |
 
 B2 Master Native Key는 S3/AWS credential로 사용하지 않는다. 자세한 모드 구분은 [B2 안내](backblaze.md)에 있다. [S3 adapter](../src/voice_coach/backend_analysis/adapters/s3_object_store.py)와 서비스가 실제 읽는 설정을 대조하고 키 파일 전체를 다른 역할에 공유하지 않는다.
 
@@ -27,6 +28,8 @@ B2 Master Native Key는 S3/AWS credential로 사용하지 않는다. 자세한 �
 | Pod `/root/.config/intelligentai/.env` | B2 수집용 사본 위치. 부모 0700·파일 0600, 현재 존재는 별도 확인 |
 | Pod `/root/.config/intelligentai/analysis-worker.env` | 기존 worker의 비공개 source. 복원 공급원은 배포 안내 참조 |
 | Pod `/run/intelligentai/analysis-worker.env` | 기존 준비 스크립트가 만드는 실행용 파일 |
+| Pod `/root/.config/intelligentai/analysis-http.env` | 현재 HTTP/GPT의 root 전용 source. 비공개 JSON 주입이 있으면 준비 코드의 우선순위 확인 |
+| Pod `/run/intelligentai/analysis-http.env` | 현재 HTTP 준비 단계가 검증 후 생성하는 실행용 파일. Clova 설정은 제거됨 |
 
 PC 사본의 현재 ACL을 확인한다. 공유 `/workspace`의 권한 제한 이력은 [배치 기록](../docs/backblaze_external_data_plan_20260909.md)에 있으며 비밀파일은 공유 볼륨·overlay·일반 복구 archive에 넣지 않는다. `/root`·`/run`은 컨테이너 재생성 시 사라질 수 있다.
 

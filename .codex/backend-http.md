@@ -2,6 +2,8 @@
 
 작업 경계는 [AGENTS.md](../AGENTS.md), 상세 계약과 설계 제안은 [HTTP 수정 계획](../docs/runpod_http_callback_revision_plan_20260910.md)을 따른다. 이 안내는 운영 API 구현 완료 기록이 아니다.
 
+2026-09-28 실제 배포는 HTTP + GPT-only 코칭이다. [배포 관측](../docs/runpod_deployed_pipeline_20260928.md)의 제어 v1.1·완료 coaching 결과 v3·null 점수와 실제 Pod 코드를 우선 대조한다. 로컬 HEAD가 배포보다 오래될 수 있으며 아래 로컬 파일만으로 현재 provider를 판단하지 않는다.
+
 ## 시작할 때
 
 1. 평가·계획·구현·배포 요청을 구분하고 두 저장소의 remote·대상 브랜치·HEAD·미커밋 변경을 확인한다. 원격 브랜치 검토가 필요하면 fetch한 SHA를 기록한다.
@@ -17,9 +19,9 @@
 | VC-BE | outbox dispatcher, timeout sweeper, cancellation dispatcher | 전송 설정에 작업 수명 기능이 묶이는지 |
 | VC-BE | `AnalysisWorkerResult`, `AnalysisResultIngestionService`, `SecurityConfig` | 결과 의미·중복/늦은 실행 처리·저장·서버 인증 |
 | intelligentAI | [domain.py](../src/voice_coach/backend_analysis/domain.py), [ports.py](../src/voice_coach/backend_analysis/ports.py), [service.py](../src/voice_coach/backend_analysis/service.py) | HTTP 입력과 공통 분석 입력의 분리 |
-| intelligentAI | [production.py](../src/voice_coach/backend_analysis/production.py), [grounded_feedback.py](../src/voice_coach/backend_analysis/grounded_feedback.py) | Seungun 한 번의 결과를 입술·Clova가 재사용하는 연결 |
+| intelligentAI | 배포된 `production.py`, `coaching_evidence.py`, `coaching.py`, `coaching_generator.py`, `expert_examples.py` | Seungun 한 번의 전체 결과 → 최대 3개 후보·입술 관찰 → GPT 코칭. 과거 `grounded_feedback.py`는 현재 조립 경로가 아님 |
 | 입력 파일 | [s3_object_store.py](../src/voice_coach/backend_analysis/adapters/s3_object_store.py) | 역할별 저장소 설정·조건부 읽기·크기/MIME/SHA 검증·정리 |
-| 배포 | [prepare_worker.py](../deploy/runpod/prepare_worker.py), [deployment_attestation.py](../src/voice_coach/backend_analysis/deployment_attestation.py), [services.json](../deploy/runpod/services.json) | 입력 parser와 실제 기동 의존성 일치 |
+| 배포 | 배포된 `prepare_http.py`, `deployment_attestation.py`, `services.http.json` | GPT 필수 설정·artifact attestation·api 단독 supervisor 구성. 로컬 파일의 revision 차이 확인 |
 
 기존 Redis parser가 요구하는 grant를 가짜 값으로 채우지 않는다. HTTP 전용 입력과 공통 코어를 분리하면서 기존 모델·자산·배포 revision 검증을 유지한다. 과거 Redis/HMAC 복구 설명은 [기존 배포 안내](../deploy/runpod/README.md)의 해당 절에만 적용한다.
 
