@@ -16,7 +16,6 @@ import subprocess
 
 WORKSPACE = Path("/workspace/intelligentai")
 RUNTIME = Path("/opt/intelligentai")
-REVISION = "a6cdfd3464d1b767259cad23e164eaf39d3e3960"
 
 
 def main() -> None:
@@ -27,7 +26,7 @@ def main() -> None:
         raise SystemExit("Unexpected release location")
     RUNTIME.mkdir(mode=0o750, exist_ok=True)
     (RUNTIME / "envs").mkdir(mode=0o750, exist_ok=True)
-    for name in ("api", "g2pk", "scorer", "hyperclova"):
+    for name in ("api", "g2pk", "scorer"):
         subprocess.run(
             ["rsync", "-a", str(WORKSPACE / "envs" / name) + "/",
              str(RUNTIME / "envs" / name) + "/"], check=True,
@@ -62,7 +61,7 @@ def main() -> None:
             if target.is_symlink():
                 raise SystemExit("Unexpected overlay destination symlink")
             target.write_bytes(content)
-    if os.environ.get("AI_ANALYSIS_TRANSPORT") == "runpod_http":
+    if os.environ.get("AI_ANALYSIS_TRANSPORT", "runpod_http") == "runpod_http":
         subprocess.run(["python3", "-m", "pip", "install", "--no-index", "--require-hashes",
             "--upgrade", "--target", str(RUNTIME / "http-python"),
             "--find-links", str(WORKSPACE / "deployment/http-dependencies-v1_1"),
@@ -99,11 +98,6 @@ def main() -> None:
                 executable = bool(path.stat().st_mode & stat.S_IXUSR)
                 os.chown(path, 0, 10001)
                 path.chmod(0o750 if executable else 0o640)
-    config = json.loads((app / "configs/pronunciation_feedback/hyperclovax_seed_think_32b_v1.json").read_text())
-    config["localDirectory"] = str(source / "data/models/hyperclovax-seed-think-32b" / REVISION)
-    config_file = RUNTIME / "hyperclova-runtime.json"
-    config_file.write_text(json.dumps(config, indent=2) + "\n")
-    config_file.chmod(0o640)
     visual_release = app / "artifacts/visual_feedback/releases/production_visual"
     if visual_release.is_dir():
         # This loader requires immutable group-readable files, not general 0640.
@@ -129,7 +123,7 @@ def main() -> None:
     }, sort_keys=True) + "\n")
     os.chown(deployment, 0, 10001)
     deployment.chmod(0o640)
-    mode = os.environ.get("AI_ANALYSIS_TRANSPORT", "redis_stream")
+    mode = os.environ.get("AI_ANALYSIS_TRANSPORT", "runpod_http")
     if mode not in {"runpod_http", "redis_stream", "disabled"}:
         raise SystemExit("analysis_transport_invalid")
     worker_preparation = app / ("deploy/runpod/prepare_http.py" if mode == "runpod_http"

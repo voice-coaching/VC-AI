@@ -72,15 +72,20 @@ def prepare_view(source, count):
     return view
 
 
-def messages_for(system, view):
-    return [dict(role="system", content=system), dict(role="user", content=json.dumps(
-        view, ensure_ascii=False, separators=(",", ":"), allow_nan=False))]
+def messages_for(system, view, expert_examples=None):
+    messages = [dict(role="system", content=system)]
+    if expert_examples is not None:
+        messages.append(expert_examples.message())
+    messages.append(dict(role="user", content=json.dumps(
+        dict(currentAttempt=view) if expert_examples is not None else view,
+        ensure_ascii=False, separators=(",", ":"), allow_nan=False)))
+    return messages
 
 
-def pack(source, system, generator):
+def pack(source, system, generator, expert_examples=None):
     for count in range(min(3, len(source["candidates"])), -1, -1):
         view = prepare_view(source, count)
-        messages = messages_for(system, view)
+        messages = messages_for(system, view, expert_examples)
         if generator.count_tokens(messages) <= generator.maximum_input_tokens:
             if source["candidates"] and count == 0:
                 raise ValueError("coaching_mandatory_candidate_exceeds_budget")
@@ -167,9 +172,15 @@ def render_document(source, view, generated, *, provider, fallback, prompt_diges
 
 
 class EvidenceBasedCoaching:
-    def __init__(self, root, generator=None):
+    def __init__(self, root, generator=None, *, expert_examples=None):
         self.system, self.prompt_digest = load_prompt(root)
         self.generator = generator
+        self.expert_examples = expert_examples
+        if expert_examples is not None:
+            from .expert_examples import INSTRUCTIONS
+            self.system += "\n" + INSTRUCTIONS
+            self.prompt_digest = hashlib.sha256(
+                (self.system + "\n" + expert_examples.sha256).encode()).hexdigest()
         # Uvicorn configures its own loggers; an unconfigured root would drop
         # this logger's INFO events. Install one secret-free, UTC stage stream.
         if not LOG.handlers:
@@ -179,6 +190,10 @@ class EvidenceBasedCoaching:
             handler.setFormatter(formatter)
             LOG.addHandler(handler)
             LOG.propagate = False
+        if expert_examples is not None:
+            LOG.info("coaching_expert_examples_loaded revision=%s sha256=%s cases=%s input_budget=%s",
+                     expert_examples.revision, expert_examples.sha256,
+                     ",".join(expert_examples.case_ids), generator.maximum_input_tokens if generator else None)
 
     def render(self, *, request, analysis, visual_state="NOT_PROVIDED", visual_observations=()):
         started = time.monotonic()
@@ -193,7 +208,11 @@ class EvidenceBasedCoaching:
         elif self.generator:
             stage = "packing"
             try:
-                view, messages = pack(source, self.system, self.generator)
+                view, messages = pack(source, self.system, self.generator, self.expert_examples)
+                if self.expert_examples is not None:
+                    LOG.info("coaching_expert_retrieval analysis=%s request=%s revision=%s sha256=%s cases=%s policy=ALL_CASES_EVERY_GENERATION",
+                             request.analysis_id, request.event_id, self.expert_examples.revision,
+                             self.expert_examples.sha256, ",".join(self.expert_examples.case_ids))
                 stage = "generation"
                 result = self.generator.generate(messages, analysis_id=request.analysis_id, request_id=str(request.event_id))
                 stage = "validation"

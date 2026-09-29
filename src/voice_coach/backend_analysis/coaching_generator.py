@@ -9,13 +9,23 @@ from pathlib import Path
 from urllib.error import HTTPError
 from urllib.request import Request, build_opener, HTTPRedirectHandler
 
-from voice_coach.pronunciation_feedback.adapters.advice_generator_hyperclova import (
-    _completion_url, _completion_content, OfflineChatTokenCounter,
-)
-from .clova_scoring import _strict_json
 from .coaching import EvidenceBasedCoaching
+from .expert_examples import ExpertCoachingExamples
 
 LOG = logging.getLogger("voice_coach.coaching")
+
+
+def _strict_json(raw):
+    def pairs(items):
+        result = {}
+        for key, value in items:
+            if key in result:
+                raise ValueError("duplicate_json_key")
+            result[key] = value
+        return result
+    def constant(_):
+        raise ValueError("non_finite_json")
+    return json.loads(raw, object_pairs_hook=pairs, parse_constant=constant)
 
 
 def _usage_count(document, name):
@@ -32,18 +42,13 @@ class _NoRedirect(HTTPRedirectHandler):
 class ChatCoachingGenerator:
     def __init__(self, *, provider, model, endpoint, revision=None, api_key=None,
                  counter=None, timeout=120, maximum_input_tokens=3900, maximum_output_tokens=1200):
-        if provider not in {"CLOVA", "OPENAI"} or not model or not math.isfinite(timeout) or not 0 < timeout <= 300:
+        if provider != "OPENAI" or model != "gpt-6-astra" or not math.isfinite(timeout) or not 0 < timeout <= 300:
             raise ValueError("coaching_provider_invalid")
         if not 1 <= maximum_input_tokens <= 100000 or not 256 <= maximum_output_tokens <= 8192:
             raise ValueError("coaching_limits_invalid")
-        if provider == "CLOVA":
-            self.endpoint = _completion_url(endpoint)
-            if not revision or counter is None or maximum_output_tokens > 2048:
-                raise ValueError("coaching_clova_pin_or_tokenizer_missing")
-        else:
-            if endpoint != "https://api.openai.com/v1/chat/completions" or not api_key:
-                raise ValueError("coaching_openai_configuration_invalid")
-            self.endpoint = endpoint
+        if endpoint != "https://api.openai.com/v1/chat/completions" or not api_key:
+            raise ValueError("coaching_openai_configuration_invalid")
+        self.endpoint = endpoint
         self.provider, self.model, self.revision = provider, model, revision
         self._api_key, self.counter, self.timeout = api_key, counter, timeout
         self.maximum_input_tokens = maximum_input_tokens
@@ -60,13 +65,9 @@ class ChatCoachingGenerator:
         started = time.monotonic()
         headers = {"Content-Type": "application/json"}
         body = dict(model=self.model, messages=messages)
-        if self.provider == "CLOVA":
-            body.update(max_tokens=self.maximum_output_tokens, temperature=0,
-                        chat_template_kwargs={"thinking": False})
-        else:
-            headers["Authorization"] = "Bearer " + self._api_key
-            body.update(max_completion_tokens=self.maximum_output_tokens, reasoning_effort="low",
-                        response_format={"type": "json_object"}, store=False)
+        headers["Authorization"] = "Bearer " + self._api_key
+        body.update(max_completion_tokens=self.maximum_output_tokens, reasoning_effort="low",
+                    response_format={"type": "json_object"}, store=False)
         request = Request(self.endpoint, data=json.dumps(body, ensure_ascii=False, allow_nan=False).encode(),
                           headers=headers, method="POST")
         try:
@@ -85,43 +86,34 @@ class ChatCoachingGenerator:
             analysis_id, request_id, self.provider,
             finish if finish in {"stop", "length", "content_filter", "tool_calls"} else "unknown",
             _usage_count(document, "prompt_tokens"), _usage_count(document, "completion_tokens"),
-            "clova_checkpoint" if self.counter else "utf8_conservative_bound", round((time.monotonic()-started)*1000))
+            "utf8_conservative_bound", round((time.monotonic()-started)*1000))
         if choice.get("finish_reason") != "stop" or choice["message"].get("refusal"):
             raise ValueError("coaching_incomplete_or_refused")
-        if self.provider == "CLOVA":
-            content = _completion_content(document, expected_model=self.model, expected_revision=self.revision)
-        else:
-            returned = document.get("model", "")
-            if returned != self.model and not returned.startswith(self.model + "-"):
-                raise ValueError("coaching_model_identity_mismatch")
-            content = choice["message"]["content"]
+        returned = document.get("model", "")
+        if returned != self.model and not returned.startswith(self.model + "-"):
+            raise ValueError("coaching_model_identity_mismatch")
+        content = choice["message"]["content"]
         return _strict_json(content)
 
 
+def openai_configuration(environment):
+    if (environment.get("AI_ANALYSIS_COACHING_ENABLED") != "true"
+            or environment.get("AI_ANALYSIS_COACHING_RESULT_CONTRACT") != "v3"
+            or environment.get("AI_ANALYSIS_COACHING_PROVIDER") != "OPENAI"
+            or environment.get("AI_ANALYSIS_COACHING_OPENAI_MODEL") != "gpt-6-astra"
+            or not environment.get("OPENAI_API_KEY", "").strip()):
+        raise ValueError("coaching_openai_configuration_invalid")
+    return environment["OPENAI_API_KEY"]
+
+
 def load_coaching(environment, *, repository_root):
-    enabled = environment.get("AI_ANALYSIS_COACHING_ENABLED", "false")
-    if enabled == "false":
-        return None
-    if enabled != "true" or environment.get("AI_ANALYSIS_COACHING_RESULT_CONTRACT") != "v3":
-        raise ValueError("coaching_requires_explicit_v3_reader_rollout")
-    provider = environment.get("AI_ANALYSIS_COACHING_PROVIDER", "CLOVA")
-    if provider == "TEMPLATE":
-        return EvidenceBasedCoaching(repository_root)
-    args = dict(provider=provider,
+    api_key = openai_configuration(environment)
+    generator = ChatCoachingGenerator(
+        provider="OPENAI", model="gpt-6-astra",
+        endpoint="https://api.openai.com/v1/chat/completions", api_key=api_key,
         timeout=float(environment.get("AI_ANALYSIS_COACHING_TIMEOUT_SECONDS", "120")),
-        maximum_input_tokens=int(environment.get("AI_ANALYSIS_COACHING_INPUT_TOKENS", "3900" if provider == "CLOVA" else "16000")),
+        maximum_input_tokens=int(environment.get("AI_ANALYSIS_COACHING_INPUT_TOKENS", "16000")),
         maximum_output_tokens=int(environment.get("AI_ANALYSIS_COACHING_OUTPUT_TOKENS", "1200")))
-    if provider == "CLOVA":
-        identity = json.loads((repository_root / "configs/pronunciation_feedback/hyperclovax_seed_think_32b_v1.json").read_text(encoding="utf-8"))
-        tokenizer = Path(environment["AI_ANALYSIS_CLOVA_TOKENIZER_PATH"])
-        if tokenizer.name != identity["revision"] or not (tokenizer / "tokenizer.json").is_file():
-            raise ValueError("coaching_tokenizer_pin_mismatch")
-        args.update(model=identity["modelId"], revision=identity["revision"],
-            endpoint=environment.get("AI_ANALYSIS_CLOVA_ENDPOINT", "http://127.0.0.1:8000/v1"),
-            counter=OfflineChatTokenCounter(tokenizer))
-    elif provider == "OPENAI":
-        args.update(model=environment["AI_ANALYSIS_COACHING_OPENAI_MODEL"],
-            endpoint="https://api.openai.com/v1/chat/completions", api_key=environment["OPENAI_API_KEY"])
-    else:
-        raise ValueError("coaching_provider_invalid")
-    return EvidenceBasedCoaching(repository_root, ChatCoachingGenerator(**args))
+    examples = ExpertCoachingExamples(repository_root)
+    examples.reserve_for(generator)
+    return EvidenceBasedCoaching(repository_root, generator, expert_examples=examples)
