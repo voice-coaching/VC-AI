@@ -38,8 +38,10 @@
 
 ## 자동 배포 설정과 확인 범위
 
-GitHub Actions에 `RUNPOD_API_KEY`, `RUNPOD_SSH_PRIVATE_KEY`, `RUNPOD_SSH_HOST_KEY` Secrets와 `RUNPOD_POD_ID` 변수를 등록했다. 사용자 PC의 개인키 대신 새 배포 전용 키를 생성했으며 Pod에는 공개키만 추가했다. 기존 SSH 접근은 보존했다. 현재 컨테이너의 공개키 등록과 향후 컨테이너 재생성 후 유지 여부는 별개다.
+GitHub Actions에 `RUNPOD_API_KEY`, `RUNPOD_SSH_PRIVATE_KEY`, `RUNPOD_SSH_HOST_KEY` Secrets와 `RUNPOD_POD_ID` 변수를 등록했다. 사용자 PC의 개인키 대신 새 배포 전용 키를 생성했으며 Pod에는 공개키만 추가했다. 기존 SSH 접근은 보존했다. 별도 승인 후 Pod의 `PUBLIC_KEY`에도 기존 공개키들과 병합했고, 컨테이너 재생성 후 배포 공개키가 복원됐음을 확인했다. 재생성된 SSH 호스트 키는 신뢰된 접속으로 확인해 GitHub Secret을 갱신했다. 향후 Pod 재생성으로 호스트 키가 바뀌면 동일한 갱신이 필요하며 자동으로 미확인 호스트 키를 신뢰하지 않는다.
 
 [자동 배포 안내](../deploy/runpod/GITHUB_ACTIONS.md)의 수동 실행에서 `check_only=true`를 선택하면 API 대상 확인과 고정 호스트 키를 사용하는 root SSH 접속만 확인한다. 소스 적용·서비스 재시작·모델 추론·회귀 QA는 하지 않는다. 정상 배포는 `check_only=false`이고 `main` push도 이 경로를 사용한다.
 
-이번 조사에서 OpenAI 키는 저장·실행 환경 주입, `bootstrap=true`까지 확인했다. 분석 readiness는 여전히 `503 / http_settings_incomplete_or_invalid`이며 위 저장소·readiness 항목이 현재 실행 설정에 없다. AWS 자격증명의 지속 환경 복원은 자동 승인 심사에서 별도 승인을 요구하여 대기 중이다. 따라서 파일 발견·Secrets 등록·소스 게시를 실제 배포 완료나 서비스 정상화로 표현하지 않는다.
+OpenAI 키는 저장·실행 환경 주입, `bootstrap=true`까지 확인했다. 저장소 설정 복원 전에는 `503 / http_settings_incomplete_or_invalid`였다. AWS 자격증명의 지속 환경 복원은 자동 승인 심사의 별도 승인 요청 후 사용자에게 명시 승인을 받아 실행했고, API PATCH 200 및 저장 항목 존재를 확인했다. 파일 발견·Secrets 등록·소스 게시와 실제 서비스 readiness·코드 배포는 별도로 확인한다.
+
+2026-09-29 [GitHub Actions 연결 확인 실행](https://github.com/voice-coaching/intelligentAI/actions/runs/36546717155)은 성공했다. 앞선 연결 확인에서 Python 기본 User-Agent로 RunPod API가 403을 반환하여 식별자 `intelligentai-deployment/1.0`을 명시했고, 수정 후 API·SSH 접근을 검증했다. 이 실행은 `check_only=true`이므로 소스 배포나 readiness 검증을 수행한 결과는 아니다.
