@@ -2,7 +2,7 @@
 
 [목차](README.md) · [설정·계약](contracts-and-limits.md) · [배포 근거](deployment-evidence.md)
 
-경로의 기준은 Pod `/opt/intelligentai/app`이다. 아래 로컬 소스 링크는 탐색 편의용이며, 배포 사실의 기준은 관측한 실행 사본과 [해시 목록](deployment-evidence.md)이다. 특히 로컬 `production.py`는 배포본과 다르다.
+2026-09-30 01:38~01:44 KST 재조사, 배포 revision `32d98e3` 기준이다. 경로의 기준은 Pod `/opt/intelligentai/app`이다. 아래 로컬 소스 링크는 탐색 편의용이며, 배포 사실의 기준은 관측한 실행 사본과 [해시 목록](deployment-evidence.md)이다. 특히 로컬 `production.py`는 배포본과 다르다.
 
 ## 1. 실제 진입 경로
 
@@ -11,7 +11,7 @@
 3. 현재 coaching이 활성화되어 있으므로 [adapters/visual.py](../../src/voice_coach/backend_analysis/adapters/visual.py)의 `analyze_coaching_observations`를 사용한다. 같은 파일의 `analyze_with_grounded_evidence`나 옛 단일 선택 음소 경로를 현재 호출로 혼동하지 않는다.
 4. [composition.py](../../src/voice_coach/pronunciation_attempts/composition.py)의 `build_local_video_attempt_facade`가 구체 adapter들을 조립한다.
 5. [video_attempt_facade.py](../../src/voice_coach/pronunciation_attempts/services/video_attempt_facade.py)의 `run_http_observations`가 후보별 `_run_visual_stages`를 실행한다.
-6. 결과를 aggregate 관찰 배열로 투영하여 코칭 입력에 넣는다. GPT는 원본 영상이나 랜드마크 좌표 배열을 이 현재 시도 경로로 받지 않는다.
+6. 내부 측정 영수증에 실제 사용 프레임·표본 수·집계·후보 식별자를 보존한다. `coaching_visual_policy.py`가 결속과 측정을 검증한 뒤 private GPT view로 투영한다. 공개 `coaching.visual` v1 투영은 별도다. GPT는 원본 영상이나 랜드마크 좌표 배열을 이 현재 시도 경로로 받지 않는다.
 
 현재는 `http_admitted=True`다. HTTP 서버 인증, claim 및 저장소 무결성 검사 후 들어오는 내부 호출이며, public 영상 분석 endpoint가 별도로 생기는 것은 아니다. 옛 `_GrantConsentAuthority`와 동의 receipt가 코드에 남아 있어도 현재 Backend–RunPod HTTP에 요청별 grant·서명을 요구한다는 뜻은 아니다.
 
@@ -29,7 +29,7 @@
 
 ## 3. 미디어 수용과 동일 시도 확인
 
-저장소에서 materialize한 영상의 SHA-256이 요청값과 같아야 한다. request ID, execution ID, 음성·영상 SHA, 코칭 정책으로 attempt digest를 구성한다.
+저장소에서 materialize한 음성·영상의 SHA-256이 각각 요청값과 같아야 한다. request ID, execution ID, 음성·영상 SHA, 코칭 정책으로 attempt digest를 구성한다.
 
 `run_http_observations`는 영상을 제한 workspace에 수용한 후 ffprobe 검사, 내장 음성 추출, trusted prompt 조회를 한 번씩 수행한다. `_PrecomputedSeungun.analyze`는 기존 분석의 기대 음소열과 영상에서 추출한 PCM의 SHA-256을 대조하여 이미 계산된 Seungun 근거를 반환한다. **단순히 같은 파일명이나 비슷한 녹음이라는 이유로 결합하지 않는다.**
 
@@ -80,7 +80,7 @@ decode receipt는 마이크로초 PTS와 RGB digest를 보존한다. 공개 `dec
 lip_aperture_ratio = (lower_lip_y - upper_lip_y) / (right_corner_x - left_corner_x)
 ```
 
-[production_visual_sidecar.py](../../src/voice_coach/pronunciation_attempts/adapters/production_visual_sidecar.py)의 `_center_cue`는 dense window 중 매핑된 음소 구간 중심에 가장 가까운 프레임 하나를 선택한다. 동률이면 이른 프레임이다. 이는 창 전체의 평균이 아니다. 중심에 가까운 프레임이라도 padding 구간에 위치할 수 있으므로, 출력 구간과 실제 프레임 시각을 동일시하지 않는다.
+[production_visual_sidecar.py](../../src/voice_coach/pronunciation_attempts/adapters/production_visual_sidecar.py)의 `_center_cue`는 dense window 중 매핑된 음소 구간 중심에 가장 가까운 프레임 하나를 선택한다. 동률이면 이른 프레임이다. 이는 창 전체의 평균이 아니다. P0/P1은 실제 선택 시각과 구간 내부 여부를 보존하며, 선택 프레임이 padding에만 있으면 유효 관찰로 승격하지 않는다.
 
 ### Closed-beta 40점 → 24점 형상
 
@@ -104,7 +104,7 @@ inner: 78, 80, 82, 13, 312, 310, 308, 318, 317, 14, 87, 88
 | `corner_height_asymmetry_ratio` | 양 입꼬리 y 차이의 절댓값 / 입 너비 |
 | `shape_change_rate_per_second` | 인접 유효 프레임의 정규화 24점 RMS 변위 / 시간 차 |
 
-sidecar는 **정확한 음소 구간 내부**의 유효 형상만 정적 평균에 사용하고 변화율은 해당 구간에서 최대값을 사용한다. 첫 구간 프레임의 변화율에는 직전 padding 프레임이 쓰일 수 있다. 마이크로초 PTS로 경계를 검사하여 밀리초 내림 때문에 바깥 프레임이 섞이는 것을 방지한다. 구간 내부 프레임이 없으면 이 추가 형상은 unavailable이며, 기본 중심 프레임 관찰과 가용성이 다를 수 있다.
+sidecar는 **정확한 음소 구간 내부**의 유효 형상만 정적 평균에 사용하고 변화율은 해당 구간에서 최대값을 사용한다. 첫 구간 프레임의 변화율에는 직전 padding 프레임이 쓰일 수 있다. 마이크로초 PTS로 경계를 검사하여 밀리초 내림 때문에 바깥 프레임이 섞이는 것을 방지한다. 내부 `validSampleCount`, `usedFrameTimesMs`, `contextFrameTimesMs`를 구분한다. 변화율 계산 자체는 `INTEGER_MILLISECONDS` 시간축을 유지하므로 수치 정밀도가 개선됐다는 뜻은 아니다. 구간 내부 프레임이 없으면 이 추가 형상은 unavailable이며, 기본 중심 프레임 관찰과 가용성이 다를 수 있다.
 
 ## 7. 신뢰성 검사, 투영과 정리
 
@@ -113,3 +113,11 @@ sidecar는 동일 시도 binding, 모델·정책·랜드마크 digest, QC·sync�
 sidecar 내부에는 calibration 및 허용 action 선택 코드가 있다. 그러나 현재 coaching adapter는 `cue_evidence` 중 `observed`이고 유한한 숫자이며 영상 내 유효 구간인 값만 꺼낸다. **action, calibrated deviation, correction claim은 GPT용 관찰로 투영하지 않는다.**
 
 facade의 `finally`에서 수용 미디어를 삭제하고 바깥 `TemporaryDirectory`도 정리한다. 상위 서비스는 영상 예외를 영상 상태로 바꾸어 음성 결과를 보존한다. 삭제 실패 여부를 이번 조사에서 실제 장애로 재현하거나 검증하지는 않았다.
+
+## 8. 배포된 P0/P1 GPT 연결
+
+`candidateId`·대표 `audioEvidenceId`·`observationId`와 measurement receipt를 연결하고 QC/sync 및 실제 사용 표본을 검사한다. 정책 모드는 `OBSERVATION_ONLY` 또는 `UNAVAILABLE`뿐이다. GPT view에는 필요한 집계·유효 표본 수·구간·허용 statement를 보내고 raw 좌표·receipt digest 전체는 보내지 않는다. 입력 예산 축소 시 후보·음성 근거·영상·허용 statement를 함께 축소한다.
+
+생성은 strict `coaching_generation_v2`이며, 후보별 네 텍스트 필드는 `allowedText`에서만 선택한다. `usedVisualStatementIds`는 같은 후보의 허용 참조만 허용한다. 검증된 참조에 한해 서버가 측정 수치·구간과 중립적인 재확인 문구를 렌더링한다. 실패 시 같은 적격 후보의 deterministic fallback을 사용하며 영상 참조는 비운다.
+
+내부 receipt/source 보존은 요청 처리 중의 근거 유지다. raw receipt의 영구 감사 저장소를 이번에 검증했다는 뜻은 아니다. 공개 v1에는 내부 ID·새 유효 표본 수를 추가하지 않는다. 상세 제한과 실제 생성 미검증 범위는 [P0/P1 실행 기록](p0-p1-deployment.md)을 따른다.

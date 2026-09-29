@@ -4,7 +4,7 @@
 
 [목차](README.md) · [구체적인 수정·도입 순서](implementation-plan.md)
 
-이 문서에서 “원래 연결되어야 하는 방식”은 확인되지 않은 과거 설계 의도를 복원한다는 뜻이 아니다. 프로젝트의 근거 보존 원칙과 현재 배포의 제약을 기준으로 제안하는 바람직한 역할 분담이다. 실제 배포 사실은 [2026-09-29 관측](deployment-evidence.md), 처리 과정은 [pipeline.md](pipeline.md)에 별도로 보존한다. 이번 작성에서는 Pod를 재조회하지 않았다.
+이 문서에서 “원래 연결되어야 하는 방식”은 확인되지 않은 과거 설계 의도를 복원한다는 뜻이 아니다. 프로젝트의 근거 보존 원칙과 당시 배포의 제약을 기준으로 제안한 역할 분담이다. 최초 설계 작성에서는 Pod를 재조회하지 않았다. 이후 실제 구현·배포와 최신 운영 사실은 [배포 근거](deployment-evidence.md), [현재 전체 파이프라인](../runpod-current-pipeline.md), 처리 과정은 [pipeline.md](pipeline.md)를 우선한다.
 
 ## 1. 결론: GPT는 측정기가 아니라 근거에 제한된 코치
 
@@ -22,11 +22,11 @@
 
 `gpt-6-astra`와 현재 Chat Completions 경로를 우선 유지한다. 모델 교체, 다른 API로의 이전, raw 영상 전송은 이 개선의 선행조건이 아니다.
 
-## 2. 이미 연결된 부분과 부족한 부분
+## 2. 최초 설계 당시 연결 상태와 개선안 — P0/P1 이전
 
-현재는 `analyze_coaching_observations`가 만든 관찰이 `build_coaching_input.visual`에 들어가고, `messages_for`가 `currentAttempt`로 직렬화해 GPT에 보낸다. 따라서 **연결이 없는 것이 아니라, 연결의 의미·추적성과 교정 근거가 제한되어 있는 상태**다.
+최초 설계 당시에도 `analyze_coaching_observations`가 만든 관찰이 `build_coaching_input.visual`에 들어가고, `messages_for`가 `currentAttempt`로 직렬화해 GPT에 보냈다. 아래 표는 그때의 개선 필요사항이며 **현재 미구현 목록이 아니다**. 이후 확정한 내부 v2·strict schema·허용 텍스트 제한은 [P0/P1 실행 기록](p0-p1-deployment.md)을 따른다.
 
-| 현재 구현/관측 | 목표와 수정 방향 |
+| 최초 설계 당시 구현/관측 | 목표와 수정 방향 |
 |---|---|
 | 관찰은 `expectedIndex`, 값, 구간, decode 시각을 가짐 | `candidateId`·음성 `evidenceId`·영상 `observationId`를 명시적으로 결합 |
 | 기본 중심 1프레임과 beta 구간 평균이 비슷한 measurement 형태 | `aggregation`, 실제 사용 시각, 유효 표본 수, 정확한 측정 범위를 구분 |
@@ -38,7 +38,7 @@
 | JSON mode와 로컬 구조/길이 검사 | strict schema + 근거 참조 검사 + 의미 위험에 대한 안전한 renderer를 함께 적용 |
 | 동일 reference를 40개 음소에 적용, calibration/evaluation 각 2사례 | 음소·역할·문맥·촬영조건에 맞는 별도 검증 전까지 개인 영상 교정 금지 |
 
-코드 근거는 [coaching_evidence.py](../../src/voice_coach/backend_analysis/coaching_evidence.py)의 `project_candidates`, [coaching.py](../../src/voice_coach/backend_analysis/coaching.py)의 `pack`·`validate_generated`, [visual adapter](../../src/voice_coach/backend_analysis/adapters/visual.py)의 관찰 투영이다. 로컬 provider 조립에는 과거 Clova 분기가 남아 있으므로 배포 상태 판단에는 [배포 관측](../runpod_deployed_pipeline_20260928.md)을 우선한다.
+관련 코드는 [coaching_evidence.py](../../src/voice_coach/backend_analysis/coaching_evidence.py)의 `project_candidates`, [coaching.py](../../src/voice_coach/backend_analysis/coaching.py)의 `pack`·`validate_generated`, [visual adapter](../../src/voice_coach/backend_analysis/adapters/visual.py)다. 이 로컬 링크들은 이후 구현으로 바뀌었으므로 위 표의 과거 소스 사본을 뜻하지 않는다. 운영 조립과 checkout의 차이를 고려해 배포 상태 판단에는 [최신 관측](../runpod-current-pipeline.md)을 우선한다.
 
 ## 3. 권장 처리 순서
 
@@ -148,7 +148,7 @@ request/execution binding, 음성·영상·PCM digest, QC/sync/window receipt, �
 
 ### API 형식
 
-현재의 `response_format={type:json_object}`를, 지원되는 JSON Schema의 `json_schema` + `strict:true` 방식으로 전환하는 것을 권장한다. JSON mode는 JSON 형식에 초점을 두지만 Structured Outputs는 지정 schema를 따르도록 제한한다. 모든 object에서 `additionalProperties:false`, 모든 필드 required와 필요한 null 허용을 명시한다. 거부 응답과 출력 중단은 별도로 처리해야 한다. [OpenAI Structured Outputs](https://developers.openai.com/api/docs/guides/structured-outputs)
+최초 설계에서는 당시 `response_format={type:json_object}`를 JSON Schema의 `json_schema` + `strict:true`로 전환하도록 제안했다. 이후 P0/P1에서 반영됐다. JSON mode는 JSON 형식에 초점을 두지만 Structured Outputs는 지정 schema를 따르도록 제한한다. 모든 object에서 `additionalProperties:false`, 모든 필드 required와 필요한 null 허용을 명시한다. 거부 응답과 출력 중단은 별도로 처리해야 한다. [OpenAI Structured Outputs](https://developers.openai.com/api/docs/guides/structured-outputs)
 
 공식 모델 문서는 `gpt-6-astra`의 Structured Outputs 지원을 명시한다. 다만 이 문서 작성은 현재 계정에서 새 schema 요청을 실제로 성공시킨 검증이 아니다. [GPT-6 Astra 모델 문서](https://developers.openai.com/api/docs/models/gpt-6-astra)
 

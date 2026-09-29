@@ -2,6 +2,27 @@
 
 이 문서는 목록 전용이다. Request/Response 상세를 작성하지 않는다.
 
+## 현재 운영 — 2026-09-30 01:38~01:44 KST
+
+AWS의 기존 호출 주소는 `https://ai.voice-coaching.site`다. RunPod 8082 gateway를 통해 분석 8080과 독립 한국어 TTS 8083으로 분기한다. [관측 근거](../runpod-current-pipeline.md), [상세 명세](specification.md)
+
+| Method | URL | Auth | 설명 |
+| --- | --- | --- | --- |
+| GET | /gateway/health | public | gateway 자체 alive |
+| GET | /health | public | 분석 API alive |
+| GET | /readyz | public | 분석 전체 준비 상태 |
+| GET | /health/services | 분석 Bearer | 분석 의존성·provider·model·revision |
+| POST | /v1/analysis-jobs | 분석 Bearer | 비동기 작업 접수 |
+| GET | /v1/analysis-jobs/{requestId}?executionId={executionId} | 분석 Bearer | 해당 실행의 상태 |
+| POST | /v1/analysis-jobs/{requestId}/cancel | 분석 Bearer | 해당 실행 취소 요청 |
+| GET | /health/live | TTS Bearer | 독립 TTS liveness |
+| GET | /health/ready | TTS Bearer | 독립 TTS 준비 상태 |
+| POST | /v1/tts/synthesize | TTS Bearer | 한국어 MP3 생성 |
+
+분석·TTS 토큰은 별개다. 아래 연구/검수 경로와 `/docs`, `/openapi.json` 등은 현재 8082 gateway 공개 API가 아니다.
+
+## 연구·loopback 검수 — 현재 운영 gateway와 별개
+
 | Method | URL | Auth | 설명 |
 | --- | --- | --- | --- |
 | GET | /health | public | 상태 확인 |

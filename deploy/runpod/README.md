@@ -4,11 +4,11 @@
 
 2026-09-30 후속 배포로 **분석·한국어 TTS 공용 8082 HTTPS 게이트웨이**가 추가됐다. 현재 Pod 시작 명령은 `bash /workspace/intelligentai/deployment/api-gateway/boot.sh`이며 아래 기존 분석 boot를 내부에서 호출한다. [공개 경로·실제 확인 결과](../../docs/runpod_api_gateway_20260930.md), [gateway 운영 구성](api-gateway/README.md)을 우선 확인한다. 기존 분석 8080은 유지한다.
 
-상태·revision·파일 hash는 [2026-09-30 실제 배포 조사](../../docs/runpod_deployed_pipeline_20260930.md), 자동 배포는 [GitHub Actions 안내](GITHUB_ACTIONS.md), 대상 확인은 [운영 안내](../../.codex/runpod.md)를 따른다. 이 문서는 조사한 배포 코드 기준이며 로컬 checkout과 실행 파일이 같다고 가정하지 않는다.
+상태·revision·파일 hash는 [현재 배포 파이프라인](../../docs/runpod-current-pipeline.md), 자동 배포는 [GitHub Actions 안내](GITHUB_ACTIONS.md), 대상 확인은 [운영 안내](../../.codex/runpod.md)를 따른다. 이 문서는 조사한 배포 코드 기준이며 로컬 checkout과 실행 파일이 같다고 가정하지 않는다.
 
 ## 실행 구조
 
-1. Pod 시작 명령은 `bash /workspace/intelligentai/deployment/int8-overlay/deploy/runpod/boot.sh`다. SSH를 유지하고 migration marker·시스템 의존성을 확인한다.
+1. Pod 시작 명령은 `bash /workspace/intelligentai/deployment/api-gateway/boot.sh`다. 별도 gateway/TTS supervisor를 시작하고 기존 `int8-overlay/deploy/runpod/boot.sh`를 분석 기동 경로로 호출한다. 분석 boot는 SSH를 유지하고 migration marker·시스템 의존성을 확인한다.
 2. `prepare_runtime.py`가 base release + 영구 overlay + 검증된 runtime-assets로 `/opt/intelligentai/app`을 구성한다.
 3. Python 환경은 `api/g2pk/scorer`를 복사한다. HTTP wheel cache는 `/workspace/intelligentai/deployment/http-dependencies-v1_1`, 실행 의존성은 `/opt/intelligentai/http-python`이다.
 4. 기본 모드는 `runpod_http`다. `prepare_http.py`가 실행 env·HTTP attestation을 구성한다.
@@ -69,5 +69,5 @@ Pod 기동 때 Git 최신 커밋을 자동으로 받는 것이 아니라 마지�
 
 - 최초 조사에서 발견한 TTS 실행 환경 부재는 후속 배포에서 복원했다. 통합 8082에서 분석·TTS 인증 readiness 200이며, AWS nginx도 2026-09-30 01:12 KST에 8082 HTTPS로 전환했다. 기존 Backend 호출 주소 `https://ai.voice-coaching.site`는 유지했고 SSH 터널은 중지·자동 시작 해제했다. 터널 중지 후에도 기존 도메인의 양쪽 인증 readiness 200을 확인했다. 실제 업무 생성·품질 QA와 구분하며 [후속 배포 결과](../../docs/runpod_api_gateway_20260930.md)를 따른다.
 - 취소 처리의 180초 drain 대기와 옛 Clova 주석은 배포 소스에도 남아 있다. 현재 즉시 슬롯 반환으로 안내하지 않는다.
-- 입술 결과는 관찰 보조이며 개인 교정·점수 근거로 검증되지 않았다. [영상 개선 계획](../../docs/video-lip-analysis/implementation-plan.md)은 구현 완료가 아니다.
+- 입술 결과는 관찰 보조이며 개인 교정·점수 근거로 검증되지 않았다. [영상 개선 계획](../../docs/video-lip-analysis/implementation-plan.md)의 P0/P1은 `32d98e3`으로 구현·배포됐고 P2는 비활성이다. 실제 생성·품질 QA는 미실행이며 [확정 구현·제약](../../docs/video-lip-analysis/p0-p1-deployment.md)을 따른다.
 - 로컬 checkout에는 과거 Clova 지원 코드가 남을 수 있다. 문서에서 폐기 처리했다고 런타임 코드 정리나 재배포까지 수행한 것은 아니다.

@@ -1,6 +1,6 @@
 # 현재 계약과 과거 호환성 정의
 
-현재 writer는 [GPT-6 HTTP 배포](../runpod_deployed_pipeline_20260930.md)다. JSON 파일은 런타임 parser가 읽는 계약이므로 설명 문서처럼 enum/const를 일괄 치환하지 않는다.
+현재 writer는 [GPT-6 HTTP 배포](../runpod-current-pipeline.md)다. JSON 파일은 런타임 parser가 읽는 계약이므로 설명 문서처럼 enum/const를 일괄 치환하지 않는다.
 
 | 파일 | 현재 사용과 과거 정의 |
 |---|---|
@@ -12,4 +12,4 @@
 
 이전 rubric을 GPT 이름으로 바꾸면 같은 schema ID의 의미가 달라지고 과거 결과를 오해한다. 정의 제거는 별도 계약 개정·과거 데이터 reader 검토·Backend 합의 후 진행한다. 이번 문서 정리에서는 JSON schema와 런타임 검증 동작을 변경하지 않았다.
 
-영상 sampleCount=null, referenceStatus=NOT_VALIDATED, correctiveClaimsAllowed=false는 현재 계약이다. [개선 설계](../video-lip-analysis/gpt6-integration-design.md)의 새 상태·유효 표본 수는 미반영이다.
+공개 영상 sampleCount=null, referenceStatus=NOT_VALIDATED, correctiveClaimsAllowed=false는 현재 v1 계약이다. P0/P1의 내부 v2에는 유효 표본 수·사용 시각·후보 결속·관찰 정책·statement 참조가 구현·배포됐다. 공개 응답은 기존 allowlist로 투영하므로 새 내부 필드를 추가하지 않는다. [확정 구현](../video-lip-analysis/p0-p1-deployment.md)을 따르며, [개선 설계](../video-lip-analysis/gpt6-integration-design.md)의 가상 예시 전체를 공개 계약으로 취급하지 않는다. P2 개인 교정은 비활성이다.

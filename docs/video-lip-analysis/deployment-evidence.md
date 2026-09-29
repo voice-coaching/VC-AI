@@ -1,8 +1,33 @@
-# 배포 관측 근거 — 2026-09-29
+# 배포 관측 근거 — 현재 재조사와 이전 이력
 
 [목차](README.md) · [처리 흐름](pipeline.md) · [설정·계약](contracts-and-limits.md)
 
-## 관측 대상과 범위
+## 최신 재조사 — 2026-09-30 01:38~01:44 KST
+
+관리 API의 유일한 Pod `s8hb5b0l5k4qlx`가 RUNNING이며 source/worker revision은 `32d98e39767b56697bc7e58fb50e3e9d61432349`다. 영구 overlay manifest의 **82개 항목 모두** 영구·실행 사본의 hash와 일치했다. overlay metadata SHA는 `4721ac82c685e006951911bc7c756d91e55fb3285a5b861bc2481a1dde5c35ab`, baseRelease는 아래 이전 관측과 동일하다. 전체 base·대형 음성 모델 재해시가 아니다.
+
+현재 API PID 2800/supervisor 2799, gateway nginx 103/독립 TTS 104이며 두 supervisor 모두 재시작 수 0이었다. AWS 기존 도메인에서 인증 분석·TTS readiness를 각각 200으로 확인했다(01:40:07 KST). 분석 OPENAI/gpt-6-astra·위 revision, TTS melo-ko-practice-r1이다. 이번에는 새 영상·GPT 생성·TTS 합성·품질 QA를 수행하지 않았고 원격 코드나 설정도 변경하지 않았다. [전체 통신·배포 조사](../runpod-current-pipeline.md)
+
+아래 이전 표의 영상 release/bundle/QC/sync/geometry/랜드마크 자산 hash는 이번에도 일치했다. P0/P1은 측정 provenance·정책·생성 계약 변경이며 그 자산의 재학습·재보정이 아니다. 이번 실행 소스 hash는 다음과 같다. 상대 경로 기준은 `/opt/intelligentai/app/src/voice_coach`다.
+
+| 실행 파일 | SHA-256 |
+|---|---|
+| `backend_analysis/service.py` | `7d9e0e5bd5623844e80ab6643e1f25bf1ad781a80c08f76c12751eda1d8111df` |
+| `backend_analysis/coaching.py` | `95b1eeb268c51982f8bd86b6109d0844b1339dc86206e0380ea7bb90313b1d5b` |
+| `backend_analysis/coaching_evidence.py` | `f95e89373760dbaa1cf62b6dd2b9256e2231d84a4bdd8fd5d0eee71794834374` |
+| `backend_analysis/coaching_visual_policy.py` | `3e5f92a5147db0017ad649e520b68d90e7da1f9f13ac6c5db21a8f9ef2816f7d` |
+| `backend_analysis/adapters/visual.py` | `5047d218c7b239eed8fb07874d19204e9ebe9abb0fe2c02fe1ec7c8e2f0aee28` |
+| `pronunciation_attempts/services/video_attempt_facade.py` | `978004f4468ce6309164a080c677637d4feb241b8f23c3867c2a8ae17c0f78fa` |
+| `pronunciation_attempts/adapters/production_visual_sidecar.py` | `df5958bd0615b57f8a824e72de7bd378deb568231e8db975f2ffa7d1f7c191df` |
+| `pronunciation_attempts/composition.py` | `b6c903b3ac4454608000f9930115d54f88828ceafcfdd4fcc4c6269efb59fceb` |
+| `visual_feedback/services/p6_lip_trajectory.py` | `b66183abf94ef5fcde84646164dc6500b64a00ed5af8f7f3dcae9c2604b6f155` |
+| `visual_feedback/models/p6_lip_trajectory.py` | `b016da1a1abcb1749559dfac9fd8753cb6511656c64dfac7dda851e2986bfe04` |
+
+coaching public schema hash `fab5d88c611924bef156fbbe17169402f233e9c5ab3745ad0a8a2c749708d918`, result schema hash `00a7cd25bee85c34d93fe0903939b3b288e48679ed8ba1cad46b5d8701801ca0`로 공개 계약은 유지된다. 내부 유효 표본 수·관찰 결속·strict schema는 구현돼 있다. [확정 P0/P1 구현](p0-p1-deployment.md)의 배포 기록과 함께 읽는다.
+
+이하 모든 표·PID·“이번” 확인 범위는 **9월 29일 최초 조사 이력**이다. 최신 상태를 덮어쓰지 않는다.
+
+## 최초 관측 대상과 범위 — 2026-09-29 이력
 
 | 항목 | 관측 |
 |---|---|

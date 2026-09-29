@@ -4,7 +4,7 @@
 
 ## 활성 설정
 
-2026-09-29 runtime env 파일 `/run/intelligentai/analysis-http.env`의 비밀값이 아닌 지정 필드만 읽었다. 프로세스 환경 전체를 출력하거나 복사하지 않았다.
+2026-09-30 01:38~01:44 KST 재조사에서 runtime env 파일 `/run/intelligentai/analysis-http.env`의 비밀값이 아닌 지정 필드만 읽었다. P0/P1 revision `32d98e3` 기준이며 프로세스 환경 전체를 출력하거나 복사하지 않았다.
 
 | 변수 | 관측값 |
 |---|---|
@@ -118,10 +118,18 @@ AI Hub 68 geometry artifact 역시 `gate_status=passed`지만 `contains_action_t
 - `expectedIndex`: 해당 Seungun 기대 음소의 0-based index다.
 - `startMs/endMs`: 매핑된 영상 로컬 음소 구간이다. padding 창 또는 유효 landmark 표본 전체 범위가 아니다.
 - `decodedSampleTimesMs`: dense window에서 decode한 시각이다. 얼굴 검출 성공 시각 목록이나 분석값별 사용 시각 목록이 아니다.
-- `sampleCount=null`: aggregate 계약에 유효 landmark 표본 수가 없기 때문이다. decode 수로 채워 넣으면 안 된다.
+- `sampleCount=null`: 공개 v1 계약의 호환성을 유지한다. 내부 v2에는 실제 유효 표본 수가 있지만 이 필드로 내보내지 않는다. decode 수로 채워 넣으면 안 된다.
 - 기본 `lip_aperture_ratio`는 중심에 가장 가까운 1프레임 값, closed-beta 정적 값은 구간 내부 평균이다. 동일한 집계 방법으로 보지 않는다.
-- 현재 시도의 이 aggregate 구조가 GPT 입력 및 최종 `coaching.visual`로 이어진다. raw 영상·이미지·좌표 배열을 GPT에 보내는 경로가 아니다. 별도 전문가 참고 사례나 debug 경로 전체에 대한 개인정보 감사까지 수행한 것은 아니다.
+- 위 예시는 공개 `coaching.visual`이다. GPT용 private view는 별도로 후보 결속·검증된 집계·유효 표본 수·정책·허용 statement를 가진다. raw 영상·이미지·좌표 배열을 GPT에 보내는 경로가 아니다. 별도 전문가 참고 사례나 debug 경로 전체에 대한 개인정보 감사까지 수행한 것은 아니다.
 - GPT 입력 예산으로 코칭 후보를 더 줄일 수 있다. `visual.observations`와 최종 `items`의 개수가 항상 같다고 가정하지 않는다.
+
+## P0/P1 내부 계약과 공개 호환성
+
+현재 내부 입력은 `voice-coaching.coaching-input.v2`, 측정 영수증은 `coaching-measurement-receipt.v2`, 정책은 `coaching-visual-policy-v2`다. `validSampleCount`와 실제 사용/context 시각을 보존하고 기본 중심 프레임은 음소 구간 내부일 때만 허용한다. 정책의 `OBSERVATION_ONLY`는 교정 검증 상태가 아니다.
+
+strict 생성 schema `coaching_generation_v2`는 네 텍스트를 후보별 `allowedText`로 제한하고 `usedVisualStatementIds`를 검사한다. 서버가 검증된 측정 수치·시간을 최종 관찰 문구에 렌더링한다. 개인별 입술 교정(P2)과 자유로운 상세 맞춤 문장 생성은 활성화하지 않았다.
+
+공개 coaching v1/callback v3에는 새 내부 필드를 추가하지 않는다. `promptRevision=pronunciation-coaching-v1`, `policyRevision=pronunciation-coaching-evidence-v1`도 외부 호환 라벨이며 내부 정책 revision·합성 prompt hash와 구분한다. [확정 구현과 배포](p0-p1-deployment.md), [최신 운영 확인](../runpod-current-pipeline.md)
 
 ## 실패와 관찰 상태
 

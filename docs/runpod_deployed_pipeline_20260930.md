@@ -2,9 +2,9 @@
 
 [문서 목차](README.md) · [운영 배포 안내](../deploy/runpod/README.md) · [입술 분석](video-lip-analysis/README.md)
 
-> 아래 최초 관측은 00:20~00:31 KST의 스냅샷이다. 이후 TTS 실행 환경·한국어 전용 frontend를 복원하고 8082 통합 API를 외부에 공개했다. 현재 공개 경로와 자동 복원 확인은 [후속 배포 결과](runpod_api_gateway_20260930.md)를 따른다.
+> **과거 관측·변경 이력 문서다. 현재 상태는 [최신 전체 조사 — 01:38~01:44 KST](runpod-current-pipeline.md)를 우선한다.** 아래 최초 관측은 00:20~00:31 KST의 스냅샷이다. 이후 TTS·8082 gateway와 AWS 연결을 복원하고 입술–GPT P0/P1을 배포했다. 아래의 TTS 부재·strict schema 미구현 설명을 현재 상태로 읽지 않는다. [gateway 배포](runpod_api_gateway_20260930.md), [P0/P1 배포](video-lip-analysis/p0-p1-deployment.md)
 
-## 현재 상태와 범위
+## 최초 관측 상태와 범위 — 과거 기록
 
 **현재 운영은 HTTP 분석 API + Seungun CUDA + 영상 입술 관찰 + 외부 GPT-6 API다. Clova 추론 서버·채점기는 운영 조립 경로에서 폐기됐다.**
 

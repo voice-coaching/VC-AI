@@ -1,5 +1,7 @@
 # RunPod 실제 배포 파이프라인 — 2026-09-28 관측
 
+> 이 문서는 9월 28일 이력이다. 현재 구성은 [9월 30일 최신 전체 조사](runpod-current-pipeline.md)를 우선한다. 이후 8082 gateway·AWS 직접 연결·독립 TTS 복원과 입술–GPT P0/P1 배포가 반영됐다.
+
 ## 근거와 적용 범위
 
 RunPod 관리 API와 SSH를 통한 읽기 전용 조사다. 2026-09-28 12:34:47 UTC(21:34:47 KST)에 배포 metadata와 supervisor 상태를 읽고, 12:37:48 UTC부터 분석 health/readiness를 조회했다. 이어 같은 세션에서 TTS health와 전문가 사례 로드 로그를 확인했다. 아래는 **그 시점의 실제 배포 구성**이며 문서 수정만으로 코드·배포가 바뀌지 않는다.

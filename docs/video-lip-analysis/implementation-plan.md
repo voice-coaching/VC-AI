@@ -2,7 +2,7 @@
 
 작성일: 2026-09-30. **P0/P1 구현·RunPod 배포 완료: `32d98e3`, 01:35 KST. [실행 기록](p0-p1-deployment.md)을 따른다. P2는 비활성이다.** 아래 계획의 과거 기준 SHA와 제안은 작성 당시 기록으로 유지한다. 실제 생성·품질 QA는 미실행이다.
 
-[목차](README.md) · [목표 설계와 입력 예시](gpt6-integration-design.md)
+[목차](README.md) · [목표 설계와 입력 예시](gpt6-integration-design.md) · [9/30 최신 운영 재조사](../runpod-current-pipeline.md)
 
 ## 1. 범위와 유지할 결정
 
@@ -14,11 +14,11 @@
 - 내부 HTTP에 동의 증빙·요청별 grant·서명·정책 revision을 추가하지 않는다. 서버 내부 근거 정책 revision과 혼동하지 않는다.
 - 두 전문가 사례 전체 주입, 짧은 총평 정책을 유지한다. raw 미디어의 새 외부 전송은 제외한다.
 
-현재 로컬 HEAD는 `76f6933a117e35e335ff9c0b3dfc418ec0d7f102`이며 배포본과 일부 provider/조립 파일이 다르다. 구현 시작 시 [배포 근거](deployment-evidence.md)의 파일과 다시 대조해야 한다. 이전 로컬 Clova 분기를 최신 RunPod에 덮어쓰는 방식으로 배포하면 안 된다. 이 문서 작성에서는 새 remote fetch·Pod 조사·Backend 소스 검토를 하지 않았다.
+최초 계획 당시 로컬 HEAD는 `76f6933a117e35e335ff9c0b3dfc418ec0d7f102`였고 배포본과 일부 provider/조립 파일이 달랐다. 이 식별자를 현재 checkout으로 사용하지 않는다. 추가 구현 시작 시 [배포 근거](deployment-evidence.md)의 파일과 다시 대조해야 한다. 이전 로컬 Clova 분기를 최신 RunPod에 덮어쓰는 방식으로 배포하면 안 된다. 최초 계획 작성에서는 새 remote fetch·Pod 조사·Backend 소스 검토를 하지 않았으며 이후 실행·재조사는 별도 기록을 따른다.
 
 ## 2. 파일별 변경안
 
-아래 경로는 저장소 상대 경로다. 새 파일명은 제안이며 이번에 생성하지 않았다.
+아래 경로는 저장소 상대 경로이며 최초 계획의 변경안이다. 이후 확정 파일·구현·배포 여부는 [P0/P1 실행 기록](p0-p1-deployment.md)을 따른다.
 
 | 위치 | 필요한 수정 |
 |---|---|
