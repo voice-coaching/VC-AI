@@ -126,6 +126,8 @@ GPT는 이 후보의 ID와 범위를 넘어 새 진단 대상을 만들 수 없�
 
 ## 영상 기반 입술모양 분석
 
+후속 관측: [2026-09-29 영상·입술 분석 문서](video-lip-analysis/README.md)에 현재 배포 코드, 활성 자산, 계산 방식과 제약을 별도로 정리했다. 아래 내용은 2026-09-28 관측으로 보존한다.
+
 현재 GPT 경로는 `analyze_coaching_observations` → `run_http_observations`를 사용한다. 최대 3개 후보의 첫 근거 음소 index에 대응하는 시간 구간을 검사한다. 동일 영상 SHA, request/execution, 추출 PCM, 기대열을 결속한다. Seungun 추론은 재실행하지 않는다.
 
 영상 admission·container probe·내장 음성 추출과 요청 내 decode cache를 재사용하되 후보별 handoff·QC·A/V sync·신뢰성 검사를 거친다. MediaPipe 랜드마크와 P6 geometry 경로에서 얻은 aggregate 값, 구간, 실패 reason, 실제 decode 시각을 관찰로 전달한다. 40점 후보/24점 매핑은 기존 geometry 자산의 구조이며 매 요청에서 모든 형상값이 항상 제공된다는 뜻은 아니다.
