@@ -16,6 +16,7 @@ import subprocess
 import tempfile
 import time
 from urllib.request import HTTPRedirectHandler, Request, build_opener
+from urllib.error import HTTPError
 from uuid import uuid4
 
 ROOT = Path(__file__).resolve().parents[2]
@@ -42,7 +43,8 @@ class NoRedirect(HTTPRedirectHandler):
 
 def resolve_pod(pod_id):
     request = Request("https://rest.runpod.io/v1/pods/" + pod_id,
-                      headers={"Authorization": "Bearer " + required("RUNPOD_API_KEY")})
+                      headers={"Authorization": "Bearer " + required("RUNPOD_API_KEY"),
+                               "User-Agent": "intelligentai-deployment/1.0", "Accept": "application/json"})
     with build_opener(NoRedirect()).open(request, timeout=30) as response:
         pod = json.load(response)
     if pod.get("id") != pod_id or pod.get("desiredStatus") != "RUNNING":
@@ -196,6 +198,7 @@ if __name__ == "__main__":
         main()
     except Exception as error:
         # Never print HTTP bodies, environment values, command argv or secrets.
-        reason = str(error) if type(error) is RuntimeError else type(error).__name__
+        reason = ("runpod_api_http_" + str(error.code) if isinstance(error, HTTPError)
+                  else str(error) if type(error) is RuntimeError else type(error).__name__)
         print("Deployment stopped: " + reason, flush=True)
         raise SystemExit(1)
