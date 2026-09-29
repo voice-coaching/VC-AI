@@ -14,6 +14,7 @@ from voice_coach.pronunciation_feedback.adapters.advice_generator_hyperclova imp
 )
 from .clova_scoring import _strict_json
 from .coaching import EvidenceBasedCoaching
+from .expert_examples import ExpertCoachingExamples
 
 LOG = logging.getLogger("voice_coach.coaching")
 
@@ -124,4 +125,8 @@ def load_coaching(environment, *, repository_root):
             endpoint="https://api.openai.com/v1/chat/completions", api_key=environment["OPENAI_API_KEY"])
     else:
         raise ValueError("coaching_provider_invalid")
-    return EvidenceBasedCoaching(repository_root, ChatCoachingGenerator(**args))
+    generator = ChatCoachingGenerator(**args)
+    examples = ExpertCoachingExamples(repository_root) if provider == "OPENAI" else None
+    if examples is not None:
+        examples.reserve_for(generator)
+    return EvidenceBasedCoaching(repository_root, generator, expert_examples=examples)

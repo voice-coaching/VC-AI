@@ -62,6 +62,24 @@ def main() -> None:
             if target.is_symlink():
                 raise SystemExit("Unexpected overlay destination symlink")
             target.write_bytes(content)
+            if "mode" in entry:
+                if entry["mode"] not in {"100644", "100755"}:
+                    raise SystemExit("Unsafe overlay file mode")
+                target.chmod(0o750 if entry["mode"] == "100755" else 0o640)
+    # Retain committed source deletions across base-release reconstruction.
+    # Only individual source files may be removed; never assets or directories.
+    for name in manifest.get("deletedFiles", []):
+        relative = Path(name)
+        if (relative.is_absolute() or ".." in relative.parts
+                or not name.startswith(("src/", "seungun/src/", "configs/", "scripts/",
+                                        "deploy/runpod/", "docs/contracts/"))):
+            raise SystemExit("Unsafe deleted source path")
+        target = app / relative
+        if not target.parent.resolve().is_relative_to(app.resolve()):
+            raise SystemExit("Deleted source parent escapes application")
+        if target.is_dir() and not target.is_symlink():
+            raise SystemExit("Deleted source must not be a directory")
+        target.unlink(missing_ok=True)
     if os.environ.get("AI_ANALYSIS_TRANSPORT") == "runpod_http":
         subprocess.run(["python3", "-m", "pip", "install", "--no-index", "--require-hashes",
             "--upgrade", "--target", str(RUNTIME / "http-python"),

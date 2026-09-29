@@ -1,0 +1,30 @@
+{
+  "revision": "announcer-paired-examples-20260928-v1",
+  "feedbackSource": "USER_PROVIDED_PROFESSIONAL_ANNOUNCER_FEEDBACK",
+  "providedOn": "2026-09-28",
+  "cases": [
+    {
+      "caseId": "testvideo1",
+      "videoSha256": "e11d1d9ac6a04de67bdff5ddda68284d92d910d343bbf28dc764f2879744eac9",
+      "expertFeedback": "입모양을 크고, 모음 입모양을 정확하게 할것, 천천히 읽어줄것, 첫번째 단락은 정보를 전달하듯, 두번째단락의 담아요를 어미를 내리며 안정적으로 읽어줄것.",
+      "annotations": [
+        {"id": "v1-mouth", "text": "입모양을 크고, 모음 입모양을 정확하게 할것", "scope": "UTTERANCE", "words": [], "dimension": "VOWEL_AND_MOUTH_SHAPE"},
+        {"id": "v1-rate", "text": "천천히 읽어줄것", "scope": "UTTERANCE", "words": [], "dimension": "READING_RATE"},
+        {"id": "v1-information", "text": "첫번째 단락은 정보를 전달하듯", "scope": "PHRASE_UNTIMED", "words": [], "dimension": "DELIVERY"},
+        {"id": "v1-ending", "text": "두번째단락의 담아요를 어미를 내리며 안정적으로 읽어줄것", "scope": "WORD", "words": ["담아요"], "dimension": "INTONATION"}
+      ]
+    },
+    {
+      "caseId": "testvideo2",
+      "videoSha256": "1dd299f28ae9a0c2fcc2422e46ef3e162c62805a2267a19e1f7a277087a81379",
+      "expertFeedback": "- 쌀과 → ‘쌀’의 ㄹ을 짧고 선명하게, 과는 가볍게 연결\n- 콩을 → ‘콩’의 ㅇ 받침을 살리고, ‘을’은 짧게\n- 그릇에 → ‘릇’의 받침을 과하게 세게 하지 않기\n- 담아요 → 가장 중요한 동작어. ‘담—아—요’로 끝을 부드럽고 안정적으로 내려주세요.\n- 전체는 쌀과 콩을 / 그릇에 담아요처럼 두 단락으로 읽기.\n\n쌀과 콩을 /그릇에 담아요\n첫 번째 단락은 정보를 전달하듯, 마지막 ‘담아요’는 따뜻하고 안정적으로 하강시키며 어미를 내리기.",
+      "annotations": [
+        {"id": "v2-rieul", "text": "‘쌀’의 ㄹ을 짧고 선명하게, 과는 가볍게 연결", "scope": "WORD", "words": ["쌀과"], "dimension": "CODA_AND_LINKING"},
+        {"id": "v2-ieung", "text": "‘콩’의 ㅇ 받침을 살리고, ‘을’은 짧게", "scope": "WORD", "words": ["콩을"], "dimension": "CODA_AND_LINKING"},
+        {"id": "v2-coda", "text": "‘릇’의 받침을 과하게 세게 하지 않기", "scope": "WORD", "words": ["그릇에"], "dimension": "CODA"},
+        {"id": "v2-ending", "text": "가장 중요한 동작어. ‘담—아—요’로 끝을 부드럽고 안정적으로 내려주세요.", "scope": "WORD", "words": ["담아요"], "dimension": "INTONATION"},
+        {"id": "v2-phrasing", "text": "전체는 쌀과 콩을 / 그릇에 담아요처럼 두 단락으로 읽기. 첫 번째 단락은 정보를 전달하듯, 마지막 ‘담아요’는 따뜻하고 안정적으로 하강시키며 어미를 내리기.", "scope": "UTTERANCE", "words": [], "dimension": "PHRASING_AND_DELIVERY"}
+      ]
+    }
+  ]
+}

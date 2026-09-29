@@ -14,6 +14,9 @@ from .coaching_evidence import POLICY, build_coaching_input, project_candidates
 
 SCHEMA = "voice-coaching.coaching-result.v1"
 PROMPT_REVISION = "pronunciation-coaching-v1"
+MAX_FEEDBACK_SENTENCES = 5
+MAX_ACTION_UTF16 = 140
+_META_LANGUAGE = re.compile(r"모델|검출|정렬|후보|보류|불확실|대치|확정|판단|기대\s*소리|연습\s*항목|단정")
 LOG = logging.getLogger("voice_coach.coaching")
 LOG.setLevel(logging.INFO)
 
@@ -47,21 +50,23 @@ def guidance_for(candidate, facts):
     phone, role = candidate["expectedPhone"], candidate["writtenRole"]
     words = list(dict.fromkeys(f["location"]["word"] for f in facts if f["location"]["word"]))
     word = words[0] if words else "해당 단어"
-    if len(word) > 160:
+    # A quoted source word must not add sentences, markup or instructions to
+    # the deterministic fallback. Keep the original location in evidence.
+    if re.fullmatch(r"[가-힣ㄱ-ㅎㅏ-ㅣ]{1,24}", word) is None or _META_LANGUAGE.search(word):
         word = "해당 단어"
-    action = "소리를 따로 끊기보다 단어를 천천히 이어 말한 뒤 자연스러운 속도로 연결해 보세요."
+    action = f"‘{word}’ → 소리를 따로 끊지 말고 천천히 이어 말한 뒤 자연스러운 속도로 연결해 보세요."
     if role == "nucleus":
-        action = "목표 모음을 천천히 내고 입 모양을 유지한 채 앞뒤 소리에 연결해 보세요. 억지로 크게 벌리지는 마세요."
+        action = f"‘{word}’ → ‘{phone}’ 소리를 천천히 낸 뒤 앞뒤 소리에 부드럽게 연결해 보세요."
     elif role == "onset" and phone in "ㅂㅃㅁ":
-        action = "두 입술이 닿는 준비 동작을 확인한 뒤 뒤따르는 모음으로 연결해 보세요. 이는 목표 소리 연습이며 입술 오류를 관찰했다는 뜻은 아닙니다."
+        action = f"‘{word}’ → ‘{phone}’을 낼 때 두 입술을 가볍게 맞댄 뒤 바로 뒤 모음으로 연결해 보세요."
     elif role == "onset" and phone in "ㅋㅌㅍ":
-        action = "목표 거센소리를 뒤의 모음과 붙여 짧게 연습하며 소리 시작의 숨이 나오는 느낌을 비교해 보세요. 목에 과하게 힘을 주지 마세요."
+        action = f"‘{word}’ → ‘{phone}’의 시작에서 숨을 짧게 내보내며 뒤 모음에 붙여 연습해 보세요."
     elif role == "onset" and phone in "ㅅㅆ":
-        action = "목표 소리를 짧게 이어 낸 뒤 뒤의 모음에 연결해 보세요. 숨이 이어지는 소리를 비교하되 이나 턱에 과하게 힘을 주지 마세요."
+        action = f"‘{word}’ → ‘{phone}’의 마찰음을 짧게 낸 뒤 뒤 모음에 바로 연결해 보세요."
     return dict(guidanceId=f"practice-{phone}-{role or 'unknown'}", revision="basic-practice-v1",
         scope="GENERAL_TARGET_PRACTICE_NOT_PERSONAL_CAUSE", action=action,
         practice=f"‘{word}’ 부분을 천천히 한 번, 자연스러운 속도로 한 번 말하고 문장 안에서 이어 말해 보세요.",
-        selfCheck=f"두 번 말한 ‘{word}’의 목표 소리가 유지되는지 같은 부분을 번갈아 들어 보세요. 분석 후보와 실제 들리는 소리가 다르면 오류로 단정하지 마세요.")
+        selfCheck=f"두 번 말한 ‘{word}’의 목표 소리가 유지되는지 같은 부분을 번갈아 들어 보세요.")
 
 
 def prepare_view(source, count):
@@ -72,15 +77,20 @@ def prepare_view(source, count):
     return view
 
 
-def messages_for(system, view):
-    return [dict(role="system", content=system), dict(role="user", content=json.dumps(
-        view, ensure_ascii=False, separators=(",", ":"), allow_nan=False))]
+def messages_for(system, view, expert_examples=None):
+    messages = [dict(role="system", content=system)]
+    if expert_examples is not None:
+        messages.append(expert_examples.message())
+    messages.append(dict(role="user", content=json.dumps(
+        dict(currentAttempt=view) if expert_examples is not None else view,
+        ensure_ascii=False, separators=(",", ":"), allow_nan=False)))
+    return messages
 
 
-def pack(source, system, generator):
+def pack(source, system, generator, expert_examples=None):
     for count in range(min(3, len(source["candidates"])), -1, -1):
         view = prepare_view(source, count)
-        messages = messages_for(system, view)
+        messages = messages_for(system, view, expert_examples)
         if generator.count_tokens(messages) <= generator.maximum_input_tokens:
             if source["candidates"] and count == 0:
                 raise ValueError("coaching_mandatory_candidate_exceeds_budget")
@@ -94,6 +104,18 @@ def _text(value):
     if re.search(r"(?:https?://|[A-Za-z]:[\\/]|/(?:tmp|run|opt|home)/|sk-proj-|Bearer\s|\b\d+(?:\.\d+)?\s*(?:점|%))", value):
         raise ValueError("coaching_unsupported_text")
     return value.strip()
+
+
+def _action(value):
+    """One short learner-facing sentence; diagnostics stay in evidence fields."""
+    text = _text(value)
+    if (len(text.encode("utf-16-le")) // 2 > MAX_ACTION_UTF16
+            or not text.endswith(".")
+            or re.search(r"[.!?。！？…\r\n\u2028\u2029]", text[:-1])):
+        raise ValueError("coaching_action_length")
+    if _META_LANGUAGE.search(text):
+        raise ValueError("coaching_action_meta")
+    return text
 
 
 def validate_generated(document, view):
@@ -113,16 +135,19 @@ def validate_generated(document, view):
         selected.add(row["candidateId"])
         for name in ("explanation", "action", "practice", "selfCheck"):
             _text(row[name])
+        _action(row["action"])
     # Avoid validating the same single anchor while ignoring equally admitted
     # different patterns. The bounded input already chose the learning agenda.
     if selected != set(candidates):
         raise ValueError("coaching_candidate_coverage")
-    return rows
+    # Retain the server's agenda order even if the model reorders valid IDs.
+    by_id = {row["candidateId"]: row for row in rows}
+    return [by_id[candidate_id] for candidate_id in candidates]
 
 
 def template_rows(view):
     return [dict(candidateId=c["candidateId"], guidanceId=c["guidance"]["guidanceId"],
-        explanation="분석 모델이 목표 소리와 다른 가능성을 표시했습니다. 실제 대치나 조음 원인이 확정된 것은 아니므로 해당 부분을 비교하며 연습해 보세요.",
+        explanation="목표 소리를 단어 안에서 자연스럽게 연결하는 연습입니다.",
         **{k: c["guidance"][k] for k in ("action", "practice", "selfCheck")}) for c in view["candidates"]]
 
 
@@ -144,12 +169,10 @@ def render_document(source, view, generated, *, provider, fallback, prompt_diges
             claimScope=candidate["claimScope"]))
     limited = source["coverage"]["reviewOnlyPhoneCount"] > 0
     status = "READY" if items else "LIMITED_EVIDENCE" if limited else "NO_ACTIONABLE_ISSUE"
-    summary = (f"연습 항목 {len(items)}개를 안내합니다. 같은 단어를 짧게 연습하고 다시 비교해 보세요." if items else
-               "정렬 근거가 불확실해 특정 소리를 잘못 발음했다고 판단하지 않았습니다." if limited else
-               "평가 가능한 구간에서 우선 교정할 근거를 찾지 못했습니다. 전체 발음의 완벽함을 보증하는 결과는 아닙니다.")
-    if items and limited:
-        summary += (f" 기대 소리 {source['coverage']['expectedPhoneCount']}개 중 "
-                    f"{source['coverage']['reviewOnlyPhoneCount']}개는 정렬 등 근거가 불확실해 판단을 보류했습니다.")
+    if len(items) > MAX_FEEDBACK_SENTENCES:
+        raise ValueError("coaching_feedback_length")
+    summary = ("\n".join(_action(item["action"]) for item in items) if items else
+               "문장을 편안한 속도로 한 번 읽고, 단어 사이의 연결이 자연스러운지 들어보세요.")
     limitations = []
     if limited:
         limitations.append("정렬이 모호하거나 국소 근거가 없는 소리는 확정 오류와 점수에서 보류했습니다.")
@@ -167,9 +190,15 @@ def render_document(source, view, generated, *, provider, fallback, prompt_diges
 
 
 class EvidenceBasedCoaching:
-    def __init__(self, root, generator=None):
+    def __init__(self, root, generator=None, *, expert_examples=None):
         self.system, self.prompt_digest = load_prompt(root)
         self.generator = generator
+        self.expert_examples = expert_examples
+        if expert_examples is not None:
+            from .expert_examples import INSTRUCTIONS
+            self.system += "\n" + INSTRUCTIONS
+            self.prompt_digest = hashlib.sha256(
+                (self.system + "\n" + expert_examples.sha256).encode()).hexdigest()
         # Uvicorn configures its own loggers; an unconfigured root would drop
         # this logger's INFO events. Install one secret-free, UTC stage stream.
         if not LOG.handlers:
@@ -179,6 +208,10 @@ class EvidenceBasedCoaching:
             handler.setFormatter(formatter)
             LOG.addHandler(handler)
             LOG.propagate = False
+        if expert_examples is not None:
+            LOG.info("coaching_expert_examples_loaded revision=%s sha256=%s cases=%s input_budget=%s",
+                     expert_examples.revision, expert_examples.sha256,
+                     ",".join(expert_examples.case_ids), generator.maximum_input_tokens if generator else None)
 
     def render(self, *, request, analysis, visual_state="NOT_PROVIDED", visual_observations=()):
         started = time.monotonic()
@@ -193,7 +226,11 @@ class EvidenceBasedCoaching:
         elif self.generator:
             stage = "packing"
             try:
-                view, messages = pack(source, self.system, self.generator)
+                view, messages = pack(source, self.system, self.generator, self.expert_examples)
+                if self.expert_examples is not None:
+                    LOG.info("coaching_expert_retrieval analysis=%s request=%s revision=%s sha256=%s cases=%s policy=ALL_CASES_EVERY_GENERATION",
+                             request.analysis_id, request.event_id, self.expert_examples.revision,
+                             self.expert_examples.sha256, ",".join(self.expert_examples.case_ids))
                 stage = "generation"
                 result = self.generator.generate(messages, analysis_id=request.analysis_id, request_id=str(request.event_id))
                 stage = "validation"
@@ -207,7 +244,7 @@ class EvidenceBasedCoaching:
                 reason = str(error) if type(error) is ValueError else "unclassified"
                 if reason not in {"coaching_output_shape", "coaching_output_count", "coaching_item_shape",
                                   "coaching_item_binding", "coaching_text_invalid", "coaching_unsupported_text",
-                                  "coaching_candidate_coverage"}:
+                                  "coaching_candidate_coverage", "coaching_action_length", "coaching_action_meta"}:
                     reason = "unclassified"
                 LOG.warning("coaching_fallback analysis=%s request=%s stage=%s reason=%s",
                             request.analysis_id, request.event_id, stage, reason)

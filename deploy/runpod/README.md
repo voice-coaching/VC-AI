@@ -1,5 +1,7 @@
 # RunPod A6000 INT8 배포 준비
 
+`main` push 기반 자동 배포의 설정·대상 등록·복구 절차는 [GitHub Actions 배포 안내](GITHUB_ACTIONS.md)를 따른다. 최초 연결과 실제 배포 성공 여부는 해당 안내의 관측 범위와 Actions 실행 결과를 구분한다.
+
 ## HTTP v1.1 분석 서버
 
 `AI_ANALYSIS_TRANSPORT=runpod_http`를 Pod 프로세스 환경에 설정하면 `prepare_runtime.py`가 `prepare_http.py`를 실행하고 manager가 `services.http.json`을 선택한다. `redis_stream`은 기존 구성, `disabled`는 Clova만 시작한다. 미설정 시 기존 Redis 배포 호환성을 유지한다. HTTP와 Redis 분석 worker를 함께 실행하지 않는다.

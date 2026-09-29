@@ -1,0 +1,8 @@
+{
+  "schemaVersion": "voice-coaching.expert-examples.v1",
+  "revision": "announcer-paired-examples-20260928-v1",
+  "retrievalPolicy": "ALL_CASES_EVERY_GENERATION",
+  "path": "artifacts/expert_coaching/announcer-20260928/cases.json",
+  "sha256": "eb68e02e75bd1b816414c411dd97953c20cd08361a2f7da6b58b94341717f3f8",
+  "caseIds": ["testvideo1", "testvideo2"]
+}
