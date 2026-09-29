@@ -4,6 +4,8 @@
 
 ## 최초 연결
 
+기존 비밀파일 위치와 재기동 시 설정 복원 조사 결과는 [설정 복원 기록](../../docs/runpod_private_settings_recovery_20260929.md)을 따른다. 수동 실행의 `check_only=true`는 API 및 고정 호스트 키 SSH 접속만 확인하며 배포하지 않는다. 기본값과 `main` push는 실제 배포 경로다.
+
 GitHub 저장소 설정의 Actions secrets/variables에 다음을 등록한다. API 키만으로 Linux SSH 인증을 대신할 수 없다.
 
 | 종류 | 이름 | 값 |

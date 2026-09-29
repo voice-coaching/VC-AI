@@ -4,6 +4,11 @@ on:
   push:
     branches: [main]
   workflow_dispatch:
+    inputs:
+      check_only:
+        description: Verify API and pinned SSH access without deploying
+        type: boolean
+        default: false
 
 permissions:
   contents: read
@@ -31,4 +36,5 @@ jobs:
           RUNPOD_SSH_HOST_KEY: ${{ secrets.RUNPOD_SSH_HOST_KEY }}
           RUNPOD_POD_ID: ${{ vars.RUNPOD_POD_ID }}
           DEPLOY_SHA: ${{ github.sha }}
+          RUNPOD_DEPLOY_CHECK_ONLY: ${{ github.event_name == 'workflow_dispatch' && inputs.check_only }}
         run: python3 deploy/runpod/github_deploy.py

@@ -139,6 +139,11 @@ def main():
                                             command], timeout=45)
 
         try:
+            if os.environ.get("RUNPOD_DEPLOY_CHECK_ONLY", "false").lower() == "true":
+                if ssh("id -u").strip() != b"0":
+                    raise RuntimeError("deployment_account_not_root")
+                print("RunPod API and pinned SSH access verified; no deployment or readiness check performed.")
+                return
             state = json.loads(ssh("cat " + REMOTE + "/state.json"))
             base = state["gitRevision"]
             if not re.fullmatch(r"[0-9a-f]{40}", base) or state.get("podId") != pod_id:
