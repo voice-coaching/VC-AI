@@ -31,7 +31,7 @@ python3 /path/to/github_deploy_remote.py --enroll <40자리-Git-기준-SHA> <현
 
 1. [runner 스크립트](github_deploy.py)가 공식 RunPod REST API로 지정 Pod의 RUNNING 상태·현재 public IP·22/tcp 매핑을 확인한다. 고정 IP를 재사용하지 않는다. SSH 호스트 키는 고정 공개키와 대조한다.
 2. 이전 배포 Git 커밋이 새 커밋의 조상인지 확인한다. 작업 트리 대신 Git blob에서 소스 delta를 구성한다. 따라서 저장하지 않거나 commit하지 않은 파일은 배포하지 않는다.
-3. 대상은 `src/`, `seungun/src/`, `configs/`, `scripts/`, `deploy/runpod/`, `docs/contracts/`다. 모델·녹음·전문가 사례의 비공개 원본·env는 업로드하지 않는다. 기존 비공개 자산과 환경을 유지한다. requirements/pyproject/lock 변경은 별도 환경 배포를 요구하며 자동으로 pip 설치하지 않는다. boot/manager 스크립트 변경도 별도 bootstrap 배포를 요구한다.
+3. 대상은 `src/`, `seungun/src/`, `configs/`, `scripts/`, `deploy/runpod/`, `docs/contracts/`다. `deploy/runpod/`의 Markdown 운영 문서는 runtime 소스 동기화에서 제외한다. 모델·녹음·전문가 사례의 비공개 원본·env는 업로드하지 않는다. 기존 비공개 자산과 환경을 유지한다. requirements/pyproject/lock 변경은 별도 환경 배포를 요구하며 자동으로 pip 설치하지 않는다. boot/manager 스크립트 변경도 별도 bootstrap 배포를 요구한다.
 4. [원격 스크립트](github_deploy_remote.py)는 실제 변경 대상 파일이 기준 Git blob 또는 새 blob과 일치하는지 확인한다. 운영 전용 덮어쓰기를 발견하면 중단한다. 변경되지 않은 운영 전용 overlay는 보존하므로 Git SHA는 마지막으로 반영한 Git 변경 범위를 나타내며 전체 운영 디스크와 Git의 동일성을 뜻하지 않는다.
 5. overlay hash와 프로세스 관계를 확인하고 변경 파일·기존 manifest를 root 전용 작업 폴더에 백업한다. boot 재시작 루프를 일시 정지한 뒤 manager를 정상 종료하고 supervisor/서비스 종료를 기다린다. 준비 단계 전에 기존 프로세스가 남아 있으면 중단한다.
 6. 영구 overlay와 manifest를 갱신하고 기존 `prepare_runtime.py`로 runtime·attestation을 구성한다. 삭제된 소스는 `deletedFiles`로 기록하여 재기동에도 복원되지 않게 한다. 개별 파일 삭제만 허용한다.
@@ -54,4 +54,6 @@ runner 시간 초과만 보고 작업을 다시 시작하지 않는다. result/p
 
 ## 이번 설정의 관측 범위
 
-2026-09-29 설정 중 공식 API에서 Pod `s8hb5b0l5k4qlx`가 RUNNING임을 확인했다. 현재 GitHub CLI의 저장소 조회/push 접근은 403/조회 실패, 연결 GitHub 앱은 404를 반환했다. Pod SSH는 인증 전에 `Exceeded MaxStartups`로 닫혔다. 따라서 Secret 등록, 원격 main 반영, 대상 등록, 실제 workflow 실행과 배포·원복 확인은 아직 수행하지 못했다. 코드는 운영 구조를 추정해 우회하지 않고 검사에 실패하면 중단하도록 작성했다.
+2026-09-29 후속 설정에서 Pod `s8hb5b0l5k4qlx`의 SSH 복구와 GitHub 저장소 관리 접근을 확인했다. 현재 운영 GPT 전용 생성기와 준비 코드를 대조해 Clova 경로가 복원되지 않도록 유지했다. 최초 배포에서 변경될 기존 파일의 실제 운영 사본은 기준 커밋 `12b09286b07fb3f607dc28c00b90362b279542c7`에 기록했다. 이 기준은 전체 운영 디스크와 Git이 동일하다는 의미가 아니며, 배포 delta의 변경 전 내용을 검증하기 위한 것이다.
+
+등록과 배포는 정상 `/health/services`를 요구한다. `http_settings_incomplete_or_invalid`인 상태를 강제로 ready로 바꾸거나 준비 검사를 우회하지 않는다. 문서 작성 및 정적 검사와 Secrets 등록·최초 배포 성공은 별개이며, 최종 실행 상태는 GitHub Actions 결과와 Pod의 `state.json`으로 확인한다.
