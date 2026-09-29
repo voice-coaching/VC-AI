@@ -4,7 +4,7 @@
 
 대상은 Pod `s8hb5b0l5k4qlx`다. 문서를 먼저 검색한 뒤 SSH로 파일 존재·설정 이름·권한과 현재 공급원의 일치를 확인했다. 키·토큰·버킷명·객체명·설정값 원문은 이 문서에 기록하지 않는다.
 
-실제 저장소·readiness 설정이 있는 기존 파일은 **`/workspace/intelligentai/deployment/private/analysis-http.env`**다. 누락된 설정 6개와 AWS 읽기 자격증명이 모두 존재한다. 현재 공급원과 이 파일의 API 토큰, callback 토큰, callback base URL은 메모리 비교에서 일치했다. 자격증명 유효성 및 객체 읽기 성공은 아직 확인하지 않았다.
+실제 저장소·readiness 설정이 있는 기존 파일은 **`/workspace/intelligentai/deployment/private/analysis-http.env`**다. 누락된 설정 6개와 AWS 읽기 자격증명이 모두 존재한다. 현재 공급원과 이 파일의 API 토큰, callback 토큰, callback base URL은 메모리 비교에서 일치했다. 사용자 승인으로 누락 항목을 지속 설정에 복원한 뒤 실제 서비스 readiness까지 확인했다.
 
 ## 문서에서 확인한 근거
 
@@ -45,3 +45,11 @@ GitHub Actions에 `RUNPOD_API_KEY`, `RUNPOD_SSH_PRIVATE_KEY`, `RUNPOD_SSH_HOST_K
 OpenAI 키는 저장·실행 환경 주입, `bootstrap=true`까지 확인했다. 저장소 설정 복원 전에는 `503 / http_settings_incomplete_or_invalid`였다. AWS 자격증명의 지속 환경 복원은 자동 승인 심사의 별도 승인 요청 후 사용자에게 명시 승인을 받아 실행했고, API PATCH 200 및 저장 항목 존재를 확인했다. 파일 발견·Secrets 등록·소스 게시와 실제 서비스 readiness·코드 배포는 별도로 확인한다.
 
 2026-09-29 [GitHub Actions 연결 확인 실행](https://github.com/voice-coaching/intelligentAI/actions/runs/36546717155)은 성공했다. 앞선 연결 확인에서 Python 기본 User-Agent로 RunPod API가 403을 반환하여 식별자 `intelligentai-deployment/1.0`을 명시했고, 수정 후 API·SSH 접근을 검증했다. 이 실행은 `check_only=true`이므로 소스 배포나 readiness 검증을 수행한 결과는 아니다.
+
+## 최초 실제 배포 결과
+
+2026-09-29 [실제 배포 실행](https://github.com/voice-coaching/intelligentAI/actions/runs/36547108212)이 성공했다. 대상 커밋은 `a734f626c3a301a85c2ece1d746603c3881cadce`이며 Pod의 배포 상태 파일과 인증 `/health/services`의 `workerRevision`이 일치했다. 응답은 `HTTP 200`, `status=ready`, `executorReady=true`, `reasonCode=null`, provider/model은 `OPENAI / gpt-6-astra`였다. 미완료 배포 marker는 제거됐고 정상 분석 supervisor가 다시 실행 중이었다.
+
+실제 사용자 녹음 처리·GPT 생성·피드백 품질·자동 회귀 QA는 실행하지 않았다. 이번 최초 push에는 기존 회귀 CI를 실행하지 않도록 `[skip ci]`를 사용하고 배포 workflow만 수동 실행했다. 이후 일반 `main` push는 workflow의 자동 배포 trigger 대상이다. `[skip ci]`가 있는 커밋은 GitHub의 push workflow 생략 규칙을 따른다.
+
+독립 TTS는 분석 배포와 별개다. 같은 점검에서 `/workspace/voice-coaching-tts` 원본은 존재하지만 컨테이너 재생성 후 `/opt/voice-coaching-tts/venv`와 `:8082` listener는 없었다. 이 문서의 분석 readiness 성공을 TTS 복원 완료로 해석하지 않는다. TTS 환경·기동 복원은 별도 운영 작업으로 남는다.
