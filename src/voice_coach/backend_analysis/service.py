@@ -158,9 +158,9 @@ class BackendAnalysisWorker:
                     # Legacy selected evidence remains provenance; new coaching
                     # items alone carry the admitted learning agenda.
                     if analysis.summary_feedback is not None:
-                        summary_feedback = coaching_document["summary"] + "\n" + "\n".join(
-                            f"{item['observation']} {item['action']} {item['practice']} {item['selfCheck']}"
-                            for item in coaching_document["items"])
+                        # The summary already contains the complete bounded
+                        # learner feedback; do not append diagnostic/details.
+                        summary_feedback = coaching_document["summary"]
                 elif self._grounded_feedback is not None:
                     summary_feedback = self._grounded_feedback.render(
                         request=request,

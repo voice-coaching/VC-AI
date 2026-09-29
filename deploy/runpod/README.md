@@ -54,3 +54,8 @@ OpenAI readiness는 인증된 모델 조회를 최대 300초 캐시한다. readi
 6. 기동 뒤 provider/model/revision·readiness·파일 hash를 재확인한다. 개발자의 실제 처리·품질 QA는 별도로 인계한다.
 
 현재 조사에서는 어떤 서비스도 재시작하거나 배포하지 않았다. 이전 Clova INT8·모델 복원 자료는 [과거 안내](README.legacy-clova.md)에 보존한다. 구형 모델 파일의 존재는 현재 사용의 근거가 아니다.
+
+## main 자동 배포
+
+GitHub Actions 설정과 배포 절차는 [자동 배포 안내](GITHUB_ACTIONS.md)를 따른다.
+
