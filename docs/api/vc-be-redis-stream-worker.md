@@ -1,5 +1,7 @@
 # VC-BE Redis Stream worker integration
 
+> Historical Redis contract. The deployment inspected on 2026-09-28 uses HTTP admission and GPT-only coaching. See [the deployed pipeline](../runpod_deployed_pipeline_20260928.md). Redis authorization/grant fields below are not requirements of the active HTTP transport.
+
 현재 구현·검증·운영 gate 요약은
 `docs/backend_analysis_production_implementation.md`를 참조한다. 이 문서는 필드와 실행
 계약의 정본이다.

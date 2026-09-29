@@ -1,5 +1,7 @@
 # VC-BE 연동 AI 분석 워커 구현 현황
 
+> 아래는 2026-09-05 Redis worker 구현 기록이다. 현재 운영은 HTTP + GPT-6(`gpt-6-astra`) 코칭으로 전환됐다. [2026-09-28 실제 배포 파이프라인](runpod_deployed_pipeline_20260928.md)을 먼저 읽는다. 아래 HMAC/consent·Redis 계약을 현재 HTTP 요청에 적용하지 않는다.
+
 - 측정일: 2026-09-05
 - 구현 기준 브랜치: `agent/prepare-gated-ctc-training`
 

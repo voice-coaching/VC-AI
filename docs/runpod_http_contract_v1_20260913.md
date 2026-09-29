@@ -1,5 +1,7 @@
 # AWS–RunPod HTTP 계약 확정 회신
 
+> 아래는 2026-09-13 제어 v1.1/결과 v1 인계와 당시 관측이다. 2026-09-28 실제 배포는 제어 v1.1을 유지하면서 GPT coaching 완료 결과 v3를 생성한다. provider·영상 관찰·null 점수 및 실제 소스 근거는 [배포 파이프라인](runpod_deployed_pipeline_20260928.md)을 따른다. 아래 과거 Clova·포트·readiness 관측을 현재 상태로 해석하지 않는다.
+
 계약 revision: `voice-coaching.runpod-http.v1.1` · 작성일: 2026-09-13.
 
 이 문서는 AWS 담당자의 PR #47 점검 회신에 대한 **RunPod 측 구현 기준 확정본**이다. 양쪽 구현·배포 완료를 뜻하지 않는다. 기존 제안과 충돌하면 이 문서와 아래 JSON Schema를 기준으로 PR #47과 RunPod 구현을 맞춘다. 요청·결과의 `schemaVersion`은 각각 기존 v1 이름을 사용하고, 이번에 확정한 세부 규칙은 위 계약 revision으로 식별한다.
