@@ -151,6 +151,8 @@ class P6MappedLipFrame:
     normalized_points_xy: tuple[tuple[float, float], ...] | None
     visible_shape: P6VisibleLipShape | None
     shape_change_rate_per_second: float | None
+    # Internal provenance only; not an additional public receipt field.
+    rate_context_timestamp_ms: int | None = None
 
     def __post_init__(self) -> None:
         if (
@@ -199,6 +201,12 @@ class P6MappedLipFrame:
                 raise VisualFeedbackContractError(
                     "P6 shape change rate is invalid"
                 )
+        if self.rate_context_timestamp_ms is not None and (
+            type(self.rate_context_timestamp_ms) is not int
+            or not 0 <= self.rate_context_timestamp_ms < self.timestamp_ms
+            or self.shape_change_rate_per_second is None
+        ):
+            raise VisualFeedbackContractError("P6 rate context is invalid")
 
     def _digest_json_object(self) -> dict[str, object]:
         return {

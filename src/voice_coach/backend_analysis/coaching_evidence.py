@@ -7,6 +7,7 @@ from __future__ import annotations
 
 from collections import Counter
 from copy import deepcopy
+from .coaching_visual_policy import INPUT_SCHEMA, bind_visual
 
 from voice_coach.pronunciation_feedback.feedback_evidence import (
     build_feedback_evidence, decompose_syllables,
@@ -123,7 +124,7 @@ def build_coaching_input(*, analysis, text, duration_ms, visual_state="NOT_PROVI
     # rankings across phones do not define pedagogical importance.
     candidates.sort(key=lambda c: (-c["repetitionCount"], int(c["candidateId"].split('-')[-1])))
     review = [f for f in facts if f["disposition"] == "REVIEW_ONLY"]
-    return dict(schemaVersion="voice-coaching.coaching-input.v1", policyRevision=POLICY,
+    source = dict(schemaVersion=INPUT_SCHEMA, policyRevision=POLICY,
         task=dict(mode="COACHING", language="ko", objective="practice_and_check_improvement"),
         utterance=dict(text=text, durationMs=duration_ms, durationSemantics="file_duration_not_speaking_rate",
                        expectedPhones=expected, ctcHypothesis=bundle["audio"]["ctcHypothesis"]),
@@ -132,11 +133,13 @@ def build_coaching_input(*, analysis, text, duration_ms, visual_state="NOT_PROVI
             includedCandidateIds=[c["candidateId"] for c in candidates], omittedCandidateIds=[],
             selectionPolicy="repetition_then_first_occurrence", omittedReason=None),
         facts=facts, candidates=candidates,
-        visual=dict(status=visual_state, observations=list(visual_observations),
+        visual=dict(status=visual_state, observations=deepcopy(list(visual_observations)),
                     referenceStatus="NOT_VALIDATED", correctiveClaimsAllowed=False),
         score=dict(validity="INSUFFICIENT_EVIDENCE" if review else "NOT_CALIBRATED",
                    overallScore=None, reasonCodes=sorted({r for f in review for r in f["reasonCodes"]}) or ["EXPERT_CALIBRATION_REQUIRED"]),
         previousAttempt=None)
+    bind_visual(source)
+    return source
 
 
 def project_candidates(source, count):
@@ -144,6 +147,16 @@ def project_candidates(source, count):
     view = deepcopy(source)
     view["candidates"] = view["candidates"][:count]
     ids = {i for c in view["candidates"] for i in c["evidenceIds"]}
+    candidate_ids = {c["candidateId"] for c in view["candidates"]}
+    view["visual"]["observations"] = [o for o in view["visual"]["observations"]
+        if o.get("candidateId") in candidate_ids and o.get("audioEvidenceId") in ids]
+    view["allowedStatements"] = [s for s in view["allowedStatements"] if s["candidateId"] in candidate_ids]
+    # Private lineage remains in source, not in provider messages.
+    view["visual"]["observations"] = [dict({k: o[k] for k in
+        ("observationId", "candidateId", "audioEvidenceId", "expectedIndex", "interpretationMode", "policyReason")},
+        measurements=[{k: m[k] for k in ("cueId", "value", "unit", "aggregation", "validSampleCount", "startMs", "endMs")}
+                      for m in o.get("validatedMeasurements", [])])
+        for o in view["visual"]["observations"]]
     # Preserve review counts/reasons globally; only bounded examples in the LLM
     # input. They cannot become coaching items.
     review = [f for f in view["facts"] if f["disposition"] == "REVIEW_ONLY"]

@@ -101,6 +101,7 @@ def build_p6_lip_trajectory(
                 normalized_points_xy=normalized_points,
                 visible_shape=visible_shape,
                 shape_change_rate_per_second=change_rate,
+                rate_context_timestamp_ms=previous_timestamp_ms if change_rate is not None else None,
             )
         )
         previous_points = normalized_points

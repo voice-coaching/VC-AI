@@ -242,7 +242,8 @@ class ProductionBackendVisualAnalysisAdapter:
         from ..coaching_evidence import build_coaching_input
         from voice_coach.visual_feedback.models.supplement import VisualFeedbackSupplement
         import math
-        if not self._http_admitted or request.visual_input is None or video.sha256 != request.visual_input.sha256:
+        if (not self._http_admitted or request.visual_input is None
+                or video.sha256 != request.visual_input.sha256 or audio.sha256 != request.audio_sha256):
             raise ValueError("coaching_visual_binding_invalid")
         source = build_coaching_input(analysis=seungun, text=request.script_text,
                                      duration_ms=request.duration_ms)
@@ -269,6 +270,7 @@ class ProductionBackendVisualAnalysisAdapter:
             captures = facade.run_http_observations(video_locator=str(video.path), attempt_id_sha256=attempt,
                 expected_sha256=video.sha256, prompt_id=f"analysis-{request.analysis_id}", expected_indices=indices)
         observations = []
+        candidate_by_index = {int(c["evidenceIds"][0].split("-")[-1]): c for c in source["candidates"][:3]}
         for capture in captures:
             measures = []
             supplement = capture["supplement"]
@@ -284,7 +286,12 @@ class ProductionBackendVisualAnalysisAdapter:
                     measures.append(dict(cueId=cue["cue_id"], value=value, unit=cue["measurement_unit"],
                         startMs=start, endMs=end, sampleCount=None,
                         samplingProvenance="AGGREGATE_CONTRACT_NO_SAMPLE_TIMESTAMPS"))
+            candidate = candidate_by_index[capture["expectedIndex"]]
             observations.append(dict(expectedIndex=capture["expectedIndex"], stage=capture["stage"],
+                observationId=f"visual-{capture['expectedIndex']}-0", candidateId=candidate["candidateId"],
+                audioEvidenceId=candidate["evidenceIds"][0],
+                provenance=dict(attemptSha256=attempt, audioSha256=audio.sha256,
+                    videoSha256=video.sha256, measurementReceipt=capture["measurementReceipt"]),
                 reasonCodes=capture["reasonCodes"], measurements=measures,
                 decodedSampleTimesMs=capture["decodedSampleTimesMs"],
                 samplingScope="DECODED_WINDOW_NOT_VALID_LANDMARK_COUNT"))

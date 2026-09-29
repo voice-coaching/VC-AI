@@ -177,6 +177,13 @@ class ProductionVisualSidecarAdapter:
     ) -> dict[str, object]:
         """Return strict JSON for one supplement without owning raw media."""
 
+        supplement, _ = self.create_with_observations(
+            detection=detection, handoff=handoff, reliability=reliability)
+        return supplement
+
+    def create_with_observations(self, *, detection, handoff, reliability):
+        """Private measurement receipt; never extend the public supplement."""
+        measurements = []
         # Resolve the immutable handoff first so even a failed-closed result is
         # bound to a real upstream reference rather than a caller-made digest.
         resolved = self._resolve_attempt(detection=detection, handoff=handoff)
@@ -196,14 +203,27 @@ class ProductionVisualSidecarAdapter:
             supplement = self._create_validated_supplement(
                 resolved=resolved,
                 reliability_receipt=reliability.receipt,
+                measurements=measurements,
             )
         except Exception:
+            measurements.clear()
             supplement = self._supplement(
                 resolved=resolved,
                 status=VisualFeedbackStatus.VISUAL_FAILED_CLOSED,
                 reason_codes=("visual_supplement_lineage_mismatch",),
             )
-        return _strict_supplement_json(supplement)
+        provenance = None
+        if measurements:
+            provenance = dict(
+                schemaVersion="coaching-measurement-receipt.v2",
+                bindingSha256=resolved.handoff.request.binding_receipt.receipt_sha256,
+                reliabilitySha256=reliability.receipt.receipt_sha256,
+                runtimeBundleSha256=self._bundle.bundle_sha256,
+                phoneAnchorSha256=resolved.anchor.anchor_ref,
+                windowSha256=resolved.phone_window.runtime_receipt.receipt_sha256,
+                videoPhoneSpanMs=dict(zip(("start", "end"), self._mapped_phone_span(resolved))),
+                qc="PASSED", sync="POLICY_ACCEPTED", measurements=measurements)
+        return _strict_supplement_json(supplement), provenance
 
     def _resolve_attempt(
         self,
@@ -359,10 +379,11 @@ class ProductionVisualSidecarAdapter:
         *,
         resolved: _ResolvedAttempt,
         reliability_receipt: AttemptVisualReliabilityReceipt,
+        measurements=None,
     ) -> VisualFeedbackSupplement:
         request = resolved.handoff.request
         anchor = resolved.anchor
-        beta_evidence, beta_status = self._closed_beta_cue_evidence(resolved)
+        beta_evidence, beta_status = self._closed_beta_cue_evidence(resolved, measurements)
         matching_rules = tuple(
             rule
             for rule in self._bundle.calibration_artifact.rules
@@ -384,7 +405,7 @@ class ProductionVisualSidecarAdapter:
                 "selected phone calibration rule is ambiguous"
             )
         rule = matching_rules[0]
-        cue = self._center_cue(resolved=resolved, rule=rule)
+        cue = self._center_cue(resolved=resolved, rule=rule, measurements=measurements)
         calibrated = self._bundle.calibration_artifact.calibrate(
             cue=cue,
             expected_phone=anchor.expected_phone,
@@ -467,28 +488,41 @@ class ProductionVisualSidecarAdapter:
         *,
         resolved: _ResolvedAttempt,
         rule: CalibrationRule,
+        measurements=None,
     ) -> LipCueMeasurement:
         dense = resolved.phone_window
         landmarks = self._validated_landmark_batch(resolved)
         mapped_start_ms, mapped_end_ms = self._mapped_phone_span(resolved)
         target_ms = (mapped_start_ms + mapped_end_ms) / 2.0
+        exact = {t // 1000: t / 1000 for t in dense.decode_receipt.decoded_timestamps_us}
         center_frame = min(
             landmarks.frames,
-            key=lambda frame: (abs(frame.timestamp_ms - target_ms), frame.timestamp_ms),
+            key=lambda frame: (abs(exact.get(frame.timestamp_ms, frame.timestamp_ms) - target_ms), frame.timestamp_ms),
         )
+        selected_time = exact.get(center_frame.timestamp_ms)
+        inside = selected_time is not None and mapped_start_ms <= selected_time <= mapped_end_ms
+        # A context frame is not an observation of a shorter CTC phone span.
+        if measurements is not None:
+            measurements.append(dict(cueId=_CUE_ID, unit=_CUE_UNIT,
+                value=center_frame.lip_geometry.aperture_ratio if inside and center_frame.lip_geometry is not None else None,
+                aggregation="NEAREST_FRAME", selectedFrameTimeMs=selected_time,
+                selectedFrameInsidePhoneSpan=inside,
+                usedFrameTimesMs=[selected_time] if inside and center_frame.lip_geometry is not None else [],
+                validSampleCount=1 if inside and center_frame.lip_geometry is not None else 0,
+                contextFrameTimesMs=[], startMs=mapped_start_ms, endMs=mapped_end_ms))
         backend = AdapterReceipt(
             backend_id="dense_phone_window_center_cue",
             backend_revision=_BACKEND_REVISION,
             status=(
-                "observed" if center_frame.lip_geometry is not None else "missing"
+                "observed" if inside and center_frame.lip_geometry is not None else "missing"
             ),
             reason_codes=(
                 ()
-                if center_frame.lip_geometry is not None
+                if inside and center_frame.lip_geometry is not None
                 else ("selected_phone_center_lip_not_observed",)
             ),
         )
-        if center_frame.lip_geometry is None:
+        if not inside or center_frame.lip_geometry is None:
             return LipCueMeasurement(
                 cue_id=_CUE_ID,
                 state=VisualCueState.MISSING,
@@ -589,6 +623,7 @@ class ProductionVisualSidecarAdapter:
     def _closed_beta_cue_evidence(
         self,
         resolved: _ResolvedAttempt,
+        measurements=None,
     ) -> tuple[tuple[VisualCueEvidence, ...], str]:
         geometry_artifact = self._closed_beta_geometry_artifact
         if geometry_artifact is None:
@@ -700,6 +735,20 @@ class ProductionVisualSidecarAdapter:
             )
         except (P6LipTrajectoryError, VisualFeedbackContractError):
             return (), "unavailable"
+        if measurements is not None:
+            for cue_id, value in values.items():
+                temporal = cue_id == "shape_change_rate_per_second"
+                used = [f for f in selected_frames if
+                        (f.shape_change_rate_per_second is not None if temporal else f.visible_shape is not None)]
+                context = []
+                if temporal:
+                    context = [exact_times[f.rate_context_timestamp_ms] / 1000 for f in used]
+                measurements.append(dict(cueId=cue_id, value=value, unit=_CLOSED_BETA_CUE_UNITS[cue_id],
+                    aggregation="MAX_IN_PHONE_SPAN" if temporal else "MEAN_IN_PHONE_SPAN",
+                    usedFrameTimesMs=[exact_times[f.timestamp_ms] / 1000 for f in used],
+                    validSampleCount=len(used), contextFrameTimesMs=context,
+                    rateTimebase="INTEGER_MILLISECONDS" if temporal else None,
+                    startMs=start_ms, endMs=end_ms))
         return evidence, "observed"
 
     def _validate_claim_policy(self, claim: VisualClaim) -> None:

@@ -273,6 +273,7 @@ class _Draft:
     visual_supplement: Mapping[str, object] | None = None
     visual_stage_status: VisualStageStatus = VisualStageStatus.NOT_STARTED
     decoded_sample_times_ms: tuple[float, ...] = ()
+    coaching_measurement_receipt: Mapping[str, object] | None = None
 
 
 class VideoAttemptFacade:
@@ -477,11 +478,15 @@ class VideoAttemptFacade:
         decoded_sample_times_ms = ()
         try:
             sample = decode_cache.get("global_sample") if decode_cache is not None else None
+            cache_key = (asset.container_sha256, self._container_policy, self._visual_sample_frame_count)
+            if decode_cache is not None and decode_cache.get("source_key") != cache_key:
+                sample = None
             if sample is None:
                 sample = self._container_port.decode_rgb24_sample(
                     asset, self._container_policy, frame_count=self._visual_sample_frame_count)
                 if decode_cache is not None:
                     decode_cache["global_sample"] = sample
+                    decode_cache["source_key"] = cache_key
         except Exception as error:
             return _audio_only(
                 audio_result=audio_result,
@@ -580,11 +585,14 @@ class VideoAttemptFacade:
             )
 
         try:
-            visual_supplement = self._visual_port.create(
-                detection=detection,
-                handoff=handoff,
-                reliability=reliability,
-            )
+            receipt = None
+            observer = getattr(self._visual_port, "create_with_observations", None)
+            if observer is not None:
+                visual_supplement, receipt = observer(
+                    detection=detection, handoff=handoff, reliability=reliability)
+            else:
+                visual_supplement = self._visual_port.create(
+                    detection=detection, handoff=handoff, reliability=reliability)
         except Exception:
             return _audio_only(
                 audio_result=audio_result,
@@ -599,6 +607,7 @@ class VideoAttemptFacade:
             visual_supplement=visual_supplement,
             visual_stage_status=VisualStageStatus.COMPLETED,
             decoded_sample_times_ms=decoded_sample_times_ms,
+            coaching_measurement_receipt=receipt,
         )
 
     def run_http(self, *, video_locator, attempt_id_sha256, expected_sha256, prompt_id):
@@ -652,6 +661,7 @@ class VideoAttemptFacade:
                                                audio_result=seungun.audio_result, decode_cache=decode_cache)
                 observations.append(dict(expectedIndex=index, stage=draft.visual_stage_status.value,
                     reasonCodes=list(draft.reason_codes), supplement=draft.visual_supplement,
+                    measurementReceipt=draft.coaching_measurement_receipt,
                     decodedSampleTimesMs=list(draft.decoded_sample_times_ms), videoDurationMs=probe.duration_ms))
             return observations
         finally:

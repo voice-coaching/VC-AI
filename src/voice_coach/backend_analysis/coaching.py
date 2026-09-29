@@ -11,6 +11,9 @@ import time
 from typing import Protocol
 
 from .coaching_evidence import POLICY, build_coaching_input, project_candidates
+from .coaching_visual_policy import (
+    EXPLANATIONS, REVISION as VISUAL_POLICY, OUTPUT_SCHEMA, public_visual, render_visual_statements,
+)
 
 SCHEMA = "voice-coaching.coaching-result.v1"
 PROMPT_REVISION = "pronunciation-coaching-v1"
@@ -42,6 +45,10 @@ def load_prompt(root):
     if target.parent != (directory / "coaching").resolve():
         raise ValueError("coaching_prompt_target_invalid")
     prompt = (directory / "system.md").read_text(encoding="utf-8") + "\n" + target.read_text(encoding="utf-8")
+    visual_prompt = (directory / "coaching/visual-coaching-v2.md").read_text(encoding="utf-8")
+    if hashlib.sha256(visual_prompt.encode()).hexdigest() != "abc69b9a3a46a00126034c2d4b143f4ba087f4697f4d2ff38d995cac6130308b":
+        raise ValueError("coaching_visual_prompt_integrity_invalid")
+    prompt += "\n" + visual_prompt
     return prompt, hashlib.sha256(prompt.encode()).hexdigest()
 
 
@@ -74,6 +81,8 @@ def prepare_view(source, count):
     by_id = {f["evidenceId"]: f for f in view["facts"]}
     for candidate in view["candidates"]:
         candidate["guidance"] = guidance_for(candidate, [by_id[i] for i in candidate["evidenceIds"]])
+        candidate["allowedText"] = dict(explanation=list(EXPLANATIONS),
+            **{k: [candidate["guidance"][k]] for k in ("action", "practice", "selfCheck")})
     return view
 
 
@@ -127,7 +136,7 @@ def validate_generated(document, view):
         raise ValueError("coaching_output_count")
     selected = set()
     for row in rows:
-        if not isinstance(row, dict) or set(row) != {"candidateId", "guidanceId", "explanation", "action", "practice", "selfCheck"}:
+        if not isinstance(row, dict) or set(row) != {"candidateId", "guidanceId", "explanation", "action", "practice", "selfCheck", "usedVisualStatementIds"}:
             raise ValueError("coaching_item_shape")
         candidate = candidates.get(row["candidateId"])
         if candidate is None or row["candidateId"] in selected or row["guidanceId"] != candidate["guidance"]["guidanceId"]:
@@ -135,6 +144,12 @@ def validate_generated(document, view):
         selected.add(row["candidateId"])
         for name in ("explanation", "action", "practice", "selfCheck"):
             _text(row[name])
+            if row[name] not in candidate["allowedText"][name]:
+                raise ValueError("coaching_text_not_allowed")
+        refs = row["usedVisualStatementIds"]
+        if (not isinstance(refs, list) or any(not isinstance(ref, str) for ref in refs)
+                or len(refs) != len(set(refs)) or not set(refs) <= set(candidate["allowedStatementIds"])):
+            raise ValueError("coaching_visual_reference_invalid")
         _action(row["action"])
     # Avoid validating the same single anchor while ignoring equally admitted
     # different patterns. The bounded input already chose the learning agenda.
@@ -147,7 +162,7 @@ def validate_generated(document, view):
 
 def template_rows(view):
     return [dict(candidateId=c["candidateId"], guidanceId=c["guidance"]["guidanceId"],
-        explanation="목표 소리를 단어 안에서 자연스럽게 연결하는 연습입니다.",
+        explanation=EXPLANATIONS[0], usedVisualStatementIds=[],
         **{k: c["guidance"][k] for k in ("action", "practice", "selfCheck")}) for c in view["candidates"]]
 
 
@@ -163,7 +178,11 @@ def render_document(source, view, generated, *, provider, fallback, prompt_diges
         observation = f"목표 표지 ‘{first['expectedPhone']}’ 구간에서 모델의 후보 표지는 ‘{observed}’입니다." if observed else "해당 구간에서 발음 검출기가 확인 후보를 표시했습니다."
         if observed == first["expectedPhone"]:
             observation = f"모델 표지는 목표 ‘{observed}’와 같지만 발음 검출기가 이 구간을 확인 후보로 표시했습니다. 대치가 확인된 것은 아닙니다."
-        items.append(dict(**row, evidenceIds=candidate["evidenceIds"],
+        visual_text = render_visual_statements(source, row)
+        if visual_text:
+            observation += " " + visual_text
+        public_row = {k: v for k, v in row.items() if k != "usedVisualStatementIds"}
+        items.append(dict(**public_row, evidenceIds=candidate["evidenceIds"],
             expectedPhone=first["expectedPhone"], observedCandidate=observed,
             location=deepcopy(first["location"]), observation=observation,
             claimScope=candidate["claimScope"]))
@@ -183,7 +202,7 @@ def render_document(source, view, generated, *, provider, fallback, prompt_diges
     return dict(schemaVersion=SCHEMA, status=status, summary=summary, strengths=[], items=items,
         practicePlan=items[0]["practice"] if items else None, limitations=limitations,
         comparison=None, coverage=deepcopy(view["coverage"]), score=deepcopy(source["score"]),
-        visual=deepcopy(source["visual"]),
+        visual=public_visual(source["visual"]),
         generation=dict(source="TEMPLATE" if fallback else "LLM", provider=provider,
             promptRevision=PROMPT_REVISION, promptSha256=prompt_digest, policyRevision=POLICY,
             fallbackReason=fallback))
@@ -208,6 +227,8 @@ class EvidenceBasedCoaching:
             handler.setFormatter(formatter)
             LOG.addHandler(handler)
             LOG.propagate = False
+        LOG.info("coaching_visual_policy_loaded revision=%s schema=%s prompt_sha256=%s corrective_claims=false",
+                 VISUAL_POLICY, OUTPUT_SCHEMA, self.prompt_digest)
         if expert_examples is not None:
             LOG.info("coaching_expert_examples_loaded revision=%s sha256=%s cases=%s input_budget=%s",
                      expert_examples.revision, expert_examples.sha256,
@@ -244,13 +265,18 @@ class EvidenceBasedCoaching:
                 reason = str(error) if type(error) is ValueError else "unclassified"
                 if reason not in {"coaching_output_shape", "coaching_output_count", "coaching_item_shape",
                                   "coaching_item_binding", "coaching_text_invalid", "coaching_unsupported_text",
-                                  "coaching_candidate_coverage", "coaching_action_length", "coaching_action_meta"}:
+                                  "coaching_candidate_coverage", "coaching_action_length", "coaching_action_meta",
+                                  "coaching_text_not_allowed", "coaching_visual_reference_invalid"}:
                     reason = "unclassified"
                 LOG.warning("coaching_fallback analysis=%s request=%s stage=%s reason=%s",
                             request.analysis_id, request.event_id, stage, reason)
                 rows = template_rows(view)
         result = render_document(source, view, rows, provider=provider,
                                  fallback=fallback, prompt_digest=self.prompt_digest)
+        LOG.info("coaching_visual_usage analysis=%s request=%s policy=%s schema=%s provided=%d referenced=%d displayed=%d",
+            request.analysis_id, request.event_id, VISUAL_POLICY, OUTPUT_SCHEMA,
+            len(view["allowedStatements"]), sum(len(r["usedVisualStatementIds"]) for r in rows),
+            sum(len(r["usedVisualStatementIds"]) for r in rows))
         LOG.info("coaching_result analysis=%s request=%s provider=%s status=%s fallback=%s candidates=%d review=%d elapsed_ms=%d",
             request.analysis_id, request.event_id, provider, result["status"], fallback,
             len(rows), source["coverage"]["reviewOnlyPhoneCount"], round((time.monotonic()-started)*1000))
