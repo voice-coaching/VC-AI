@@ -6,6 +6,7 @@ from collections import OrderedDict
 from dataclasses import dataclass, field
 from datetime import datetime, UTC
 import multiprocessing as mp
+import logging
 import os
 import random
 import signal
@@ -280,6 +281,7 @@ class HttpRuntime:
         receiving = asyncio.create_task(self._receive())
         cancelled = asyncio.create_task(job.cancel.wait())
         job.state = "RUNNING"
+        phase = "receive_result"
         try:
             done, _ = await asyncio.wait((receiving, cancelled), return_when=asyncio.FIRST_COMPLETED)
             if cancelled in done:
@@ -287,8 +289,10 @@ class HttpRuntime:
             kind, result = receiving.result()
             if kind != "result":
                 raise RuntimeError("executor_unavailable")
+            phase = "validate_result"
             body = result_payload(result, job.request, self.worker_id)
             job.state = "DELIVERING_RESULT"
+            phase = "deliver_result"
             attempt = 0
             while not job.cancel.is_set() and time.monotonic() < job.lease_until:
                 try:
@@ -311,8 +315,10 @@ class HttpRuntime:
             job.cancel.set()
         except asyncio.CancelledError:
             job.cancel.set()
-        except Exception:
-            job.reason = "INTERNAL_ERROR"
+        except Exception as error:
+            logging.getLogger(__name__).warning(
+                "analysis_result_delivery_failed phase=%s error=%s", phase, type(error).__name__)
+            job.reason = error.code if isinstance(error, HttpFailure) else "INTERNAL_ERROR"
             job.cancel.set()
         finally:
             for task in (heartbeat, receiving, cancelled):

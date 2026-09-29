@@ -1,9 +1,9 @@
 """Grounded contract between a decided diagnosis and a local coaching LLM.
 
 The acoustic and policy stages have already finished when this module is used.
-The model rewrites approved claims without deciding new pronunciation facts.
-Host-authored required fragments keep observations and practice steps from
-disappearing during summarization. Invalid prose falls back to the source claims.
+The model may explain evidence and add general pronunciation teaching guidance.
+Source claims are optional reference material, not mandatory wording. Identity,
+privacy and wire-shape checks remain; generation failures retain source fallback.
 """
 
 from __future__ import annotations
@@ -17,10 +17,12 @@ from typing import Any, Mapping
 from .coaching_payload import CoachingPayloadError
 from .domain import DiagnosticIssueDraft, PromptSpec
 
-GROUNDED_INPUT_SCHEMA_VERSION = "voice_coach.grounded_advice_input.v4"
+GROUNDED_INPUT_SCHEMA_VERSION = "voice_coach.grounded_advice_input.v6"
+_EXPANDED_INPUT_SCHEMA_VERSION = "voice_coach.grounded_advice_input.v5"
+_PREVIOUS_INPUT_SCHEMA_VERSION = "voice_coach.grounded_advice_input.v4"
 _LEGACY_INPUT_SCHEMA_VERSION = "voice_coach.grounded_advice_input.v3"
 GROUNDED_OUTPUT_SCHEMA_VERSION = "voice_coach.grounded_advice_output.v3"
-MAXIMUM_GROUNDED_MESSAGE_CHARACTERS = 1000
+MAXIMUM_GROUNDED_MESSAGE_CHARACTERS = 20000  # Backend summaryFeedback contract limit
 
 _SHA256 = re.compile(r"\b[0-9a-f]{64}\b")
 _PATH_LIKE = re.compile(
@@ -156,6 +158,7 @@ class GroundedCoachingPayload:
     advice_id: str
     approved_claims: tuple[ApprovedAdviceClaim, ...]
     claim_scope: str
+    feedback_evidence: dict[str, Any] | None = None
 
     def __post_init__(self) -> None:
         if self.schema_version != GROUNDED_INPUT_SCHEMA_VERSION:
@@ -173,6 +176,11 @@ class GroundedCoachingPayload:
             if not value:
                 raise CoachingPayloadError(f"{name} must not be empty")
             _assert_privacy_safe(value, field=name)
+        if self.feedback_evidence is not None and (
+            not isinstance(self.feedback_evidence, dict)
+            or self.feedback_evidence.get("schemaVersion") != "voice_coach.feedback_evidence.v1"
+        ):
+            raise CoachingPayloadError("feedback evidence schema differs")
         if not self.approved_claims:
             raise CoachingPayloadError("grounded payload needs an approved claim")
         if self.issue_type == "phone_pronunciation_error" and (
@@ -279,20 +287,14 @@ class GroundedCoachingPayload:
                     {
                         "claimId": item.claim_id,
                         "text": item.text,
-                        "requiredFragments": list(item.required_fragments),
+                        "requiredFragments": [],
                     }
                     for item in self.approved_claims
                 ],
             },
             "claimScope": self.claim_scope,
-            "constraints": {
-                "mayAddIssue": False,
-                "mayAddPhone": False,
-                "mayAddLocation": False,
-                "mayAddScore": False,
-                "mayAddArticulationFact": False,
-                "maximumIssues": 1,
-            },
+            "constraints": {},
+            "feedbackEvidence": self.feedback_evidence,
         }
 
     def to_json(self) -> str:
@@ -318,10 +320,13 @@ class GroundedCoachingPayload:
             "claimScope",
             "constraints",
         }
+        if value.get("schemaVersion") == GROUNDED_INPUT_SCHEMA_VERSION:
+            required.add("feedbackEvidence")
         if set(value) != required:
             raise CoachingPayloadError("grounded payload schema differs")
         if value["schemaVersion"] not in (
-            GROUNDED_INPUT_SCHEMA_VERSION, _LEGACY_INPUT_SCHEMA_VERSION
+            GROUNDED_INPUT_SCHEMA_VERSION, _EXPANDED_INPUT_SCHEMA_VERSION, _PREVIOUS_INPUT_SCHEMA_VERSION,
+            _LEGACY_INPUT_SCHEMA_VERSION
         ):
             raise CoachingPayloadError("grounded input schema version differs")
         legacy = value["schemaVersion"] == _LEGACY_INPUT_SCHEMA_VERSION
@@ -364,7 +369,11 @@ class GroundedCoachingPayload:
             "mayAddArticulationFact": False,
             "maximumIssues": 1,
         }
-        if constraints != expected_constraints:
+        accepted_constraints = (
+            {} if value["schemaVersion"] in (GROUNDED_INPUT_SCHEMA_VERSION, _EXPANDED_INPUT_SCHEMA_VERSION)
+            else expected_constraints
+        )
+        if constraints != accepted_constraints:
             raise CoachingPayloadError("grounded payload constraints differ")
 
         raw_location = issue["location"]
@@ -489,6 +498,7 @@ class GroundedCoachingPayload:
             advice_id=string_fields["adviceId"],
             approved_claims=tuple(claims),
             claim_scope=string_fields["claimScope"],
+            feedback_evidence=value.get("feedbackEvidence"),
         )
 
 
@@ -578,10 +588,12 @@ def build_grounded_coaching_payload(
 
 
 def parse_grounded_advice_plan(raw: str) -> GroundedAdvicePlan:
-    """Parse exact JSON and reject prose, fences, missing fields, or extras."""
+    """Parse one JSON object, optionally inside one complete JSON code fence."""
 
     try:
-        document = json.loads(raw.strip())
+        content = raw.strip()
+        fenced = re.fullmatch(r"```(?:json)?[ \t]*\r?\n(.*?)\r?\n```", content, re.DOTALL)
+        document = json.loads(fenced.group(1) if fenced else content)
     except (json.JSONDecodeError, UnicodeDecodeError) as error:
         raise CoachingPayloadError("grounded generator response is not JSON") from error
     if not isinstance(document, dict):
@@ -650,63 +662,21 @@ def validate_grounded_advice_plan(
         if plan.learner_message is not None:
             raise CoachingPayloadError("an abstained plan must omit learner message")
         return plan
-    if set(plan.selected_claim_ids) != allowed:
-        raise CoachingPayloadError("grounded output must preserve every approved claim")
+    if not set(plan.selected_claim_ids).issubset(allowed):
+        raise CoachingPayloadError("grounded output refers to an unknown source claim")
     if (
         plan.candidate_disclosure is CandidateDisclosure.MODEL_CANDIDATE
         and payload.observed_candidate is None
+        and not any(row.get("observed_candidate") is not None for row in
+                    (payload.feedback_evidence or {}).get("audio", {}).get("phones", []))
     ):
         raise CoachingPayloadError("grounded output invents an observed candidate")
     if plan.learner_message is not None:
         message = plan.learner_message.strip()
-        if not 40 <= len(message) <= MAXIMUM_GROUNDED_MESSAGE_CHARACTERS:
-            raise CoachingPayloadError("learner message length is outside policy")
-        for claim in payload.approved_claims:
-            if any(fragment not in message for fragment in claim.required_fragments):
-                raise CoachingPayloadError("learner message omits required claim detail")
-        if any(
-            term in message.lower()
-            for term in (
-                "detector",
-                "threshold",
-                "score",
-                "confidence",
-                "schema",
-                "claimid",
-            )
-        ):
-            raise CoachingPayloadError("learner message exposes internal terminology")
-        if payload.location is not None and (
-            payload.location.target_unit not in message
-        ):
-            raise CoachingPayloadError("learner message omits the target unit")
-        if (
-            payload.location is not None
-            and payload.location.learner_anchor is not None
-            and payload.location.learner_anchor not in message
-        ):
-            raise CoachingPayloadError(
-                "learner message omits the exact syllable anchor"
-            )
-        if (
-            any("원래 속도" in claim.text for claim in payload.approved_claims)
-            and "빠르게" in message
-        ):
-            raise CoachingPayloadError(
-                "learner message changes original speed to faster speech"
-            )
-        if (
-            plan.candidate_disclosure is CandidateDisclosure.MODEL_CANDIDATE
-            and payload.observed_candidate is not None
-            and (
-                payload.observed_candidate not in message
-                or not any(
-                    marker in message for marker in ("가능", "확정", "추정", "단정")
-                )
-            )
-        ):
-            raise CoachingPayloadError("learner message omits candidate uncertainty")
+        if not 1 <= len(message) <= MAXIMUM_GROUNDED_MESSAGE_CHARACTERS:
+            raise CoachingPayloadError("learner message exceeds the backend contract")
         _assert_privacy_safe(message, field="learner message")
+
     return plan
 
 

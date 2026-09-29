@@ -1,12 +1,14 @@
 """Optional local Clova presentation over the current attempt's approved facts.
 
-Only the existing grounded payload reaches the LLM. Request identifiers, grants,
-object keys, media, and the full visual supplement never enter that payload.
+A versioned evidence projection can accompany the selected issue. Request
+identifiers, object keys, media and provenance hashes never reach the model.
 """
 
 from __future__ import annotations
 
 from collections.abc import Mapping
+from dataclasses import replace
+import logging
 import hashlib
 import hmac
 import json
@@ -18,6 +20,7 @@ from voice_coach.pronunciation_feedback.adapters.advice_generator_hyperclova imp
     DEFAULT_MODEL_ID,
     DEFAULT_TIMEOUT_SECONDS,
     LocalHyperClovaAdviceGenerator,
+    OfflineChatTokenCounter,
 )
 from voice_coach.pronunciation_feedback.ports import GroundedAdviceGeneratorPort
 from voice_coach.pronunciation_feedback.seungun_bridge import (
@@ -29,6 +32,8 @@ from voice_coach.pronunciation_feedback.video_grounded_advice import (
 from voice_coach.visual_feedback.models.integrity import canonical_json_bytes
 from voice_coach.visual_feedback.models.supplement import VisualFeedbackSupplement
 
+from voice_coach.pronunciation_feedback.feedback_evidence import build_feedback_evidence
+
 from .domain import AnalysisOutcome, AnalysisRequest, VisualSupplement
 from .ports import SeungunAnalysis
 
@@ -36,8 +41,9 @@ from .ports import SeungunAnalysis
 class BackendGroundedFeedback:
     """Change presentation only; retain the original result on invalid evidence."""
 
-    def __init__(self, generator: GroundedAdviceGeneratorPort) -> None:
+    def __init__(self, generator: GroundedAdviceGeneratorPort, *, full_evidence=False) -> None:
         self._generator = generator
+        self._full_evidence = full_evidence
 
     def render(
         self,
@@ -46,6 +52,9 @@ class BackendGroundedFeedback:
         analysis: SeungunAnalysis,
         visual_supplement: VisualSupplement | None,
         visual_evidence: Mapping[str, object] | None,
+        overall_score=None,
+        scoring_evidence=None,
+        visual_state="UNAVAILABLE",
     ) -> str | None:
         if analysis.outcome is not AnalysisOutcome.COACHING_READY:
             return analysis.summary_feedback
@@ -69,6 +78,17 @@ class BackendGroundedFeedback:
                 visual_evidence,
                 selected_index=selected.selected_expected_index,
             )
+            if self._full_evidence:
+                state = visual_state
+                if admitted_visual is not None:
+                    state = "OBSERVED_NOT_PRONUNCIATION_TRUTH"
+                elif visual_evidence is not None:
+                    state = "EVIDENCE_BINDING_REJECTED"
+                payload = replace(payload, feedback_evidence=build_feedback_evidence(
+                    analysis=analysis.analysis_evidence, target_text=request.script_text,
+                    selected_index=selected.selected_expected_index,
+                    visual_evidence=admitted_visual, visual_state=state,
+                    overall_score=overall_score, scoring_evidence=scoring_evidence))
             feedback = generate_grounded_video_feedback(
                 audio_result={
                     "status": "coaching_ready",
@@ -84,8 +104,14 @@ class BackendGroundedFeedback:
             )
             # The shared renderer already falls back to the exact admitted
             # audio/visual claims on HTTP, model identity, or output failures.
+            logging.getLogger("voice_coach.feedback_transfer").info(
+                "feedback_result analysis=%s generator_status=%s fallback=%s",
+                request.analysis_id, feedback.generator_status, feedback.fallback_reason)
             return feedback.message
-        except Exception:
+        except Exception as error:
+            logging.getLogger("voice_coach.feedback_transfer").warning(
+                "feedback_result analysis=%s generator_status=catalog_fallback error=%s",
+                request.analysis_id, type(error).__name__)
             # A presentation failure cannot replace the detector's outcome,
             # erase its approved advice, or leak diagnostic exception text.
             return analysis.summary_feedback
@@ -148,15 +174,25 @@ def load_grounded_feedback(
         )
         if not math.isfinite(timeout) or not 0 < timeout <= 300:
             raise ValueError
+        full_evidence = environment.get("AI_ANALYSIS_CLOVA_FULL_EVIDENCE_ENABLED", "false").lower()
+        if full_evidence not in {"true", "false"}:
+            raise ValueError("invalid feedback evidence switch")
+        counter = None
+        if full_evidence == "true":
+            path = Path(environment["AI_ANALYSIS_CLOVA_TOKENIZER_PATH"])
+            if path.name != revision or not (path / "tokenizer.json").is_file():
+                raise ValueError("feedback tokenizer pin differs")
+            counter = OfflineChatTokenCounter(path)
         generator = LocalHyperClovaAdviceGenerator(
             endpoint=environment.get("AI_ANALYSIS_CLOVA_ENDPOINT", "http://127.0.0.1:8000/v1"),
             model_id=model_id,
             revision=revision,
             timeout_seconds=timeout,
+            token_counter=counter,
         )
     except (OSError, KeyError, TypeError, ValueError):
         raise ValueError("analysis_clova_configuration_invalid") from None
-    return BackendGroundedFeedback(generator)
+    return BackendGroundedFeedback(generator, full_evidence=full_evidence == "true")
 
 
 __all__ = ["BackendGroundedFeedback", "load_grounded_feedback"]

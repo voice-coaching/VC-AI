@@ -1,0 +1,553 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "type": "object",
+  "additionalProperties": false,
+  "properties": {
+    "schemaVersion": {
+      "enum": [
+        "voice-coaching.coaching-result.v1"
+      ]
+    },
+    "status": {
+      "enum": [
+        "READY",
+        "LIMITED_EVIDENCE",
+        "NO_ACTIONABLE_ISSUE"
+      ]
+    },
+    "summary": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 1500,
+      "pattern": "\\S"
+    },
+    "strengths": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "minLength": 1,
+        "maxLength": 1200,
+        "pattern": "\\S"
+      },
+      "maxItems": 0
+    },
+    "items": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "candidateId": {
+            "type": "string",
+            "pattern": "^(?:candidate|phone)-[0-9]{1,4}$",
+            "maxLength": 20
+          },
+          "guidanceId": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 100,
+            "pattern": "\\S"
+          },
+          "explanation": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 1200,
+            "pattern": "\\S"
+          },
+          "action": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 1200,
+            "pattern": "\\S"
+          },
+          "practice": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 1200,
+            "pattern": "\\S"
+          },
+          "selfCheck": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 1200,
+            "pattern": "\\S"
+          },
+          "evidenceIds": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "pattern": "^(?:candidate|phone)-[0-9]{1,4}$",
+              "maxLength": 20
+            },
+            "maxItems": 4096
+          },
+          "expectedPhone": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 16,
+            "pattern": "\\S"
+          },
+          "observedCandidate": {
+            "anyOf": [
+              {
+                "type": "string",
+                "minLength": 1,
+                "maxLength": 16,
+                "pattern": "\\S"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "location": {
+            "type": "object",
+            "additionalProperties": false,
+            "properties": {
+              "word": {
+                "anyOf": [
+                  {
+                    "type": "string",
+                    "minLength": 1,
+                    "maxLength": 1000,
+                    "pattern": "\\S"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
+              },
+              "syllable": {
+                "anyOf": [
+                  {
+                    "type": "string",
+                    "minLength": 1,
+                    "maxLength": 8,
+                    "pattern": "\\S"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
+              },
+              "charStart": {
+                "anyOf": [
+                  {
+                    "type": "integer",
+                    "minimum": 0,
+                    "maximum": 20000
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
+              },
+              "charEnd": {
+                "anyOf": [
+                  {
+                    "type": "integer",
+                    "minimum": 0,
+                    "maximum": 20000
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
+              },
+              "writtenRole": {
+                "enum": [
+                  "onset",
+                  "nucleus",
+                  "coda",
+                  null
+                ]
+              },
+              "roleSemantics": {
+                "enum": [
+                  "written_not_post_phonology"
+                ]
+              },
+              "startMs": {
+                "anyOf": [
+                  {
+                    "type": "integer",
+                    "minimum": 0,
+                    "maximum": 180000
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
+              },
+              "endMs": {
+                "anyOf": [
+                  {
+                    "type": "integer",
+                    "minimum": 0,
+                    "maximum": 180000
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
+              },
+              "timingProvenance": {
+                "enum": [
+                  "CTC_NONBLANK_SPAN",
+                  "UNAVAILABLE"
+                ]
+              }
+            },
+            "required": [
+              "word",
+              "syllable",
+              "charStart",
+              "charEnd",
+              "writtenRole",
+              "roleSemantics",
+              "startMs",
+              "endMs",
+              "timingProvenance"
+            ]
+          },
+          "observation": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 1200,
+            "pattern": "\\S"
+          },
+          "claimScope": {
+            "enum": [
+              "MODEL_OBSERVATION_NOT_CONFIRMED_ARTICULATION"
+            ]
+          }
+        },
+        "required": [
+          "candidateId",
+          "guidanceId",
+          "explanation",
+          "action",
+          "practice",
+          "selfCheck",
+          "evidenceIds",
+          "expectedPhone",
+          "observedCandidate",
+          "location",
+          "observation",
+          "claimScope"
+        ]
+      },
+      "maxItems": 3
+    },
+    "practicePlan": {
+      "anyOf": [
+        {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 1200,
+          "pattern": "\\S"
+        },
+        {
+          "type": "null"
+        }
+      ]
+    },
+    "limitations": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "minLength": 1,
+        "maxLength": 1200,
+        "pattern": "\\S"
+      },
+      "maxItems": 10
+    },
+    "comparison": {
+      "type": "null"
+    },
+    "coverage": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "expectedPhoneCount": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 4096
+        },
+        "actionableCandidateCount": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 4096
+        },
+        "reviewOnlyPhoneCount": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 4096
+        },
+        "alignmentCheck": {
+          "enum": [
+            "CHECKED",
+            "LIMIT_EXCEEDED"
+          ]
+        },
+        "includedCandidateIds": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "pattern": "^(?:candidate|phone)-[0-9]{1,4}$",
+            "maxLength": 20
+          },
+          "maxItems": 3
+        },
+        "omittedCandidateIds": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "pattern": "^(?:candidate|phone)-[0-9]{1,4}$",
+            "maxLength": 20
+          },
+          "maxItems": 4096
+        },
+        "selectionPolicy": {
+          "enum": [
+            "repetition_then_first_occurrence"
+          ]
+        },
+        "omittedReason": {
+          "enum": [
+            "INPUT_BUDGET",
+            null
+          ]
+        }
+      },
+      "required": [
+        "expectedPhoneCount",
+        "actionableCandidateCount",
+        "reviewOnlyPhoneCount",
+        "alignmentCheck",
+        "includedCandidateIds",
+        "omittedCandidateIds",
+        "selectionPolicy",
+        "omittedReason"
+      ]
+    },
+    "score": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "validity": {
+          "enum": [
+            "INSUFFICIENT_EVIDENCE",
+            "NOT_CALIBRATED"
+          ]
+        },
+        "overallScore": {
+          "type": "null"
+        },
+        "reasonCodes": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 80,
+            "pattern": "\\S"
+          },
+          "maxItems": 20
+        }
+      },
+      "required": [
+        "validity",
+        "overallScore",
+        "reasonCodes"
+      ]
+    },
+    "visual": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "status": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 80,
+          "pattern": "\\S"
+        },
+        "observations": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "properties": {
+              "expectedIndex": {
+                "type": "integer",
+                "minimum": 0,
+                "maximum": 4095
+              },
+              "stage": {
+                "type": "string",
+                "minLength": 1,
+                "maxLength": 80
+              },
+              "reasonCodes": {
+                "type": "array",
+                "items": {
+                  "type": "string",
+                  "minLength": 1,
+                  "maxLength": 100
+                },
+                "maxItems": 20
+              },
+              "measurements": {
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "additionalProperties": false,
+                  "properties": {
+                    "cueId": {
+                      "type": "string",
+                      "minLength": 1,
+                      "maxLength": 100
+                    },
+                    "value": {
+                      "type": "number"
+                    },
+                    "unit": {
+                      "type": "string",
+                      "minLength": 1,
+                      "maxLength": 40
+                    },
+                    "startMs": {
+                      "type": "integer",
+                      "minimum": 0,
+                      "maximum": 180000
+                    },
+                    "endMs": {
+                      "type": "integer",
+                      "minimum": 1,
+                      "maximum": 180000
+                    },
+                    "sampleCount": {
+                      "type": "null"
+                    },
+                    "samplingProvenance": {
+                      "const": "AGGREGATE_CONTRACT_NO_SAMPLE_TIMESTAMPS"
+                    }
+                  },
+                  "required": [
+                    "cueId",
+                    "value",
+                    "unit",
+                    "startMs",
+                    "endMs",
+                    "sampleCount",
+                    "samplingProvenance"
+                  ]
+                },
+                "maxItems": 30
+              },
+              "decodedSampleTimesMs": {
+                "type": "array",
+                "maxItems": 512,
+                "items": {
+                  "type": "number",
+                  "minimum": 0,
+                  "maximum": 180000
+                }
+              },
+              "samplingScope": {
+                "const": "DECODED_WINDOW_NOT_VALID_LANDMARK_COUNT"
+              }
+            },
+            "required": [
+              "expectedIndex",
+              "stage",
+              "reasonCodes",
+              "measurements",
+              "decodedSampleTimesMs",
+              "samplingScope"
+            ]
+          },
+          "maxItems": 3
+        },
+        "referenceStatus": {
+          "enum": [
+            "NOT_VALIDATED"
+          ]
+        },
+        "correctiveClaimsAllowed": {
+          "const": false
+        }
+      },
+      "required": [
+        "status",
+        "observations",
+        "referenceStatus",
+        "correctiveClaimsAllowed"
+      ]
+    },
+    "generation": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "source": {
+          "enum": [
+            "LLM",
+            "TEMPLATE"
+          ]
+        },
+        "provider": {
+          "enum": [
+            "CLOVA",
+            "OPENAI",
+            "NONE"
+          ]
+        },
+        "promptRevision": {
+          "enum": [
+            "pronunciation-coaching-v1"
+          ]
+        },
+        "promptSha256": {
+          "type": "string",
+          "pattern": "^[a-f0-9]{64}$"
+        },
+        "policyRevision": {
+          "enum": [
+            "pronunciation-coaching-evidence-v1"
+          ]
+        },
+        "fallbackReason": {
+          "enum": [
+            null,
+            "GENERATOR_NOT_CONFIGURED",
+            "NO_ACTIONABLE_CANDIDATES",
+            "INPUT_BUDGET",
+            "GENERATION_FAILED",
+            "OUTPUT_REJECTED"
+          ]
+        }
+      },
+      "required": [
+        "source",
+        "provider",
+        "promptRevision",
+        "promptSha256",
+        "policyRevision",
+        "fallbackReason"
+      ]
+    }
+  },
+  "required": [
+    "schemaVersion",
+    "status",
+    "summary",
+    "strengths",
+    "items",
+    "practicePlan",
+    "limitations",
+    "comparison",
+    "coverage",
+    "score",
+    "visual",
+    "generation"
+  ]
+}

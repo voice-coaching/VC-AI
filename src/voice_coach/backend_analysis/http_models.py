@@ -6,10 +6,12 @@ from datetime import datetime
 from functools import lru_cache
 import hashlib
 import json
+import logging
+from fractions import Fraction
 from pathlib import Path
 from uuid import UUID
 
-from jsonschema import Draft202012Validator, FormatChecker
+from jsonschema import Draft202012Validator, FormatChecker, ValidationError, validators
 import rfc8785
 
 from .domain import AnalysisWorkerResult
@@ -17,6 +19,22 @@ from .domain import AnalysisWorkerResult
 CONTRACT = "voice-coaching.runpod-http.v1.1"
 MAX_CONTROL_BYTES = 65536
 MAX_RESULT_BYTES = 1048576
+
+
+def _decimal_multiple_of(validator, divisor, instance, schema):
+    """Use the JSON decimal spelling, not binary float division, for multiples."""
+    if not validator.is_type(instance, "number"):
+        return
+    try:
+        valid = (Fraction(str(instance)) / Fraction(str(divisor))).denominator == 1
+    except (ValueError, ZeroDivisionError, OverflowError):
+        valid = False
+    if not valid:
+        yield ValidationError("number is not an exact decimal multiple")
+
+
+DecimalDraft202012Validator = validators.extend(
+    Draft202012Validator, {"multipleOf": _decimal_multiple_of})
 
 
 class HttpFailure(Exception):
@@ -59,12 +77,18 @@ def validator(kind: str, result: bool = False):
     filename = "runpod_result_v1.schema.json" if result else "runpod_http_control_v1.schema.json"
     schema = json.loads((root / "docs/contracts" / filename).read_text(encoding="utf-8"))
     schema["$ref"] = "#/$defs/" + kind
-    return Draft202012Validator(schema, format_checker=FormatChecker())
+    return DecimalDraft202012Validator(schema, format_checker=FormatChecker())
 
 
 def validate(value, kind: str, *, result: bool = False):
     check = validator(kind, result)
-    if not check.is_valid(value):
+    error = next(check.iter_errors(value), None)
+    if error is not None:
+        if result:
+            # Schema-owned names only; never log input values or exception text.
+            logging.getLogger(__name__).warning(
+                "result_schema_rejected keyword=%s schemaPath=%s", error.validator,
+                "/".join(map(str, error.absolute_schema_path)))
         raise HttpFailure(422, "VALIDATION_FAILED")
     _utf16_lengths(value, check.schema, check.schema)
     return value
@@ -83,6 +107,9 @@ def _utf16_lengths(value, node, root):
         for key, child in node.get("properties", {}).items():
             if key in value:
                 _utf16_lengths(value[key], child, root)
+    if isinstance(value, list) and isinstance(node.get("items"), dict):
+        for child in value:
+            _utf16_lengths(child, node["items"], root)
     for keyword in ("anyOf", "oneOf", "allOf"):
         for child in node.get(keyword, []):
             _utf16_lengths(value, child, root)
@@ -177,6 +204,9 @@ def result_payload(result: AnalysisWorkerResult, request: AnalysisInput, worker_
     if result.scoring_evidence is not None:
         body.update(schemaVersion="voice-coaching.runpod-analysis-result.v2",
                     overallScore=result.overall_score, scoringEvidence=result.scoring_evidence)
+    if result.coaching is not None:
+        body.update(schemaVersion="voice-coaching.runpod-analysis-result.v3",
+                    overallScore=None, scoringEvidence=None, coaching=result.coaching)
     validate(body, "result", result=True)
     if len(rfc8785.dumps(body)) > MAX_RESULT_BYTES:
         raise HttpFailure(413, "PAYLOAD_TOO_LARGE")

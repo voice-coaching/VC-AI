@@ -28,6 +28,7 @@ COPY requirements/backend-analysis-worker.txt /app/requirements/backend-analysis
 COPY requirements/paper-g2pk-linux-aarch64.lock.txt /app/requirements/paper-g2pk-linux-aarch64.lock.txt
 COPY src /app/src
 COPY seungun/src /app/seungun/src
+COPY configs/pronunciation_feedback /app/configs/pronunciation_feedback
 COPY scripts/g2pk_expected_phones_worker.py /app/scripts/g2pk_expected_phones_worker.py
 COPY scripts/run_backend_analysis_worker.py /app/scripts/run_backend_analysis_worker.py
 

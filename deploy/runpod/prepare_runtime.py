@@ -50,7 +50,18 @@ def main() -> None:
             raise SystemExit("Overlay checksum differs")
         target = app / relative
         target.parent.mkdir(parents=True, exist_ok=True)
-        target.write_bytes(content)
+        if "symlinkTarget" in entry:
+            link_target = entry["symlinkTarget"]
+            if (not isinstance(link_target, str) or Path(link_target).name != link_target
+                    or link_target in {"", ".", ".."} or content.decode("utf-8").strip() != link_target):
+                raise SystemExit("Unsafe overlay symlink")
+            if target.exists() or target.is_symlink():
+                target.unlink()
+            target.symlink_to(link_target)
+        else:
+            if target.is_symlink():
+                raise SystemExit("Unexpected overlay destination symlink")
+            target.write_bytes(content)
     if os.environ.get("AI_ANALYSIS_TRANSPORT") == "runpod_http":
         subprocess.run(["python3", "-m", "pip", "install", "--no-index", "--require-hashes",
             "--upgrade", "--target", str(RUNTIME / "http-python"),

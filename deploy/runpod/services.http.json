@@ -73,7 +73,10 @@
         "AI_ANALYSIS_CLOVA_TIMEOUT_SECONDS": "180",
         "TMPDIR": "/run/intelligentai/worker/tmp",
         "MPLCONFIGDIR": "/run/intelligentai/worker/tmp/matplotlib",
-        "AI_ANALYSIS_TRANSPORT": "runpod_http"
+        "AI_ANALYSIS_TRANSPORT": "runpod_http",
+        "AI_ANALYSIS_CLOVA_FULL_EVIDENCE_ENABLED": "true",
+        "AI_ANALYSIS_CLOVA_SCORING_ENABLED": "true",
+        "AI_ANALYSIS_CLOVA_RUBRIC_REVISION": "clova-phone-rubric-v3"
       },
       "dependsOn": [],
       "health": {

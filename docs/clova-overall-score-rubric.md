@@ -1,4 +1,6 @@
-# CLOVA overallScore 기준표 v1
+# CLOVA overallScore 기준표 v1 — 이전 계약
+
+상세 항목과 조건부 채점 프롬프트는 [v2 기준표](clova-detailed-scoring-v2.md)를 사용한다. 아래는 기존 저장 결과 호환을 위한 v1 기록이다.
 
 > 과거 채점 계약이다. 현재 배포는 GPT 코칭 결과 v3를 생성하며 `overallScore`와 `scoringEvidence`는 null이다. 이 기준표로 새 결과를 채점하거나 승급 점수로 사용하지 않는다. [2026-09-28 배포 근거](runpod_deployed_pipeline_20260928.md)를 따른다. 기존 저장 결과의 소급 변경은 이번 문서 갱신 범위가 아니다.
 
