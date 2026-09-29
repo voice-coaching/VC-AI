@@ -29,4 +29,36 @@
 
 로컬 Python 구문 검사·diff 정적 검토를 수행했다. 자동 회귀 테스트·합성 영상·실제 녹음·GPT 생성·TTS 합성·품질 QA는 실행하지 않는다. 새 strict 요청의 실제 생성 성공·입술 관찰 품질·FE 표현은 개발자가 확인해야 한다.
 
-실제 배포 결과와 복구 위치는 작업 완료 후 이 절에 기록한다. 이 문장만으로 배포 완료를 뜻하지 않는다.
+**실제 배포 완료: 2026-09-30 01:35 KST** (2026-09-29 16:35 UTC).
+
+| 항목 | 실제 관측 |
+|---|---|
+| 구현 커밋 / runtime revision | `32d98e39767b56697bc7e58fb50e3e9d61432349` |
+| 배포 방식 | 현재 운영 파일 hash를 before로 고정한 10파일 한정 delta; 기존 `github_deploy_remote.py`의 백업·정상 종료·prepare·readiness·실패 시 원복 절차 사용 |
+| 영구 overlay SHA-256 | `4721ac82c685e006951911bc7c756d91e55fb3285a5b861bc2481a1dde5c35ab` |
+| 배포 결과 / pending | `succeeded` / 없음 |
+| 적용 파일 | 변경 10개 모두 실행 파일 hash와 묶음 hash 일치 |
+| 정책 로드 | 01:34:21 KST, `coaching-visual-policy-v2`, `coaching_generation_v2` |
+| 실제 합성 prompt SHA-256 | `b424be80e08f7a1d929538e123a3f81b77cfd156ce581bb6778524db97522202` |
+| AWS 기존 도메인 인증 `/health/services` | 01:35:06 KST, 200 ready, executorReady=true, 새 workerRevision 일치 |
+| AWS 기존 도메인 인증 TTS `/health/ready` | 같은 시각 200 ready, melo-ko-practice-r1 |
+| AWS Backend | 재시작 없음, PID 86851 유지 |
+
+배포 직전 PostgreSQL 읽기 전용 집계에서 진행 중 분석과 유효 lease는 각각 0이었다. AWS nginx에 신규 `/v1/analysis-jobs` 접수만 503/Retry-After로 일시 보호하고 다시 0건을 확인한 뒤 분석 프로세스를 재기동했다. 새 readiness 확인 후 보호를 해제하고 원래 8082 전달 설정을 복원·검사·reload했다. TTS·Backend는 재시작하지 않았다.
+
+원복용 원본 overlay manifest와 수정 대상 파일은 아래 root 전용 작업 디렉터리의 `backup.json`에 보존했다. `bundle.json`, `result.json`도 같은 위치다.
+
+`/workspace/intelligentai/deployment/github-actions/jobs/32d98e39767b56697bc7e58fb50e3e9d61432349-visual-p0p1/`
+
+수동 원복이 필요하면 신규 접수를 보호하고 현재 진행 작업을 확인한 뒤 기존 boot/manager/supervisor 정상 종료 절차로 백업 파일·manifest를 함께 복원한다. 준비 단계를 실행하고 이전 revision `5ea4712e55f231450b2120c7121dfaa3ade1ed6f`의 readiness를 확인한 후 접수를 연다. 원복 없이 `state.json`이나 pending만 편집하지 않는다.
+
+AWS 임시 보호 직전 설정 백업은 `/var/backups/voice-coaching-gateway/visual-p0p1/ai.voice-coaching.site.conf`이며 이미 복원했다. nginx 설정 SHA-256은 다시 `e8b979412a57a17d3c0c52ef664a56c1286b37ac4bbb5f6d0dcc8a4626eb0cac`다.
+
+커밋은 로컬에서 생성했고 원격 push·GitHub Actions·Backend PR은 수행하지 않았다. 운영 Git revision은 적용한 변경 범위의 식별자이지 전체 로컬 checkout과 운영 파일이 같다는 뜻이 아니다. 이번 범위 밖의 운영 GPT-only 조립·기동 설정은 보존했다. 원격 자동 배포를 다시 사용하기 전 로컬 구현 커밋을 정식 인계하고 GitHub SSH host-key 설정을 대조해야 한다.
+
+## 남은 개발자 확인
+
+- 실제 입력에서 후보 축소·부분 영상 실패·구간 밖 중심 프레임·beta 평균/변화율 provenance 확인.
+- 해당 계정에서 새 strict schema의 GPT 생성, statement 선택 및 서버 표시, 오류 시 fallback 확인.
+- 실제 callback 저장과 FE 총평/상세 표시, 품질·지연 확인. 이번 readiness는 이 QA의 대체가 아니다.
+- 자유 텍스트는 의도적으로 제한돼 있다. 더 풍부한 설명이 필요하면 검토된 일반 연습 문구를 확장하거나 별도 의미 안전성 검증을 거쳐야 한다. 개인 교정(P2)은 계속 비활성이다.

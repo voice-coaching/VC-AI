@@ -87,6 +87,8 @@ Python/shell/nginx 구문·파일 hash·패키지 메타데이터와 운영 heal
 
 ## 남은 연결 경계
 
+후속 01:35 KST에 분석의 입술 관찰–GPT P0/P1 코드를 배포하여 workerRevision은 `32d98e39767b56697bc7e58fb50e3e9d61432349`로 변경됐다. 이때 사용한 AWS 분석 접수 보호는 해제됐고 기존 8082 경로의 분석·TTS readiness 200을 다시 확인했다. 위 01:14 이전 revision 관측은 과거 기록이다. [구현·배포 기록](video-lip-analysis/p0-p1-deployment.md)을 따른다.
+
 SSH host key가 바뀌었으므로 자동 배포의 고정 `RUNPOD_SSH_HOST_KEY` 및 별도 운영 클라이언트의 known_hosts는 다음 사용 전에 대조해야 한다. GitHub secret은 이번에 변경하지 않았다. AWS 업무 HTTP 호출은 이제 SSH 터널을 사용하지 않는다. 새 키를 검증 없이 자동 수락하도록 바꾸지 않는다.
 
 HTTP proxy의 TLS·100초 제한은 [RunPod 공식 포트 안내](https://docs.runpod.io/pods/configuration/expose-ports)를 따른다. gateway는 30초 upstream timeout, 분석 body 64 KiB/TTS 32 KiB, 자동 upstream 재시도 비활성이다. 기존 업무별 인증·동시 실행 제한을 유지한다.

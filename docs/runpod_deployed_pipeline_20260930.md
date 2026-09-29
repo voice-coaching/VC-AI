@@ -170,3 +170,7 @@ Pod `/workspace/intelligentai/deployment/github-actions/state.json`의 gitRevisi
 2026-09-30 01:12 KST에 AWS nginx의 분석·TTS upstream을 모두 `https://s8hb5b0l5k4qlx-8082.proxy.runpod.net`으로 변경했다. Backend의 분석·TTS base URL `https://ai.voice-coaching.site`는 유지했으며 Backend 재시작·환경/JAR 변경 없이 nginx만 graceful reload했다. 기존 서비스별 인증과 upstream TLS 검증을 유지했다.
 
 기존 도메인의 양쪽 인증 health 200 확인 후 `voice-coaching-tts-tunnel`을 중지·자동 시작 해제했다. 01:14:38 KST 최종 확인에서도 분석·TTS ready 200, Backend UP, nginx/Backend active, 터널 inactive/disabled였다. 실제 분석·합성 생성과 품질 QA는 하지 않았다. 설정 경로·백업·hash·확인 범위·원복 주의사항은 [AWS 전환 기록](runpod_api_gateway_20260930.md)을 따른다. 위 최초 장애 관측은 과거 시점 기록이며 현재 연결 상태와 구분한다.
+
+## 후속 운영 변경 — 입술 관찰–GPT P0/P1
+
+2026-09-30 01:35 KST, runtime revision `32d98e39767b56697bc7e58fb50e3e9d61432349`로 배포했다. 후보·영상 근거 동시 축소, 내부 측정 provenance, strict 생성 schema와 허용 문구/영상 statement 검증, 서버 관찰 renderer를 적용했다. 외부 callback v3/coaching v1 계약과 P2 교정 금지를 유지한다. 변경 파일 10개 hash, 정책 로드, AWS 기존 도메인 분석·TTS readiness 200을 확인했다. 기존 조사 본문의 이전 revision은 해당 시점 기록이다. 범위·출력 제한·백업·미실행 QA는 [P0/P1 실행 기록](video-lip-analysis/p0-p1-deployment.md)을 따른다.
