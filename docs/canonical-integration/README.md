@@ -1,5 +1,11 @@
 # Canonical AI와 동결 LLM 서비스 통합
 
+**2026-10-02 17:55 KST 후속:** [testvideo1 실제 API 검증·수정](testvideo1-verification-20261002.md).
+G2P 사전 환경 누락과 MFA zombie 회수를 수정·운영 배포했다. 실제 API 분석 51의 core는
+`ACCEPT / ok`였으나 Backend journal JSON 응답 결함으로 후속 보관 전에 실패했다.
+[Backend PR #95](https://github.com/voice-coaching/VC-BE/pull/95)는 준비됐고 운영 교체 승인 대기다.
+전체 B2/callback E2E 완료는 아직 아니다. 아래 미수행 문장은 각 과거 시점의 기록이다.
+
 **2026-10-02 16:13 KST 후속:** [core 실행기 수정·재배포와 FE UI 복원](incident-20261002-executor-and-ui.md).
 analysis 48의 감시기 Python/pidfd 문제를 수정하여 런타임 5개 파일과 영구 overlay에 반영했다.
 RunPod·Backend v4 접수 활성, AWS 설정 주소의 분석·TTS readiness 200을 확인했다.

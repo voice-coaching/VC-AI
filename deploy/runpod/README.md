@@ -1,5 +1,10 @@
 # RunPod GPT-6 HTTP 운영 배포
 
+2026-10-02 17:55 KST: [testvideo1 실제 API 검증·후속 수정](../../docs/canonical-integration/testvideo1-verification-20261002.md).
+G2P 사전 환경과 실행 중 zombie 회수를 수정한 `0adcdef`를 운영 배포했다.
+실제 API core 분석은 성공했으나 Backend journal 응답 직렬화 결함으로 전체 callback은
+실패했다. Backend PR #95는 준비됐고 운영 JAR 교체 승인 대기다.
+
 2026-10-02 16:13 KST: [canonical 감시기 Python 분리 수정·재배포](../../docs/canonical-integration/incident-20261002-executor-and-ui.md)를
 완료했다. 부팅/lane 초기화에서 실제 감시기의 pidfd·subreaper 지원을 확인한다.
 기존 frozen core Python과 계약은 유지하며 실제 추론 E2E는 미수행이다.

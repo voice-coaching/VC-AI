@@ -2,6 +2,13 @@
 
 [문서 목차](README.md) · [운영 절차](../deploy/runpod/README.md) · [운영 API](api/specification.md) · [입술 분석](video-lip-analysis/README.md)
 
+**10/2 17:55 KST 후속:** [testvideo1 실제 API 검증](canonical-integration/testvideo1-verification-20261002.md).
+G2P 환경·MFA zombie 회수 수정 `0adcdef`를 배포했다. 최신 overlay는
+`41f30bdb15f02c2f2141845fddfb7b95b9004c7a4fde5b406943ed1f4e518d1d`다.
+분석 51 core `ACCEPT / ok` 확인 후 Backend journal JSON wire 오류를 발견했다.
+Backend PR #95 준비, 운영 교체 승인 대기이며 전체 callback E2E는 미완료다.
+아래 overlay·미수행 표기는 각 관측 시점의 이력이다.
+
 **10/2 11:39~11:41 KST 후속:** [실행기·부팅·키 주입 및 제한 v4 활성](canonical-integration/rollout-execution-20261002.md#제한-v4-접수-활성화)을
 운영 확인했다. Backend reader·검증·journal/apply 및 양쪽 admission ON이다.
 명시 opt-in 단독 음성 발음 학습만 해당하며 기존 분석/TTS와 공개 API는 유지한다.
