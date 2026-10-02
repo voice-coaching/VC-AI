@@ -6,6 +6,7 @@ import math
 import os
 from pathlib import Path
 import stat
+import subprocess
 import sys
 import time
 from typing import Callable
@@ -15,6 +16,30 @@ from .canonical_bridge import CanonicalIntegrationError, _require
 
 class CanonicalProcessCleanupUnconfirmed(CanonicalIntegrationError):
     """Caller must keep admission closed until operator subtree reconciliation."""
+
+
+class CanonicalProcessFailed(CanonicalIntegrationError):
+    """An owned guard exited; retain only its numeric status for private diagnostics."""
+
+    def __init__(self, exit_status: int):
+        super().__init__('CANONICAL_PROCESS_FAILED')
+        self.exit_status = exit_status
+
+
+def check_guard_python(guard_python: Path) -> None:
+    """Boot/readiness check of the actual guard runtime; no model or child job."""
+    _require(guard_python.is_absolute() and guard_python.is_file(),
+             'CANONICAL_GUARD_RUNTIME_UNAVAILABLE')
+    try:
+        result = subprocess.run(
+            [str(guard_python), '-I', '-B',
+             str(Path(__file__).with_name('canonical_process_guard.py')), '--check'],
+            env={'PATH': '/usr/bin:/bin', 'PYTHONDONTWRITEBYTECODE': '1'},
+            stdin=subprocess.DEVNULL, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL,
+            timeout=10, check=False)
+    except (OSError, subprocess.TimeoutExpired):
+        raise CanonicalIntegrationError('CANONICAL_GUARD_RUNTIME_UNAVAILABLE') from None
+    _require(result.returncode == 0, 'CANONICAL_GUARD_RUNTIME_UNAVAILABLE')
 
 
 def private_directory(path: Path) -> Path:
@@ -27,7 +52,7 @@ def private_directory(path: Path) -> Path:
     return path
 
 
-async def run_guarded(*, python: Path, command: list[str], cwd: Path,
+async def run_guarded(*, guard_python: Path, command: list[str], cwd: Path,
                       environment: dict[str, str], log_path: Path,
                       deadline_monotonic: float, execution_is_active: Callable[[], bool]) -> None:
     """Run a server-built command; caller owns admission, lease and private paths.
@@ -35,8 +60,10 @@ async def run_guarded(*, python: Path, command: list[str], cwd: Path,
     Cancellation closes the lifetime pipe and awaits subtree reclamation. There
     is deliberately no kill(timeout) of the subreaper: killing it can abandon
     setsid descendants. The slot owner MUST await this coroutine's completion.
+    guard_python owns Linux supervision; command[0] independently selects the
+    immutable model environment. Never infer the guard interpreter from it.
     """
-    _require(sys.platform == 'linux' and python.is_absolute() and python.is_file()
+    _require(sys.platform == 'linux' and guard_python.is_absolute() and guard_python.is_file()
              and command and all(type(arg) is str and '\x00' not in arg for arg in command),
              'CANONICAL_PROCESS_CONFIGURATION')
     _require(math.isfinite(deadline_monotonic) and deadline_monotonic > time.monotonic(),
@@ -50,7 +77,7 @@ async def run_guarded(*, python: Path, command: list[str], cwd: Path,
     launch = None
     try:
         launch = asyncio.create_task(asyncio.create_subprocess_exec(
-            str(python), '-I', '-B', str(Path(__file__).with_name('canonical_process_guard.py')),
+            str(guard_python), '-I', '-B', str(Path(__file__).with_name('canonical_process_guard.py')),
             '--deadline', str(deadline_monotonic), '--cwd', str(cwd), '--', *command,
             stdin=asyncio.subprocess.PIPE, stdout=fd, stderr=fd,
             env=environment, cwd=cwd, start_new_session=True, close_fds=True))
@@ -63,7 +90,8 @@ async def run_guarded(*, python: Path, command: list[str], cwd: Path,
             await asyncio.wait({waiter}, timeout=0.1)
         if waiter.result() < 0:
             raise CanonicalProcessCleanupUnconfirmed('CANONICAL_PROCESS_CLEANUP_UNCONFIRMED')
-        _require(waiter.result() == 0, 'CANONICAL_PROCESS_FAILED')
+        if waiter.result() != 0:
+            raise CanonicalProcessFailed(waiter.result())
         _require(execution_is_active() is True and time.monotonic() < deadline_monotonic,
                  'CANONICAL_EXECUTION_INACTIVE')
     finally:

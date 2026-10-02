@@ -11,9 +11,12 @@ import importlib.util
 import json
 import os
 from pathlib import Path
+import re
 import signal
 import subprocess
 import sys
+import time
+from urllib.request import Request, ProxyHandler, build_opener
 
 APP = Path("/opt/intelligentai/app")
 DEPLOY = Path("/workspace/intelligentai/deployment")
@@ -31,11 +34,34 @@ def require(condition, reason):
         raise RuntimeError(reason)
 
 
+def canonical_ready(timeout=120):
+    """Authenticated operational readiness only; never sends an analysis job."""
+    opener = build_opener(ProxyHandler({}))
+    deadline = time.monotonic() + timeout
+    while time.monotonic() < deadline:
+        try:
+            token = next(line.split("=", 1)[1] for line in
+                Path("/run/intelligentai/analysis-http.env").read_text().splitlines()
+                if line.startswith("AI_ANALYSIS_API_TOKEN="))
+            with opener.open(Request("http://127.0.0.1:8080/health/canonical",
+                    headers={"Authorization": "Bearer " + token}), timeout=5) as response:
+                state = json.load(response)
+            if state.get("executorConfigured") is True and state.get("admissionEnabled") is True:
+                return
+        except Exception:
+            pass
+        time.sleep(3)
+    raise RuntimeError("canonical_readiness_timeout")
+
+
 def main():
     require(os.geteuid() == 0 and len(sys.argv) == 3, "root_bundle_digest_required")
+    os.umask(0o077)
     raw = Path(sys.argv[1]).read_bytes()
     require(sha(raw) == sys.argv[2], "bundle_digest_changed")
     bundle = json.loads(raw)
+    require(re.fullmatch(r"[0-9a-f]{40}", bundle["sourceGitRevision"]) is not None,
+            "source_git_revision_required")
     spec = importlib.util.spec_from_file_location("deployer", APP / "deploy/runpod/github_deploy_remote.py")
     helper = importlib.util.module_from_spec(spec)
     spec.loader.exec_module(helper)
@@ -54,6 +80,10 @@ def main():
                 and ".." not in Path(path).parts and not Path(path).is_absolute(), "source_path_invalid")
             data = base64.b64decode(row["content"], validate=True)
             require(sha(data) == row["sha256"], "source_digest_invalid")
+            for root in (APP, OVERLAY):
+                require((root / path).is_file() and not (root / path).is_symlink()
+                        and sha((root / path).read_bytes()) == row["beforeSha256"],
+                        "source_drift")
             if path.endswith(".py"):
                 compile(data, path, "exec")
             records[path] = data
@@ -76,6 +106,7 @@ def main():
         topology = helper.topology()
         boot_env = helper.boot_environment(topology["boot"])
         stopped = False
+        resumed = False
         try:
             helper.stop_managed(topology)
             stopped = True
@@ -91,6 +122,7 @@ def main():
             manifest["canonicalIntegration"] = {
                 "bundleSha256": sha(raw), "admissionMode": "BACKEND_READINESS_GATED",
                 "baseGitRevision": bundle["baseRevision"],
+                "sourceGitRevision": bundle["sourceGitRevision"],
                 "deployedAt": datetime.now(UTC).isoformat()}
             helper.atomic(MANIFEST, (json.dumps(manifest, sort_keys=True) + "\n").encode(), 0o640)
             metadata = json.loads(old_deployment)
@@ -106,12 +138,14 @@ def main():
             env = dict(line.split("=", 1) for line in
                 Path("/run/intelligentai/analysis-http.env").read_text().splitlines() if "=" in line)
             require(env.get("AI_ANALYSIS_HTTP_BOOTSTRAP_READY") == "true", "legacy_bootstrap_failed")
+            require(env.get("AI_CANONICAL_BOOTSTRAP_READY") == "true", "canonical_bootstrap_failed")
             state = json.loads(old_state)
             state["overlaySha256"] = metadata["overlaySha256"]
             helper.atomic(CONTROL / "state.json", (json.dumps(state, sort_keys=True) + "\n").encode())
             helper.send(topology["boot"], signal.SIGCONT)
-            stopped = False
+            resumed = True
             helper.ready(bundle["baseRevision"], timeout=300)
+            canonical_ready()
             for path, data in records.items():
                 require((APP / path).read_bytes() == data and (OVERLAY / path).read_bytes() == data,
                         "installed_source_mismatch")
@@ -121,8 +155,10 @@ def main():
                 "overlaySha256": metadata["overlaySha256"], "bundleSha256": sha(raw),
                 "backup": str(backup), "files": len(records)}), flush=True)
         except BaseException:
-            # Before restart, restore exactly the source set we changed.
+            # Never restore files over a live new generation after readiness failure.
             if stopped:
+                if resumed:
+                    helper.stop_managed(helper.topology())
                 for path, versions in original.items():
                     for kind, root in (("app", APP), ("overlay", OVERLAY)):
                         if versions[kind] is None:
@@ -137,7 +173,9 @@ def main():
                 helper.atomic(CONTROL / "state.json", old_state)
                 subprocess.run(["/opt/intelligentai/envs/scorer/bin/python",
                     str(APP / "deploy/runpod/prepare_http.py")], env=boot_env,
-                    stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL, timeout=120)
+                    stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL, timeout=180, check=True)
+                helper.send(topology["boot"], signal.SIGCONT)
+                helper.ready(bundle["baseRevision"], timeout=300)
             raise
         finally:
             if helper.alive(topology["boot"]):
@@ -149,5 +187,7 @@ if __name__ == "__main__":
         main()
     except Exception as error:
         print(json.dumps({"status": "DEPLOYMENT_REQUIRES_RECONCILIATION",
-                          "errorType": type(error).__name__}), flush=True)
+                          "errorType": type(error).__name__,
+                          "reason": str(error) if type(error) is RuntimeError and
+                          re.fullmatch(r"[a-z_]{1,80}", str(error)) else None}), flush=True)
         raise SystemExit(1)

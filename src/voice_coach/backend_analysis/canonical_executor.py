@@ -14,12 +14,12 @@ import sys
 import time
 from uuid import UUID
 
-from .canonical_bridge import FrozenCanonicalArtifacts, FrozenCanonicalCoaching, _require
+from .canonical_bridge import CanonicalIntegrationError, FrozenCanonicalArtifacts, FrozenCanonicalCoaching, _require
 from .canonical_backend_journal import BackendCanonicalJournal
 from .canonical_backend_delivery import BackendCanonicalDelivery
 from .canonical_codec import encode_document
 from .canonical_evidence_store import evidence_store_from_environment
-from .canonical_process import private_directory
+from .canonical_process import CanonicalProcessFailed, check_guard_python, private_directory
 from .canonical_producer import FrozenCanonicalProducer, read_private_result, write_private_new
 from .canonical_receipt_client import CanonicalReceiptClient
 from .canonical_result import preflight_canonical_result, serialize_canonical_result
@@ -41,6 +41,7 @@ def check(env):
     """Static import/pin/config and read-only private ACL, never generation."""
     from .canonical_producer import CORE_PYTHON
     HttpSettings.from_environment(env)
+    check_guard_python(Path(sys.executable))
     private_directory(Path(env["AI_CANONICAL_WORKSPACE_ROOT"]))
     _require(CORE_PYTHON.is_file() and os.access(CORE_PYTHON, os.X_OK),
              "CANONICAL_CORE_PYTHON_UNAVAILABLE")
@@ -152,9 +153,15 @@ def main():
             asyncio.run(execute(Path(sys.argv[1]), os.environ))
         else:
             raise ValueError()
-    except Exception:
+    except Exception as error:
         # Do not leak provider/SDK exceptions, transcripts, object paths or keys.
-        print("canonical_executor_unavailable", file=sys.stderr)
+        diagnostic = {"event": "canonical_executor_unavailable"}
+        if isinstance(error, CanonicalProcessFailed):
+            diagnostic.update(code="CANONICAL_PROCESS_FAILED", guardExitStatus=error.exit_status)
+        elif isinstance(error, CanonicalIntegrationError) and str(error) in {
+                "CANONICAL_GUARD_RUNTIME_UNAVAILABLE", "CANONICAL_PROCESS_CLEANUP_UNCONFIRMED"}:
+            diagnostic["code"] = str(error)
+        print(json.dumps(diagnostic), file=sys.stderr)
         return 1
     return 0
 

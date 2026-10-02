@@ -59,7 +59,25 @@ def _reap_owned_tree() -> None:
         time.sleep(0.05)
 
 
+def configure_guard() -> bool:
+    """Check the real interpreter/kernel and enable subreaping in this process."""
+    if sys.platform != 'linux' or not all((
+            hasattr(os, 'pidfd_open'), hasattr(os, 'P_PIDFD'),
+            hasattr(signal, 'pidfd_send_signal'))):
+        return False
+    # No child or signal: verify the kernel permits opening our own stable pidfd.
+    descriptor = os.pidfd_open(os.getpid())
+    os.close(descriptor)
+    libc = ctypes.CDLL(None, use_errno=True)
+    if libc.prctl(36, 1, 0, 0, 0) != 0:  # PR_SET_CHILD_SUBREAPER
+        return False
+    enabled = ctypes.c_int()
+    return libc.prctl(37, ctypes.byref(enabled), 0, 0, 0) == 0 and enabled.value == 1
+
+
 def main() -> int:
+    if sys.argv[1:] == ['--check']:
+        return 0 if configure_guard() else 125
     parser = argparse.ArgumentParser(add_help=False)
     parser.add_argument('--deadline', type=float, required=True)
     parser.add_argument('--cwd', required=True)
@@ -68,15 +86,9 @@ def main() -> int:
     if (sys.platform != 'linux' or not math.isfinite(args.deadline)
             or not args.command or args.command[0] != '--' or len(args.command) < 2):
         return 125
-    if not all((hasattr(os, 'pidfd_open'), hasattr(os, 'P_PIDFD'),
-                hasattr(signal, 'pidfd_send_signal'))):
-        return 125
     os.umask(0o077)
-    libc = ctypes.CDLL(None, use_errno=True)
-    if libc.prctl(36, 1, 0, 0, 0) != 0:  # PR_SET_CHILD_SUBREAPER
-        return 125
-    enabled = ctypes.c_int()
-    if libc.prctl(37, ctypes.byref(enabled), 0, 0, 0) != 0 or enabled.value != 1:
+    if not configure_guard():
+        print('canonical_guard_runtime_unavailable', file=sys.stderr)
         return 125
     stopping = False
 

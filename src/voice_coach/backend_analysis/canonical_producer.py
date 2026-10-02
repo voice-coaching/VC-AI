@@ -13,6 +13,7 @@ import hashlib
 import os
 from pathlib import Path
 import stat
+import sys
 import time
 from typing import Callable
 
@@ -113,7 +114,9 @@ class FrozenCanonicalProducer:
                            HF_HUB_DISABLE_IMPLICIT_TOKEN='1',
                            OMP_NUM_THREADS='2', MKL_NUM_THREADS='2', OPENBLAS_NUM_THREADS='2',
                            NUMEXPR_NUM_THREADS='2')
-        await run_guarded(python=CORE_PYTHON,
+        # The frozen conda build lacks pidfd bindings. Supervision stays in the
+        # checked canonical executor environment; only the model uses CORE_PYTHON.
+        await run_guarded(guard_python=Path(sys.executable),
                           command=[str(CORE_PYTHON), '-B', '-u',
                                    str(self.artifacts.core_root / 'scripts/run_release.py'),
                                    '--cases', str(case_path), '--output', str(output)],
