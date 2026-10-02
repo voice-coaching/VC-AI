@@ -1,6 +1,6 @@
 # RunPod AI API lease 갱신·종료 진단 수정 계획
 
-작성일: 2026-10-03. 상태: **로컬 구현·구문 확인 완료, 운영 반영은 아래 실행 기록 참조**.
+작성일: 2026-10-03. 상태: **구현·RunPod 배포·운영 준비 확인 완료, 개발자 실제 분석/경합 QA 미수행**.
 대상: canonical v4의 HTTP 부모 → 격리 executor → core 감시기 연결.
 근거: [분석 57 장애 조사](incident-20261003-journal-wire.md).
 전역·서비스 계층·외부 연동·문서화 규칙을 적용한다.
@@ -175,3 +175,40 @@ MFA 성공·피드백 품질·GPT 생성 성공을 일반화하지 않는다.
   부재를 요구하고 백업·원복 시 신규 파일 제거를 지원한다. 기존 파일 hash 검사는 유지한다.
 - 코드 7개(신규 모듈·배포 helper 포함)의 구문 컴파일과 diff 정적 확인을 수행했다.
   자동 회귀 테스트·실제 분석·품질 QA는 수행하지 않았다.
+
+## 10. 운영 배포 기록
+
+2026-10-02 17:15~17:18 UTC (10월 3일 02:15~02:18 KST), 사용자 계획 수행 요청으로
+Pod `s8hb5b0l5k4qlx`에 배포했다. 원래 분석 57의 직접 예외는 여전히 미확정이며,
+정상 교체를 오류로 오인할 수 있는 코드 경로와 진단 누락을 수정한 배포다.
+
+| 항목 | 값 |
+|---|---|
+| 패치 소스 커밋 | `5f582fc1a171dd03bf90d2475394f9131288d67a` |
+| 유지한 base sourceRevision | `32d98e39767b56697bc7e58fb50e3e9d61432349` |
+| 배포 bundle SHA-256 | `4c22a4635f9e105c360f07456472eb19c181728a1cb89d0fef478ba7bddd8871` |
+| 새 overlay SHA-256 | `e49443deec905def50d6eada451e9310a20f3c45c22e6ef9f93c66154ee2fffe` |
+| 원복 사본 | `/workspace/intelligentai/deployment/canonical-runtime-backup-20261002T171503Z` |
+| gateway 원본 SHA-256 | `45084a18fd5427600328e6c5eca128b8bbf40259467488b94aa22ec0862ddc11` |
+
+- 배포 전 DB를 read-only로 조회해 미래 만료의 claim lease가 0개임을 확인했다.
+  gateway의 `/v1/analysis-jobs` 신규 접수 경로만 일시적으로 503 처리하고 다시 0개를
+  확인했다. 기존 상태·취소·TTS 경로는 유지했다.
+- 검토한 helper로 boot respawn loop를 제어하고 manager/supervisor를 정상 종료했다.
+  신규 lease 모듈 포함 runtime 6개와 영구 overlay·manifest·metadata를 함께 갱신했다.
+  prepare_http 및 canonical bootstrap 성공 후 같은 boot 구조로 재기동했다.
+- 배포 성공 후 gateway를 원본 hash 그대로 복원했다. 접수 경로의 비인증 GET은
+  유지보수 503이 아닌 기존 인증 401로 돌아왔다. 실제 분석 POST는 보내지 않았다.
+- 17:17:45 UTC 운영 관측: runtime/overlay 6개 파일 hash 일치,
+  `/health/services` 200/ready/executorReady=true, `/health/canonical` 200,
+  executorConfigured/admissionEnabled=true, executionQaPerformed=false.
+- 같은 RunPod에서 실제 Backend 도메인의 worker-readiness/v2는 200/ready,
+  canonicalSupported/admission=true, evidenceStoreStatus=READY였다.
+  기존 분석 56의 journal GET은 배포 schema 검증을 통과했다.
+- 독립 TTS 전용 인증으로 `/health/live`=200/alive, `/health/ready`=200/ready.
+  앞선 비인증 TTS 조회의 401은 별도 인증 요구였으며 서비스 장애로 보고하지 않는다.
+
+개발자 확인이 남은 항목: 실제 교체 경합·만료·취소 수용 및 새 분석의 core/GPT(해당 시)/
+B2 보관/receipt/callback 완료, 피드백 품질. 자동 회귀·브라우저 QA나 실패 요청 자동
+재실행을 수행하지 않았다. Backend JAR·DB·동결 R/S7·TTS 구현은 이번에 변경하지 않았다.
+소스는 로컬 커밋했으며 push/PR는 수행하지 않았다.

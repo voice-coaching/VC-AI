@@ -1,5 +1,9 @@
 # RunPod GPT-6 HTTP 운영 배포
 
+2026-10-03 02:18 KST: [lease 갱신 경합 방지·종료 진단 배포](../../docs/canonical-integration/runpod-lease-hardening-plan-20261003.md#10-운영-배포-기록).
+`5f582fc`의 lease snapshot reader와 단계별 오류 진단을 runtime/overlay에 적용했다.
+양쪽 readiness와 기존 journal 응답을 확인했으며 실제 분석·경합 QA는 개발자 확인이 남았다.
+
 2026-10-02 17:55 KST: [testvideo1 실제 API 검증·후속 수정](../../docs/canonical-integration/testvideo1-verification-20261002.md).
 G2P 사전 환경과 실행 중 zombie 회수를 수정한 `0adcdef`를 운영 배포했다.
 실제 API core 분석은 성공했으나 Backend journal 응답 직렬화 결함으로 전체 callback은

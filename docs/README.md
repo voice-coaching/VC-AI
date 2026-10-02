@@ -4,6 +4,8 @@
 
 | 목적 | 문서 |
 |---|---|
+| RunPod lease 갱신 경합 방지 구현·배포 | [lease 판독·오류 진단·운영 확인과 남은 QA](canonical-integration/runpod-lease-hardening-plan-20261003.md) |
+| 10/3 분석 53–56 실패·AWS main 배포·JSON 응답 복구 | [journal JSON 결함 조사와 운영 수정 반영](canonical-integration/incident-20261003-journal-wire.md) |
 | 현재 RunPod 구성·실측 상태·코드 근거 | [현재 배포 파이프라인 — 10/2 canonical 활성화 포함](runpod-current-pipeline.md) |
 | 실행기·부팅·운영 키·제한 v4 접수 활성 | [10/2 운영 배포와 실제 관측·미수행 QA](canonical-integration/rollout-execution-20261002.md#제한-v4-접수-활성화) |
 | 새 canonical core·frozen LLM 통합 진행 | [원본 위치·차이 분석·내부 연결 구현·남은 작업](canonical-integration/README.md) |
