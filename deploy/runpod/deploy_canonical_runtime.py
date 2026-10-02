@@ -81,9 +81,13 @@ def main():
             data = base64.b64decode(row["content"], validate=True)
             require(sha(data) == row["sha256"], "source_digest_invalid")
             for root in (APP, OVERLAY):
-                require((root / path).is_file() and not (root / path).is_symlink()
-                        and sha((root / path).read_bytes()) == row["beforeSha256"],
-                        "source_drift")
+                previous = row["beforeSha256"]
+                target = root / path
+                if previous is None:
+                    require(not target.exists() and not target.is_symlink(), "new_source_exists")
+                else:
+                    require(target.is_file() and not target.is_symlink()
+                            and sha(target.read_bytes()) == previous, "source_drift")
             if path.endswith(".py"):
                 compile(data, path, "exec")
             records[path] = data

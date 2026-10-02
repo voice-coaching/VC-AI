@@ -78,7 +78,14 @@ class BackendCanonicalJournal:
             raise BackendJournalFailure(503) from None
 
     def _snapshot(self, value):
-        validate_document(value, 'journalSnapshot', schema_name='journal')
+        # Identify the upstream wire boundary without exposing private schema instances.
+        # Keep schema/configuration failures distinct from a malformed Backend reply.
+        try:
+            validate_document(value, 'journalSnapshot', schema_name='journal')
+        except CanonicalIntegrationError as error:
+            if str(error) == 'CANONICAL_SCHEMA_INVALID':
+                raise CanonicalIntegrationError('BACKEND_JOURNAL_RESPONSE_INVALID') from None
+            raise
         for key, expected in {'requestId': str(self.request.event_id), 'executionId': str(self.request.execution_id),
                               'analysisId': self.request.analysis_id, 'workerInstanceId': str(self.worker_id)}.items():
             _require(value[key] == expected, 'JOURNAL_BINDING_MISMATCH')

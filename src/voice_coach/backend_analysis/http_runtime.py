@@ -384,8 +384,17 @@ class HttpRuntime:
             job.state = "CANCELLED"
         except Exception as error:
             # No fabricated core/fallback or downgrade. Backend fences timeout/failure.
+            from .canonical_process import CanonicalProcessFailed
+            from .canonical_lease import LEASE_CODES
+            from .canonical_bridge import CanonicalIntegrationError
+            code = "INTERNAL_ERROR"
+            if isinstance(error, CanonicalIntegrationError) and str(error) in LEASE_CODES | {
+                    "CANONICAL_EXECUTION_INACTIVE", "CANONICAL_PROCESS_FAILED"}:
+                code = str(error)
             logging.getLogger(__name__).warning(
-                "canonical_execution_failed error=%s", type(error).__name__)
+                "canonical_execution_failed executionId=%s code=%s guardExitStatus=%s",
+                job.request.execution_id, code,
+                error.exit_status if isinstance(error, CanonicalProcessFailed) else None)
             job.reason = job.reason or "INTERNAL_ERROR"
             job.state = "CANCELLED" if job.cancel.is_set() else "FAILED"
         finally:

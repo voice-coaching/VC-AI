@@ -85,15 +85,17 @@ async def run_guarded(*, guard_python: Path, command: list[str], cwd: Path,
         process = await asyncio.shield(launch)
         waiter = asyncio.create_task(process.wait())
         while not waiter.done():
-            if not execution_is_active() or time.monotonic() >= deadline_monotonic:
+            if time.monotonic() >= deadline_monotonic:
+                raise CanonicalIntegrationError('CANONICAL_DEADLINE_EXCEEDED')
+            if not execution_is_active():
                 raise CanonicalIntegrationError('CANONICAL_EXECUTION_INACTIVE')
             await asyncio.wait({waiter}, timeout=0.1)
         if waiter.result() < 0:
             raise CanonicalProcessCleanupUnconfirmed('CANONICAL_PROCESS_CLEANUP_UNCONFIRMED')
         if waiter.result() != 0:
             raise CanonicalProcessFailed(waiter.result())
-        _require(execution_is_active() is True and time.monotonic() < deadline_monotonic,
-                 'CANONICAL_EXECUTION_INACTIVE')
+        _require(time.monotonic() < deadline_monotonic, 'CANONICAL_DEADLINE_EXCEEDED')
+        _require(execution_is_active() is True, 'CANONICAL_EXECUTION_INACTIVE')
     finally:
         # Also recover the process handle if cancellation occurred during spawn.
         cancelled = False

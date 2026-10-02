@@ -2,12 +2,11 @@
 from __future__ import annotations
 
 from datetime import datetime, UTC
-import os
 from pathlib import Path
 import time
-from uuid import uuid4
 
 from .canonical_codec import encode_document
+from .canonical_lease import publish_lease
 from .canonical_process import check_guard_python, private_directory, run_guarded
 from .canonical_producer import read_private_result, write_private_new
 from .http_models import parse_json, timestamp
@@ -27,11 +26,7 @@ class CanonicalLane:
     def publish_lease(job):
         if job.canonical_workspace is None:
             return
-        path = job.canonical_workspace / "lease.json"
-        temporary = path.with_name(".lease-" + uuid4().hex)
-        write_private_new(temporary, encode_document({
-            "executionId": str(job.request.execution_id), "until": job.lease_until}))
-        os.replace(temporary, path)
+        publish_lease(job.canonical_workspace, job.request.execution_id, job.lease_until)
 
     async def run(self, job, worker_id):
         work = self.root / str(job.request.execution_id)

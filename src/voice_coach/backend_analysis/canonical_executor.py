@@ -15,9 +15,10 @@ import time
 from uuid import UUID
 
 from .canonical_bridge import CanonicalIntegrationError, FrozenCanonicalArtifacts, FrozenCanonicalCoaching, _require
-from .canonical_backend_journal import BackendCanonicalJournal
+from .canonical_backend_journal import BackendCanonicalJournal, BackendJournalFailure
 from .canonical_backend_delivery import BackendCanonicalDelivery
 from .canonical_codec import encode_document
+from .canonical_lease import LEASE_CODES, read_lease
 from .canonical_evidence_store import evidence_store_from_environment
 from .canonical_process import CanonicalProcessFailed, check_guard_python, private_directory
 from .canonical_producer import (
@@ -57,7 +58,7 @@ def check(env):
         store.close()
 
 
-async def execute(path: Path, env):
+async def execute(path: Path, env, diagnostic: dict):
     work = private_directory(path.parent)
     descriptor = parse_json(read_private_result(path, work, 70000))
     _require(set(descriptor) == {"request", "workerId", "deadline"}, "CANONICAL_DESCRIPTOR")
@@ -68,16 +69,19 @@ async def execute(path: Path, env):
     deadline = descriptor["deadline"]
     _require(type(deadline) in (int, float) and math.isfinite(deadline), "CANONICAL_DEADLINE")
 
+    diagnostic.update(requestId=str(request.event_id), executionId=str(request.execution_id))
+
+    def stage(name: str) -> None:
+        diagnostic["stage"] = name
+        print(json.dumps({"event": "canonical_stage", **diagnostic}), file=sys.stderr, flush=True)
+
     def remaining():
-        try:
-            lease = parse_json(read_private_result(work / "lease.json", work, 1024))
-            _require(set(lease) == {"executionId", "until"} and
-                     lease["executionId"] == str(request.execution_id), "CANONICAL_LEASE")
-            until = lease["until"]
-            _require(type(until) in (int, float) and math.isfinite(until), "CANONICAL_LEASE")
-            return max(0.0, min(deadline, until) - time.monotonic())
-        except Exception:
-            return 0.0
+        snapshot = read_lease(work, request.execution_id, deadline)
+        if snapshot.replacements:
+            print(json.dumps({"event": "canonical_lease_replaced",
+                              "executionId": str(request.execution_id),
+                              "replacements": snapshot.replacements}), file=sys.stderr, flush=True)
+        return snapshot.remaining(deadline)
 
     def active():
         return remaining() > 0
@@ -96,10 +100,12 @@ async def execute(path: Path, env):
     audio_context = None
     acquired = False
     try:
+        stage("RESERVE")
         identity = await asyncio.to_thread(journal.reserve,
             worker_revision=env["VOICE_COACH_BUILD_REVISION"],
             pipeline_revision=env["AI_CANONICAL_PIPELINE_REVISION"])
         fence()
+        stage("MATERIALIZE")
         media_root = work / "media"
         media_root.mkdir(mode=0o700)
         media = S3CompatibleRestrictedObjectStore(recordings,
@@ -108,6 +114,7 @@ async def execute(path: Path, env):
         audio = await asyncio.to_thread(audio_context.__enter__)
         acquired = True
         fence()
+        stage("CORE")
         core_root = work / "core"
         core_root.mkdir(mode=0o700)
         produced = await FrozenCanonicalProducer(
@@ -115,18 +122,23 @@ async def execute(path: Path, env):
             nltk_data_root=Path(env["AI_ANALYSIS_NLTK_DATA_ROOT"])).produce(
             request, audio, deadline_monotonic=deadline, execution_is_active=active)
         fence()
+        stage("EXPRESSION")
         expression = await asyncio.to_thread(frozen.express_admitted, request, audio=audio,
             core_bytes=produced.raw, prepared_wav=produced.prepared_wav,
             producer_workspace=produced.workspace, transport=FrozenOpenAITransport(env["OPENAI_API_KEY"]))
         fence()
+        stage("PREFLIGHT")
         preflight = await asyncio.to_thread(preflight_canonical_result, expression,
             request=request, frozen=frozen, prepared_audio=produced.prepared_audio)
         fence()
+        stage("RETAIN")
         retained = await asyncio.to_thread(retain_canonical_preflight, preflight,
             store=store, journal=journal, deadline_monotonic=deadline, execution_is_active=active)
+        stage("RECEIPT")
         receipt = await receipt_client.await_verified(retained, journal=journal,
             deadline_monotonic=deadline, execution_is_active=active)
         fence()
+        stage("CALLBACK")
         raw = await asyncio.to_thread(serialize_canonical_result, expression,
             request=request, identity=identity, frozen=frozen, receipt=receipt,
             prepared_audio=produced.prepared_audio)
@@ -139,32 +151,51 @@ async def execute(path: Path, env):
                           encode_document({"status": result["status"]}))
     finally:
         # Parent guard handles abrupt death; never delete external retained evidence.
+        primary_failure = sys.exception()
+        cleanup_failure = None
+        actions = [(recordings.close, False), (store.close, False),
+                   (delivery.close, True), (receipt_client.close, True), (journal.close, False)]
         if acquired:
-            await asyncio.to_thread(audio_context.__exit__, None, None, None)
-        recordings.close()
-        store.close()
-        await delivery.close()
-        await receipt_client.close()
-        journal.close()
+            actions.insert(0, (lambda: audio_context.__exit__(None, None, None), False))
+        for action, is_async in actions:
+            try:
+                if is_async:
+                    await action()
+                else:
+                    await asyncio.to_thread(action)
+            except Exception as error:
+                cleanup_failure = cleanup_failure or error
+        if cleanup_failure is not None:
+            print(json.dumps({"event": "canonical_cleanup_failed", "code": "INTERNAL_ERROR",
+                              "primaryFailure": primary_failure is not None,
+                              "executionId": str(request.execution_id)}), file=sys.stderr, flush=True)
+            if primary_failure is None:
+                diagnostic["stage"] = "CLEANUP"
+                raise cleanup_failure
 
 
 def main():
     os.umask(0o077)
+    context = {"stage": "CONFIGURATION"}
     try:
         if sys.argv[1:] == ["--check"]:
             check(os.environ)
             print("canonical_executor_configuration_ready")
         elif len(sys.argv) == 2:
-            asyncio.run(execute(Path(sys.argv[1]), os.environ))
+            asyncio.run(execute(Path(sys.argv[1]), os.environ, context))
         else:
             raise ValueError()
     except Exception as error:
         # Do not leak provider/SDK exceptions, transcripts, object paths or keys.
-        diagnostic = {"event": "canonical_executor_unavailable"}
+        diagnostic = {"event": "canonical_executor_unavailable", "code": "INTERNAL_ERROR", **context}
         if isinstance(error, CanonicalProcessFailed):
             diagnostic.update(code="CANONICAL_PROCESS_FAILED", guardExitStatus=error.exit_status)
+        elif isinstance(error, BackendJournalFailure):
+            diagnostic.update(code=str(error), upstreamStatus=error.status)
         elif isinstance(error, CanonicalIntegrationError) and str(error) in {
-                "CANONICAL_GUARD_RUNTIME_UNAVAILABLE", "CANONICAL_PROCESS_CLEANUP_UNCONFIRMED"}:
+                "CANONICAL_GUARD_RUNTIME_UNAVAILABLE", "CANONICAL_PROCESS_CLEANUP_UNCONFIRMED",
+                "BACKEND_JOURNAL_RESPONSE_INVALID", "CANONICAL_EXECUTION_INACTIVE",
+                "CANONICAL_SCHEMA_INVALID", "CANONICAL_OUTPUT_CHANGED"} | LEASE_CODES:
             diagnostic["code"] = str(error)
         print(json.dumps(diagnostic), file=sys.stderr)
         return 1
