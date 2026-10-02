@@ -13,6 +13,7 @@ import hashlib
 import os
 from pathlib import Path
 import stat
+import subprocess
 import sys
 import time
 from typing import Callable
@@ -27,6 +28,36 @@ from .ports import MaterializedAudio
 
 
 CORE_PYTHON = Path('/workspace/intelligentai/validation/finish_20260916/envs/mac_prod311/bin/python')
+
+
+def core_environment(nltk_data_root: Path) -> dict[str, str]:
+    # Use the already-provisioned read-only corpus, never a download to the
+    # service user's nonexistent home. Do not inherit API/storage credentials.
+    _require(nltk_data_root.is_absolute() and nltk_data_root.is_dir()
+             and os.access(nltk_data_root / 'corpora/cmudict/cmudict', os.R_OK),
+             'CANONICAL_NLTK_DATA_UNAVAILABLE')
+    return dict(PATH=str(CORE_PYTHON.parent) + ':/usr/bin:/bin',
+                LANG='C.UTF-8', LC_ALL='C.UTF-8', NLTK_DATA=str(nltk_data_root),
+                PYTHONDONTWRITEBYTECODE='1', PYTHONUNBUFFERED='1',
+                HF_HUB_OFFLINE='1', TRANSFORMERS_OFFLINE='1',
+                HF_HUB_DISABLE_IMPLICIT_TOKEN='1',
+                OMP_NUM_THREADS='2', MKL_NUM_THREADS='2', OPENBLAS_NUM_THREADS='2',
+                NUMEXPR_NUM_THREADS='2')
+
+
+def check_core_environment(nltk_data_root: Path) -> None:
+    """Offline dependency initialization in the actual core interpreter, no inference."""
+    environment = core_environment(nltk_data_root)
+    try:
+        result = subprocess.run(
+            [str(CORE_PYTHON), '-B', '-c',
+             'import nltk; nltk.data.find("corpora/cmudict"); '
+             'from g2pk import G2p; G2p()'],
+            env=environment, stdin=subprocess.DEVNULL, stdout=subprocess.DEVNULL,
+            stderr=subprocess.DEVNULL, timeout=30, check=False)
+    except (OSError, subprocess.TimeoutExpired):
+        _require(False, 'CANONICAL_G2PK_UNAVAILABLE')
+    _require(result.returncode == 0, 'CANONICAL_G2PK_UNAVAILABLE')
 
 
 @dataclass(frozen=True, slots=True)
@@ -70,11 +101,13 @@ def read_private_result(path: Path, root: Path, limit: int) -> bytes:
 
 
 class FrozenCanonicalProducer:
-    def __init__(self, artifacts: FrozenCanonicalArtifacts, workspace_root: Path, journal: BackendCanonicalJournal):
+    def __init__(self, artifacts: FrozenCanonicalArtifacts, workspace_root: Path,
+                 journal: BackendCanonicalJournal, *, nltk_data_root: Path):
         _require(type(journal) is BackendCanonicalJournal, 'BACKEND_JOURNAL_REQUIRED')
         self.journal = journal
         self.artifacts = artifacts
         self.workspace_root = private_directory(workspace_root)
+        self.environment = core_environment(nltk_data_root)
 
     async def produce(self, request: AnalysisInput, audio: MaterializedAudio, *,
                       deadline_monotonic: float,
@@ -107,20 +140,13 @@ class FrozenCanonicalProducer:
         write_private_new(case_path, _encode([dict(id=str(request.event_id),
                                                    audio=str(audio.path), script=request.script_text)]))
         output = work / 'release-output'
-        environment = dict(PATH=str(CORE_PYTHON.parent) + ':/usr/bin:/bin',
-                           LANG='C.UTF-8', LC_ALL='C.UTF-8',
-                           PYTHONDONTWRITEBYTECODE='1', PYTHONUNBUFFERED='1',
-                           HF_HUB_OFFLINE='1', TRANSFORMERS_OFFLINE='1',
-                           HF_HUB_DISABLE_IMPLICIT_TOKEN='1',
-                           OMP_NUM_THREADS='2', MKL_NUM_THREADS='2', OPENBLAS_NUM_THREADS='2',
-                           NUMEXPR_NUM_THREADS='2')
         # The frozen conda build lacks pidfd bindings. Supervision stays in the
         # checked canonical executor environment; only the model uses CORE_PYTHON.
         await run_guarded(guard_python=Path(sys.executable),
                           command=[str(CORE_PYTHON), '-B', '-u',
                                    str(self.artifacts.core_root / 'scripts/run_release.py'),
                                    '--cases', str(case_path), '--output', str(output)],
-                          cwd=self.artifacts.core_root, environment=environment,
+                          cwd=self.artifacts.core_root, environment=self.environment,
                           log_path=work / 'producer.log', deadline_monotonic=deadline_monotonic,
                           execution_is_active=execution_is_active)
         raw = read_private_result(output / 'candidate/results' / (str(request.event_id) + '.json'),

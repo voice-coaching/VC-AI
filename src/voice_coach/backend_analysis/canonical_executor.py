@@ -20,7 +20,9 @@ from .canonical_backend_delivery import BackendCanonicalDelivery
 from .canonical_codec import encode_document
 from .canonical_evidence_store import evidence_store_from_environment
 from .canonical_process import CanonicalProcessFailed, check_guard_python, private_directory
-from .canonical_producer import FrozenCanonicalProducer, read_private_result, write_private_new
+from .canonical_producer import (
+    FrozenCanonicalProducer, check_core_environment, read_private_result, write_private_new,
+)
 from .canonical_receipt_client import CanonicalReceiptClient
 from .canonical_result import preflight_canonical_result, serialize_canonical_result
 from .canonical_retention import retain_canonical_preflight
@@ -45,6 +47,7 @@ def check(env):
     private_directory(Path(env["AI_CANONICAL_WORKSPACE_ROOT"]))
     _require(CORE_PYTHON.is_file() and os.access(CORE_PYTHON, os.X_OK),
              "CANONICAL_CORE_PYTHON_UNAVAILABLE")
+    check_core_environment(Path(env["AI_ANALYSIS_NLTK_DATA_ROOT"]))
     FrozenCanonicalCoaching(artifacts(env))._bridge()
     FrozenOpenAITransport(env["OPENAI_API_KEY"])
     store = evidence_store_from_environment(env)
@@ -107,7 +110,9 @@ async def execute(path: Path, env):
         fence()
         core_root = work / "core"
         core_root.mkdir(mode=0o700)
-        produced = await FrozenCanonicalProducer(frozen.artifacts, core_root, journal).produce(
+        produced = await FrozenCanonicalProducer(
+            frozen.artifacts, core_root, journal,
+            nltk_data_root=Path(env["AI_ANALYSIS_NLTK_DATA_ROOT"])).produce(
             request, audio, deadline_monotonic=deadline, execution_is_active=active)
         fence()
         expression = await asyncio.to_thread(frozen.express_admitted, request, audio=audio,

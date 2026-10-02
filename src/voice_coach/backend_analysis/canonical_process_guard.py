@@ -59,6 +59,18 @@ def _reap_owned_tree() -> None:
         time.sleep(0.05)
 
 
+def _reap_exited_adoptees(command_pid: int) -> None:
+    # MFA's resource tracker can outlive its worker and become our child.
+    # Reap already-exited adoptees during execution, not just final teardown:
+    # otherwise the frozen supervisor correctly observes a lingering zombie.
+    # Popen alone owns the command's status; live children are never signalled.
+    for pid in _children() - {command_pid}:
+        try:
+            os.waitpid(pid, os.WNOHANG)
+        except ChildProcessError:
+            pass
+
+
 def configure_guard() -> bool:
     """Check the real interpreter/kernel and enable subreaping in this process."""
     if sys.platform != 'linux' or not all((
@@ -108,6 +120,7 @@ def main() -> int:
             child = subprocess.Popen(args.command[1:], cwd=args.cwd, stdin=subprocess.DEVNULL,
                                      close_fds=True, start_new_session=True)
             while child.poll() is None:
+                _reap_exited_adoptees(child.pid)
                 if stopping or time.monotonic() >= args.deadline or selector.select(0.1):
                     return 124
             return child.returncode if 0 <= child.returncode <= 123 else 125

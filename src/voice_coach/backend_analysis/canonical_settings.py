@@ -24,6 +24,7 @@ def child_environment(environment):
         "AI_ANALYSIS_READINESS_OBJECT_SHA256", "AI_ANALYSIS_READINESS_OBJECT_SIZE_BYTES",
         "AWS_ACCESS_KEY_ID", "AWS_SECRET_ACCESS_KEY", "AWS_SESSION_TOKEN",
         "OPENAI_API_KEY", "VOICE_COACH_BUILD_REVISION",
+        "AI_ANALYSIS_NLTK_DATA_ROOT",
     }
     values = {k: v for k, v in environment.items()
               if k in names or k.startswith("AI_CANONICAL_")}
