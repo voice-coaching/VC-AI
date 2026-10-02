@@ -2,36 +2,6 @@
   "schemaVersion": "intelligentai.service-supervisor.v1",
   "services": [
     {
-      "name": "clova",
-      "command": [
-        "/usr/bin/python3",
-        "/opt/intelligentai/app/deploy/runpod/start_hyperclova.py"
-      ],
-      "cwd": "/opt/intelligentai/app",
-      "env": {
-        "PYTHONUNBUFFERED": "1",
-        "PYTHONDONTWRITEBYTECODE": "1"
-      },
-      "dependsOn": [],
-      "health": {
-        "type": "http",
-        "url": "http://127.0.0.1:8000/health",
-        "jsonField": "status",
-        "acceptedValues": [
-          "ready"
-        ],
-        "pidField": "process_id",
-        "timeoutSeconds": 3
-      },
-      "startupTimeoutSeconds": 1800,
-      "stopTimeoutSeconds": 240,
-      "log": {
-        "path": "/run/intelligentai/logs/clova.log",
-        "maximumBytes": 10485760,
-        "backupCount": 3
-      }
-    },
-    {
       "name": "api",
       "command": [
         "/opt/intelligentai/envs/scorer/bin/python",
@@ -68,15 +38,13 @@
         "AI_ANALYSIS_VISUAL_LANDMARK_MODEL_PATH": "/opt/intelligentai/app/models/mediapipe/face_landmarker.task",
         "AI_ANALYSIS_VISUAL_GEOMETRY_ARTIFACT_PATH": "/opt/intelligentai/app/artifacts/visual_feedback/p6/aihub68_geometry_artifact_v2.json",
         "AI_ANALYSIS_MAXIMUM_RESULT_PAYLOAD_BYTES": "1048576",
-        "AI_ANALYSIS_CLOVA_ENABLED": "true",
-        "AI_ANALYSIS_CLOVA_ENDPOINT": "http://127.0.0.1:8000/v1",
-        "AI_ANALYSIS_CLOVA_TIMEOUT_SECONDS": "180",
         "TMPDIR": "/run/intelligentai/worker/tmp",
         "MPLCONFIGDIR": "/run/intelligentai/worker/tmp/matplotlib",
         "AI_ANALYSIS_TRANSPORT": "runpod_http",
-        "AI_ANALYSIS_CLOVA_FULL_EVIDENCE_ENABLED": "true",
-        "AI_ANALYSIS_CLOVA_SCORING_ENABLED": "true",
-        "AI_ANALYSIS_CLOVA_RUBRIC_REVISION": "clova-phone-rubric-v3"
+        "AI_ANALYSIS_COACHING_ENABLED": "true",
+        "AI_ANALYSIS_COACHING_RESULT_CONTRACT": "v3",
+        "AI_ANALYSIS_COACHING_PROVIDER": "OPENAI",
+        "AI_ANALYSIS_COACHING_OPENAI_MODEL": "gpt-6-astra"
       },
       "dependsOn": [],
       "health": {

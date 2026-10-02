@@ -1,0 +1,58 @@
+{
+  "type": "object",
+  "additionalProperties": false,
+  "properties": {
+    "items": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "candidateId": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 1200
+          },
+          "guidanceId": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 1200
+          },
+          "explanation": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 1200
+          },
+          "action": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 1200
+          },
+          "practice": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 1200
+          },
+          "selfCheck": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 1200
+          }
+        },
+        "required": [
+          "candidateId",
+          "guidanceId",
+          "explanation",
+          "action",
+          "practice",
+          "selfCheck"
+        ]
+      },
+      "maxItems": 3
+    }
+  },
+  "required": [
+    "items"
+  ],
+  "$schema": "https://json-schema.org/draft/2020-12/schema"
+}
