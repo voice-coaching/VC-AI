@@ -1,5 +1,9 @@
 # RunPod GPT-6 HTTP 운영 배포
 
+2026-10-02 16:13 KST: [canonical 감시기 Python 분리 수정·재배포](../../docs/canonical-integration/incident-20261002-executor-and-ui.md)를
+완료했다. 부팅/lane 초기화에서 실제 감시기의 pidfd·subreaper 지원을 확인한다.
+기존 frozen core Python과 계약은 유지하며 실제 추론 E2E는 미수행이다.
+
 2026-10-02 11:39~11:41 KST: [서버 배포·제한 v4 활성](../../docs/canonical-integration/rollout-execution-20261002.md#제한-v4-접수-활성화)을
 확인했다. RunPod 실행기·부팅·writer와 Backend reader·검증·journal/apply가 연결됐고
 양쪽 v4 admission은 ON이다. 기존 헤더 없는 API는 legacy를 유지한다. 실제 추론·저장·

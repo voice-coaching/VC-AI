@@ -1,5 +1,12 @@
 # Canonical AI와 동결 LLM 서비스 통합
 
+**2026-10-02 16:13 KST 후속:** [core 실행기 수정·재배포와 FE UI 복원](incident-20261002-executor-and-ui.md).
+analysis 48의 감시기 Python/pidfd 문제를 수정하여 런타임 5개 파일과 영구 overlay에 반영했다.
+RunPod·Backend v4 접수 활성, AWS 설정 주소의 분석·TTS readiness 200을 확인했다.
+실제 분석/GPT/callback E2E는 미수행이며 아래 readiness를 실제 분석 성공으로 해석하지 않는다.
+FE는 사용자 결정에 따라 별도 v4 화면을 철회하고 기존 화면에 v4 계약만 연결하는
+[PR #37](https://github.com/voice-coaching/VC-FE/pull/37)을 생성했다. 병합/FE 운영 배포는 미수행이다.
+
 **최신 상태: [2026-10-02 서버 배포·제한 v4 접수 활성](rollout-execution-20261002.md#제한-v4-접수-활성화).**
 RunPod 전체 실행기·부팅·writer 키와 Backend reader·검증·journal/apply를 운영 반영했다.
 11:39~11:41 KST 양쪽 admission ON 및 공유 계약 9개 SHA 일치를 확인했다.
