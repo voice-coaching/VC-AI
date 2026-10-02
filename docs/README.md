@@ -4,7 +4,11 @@
 
 | 목적 | 문서 |
 |---|---|
-| 현재 RunPod 구성·실측 상태·코드 근거 | [현재 배포 파이프라인 — 9/30 01:38~01:44 KST](runpod-current-pipeline.md) |
+| 현재 RunPod 구성·실측 상태·코드 근거 | [현재 배포 파이프라인 — 10/2 canonical 활성화 포함](runpod-current-pipeline.md) |
+| 실행기·부팅·운영 키·제한 v4 접수 활성 | [10/2 운영 배포와 실제 관측·미수행 QA](canonical-integration/rollout-execution-20261002.md#제한-v4-접수-활성화) |
+| 새 canonical core·frozen LLM 통합 진행 | [원본 위치·차이 분석·내부 연결 구현·남은 작업](canonical-integration/README.md) |
+| callback v3 → v4 전면 개편 계획 | [canonical 상태·scoped ID·MFA 무손실 보존과 서비스 전환](canonical-integration/callback-v4-plan.md) |
+| v4 운영 제한 키·전체 통합·배포 순서 | [역할별 비밀 주입·남은 구현·활성화 gate·원복 계획](canonical-integration/production-rollout-plan.md) |
 | 통합 8082 HTTPS 공개·재기동 복원 결과 | [통합 API 배포](runpod_api_gateway_20260930.md) |
 | 기동·복원·안전한 변경 | [RunPod 배포 안내](../deploy/runpod/README.md) |
 | 자동 배포와 관측 범위 | [GitHub Actions 안내](../deploy/runpod/GITHUB_ACTIONS.md) |

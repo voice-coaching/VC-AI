@@ -55,22 +55,33 @@ class Job:
     claimed: asyncio.Event = field(default_factory=asyncio.Event)
     task: asyncio.Task | None = None
     finished: float = 0
+    canonical_workspace: Path | None = field(default=None, repr=False)
 
 
 class HttpRuntime:
     def __init__(self, environment):
         self.environment = dict(environment)
+        # Keep role secrets in the explicit lane configuration, not the ambient
+        # environment inherited by multiprocessing's helper/legacy processes.
+        for name in tuple(os.environ):
+            if name.startswith("AI_CANONICAL_"):
+                os.environ.pop(name, None)
         self.worker_id = str(uuid4())
         self.settings = None
         self.backend = None
         self.process = self.connection = None
         self.executor_ready = False
+        self.openai_checked_until = 0.0
         self.dependencies_until = 0.0
         self.reason = "http_settings_incomplete_or_invalid"
         self.active: Job | None = None
         self.history = OrderedDict()
         self.stopping = False
         self.monitor = None
+        self.canonical_lane = None
+        self.canonical_reason = "canonical_bootstrap_not_ready"
+        self.canonical_dependencies_until = 0.0
+        self.canonical_monitor = None
 
     def ready(self):
         return (not self.stopping and self.settings is not None and self.executor_ready
@@ -83,7 +94,55 @@ class HttpRuntime:
             self.backend = BackendHttp(self.settings)
         except ValueError:
             return
+        if self.environment.get("AI_CANONICAL_BOOTSTRAP_READY") == "true":
+            try:
+                from .canonical_lane import CanonicalLane
+                self.canonical_lane = CanonicalLane(self.environment)
+                self.canonical_reason = None
+            except Exception:
+                self.canonical_reason = "canonical_configuration_invalid"
         self.monitor = asyncio.create_task(self._monitor())
+        if self.canonical_lane is not None:
+            self.canonical_monitor = asyncio.create_task(self._monitor_canonical())
+
+    def canonical_admission_ready(self):
+        return (self.canonical_lane is not None and not self.stopping
+                and self.environment.get("AI_CANONICAL_ADMISSION_ENABLED") == "true"
+                and time.monotonic() < self.canonical_dependencies_until)
+
+    async def _monitor_canonical(self):
+        import httpx
+        from .canonical_codec import validate_document
+        from .canonical_settings import schema_digests
+        expected = {row["file"]: row["sha256"] for row in schema_digests()}
+        async with httpx.AsyncClient(trust_env=False, follow_redirects=False, timeout=8) as client:
+            while not self.stopping:
+                try:
+                    async with client.stream("GET", self.settings.callback_base + "/api/internal/ai/worker-readiness/v2",
+                            headers={"Authorization": "Bearer " + self.settings.callback_token,
+                                     "Accept-Encoding": "identity"}) as response:
+                        if response.status_code != 200 or response.headers.get("Content-Encoding", "identity") != "identity":
+                            raise ValueError()
+                        raw = bytearray()
+                        async for chunk in response.aiter_raw():
+                            raw.extend(chunk)
+                            if len(raw) > 65536:
+                                raise ValueError()
+                    from .http_models import parse_json
+                    state = parse_json(bytes(raw))
+                    validate_document(state, "workerReadinessV2", schema_name="control")
+                    actual = {row["file"]: row["sha256"] for row in state["schemaDigests"]}
+                    if (not state["canonicalSupported"] or not state["canonicalAdmissionEnabled"]
+                            or actual != expected or len(state["schemaDigests"]) != len(expected)):
+                        raise ValueError()
+                    self.canonical_dependencies_until = time.monotonic() + 45
+                    self.canonical_reason = None
+                except asyncio.CancelledError:
+                    raise
+                except Exception:
+                    self.canonical_dependencies_until = 0
+                    self.canonical_reason = "canonical_backend_not_ready"
+                await asyncio.sleep(10)
 
     async def _receive(self):
         while not self.stopping:
@@ -100,7 +159,7 @@ class HttpRuntime:
         parent, child = context.Pipe()
         self.connection = parent
         environment = {k: v for k, v in self.environment.items()
-                       if k not in {"AI_ANALYSIS_API_TOKEN", "AI_ANALYSIS_CALLBACK_TOKEN",
+                       if not k.startswith("AI_CANONICAL_") and k not in {"AI_ANALYSIS_API_TOKEN", "AI_ANALYSIS_CALLBACK_TOKEN",
                                     "AI_ANALYSIS_CALLBACK_BASE_URL"}}
         work = Path(environment["AI_ANALYSIS_RESTRICTED_WORKSPACE_ROOT"]) / ("http-" + self.worker_id)
         work.mkdir(mode=0o700, parents=True, exist_ok=True)
@@ -150,18 +209,30 @@ class HttpRuntime:
 
     async def _monitor(self):
         while not self.stopping:
+            stage = "executor_not_ready"
+            previous = self.reason
             try:
                 if self.active is None and (not self.executor_ready or self.process is None or not self.process.is_alive()):
                     await self._stop_executor()
                     await self._spawn()
+                stage = "backend_callback_not_ready"
                 response = await self.backend.call("/api/internal/ai/worker-readiness", None, "workerReadiness")
                 if response["status"] != "ready" or response["contractVersion"] != CONTRACT:
                     raise ValueError()
-                import httpx
-                async with httpx.AsyncClient(trust_env=False, timeout=3, follow_redirects=False) as client:
-                    clova = await client.get("http://127.0.0.1:8000/health")
-                    if clova.status_code != 200 or clova.json().get("status") != "ready":
-                        raise ValueError()
+                stage = "openai_configuration_invalid"
+                from .coaching_generator import openai_configuration
+                api_key = openai_configuration(self.environment)
+                stage = "openai_model_unavailable"
+                if time.monotonic() >= self.openai_checked_until:
+                    import httpx
+                    async with httpx.AsyncClient(trust_env=False, timeout=5, follow_redirects=False) as client:
+                        response = await client.get("https://api.openai.com/v1/models/gpt-6-astra",
+                            headers={"Authorization": "Bearer " + api_key})
+                        if response.status_code != 200 or response.json().get("id") != "gpt-6-astra":
+                            raise ValueError()
+                    # Authenticated model visibility, not an inference quality check.
+                    self.openai_checked_until = time.monotonic() + 300
+                stage = "storage_not_ready"
                 from .http_storage import storage_ready
                 if not await asyncio.to_thread(storage_ready, self.environment, self.settings):
                     raise ValueError()
@@ -171,7 +242,10 @@ class HttpRuntime:
                 raise
             except Exception:
                 self.dependencies_until = 0
-                self.reason = "analysis_dependencies_not_ready"
+                self.reason = stage
+            if previous != self.reason:
+                logging.getLogger(__name__).warning("analysis_dependency_state provider=OPENAI model=gpt-6-astra reason=%s",
+                    self.reason or "ready")
             await asyncio.sleep(15)
 
     def _prune(self):
@@ -200,6 +274,10 @@ class HttpRuntime:
         if self.settings is None:
             raise HttpFailure(503, "NOT_READY")
         request = AnalysisInput.from_payload(body, self.settings.prefix)
+        if not request.is_legacy and (
+                not self.canonical_admission_ready()
+                or request.visual_input is not None):
+            raise HttpFailure(503, "NOT_READY")
         key, sha = (body["requestId"], body["executionId"]), digest(body)
         self._prune()
         prior = self.history.get(key)
@@ -211,6 +289,8 @@ class HttpRuntime:
             return (200 if prior.finished else 202), self.status(prior)
         if any(k[0] == key[0] and not j.finished for k, j in self.history.items()):
             raise HttpFailure(409, "STALE_EXECUTION")
+        if self.active is not None and not self.active.request.is_legacy:
+            raise HttpFailure(429, "CAPACITY_EXCEEDED")
         if not self.ready():
             raise HttpFailure(503, "NOT_READY")
         if self.active is not None:
@@ -227,9 +307,10 @@ class HttpRuntime:
             self._lease(job, claim, sent)
             if job.cancel.is_set():
                 raise HttpFailure(409, "ANALYSIS_CANCELLED")
-            self.connection.send(request)
+            if request.is_legacy:
+                self.connection.send(request)
             job.claimed.set()
-            job.task = asyncio.create_task(self._run(job))
+            job.task = asyncio.create_task(self._run(job) if request.is_legacy else self._run_canonical(job))
             return 202, self.status(job)
         except BaseException:
             self.history.pop(key, None)
@@ -253,6 +334,8 @@ class HttpRuntime:
         job.lease_until = sent + duration - 2
         if time.monotonic() >= job.lease_until:
             raise HttpFailure(409, "LEASE_EXPIRED")
+        if not job.request.is_legacy and self.canonical_lane is not None:
+            self.canonical_lane.publish_lease(job)
 
     async def _heartbeat(self, job):
         delay = 15
@@ -275,6 +358,42 @@ class HttpRuntime:
                     job.cancel.set()
                     return
                 delay = max(1, error.retry_after)
+            except Exception:
+                job.reason = "DEPENDENCY_UNAVAILABLE"
+                job.cancel.set()
+                return
+
+    async def _run_canonical(self, job):
+        from .canonical_process import CanonicalProcessCleanupUnconfirmed
+        heartbeat = asyncio.create_task(self._heartbeat(job))
+        job.state = "RUNNING"
+        cleanup_confirmed = True
+        try:
+            # The resident legacy model must release GPU ownership before R/MFA.
+            # No legacy attempt is active: both lanes share the same reserved slot.
+            await self._stop_executor()
+            job.state = await self.canonical_lane.run(job, self.worker_id)
+        except CanonicalProcessCleanupUnconfirmed:
+            cleanup_confirmed = False
+            self.stopping = True
+            self.canonical_reason = "canonical_cleanup_unconfirmed"
+            job.reason = "INTERNAL_ERROR"
+            job.state = "CANCELLING"
+        except asyncio.CancelledError:
+            job.cancel.set()
+            job.state = "CANCELLED"
+        except Exception as error:
+            # No fabricated core/fallback or downgrade. Backend fences timeout/failure.
+            logging.getLogger(__name__).warning(
+                "canonical_execution_failed error=%s", type(error).__name__)
+            job.reason = job.reason or "INTERNAL_ERROR"
+            job.state = "CANCELLED" if job.cancel.is_set() else "FAILED"
+        finally:
+            heartbeat.cancel()
+            await asyncio.gather(heartbeat, return_exceptions=True)
+            if cleanup_confirmed:
+                job.finished = time.monotonic()
+                self.active = None
 
     async def _run(self, job):
         heartbeat = asyncio.create_task(self._heartbeat(job))
@@ -345,6 +464,9 @@ class HttpRuntime:
 
     async def close(self):
         self.stopping = True
+        if self.canonical_monitor:
+            self.canonical_monitor.cancel()
+            await asyncio.gather(self.canonical_monitor, return_exceptions=True)
         if self.monitor:
             self.monitor.cancel()
             await asyncio.gather(self.monitor, return_exceptions=True)

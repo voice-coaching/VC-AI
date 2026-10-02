@@ -6,7 +6,7 @@ import os
 from fastapi import FastAPI, Request
 from fastapi.responses import JSONResponse
 
-from .http_models import HttpFailure, MAX_CONTROL_BYTES, parse_json, validate
+from .http_models import HttpFailure, MAX_CONTROL_BYTES, parse_json, validate, validate_analysis_request
 from .http_runtime import HttpRuntime
 
 
@@ -75,15 +75,29 @@ def create_app(environment=None):
         is_ready = runtime.ready()
         return JSONResponse(dict(status="ready" if is_ready else "not_ready", workerInstanceId=runtime.worker_id,
                                  reasonCode=runtime.reason, executorReady=runtime.executor_ready,
+                                 coachingProvider="OPENAI", coachingModel="gpt-6-astra",
                                  workerRevision=runtime.environment.get("VOICE_COACH_BUILD_REVISION")),
                             status_code=200 if is_ready else 503)
 
     @app.post("/v1/analysis-jobs")
     async def accept(request: Request):
         payload = await body(request)
-        validate(payload, "analysisRequest")
+        validate_analysis_request(payload)
         code, result = await runtime.accept(payload)
         return JSONResponse(result, status_code=code)
+
+    @app.get("/health/canonical")
+    async def canonical_health(request: Request):
+        # The shared middleware authenticates every non-public health route.
+        from .canonical_settings import schema_digests
+        ready = runtime.canonical_lane is not None and not runtime.stopping
+        return JSONResponse({
+            "executorConfigured": ready,
+            "admissionEnabled": runtime.canonical_admission_ready(),
+            "reasonCode": runtime.canonical_reason,
+            "executionQaPerformed": False,
+            "schemaDigests": schema_digests(),
+        }, status_code=200 if ready else 503)
 
     @app.get("/v1/analysis-jobs/{request_id}")
     async def status(request_id: str, request: Request):

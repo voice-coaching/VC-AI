@@ -1,0 +1,68 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:voice-coaching:runpod-analysis-request:v2",
+  "title": "Canonical RunPod analysis request v2",
+  "$comment": "Parsing support is not execution readiness. Keep v1 unchanged. Enforce the 65536-byte body limit, UTF-16 string limits, registered ownership/media metadata, original-payload JCS digest, and lease/deadline outside this schema. No caller-supplied grant, callback URL, model path or storage target is accepted.",
+  "$ref": "#/$defs/analysisRequest",
+  "$defs": {
+    "uuid": {
+      "type": "string", "format": "uuid",
+      "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+    },
+    "positiveLong": {"type": "integer", "minimum": 1, "maximum": 9007199254740991},
+    "sha256": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
+    "utcTimestamp": {
+      "type": "string", "format": "date-time",
+      "pattern": "^[0-9]{4}-(0[1-9]|1[0-2])-(0[1-9]|[12][0-9]|3[01])T([01][0-9]|2[0-3]):[0-5][0-9]:[0-5][0-9][.][0-9]{3}Z$"
+    },
+    "durationMs": {"type": "integer", "minimum": 1, "maximum": 2147483647},
+    "objectKey": {"type": "string", "minLength": 1, "maxLength": 1000, "pattern": "\\S"},
+    "audio": {
+      "type": "object", "additionalProperties": false,
+      "required": ["objectKey", "mimeType", "sha256", "fileSizeBytes", "durationMs"],
+      "properties": {
+        "objectKey": {"$ref": "#/$defs/objectKey"},
+        "mimeType": {"const": "audio/wav"},
+        "sha256": {"$ref": "#/$defs/sha256"},
+        "fileSizeBytes": {"$ref": "#/$defs/positiveLong"},
+        "durationMs": {"$ref": "#/$defs/durationMs"}
+      }
+    },
+    "video": {
+      "type": "object", "additionalProperties": false,
+      "required": ["objectKey", "mimeType", "sha256", "fileSizeBytes", "durationMs"],
+      "properties": {
+        "objectKey": {"$ref": "#/$defs/objectKey"},
+        "mimeType": {"const": "video/mp4"},
+        "sha256": {"$ref": "#/$defs/sha256"},
+        "fileSizeBytes": {"$ref": "#/$defs/positiveLong"},
+        "durationMs": {"anyOf": [{"$ref": "#/$defs/durationMs"}, {"type": "null"}]}
+      }
+    },
+    "analysisRequest": {
+      "type": "object", "additionalProperties": false,
+      "required": [
+        "schemaVersion", "requestId", "executionId", "analysisId", "recordingId", "contentId",
+        "learningFocus", "promptRevision", "scriptText", "scriptSha256", "audio", "video", "deadlineAt",
+        "analysisProfile", "resultSchemaVersion"
+      ],
+      "properties": {
+        "schemaVersion": {"const": "voice-coaching.runpod-analysis-request.v2"},
+        "requestId": {"$ref": "#/$defs/uuid"},
+        "executionId": {"$ref": "#/$defs/uuid"},
+        "analysisId": {"$ref": "#/$defs/positiveLong"},
+        "recordingId": {"$ref": "#/$defs/positiveLong"},
+        "contentId": {"$ref": "#/$defs/positiveLong"},
+        "learningFocus": {"const": "PRONUNCIATION"},
+        "promptRevision": {"type": "string", "minLength": 1, "maxLength": 100, "pattern": "\\S"},
+        "scriptText": {"type": "string", "minLength": 1, "maxLength": 10000, "pattern": "\\S"},
+        "scriptSha256": {"$ref": "#/$defs/sha256"},
+        "audio": {"$ref": "#/$defs/audio"},
+        "video": {"anyOf": [{"$ref": "#/$defs/video"}, {"type": "null"}]},
+        "deadlineAt": {"$ref": "#/$defs/utcTimestamp"},
+        "analysisProfile": {"const": "CANONICAL_FROZEN_20260928_V4"},
+        "resultSchemaVersion": {"const": "voice-coaching.runpod-analysis-result.v4"}
+      }
+    }
+  }
+}

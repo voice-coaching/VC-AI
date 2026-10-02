@@ -1,4 +1,4 @@
-"""Strict HTTP v1.1 boundary; no Redis grant or debug payload conversion."""
+"""Strict versioned requests and legacy HTTP controls; no grant conversion."""
 from __future__ import annotations
 
 from dataclasses import dataclass
@@ -17,6 +17,12 @@ import rfc8785
 from .domain import AnalysisWorkerResult
 
 CONTRACT = "voice-coaching.runpod-http.v1.1"
+REQUEST_V1 = "voice-coaching.runpod-analysis-request.v1"
+REQUEST_V2 = "voice-coaching.runpod-analysis-request.v2"
+RESULT_V3 = "voice-coaching.runpod-analysis-result.v3"
+RESULT_V4 = "voice-coaching.runpod-analysis-result.v4"
+LEGACY_PROFILE = "LEGACY_SEUNGUN_V3"
+CANONICAL_PROFILE = "CANONICAL_FROZEN_20260928_V4"
 MAX_CONTROL_BYTES = 65536
 MAX_RESULT_BYTES = 1048576
 
@@ -72,16 +78,20 @@ def parse_json(raw: bytes):
 
 
 @lru_cache(maxsize=32)
-def validator(kind: str, result: bool = False):
+def validator(kind: str, result: bool = False, *, request_version: str = REQUEST_V1):
     root = Path(__file__).resolve().parents[3]
     filename = "runpod_result_v1.schema.json" if result else "runpod_http_control_v1.schema.json"
+    if request_version != REQUEST_V1:
+        if result or kind != "analysisRequest" or request_version != REQUEST_V2:
+            raise HttpFailure(422, "VALIDATION_FAILED")
+        filename = "runpod_analysis_request_v2.schema.json"
     schema = json.loads((root / "docs/contracts" / filename).read_text(encoding="utf-8"))
     schema["$ref"] = "#/$defs/" + kind
     return DecimalDraft202012Validator(schema, format_checker=FormatChecker())
 
 
-def validate(value, kind: str, *, result: bool = False):
-    check = validator(kind, result)
+def validate(value, kind: str, *, result: bool = False, request_version: str = REQUEST_V1):
+    check = validator(kind, result, request_version=request_version)
     error = next(check.iter_errors(value), None)
     if error is not None:
         if result:
@@ -92,6 +102,21 @@ def validate(value, kind: str, *, result: bool = False):
         raise HttpFailure(422, "VALIDATION_FAILED")
     _utf16_lengths(value, check.schema, check.schema)
     return value
+
+
+def validate_analysis_request(body):
+    """Select a closed request schema without modifying the wire document."""
+    if not isinstance(body, dict):
+        raise HttpFailure(422, "VALIDATION_FAILED")
+    version = body.get("schemaVersion")
+    if not isinstance(version, str) or version not in (REQUEST_V1, REQUEST_V2):
+        raise HttpFailure(422, "VALIDATION_FAILED")
+    validate(body, "analysisRequest", request_version=version)
+    if version == REQUEST_V2 and (
+            body.get("analysisProfile") != CANONICAL_PROFILE
+            or body.get("resultSchemaVersion") != RESULT_V4):
+        raise HttpFailure(422, "VALIDATION_FAILED")
+    return body
 
 
 def _utf16_lengths(value, node, root):
@@ -158,6 +183,16 @@ class AnalysisInput:
     duration_ms: int
     learning_focus: str
     visual_input: HttpVisualInput | None
+    request_schema_version: str = REQUEST_V1
+    analysis_profile: str = LEGACY_PROFILE
+    # Internal legacy routing default; v1 wire bytes and v1-v3 output stay unchanged.
+    result_schema_version: str = RESULT_V3
+
+    @property
+    def is_legacy(self):
+        return (self.request_schema_version == REQUEST_V1
+                and self.analysis_profile == LEGACY_PROFILE
+                and self.result_schema_version == RESULT_V3)
 
     @property
     def closed_beta_context(self):
@@ -166,7 +201,7 @@ class AnalysisInput:
 
     @classmethod
     def from_payload(cls, body: dict, prefix: str):
-        validate(body, "analysisRequest")
+        validate_analysis_request(body)
         for key, limit in (("scriptText", 20000), ("promptRevision", 100)):
             if len(body[key].encode("utf-16-le")) // 2 > limit:
                 raise HttpFailure(422, "VALIDATION_FAILED")
@@ -184,10 +219,18 @@ class AnalysisInput:
                    audio["fileSizeBytes"], audio["durationMs"], body["learningFocus"],
                    HttpVisualInput(object_key=video["objectKey"], sha256=video["sha256"],
                                        mime_type=video["mimeType"], file_size_bytes=video["fileSizeBytes"],
-                                       duration_ms=video["durationMs"]) if video else None)
+                                       duration_ms=video["durationMs"]) if video else None,
+                   request_schema_version=body["schemaVersion"],
+                   analysis_profile=(body["analysisProfile"] if body["schemaVersion"] == REQUEST_V2
+                                     else LEGACY_PROFILE),
+                   result_schema_version=(body["resultSchemaVersion"] if body["schemaVersion"] == REQUEST_V2
+                                          else RESULT_V3))
 
 
 def result_payload(result: AnalysisWorkerResult, request: AnalysisInput, worker_id: str):
+    if not request.is_legacy:
+        # This serializer cannot represent canonical results, including failures.
+        raise HttpFailure(422, "VALIDATION_FAILED")
     evidence = result.pronunciation_evidence
     if evidence and evidence.selected_end_ms is not None and evidence.selected_end_ms > request.duration_ms:
         raise HttpFailure(422, "VALIDATION_FAILED")

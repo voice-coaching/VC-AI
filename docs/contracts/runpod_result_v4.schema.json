@@ -1,0 +1,2602 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:voice-coaching:runpod-analysis-result:v4",
+  "title": "Private canonical HTTP result v4 preflight contract",
+  "$comment": "NOT ACTIVATED. Service validation additionally requires original bytes, frozen prepare equality, full binding/association and authenticated Backend VERIFIED receipt. Max raw UTF-8 callback 1 MiB; byte hashes are not JCS hashes. Imported frozen inputValidation/candidate/coverage/output subtrees are unchanged. Frozen arbitrary diagnostic evidence remains arbitrary only where its pinned schema explicitly allows it; never infer a typed MFA receipt from that schema.",
+  "$ref": "#/$defs/result",
+  "$defs": {
+    "preparedAudio": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["sha256", "frameCount", "sampleRate", "measurementSource"],
+      "properties": {
+        "sha256": {"$ref": "#/$defs/sha256"},
+        "frameCount": {"type": "integer", "minimum": 0, "maximum": 9007199254740991},
+        "sampleRate": {"type": "integer", "minimum": 1, "maximum": 2147483647},
+        "measurementSource": {"const": "SERVER_PREPARED_WAV_PCM_FRAMES"}
+      }
+    },
+    "uuid": {
+      "type": "string",
+      "format": "uuid",
+      "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+    },
+    "sha256": {
+      "type": "string",
+      "pattern": "^[0-9a-f]{64}$"
+    },
+    "positiveLong": {
+      "type": "integer",
+      "minimum": 1,
+      "maximum": 9007199254740991
+    },
+    "revision": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 100
+    },
+    "inputValidation": {
+      "$defs": {
+        "ErrorCode": {
+          "enum": [
+            "invalid_script",
+            "invalid_audio",
+            "audio_conversion_failed",
+            "g2p_failed",
+            "alignment_failed",
+            "textgrid_parse_failed",
+            "acoustic_analysis_failed",
+            "dependency_missing",
+            "model_missing",
+            "internal_error"
+          ],
+          "title": "ErrorCode",
+          "type": "string"
+        },
+        "JsonValue": {},
+        "PipelineError": {
+          "additionalProperties": false,
+          "properties": {
+            "code": {
+              "$ref": "#/$defs/ErrorCode"
+            },
+            "stage": {
+              "$ref": "#/$defs/PipelineStage"
+            },
+            "message_ko": {
+              "minLength": 1,
+              "title": "Message Ko",
+              "type": "string"
+            },
+            "recoverable": {
+              "default": false,
+              "title": "Recoverable",
+              "type": "boolean"
+            },
+            "details": {
+              "additionalProperties": {
+                "$ref": "#/$defs/JsonValue"
+              },
+              "title": "Details",
+              "type": "object"
+            }
+          },
+          "required": [
+            "code",
+            "stage",
+            "message_ko"
+          ],
+          "title": "PipelineError",
+          "type": "object"
+        },
+        "PipelineStage": {
+          "enum": [
+            "input",
+            "audio",
+            "g2p",
+            "alignment",
+            "textgrid",
+            "acoustic",
+            "feedback",
+            "storage",
+            "dependency",
+            "internal"
+          ],
+          "title": "PipelineStage",
+          "type": "string"
+        }
+      },
+      "additionalProperties": false,
+      "description": "Development-only sidecar; never part of ai_core_result_v1.",
+      "properties": {
+        "schema_version": {
+          "const": "input_validation_result_v1",
+          "default": "input_validation_result_v1",
+          "title": "Schema Version",
+          "type": "string"
+        },
+        "gate_version": {
+          "default": "phase2_gate_spec_v1",
+          "enum": [
+            "phase2_gate_spec_v1",
+            "demo_content_gate_calibration_v2"
+          ],
+          "title": "Gate Version",
+          "type": "string"
+        },
+        "status": {
+          "enum": [
+            "ACCEPT",
+            "REJECT",
+            "INCONCLUSIVE",
+            "SYSTEM_FAILURE"
+          ],
+          "title": "Status",
+          "type": "string"
+        },
+        "reason_code": {
+          "anyOf": [
+            {
+              "enum": [
+                "AUDIO_DECODE_OR_CORRUPTION",
+                "SILENCE_OR_NO_SPEECH",
+                "ALIGNMENT_FAILURE",
+                "SYSTEM_ANALYSIS_FAILURE",
+                "INSUFFICIENT_CONTENT",
+                "TRANSCRIPT_MISMATCH"
+              ],
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "title": "Reason Code"
+        },
+        "stage": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/PipelineStage"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "evidence": {
+          "additionalProperties": {
+            "$ref": "#/$defs/JsonValue"
+          },
+          "title": "Evidence",
+          "type": "object"
+        },
+        "source_provenance": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "title": "Source Provenance"
+        },
+        "original_error": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/PipelineError"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "subject": {
+          "enum": [
+            "RECORDING",
+            "ANALYSIS_SYSTEM",
+            "UNKNOWN"
+          ],
+          "title": "Subject",
+          "type": "string"
+        },
+        "decision_basis": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "title": "Decision Basis"
+        }
+      },
+      "required": [
+        "status",
+        "reason_code",
+        "stage",
+        "evidence",
+        "source_provenance",
+        "original_error",
+        "subject",
+        "decision_basis"
+      ],
+      "title": "InputValidationResultV1",
+      "type": "object",
+      "$id": "urn:canonical-ai:input-validation-v1"
+    },
+    "candidate": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "candidateId": {
+          "type": "string",
+          "minLength": 1
+        },
+        "evidenceIds": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "minLength": 1
+          }
+        },
+        "expectedPhone": {
+          "type": "string",
+          "minLength": 1
+        },
+        "observedCandidate": {
+          "type": "string",
+          "minLength": 1
+        },
+        "expectedRole": {
+          "enum": [
+            "onset",
+            "nucleus",
+            "coda"
+          ]
+        },
+        "roleSemantics": {
+          "const": "FROZEN_G2P_EXPECTED_PHONE_ROLE"
+        },
+        "repetitionCount": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "claimScope": {
+          "const": "MODEL_OBSERVATION_NOT_CONFIRMED_ARTICULATION"
+        },
+        "disposition": {
+          "const": "PRONUNCIATION_REVIEW"
+        },
+        "presentationState": {
+          "const": "CLEAR_CONTRAST"
+        },
+        "guidance": {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "guidanceId": {
+              "type": "string",
+              "minLength": 1
+            },
+            "revision": {
+              "const": "basic-practice-v1"
+            },
+            "scope": {
+              "const": "GENERAL_TARGET_PRACTICE_NOT_PERSONAL_CAUSE"
+            },
+            "action": {
+              "type": "string",
+              "minLength": 1
+            },
+            "practice": {
+              "type": "string",
+              "minLength": 1
+            },
+            "selfCheck": {
+              "type": "string",
+              "minLength": 1
+            }
+          },
+          "required": [
+            "guidanceId",
+            "revision",
+            "scope",
+            "action",
+            "practice",
+            "selfCheck"
+          ]
+        },
+        "facts": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "properties": {
+              "evidenceId": {
+                "type": "string",
+                "minLength": 1
+              },
+              "expectedIndex": {
+                "type": "integer",
+                "minimum": 0
+              },
+              "location": {
+                "type": "object",
+                "additionalProperties": false,
+                "properties": {
+                  "word": {
+                    "type": "string",
+                    "minLength": 1
+                  },
+                  "wordIndex": {
+                    "type": "integer",
+                    "minimum": 0
+                  },
+                  "wordStartS": {
+                    "type": "number",
+                    "minimum": 0
+                  },
+                  "wordEndS": {
+                    "type": "number",
+                    "minimum": 0
+                  },
+                  "phoneStartS": {
+                    "type": "number",
+                    "minimum": 0
+                  },
+                  "phoneEndS": {
+                    "type": "number",
+                    "minimum": 0
+                  },
+                  "timingProvenance": {
+                    "const": "MFA_LOCATION_ONLY"
+                  }
+                },
+                "required": [
+                  "word",
+                  "wordIndex",
+                  "wordStartS",
+                  "wordEndS",
+                  "phoneStartS",
+                  "phoneEndS",
+                  "timingProvenance"
+                ]
+              },
+              "localizationStatus": {
+                "type": "string",
+                "minLength": 1
+              }
+            },
+            "required": [
+              "evidenceId",
+              "expectedIndex",
+              "location",
+              "localizationStatus"
+            ]
+          }
+        }
+      },
+      "required": [
+        "candidateId",
+        "evidenceIds",
+        "expectedPhone",
+        "observedCandidate",
+        "expectedRole",
+        "roleSemantics",
+        "repetitionCount",
+        "claimScope",
+        "disposition",
+        "presentationState",
+        "guidance",
+        "facts"
+      ]
+    },
+    "coverage": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "evaluatedConsonantPositions": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "visiblePositionCount": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "permittedPatternCount": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "includedCandidateIds": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "minLength": 1
+          }
+        },
+        "omittedCandidateIds": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "minLength": 1
+          }
+        },
+        "selectionPolicy": {
+          "const": "repetition_then_first_occurrence_max3"
+        },
+        "omittedReason": {
+          "enum": [
+            "EXISTING_MAX3_SELECTION",
+            null
+          ]
+        },
+        "presentationStateCounts": {
+          "type": "object",
+          "additionalProperties": {
+            "type": "integer",
+            "minimum": 0
+          }
+        }
+      },
+      "required": [
+        "evaluatedConsonantPositions",
+        "visiblePositionCount",
+        "permittedPatternCount",
+        "includedCandidateIds",
+        "omittedCandidateIds",
+        "selectionPolicy",
+        "omittedReason",
+        "presentationStateCounts"
+      ]
+    },
+    "expression": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "candidateId": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 1200
+        },
+        "guidanceId": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 1200
+        },
+        "explanation": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 1200
+        },
+        "action": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 1200
+        },
+        "practice": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 1200
+        },
+        "selfCheck": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 1200
+        }
+      },
+      "required": [
+        "candidateId",
+        "guidanceId",
+        "explanation",
+        "action",
+        "practice",
+        "selfCheck"
+      ]
+    },
+    "projection": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "schemaVersion": {
+          "const": "canonical-llm-expression-input-v1"
+        },
+        "attemptScope": {
+          "type": "string",
+          "minLength": 1
+        },
+        "task": {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "mode": {
+              "const": "COACHING"
+            },
+            "language": {
+              "const": "ko"
+            },
+            "objective": {
+              "const": "practice_and_check_improvement"
+            }
+          },
+          "required": [
+            "mode",
+            "language",
+            "objective"
+          ]
+        },
+        "sourceIdentity": {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "coreSha256": {
+              "type": "string",
+              "pattern": "^[0-9a-f]{64}$"
+            },
+            "parentManifestSha256": {
+              "type": "string",
+              "pattern": "^[0-9a-f]{64}$"
+            },
+            "scriptSha256": {
+              "type": "string",
+              "pattern": "^[0-9a-f]{64}$"
+            },
+            "audioSha256": {
+              "type": "string",
+              "pattern": "^[0-9a-f]{64}$"
+            },
+            "canonicalAudioSha256": {
+              "type": "string",
+              "pattern": "^[0-9a-f]{64}$"
+            }
+          },
+          "required": [
+            "coreSha256",
+            "parentManifestSha256",
+            "scriptSha256",
+            "audioSha256",
+            "canonicalAudioSha256"
+          ]
+        },
+        "globalStatus": {
+          "const": "ACCEPT"
+        },
+        "utterance": {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "text": {
+              "type": "string",
+              "minLength": 1
+            }
+          },
+          "required": [
+            "text"
+          ]
+        },
+        "coverage": {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "evaluatedConsonantPositions": {
+              "type": "integer",
+              "minimum": 0
+            },
+            "visiblePositionCount": {
+              "type": "integer",
+              "minimum": 0
+            },
+            "permittedPatternCount": {
+              "type": "integer",
+              "minimum": 0
+            },
+            "includedCandidateIds": {
+              "type": "array",
+              "items": {
+                "type": "string",
+                "minLength": 1
+              }
+            },
+            "omittedCandidateIds": {
+              "type": "array",
+              "items": {
+                "type": "string",
+                "minLength": 1
+              }
+            },
+            "selectionPolicy": {
+              "const": "repetition_then_first_occurrence_max3"
+            },
+            "omittedReason": {
+              "enum": [
+                "EXISTING_MAX3_SELECTION",
+                null
+              ]
+            },
+            "presentationStateCounts": {
+              "type": "object",
+              "additionalProperties": {
+                "type": "integer",
+                "minimum": 0
+              }
+            }
+          },
+          "required": [
+            "evaluatedConsonantPositions",
+            "visiblePositionCount",
+            "permittedPatternCount",
+            "includedCandidateIds",
+            "omittedCandidateIds",
+            "selectionPolicy",
+            "omittedReason",
+            "presentationStateCounts"
+          ]
+        },
+        "candidates": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "properties": {
+              "candidateId": {
+                "type": "string",
+                "minLength": 1
+              },
+              "evidenceIds": {
+                "type": "array",
+                "items": {
+                  "type": "string",
+                  "minLength": 1
+                }
+              },
+              "expectedPhone": {
+                "type": "string",
+                "minLength": 1
+              },
+              "observedCandidate": {
+                "type": "string",
+                "minLength": 1
+              },
+              "expectedRole": {
+                "enum": [
+                  "onset",
+                  "nucleus",
+                  "coda"
+                ]
+              },
+              "roleSemantics": {
+                "const": "FROZEN_G2P_EXPECTED_PHONE_ROLE"
+              },
+              "repetitionCount": {
+                "type": "integer",
+                "minimum": 1
+              },
+              "claimScope": {
+                "const": "MODEL_OBSERVATION_NOT_CONFIRMED_ARTICULATION"
+              },
+              "disposition": {
+                "const": "PRONUNCIATION_REVIEW"
+              },
+              "presentationState": {
+                "const": "CLEAR_CONTRAST"
+              },
+              "guidance": {
+                "type": "object",
+                "additionalProperties": false,
+                "properties": {
+                  "guidanceId": {
+                    "type": "string",
+                    "minLength": 1
+                  },
+                  "revision": {
+                    "const": "basic-practice-v1"
+                  },
+                  "scope": {
+                    "const": "GENERAL_TARGET_PRACTICE_NOT_PERSONAL_CAUSE"
+                  },
+                  "action": {
+                    "type": "string",
+                    "minLength": 1
+                  },
+                  "practice": {
+                    "type": "string",
+                    "minLength": 1
+                  },
+                  "selfCheck": {
+                    "type": "string",
+                    "minLength": 1
+                  }
+                },
+                "required": [
+                  "guidanceId",
+                  "revision",
+                  "scope",
+                  "action",
+                  "practice",
+                  "selfCheck"
+                ]
+              },
+              "facts": {
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "additionalProperties": false,
+                  "properties": {
+                    "evidenceId": {
+                      "type": "string",
+                      "minLength": 1
+                    },
+                    "expectedIndex": {
+                      "type": "integer",
+                      "minimum": 0
+                    },
+                    "location": {
+                      "type": "object",
+                      "additionalProperties": false,
+                      "properties": {
+                        "word": {
+                          "type": "string",
+                          "minLength": 1
+                        },
+                        "wordIndex": {
+                          "type": "integer",
+                          "minimum": 0
+                        },
+                        "wordStartS": {
+                          "type": "number",
+                          "minimum": 0
+                        },
+                        "wordEndS": {
+                          "type": "number",
+                          "minimum": 0
+                        },
+                        "phoneStartS": {
+                          "type": "number",
+                          "minimum": 0
+                        },
+                        "phoneEndS": {
+                          "type": "number",
+                          "minimum": 0
+                        },
+                        "timingProvenance": {
+                          "const": "MFA_LOCATION_ONLY"
+                        }
+                      },
+                      "required": [
+                        "word",
+                        "wordIndex",
+                        "wordStartS",
+                        "wordEndS",
+                        "phoneStartS",
+                        "phoneEndS",
+                        "timingProvenance"
+                      ]
+                    },
+                    "localizationStatus": {
+                      "type": "string",
+                      "minLength": 1
+                    }
+                  },
+                  "required": [
+                    "evidenceId",
+                    "expectedIndex",
+                    "location",
+                    "localizationStatus"
+                  ]
+                }
+              }
+            },
+            "required": [
+              "candidateId",
+              "evidenceIds",
+              "expectedPhone",
+              "observedCandidate",
+              "expectedRole",
+              "roleSemantics",
+              "repetitionCount",
+              "claimScope",
+              "disposition",
+              "presentationState",
+              "guidance",
+              "facts"
+            ]
+          },
+          "maxItems": 3
+        },
+        "reviewReasonCounts": {
+          "type": "object",
+          "additionalProperties": {
+            "type": "integer",
+            "minimum": 0
+          }
+        },
+        "visual": {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "status": {
+              "const": "NOT_CONNECTED"
+            },
+            "correctiveClaimsAllowed": {
+              "const": false
+            }
+          },
+          "required": [
+            "status",
+            "correctiveClaimsAllowed"
+          ]
+        },
+        "prosody": {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "status": {
+              "type": "string",
+              "minLength": 1
+            },
+            "expressionPermission": {
+              "const": "NO_APPROVED_GUIDANCE_MAPPING"
+            },
+            "evidenceRetention": {
+              "const": "PRESERVED_IN_LOCAL_CORE"
+            }
+          },
+          "required": [
+            "status",
+            "expressionPermission",
+            "evidenceRetention"
+          ]
+        },
+        "score": {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "validity": {
+              "enum": [
+                "INSUFFICIENT_EVIDENCE",
+                "NOT_CALIBRATED"
+              ]
+            },
+            "overallScore": {
+              "const": null
+            }
+          },
+          "required": [
+            "validity",
+            "overallScore"
+          ]
+        },
+        "previousAttempt": {
+          "const": null
+        }
+      },
+      "required": [
+        "schemaVersion",
+        "attemptScope",
+        "task",
+        "sourceIdentity",
+        "globalStatus",
+        "utterance",
+        "coverage",
+        "candidates",
+        "reviewReasonCounts",
+        "visual",
+        "prosody",
+        "score",
+        "previousAttempt"
+      ],
+      "$schema": "https://json-schema.org/draft/2020-12/schema"
+    },
+    "selection": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "attemptScope": {
+          "type": "string",
+          "pattern": "^[0-9a-f]{64}$"
+        },
+        "coverage": {
+          "$ref": "#/$defs/coverage"
+        },
+        "reviewReasonCounts": {
+          "type": "object",
+          "additionalProperties": {
+            "type": "integer",
+            "minimum": 0
+          }
+        },
+        "candidates": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "properties": {
+              "candidateId": {
+                "type": "string",
+                "minLength": 1
+              },
+              "evidenceIds": {
+                "type": "array",
+                "items": {
+                  "type": "string",
+                  "minLength": 1
+                }
+              },
+              "expectedPhone": {
+                "type": "string",
+                "minLength": 1
+              },
+              "observedCandidate": {
+                "type": "string",
+                "minLength": 1
+              },
+              "expectedRole": {
+                "enum": [
+                  "onset",
+                  "nucleus",
+                  "coda"
+                ]
+              },
+              "roleSemantics": {
+                "const": "FROZEN_G2P_EXPECTED_PHONE_ROLE"
+              },
+              "repetitionCount": {
+                "type": "integer",
+                "minimum": 1
+              },
+              "claimScope": {
+                "const": "MODEL_OBSERVATION_NOT_CONFIRMED_ARTICULATION"
+              },
+              "disposition": {
+                "const": "PRONUNCIATION_REVIEW"
+              },
+              "presentationState": {
+                "const": "CLEAR_CONTRAST"
+              },
+              "guidance": {
+                "type": "object",
+                "additionalProperties": false,
+                "properties": {
+                  "guidanceId": {
+                    "type": "string",
+                    "minLength": 1
+                  },
+                  "revision": {
+                    "const": "basic-practice-v1"
+                  },
+                  "scope": {
+                    "const": "GENERAL_TARGET_PRACTICE_NOT_PERSONAL_CAUSE"
+                  },
+                  "action": {
+                    "type": "string",
+                    "minLength": 1
+                  },
+                  "practice": {
+                    "type": "string",
+                    "minLength": 1
+                  },
+                  "selfCheck": {
+                    "type": "string",
+                    "minLength": 1
+                  }
+                },
+                "required": [
+                  "guidanceId",
+                  "revision",
+                  "scope",
+                  "action",
+                  "practice",
+                  "selfCheck"
+                ]
+              },
+              "facts": {
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "additionalProperties": false,
+                  "properties": {
+                    "evidenceId": {
+                      "type": "string",
+                      "minLength": 1
+                    },
+                    "expectedIndex": {
+                      "type": "integer",
+                      "minimum": 0
+                    },
+                    "location": {
+                      "type": "object",
+                      "additionalProperties": false,
+                      "properties": {
+                        "word": {
+                          "type": "string",
+                          "minLength": 1
+                        },
+                        "wordIndex": {
+                          "type": "integer",
+                          "minimum": 0
+                        },
+                        "wordStartS": {
+                          "type": "number",
+                          "minimum": 0
+                        },
+                        "wordEndS": {
+                          "type": "number",
+                          "minimum": 0
+                        },
+                        "phoneStartS": {
+                          "type": "number",
+                          "minimum": 0
+                        },
+                        "phoneEndS": {
+                          "type": "number",
+                          "minimum": 0
+                        },
+                        "timingProvenance": {
+                          "const": "MFA_LOCATION_ONLY"
+                        }
+                      },
+                      "required": [
+                        "word",
+                        "wordIndex",
+                        "wordStartS",
+                        "wordEndS",
+                        "phoneStartS",
+                        "phoneEndS",
+                        "timingProvenance"
+                      ]
+                    },
+                    "localizationStatus": {
+                      "type": "string",
+                      "minLength": 1
+                    }
+                  },
+                  "required": [
+                    "evidenceId",
+                    "expectedIndex",
+                    "location",
+                    "localizationStatus"
+                  ]
+                }
+              }
+            },
+            "required": [
+              "candidateId",
+              "evidenceIds",
+              "expectedPhone",
+              "observedCandidate",
+              "expectedRole",
+              "roleSemantics",
+              "repetitionCount",
+              "claimScope",
+              "disposition",
+              "presentationState",
+              "guidance",
+              "facts"
+            ]
+          },
+          "maxItems": 3
+        }
+      },
+      "required": [
+        "attemptScope",
+        "coverage",
+        "reviewReasonCounts",
+        "candidates"
+      ]
+    },
+    "binding": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "parent_manifest_sha256": {
+          "const": "95f2347ad53ab53030f68a65795cfc5a84ca1c8c41bd03119c9a9fb15d0367c2"
+        },
+        "core_sha256": {
+          "$ref": "#/$defs/sha256"
+        },
+        "script_sha256": {
+          "$ref": "#/$defs/sha256"
+        },
+        "request_id": {
+          "$ref": "#/$defs/uuid"
+        },
+        "analysis_id": {
+          "type": "string",
+          "minLength": 1
+        },
+        "source_audio_sha256": {
+          "$ref": "#/$defs/sha256"
+        },
+        "prepared_wav_sha256": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/sha256"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "provenance_source": {
+          "const": "admitted-http-canonical-producer-v1"
+        }
+      },
+      "required": [
+        "parent_manifest_sha256",
+        "core_sha256",
+        "script_sha256",
+        "request_id",
+        "analysis_id",
+        "source_audio_sha256",
+        "prepared_wav_sha256",
+        "provenance_source"
+      ]
+    },
+    "association": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "requestId": {
+          "$ref": "#/$defs/uuid"
+        },
+        "executionId": {
+          "$ref": "#/$defs/uuid"
+        },
+        "analysisId": {
+          "$ref": "#/$defs/positiveLong"
+        },
+        "recordingId": {
+          "$ref": "#/$defs/positiveLong"
+        },
+        "contentId": {
+          "$ref": "#/$defs/positiveLong"
+        },
+        "canonicalAnalysisId": {
+          "type": "string",
+          "minLength": 1
+        },
+        "coreSha256": {
+          "$ref": "#/$defs/sha256"
+        },
+        "parentManifestSha256": {
+          "const": "95f2347ad53ab53030f68a65795cfc5a84ca1c8c41bd03119c9a9fb15d0367c2"
+        },
+        "llmManifestSha256": {
+          "const": "1413b196616c919aeaab243fdd57771e70221ffc53a37f9b018d1881499b8c73"
+        },
+        "llmDependencyLockSha256": {
+          "const": "d8356763579dcfee347073a3f0ff72f4a0f67e33a29fa3b4c71012afcfd4ba01"
+        },
+        "scriptSha256": {
+          "$ref": "#/$defs/sha256"
+        },
+        "audioSha256": {
+          "$ref": "#/$defs/sha256"
+        },
+        "preparedWavSha256": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/sha256"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "visualStatus": {
+          "const": "NOT_CONNECTED"
+        },
+        "visualCorrectiveClaimsAllowed": {
+          "const": false
+        },
+        "preparedAudio": {
+          "anyOf": [{"$ref": "#/$defs/preparedAudio"}, {"type": "null"}]
+        }
+      },
+      "required": [
+        "requestId",
+        "executionId",
+        "analysisId",
+        "recordingId",
+        "contentId",
+        "canonicalAnalysisId",
+        "coreSha256",
+        "parentManifestSha256",
+        "llmManifestSha256",
+        "llmDependencyLockSha256",
+        "scriptSha256",
+        "audioSha256",
+        "preparedWavSha256",
+        "preparedAudio",
+        "visualStatus",
+        "visualCorrectiveClaimsAllowed"
+      ]
+    },
+    "visual": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "status": {
+          "const": "NOT_CONNECTED"
+        },
+        "correctiveClaimsAllowed": {
+          "const": false
+        }
+      },
+      "required": [
+        "status",
+        "correctiveClaimsAllowed"
+      ]
+    },
+    "failure": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "origin": {
+          "enum": [
+            "CORE",
+            "INTEGRATION"
+          ]
+        },
+        "code": {
+          "enum": [
+            "CORE_SYSTEM_FAILURE",
+            "CANONICAL_EXECUTION_FAILED",
+            "CORE_CONTRACT_INVALID",
+            "CANONICAL_BINDING_FAILED",
+            "CANONICAL_ADAPTER_FAILED",
+            "EVIDENCE_STORAGE_FAILED",
+            "RESULT_ENVELOPE_TOO_LARGE"
+          ]
+        },
+        "stage": {
+          "enum": [
+            "EXECUTION",
+            "VALIDATION",
+            "BINDING",
+            "ADAPTER",
+            "RETENTION",
+            "SERIALIZATION"
+          ]
+        }
+      },
+      "required": [
+        "origin",
+        "code",
+        "stage"
+      ],
+      "oneOf": [
+        {
+          "properties": {
+            "origin": {
+              "const": "CORE"
+            },
+            "code": {
+              "const": "CORE_SYSTEM_FAILURE"
+            },
+            "stage": {
+              "const": "EXECUTION"
+            }
+          }
+        },
+        {
+          "properties": {
+            "origin": {
+              "const": "INTEGRATION"
+            },
+            "code": {
+              "const": "CANONICAL_EXECUTION_FAILED"
+            },
+            "stage": {
+              "const": "EXECUTION"
+            }
+          }
+        },
+        {
+          "properties": {
+            "origin": {
+              "const": "INTEGRATION"
+            },
+            "code": {
+              "const": "CORE_CONTRACT_INVALID"
+            },
+            "stage": {
+              "const": "VALIDATION"
+            }
+          }
+        },
+        {
+          "properties": {
+            "origin": {
+              "const": "INTEGRATION"
+            },
+            "code": {
+              "const": "CANONICAL_BINDING_FAILED"
+            },
+            "stage": {
+              "const": "BINDING"
+            }
+          }
+        },
+        {
+          "properties": {
+            "origin": {
+              "const": "INTEGRATION"
+            },
+            "code": {
+              "const": "CANONICAL_ADAPTER_FAILED"
+            },
+            "stage": {
+              "const": "ADAPTER"
+            }
+          }
+        },
+        {
+          "properties": {
+            "origin": {
+              "const": "INTEGRATION"
+            },
+            "code": {
+              "const": "EVIDENCE_STORAGE_FAILED"
+            },
+            "stage": {
+              "const": "RETENTION"
+            }
+          }
+        },
+        {
+          "properties": {
+            "origin": {
+              "const": "INTEGRATION"
+            },
+            "code": {
+              "const": "RESULT_ENVELOPE_TOO_LARGE"
+            },
+            "stage": {
+              "const": "SERIALIZATION"
+            }
+          }
+        }
+      ]
+    },
+    "artifact": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "kind": {
+          "enum": [
+            "CORE",
+            "BRIDGE_RESULT",
+            "SELECTION_PROJECTION",
+            "BINDING",
+            "ASSOCIATION"
+          ]
+        },
+        "schemaVersion": {
+          "enum": [
+            "canonical_ai_predeploy_v1",
+            "canonical-llm-expression-result-v1",
+            "canonical-llm-expression-input-v1",
+            "voice-coaching.canonical-binding.v1",
+            "voice-coaching.canonical-association.v1"
+          ]
+        },
+        "sha256": {
+          "$ref": "#/$defs/sha256"
+        },
+        "byteSize": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 16777216
+        },
+        "objectKey": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 1000,
+          "pattern": "^[A-Za-z0-9][A-Za-z0-9._/-]*$"
+        },
+        "versionId": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 1024
+        }
+      },
+      "required": [
+        "kind",
+        "schemaVersion",
+        "sha256",
+        "byteSize",
+        "objectKey",
+        "versionId"
+      ],
+      "oneOf": [
+        {
+          "properties": {
+            "kind": {
+              "const": "CORE"
+            },
+            "schemaVersion": {
+              "const": "canonical_ai_predeploy_v1"
+            }
+          }
+        },
+        {
+          "properties": {
+            "kind": {
+              "const": "BRIDGE_RESULT"
+            },
+            "schemaVersion": {
+              "const": "canonical-llm-expression-result-v1"
+            }
+          }
+        },
+        {
+          "properties": {
+            "kind": {
+              "const": "SELECTION_PROJECTION"
+            },
+            "schemaVersion": {
+              "const": "canonical-llm-expression-input-v1"
+            }
+          }
+        },
+        {
+          "properties": {
+            "kind": {
+              "const": "BINDING"
+            },
+            "schemaVersion": {
+              "const": "voice-coaching.canonical-binding.v1"
+            }
+          }
+        },
+        {
+          "properties": {
+            "kind": {
+              "const": "ASSOCIATION"
+            },
+            "schemaVersion": {
+              "const": "voice-coaching.canonical-association.v1"
+            }
+          }
+        }
+      ]
+    },
+    "retainedEvidence": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "evidenceReceiptId": {
+          "$ref": "#/$defs/uuid"
+        },
+        "manifestSha256": {
+          "$ref": "#/$defs/sha256"
+        },
+        "artifacts": {
+          "type": "array",
+          "minItems": 4,
+          "maxItems": 5,
+          "items": {
+            "$ref": "#/$defs/artifact"
+          }
+        }
+      },
+      "required": [
+        "evidenceReceiptId",
+        "manifestSha256",
+        "artifacts"
+      ]
+    },
+    "coaching": {
+      "oneOf": [
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "schemaVersion": {
+              "const": "canonical-llm-expression-result-v1"
+            },
+            "coreInputValidation": {
+              "$ref": "#/$defs/inputValidation"
+            },
+            "coreSha256": {
+              "$ref": "#/$defs/sha256"
+            },
+            "adapterStatus": {
+              "const": "READY"
+            },
+            "generationStatus": {
+              "enum": [
+                "SCHEMA_AND_STRUCTURAL_SEMANTICS_VALID",
+                "DETERMINISTIC_FALLBACK"
+              ]
+            },
+            "items": {
+              "type": "array",
+              "maxItems": 3,
+              "items": {
+                "type": "object",
+                "additionalProperties": false,
+                "properties": {
+                  "candidate": {
+                    "$ref": "#/$defs/candidate"
+                  },
+                  "expression": {
+                    "$ref": "#/$defs/expression"
+                  }
+                },
+                "required": [
+                  "candidate",
+                  "expression"
+                ]
+              },
+              "minItems": 1
+            },
+            "dispatchAttempts": {
+              "const": 1
+            },
+            "fallbackReason": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "minLength": 1,
+                  "maxLength": 128
+                },
+                {
+                  "type": "null"
+                }
+              ]
+            },
+            "naturalLanguageSemanticsFullyVerified": {
+              "const": false
+            },
+            "visualCorrectiveClaimsAllowed": {
+              "const": false
+            }
+          },
+          "required": [
+            "schemaVersion",
+            "coreInputValidation",
+            "coreSha256",
+            "adapterStatus",
+            "generationStatus",
+            "items",
+            "dispatchAttempts",
+            "fallbackReason",
+            "naturalLanguageSemanticsFullyVerified",
+            "visualCorrectiveClaimsAllowed"
+          ],
+          "allOf": [
+            {
+              "if": {
+                "properties": {
+                  "generationStatus": {
+                    "const": "DETERMINISTIC_FALLBACK"
+                  }
+                }
+              },
+              "then": {
+                "properties": {
+                  "fallbackReason": {
+                    "type": "string",
+                    "minLength": 1,
+                    "maxLength": 128
+                  }
+                }
+              },
+              "else": {
+                "properties": {
+                  "fallbackReason": {
+                    "const": null
+                  }
+                }
+              }
+            }
+          ]
+        },
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "schemaVersion": {
+              "const": "canonical-llm-expression-result-v1"
+            },
+            "coreInputValidation": {
+              "$ref": "#/$defs/inputValidation"
+            },
+            "coreSha256": {
+              "$ref": "#/$defs/sha256"
+            },
+            "adapterStatus": {
+              "enum": [
+                "GLOBAL_REJECT",
+                "GLOBAL_INCONCLUSIVE",
+                "GLOBAL_SYSTEM_FAILURE",
+                "NO_PERMITTED_COACHING_CONTENT"
+              ]
+            },
+            "generationStatus": {
+              "const": "NOT_DISPATCHED"
+            },
+            "items": {
+              "type": "array",
+              "maxItems": 0
+            },
+            "dispatchAttempts": {
+              "const": 0
+            }
+          },
+          "required": [
+            "schemaVersion",
+            "coreInputValidation",
+            "coreSha256",
+            "adapterStatus",
+            "generationStatus",
+            "items",
+            "dispatchAttempts"
+          ]
+        },
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "schemaVersion": {
+              "const": "canonical-llm-expression-result-v1"
+            },
+            "coreInputValidation": {
+              "$ref": "#/$defs/inputValidation"
+            },
+            "coreSha256": {
+              "$ref": "#/$defs/sha256"
+            },
+            "adapterStatus": {
+              "const": "FAIL_CLOSED"
+            },
+            "generationStatus": {
+              "const": "NOT_DISPATCHED"
+            },
+            "items": {
+              "type": "array",
+              "maxItems": 0
+            },
+            "dispatchAttempts": {
+              "const": 0
+            },
+            "errorCode": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 128
+            }
+          },
+          "required": [
+            "schemaVersion",
+            "coreInputValidation",
+            "coreSha256",
+            "adapterStatus",
+            "generationStatus",
+            "items",
+            "dispatchAttempts",
+            "errorCode"
+          ]
+        }
+      ],
+      "$comment": "Closed service wrapper transcribed from pinned adapter.py dispatch. No frozen result schema exists. Error/fallback fields are Python exception class names only."
+    },
+    "evidence": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "artifactKind": {
+          "const": "CORE"
+        },
+        "sha256": {
+          "$ref": "#/$defs/sha256"
+        },
+        "pointers": {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "pronunciation": {
+              "const": "/pronunciation_evidence"
+            },
+            "prosody": {
+              "const": "/core_result/prosody"
+            },
+            "mfa": {
+              "const": "/mfa_receipt"
+            },
+            "contentGate": {
+              "const": "/content_gate"
+            },
+            "inputValidation": {
+              "const": "/input_validation"
+            },
+            "core": {
+              "const": "/core_result"
+            },
+            "llmFacingEvidence": {
+              "const": "/llm_facing_evidence"
+            }
+          },
+          "required": [
+            "pronunciation",
+            "prosody",
+            "mfa",
+            "contentGate",
+            "inputValidation",
+            "core",
+            "llmFacingEvidence"
+          ]
+        }
+      },
+      "required": [
+        "artifactKind",
+        "sha256",
+        "pointers"
+      ]
+    },
+    "canonical": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "schemaVersion": {
+          "const": "canonical_ai_predeploy_v1"
+        },
+        "representation": {
+          "enum": [
+            "INLINE",
+            "RETAINED_ONLY"
+          ]
+        },
+        "decision": {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "status": {
+              "enum": [
+                "ACCEPT",
+                "REJECT",
+                "INCONCLUSIVE",
+                "SYSTEM_FAILURE"
+              ],
+              "title": "Status",
+              "type": "string"
+            },
+            "reason_code": {
+              "anyOf": [
+                {
+                  "enum": [
+                    "AUDIO_DECODE_OR_CORRUPTION",
+                    "SILENCE_OR_NO_SPEECH",
+                    "ALIGNMENT_FAILURE",
+                    "SYSTEM_ANALYSIS_FAILURE",
+                    "INSUFFICIENT_CONTENT",
+                    "TRANSCRIPT_MISMATCH"
+                  ],
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Reason Code"
+            },
+            "stage": {
+              "anyOf": [
+                {
+                  "enum": [
+                    "input",
+                    "audio",
+                    "g2p",
+                    "alignment",
+                    "textgrid",
+                    "acoustic",
+                    "feedback",
+                    "storage",
+                    "dependency",
+                    "internal"
+                  ]
+                },
+                {
+                  "type": "null"
+                }
+              ]
+            }
+          },
+          "required": [
+            "status",
+            "reason_code",
+            "stage"
+          ]
+        },
+        "inputValidation": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/inputValidation"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "coreStatus": {
+          "enum": [
+            "ok",
+            "partial",
+            "error"
+          ],
+          "title": "Status",
+          "type": "string"
+        },
+        "feedbackDeliveryAllowed": {
+          "type": "boolean"
+        },
+        "pronunciationFeedbackSource": {
+          "const": "REFINED_P1_ONLY"
+        },
+        "evidence": {
+          "$ref": "#/$defs/evidence"
+        }
+      },
+      "required": [
+        "schemaVersion",
+        "representation",
+        "decision",
+        "inputValidation",
+        "coreStatus",
+        "feedbackDeliveryAllowed",
+        "pronunciationFeedbackSource",
+        "evidence"
+      ],
+      "allOf": [
+        {
+          "if": {
+            "properties": {
+              "representation": {
+                "const": "INLINE"
+              }
+            }
+          },
+          "then": {
+            "properties": {
+              "inputValidation": {
+                "$ref": "#/$defs/inputValidation"
+              }
+            }
+          },
+          "else": {
+            "properties": {
+              "inputValidation": {
+                "const": null
+              }
+            }
+          }
+        }
+      ]
+    },
+    "sourceIdentity": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "scriptSha256": {
+          "$ref": "#/$defs/sha256"
+        },
+        "audioSha256": {
+          "$ref": "#/$defs/sha256"
+        },
+        "preparedWavSha256": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/sha256"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "canonicalAnalysisId": {
+          "anyOf": [
+            {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 200
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "coreSha256": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/sha256"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "parentManifestSha256": {
+          "const": "95f2347ad53ab53030f68a65795cfc5a84ca1c8c41bd03119c9a9fb15d0367c2"
+        },
+        "llmManifestSha256": {
+          "const": "1413b196616c919aeaab243fdd57771e70221ffc53a37f9b018d1881499b8c73"
+        },
+        "llmDependencyLockSha256": {
+          "const": "d8356763579dcfee347073a3f0ff72f4a0f67e33a29fa3b4c71012afcfd4ba01"
+        },
+        "promptSha256": {
+          "const": "362ccc1f15d2e166110cca52d90fd3d6e81ee85646e96eb7018d8b8278898714"
+        }
+      },
+      "required": [
+        "scriptSha256",
+        "audioSha256",
+        "preparedWavSha256",
+        "canonicalAnalysisId",
+        "coreSha256",
+        "parentManifestSha256",
+        "llmManifestSha256",
+        "llmDependencyLockSha256",
+        "promptSha256"
+      ]
+    },
+    "score": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "overallScore": {
+          "const": null
+        },
+        "validity": {
+          "enum": [
+            "NOT_CALIBRATED",
+            "INSUFFICIENT_EVIDENCE",
+            "NOT_AVAILABLE"
+          ]
+        },
+        "reason": {
+          "const": "NO_APPROVED_SCORING_CONTRACT"
+        }
+      },
+      "required": [
+        "overallScore",
+        "validity",
+        "reason"
+      ]
+    },
+    "result": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "schemaVersion": {
+          "const": "voice-coaching.runpod-analysis-result.v4"
+        },
+        "eventId": {
+          "$ref": "#/$defs/uuid"
+        },
+        "requestId": {
+          "$ref": "#/$defs/uuid"
+        },
+        "executionId": {
+          "$ref": "#/$defs/uuid"
+        },
+        "workerInstanceId": {
+          "$ref": "#/$defs/uuid"
+        },
+        "analysisId": {
+          "$ref": "#/$defs/positiveLong"
+        },
+        "recordingId": {
+          "$ref": "#/$defs/positiveLong"
+        },
+        "contentId": {
+          "$ref": "#/$defs/positiveLong"
+        },
+        "status": {
+          "enum": [
+            "COMPLETED",
+            "FAILED"
+          ]
+        },
+        "failure": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/failure"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "workerRevision": {
+          "$ref": "#/$defs/revision"
+        },
+        "pipelineRevision": {
+          "$ref": "#/$defs/revision"
+        },
+        "analysisProfile": {
+          "const": "CANONICAL_FROZEN_20260928_V4"
+        },
+        "sourceIdentity": {
+          "$ref": "#/$defs/sourceIdentity"
+        },
+        "canonical": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/canonical"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "selection": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/selection"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "coaching": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/coaching"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "visual": {
+          "$ref": "#/$defs/visual"
+        },
+        "prosodyPolicy": {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "expressionPermission": {
+              "const": "NO_APPROVED_GUIDANCE_MAPPING"
+            }
+          },
+          "required": [
+            "expressionPermission"
+          ]
+        },
+        "score": {
+          "$ref": "#/$defs/score"
+        },
+        "retainedEvidence": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/retainedEvidence"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        }
+      },
+      "required": [
+        "schemaVersion",
+        "eventId",
+        "requestId",
+        "executionId",
+        "workerInstanceId",
+        "analysisId",
+        "recordingId",
+        "contentId",
+        "status",
+        "failure",
+        "workerRevision",
+        "pipelineRevision",
+        "analysisProfile",
+        "sourceIdentity",
+        "canonical",
+        "selection",
+        "coaching",
+        "visual",
+        "prosodyPolicy",
+        "score",
+        "retainedEvidence"
+      ],
+      "oneOf": [
+        {
+          "properties": {
+            "status": {
+              "const": "COMPLETED"
+            },
+            "failure": {
+              "const": null
+            },
+            "canonical": {
+              "type": "object",
+              "properties": {
+                "representation": {
+                  "const": "INLINE"
+                },
+                "decision": {
+                  "properties": {
+                    "status": {
+                      "enum": [
+                        "ACCEPT",
+                        "REJECT",
+                        "INCONCLUSIVE"
+                      ]
+                    }
+                  }
+                }
+              }
+            },
+            "coaching": {
+              "$ref": "#/$defs/coaching"
+            },
+            "retainedEvidence": {
+              "$ref": "#/$defs/retainedEvidence"
+            }
+          }
+        },
+        {
+          "properties": {
+            "status": {
+              "const": "FAILED"
+            },
+            "failure": {
+              "allOf": [
+                {
+                  "$ref": "#/$defs/failure"
+                },
+                {
+                  "properties": {
+                    "origin": {
+                      "const": "INTEGRATION"
+                    },
+                    "code": {
+                      "enum": [
+                        "CANONICAL_EXECUTION_FAILED",
+                        "CORE_CONTRACT_INVALID",
+                        "CANONICAL_BINDING_FAILED",
+                        "EVIDENCE_STORAGE_FAILED"
+                      ]
+                    }
+                  }
+                }
+              ]
+            },
+            "canonical": {
+              "const": null
+            },
+            "selection": {
+              "const": null
+            },
+            "coaching": {
+              "const": null
+            },
+            "retainedEvidence": {
+              "const": null
+            },
+            "sourceIdentity": {
+              "properties": {
+                "canonicalAnalysisId": {
+                  "const": null
+                },
+                "coreSha256": {
+                  "const": null
+                },
+                "preparedWavSha256": {
+                  "const": null
+                }
+              }
+            },
+            "score": {
+              "properties": {
+                "validity": {
+                  "const": "NOT_AVAILABLE"
+                }
+              }
+            }
+          }
+        },
+        {
+          "properties": {
+            "status": {
+              "const": "FAILED"
+            },
+            "failure": {
+              "allOf": [
+                {
+                  "$ref": "#/$defs/failure"
+                },
+                {
+                  "properties": {
+                    "origin": {
+                      "const": "INTEGRATION"
+                    },
+                    "code": {
+                      "const": "RESULT_ENVELOPE_TOO_LARGE"
+                    },
+                    "stage": {
+                      "const": "SERIALIZATION"
+                    }
+                  }
+                }
+              ]
+            },
+            "canonical": {
+              "type": "object",
+              "properties": {
+                "representation": {
+                  "const": "RETAINED_ONLY"
+                }
+              }
+            },
+            "selection": {
+              "const": null
+            },
+            "coaching": {
+              "const": null
+            },
+            "retainedEvidence": {
+              "$ref": "#/$defs/retainedEvidence"
+            }
+          }
+        },
+        {
+          "properties": {
+            "status": {
+              "const": "FAILED"
+            },
+            "failure": {
+              "$ref": "#/$defs/failure"
+            },
+            "canonical": {
+              "type": "object",
+              "properties": {
+                "representation": {
+                  "const": "INLINE"
+                }
+              }
+            },
+            "coaching": {
+              "anyOf": [
+                {
+                  "type": "null"
+                },
+                {
+                  "allOf": [
+                    {
+                      "$ref": "#/$defs/coaching"
+                    },
+                    {
+                      "properties": {
+                        "adapterStatus": {
+                          "enum": [
+                            "FAIL_CLOSED",
+                            "GLOBAL_SYSTEM_FAILURE"
+                          ]
+                        }
+                      }
+                    }
+                  ]
+                }
+              ]
+            },
+            "retainedEvidence": {
+              "$ref": "#/$defs/retainedEvidence"
+            }
+          }
+        }
+      ],
+      "allOf": [
+        {
+          "if": {
+            "properties": {
+              "canonical": {
+                "type": "null"
+              }
+            }
+          },
+          "then": {
+            "properties": {
+              "failure": {
+                "type": "object",
+                "properties": {
+                  "origin": {
+                    "const": "INTEGRATION"
+                  }
+                }
+              }
+            }
+          },
+          "else": {
+            "properties": {
+              "sourceIdentity": {
+                "properties": {
+                  "canonicalAnalysisId": {
+                    "type": "string",
+                    "minLength": 1,
+                    "maxLength": 200
+                  },
+                  "coreSha256": {
+                    "$ref": "#/$defs/sha256"
+                  }
+                }
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "status": {
+                "const": "COMPLETED"
+              },
+              "canonical": {
+                "type": "object",
+                "properties": {
+                  "decision": {
+                    "properties": {
+                      "status": {
+                        "const": "ACCEPT"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "then": {
+            "properties": {
+              "selection": {
+                "$ref": "#/$defs/selection"
+              },
+              "coaching": {
+                "properties": {
+                  "adapterStatus": {
+                    "enum": [
+                      "READY",
+                      "NO_PERMITTED_COACHING_CONTENT"
+                    ]
+                  }
+                }
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "coaching": {
+                "type": "object",
+                "properties": {
+                  "adapterStatus": {
+                    "const": "GLOBAL_REJECT"
+                  }
+                }
+              }
+            }
+          },
+          "then": {
+            "properties": {
+              "selection": {
+                "const": null
+              },
+              "canonical": {
+                "type": "object",
+                "properties": {
+                  "decision": {
+                    "properties": {
+                      "status": {
+                        "const": "REJECT"
+                      }
+                    }
+                  }
+                }
+              },
+              "status": {
+                "const": "COMPLETED"
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "coaching": {
+                "type": "object",
+                "properties": {
+                  "adapterStatus": {
+                    "const": "GLOBAL_INCONCLUSIVE"
+                  }
+                }
+              }
+            }
+          },
+          "then": {
+            "properties": {
+              "selection": {
+                "const": null
+              },
+              "canonical": {
+                "type": "object",
+                "properties": {
+                  "decision": {
+                    "properties": {
+                      "status": {
+                        "const": "INCONCLUSIVE"
+                      }
+                    }
+                  }
+                }
+              },
+              "status": {
+                "const": "COMPLETED"
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "coaching": {
+                "type": "object",
+                "properties": {
+                  "adapterStatus": {
+                    "const": "GLOBAL_SYSTEM_FAILURE"
+                  }
+                }
+              }
+            }
+          },
+          "then": {
+            "properties": {
+              "selection": {
+                "const": null
+              },
+              "canonical": {
+                "type": "object",
+                "properties": {
+                  "decision": {
+                    "properties": {
+                      "status": {
+                        "const": "SYSTEM_FAILURE"
+                      }
+                    }
+                  }
+                }
+              },
+              "status": {
+                "const": "FAILED"
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "coaching": {
+                "type": "object",
+                "properties": {
+                  "adapterStatus": {
+                    "const": "READY"
+                  }
+                }
+              }
+            }
+          },
+          "then": {
+            "properties": {
+              "status": {
+                "const": "COMPLETED"
+              },
+              "selection": {
+                "$ref": "#/$defs/selection"
+              },
+              "canonical": {
+                "type": "object",
+                "properties": {
+                  "decision": {
+                    "properties": {
+                      "status": {
+                        "const": "ACCEPT"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "coaching": {
+                "type": "object",
+                "properties": {
+                  "adapterStatus": {
+                    "const": "NO_PERMITTED_COACHING_CONTENT"
+                  }
+                }
+              }
+            }
+          },
+          "then": {
+            "properties": {
+              "status": {
+                "const": "COMPLETED"
+              },
+              "selection": {
+                "allOf": [
+                  {
+                    "$ref": "#/$defs/selection"
+                  },
+                  {
+                    "properties": {
+                      "candidates": {
+                        "maxItems": 0
+                      }
+                    }
+                  }
+                ]
+              },
+              "canonical": {
+                "type": "object",
+                "properties": {
+                  "decision": {
+                    "properties": {
+                      "status": {
+                        "const": "ACCEPT"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "coaching": {
+                "type": "object",
+                "properties": {
+                  "adapterStatus": {
+                    "const": "FAIL_CLOSED"
+                  }
+                }
+              }
+            }
+          },
+          "then": {
+            "properties": {
+              "status": {
+                "const": "FAILED"
+              },
+              "selection": {
+                "const": null
+              },
+              "failure": {
+                "type": "object",
+                "properties": {
+                  "origin": {
+                    "const": "INTEGRATION"
+                  },
+                  "code": {
+                    "const": "CANONICAL_ADAPTER_FAILED"
+                  },
+                  "stage": {
+                    "const": "ADAPTER"
+                  }
+                }
+              }
+            }
+          }
+        }
+      ]
+    }
+  }
+}
