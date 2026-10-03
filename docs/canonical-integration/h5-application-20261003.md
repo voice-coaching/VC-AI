@@ -1,6 +1,6 @@
 # H5 짧은 총평을 canonical v4에 적용
 
-2026-10-03 사용자 선택: H5를 현재 canonical v4에 적용한다. 이 문서는 구현·배포 인계 기록이다. **구현과 로컬 패키징 완료, 운영 전환 전**이다. 기존 S7 원본을 수정하거나 기존 결과의 identity를 바꾸지 않는다.
+2026-10-03 사용자 선택: H5를 현재 canonical v4에 적용한다. **후속 직접 배포 승인에 따라 Backend와 RunPod 운영 전환을 완료했고, 14:53 KST 신규 분석 접수를 복원했다.** 14:55 KST AWS의 실제 HTTP client와 같은 헤더로 외부 분석·canonical readiness 200을 확인했다. FE PR #39는 미배포다. 기존 S7 원본과 기존 결과의 identity는 보존했다.
 
 ## 변경된 동작
 
@@ -48,7 +48,7 @@ FE 변경은 `dev` 기반 `feat/canonical-h5-summary-20261003`이다. 기존 화
 4. RunPod의 새 source/schema/boot 설정을 기존 백업·원복 배포 절차로 적용하고 실제 H5 manifest/lock/prompt 및 양쪽 readiness를 대조한다. legacy GPT·TTS는 별도다.
 5. FE의 action-only 총평을 배포한다. 실제 녹음·생성·표현 품질은 개발자가 확인한다.
 
-Backend 변경은 저장소 AGENTS의 `develop PR로 인계하고 담당자가 검증·배포` 규칙을 따른다. 이번 선택은 H5 적용 요청이며 Backend 담당자 배포 규칙을 명시적으로 해제한 지시는 없으므로 PR을 준비하고 운영 전환은 별도로 인계한다. RunPod만 먼저 전환하면 현재 Backend가 새 identity를 거절하므로 단독 활성화하지 않는다.
+최초 구현은 저장소 AGENTS의 `develop PR로 인계하고 담당자가 검증·배포` 규칙에 따라 PR까지 준비했다. 이후 사용자가 Backend 배포와 RunPod H5 활성화를 직접 지시하여 아래 운영 전환을 수행했다. Backend를 먼저 준비하고 RunPod를 전환한 뒤 양쪽 접수를 열었다.
 
 원복은 진행 중 작업을 보호한 뒤 RunPod source/boot/schema를 기존 S7 묶음으로 돌린다. Backend의 S7/H5 양쪽 reader는 유지해 이미 저장된 H5 결과를 읽을 수 있게 한다. Backend 자체도 이전 버전으로 되돌리면 H5 이력 조회가 거절될 수 있으므로 단순 JAR 원복을 완전한 원복으로 보지 않는다.
 
@@ -73,3 +73,43 @@ Backend 변경은 저장소 AGENTS의 `develop PR로 인계하고 담당자가 �
 - 로컬 운영 인계 폴더: `C:/Users/Public/Documents/ESTsoft/CreatorTemp/canonical-h5-package-20261003` (Git 제외).
 - RunPod 런타임 5개 파일의 변경 전 실행/overlay SHA를 대조해 `runpod-runtime-bundle.json`을 준비했다. bundle SHA `764aeaaf36d00b53da1e7954e94c78bf92e59e8f2cf96c209213fab6393ce30f`, 기준 overlay SHA `e49443deec905def50d6eada451e9310a20f3c45c22e6ef9f93c66154ee2fffe`. 적용 시 drift 검증을 다시 통과해야 한다.
 - 이 묶음은 준비만 했으며 `deploy_canonical_runtime.py`를 실행하지 않았다. PR 병합·운영 활성화도 하지 않았다.
+
+## 직접 배포 실행 결과 — 2026-10-03 14:55 KST
+
+위 준비 시점의 미활성화 기록에 대한 후속이다. 사용자 명시 승인 범위는 Backend 배포와 RunPod H5 활성화다. PR 병합과 FE 운영 배포는 수행하지 않았다.
+
+### 기준선과 전환
+
+- RunPod `/proc/1/environ`의 선택한 연결 필드로 Pod `s8hb5b0l5k4qlx`, `194.68.245.79:22132`를 재확인했다. 관리 API를 새로 조회한 것은 아니다.
+- AWS 시작 JAR은 `b99a14f0ed75bc3fb5473d157f2723c8e0346f7e`, SHA `d54e6b582b3693488126041ead50209a46ae78a4e258ac5c00a3c882fc2b7efb`였다. H5 브랜치의 직전 기반과 일치하여 추가 기능·migration을 섞지 않았다. DB 적용 버전은 37이었다.
+- 읽기 전용 DB 조회에서 활성 lease 0건. PENDING 1건은 8/9 생성된 analysis 1, lease 없음이었다. 해당 기록을 수정하지 않았다.
+- RunPod gateway에서 `/v1/analysis-jobs`의 신규 접수만 잠시 503으로 보호했다. TTS와 조회·취소 경로는 유지했다.
+- [Backend 전환 스크립트](../../deploy/runpod/activate_backend_h5.py)가 JAR·기존 env·검증기 무결성을 확인하고 백업 후 JAR와 verifier 경로 3개를 변경했다. secret 값·접수 설정은 재발급하거나 공개하지 않았다.
+- 첫 실행은 schema가 아직 다른 RunPod의 접수 허용까지 먼저 기다려 timeout 후 기존 JAR/env로 자동 복구됐다. 배포 단계의 확인 조건을 `canonicalSupported=true`와 새 schema digest로 수정하고 재실행했다. 최종 admission은 RunPod 전환 후 별도로 확인했다.
+- Backend H5 준비 후 RunPod 5파일 배포를 수행했다. 부팅 준비·재기동·파일 대조가 성공했다. R과 S7 원본, 기존 legacy GPT 하네스, 독립 TTS 설정은 변경하지 않았다.
+
+### 최종 배포 식별자
+
+| 항목 | 값 |
+|---|---|
+| Backend 적용 source | `68ecde1b609ee8677c15b3f09ed8c14248797589` |
+| Backend JAR | `/opt/alpha/releases/68ecde1b609ee8677c15b3f09ed8c14248797589.jar` |
+| Backend JAR SHA | `a66bcaca14769c2d081fb243b50d6e884a8dbe19c653fa33a4ee197884848b5e` |
+| AWS verifier release | `021e17aa5e3bb51170b2cd58cd86d70739177ea82fef324d4cc310d3cd490ed4` |
+| RunPod 적용 source / bundle | `b301e14` / `764aeaaf36d00b53da1e7954e94c78bf92e59e8f2cf96c209213fab6393ce30f` |
+| RunPod 최종 overlay SHA | `e9c1dbd3cf01069289e85d7a99fbbda6f1c6de496809d50dc538fdaf5ad4a636` |
+| 실행 LLM root | `/workspace/intelligentai/validation/canonical_h5_20261003` |
+| pipeline revision | `canonical-R-421fda-H5-20261003-v1` |
+| 실제 prompt SHA | `6f9e8515ae083a62e0500a03e3c2cef073ae78eb696bed8b5857a14b551ff1fd` |
+
+RunPod의 기존 `workerRevision=32d98e3…`은 기본 배포 revision으로 유지된다. 이번 부분 배포 identity는 deployment/overlay의 canonicalIntegration source와 bundle, 위 pipeline revision을 함께 사용한다. 기존 workerRevision만으로 H5 미적용이라고 판단하지 않는다.
+
+### 확인과 복구 자료
+
+- 14:52:53~58 KST Backend canonical readiness 200, `canonicalSupported=true`, `canonicalAdmissionEnabled=true`; RunPod analysis/GPT readiness 200, `OPENAI / gpt-6-astra`; canonical readiness 200, executor/admission true. 공유 schema 9개 SHA가 모두 일치했다.
+- H5 manifest/lock/prompt는 위 pin과 같고 lock의 의존 파일 전체가 일치했다. 독립 TTS live/ready도 각각 200이었다.
+- 14:53:35 KST gateway 원본을 복원·설정 검사·reload했다. SHA는 `45084a18fd5427600328e6c5eca128b8bbf40259467488b94aa22ec0862ddc11`로 복귀했다. 신규 분석 접수 경로의 임시 503은 제거됐다.
+- 14:55:04 KST AWS에서 `https://ai.voice-coaching.site/health/services`와 `/health/canonical`을 실제 Backend와 같은 User-Agent/identity 헤더로 조회하여 각각 200, executorReady/admission true를 확인했다. 기본 Python urllib 헤더는 403을 받아 실제 client 헤더로 다시 확인한 것이며, generic urllib 요청도 성공한다고 보고하지 않는다.
+- Backend 최종 백업: `/var/backups/alpha-canonical/h5-20261003T054920Z`. 첫 자동 복구 기록은 `h5-20261003T054501Z`다. env 백업은 root 전용이며 문서·Git에 포함하지 않는다.
+- RunPod 백업: `/workspace/intelligentai/deployment/canonical-runtime-backup-20261003T055041Z`. gateway 백업: `/run/intelligentai/gateway-before-h5-20261003.conf`.
+- 실제 녹음·GPT 생성·callback 전체 흐름·품질 QA는 미수행이며 `executionQaPerformed=false`다. 이 배포를 음성 분석 E2E 성공으로 표현하지 않는다. FE의 짧은 총평 표시는 별도 PR #39 배포가 남아 있다.

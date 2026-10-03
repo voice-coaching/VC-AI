@@ -1,6 +1,6 @@
 # Canonical AI와 동결 LLM 서비스 통합
 
-**2026-10-03 H5 선택 후속:** [H5 파생 하네스·양쪽 검증 계약·FE 짧은 총평](h5-application-20261003.md)을 구현하고 배포 묶음과 PR을 준비했다. 운영 전환은 아직 하지 않았으며 아래 S7 운영 관측과 구분한다.
+**2026-10-03 14:55 KST H5 배포 후속:** [H5 파생 하네스·양쪽 검증 계약·실행 기록](h5-application-20261003.md). 사용자 직접 배포 승인으로 Backend와 RunPod H5를 운영 반영했다. 양쪽 canonical 접수 ON, 공유 schema 9개 일치, 분석/GPT·독립 TTS readiness 200을 확인했다. 실제 녹음·GPT·callback E2E는 미수행이고 FE PR #39는 미배포다. 아래 S7 운영 관측은 과거 시점이다.
 
 **2026-10-02 17:55 KST 후속:** [testvideo1 실제 API 검증·수정](testvideo1-verification-20261002.md).
 G2P 사전 환경 누락과 MFA zombie 회수를 수정·운영 배포했다. 실제 API 분석 51의 core는
