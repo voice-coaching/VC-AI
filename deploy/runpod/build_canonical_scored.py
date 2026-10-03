@@ -14,7 +14,7 @@ CORE_PARENT = "95f2347ad53ab53030f68a65795cfc5a84ca1c8c41bd03119c9a9fb15d0367c2"
 H5_PARENT = "9f10296b6944249ded9f5ce2ccfdfa7c53b6e4af670999fe68e9e477e97eaf45"
 H5_LOCK = "93636f0c4befe7f1e34358e74b1077cc94cb2b82064781485b0183c53357d2f5"
 CORE_DIRECTORY = "canonical_scored_core_20261003_v2"
-LLM_DIRECTORY = "canonical_scored_h5_20261003_v2"
+LLM_DIRECTORY = "canonical_scored_h5_20261003_v3"
 
 
 def sha(raw):
@@ -155,6 +155,11 @@ def build_harness(source, target, core_sha, content_sha, rubric_path):
     policy = Path(__file__).parent / "harnesses"
     adapter = files["bridge/adapter.py"].decode()
     adapter = replace_once(adapter, 'PARENT = "' + CORE_PARENT + '"', 'PARENT = "' + core_sha + '"')
+    adapter = replace_once(adapter,
+        'require(core["core_result"]["metadata"]["expected_phone_source"]=="g2pk_compat_jamo_v1","EXPECTED_PHONE_PROVENANCE")',
+        'require(core["core_result"]["metadata"]["expected_phone_source"]=="g2pk_detector_phone_contract_v2" '
+        'and core["core_result"]["pronunciation"]["expected_phone_source"]=="g2pk_detector_phone_contract_v2",'
+        '"EXPECTED_PHONE_PROVENANCE")')
     adapter += "\n" + (policy / "canonical_scored_bridge.py").read_text(encoding="utf-8")
     files["bridge/adapter.py"] = adapter.encode()
     for name in ("phone_rubric", "gpt_rubric"):

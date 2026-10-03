@@ -86,7 +86,7 @@ def main():
     from voice_coach.backend_analysis.http_models import AnalysisInput, parse_json
     from voice_coach.backend_analysis.canonical_harness import (
         H5, S7, SCORED, H5_DIRECTORY, SCORED_CORE_DIRECTORY, SCORED_LLM_DIRECTORY, harness_identity,
-        SCORED_V1, SCORED_V1_CORE_DIRECTORY, SCORED_V1_LLM_DIRECTORY,
+        SCORED_V1, SCORED_V1_CORE_DIRECTORY, SCORED_V1_LLM_DIRECTORY, SCORED_V2, SCORED_V2_LLM_DIRECTORY,
     )
     frozen = FrozenCanonicalCoaching(FrozenCanonicalArtifacts(args.core_root, args.llm_root))
     h5 = FrozenCanonicalCoaching(FrozenCanonicalArtifacts(args.core_root, args.llm_root.parent / H5_DIRECTORY))
@@ -94,6 +94,8 @@ def main():
         args.core_root.parent / SCORED_CORE_DIRECTORY, args.llm_root.parent / SCORED_LLM_DIRECTORY))
     scored_v1 = FrozenCanonicalCoaching(FrozenCanonicalArtifacts(
         args.core_root.parent / SCORED_V1_CORE_DIRECTORY, args.llm_root.parent / SCORED_V1_LLM_DIRECTORY))
+    scored_v2 = FrozenCanonicalCoaching(FrozenCanonicalArtifacts(
+        args.core_root.parent / SCORED_CORE_DIRECTORY, args.llm_root.parent / SCORED_V2_LLM_DIRECTORY))
     # Installation failure is not invalid user evidence. Validate it before reading a job.
     try:
         frozen._bridge()
@@ -106,6 +108,9 @@ def main():
         if scored_v1.artifacts.identity != SCORED_V1:
             raise RuntimeError('VERIFIER_HARNESS_ROOT_MISMATCH')
         scored_v1._bridge().scoring_policy()
+        if scored_v2.artifacts.identity != SCORED_V2:
+            raise RuntimeError('VERIFIER_HARNESS_ROOT_MISMATCH')
+        scored_v2._bridge().scoring_policy()
     except Exception:
         raise RuntimeError('VERIFIER_DEPENDENCIES_UNAVAILABLE') from None
     if args.check_installation:
@@ -150,7 +155,7 @@ def main():
         association = _read_json(private.association_bytes)
         _validate(association, 'association')
         selected = harness_identity(association['llmManifestSha256'])
-        frozen = {S7: frozen, H5: h5, SCORED_V1: scored_v1, SCORED: scored}[selected]
+        frozen = {S7: frozen, H5: h5, SCORED_V1: scored_v1, SCORED_V2: scored_v2, SCORED: scored}[selected]
         metadata = association['preparedAudio']
         prepared = PreparedAudioIdentity.from_document(metadata) if metadata is not None else None
         # This verifies authenticated producer measurements and their binding,

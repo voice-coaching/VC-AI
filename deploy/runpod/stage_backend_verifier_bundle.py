@@ -49,7 +49,7 @@ def main():
                 and '\\' not in name and path.as_posix() == name
                 and (name.startswith(('frozen/core/', 'frozen/llm/', 'frozen/canonical_h5_20261003/',
                      'frozen/canonical_scored_core_20261003_v1/', 'frozen/canonical_scored_h5_20261003_v1/',
-                     'frozen/canonical_scored_core_20261003_v2/', 'frozen/canonical_scored_h5_20261003_v2/',
+                     'frozen/canonical_scored_h5_20261003_v3/', 'frozen/canonical_scored_core_20261003_v2/', 'frozen/canonical_scored_h5_20261003_v2/',
                      'app/src/voice_coach/', 'app/docs/contracts/'))
                      or name == 'app/deploy/runpod/canonical_verify.py')
                 and not any(p == '.env' or p.startswith('.env.') for p in path.parts), 'BUNDLE_PATH')
@@ -58,6 +58,8 @@ def main():
         require(len(content) <= 2 * 1024 * 1024 and hashlib.sha256(content).hexdigest() == entry['sha256'], 'BUNDLE_HASH')
         decoded[name] = content
     pins = {
+        'frozen/canonical_scored_h5_20261003_v3/contracts/llm/dependency_lock.json': 'dc3db9cc03a3355ddeb5d5819cd6fd46726935c8ca9b830f513e37163c89f4d8',
+        'frozen/canonical_scored_h5_20261003_v3/contracts/llm/llm_contract_manifest.json': 'e3d6d6be9d896ede8d75d5f35f5daf4520a8d42f484e5f84a6fc32f8a05fb2e3',
         'frozen/canonical_scored_core_20261003_v2/release_manifest.json': '08fd8a19b6897d0c3890b0944986685830f24e6e676ea19422038b03a940ba80',
         'frozen/canonical_scored_h5_20261003_v2/contracts/llm/dependency_lock.json': 'b4ff1aa729d9c981a048d5b7df1293d9637df53269d0598d7ae6069f2b0cc989',
         'frozen/canonical_scored_h5_20261003_v2/contracts/llm/llm_contract_manifest.json': '4afc1c2cdbf7b5440742cf154fe96ab2083beda69cd9e07c47a241fb0d784fcf',

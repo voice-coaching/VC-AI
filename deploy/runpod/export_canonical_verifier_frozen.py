@@ -6,6 +6,7 @@ import json
 from pathlib import Path
 
 ROOTS = {
+    'canonical_scored_h5_20261003_v3': Path('/workspace/intelligentai/validation/canonical_scored_h5_20261003_v3'),
     'core': Path('/workspace/intelligentai/releases/canonical_ai_pre_llm_20260928_100247Z_421fda'),
     'llm': Path('/workspace/intelligentai/validation/canonical_llm_step7_20260928T154608Z_bc3aa1'),
     'canonical_h5_20261003': Path('/workspace/intelligentai/validation/canonical_h5_20261003'),
@@ -15,6 +16,7 @@ ROOTS = {
     'canonical_scored_h5_20261003_v2': Path('/workspace/intelligentai/validation/canonical_scored_h5_20261003_v2'),
 }
 PINS = {
+    'canonical_scored_h5_20261003_v3': ('contracts/llm/dependency_lock.json', 'dc3db9cc03a3355ddeb5d5819cd6fd46726935c8ca9b830f513e37163c89f4d8'),
     'core': ('release_manifest.json', '95f2347ad53ab53030f68a65795cfc5a84ca1c8c41bd03119c9a9fb15d0367c2'),
     'llm': ('contracts/llm/dependency_lock.json', 'd8356763579dcfee347073a3f0ff72f4a0f67e33a29fa3b4c71012afcfd4ba01'),
     'canonical_h5_20261003': ('contracts/llm/dependency_lock.json', '93636f0c4befe7f1e34358e74b1077cc94cb2b82064781485b0183c53357d2f5'),
@@ -24,6 +26,7 @@ PINS = {
     'canonical_scored_h5_20261003_v2': ('contracts/llm/dependency_lock.json', 'b4ff1aa729d9c981a048d5b7df1293d9637df53269d0598d7ae6069f2b0cc989'),
 }
 MANIFESTS = {
+    'canonical_scored_h5_20261003_v3': 'e3d6d6be9d896ede8d75d5f35f5daf4520a8d42f484e5f84a6fc32f8a05fb2e3',
     'llm': '1413b196616c919aeaab243fdd57771e70221ffc53a37f9b018d1881499b8c73',
     'canonical_h5_20261003': '9f10296b6944249ded9f5ce2ccfdfa7c53b6e4af670999fe68e9e477e97eaf45',
     'canonical_scored_h5_20261003_v1': '820d600fab4c49615050b9a038e7236f0429f68249dc631a39c0f5ab0be6f0f6',
@@ -33,7 +36,7 @@ MANIFESTS = {
 
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument('--frozen-root', type=Path, help='Local frozen directory containing all five pinned releases')
+    parser.add_argument('--frozen-root', type=Path, help='Local frozen directory containing all pinned releases')
     parser.add_argument('--app-root', type=Path, help='Include the complete offline verifier application closure')
     args = parser.parse_args()
     roots = {kind: args.frozen_root / kind if args.frozen_root else root for kind, root in ROOTS.items()}
