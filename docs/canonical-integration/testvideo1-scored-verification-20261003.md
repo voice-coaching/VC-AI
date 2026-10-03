@@ -123,3 +123,43 @@ Git 없는 core v2, 채점 기준, GPT 프롬프트는 그대로이며 H5 하네
 - H5 v3 manifest: `e3d6d6be9d896ede8d75d5f35f5daf4520a8d42f484e5f84a6fc32f8a05fb2e3`.
 - H5 v3 lock: `dc3db9cc03a3355ddeb5d5819cd6fd46726935c8ca9b830f513e37163c89f4d8`.
 - v4 schema/registry/Backend는 v3를 추가하고 S7/H5/v1/v2의 과거 검증을 유지한다.
+
+## v3 배포 및 최종 시도
+
+- AWS JAR revision: `149c3a5e063e941f3c6085d9bc5d4ce00982597d`.
+- JAR SHA-256: `ba4941fbc9745cee9aba2991007aa283a5763b54f2084c15c0a86e9f1283e9a7`.
+- AI source: `5a1fba59aefb3fca24df0215534eabf0c0568d5b`.
+- RunPod bundle: `d31b79fdb2a131d45e16de9adcd27831149e98d30229cbc9990d3a5afccf7b04`.
+- RunPod overlay: `d024e494bb68529e614ae29959ab3817d2d09c8d94860ae5a7ed463b17e47a85`.
+- AWS verifier bundle: `f78fd56a3a69639e7e20f3d9b54e9596c7bb257238f6e5d0e15b6f59269a4672`.
+- v4 schema: `33b03cfcebcd2ba6a982aa5a78952e922f81519c631bfaaa1a3baf932370512c`.
+- runtime profile: `2009bf857e2c5dc2cbd554f91d68ffc145e3a29ac86522067f6126c0e3fc380e`.
+
+Java 21 컴파일, Python 수정 파일 파싱, 양쪽 schema 바이트 일치, 5개 하네스 설치
+검증을 통과했다. 세 번 연속 전체 readiness/drain과 FE 자산 확인 후 22:19:46 KST에
+접수를 열었다. 22:20:12에 같은 분석 64의 정상 재시도(retryCount 3)를 접수했다.
+request ID는 `0e097289-b5ad-4cd2-8d8b-8d6cb604897b`, execution ID는
+`27a72710-620e-4fb0-b281-1b5cee569911`이다.
+
+### 실제 요청 완료
+
+2026-10-03 **22:26:54 KST**에 FE 운영 프록시를 통한 상태 조회에서 분석 64가
+COMPLETED/100%, 공개 v2 결과에서 ACCEPT, coreStatus=ok, canComplete=true로 확인됐다.
+점수는 **70.8**, validity=RUBRIC_COMPUTED, rubricRevision=phone-rubric-20261003-v1이다.
+9개 항목 level은 입력 순서대로 `3, 1, 4, 2, 2, null, 3, 4, 4`다. 파찰음은
+근거가 없으므로 null로 제외됐다. 해당 요청의 저장된 GPT 채점 record는 READY다.
+허용 교정 후보가 없어서 코칭은 NO_PERMITTED_COACHING_CONTENT/NOT_DISPATCHED이며,
+이는 별도 GPT 채점 호출이 없었다는 뜻이 아니다.
+
+- receipt `10345b22-e256-4c4d-a3b7-1e5be7932454`: VERIFIED, 검증 시도 1회.
+- callback/event `ce0db1d4-f1b5-4f24-ad09-c78dcf054774`: APPLIED, 적용 시도 1회.
+- 저장 결과 COMPLETED 및 immutable ACK APPLIED 확인.
+- 결과 효과 처리 완료: 22:26:58 KST. 사용자 세션 완료 API는 호출하지 않았다.
+- FE 운영 revision `36a49772c3ddc3df00cd44542064c502953469ac`의 공개 응답 파서에
+  실제 결과를 전달해 ACCEPTED 및 같은 70.8점/canComplete=true를 확인했다.
+
+확인 범위는 사용자 지정 단일 영상의 음성 추출, 실제 업로드와 FE 프록시→AWS→RunPod→
+GPT 채점→B2 근거 보존/Backend 검증→콜백→공개 결과 조회 및 FE 파서 검증이다.
+다른 녹음의 품질·브라우저 화면 QA·자동 회귀 테스트 통과를 뜻하지 않는다.
+Backend [PR #101](https://github.com/voice-coaching/VC-BE/pull/101)은 develop 대상이며
+별도 병합 없이 명시적으로 승인된 운영 수정 배포를 수행했다.
