@@ -50,10 +50,8 @@ def check(env):
              "CANONICAL_CORE_PYTHON_UNAVAILABLE")
     check_core_environment(Path(env["AI_ANALYSIS_NLTK_DATA_ROOT"]))
     frozen = FrozenCanonicalCoaching(artifacts(env))
-    from .canonical_producer import core_environment
     from .canonical_provenance import check_provenance
-    check_provenance(frozen.artifacts.core_root,
-                     core_environment(Path(env['AI_ANALYSIS_NLTK_DATA_ROOT']), frozen.artifacts.core_root))
+    check_provenance(frozen.artifacts.core_root)
     bridge = frozen._bridge()
     if frozen.artifacts.identity.scoring:
         bridge.scoring_policy()

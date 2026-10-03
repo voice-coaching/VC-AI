@@ -25,7 +25,7 @@ H5 = HarnessIdentity(
     "6f9e8515ae083a62e0500a03e3c2cef073ae78eb696bed8b5857a14b551ff1fd",
 )
 H5_DIRECTORY = "canonical_h5_20261003"
-SCORED = HarnessIdentity(
+SCORED_V1 = HarnessIdentity(
     "canonical-scored-h5-20261003-v1",
     "820d600fab4c49615050b9a038e7236f0429f68249dc631a39c0f5ab0be6f0f6",
     "17d327b5898b183274418996468b577f3c455d8c1a5868b9cf3e00a34d53114d",
@@ -33,9 +33,19 @@ SCORED = HarnessIdentity(
     "6ca67fcdaed390cc3da634fbafaef153890e52b8775c431f3fefae7dc122c776",
     True,
 )
-SCORED_CORE_DIRECTORY = "canonical_scored_core_20261003_v1"
-SCORED_LLM_DIRECTORY = "canonical_scored_h5_20261003_v1"
-HARNESSES = {value.manifest_sha256: value for value in (S7, H5, SCORED)}
+SCORED_V1_CORE_DIRECTORY = "canonical_scored_core_20261003_v1"
+SCORED_V1_LLM_DIRECTORY = "canonical_scored_h5_20261003_v1"
+SCORED = HarnessIdentity(
+    "canonical-scored-h5-20261003-v2",
+    "4afc1c2cdbf7b5440742cf154fe96ab2083beda69cd9e07c47a241fb0d784fcf",
+    "b4ff1aa729d9c981a048d5b7df1293d9637df53269d0598d7ae6069f2b0cc989",
+    "6f9e8515ae083a62e0500a03e3c2cef073ae78eb696bed8b5857a14b551ff1fd",
+    "08fd8a19b6897d0c3890b0944986685830f24e6e676ea19422038b03a940ba80",
+    True,
+)
+SCORED_CORE_DIRECTORY = "canonical_scored_core_20261003_v2"
+SCORED_LLM_DIRECTORY = "canonical_scored_h5_20261003_v2"
+HARNESSES = {value.manifest_sha256: value for value in (S7, H5, SCORED_V1, SCORED)}
 
 
 def harness_identity(manifest_sha256: str) -> HarnessIdentity:

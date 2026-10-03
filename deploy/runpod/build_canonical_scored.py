@@ -13,8 +13,8 @@ from pathlib import Path
 CORE_PARENT = "95f2347ad53ab53030f68a65795cfc5a84ca1c8c41bd03119c9a9fb15d0367c2"
 H5_PARENT = "9f10296b6944249ded9f5ce2ccfdfa7c53b6e4af670999fe68e9e477e97eaf45"
 H5_LOCK = "93636f0c4befe7f1e34358e74b1077cc94cb2b82064781485b0183c53357d2f5"
-CORE_DIRECTORY = "canonical_scored_core_20261003_v1"
-LLM_DIRECTORY = "canonical_scored_h5_20261003_v1"
+CORE_DIRECTORY = "canonical_scored_core_20261003_v2"
+LLM_DIRECTORY = "canonical_scored_h5_20261003_v2"
 
 
 def sha(raw):
@@ -96,6 +96,33 @@ def build_core(source, target):
     files.pop("calibration/demo_content_gate_config_v2.json")
     files.pop("source/src/korean_pronunciation_poc/demo_content_evidence.py")
     identity = json.loads(files["config/release_preflight_identity.json"])
+    # Deployment is a verified source snapshot, not a development checkout.
+    # Record the real baseline; Git availability must not decide analysis success.
+    files["source/config/release_provenance.json"] = encode(dict(
+        schema="canonical-release-provenance-v1",
+        source_git_commit=identity["base_source_commit"], source_modified=True))
+    module_name = "source/src/korean_pronunciation_poc/manifest.py"
+    module = files[module_name].decode()
+    module = replace_once(module, "import platform\n", "import platform\nimport json\nimport re\n")
+    start = module.index("def _git_state(")
+    end = module.index("\ndef _tool_version(", start)
+    module = module[:start] + '''def _git_state(config: PocConfig, runner: Runner) -> tuple[str, bool]:
+    """Legacy output fields populated from the pinned deployment snapshot."""
+    try:
+        path = config.paths.project_root / "config/release_provenance.json"
+        doc = json.loads(path.read_bytes())
+        if (set(doc) != {"schema", "source_git_commit", "source_modified"}
+                or doc["schema"] != "canonical-release-provenance-v1"
+                or not re.fullmatch("[0-9a-f]{40}", doc["source_git_commit"])
+                or type(doc["source_modified"]) is not bool):
+            raise ValueError("RELEASE_PROVENANCE_INVALID")
+        return doc["source_git_commit"], doc["source_modified"]
+    except (OSError, ValueError, TypeError, KeyError) as exc:
+        raise _failure("배포 출처 정보를 확인할 수 없습니다.",
+                       exception_type=type(exc).__name__) from exc
+
+''' + module[end:]
+    files[module_name] = module.encode()
     identity["gate_config"] = dict(path="/workspace/intelligentai/releases/" + CORE_DIRECTORY
                                   + "/calibration/content_gate_removed_v1.json", sha256=sha(policy))
     identity["release_blackbox_runner_sha256"] = sha(files["source/scripts/run_canonical_batch.py"])

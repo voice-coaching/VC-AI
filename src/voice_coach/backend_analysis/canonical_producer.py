@@ -25,13 +25,13 @@ from .canonical_backend_journal import BackendCanonicalJournal
 from .canonical_process import private_directory, run_guarded
 from .http_models import AnalysisInput
 from .ports import MaterializedAudio
-from .canonical_provenance import check_provenance, git_environment
+from .canonical_provenance import check_provenance
 
 
 CORE_PYTHON = Path('/workspace/intelligentai/validation/finish_20260916/envs/mac_prod311/bin/python')
 
 
-def core_environment(nltk_data_root: Path, core_root: Path | None = None) -> dict[str, str]:
+def core_environment(nltk_data_root: Path) -> dict[str, str]:
     # Use the already-provisioned read-only corpus, never a download to the
     # service user's nonexistent home. Do not inherit API/storage credentials.
     _require(nltk_data_root.is_absolute() and nltk_data_root.is_dir()
@@ -44,8 +44,6 @@ def core_environment(nltk_data_root: Path, core_root: Path | None = None) -> dic
                 HF_HUB_DISABLE_IMPLICIT_TOKEN='1',
                 OMP_NUM_THREADS='2', MKL_NUM_THREADS='2', OPENBLAS_NUM_THREADS='2',
                 NUMEXPR_NUM_THREADS='2')
-    if core_root is not None:
-        environment.update(git_environment(core_root))
     return environment
 
 
@@ -112,8 +110,7 @@ class FrozenCanonicalProducer:
         self.artifacts = artifacts
         self.workspace_root = private_directory(workspace_root)
         self.environment = core_environment(nltk_data_root)
-        self.environment.update(git_environment(artifacts.core_root))
-        check_provenance(artifacts.core_root, self.environment)
+        check_provenance(artifacts.core_root)
 
     async def produce(self, request: AnalysisInput, audio: MaterializedAudio, *,
                       deadline_monotonic: float,

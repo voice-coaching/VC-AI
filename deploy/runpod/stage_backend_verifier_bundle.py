@@ -37,10 +37,10 @@ def require(condition, code):
 def main():
     require(sys.platform == 'linux' and os.geteuid() == 0, 'ROOT_LINUX_REQUIRED')
     os.umask(0o022)
-    raw = sys.stdin.buffer.read(8 * 1024 * 1024 + 1)
-    require(0 < len(raw) <= 8 * 1024 * 1024, 'BUNDLE_SIZE')
+    raw = sys.stdin.buffer.read(12 * 1024 * 1024 + 1)
+    require(0 < len(raw) <= 12 * 1024 * 1024, 'BUNDLE_SIZE')
     files = json.loads(raw)
-    require(type(files) is dict and 90 <= len(files) <= 300, 'BUNDLE_FILES')
+    require(type(files) is dict and 90 <= len(files) <= 450, 'BUNDLE_FILES')
     require(REQUIRED_APP_FILES.issubset(files), 'BUNDLE_APP_DEPENDENCIES_MISSING')
     decoded = {}
     for name, entry in files.items():
@@ -49,6 +49,7 @@ def main():
                 and '\\' not in name and path.as_posix() == name
                 and (name.startswith(('frozen/core/', 'frozen/llm/', 'frozen/canonical_h5_20261003/',
                      'frozen/canonical_scored_core_20261003_v1/', 'frozen/canonical_scored_h5_20261003_v1/',
+                     'frozen/canonical_scored_core_20261003_v2/', 'frozen/canonical_scored_h5_20261003_v2/',
                      'app/src/voice_coach/', 'app/docs/contracts/'))
                      or name == 'app/deploy/runpod/canonical_verify.py')
                 and not any(p == '.env' or p.startswith('.env.') for p in path.parts), 'BUNDLE_PATH')
@@ -57,6 +58,9 @@ def main():
         require(len(content) <= 2 * 1024 * 1024 and hashlib.sha256(content).hexdigest() == entry['sha256'], 'BUNDLE_HASH')
         decoded[name] = content
     pins = {
+        'frozen/canonical_scored_core_20261003_v2/release_manifest.json': '08fd8a19b6897d0c3890b0944986685830f24e6e676ea19422038b03a940ba80',
+        'frozen/canonical_scored_h5_20261003_v2/contracts/llm/dependency_lock.json': 'b4ff1aa729d9c981a048d5b7df1293d9637df53269d0598d7ae6069f2b0cc989',
+        'frozen/canonical_scored_h5_20261003_v2/contracts/llm/llm_contract_manifest.json': '4afc1c2cdbf7b5440742cf154fe96ab2083beda69cd9e07c47a241fb0d784fcf',
         'frozen/canonical_scored_core_20261003_v1/release_manifest.json': '6ca67fcdaed390cc3da634fbafaef153890e52b8775c431f3fefae7dc122c776',
         'frozen/canonical_scored_h5_20261003_v1/contracts/llm/dependency_lock.json': '17d327b5898b183274418996468b577f3c455d8c1a5868b9cf3e00a34d53114d',
         'frozen/canonical_scored_h5_20261003_v1/contracts/llm/llm_contract_manifest.json': '820d600fab4c49615050b9a038e7236f0429f68249dc631a39c0f5ab0be6f0f6',

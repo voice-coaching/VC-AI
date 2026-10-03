@@ -1,32 +1,27 @@
-"""Read-only Git provenance required by the frozen core after inference."""
+"""Validate pinned deployment provenance without a Git checkout at runtime."""
+import hashlib
+import json
 from pathlib import Path
-import subprocess
+import re
 
 from .canonical_bridge import _require
 
-PARENT_COMMIT = 'f27d6b31cec30b1174372e51c6bf5d19ee359247'
-
-
-def git_environment(core_root: Path) -> dict[str, str]:
-    # Trust only this verified release, never every repository on the host.
-    return dict(GIT_CONFIG_NOSYSTEM='1', GIT_CONFIG_GLOBAL='/dev/null',
-                GIT_CONFIG_COUNT='1', GIT_CONFIG_KEY_0='safe.directory',
-                GIT_CONFIG_VALUE_0=str(core_root), GIT_OPTIONAL_LOCKS='0')
-
-
-def check_provenance(core_root: Path, environment: dict[str, str]) -> None:
+def check_provenance(core_root: Path) -> None:
     _require(core_root.is_absolute() and core_root.resolve(strict=True) == core_root,
              'CANONICAL_PROVENANCE_PATH')
+    name = 'source/config/release_provenance.json'
     try:
-        def git(*args):
-            result = subprocess.run(['git', '-C', str(core_root / 'source'), *args],
-                env=environment, capture_output=True, timeout=10, check=False)
-            _require(result.returncode == 0, 'CANONICAL_PROVENANCE_UNAVAILABLE')
-            return result.stdout.decode().strip()
-        _require(git('rev-parse', '--show-toplevel') == str(core_root),
-                 'CANONICAL_PROVENANCE_PATH')
-        _require(git('rev-parse', 'HEAD') == PARENT_COMMIT,
-                 'CANONICAL_PROVENANCE_REVISION')
-        git('status', '--porcelain')
-    except (OSError, subprocess.TimeoutExpired, UnicodeError):
+        manifest = json.loads((core_root / 'release_manifest.json').read_bytes())
+        raw = (core_root / name).read_bytes()
+        _require(hashlib.sha256(raw).hexdigest() == manifest['file_sha256'][name],
+                 'CANONICAL_PROVENANCE_DIGEST')
+        doc = json.loads(raw)
+        _require(set(doc) == {'schema', 'source_git_commit', 'source_modified'}
+                 and doc['schema'] == 'canonical-release-provenance-v1'
+                 and re.fullmatch('[0-9a-f]{40}', doc['source_git_commit'])
+                 and type(doc['source_modified']) is bool, 'CANONICAL_PROVENANCE_INVALID')
+        identity = json.loads((core_root / 'config/release_preflight_identity.json').read_bytes())
+        _require(doc['source_git_commit'] == identity['base_source_commit']
+                 and doc['source_modified'] is True, 'CANONICAL_PROVENANCE_REVISION')
+    except (OSError, ValueError, TypeError, KeyError):
         _require(False, 'CANONICAL_PROVENANCE_UNAVAILABLE')
