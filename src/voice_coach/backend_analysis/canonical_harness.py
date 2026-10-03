@@ -54,7 +54,16 @@ SCORED = HarnessIdentity(
     True,
 )
 SCORED_LLM_DIRECTORY = "canonical_scored_h5_20261003_v3"
-HARNESSES = {value.manifest_sha256: value for value in (S7, H5, SCORED_V1, SCORED_V2, SCORED)}
+RESIDENT = HarnessIdentity(
+    'canonical-resident-h5-20261004-v1',
+    '885a2f0a67494dc3bebed28962222bfe95a0143292fe2de04194b84ea8beadc5',
+    '1945dcf2fad7fc97621830abed34353c2d372d8224cc9ad11a9c422eabfdf9f4',
+    SCORED.prompt_sha256,
+    'ce16f635da012237b5316b36161d5eeff9432279cd08dbbe7967f5ab7ace7f7e', True,
+)
+RESIDENT_CORE_DIRECTORY = 'canonical_resident_core_20261004_v1'
+RESIDENT_LLM_DIRECTORY = 'canonical_resident_h5_20261004_v1'
+HARNESSES = {value.manifest_sha256: value for value in (S7, H5, SCORED_V1, SCORED_V2, SCORED, RESIDENT)}
 
 
 def harness_identity(manifest_sha256: str) -> HarnessIdentity:

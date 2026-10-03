@@ -87,6 +87,7 @@ def main():
     from voice_coach.backend_analysis.canonical_harness import (
         H5, S7, SCORED, H5_DIRECTORY, SCORED_CORE_DIRECTORY, SCORED_LLM_DIRECTORY, harness_identity,
         SCORED_V1, SCORED_V1_CORE_DIRECTORY, SCORED_V1_LLM_DIRECTORY, SCORED_V2, SCORED_V2_LLM_DIRECTORY,
+        RESIDENT, RESIDENT_CORE_DIRECTORY, RESIDENT_LLM_DIRECTORY,
     )
     frozen = FrozenCanonicalCoaching(FrozenCanonicalArtifacts(args.core_root, args.llm_root))
     h5 = FrozenCanonicalCoaching(FrozenCanonicalArtifacts(args.core_root, args.llm_root.parent / H5_DIRECTORY))
@@ -97,6 +98,8 @@ def main():
     scored_v2 = FrozenCanonicalCoaching(FrozenCanonicalArtifacts(
         args.core_root.parent / SCORED_CORE_DIRECTORY, args.llm_root.parent / SCORED_V2_LLM_DIRECTORY))
     # Installation failure is not invalid user evidence. Validate it before reading a job.
+    resident = FrozenCanonicalCoaching(FrozenCanonicalArtifacts(
+        args.core_root.parent / RESIDENT_CORE_DIRECTORY, args.llm_root.parent / RESIDENT_LLM_DIRECTORY))
     try:
         frozen._bridge()
         if frozen.artifacts.identity != S7 or h5.artifacts.identity != H5:
@@ -111,6 +114,9 @@ def main():
         if scored_v2.artifacts.identity != SCORED_V2:
             raise RuntimeError('VERIFIER_HARNESS_ROOT_MISMATCH')
         scored_v2._bridge().scoring_policy()
+        if resident.artifacts.identity != RESIDENT:
+            raise RuntimeError('VERIFIER_HARNESS_ROOT_MISMATCH')
+        resident._bridge().scoring_policy()
     except Exception:
         raise RuntimeError('VERIFIER_DEPENDENCIES_UNAVAILABLE') from None
     if args.check_installation:
@@ -121,7 +127,9 @@ def main():
                               llmManifestSha256=LLM_MANIFEST_SHA256, llmLockSha256=LLM_LOCK_SHA256,
                               h5ManifestSha256=H5.manifest_sha256, h5LockSha256=H5.lock_sha256,
                               scoredCoreManifestSha256=SCORED.core_sha256,
-                              scoredManifestSha256=SCORED.manifest_sha256, scoredLockSha256=SCORED.lock_sha256)))
+                              scoredManifestSha256=SCORED.manifest_sha256, scoredLockSha256=SCORED.lock_sha256,
+                              residentCoreManifestSha256=RESIDENT.core_sha256,
+                              residentManifestSha256=RESIDENT.manifest_sha256, residentLockSha256=RESIDENT.lock_sha256)))
         return
     header = _read_json(frame(1024), 1024)
     if (type(header) is not dict or set(header) != {'protocol', 'operation', 'receiptId'}
@@ -155,7 +163,7 @@ def main():
         association = _read_json(private.association_bytes)
         _validate(association, 'association')
         selected = harness_identity(association['llmManifestSha256'])
-        frozen = {S7: frozen, H5: h5, SCORED_V1: scored_v1, SCORED_V2: scored_v2, SCORED: scored}[selected]
+        frozen = {S7: frozen, H5: h5, SCORED_V1: scored_v1, SCORED_V2: scored_v2, SCORED: scored, RESIDENT: resident}[selected]
         metadata = association['preparedAudio']
         prepared = PreparedAudioIdentity.from_document(metadata) if metadata is not None else None
         # This verifies authenticated producer measurements and their binding,

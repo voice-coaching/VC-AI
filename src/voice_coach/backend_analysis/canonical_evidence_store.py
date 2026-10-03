@@ -224,6 +224,7 @@ def evidence_store_from_environment(environment: Mapping[str, str]) -> PrivateB2
             "s3", endpoint_url=settings.endpoint, region_name=settings.region,
             aws_access_key_id=key_id, aws_secret_access_key=app_key,
             config=Config(signature_version="s3v4", connect_timeout=3, read_timeout=15,
+                          max_pool_connections=2,
                           retries={"max_attempts": 0}, proxies={},
                           s3={"addressing_style": "path"}),
         )

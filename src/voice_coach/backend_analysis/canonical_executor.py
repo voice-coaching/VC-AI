@@ -30,6 +30,8 @@ from .canonical_retention import retain_canonical_preflight
 from .canonical_transport import FrozenOpenAITransport
 from .http_models import AnalysisInput, parse_json
 from .http_settings import HttpSettings
+from .pipeline_timing import PipelineTiming
+from .canonical_async import blocking, drain_on_cancel
 from .adapters.s3_object_store import (
     S3CompatibleRestrictedObjectStore, S3ObjectStoreSettings, create_s3_client_from_environment,
 )
@@ -75,8 +77,11 @@ async def execute(path: Path, env, diagnostic: dict):
     _require(type(deadline) in (int, float) and math.isfinite(deadline), "CANONICAL_DEADLINE")
 
     diagnostic.update(requestId=str(request.event_id), executionId=str(request.execution_id))
+    timing = PipelineTiming(analysis_id=request.analysis_id, request_id=request.event_id,
+                            execution_id=request.execution_id, revision=env["VOICE_COACH_BUILD_REVISION"])
 
     def stage(name: str) -> None:
+        timing.stage(name)
         diagnostic["stage"] = name
         print(json.dumps({"event": "canonical_stage", **diagnostic}), file=sys.stderr, flush=True)
 
@@ -105,26 +110,38 @@ async def execute(path: Path, env, diagnostic: dict):
     audio_context = None
     acquired = False
     try:
-        stage("RESERVE")
-        identity = await asyncio.to_thread(journal.reserve,
-            worker_revision=env["VOICE_COACH_BUILD_REVISION"],
-            pipeline_revision=env["AI_CANONICAL_PIPELINE_REVISION"])
-        fence()
-        stage("MATERIALIZE")
+        stage("RESERVE_AND_MATERIALIZE")
         media_root = work / "media"
         media_root.mkdir(mode=0o700)
         media = S3CompatibleRestrictedObjectStore(recordings,
             S3ObjectStoreSettings(env["AI_ANALYSIS_OBJECT_STORAGE_BUCKET"], settings.prefix, media_root))
         audio_context = media.materialize(request)
-        audio = await asyncio.to_thread(audio_context.__enter__)
-        acquired = True
+        async def materialize():
+            nonlocal acquired
+            value = await asyncio.to_thread(audio_context.__enter__)
+            acquired = True
+            return value
+
+        # Neither operation depends on the other's result. Drain both before
+        # cleanup: cancelling to_thread does not stop its underlying download.
+        prepared = asyncio.gather(
+            asyncio.to_thread(journal.reserve,
+                worker_revision=env["VOICE_COACH_BUILD_REVISION"],
+                pipeline_revision=env["AI_CANONICAL_PIPELINE_REVISION"]),
+            materialize(), return_exceptions=True)
+        identity, audio = await drain_on_cancel(prepared)
+        for value in (identity, audio):
+            if isinstance(value, BaseException):
+                raise value
         fence()
         stage("CORE")
         core_root = work / "core"
         core_root.mkdir(mode=0o700)
         produced = await FrozenCanonicalProducer(
             frozen.artifacts, core_root, journal,
-            nltk_data_root=Path(env["AI_ANALYSIS_NLTK_DATA_ROOT"])).produce(
+            nltk_data_root=Path(env["AI_ANALYSIS_NLTK_DATA_ROOT"]),
+            resident_socket=Path(env['AI_CANONICAL_RESIDENT_SOCKET'])
+                if env.get('AI_CANONICAL_RESIDENT_SOCKET') else None).produce(
             request, audio, deadline_monotonic=deadline, execution_is_active=active)
         fence()
         stage("EXPRESSION")
@@ -137,8 +154,9 @@ async def execute(path: Path, env, diagnostic: dict):
             request=request, frozen=frozen, prepared_audio=produced.prepared_audio)
         fence()
         stage("RETAIN")
-        retained = await asyncio.to_thread(retain_canonical_preflight, preflight,
-            store=store, journal=journal, deadline_monotonic=deadline, execution_is_active=active)
+        retained = await blocking(retain_canonical_preflight, preflight,
+            store=store, journal=journal, deadline_monotonic=deadline, execution_is_active=active,
+            concurrency=2)
         stage("RECEIPT")
         receipt = await receipt_client.await_verified(retained, journal=journal,
             deadline_monotonic=deadline, execution_is_active=active)
@@ -157,6 +175,7 @@ async def execute(path: Path, env, diagnostic: dict):
     finally:
         # Parent guard handles abrupt death; never delete external retained evidence.
         primary_failure = sys.exception()
+        timing.finish("FAILED" if primary_failure is not None else "OK")
         cleanup_failure = None
         actions = [(recordings.close, False), (store.close, False),
                    (delivery.close, True), (receipt_client.close, True), (journal.close, False)]

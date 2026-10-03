@@ -1,6 +1,7 @@
 """Authenticated asynchronous analysis API; health never claims inference success."""
 from contextlib import asynccontextmanager
 import hmac
+import logging
 import os
 
 from fastapi import FastAPI, Request
@@ -24,6 +25,7 @@ def create_app(environment=None):
 
     @app.exception_handler(HttpFailure)
     async def failure(request, error):
+        logging.getLogger(__name__).info("analysis_http_rejected status=%s code=%s", error.status, error.code)
         headers = {"Cache-Control": "no-store"}
         if error.status in (429, 503):
             headers["Retry-After"] = str(max(1, int(error.retry_after)))
@@ -75,6 +77,7 @@ def create_app(environment=None):
         is_ready = runtime.ready()
         return JSONResponse(dict(status="ready" if is_ready else "not_ready", workerInstanceId=runtime.worker_id,
                                  reasonCode=runtime.reason, executorReady=runtime.executor_ready,
+                                 legacyReady=runtime.legacy_ready(), canonicalReady=runtime.canonical_admission_ready(),
                                  coachingProvider="OPENAI", coachingModel="gpt-6-astra",
                                  workerRevision=runtime.environment.get("VOICE_COACH_BUILD_REVISION")),
                             status_code=200 if is_ready else 503)

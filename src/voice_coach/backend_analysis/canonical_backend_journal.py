@@ -8,7 +8,6 @@ from __future__ import annotations
 
 import hashlib
 import math
-import asyncio
 from typing import Callable
 from uuid import UUID
 import httpx
@@ -18,6 +17,7 @@ from .canonical_codec import encode_document, read_document, validate_document
 from .canonical_result import CanonicalPreflight, ExecutionAssociation, PrivateArtifact, ArtifactReference, ResultIdentity
 from .http_models import AnalysisInput, parse_json
 from .http_settings import HttpSettings
+from .journal_http import JournalHttp
 
 
 class BackendJournalFailure(CanonicalIntegrationError):
@@ -41,9 +41,11 @@ class BackendCanonicalJournal:
         self._headers = {'Authorization': 'Bearer ' + settings.callback_token,
                          'X-Worker-Instance-Id': str(worker_id), 'Accept-Encoding': 'identity'}
         self._closed = False
+        self._http = JournalHttp(self._base_url, self._headers)
 
     def close(self):
         self._closed = True
+        self._http.close()
 
     def _call(self, method: str, suffix: str, raw: bytes | None = None, *,
               content_type='application/json', late=False, headers=None):
@@ -51,28 +53,24 @@ class BackendCanonicalJournal:
         _require(not self._closed and type(budget) in (int, float) and math.isfinite(budget) and budget > 0
                  and (late or self._active() is True), 'EVIDENCE_EXECUTION_INACTIVE')
         async def request():
-            async with httpx.AsyncClient(base_url=self._base_url, headers=self._headers,
-                    follow_redirects=False, trust_env=False, timeout=httpx.Timeout(10, connect=3)) as client:
-                async with client.stream(method, self._base + suffix, content=raw,
-                        headers={'Content-Type': content_type, **(headers or {})}) as reply:
-                    _require(reply.headers.get('Content-Encoding', 'identity') == 'identity', 'JOURNAL_CONTENT_ENCODING')
-                    body = bytearray()
-                    async for chunk in reply.aiter_raw():
-                        body.extend(chunk)
-                        _require(len(body) <= 65536, 'JOURNAL_RESPONSE_SIZE')
-                    if reply.status_code not in (200, 204):
-                        # Never log server diagnostics or trust a failure as successful commit.
-                        raise BackendJournalFailure(reply.status_code)
-                    if reply.status_code == 204:
-                        _require(not body, 'JOURNAL_RESPONSE_INVALID')
-                        return None
-                    _require(reply.headers.get('Content-Type', '').split(';')[0].strip() == 'application/json',
-                             'JOURNAL_CONTENT_TYPE')
-                    return read_document(bytes(body), 65536)
-        async def bounded():
-            return await asyncio.wait_for(request(), min(10, budget))
+            async with self._http.client.stream(method, self._base + suffix, content=raw,
+                    headers={'Content-Type': content_type, **(headers or {})}) as reply:
+                _require(reply.headers.get('Content-Encoding', 'identity') == 'identity', 'JOURNAL_CONTENT_ENCODING')
+                body = bytearray()
+                async for chunk in reply.aiter_raw():
+                    body.extend(chunk)
+                    _require(len(body) <= 65536, 'JOURNAL_RESPONSE_SIZE')
+                if reply.status_code not in (200, 204):
+                    # Never log server diagnostics or trust a failure as successful commit.
+                    raise BackendJournalFailure(reply.status_code)
+                if reply.status_code == 204:
+                    _require(not body, 'JOURNAL_RESPONSE_INVALID')
+                    return None
+                _require(reply.headers.get('Content-Type', '').split(';')[0].strip() == 'application/json',
+                         'JOURNAL_CONTENT_TYPE')
+                return read_document(bytes(body), 65536)
         try:
-            return asyncio.run(bounded())  # Private storage-stage thread, never heartbeat's loop.
+            return self._http.run(request(), min(10, budget))
         except (httpx.HTTPError, TimeoutError):
             # In particular /start and /begin may already be committed. Never auto-repeat.
             raise BackendJournalFailure(503) from None

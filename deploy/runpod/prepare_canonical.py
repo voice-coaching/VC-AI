@@ -85,6 +85,10 @@ def prepare(values):
         "AI_CANONICAL_EVIDENCE_ORPHAN_GRACE_HOURS": "INDEFINITE",
     })
     WORK.mkdir(mode=0o700, exist_ok=True)
+    if values.get('AI_CANONICAL_RESIDENT_ENABLED') == 'true':
+        values.update(AI_CANONICAL_CORE_ROOT='/workspace/intelligentai/releases/canonical_resident_core_20261004_v1',
+                      AI_CANONICAL_LLM_ROOT='/workspace/intelligentai/validation/canonical_resident_h5_20261004_v1',
+                      AI_CANONICAL_PIPELINE_REVISION='canonical-resident-H5-20261004-v1')
     if WORK.is_symlink() or WORK.resolve() != WORK:
         raise ValueError("canonical_workspace_invalid")
     os.chown(WORK, 10001, 10001)

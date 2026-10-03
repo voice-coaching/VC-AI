@@ -9,6 +9,8 @@ the configured retention policy and must never resurrect the execution.
 from __future__ import annotations
 
 from dataclasses import dataclass, field
+from concurrent.futures import ThreadPoolExecutor
+from threading import Event
 import hashlib
 import time
 from typing import Callable
@@ -40,6 +42,7 @@ def retain_canonical_preflight(
     preflight: CanonicalPreflight, *, store: PrivateB2EvidenceStore,
     journal: CanonicalJournalPort,
     deadline_monotonic: float, execution_is_active: Callable[[], bool],
+    concurrency: int = 1,
 ) -> RetainedCanonicalManifest:
     """Upload only preflight-validated originals while the caller owns execution.
 
@@ -54,7 +57,11 @@ def retain_canonical_preflight(
              and time.monotonic() < deadline_monotonic < float("inf"),
              "EVIDENCE_DEADLINE_INVALID")
 
+    _require(type(concurrency) is int and concurrency in (1, 2), "EVIDENCE_CONCURRENCY_INVALID")
+    stopped = Event()
+
     def fence():
+        _require(not stopped.is_set(), "EVIDENCE_SIBLING_FAILED")
         _require(time.monotonic() < deadline_monotonic, "EVIDENCE_DEADLINE_EXCEEDED")
         _require(execution_is_active() is True, "EVIDENCE_EXECUTION_INACTIVE")
 
@@ -78,8 +85,7 @@ def retain_canonical_preflight(
 
     fence()
     journal.prepare(preflight)
-    references = []
-    for item in preflight.artifacts:
+    def retain(item):
         fence()
         stored = journal.reference(preflight.association, item)
         if stored is None:
@@ -100,7 +106,24 @@ def retain_canonical_preflight(
                                 execution_id=str(preflight.association.execution_id))
         journal.verified(preflight.association, item, reference)
         fence()
-        references.append(ArtifactReference.from_document(reference))
+        return ArtifactReference.from_document(reference)
+
+    def bounded_retain(item):
+        try:
+            return retain(item)
+        except BaseException:
+            stopped.set()
+            raise
+
+    if concurrency == 1:
+        references = [bounded_retain(item) for item in preflight.artifacts]
+    else:
+        # The Backend journal and SDK client support concurrent independent
+        # artifacts. Preserve each artifact's intent/PUT/checkpoint/readback
+        # ordering and drain siblings before the caller closes either client.
+        with ThreadPoolExecutor(max_workers=concurrency, thread_name_prefix="canonical-retain") as pool:
+            pending = [pool.submit(bounded_retain, item) for item in preflight.artifacts]
+            references = [future.result() for future in pending]
 
     document = dict(schemaVersion=MANIFEST_VERSION,
                     association=preflight.association.to_document(),

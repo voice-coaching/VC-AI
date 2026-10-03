@@ -104,12 +104,13 @@ def read_private_result(path: Path, root: Path, limit: int) -> bytes:
 
 class FrozenCanonicalProducer:
     def __init__(self, artifacts: FrozenCanonicalArtifacts, workspace_root: Path,
-                 journal: BackendCanonicalJournal, *, nltk_data_root: Path):
+                 journal: BackendCanonicalJournal, *, nltk_data_root: Path, resident_socket: Path | None = None):
         _require(type(journal) is BackendCanonicalJournal, 'BACKEND_JOURNAL_REQUIRED')
         self.journal = journal
         self.artifacts = artifacts
         self.workspace_root = private_directory(workspace_root)
         self.environment = core_environment(nltk_data_root)
+        self.resident_socket = resident_socket
         check_provenance(artifacts.core_root)
 
     async def produce(self, request: AnalysisInput, audio: MaterializedAudio, *,
@@ -145,13 +146,18 @@ class FrozenCanonicalProducer:
         output = work / 'release-output'
         # The frozen conda build lacks pidfd bindings. Supervision stays in the
         # checked canonical executor environment; only the model uses CORE_PYTHON.
-        await run_guarded(guard_python=Path(sys.executable),
-                          command=[str(CORE_PYTHON), '-B', '-u',
-                                   str(self.artifacts.core_root / 'scripts/run_release.py'),
-                                   '--cases', str(case_path), '--output', str(output)],
-                          cwd=self.artifacts.core_root, environment=self.environment,
-                          log_path=work / 'producer.log', deadline_monotonic=deadline_monotonic,
-                          execution_is_active=execution_is_active)
+        if self.resident_socket is not None:
+            from .canonical_resident import produce_resident
+            await produce_resident(self.resident_socket, request=request, case_path=case_path,
+                                   deadline=deadline_monotonic, active=execution_is_active)
+        else:
+            await run_guarded(guard_python=Path(sys.executable),
+                              command=[str(CORE_PYTHON), '-B', '-u',
+                                       str(self.artifacts.core_root / 'scripts/run_release.py'),
+                                       '--cases', str(case_path), '--output', str(output)],
+                              cwd=self.artifacts.core_root, environment=self.environment,
+                              log_path=work / 'producer.log', deadline_monotonic=deadline_monotonic,
+                              execution_is_active=execution_is_active)
         raw = read_private_result(output / 'candidate/results' / (str(request.event_id) + '.json'),
                                   work, MAX_CORE_BYTES)
         core = read_document(raw, MAX_CORE_BYTES)

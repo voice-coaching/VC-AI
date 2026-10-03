@@ -20,6 +20,8 @@ def paths(revision):
         'src/voice_coach/backend_analysis/http_api.py',
         'src/voice_coach/backend_analysis/http_models.py',
         'src/voice_coach/backend_analysis/http_runtime.py',
+        'src/voice_coach/backend_analysis/journal_http.py',
+        'src/voice_coach/backend_analysis/pipeline_timing.py',
         'src/voice_coach/backend_analysis/deployment_observation.py',
         'src/voice_coach/backend_analysis/phone_rubric.py',
         'src/voice_coach/backend_analysis/gpt_rubric.py',

@@ -78,6 +78,8 @@ class HttpRuntime:
         self.history = OrderedDict()
         self.stopping = False
         self.monitor = None
+        self.legacy_requested = False
+        self.legacy_bootstrap = None
         self.canonical_lane = None
         self.canonical_reason = "canonical_bootstrap_not_ready"
         self.canonical_dependencies_until = 0.0
@@ -88,10 +90,34 @@ class HttpRuntime:
         except (OSError, ValueError, KeyError, TypeError):
             self.deployment_identity = None
 
-    def ready(self):
+    def legacy_ready(self):
         return (not self.stopping and self.settings is not None and self.executor_ready
                 and self.process is not None and self.process.is_alive()
                 and time.monotonic() < self.dependencies_until)
+
+    def ready(self):
+        return self.legacy_ready() or self.canonical_admission_ready()
+
+    async def _prepare_legacy(self):
+        try:
+            await self._stop_executor()
+            await self._spawn()
+        except asyncio.CancelledError:
+            raise
+        except Exception:
+            self.executor_ready = False
+            try:
+                await self._stop_executor()
+            except Exception:
+                # Unknown ownership is not permission to admit another model.
+                self.stopping = True
+                self.reason = "executor_cleanup_pending"
+
+    async def _cancel_legacy_bootstrap(self):
+        if self.legacy_bootstrap is not None:
+            self.legacy_bootstrap.cancel()
+            await asyncio.gather(self.legacy_bootstrap, return_exceptions=True)
+            self.legacy_bootstrap = None
 
     async def start(self):
         try:
@@ -112,8 +138,10 @@ class HttpRuntime:
 
     def canonical_admission_ready(self):
         return (self.canonical_lane is not None and not self.stopping
+                and self.canonical_lane.ready()
                 and self.environment.get("AI_CANONICAL_ADMISSION_ENABLED") == "true"
-                and time.monotonic() < self.canonical_dependencies_until)
+                and time.monotonic() < self.canonical_dependencies_until
+                and time.monotonic() < self.dependencies_until)
 
     def deployment_snapshot(self):
         """Authenticated deployment diagnostics; counts only, never job content."""
@@ -131,6 +159,7 @@ class HttpRuntime:
         async with httpx.AsyncClient(trust_env=False, follow_redirects=False, timeout=8) as client:
             while not self.stopping:
                 try:
+                    await self.canonical_lane.refresh()
                     async with client.stream("GET", self.settings.callback_base + "/api/internal/ai/worker-readiness/v2",
                             headers={"Authorization": "Bearer " + self.settings.callback_token,
                                      "Accept-Encoding": "identity"}) as response:
@@ -225,9 +254,11 @@ class HttpRuntime:
             stage = "executor_not_ready"
             previous = self.reason
             try:
-                if self.active is None and (not self.executor_ready or self.process is None or not self.process.is_alive()):
-                    await self._stop_executor()
-                    await self._spawn()
+                if (self.active is None and (self.canonical_lane is None or self.legacy_requested)
+                        and not self.legacy_ready()
+                        and (self.process is None or not self.process.is_alive())
+                        and (self.legacy_bootstrap is None or self.legacy_bootstrap.done())):
+                    self.legacy_bootstrap = asyncio.create_task(self._prepare_legacy())
                 stage = "backend_callback_not_ready"
                 response = await self.backend.call("/api/internal/ai/worker-readiness", None, "workerReadiness")
                 if response["status"] != "ready" or response["contractVersion"] != CONTRACT:
@@ -287,9 +318,7 @@ class HttpRuntime:
         if self.settings is None:
             raise HttpFailure(503, "NOT_READY")
         request = AnalysisInput.from_payload(body, self.settings.prefix)
-        if not request.is_legacy and (
-                not self.canonical_admission_ready()
-                or request.visual_input is not None):
+        if not request.is_legacy and request.visual_input is not None:
             raise HttpFailure(503, "NOT_READY")
         key, sha = (body["requestId"], body["executionId"]), digest(body)
         self._prune()
@@ -302,12 +331,15 @@ class HttpRuntime:
             return (200 if prior.finished else 202), self.status(prior)
         if any(k[0] == key[0] and not j.finished for k, j in self.history.items()):
             raise HttpFailure(409, "STALE_EXECUTION")
-        if self.active is not None and not self.active.request.is_legacy:
-            raise HttpFailure(429, "CAPACITY_EXCEEDED")
-        if not self.ready():
-            raise HttpFailure(503, "NOT_READY")
         if self.active is not None:
             raise HttpFailure(429, "CAPACITY_EXCEEDED")
+        if not request.is_legacy and not self.canonical_admission_ready():
+            raise HttpFailure(503, "NOT_READY")
+        if request.is_legacy and not self.legacy_ready():
+            if self.canonical_lane is not None and self.canonical_lane.resident is not None:
+                raise HttpFailure(503, "NOT_READY")
+            self.legacy_requested = True
+            raise HttpFailure(503, "NOT_READY")
         if timestamp(body["deadlineAt"]) <= datetime.now(UTC):
             raise HttpFailure(409, "DEADLINE_EXCEEDED")
         job = Job(body, request, sha)
@@ -384,6 +416,8 @@ class HttpRuntime:
         try:
             # The resident legacy model must release GPU ownership before R/MFA.
             # No legacy attempt is active: both lanes share the same reserved slot.
+            self.legacy_requested = False
+            await self._cancel_legacy_bootstrap()
             await self._stop_executor()
             job.state = await self.canonical_lane.run(job, self.worker_id)
         except CanonicalProcessCleanupUnconfirmed:
@@ -497,6 +531,9 @@ class HttpRuntime:
             if self.active.task:
                 self.active.task.cancel()
                 await asyncio.gather(self.active.task, return_exceptions=True)
+        await self._cancel_legacy_bootstrap()
+        if self.canonical_lane is not None:
+            await self.canonical_lane.close()
         await self._stop_executor()
         if self.backend:
             await self.backend.close()

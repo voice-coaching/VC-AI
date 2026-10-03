@@ -6,6 +6,8 @@ import json
 from pathlib import Path
 
 ROOTS = {
+    'canonical_resident_core_20261004_v1': Path('/workspace/intelligentai/releases/canonical_resident_core_20261004_v1'),
+    'canonical_resident_h5_20261004_v1': Path('/workspace/intelligentai/validation/canonical_resident_h5_20261004_v1'),
     'canonical_scored_h5_20261003_v3': Path('/workspace/intelligentai/validation/canonical_scored_h5_20261003_v3'),
     'core': Path('/workspace/intelligentai/releases/canonical_ai_pre_llm_20260928_100247Z_421fda'),
     'llm': Path('/workspace/intelligentai/validation/canonical_llm_step7_20260928T154608Z_bc3aa1'),
@@ -16,6 +18,8 @@ ROOTS = {
     'canonical_scored_h5_20261003_v2': Path('/workspace/intelligentai/validation/canonical_scored_h5_20261003_v2'),
 }
 PINS = {
+    'canonical_resident_core_20261004_v1': ('release_manifest.json', 'ce16f635da012237b5316b36161d5eeff9432279cd08dbbe7967f5ab7ace7f7e'),
+    'canonical_resident_h5_20261004_v1': ('contracts/llm/dependency_lock.json', '1945dcf2fad7fc97621830abed34353c2d372d8224cc9ad11a9c422eabfdf9f4'),
     'canonical_scored_h5_20261003_v3': ('contracts/llm/dependency_lock.json', 'dc3db9cc03a3355ddeb5d5819cd6fd46726935c8ca9b830f513e37163c89f4d8'),
     'core': ('release_manifest.json', '95f2347ad53ab53030f68a65795cfc5a84ca1c8c41bd03119c9a9fb15d0367c2'),
     'llm': ('contracts/llm/dependency_lock.json', 'd8356763579dcfee347073a3f0ff72f4a0f67e33a29fa3b4c71012afcfd4ba01'),
@@ -26,6 +30,7 @@ PINS = {
     'canonical_scored_h5_20261003_v2': ('contracts/llm/dependency_lock.json', 'b4ff1aa729d9c981a048d5b7df1293d9637df53269d0598d7ae6069f2b0cc989'),
 }
 MANIFESTS = {
+    'canonical_resident_h5_20261004_v1': '885a2f0a67494dc3bebed28962222bfe95a0143292fe2de04194b84ea8beadc5',
     'canonical_scored_h5_20261003_v3': 'e3d6d6be9d896ede8d75d5f35f5daf4520a8d42f484e5f84a6fc32f8a05fb2e3',
     'llm': '1413b196616c919aeaab243fdd57771e70221ffc53a37f9b018d1881499b8c73',
     'canonical_h5_20261003': '9f10296b6944249ded9f5ce2ccfdfa7c53b6e4af670999fe68e9e477e97eaf45',
