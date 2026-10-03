@@ -17,7 +17,7 @@ import threading
 from types import ModuleType
 from typing import Callable, TYPE_CHECKING
 
-from .canonical_harness import harness_identity
+from .canonical_harness import harness_identity, check_schema_registration
 
 if TYPE_CHECKING:
     from .http_models import AnalysisInput
@@ -95,6 +95,7 @@ class FrozenCanonicalArtifacts:
         core = self.core_root.resolve(strict=True)
         llm = self.llm_root.resolve(strict=True)
         identity = self.identity
+        check_schema_registration(identity)
         manifest = _pinned_json(core, "release_manifest.json", identity.core_sha256)
         _pinned_json(llm, "contracts/llm/llm_contract_manifest.json", identity.manifest_sha256)
         lock = _pinned_json(llm, "contracts/llm/dependency_lock.json", identity.lock_sha256)

@@ -67,4 +67,17 @@ HTTP 부모는 실패 후 heartbeat를 중지하므로 Backend에는 나중에 e
 | AWS verifier bundle | `39368e9d728e6bb276a882a7bd07424bc317b5092af270fb3583dac3f5e40fc1` |
 
 수정 전 분석 64는 21:11:19 KST에 FAILED/execution timeout으로 종료됐다.
-신규 접수는 전환을 위해 유지보수 차단 중이며 기존 실제 요청/lease를 초기화하지 않았다.
+v2 전환 중 신규 접수를 차단했으며 기존 실제 요청/lease를 초기화하지 않았다.
+
+## v2 배포 후 추가 계약 누락
+
+21:35:06 KST에 v2 readiness와 drain 확인 후 접수를 열고 21:35:56에 분석 64의
+정상 재시도 API를 호출했다. core 및 MFA 종료 코드는 0이며 Git 장애는 재발하지 않았다.
+이 실행은 PREFLIGHT에서 `CANONICAL_SCHEMA_INVALID`로 종료했고 21:40:52에 Backend
+timeout이 됐다. core 원문은 parent schema를 통과했다.
+
+원인은 v2를 Python harness registry에는 등록했지만 v4 schema의 binding, association,
+sourceIdentity 허용 hash 묶음 및 scored 분기에는 추가하지 않은 것이다. 해당 폐쇄형
+목록에 v2를 추가하고 기존 S7/H5/v1을 보존한다. Backend의 H5 요약 경로도 v2를 포함한다.
+artifact 검증에는 실제 하네스 identity의 schema 등록 검사를 추가하여 이 종류의 배포
+누락을 추론 전에 차단한다. 점수·음소·정렬 계산이나 임계값은 변경하지 않는다.

@@ -53,3 +53,28 @@ def harness_identity(manifest_sha256: str) -> HarnessIdentity:
         return HARNESSES[manifest_sha256]
     except (KeyError, TypeError):
         raise ValueError("CANONICAL_HARNESS_UNKNOWN") from None
+
+
+def check_schema_registration(identity: HarnessIdentity) -> None:
+    """Catch missing or mismatched release pins before admitting inference."""
+    from jsonschema import Draft202012Validator, ValidationError
+    from .canonical_codec import _schema
+
+    schema = _schema("v4")
+    values = dict(parentManifestSha256=identity.core_sha256,
+                  llmManifestSha256=identity.manifest_sha256,
+                  llmDependencyLockSha256=identity.lock_sha256,
+                  promptSha256=identity.prompt_sha256)
+    try:
+        Draft202012Validator(schema["$defs"]["binding"]["properties"][
+            "parent_manifest_sha256"]).validate(identity.core_sha256)
+        for name in ("association", "sourceIdentity"):
+            definition = schema["$defs"][name]
+            # Validate the real configured identity and its closed tuple, not a
+            # fabricated recording/result. Other required fields belong to requests.
+            fragment = dict(properties={k: definition["properties"][k]
+                                        for k in values if k in definition["properties"]},
+                            oneOf=definition["oneOf"])
+            Draft202012Validator(fragment).validate(values)
+    except ValidationError:
+        raise ValueError("CANONICAL_HARNESS_SCHEMA_MISMATCH") from None
