@@ -94,8 +94,8 @@ class FrozenCanonicalArtifacts:
     def verify(self) -> dict:
         core = self.core_root.resolve(strict=True)
         llm = self.llm_root.resolve(strict=True)
-        manifest = _pinned_json(core, "release_manifest.json", CORE_MANIFEST_SHA256)
         identity = self.identity
+        manifest = _pinned_json(core, "release_manifest.json", identity.core_sha256)
         _pinned_json(llm, "contracts/llm/llm_contract_manifest.json", identity.manifest_sha256)
         lock = _pinned_json(llm, "contracts/llm/dependency_lock.json", identity.lock_sha256)
         for root, files in ((core, manifest["file_sha256"]), (llm, lock["files"])):
@@ -150,14 +150,15 @@ class FrozenCanonicalCoaching:
         # Load the exact verified bytes, not an ambient `bridge` on sys.path or
         # a cached pyc. Relative legacy_pure import retains frozen semantics.
         source = {}
-        for name in ("legacy_pure", "adapter"):
+        modules = ("phone_rubric", "gpt_rubric", "legacy_pure", "adapter") if identity.scoring else ("legacy_pure", "adapter")
+        for name in modules:
             relative = f"bridge/{name}.py"
             raw = _contained_file(root, relative).read_bytes()
             _require(_sha(raw) == lock["files"][relative], "FROZEN_IMPORT_MISMATCH")
             source[name] = raw
         package_name = "_voice_coach_frozen_step7_" + identity.lock_sha256
         with _IMPORT_LOCK:
-            names = [package_name, package_name + ".legacy_pure", package_name + ".adapter"]
+            names = [package_name, *(package_name + "." + name for name in modules)]
             previous = {name: sys.modules.get(name) for name in names}
             try:
                 package = ModuleType(package_name)
@@ -223,7 +224,7 @@ class FrozenCanonicalCoaching:
         # The core owns its analysis UUID; never rewrite it to the Backend integer.
         analysis_id = core.get("core_result", {}).get("metadata", {}).get("analysis_id")
         _require(isinstance(analysis_id, str) and bool(analysis_id), "CORE_ANALYSIS_ID_MISSING")
-        binding = dict(parent_manifest_sha256=CORE_MANIFEST_SHA256,
+        binding = dict(parent_manifest_sha256=self.artifacts.identity.core_sha256,
                        core_sha256=_sha(core_bytes), script_sha256=request.script_sha256,
                        request_id=str(request.event_id), analysis_id=analysis_id,
                        source_audio_sha256=request.audio_sha256,
@@ -247,7 +248,7 @@ class FrozenCanonicalCoaching:
                            analysisId=request.analysis_id, recordingId=request.recording_id,
                            contentId=request.content_id, canonicalAnalysisId=analysis_id,
                            coreSha256=binding["core_sha256"],
-                           parentManifestSha256=CORE_MANIFEST_SHA256,
+                           parentManifestSha256=identity.core_sha256,
                            llmManifestSha256=identity.manifest_sha256,
                            llmDependencyLockSha256=identity.lock_sha256,
                            scriptSha256=request.script_sha256, audioSha256=request.audio_sha256,

@@ -49,7 +49,10 @@ def check(env):
     _require(CORE_PYTHON.is_file() and os.access(CORE_PYTHON, os.X_OK),
              "CANONICAL_CORE_PYTHON_UNAVAILABLE")
     check_core_environment(Path(env["AI_ANALYSIS_NLTK_DATA_ROOT"]))
-    FrozenCanonicalCoaching(artifacts(env))._bridge()
+    frozen = FrozenCanonicalCoaching(artifacts(env))
+    bridge = frozen._bridge()
+    if frozen.artifacts.identity.scoring:
+        bridge.scoring_policy()
     FrozenOpenAITransport(env["OPENAI_API_KEY"])
     store = evidence_store_from_environment(env)
     try:

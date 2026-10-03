@@ -1107,7 +1107,10 @@
       "additionalProperties": false,
       "properties": {
         "parent_manifest_sha256": {
-          "const": "95f2347ad53ab53030f68a65795cfc5a84ca1c8c41bd03119c9a9fb15d0367c2"
+          "enum": [
+            "95f2347ad53ab53030f68a65795cfc5a84ca1c8c41bd03119c9a9fb15d0367c2",
+            "6ca67fcdaed390cc3da634fbafaef153890e52b8775c431f3fefae7dc122c776"
+          ]
         },
         "core_sha256": {
           "$ref": "#/$defs/sha256"
@@ -1177,18 +1180,23 @@
           "$ref": "#/$defs/sha256"
         },
         "parentManifestSha256": {
-          "const": "95f2347ad53ab53030f68a65795cfc5a84ca1c8c41bd03119c9a9fb15d0367c2"
+          "enum": [
+            "95f2347ad53ab53030f68a65795cfc5a84ca1c8c41bd03119c9a9fb15d0367c2",
+            "6ca67fcdaed390cc3da634fbafaef153890e52b8775c431f3fefae7dc122c776"
+          ]
         },
         "llmManifestSha256": {
           "enum": [
             "1413b196616c919aeaab243fdd57771e70221ffc53a37f9b018d1881499b8c73",
-            "9f10296b6944249ded9f5ce2ccfdfa7c53b6e4af670999fe68e9e477e97eaf45"
+            "9f10296b6944249ded9f5ce2ccfdfa7c53b6e4af670999fe68e9e477e97eaf45",
+            "820d600fab4c49615050b9a038e7236f0429f68249dc631a39c0f5ab0be6f0f6"
           ]
         },
         "llmDependencyLockSha256": {
           "enum": [
             "d8356763579dcfee347073a3f0ff72f4a0f67e33a29fa3b4c71012afcfd4ba01",
-            "93636f0c4befe7f1e34358e74b1077cc94cb2b82064781485b0183c53357d2f5"
+            "93636f0c4befe7f1e34358e74b1077cc94cb2b82064781485b0183c53357d2f5",
+            "17d327b5898b183274418996468b577f3c455d8c1a5868b9cf3e00a34d53114d"
           ]
         },
         "scriptSha256": {
@@ -1250,6 +1258,9 @@
             },
             "llmDependencyLockSha256": {
               "const": "d8356763579dcfee347073a3f0ff72f4a0f67e33a29fa3b4c71012afcfd4ba01"
+            },
+            "parentManifestSha256": {
+              "const": "95f2347ad53ab53030f68a65795cfc5a84ca1c8c41bd03119c9a9fb15d0367c2"
             }
           }
         },
@@ -1260,6 +1271,22 @@
             },
             "llmDependencyLockSha256": {
               "const": "93636f0c4befe7f1e34358e74b1077cc94cb2b82064781485b0183c53357d2f5"
+            },
+            "parentManifestSha256": {
+              "const": "95f2347ad53ab53030f68a65795cfc5a84ca1c8c41bd03119c9a9fb15d0367c2"
+            }
+          }
+        },
+        {
+          "properties": {
+            "parentManifestSha256": {
+              "const": "6ca67fcdaed390cc3da634fbafaef153890e52b8775c431f3fefae7dc122c776"
+            },
+            "llmManifestSha256": {
+              "const": "820d600fab4c49615050b9a038e7236f0429f68249dc631a39c0f5ab0be6f0f6"
+            },
+            "llmDependencyLockSha256": {
+              "const": "17d327b5898b183274418996468b577f3c455d8c1a5868b9cf3e00a34d53114d"
             }
           }
         }
@@ -1605,6 +1632,9 @@
             },
             "visualCorrectiveClaimsAllowed": {
               "const": false
+            },
+            "scoring": {
+              "$ref": "#/$defs/scoringRecord"
             }
           },
           "required": [
@@ -1677,6 +1707,9 @@
             },
             "dispatchAttempts": {
               "const": 0
+            },
+            "scoring": {
+              "$ref": "#/$defs/scoringRecord"
             }
           },
           "required": [
@@ -1719,6 +1752,9 @@
               "type": "string",
               "minLength": 1,
               "maxLength": 128
+            },
+            "scoring": {
+              "$ref": "#/$defs/scoringRecord"
             }
           },
           "required": [
@@ -1970,18 +2006,23 @@
           ]
         },
         "parentManifestSha256": {
-          "const": "95f2347ad53ab53030f68a65795cfc5a84ca1c8c41bd03119c9a9fb15d0367c2"
+          "enum": [
+            "95f2347ad53ab53030f68a65795cfc5a84ca1c8c41bd03119c9a9fb15d0367c2",
+            "6ca67fcdaed390cc3da634fbafaef153890e52b8775c431f3fefae7dc122c776"
+          ]
         },
         "llmManifestSha256": {
           "enum": [
             "1413b196616c919aeaab243fdd57771e70221ffc53a37f9b018d1881499b8c73",
-            "9f10296b6944249ded9f5ce2ccfdfa7c53b6e4af670999fe68e9e477e97eaf45"
+            "9f10296b6944249ded9f5ce2ccfdfa7c53b6e4af670999fe68e9e477e97eaf45",
+            "820d600fab4c49615050b9a038e7236f0429f68249dc631a39c0f5ab0be6f0f6"
           ]
         },
         "llmDependencyLockSha256": {
           "enum": [
             "d8356763579dcfee347073a3f0ff72f4a0f67e33a29fa3b4c71012afcfd4ba01",
-            "93636f0c4befe7f1e34358e74b1077cc94cb2b82064781485b0183c53357d2f5"
+            "93636f0c4befe7f1e34358e74b1077cc94cb2b82064781485b0183c53357d2f5",
+            "17d327b5898b183274418996468b577f3c455d8c1a5868b9cf3e00a34d53114d"
           ]
         },
         "promptSha256": {
@@ -2013,6 +2054,9 @@
             },
             "promptSha256": {
               "const": "362ccc1f15d2e166110cca52d90fd3d6e81ee85646e96eb7018d8b8278898714"
+            },
+            "parentManifestSha256": {
+              "const": "95f2347ad53ab53030f68a65795cfc5a84ca1c8c41bd03119c9a9fb15d0367c2"
             }
           }
         },
@@ -2026,33 +2070,41 @@
             },
             "promptSha256": {
               "const": "6f9e8515ae083a62e0500a03e3c2cef073ae78eb696bed8b5857a14b551ff1fd"
+            },
+            "parentManifestSha256": {
+              "const": "95f2347ad53ab53030f68a65795cfc5a84ca1c8c41bd03119c9a9fb15d0367c2"
+            }
+          }
+        },
+        {
+          "properties": {
+            "parentManifestSha256": {
+              "const": "6ca67fcdaed390cc3da634fbafaef153890e52b8775c431f3fefae7dc122c776"
+            },
+            "llmManifestSha256": {
+              "const": "820d600fab4c49615050b9a038e7236f0429f68249dc631a39c0f5ab0be6f0f6"
+            },
+            "llmDependencyLockSha256": {
+              "const": "17d327b5898b183274418996468b577f3c455d8c1a5868b9cf3e00a34d53114d"
+            },
+            "promptSha256": {
+              "const": "6f9e8515ae083a62e0500a03e3c2cef073ae78eb696bed8b5857a14b551ff1fd"
             }
           }
         }
       ]
     },
     "score": {
-      "type": "object",
-      "additionalProperties": false,
-      "properties": {
-        "overallScore": {
-          "const": null
+      "oneOf": [
+        {
+          "$ref": "#/$defs/legacyScore"
         },
-        "validity": {
-          "enum": [
-            "NOT_CALIBRATED",
-            "INSUFFICIENT_EVIDENCE",
-            "NOT_AVAILABLE"
-          ]
+        {
+          "$ref": "#/$defs/computedScore"
         },
-        "reason": {
-          "const": "NO_APPROVED_SCORING_CONTRACT"
+        {
+          "$ref": "#/$defs/unscoredScore"
         }
-      },
-      "required": [
-        "overallScore",
-        "validity",
-        "reason"
       ]
     },
     "result": {
@@ -2682,6 +2734,654 @@
                   }
                 }
               }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "sourceIdentity": {
+                "properties": {
+                  "llmManifestSha256": {
+                    "const": "820d600fab4c49615050b9a038e7236f0429f68249dc631a39c0f5ab0be6f0f6"
+                  }
+                }
+              }
+            }
+          },
+          "then": {
+            "properties": {
+              "score": {
+                "oneOf": [
+                  {
+                    "$ref": "#/$defs/computedScore"
+                  },
+                  {
+                    "$ref": "#/$defs/unscoredScore"
+                  }
+                ]
+              },
+              "coaching": {
+                "anyOf": [
+                  {
+                    "type": "null"
+                  },
+                  {
+                    "type": "object",
+                    "required": [
+                      "scoring"
+                    ]
+                  }
+                ]
+              }
+            }
+          },
+          "else": {
+            "properties": {
+              "score": {
+                "$ref": "#/$defs/legacyScore"
+              },
+              "coaching": {
+                "not": {
+                  "type": "object",
+                  "required": [
+                    "scoring"
+                  ]
+                }
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "score": {
+                "properties": {
+                  "validity": {
+                    "const": "RUBRIC_COMPUTED"
+                  }
+                }
+              }
+            }
+          },
+          "then": {
+            "properties": {
+              "status": {
+                "const": "COMPLETED"
+              },
+              "canonical": {
+                "type": "object",
+                "properties": {
+                  "decision": {
+                    "properties": {
+                      "status": {
+                        "const": "ACCEPT"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      ]
+    },
+    "rubricResult": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "rubricRevision",
+        "criteria",
+        "overallScore"
+      ],
+      "properties": {
+        "rubricRevision": {
+          "const": "phone-rubric-20261003-v1"
+        },
+        "criteria": {
+          "type": "array",
+          "minItems": 9,
+          "maxItems": 9,
+          "prefixItems": [
+            {
+              "type": "object",
+              "additionalProperties": false,
+              "required": [
+                "criterionId",
+                "level"
+              ],
+              "properties": {
+                "criterionId": {
+                  "const": "vowels"
+                },
+                "level": {
+                  "type": [
+                    "integer",
+                    "null"
+                  ],
+                  "minimum": 0,
+                  "maximum": 4
+                }
+              }
+            },
+            {
+              "type": "object",
+              "additionalProperties": false,
+              "required": [
+                "criterionId",
+                "level"
+              ],
+              "properties": {
+                "criterionId": {
+                  "const": "plain_stops"
+                },
+                "level": {
+                  "type": [
+                    "integer",
+                    "null"
+                  ],
+                  "minimum": 0,
+                  "maximum": 4
+                }
+              }
+            },
+            {
+              "type": "object",
+              "additionalProperties": false,
+              "required": [
+                "criterionId",
+                "level"
+              ],
+              "properties": {
+                "criterionId": {
+                  "const": "tense_stops"
+                },
+                "level": {
+                  "type": [
+                    "integer",
+                    "null"
+                  ],
+                  "minimum": 0,
+                  "maximum": 4
+                }
+              }
+            },
+            {
+              "type": "object",
+              "additionalProperties": false,
+              "required": [
+                "criterionId",
+                "level"
+              ],
+              "properties": {
+                "criterionId": {
+                  "const": "aspirated_stops"
+                },
+                "level": {
+                  "type": [
+                    "integer",
+                    "null"
+                  ],
+                  "minimum": 0,
+                  "maximum": 4
+                }
+              }
+            },
+            {
+              "type": "object",
+              "additionalProperties": false,
+              "required": [
+                "criterionId",
+                "level"
+              ],
+              "properties": {
+                "criterionId": {
+                  "const": "fricatives"
+                },
+                "level": {
+                  "type": [
+                    "integer",
+                    "null"
+                  ],
+                  "minimum": 0,
+                  "maximum": 4
+                }
+              }
+            },
+            {
+              "type": "object",
+              "additionalProperties": false,
+              "required": [
+                "criterionId",
+                "level"
+              ],
+              "properties": {
+                "criterionId": {
+                  "const": "affricates"
+                },
+                "level": {
+                  "type": [
+                    "integer",
+                    "null"
+                  ],
+                  "minimum": 0,
+                  "maximum": 4
+                }
+              }
+            },
+            {
+              "type": "object",
+              "additionalProperties": false,
+              "required": [
+                "criterionId",
+                "level"
+              ],
+              "properties": {
+                "criterionId": {
+                  "const": "nasals"
+                },
+                "level": {
+                  "type": [
+                    "integer",
+                    "null"
+                  ],
+                  "minimum": 0,
+                  "maximum": 4
+                }
+              }
+            },
+            {
+              "type": "object",
+              "additionalProperties": false,
+              "required": [
+                "criterionId",
+                "level"
+              ],
+              "properties": {
+                "criterionId": {
+                  "const": "liquid"
+                },
+                "level": {
+                  "type": [
+                    "integer",
+                    "null"
+                  ],
+                  "minimum": 0,
+                  "maximum": 4
+                }
+              }
+            },
+            {
+              "type": "object",
+              "additionalProperties": false,
+              "required": [
+                "criterionId",
+                "level"
+              ],
+              "properties": {
+                "criterionId": {
+                  "const": "coverage"
+                },
+                "level": {
+                  "type": [
+                    "integer",
+                    "null"
+                  ],
+                  "minimum": 0,
+                  "maximum": 4
+                }
+              }
+            }
+          ]
+        },
+        "overallScore": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 100
+        }
+      }
+    },
+    "scoringRecord": {
+      "oneOf": [
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "status",
+            "result"
+          ],
+          "properties": {
+            "status": {
+              "const": "READY"
+            },
+            "result": {
+              "$ref": "#/$defs/rubricResult"
+            }
+          }
+        },
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "status"
+          ],
+          "properties": {
+            "status": {
+              "enum": [
+                "UNSCORABLE",
+                "NOT_REQUESTED"
+              ]
+            }
+          }
+        }
+      ]
+    },
+    "legacyScore": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "overallScore": {
+          "const": null
+        },
+        "validity": {
+          "enum": [
+            "NOT_CALIBRATED",
+            "INSUFFICIENT_EVIDENCE",
+            "NOT_AVAILABLE"
+          ]
+        },
+        "reason": {
+          "const": "NO_APPROVED_SCORING_CONTRACT"
+        }
+      },
+      "required": [
+        "overallScore",
+        "validity",
+        "reason"
+      ]
+    },
+    "computedScore": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "rubricRevision",
+        "criteria",
+        "overallScore",
+        "validity",
+        "reason"
+      ],
+      "properties": {
+        "rubricRevision": {
+          "const": "phone-rubric-20261003-v1"
+        },
+        "criteria": {
+          "type": "array",
+          "minItems": 9,
+          "maxItems": 9,
+          "prefixItems": [
+            {
+              "type": "object",
+              "additionalProperties": false,
+              "required": [
+                "criterionId",
+                "level"
+              ],
+              "properties": {
+                "criterionId": {
+                  "const": "vowels"
+                },
+                "level": {
+                  "type": [
+                    "integer",
+                    "null"
+                  ],
+                  "minimum": 0,
+                  "maximum": 4
+                }
+              }
+            },
+            {
+              "type": "object",
+              "additionalProperties": false,
+              "required": [
+                "criterionId",
+                "level"
+              ],
+              "properties": {
+                "criterionId": {
+                  "const": "plain_stops"
+                },
+                "level": {
+                  "type": [
+                    "integer",
+                    "null"
+                  ],
+                  "minimum": 0,
+                  "maximum": 4
+                }
+              }
+            },
+            {
+              "type": "object",
+              "additionalProperties": false,
+              "required": [
+                "criterionId",
+                "level"
+              ],
+              "properties": {
+                "criterionId": {
+                  "const": "tense_stops"
+                },
+                "level": {
+                  "type": [
+                    "integer",
+                    "null"
+                  ],
+                  "minimum": 0,
+                  "maximum": 4
+                }
+              }
+            },
+            {
+              "type": "object",
+              "additionalProperties": false,
+              "required": [
+                "criterionId",
+                "level"
+              ],
+              "properties": {
+                "criterionId": {
+                  "const": "aspirated_stops"
+                },
+                "level": {
+                  "type": [
+                    "integer",
+                    "null"
+                  ],
+                  "minimum": 0,
+                  "maximum": 4
+                }
+              }
+            },
+            {
+              "type": "object",
+              "additionalProperties": false,
+              "required": [
+                "criterionId",
+                "level"
+              ],
+              "properties": {
+                "criterionId": {
+                  "const": "fricatives"
+                },
+                "level": {
+                  "type": [
+                    "integer",
+                    "null"
+                  ],
+                  "minimum": 0,
+                  "maximum": 4
+                }
+              }
+            },
+            {
+              "type": "object",
+              "additionalProperties": false,
+              "required": [
+                "criterionId",
+                "level"
+              ],
+              "properties": {
+                "criterionId": {
+                  "const": "affricates"
+                },
+                "level": {
+                  "type": [
+                    "integer",
+                    "null"
+                  ],
+                  "minimum": 0,
+                  "maximum": 4
+                }
+              }
+            },
+            {
+              "type": "object",
+              "additionalProperties": false,
+              "required": [
+                "criterionId",
+                "level"
+              ],
+              "properties": {
+                "criterionId": {
+                  "const": "nasals"
+                },
+                "level": {
+                  "type": [
+                    "integer",
+                    "null"
+                  ],
+                  "minimum": 0,
+                  "maximum": 4
+                }
+              }
+            },
+            {
+              "type": "object",
+              "additionalProperties": false,
+              "required": [
+                "criterionId",
+                "level"
+              ],
+              "properties": {
+                "criterionId": {
+                  "const": "liquid"
+                },
+                "level": {
+                  "type": [
+                    "integer",
+                    "null"
+                  ],
+                  "minimum": 0,
+                  "maximum": 4
+                }
+              }
+            },
+            {
+              "type": "object",
+              "additionalProperties": false,
+              "required": [
+                "criterionId",
+                "level"
+              ],
+              "properties": {
+                "criterionId": {
+                  "const": "coverage"
+                },
+                "level": {
+                  "type": [
+                    "integer",
+                    "null"
+                  ],
+                  "minimum": 0,
+                  "maximum": 4
+                }
+              }
+            }
+          ]
+        },
+        "overallScore": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 100
+        },
+        "validity": {
+          "const": "RUBRIC_COMPUTED"
+        },
+        "reason": {
+          "const": "EVIDENCE_BOUND_PRACTICE_SCORE"
+        }
+      }
+    },
+    "unscoredScore": {
+      "oneOf": [
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "overallScore",
+            "validity",
+            "reason"
+          ],
+          "properties": {
+            "overallScore": {
+              "const": null
+            },
+            "validity": {
+              "const": "UNSCORABLE"
+            },
+            "reason": {
+              "const": "SCORING_FAILED"
+            }
+          }
+        },
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "overallScore",
+            "validity",
+            "reason"
+          ],
+          "properties": {
+            "overallScore": {
+              "const": null
+            },
+            "validity": {
+              "const": "NOT_AVAILABLE"
+            },
+            "reason": {
+              "const": "INPUT_NOT_ACCEPTED"
+            }
+          }
+        },
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "overallScore",
+            "validity",
+            "reason"
+          ],
+          "properties": {
+            "overallScore": {
+              "const": null
+            },
+            "validity": {
+              "const": "NOT_AVAILABLE"
+            },
+            "reason": {
+              "const": "RESULT_NOT_DELIVERED"
             }
           }
         }

@@ -174,7 +174,7 @@ def _binding_and_association(request: AnalysisInput, core: dict, raw: bytes,
     _require((prepared_sha is None and prepared_audio is None)
              or (type(prepared_audio) is PreparedAudioIdentity and prepared_audio.sha256 == prepared_sha),
              'PREPARED_DURATION_UNVERIFIED')
-    binding = dict(parent_manifest_sha256=CORE_MANIFEST_SHA256,
+    binding = dict(parent_manifest_sha256=harness.core_sha256,
                    core_sha256=_sha(raw), script_sha256=request.script_sha256,
                    request_id=str(request.event_id), analysis_id=core_id,
                    source_audio_sha256=request.audio_sha256,
@@ -182,7 +182,7 @@ def _binding_and_association(request: AnalysisInput, core: dict, raw: bytes,
                    provenance_source="admitted-http-canonical-producer-v1")
     identity = ExecutionAssociation(request.event_id, request.execution_id, request.analysis_id,
                                     request.recording_id, request.content_id, core_id, _sha(raw))
-    association = dict(identity.to_document(), parentManifestSha256=CORE_MANIFEST_SHA256,
+    association = dict(identity.to_document(), parentManifestSha256=harness.core_sha256,
                        llmManifestSha256=harness.manifest_sha256, llmDependencyLockSha256=harness.lock_sha256,
                        scriptSha256=request.script_sha256, audioSha256=request.audio_sha256,
                        preparedWavSha256=core["prepared_wav_sha256"],
@@ -266,6 +266,10 @@ def preflight_canonical_result(
     _require(expression["coreSha256"] == _sha(result.core_bytes)
              and expression["coreInputValidation"] == core["input_validation"], "EXPRESSION_CORE_MISMATCH")
     bridge = frozen._bridge()
+    if frozen.artifacts.identity.scoring:
+        bridge.verify_scoring(core, expression.get("scoring"))
+    else:
+        _require("scoring" not in expression, "UNEXPECTED_SCORING_RECORD")
     try:
         _, expected_view, _, skip = bridge.prepare(result.core_bytes, request.script_text, binding)
     except Exception as exc:
@@ -278,7 +282,10 @@ def preflight_canonical_result(
             view = _read_json(result.selection_bytes)
             _validate(view, schema_name="input")
             _selection_semantics(core, view, prepared_audio)
-        if skip:
+        if (frozen.artifacts.identity.scoring and expression.get("scoring") == {"status": "UNSCORABLE"}):
+            _require(expression["adapterStatus"] == "FAIL_CLOSED"
+                     and expression["errorCode"] == "SCORING_UNSCORABLE", "SCORING_FAILURE_STATUS")
+        elif skip:
             _require(expression["adapterStatus"] == skip, "ADAPTER_STATUS_MISMATCH")
         else:
             _require(expression["adapterStatus"] == "READY", "ADAPTER_STATUS_MISMATCH")
@@ -289,7 +296,7 @@ def preflight_canonical_result(
             for item in items:
                 candidate, text = item["candidate"], item["expression"]
                 _require(text["guidanceId"] == candidate["guidance"]["guidanceId"], "GUIDANCE_MISMATCH")
-                if frozen.artifacts.identity == H5:
+                if frozen.artifacts.identity == H5 or frozen.artifacts.identity.scoring:
                     bridge.validate_action(text["action"])
                 for value in text.values():
                     _require(len(value.encode("utf-16-le")) // 2 <= 1200, "EXPRESSION_UTF16_LIMIT")
@@ -366,12 +373,29 @@ def _base_document(request: AnalysisInput, identity: ResultIdentity, harness: Ha
                 analysisProfile=PROFILE,
                 sourceIdentity=dict(scriptSha256=request.script_sha256, audioSha256=request.audio_sha256,
                                     preparedWavSha256=None, canonicalAnalysisId=None, coreSha256=None,
-                                    parentManifestSha256=CORE_MANIFEST_SHA256,
+                                    parentManifestSha256=harness.core_sha256,
                                     llmManifestSha256=harness.manifest_sha256,
                                     llmDependencyLockSha256=harness.lock_sha256, promptSha256=harness.prompt_sha256),
                 visual=dict(status="NOT_CONNECTED", correctiveClaimsAllowed=False),
                 prosodyPolicy=dict(expressionPermission="NO_APPROVED_GUIDANCE_MAPPING"),
                 score=dict(overallScore=None, validity="NOT_AVAILABLE", reason="NO_APPROVED_SCORING_CONTRACT"))
+
+
+def _public_score(expression, view, harness):
+    if not harness.scoring:
+        return dict(overallScore=None, validity=view["score"]["validity"] if view else "NOT_AVAILABLE",
+                    reason="NO_APPROVED_SCORING_CONTRACT")
+    scoring = expression["scoring"]
+    if scoring["status"] == "READY":
+        return dict(scoring["result"], validity="RUBRIC_COMPUTED", reason="EVIDENCE_BOUND_PRACTICE_SCORE")
+    return dict(overallScore=None, validity="UNSCORABLE" if scoring["status"] == "UNSCORABLE" else "NOT_AVAILABLE",
+                reason="SCORING_FAILED" if scoring["status"] == "UNSCORABLE" else "INPUT_NOT_ACCEPTED")
+
+
+def _public_selection(view, expression):
+    if view is None or expression["adapterStatus"] == "FAIL_CLOSED":
+        return None
+    return {key: view[key] for key in ("attemptScope", "coverage", "reviewReasonCounts", "candidates")}
 
 
 def serialize_canonical_result(
@@ -404,10 +428,8 @@ def serialize_canonical_result(
                                    pronunciationFeedbackSource=core["pronunciation_feedback_source"],
                                    evidence=dict(artifactKind="CORE", sha256=_sha(result.core_bytes),
                                                  pointers=dict(EVIDENCE_POINTERS))),
-                    selection={key: view[key] for key in ("attemptScope", "coverage", "reviewReasonCounts", "candidates")}
-                    if view is not None else None, coaching=expression, retainedEvidence=retained)
-    if view is not None:
-        document["score"]["validity"] = view["score"]["validity"]
+                    selection=_public_selection(view, expression), coaching=expression, retainedEvidence=retained)
+    document["score"] = _public_score(expression, view, frozen.artifacts.identity)
     if expression["adapterStatus"] == "FAIL_CLOSED":
         document.update(status="FAILED", failure=ServiceFailure(
             "INTEGRATION", "CANONICAL_ADAPTER_FAILED", "ADAPTER").to_document())
@@ -420,6 +442,8 @@ def serialize_canonical_result(
             "INTEGRATION", "RESULT_ENVELOPE_TOO_LARGE", "SERIALIZATION").to_document(),
                         selection=None, coaching=None)
         document["canonical"].update(representation="RETAINED_ONLY", inputValidation=None)
+        if frozen.artifacts.identity.scoring:
+            document["score"] = dict(overallScore=None, validity="NOT_AVAILABLE", reason="RESULT_NOT_DELIVERED")
     validate_canonical_result_document(document, preflight=preflight, receipt=receipt)
     raw = _wire(document)
     _require(len(raw) <= MAX_RESULT_BYTES, "RESULT_SUMMARY_TOO_LARGE")
@@ -485,14 +509,19 @@ def validate_canonical_result_document(
                                            pointers=EVIDENCE_POINTERS), "CORE_EVIDENCE_MISMATCH")
     expression = _read_json(result.expression_bytes)
     view = _read_json(result.selection_bytes) if result.selection_bytes is not None else None
-    _require(document["score"]["validity"] == (view["score"]["validity"] if view else "NOT_AVAILABLE"),
-             "SCORE_VALIDITY_MISMATCH")
+    from .canonical_harness import harness_identity
+    harness = harness_identity(source["llmManifestSha256"])
+    expected_score = (dict(overallScore=None, validity="NOT_AVAILABLE", reason="RESULT_NOT_DELIVERED")
+                      if harness.scoring and canonical["representation"] == "RETAINED_ONLY"
+                      else _public_score(expression, view, harness))
+    _require(document["score"] == expected_score,
+             "SCORE_RESULT_MISMATCH")
     if canonical["representation"] == "RETAINED_ONLY":
         # Schema enforces failure/null combination. Also prove the original
         # inline envelope really exceeded the limit, rather than hide content.
-        inline = dict(document, selection={key: view[key] for key in
-                      ("attemptScope", "coverage", "reviewReasonCounts", "candidates")} if view else None,
-                      coaching=expression, canonical=dict(canonical, representation="INLINE", inputValidation=validation))
+        inline = dict(document, selection=_public_selection(view, expression),
+                      coaching=expression, score=_public_score(expression, view, harness),
+                      canonical=dict(canonical, representation="INLINE", inputValidation=validation))
         original_failure = None
         if expression["adapterStatus"] == "FAIL_CLOSED":
             original_failure = ServiceFailure("INTEGRATION", "CANONICAL_ADAPTER_FAILED", "ADAPTER").to_document()
@@ -503,7 +532,7 @@ def validate_canonical_result_document(
         return
     _require(canonical["inputValidation"] == validation and document["coaching"] == expression,
              "ORIGINAL_RESULT_MISMATCH")
-    selection = {key: view[key] for key in ("attemptScope", "coverage", "reviewReasonCounts", "candidates")} if view else None
+    selection = _public_selection(view, expression)
     _require(document["selection"] == selection, "ORIGINAL_SELECTION_MISMATCH")
     expected_failure = None
     if expression["adapterStatus"] == "FAIL_CLOSED":

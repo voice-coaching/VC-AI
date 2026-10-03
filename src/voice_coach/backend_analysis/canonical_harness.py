@@ -8,6 +8,8 @@ class HarnessIdentity:
     manifest_sha256: str
     lock_sha256: str
     prompt_sha256: str
+    core_sha256: str = "95f2347ad53ab53030f68a65795cfc5a84ca1c8c41bd03119c9a9fb15d0367c2"
+    scoring: bool = False
 
 
 S7 = HarnessIdentity(
@@ -23,7 +25,17 @@ H5 = HarnessIdentity(
     "6f9e8515ae083a62e0500a03e3c2cef073ae78eb696bed8b5857a14b551ff1fd",
 )
 H5_DIRECTORY = "canonical_h5_20261003"
-HARNESSES = {value.manifest_sha256: value for value in (S7, H5)}
+SCORED = HarnessIdentity(
+    "canonical-scored-h5-20261003-v1",
+    "820d600fab4c49615050b9a038e7236f0429f68249dc631a39c0f5ab0be6f0f6",
+    "17d327b5898b183274418996468b577f3c455d8c1a5868b9cf3e00a34d53114d",
+    "6f9e8515ae083a62e0500a03e3c2cef073ae78eb696bed8b5857a14b551ff1fd",
+    "6ca67fcdaed390cc3da634fbafaef153890e52b8775c431f3fefae7dc122c776",
+    True,
+)
+SCORED_CORE_DIRECTORY = "canonical_scored_core_20261003_v1"
+SCORED_LLM_DIRECTORY = "canonical_scored_h5_20261003_v1"
+HARNESSES = {value.manifest_sha256: value for value in (S7, H5, SCORED)}
 
 
 def harness_identity(manifest_sha256: str) -> HarnessIdentity:

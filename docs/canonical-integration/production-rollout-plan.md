@@ -1,5 +1,7 @@
 # Canonical v4 운영 제한 키·통합·배포 실행 계획
 
+**2026-10-03 추가:** 새 채점 identity·배포 순서·확인 범위는 [채점 구현 정본](scoring-implementation-20261003.md)을 따른다. 기존 운영 기록은 새 경로의 배포·추론 성공 증거가 아니다. AWS 검증 묶음/Backend/FE가 새 점수 계약을 지원한 뒤 RunPod 파생 core/H5를 활성화한다.
+
 **최신 실행: 2026-10-02 11:39~11:41 KST [서버 배포·제한 v4 접수 활성](rollout-execution-20261002.md#제한-v4-접수-활성화).**
 RunPod 실행기·부팅·writer 키와 Backend reader·검증·journal/apply를 운영 반영했다.
 양쪽 readiness와 계약 9개 SHA가 일치하고 v4 접수는 ON이다. canonical migration은

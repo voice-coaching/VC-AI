@@ -1,5 +1,9 @@
 # Canonical AI와 동결 LLM 서비스 통합
 
+**2026-10-03 채점 구현:** [게이트 제거·Seungun 전체 음소 9항목 채점](scoring-implementation-20261003.md). 새 파생 하네스와 v4 숫자 점수·실패 계약을 구현했다. 아래 H5 운영 관측과 달리 새 채점 경로는 아직 미배포다.
+
+**2026-10-03 15:00–15:13 KST 조사:** [분석 60 내용 거절·점수 미제공 원인](incident-20261003-content-gate-and-score.md). 결과는 Backend에 `COMPLETED / REJECT / INSUFFICIENT_CONTENT`로 적용됐다. 개발용 자음 일치율 gate에서 거절되어 GPT는 호출하지 않았다. 현재 H5와 v4 계약은 성공 시에도 숫자 점수를 생성하지 않는다. 운영 변경 없이 로그·DB·배포 소스를 대조했다.
+
 **2026-10-03 14:55 KST H5 배포 후속:** [H5 파생 하네스·양쪽 검증 계약·실행 기록](h5-application-20261003.md). 사용자 직접 배포 승인으로 Backend와 RunPod H5를 운영 반영했다. 양쪽 canonical 접수 ON, 공유 schema 9개 일치, 분석/GPT·독립 TTS readiness 200을 확인했다. 실제 녹음·GPT·callback E2E는 미수행이고 FE PR #39는 미배포다. 아래 S7 운영 관측은 과거 시점이다.
 
 **2026-10-02 17:55 KST 후속:** [testvideo1 실제 API 검증·수정](testvideo1-verification-20261002.md).

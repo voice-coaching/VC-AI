@@ -1,5 +1,7 @@
 # 현재 계약과 과거 호환성 정의
 
+**2026-10-03:** `runpod_result_v4.schema.json`은 기존 S7/H5 null 점수와 새 scored-H5 숫자 점수를 identity별로 구분한다. [채점 구현·실패·배포 계약](../canonical-integration/scoring-implementation-20261003.md)을 참조한다. 기존 null-only 설명은 과거 하네스에 적용한다.
+
 현재 writer는 [GPT-6 HTTP 배포](../runpod-current-pipeline.md)다. JSON 파일은 런타임 parser가 읽는 계약이므로 설명 문서처럼 enum/const를 일괄 치환하지 않는다.
 
 후속 사용자 결정은 callback v3를 전면 개편하여 `voice-coaching.runpod-analysis-result.v4`로 승계하는 것이다. [v4 전환 계획·구현 현황](../canonical-integration/callback-v4-plan.md)은 canonical 상태·scoped ID·MFA와 원본 바이트 보존을 정의한다. **10/2 명시 opt-in v4를 활성화했으며 헤더 없는 기존 API는 legacy다.** 과거 Redis `voice-coaching.analysis-result.v4`와 혼동하지 않는다.

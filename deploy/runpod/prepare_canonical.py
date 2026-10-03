@@ -73,9 +73,9 @@ def prepare(values):
     values.update({
         "AI_CANONICAL_PYTHON": str(PYTHON),
         "AI_CANONICAL_WORKSPACE_ROOT": str(WORK),
-        "AI_CANONICAL_CORE_ROOT": "/workspace/intelligentai/releases/canonical_ai_pre_llm_20260928_100247Z_421fda",
-        "AI_CANONICAL_LLM_ROOT": "/workspace/intelligentai/validation/canonical_h5_20261003",
-        "AI_CANONICAL_PIPELINE_REVISION": "canonical-R-421fda-H5-20261003-v1",
+        "AI_CANONICAL_CORE_ROOT": "/workspace/intelligentai/releases/canonical_scored_core_20261003_v1",
+        "AI_CANONICAL_LLM_ROOT": "/workspace/intelligentai/validation/canonical_scored_h5_20261003_v1",
+        "AI_CANONICAL_PIPELINE_REVISION": "canonical-scored-H5-20261003-v1",
         "AI_CANONICAL_EVIDENCE_B2_ENDPOINT": "https://s3.us-east-005.backblazeb2.com",
         "AI_CANONICAL_EVIDENCE_B2_REGION": "us-east-005",
         "AI_CANONICAL_EVIDENCE_B2_BUCKET": "speakai2026",

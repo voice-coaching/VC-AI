@@ -84,15 +84,22 @@ def main():
         read_document as _read_json, validate_document as _validate,
     )
     from voice_coach.backend_analysis.http_models import AnalysisInput, parse_json
-    from voice_coach.backend_analysis.canonical_harness import H5, S7, H5_DIRECTORY, harness_identity
+    from voice_coach.backend_analysis.canonical_harness import (
+        H5, S7, SCORED, H5_DIRECTORY, SCORED_CORE_DIRECTORY, SCORED_LLM_DIRECTORY, harness_identity,
+    )
     frozen = FrozenCanonicalCoaching(FrozenCanonicalArtifacts(args.core_root, args.llm_root))
     h5 = FrozenCanonicalCoaching(FrozenCanonicalArtifacts(args.core_root, args.llm_root.parent / H5_DIRECTORY))
+    scored = FrozenCanonicalCoaching(FrozenCanonicalArtifacts(
+        args.core_root.parent / SCORED_CORE_DIRECTORY, args.llm_root.parent / SCORED_LLM_DIRECTORY))
     # Installation failure is not invalid user evidence. Validate it before reading a job.
     try:
         frozen._bridge()
         if frozen.artifacts.identity != S7 or h5.artifacts.identity != H5:
             raise RuntimeError('VERIFIER_HARNESS_ROOT_MISMATCH')
         h5._bridge()
+        if scored.artifacts.identity != SCORED:
+            raise RuntimeError('VERIFIER_HARNESS_ROOT_MISMATCH')
+        scored._bridge().scoring_policy()
     except Exception:
         raise RuntimeError('VERIFIER_DEPENDENCIES_UNAVAILABLE') from None
     if args.check_installation:
@@ -101,7 +108,9 @@ def main():
         )
         print(json.dumps(dict(protocol=PROTOCOL, status='READY', coreManifestSha256=CORE_MANIFEST_SHA256,
                               llmManifestSha256=LLM_MANIFEST_SHA256, llmLockSha256=LLM_LOCK_SHA256,
-                              h5ManifestSha256=H5.manifest_sha256, h5LockSha256=H5.lock_sha256)))
+                              h5ManifestSha256=H5.manifest_sha256, h5LockSha256=H5.lock_sha256,
+                              scoredCoreManifestSha256=SCORED.core_sha256,
+                              scoredManifestSha256=SCORED.manifest_sha256, scoredLockSha256=SCORED.lock_sha256)))
         return
     header = _read_json(frame(1024), 1024)
     if (type(header) is not dict or set(header) != {'protocol', 'operation', 'receiptId'}
@@ -135,7 +144,7 @@ def main():
         association = _read_json(private.association_bytes)
         _validate(association, 'association')
         selected = harness_identity(association['llmManifestSha256'])
-        frozen = h5 if selected == H5 else frozen
+        frozen = {S7: frozen, H5: h5, SCORED: scored}[selected]
         metadata = association['preparedAudio']
         prepared = PreparedAudioIdentity.from_document(metadata) if metadata is not None else None
         # This verifies authenticated producer measurements and their binding,

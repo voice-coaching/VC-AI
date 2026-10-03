@@ -1,5 +1,7 @@
 # Canonical callback v4 전환 계획
 
+**2026-10-03 추가:** [채점 구현 정본](scoring-implementation-20261003.md)에 따라 새 하네스는 숫자 score와 9항목을 제공한다. 아래 null-only 설명은 기존 S7/H5에 한정된다. 새 채점 실패는 UNSCORABLE/FAILED이며 대체 점수는 없다. 공유 JSON Schema를 함께 갱신했으며 새 경로는 미배포다.
+
 2026-10-02 11:39~11:41 KST: [최신 제한 v4 접수 활성화](rollout-execution-20261002.md#제한-v4-접수-활성화).
 canonical **V33~V36**, RunPod 실행기·부팅·writer, Backend reader·검증·journal/apply를
 운영 반영했고 양쪽 admission은 ON이다. 명시적 v4 헤더의 단독 음성 발음 학습만 대상이다.
