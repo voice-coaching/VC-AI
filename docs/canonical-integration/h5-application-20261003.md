@@ -63,3 +63,13 @@ Backend 변경은 저장소 AGENTS의 `develop PR로 인계하고 담당자가 �
 - AWS 별도 release: `/opt/alpha-canonical/releases/021e17aa5e3bb51170b2cd58cd86d70739177ea82fef324d4cc310d3cd490ed4`, 128개 파일, 활성화하지 않음. 서비스 사용자로 `--check-installation`을 실행해 기존 core/S7와 새 H5 두 pin 모두 READY 확인. 작업 stdin·B2 조회·추론·GPT 호출은 없었다.
 - RunPod: `/workspace/intelligentai/validation/canonical_h5_20261003`에 13개 파일 준비, 전부 SHA 일치. 기존 S7·서비스 env·프로세스는 변경하지 않았다. 해당 FUSE 볼륨은 chown을 거절하고 기존 S7처럼 고정 디렉터리 777/파일 666 권한을 보고한다. 최초 빈 디렉터리에서 중단된 뒤 그 경로가 비어 있음을 확인하고 완성했다. runtime의 내용 무결성 pin은 필수이며 POSIX 소유권으로 보호됐다고 주장하지 않는다.
 - 운영 Backend JAR·검증기 활성 경로·RunPod H5 선택·FE 배포는 미수행이다. PR과 담당자 배포 또는 사용자의 명시적인 직접 배포 지시가 남아 있다.
+
+### 커밋·PR·배포 묶음
+
+- AI 구현 `b301e14`, 원격 `feat/canonical-h5-20261003`에 push. main·기존 통합 브랜치를 변경하지 않았다.
+- Backend `68ecde1`, [develop 대상 draft PR #98](https://github.com/voice-coaching/VC-BE/pull/98).
+- FE `380b700`, [dev 대상 draft PR #39](https://github.com/voice-coaching/VC-FE/pull/39).
+- Backend 빌드 JAR SHA: `a66bcaca14769c2d081fb243b50d6e884a8dbe19c653fa33a4ee197884848b5e`.
+- 로컬 운영 인계 폴더: `C:/Users/Public/Documents/ESTsoft/CreatorTemp/canonical-h5-package-20261003` (Git 제외).
+- RunPod 런타임 5개 파일의 변경 전 실행/overlay SHA를 대조해 `runpod-runtime-bundle.json`을 준비했다. bundle SHA `764aeaaf36d00b53da1e7954e94c78bf92e59e8f2cf96c209213fab6393ce30f`, 기준 overlay SHA `e49443deec905def50d6eada451e9310a20f3c45c22e6ef9f93c66154ee2fffe`. 적용 시 drift 검증을 다시 통과해야 한다.
+- 이 묶음은 준비만 했으며 `deploy_canonical_runtime.py`를 실행하지 않았다. PR 병합·운영 활성화도 하지 않았다.

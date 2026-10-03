@@ -1,5 +1,7 @@
 # Canonical AI와 동결 LLM 서비스 통합
 
+**2026-10-03 H5 선택 후속:** [H5 파생 하네스·양쪽 검증 계약·FE 짧은 총평](h5-application-20261003.md)을 구현하고 배포 묶음과 PR을 준비했다. 운영 전환은 아직 하지 않았으며 아래 S7 운영 관측과 구분한다.
+
 **2026-10-02 17:55 KST 후속:** [testvideo1 실제 API 검증·수정](testvideo1-verification-20261002.md).
 G2P 사전 환경 누락과 MFA zombie 회수를 수정·운영 배포했다. 실제 API 분석 51의 core는
 `ACCEPT / ok`였으나 Backend journal JSON 응답 결함으로 후속 보관 전에 실패했다.
