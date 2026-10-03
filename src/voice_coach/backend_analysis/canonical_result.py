@@ -7,7 +7,8 @@ Never expose these objects (including original_error) through a public API.
 
 The original frozen schemas are packaged alongside the service schema. Frozen
 prepare is replayed without dispatch to verify guidance and selection, not to
-generate another answer. No prompt, model, SDK or frozen source is modified.
+generate another answer. S7 and H5 identities select their own pinned validator;
+the original S7 files and core remain unchanged.
 """
 from __future__ import annotations
 
@@ -24,6 +25,7 @@ from .canonical_bridge import (
     _encode, _require, _sha,
 )
 from .canonical_media import PreparedAudioIdentity
+from .canonical_harness import H5, HarnessIdentity
 # Compatibility aliases for existing private callers; new infrastructure imports
 # the codec directly instead of reaching through result assembly.
 from .canonical_codec import (
@@ -159,7 +161,7 @@ class ServiceFailure:
 
 
 def _binding_and_association(request: AnalysisInput, core: dict, raw: bytes,
-                             prepared_audio: PreparedAudioIdentity | None):
+                             prepared_audio: PreparedAudioIdentity | None, harness: HarnessIdentity):
     _require(request.analysis_profile == PROFILE and request.result_schema_version == RESULT_VERSION
              and request.request_schema_version == "voice-coaching.runpod-analysis-request.v2",
              "CANONICAL_PROFILE_REQUIRED")
@@ -181,7 +183,7 @@ def _binding_and_association(request: AnalysisInput, core: dict, raw: bytes,
     identity = ExecutionAssociation(request.event_id, request.execution_id, request.analysis_id,
                                     request.recording_id, request.content_id, core_id, _sha(raw))
     association = dict(identity.to_document(), parentManifestSha256=CORE_MANIFEST_SHA256,
-                       llmManifestSha256=LLM_MANIFEST_SHA256, llmDependencyLockSha256=LLM_LOCK_SHA256,
+                       llmManifestSha256=harness.manifest_sha256, llmDependencyLockSha256=harness.lock_sha256,
                        scriptSha256=request.script_sha256, audioSha256=request.audio_sha256,
                        preparedWavSha256=core["prepared_wav_sha256"],
                        preparedAudio=prepared_audio.to_document() if prepared_audio is not None else None,
@@ -258,7 +260,8 @@ def preflight_canonical_result(
     _validate(binding, "binding")
     _validate(association, "association")
     _validate(expression, "coaching")
-    expected_binding, expected_association, identity = _binding_and_association(request, core, result.core_bytes, prepared_audio)
+    expected_binding, expected_association, identity = _binding_and_association(
+        request, core, result.core_bytes, prepared_audio, frozen.artifacts.identity)
     _require(binding == expected_binding and association == expected_association, "FULL_BINDING_MISMATCH")
     _require(expression["coreSha256"] == _sha(result.core_bytes)
              and expression["coreInputValidation"] == core["input_validation"], "EXPRESSION_CORE_MISMATCH")
@@ -286,6 +289,8 @@ def preflight_canonical_result(
             for item in items:
                 candidate, text = item["candidate"], item["expression"]
                 _require(text["guidanceId"] == candidate["guidance"]["guidanceId"], "GUIDANCE_MISMATCH")
+                if frozen.artifacts.identity == H5:
+                    bridge.validate_action(text["action"])
                 for value in text.values():
                     _require(len(value.encode("utf-16-le")) // 2 <= 1200, "EXPRESSION_UTF16_LIMIT")
             if expression["generationStatus"] == "DETERMINISTIC_FALLBACK":
@@ -346,7 +351,7 @@ def _verified_retention(receipt: TrustedBackendVerifiedReceipt, preflight: Canon
     return value
 
 
-def _base_document(request: AnalysisInput, identity: ResultIdentity) -> dict:
+def _base_document(request: AnalysisInput, identity: ResultIdentity, harness: HarnessIdentity = H5) -> dict:
     _require(type(identity) is ResultIdentity and type(identity.event_id) is UUID
              and type(identity.worker_instance_id) is UUID, "RESULT_IDENTITY_INVALID")
     _require(request.analysis_profile == PROFILE and request.result_schema_version == RESULT_VERSION
@@ -362,8 +367,8 @@ def _base_document(request: AnalysisInput, identity: ResultIdentity) -> dict:
                 sourceIdentity=dict(scriptSha256=request.script_sha256, audioSha256=request.audio_sha256,
                                     preparedWavSha256=None, canonicalAnalysisId=None, coreSha256=None,
                                     parentManifestSha256=CORE_MANIFEST_SHA256,
-                                    llmManifestSha256=LLM_MANIFEST_SHA256,
-                                    llmDependencyLockSha256=LLM_LOCK_SHA256, promptSha256=PROMPT_SHA256),
+                                    llmManifestSha256=harness.manifest_sha256,
+                                    llmDependencyLockSha256=harness.lock_sha256, promptSha256=harness.prompt_sha256),
                 visual=dict(status="NOT_CONNECTED", correctiveClaimsAllowed=False),
                 prosodyPolicy=dict(expressionPermission="NO_APPROVED_GUIDANCE_MAPPING"),
                 score=dict(overallScore=None, validity="NOT_AVAILABLE", reason="NO_APPROVED_SCORING_CONTRACT"))
@@ -386,7 +391,7 @@ def serialize_canonical_result(
     core = _read_json(result.core_bytes)
     expression = _read_json(result.expression_bytes)
     view = _read_json(result.selection_bytes) if result.selection_bytes is not None else None
-    document = _base_document(request, identity)
+    document = _base_document(request, identity, frozen.artifacts.identity)
     document["sourceIdentity"].update(preparedWavSha256=core["prepared_wav_sha256"],
                                       canonicalAnalysisId=preflight.association.canonical_analysis_id,
                                       coreSha256=preflight.association.core_sha256)

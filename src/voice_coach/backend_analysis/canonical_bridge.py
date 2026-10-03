@@ -1,4 +1,4 @@
-"""Private integration with the immutable canonical STEP7 expression bridge.
+"""Private integration with pinned S7 and its separately packaged H5 derivative.
 
 Not an HTTP DTO or a replacement for the legacy production factory. The caller
 must be the admitted executor, after a trusted canonical producer has finished.
@@ -16,6 +16,8 @@ import sys
 import threading
 from types import ModuleType
 from typing import Callable, TYPE_CHECKING
+
+from .canonical_harness import harness_identity
 
 if TYPE_CHECKING:
     from .http_models import AnalysisInput
@@ -85,12 +87,17 @@ class FrozenCanonicalArtifacts:
     core_root: Path = field(repr=False)
     llm_root: Path = field(repr=False)
 
+    @property
+    def identity(self):
+        return harness_identity(_file_sha(self.llm_root / "contracts/llm/llm_contract_manifest.json"))
+
     def verify(self) -> dict:
         core = self.core_root.resolve(strict=True)
         llm = self.llm_root.resolve(strict=True)
         manifest = _pinned_json(core, "release_manifest.json", CORE_MANIFEST_SHA256)
-        _pinned_json(llm, "contracts/llm/llm_contract_manifest.json", LLM_MANIFEST_SHA256)
-        lock = _pinned_json(llm, "contracts/llm/dependency_lock.json", LLM_LOCK_SHA256)
+        identity = self.identity
+        _pinned_json(llm, "contracts/llm/llm_contract_manifest.json", identity.manifest_sha256)
+        lock = _pinned_json(llm, "contracts/llm/dependency_lock.json", identity.lock_sha256)
         for root, files in ((core, manifest["file_sha256"]), (llm, lock["files"])):
             for relative, expected in files.items():
                 _require(_file_sha(_contained_file(root, relative)) == expected,
@@ -138,6 +145,7 @@ class FrozenCanonicalCoaching:
         _require(sys.version_info[:2] == (3, 12) and version("jsonschema") == "4.25.1",
                  "FROZEN_BRIDGE_RUNTIME_MISMATCH")
         lock = self.artifacts.verify()
+        identity = self.artifacts.identity
         root = self.artifacts.llm_root.resolve(strict=True)
         # Load the exact verified bytes, not an ambient `bridge` on sys.path or
         # a cached pyc. Relative legacy_pure import retains frozen semantics.
@@ -147,7 +155,7 @@ class FrozenCanonicalCoaching:
             raw = _contained_file(root, relative).read_bytes()
             _require(_sha(raw) == lock["files"][relative], "FROZEN_IMPORT_MISMATCH")
             source[name] = raw
-        package_name = "_voice_coach_frozen_step7_" + LLM_LOCK_SHA256
+        package_name = "_voice_coach_frozen_step7_" + identity.lock_sha256
         with _IMPORT_LOCK:
             names = [package_name, package_name + ".legacy_pure", package_name + ".adapter"]
             previous = {name: sys.modules.get(name) for name in names}
@@ -162,7 +170,7 @@ class FrozenCanonicalCoaching:
                     module.__file__ = str(root / "bridge" / (name + ".py"))
                     sys.modules[full_name] = module
                     exec(compile(raw, module.__file__, "exec"), module.__dict__)
-                return module.Bridge(root, expected_lock_sha256=LLM_LOCK_SHA256)
+                return module.Bridge(root, expected_lock_sha256=identity.lock_sha256)
             finally:
                 for name in names:
                     if previous[name] is None:
@@ -231,16 +239,17 @@ class FrozenCanonicalCoaching:
         except Exception:
             # dispatch still owns fail-closed/errorCode semantics and performs
             # its original prepare call. This extra deterministic preparation
-            # never invokes transport or changes the frozen prompt/model.
+            # never invokes transport; each harness owns its pinned prompt.
             pass
         result = bridge.dispatch(core_bytes, request.script_text, binding, transport=transport)
+        identity = self.artifacts.identity
         association = dict(requestId=str(request.event_id), executionId=str(request.execution_id),
                            analysisId=request.analysis_id, recordingId=request.recording_id,
                            contentId=request.content_id, canonicalAnalysisId=analysis_id,
                            coreSha256=binding["core_sha256"],
                            parentManifestSha256=CORE_MANIFEST_SHA256,
-                           llmManifestSha256=LLM_MANIFEST_SHA256,
-                           llmDependencyLockSha256=LLM_LOCK_SHA256,
+                           llmManifestSha256=identity.manifest_sha256,
+                           llmDependencyLockSha256=identity.lock_sha256,
                            scriptSha256=request.script_sha256, audioSha256=request.audio_sha256,
                            preparedWavSha256=prepared_sha,
                            preparedAudio=prepared_identity.to_document() if prepared_identity is not None else None,

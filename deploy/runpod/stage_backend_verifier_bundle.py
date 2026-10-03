@@ -17,7 +17,7 @@ BASE = Path('/opt/alpha-canonical/releases')
 REQUIRED_APP_FILES = frozenset({
     'app/deploy/runpod/canonical_verify.py',
     *(f'app/src/voice_coach/backend_analysis/{name}.py' for name in (
-        'canonical_bridge', 'canonical_codec', 'canonical_media',
+        'canonical_bridge', 'canonical_codec', 'canonical_media', 'canonical_harness',
         'canonical_result', 'http_models', 'domain',
     )),
     *(f'app/docs/contracts/{name}.schema.json' for name in (
@@ -39,14 +39,14 @@ def main():
     raw = sys.stdin.buffer.read(8 * 1024 * 1024 + 1)
     require(0 < len(raw) <= 8 * 1024 * 1024, 'BUNDLE_SIZE')
     files = json.loads(raw)
-    require(type(files) is dict and 90 <= len(files) <= 130, 'BUNDLE_FILES')
+    require(type(files) is dict and 90 <= len(files) <= 145, 'BUNDLE_FILES')
     require(REQUIRED_APP_FILES.issubset(files), 'BUNDLE_APP_DEPENDENCIES_MISSING')
     decoded = {}
     for name, entry in files.items():
         path = PurePosixPath(name)
         require(not path.is_absolute() and all(p not in ('', '.', '..') for p in name.split('/'))
                 and '\\' not in name and path.as_posix() == name
-                and (name.startswith(('frozen/core/', 'frozen/llm/', 'app/src/voice_coach/', 'app/docs/contracts/'))
+                and (name.startswith(('frozen/core/', 'frozen/llm/', 'frozen/canonical_h5_20261003/', 'app/src/voice_coach/', 'app/docs/contracts/'))
                      or name == 'app/deploy/runpod/canonical_verify.py')
                 and not any(p == '.env' or p.startswith('.env.') for p in path.parts), 'BUNDLE_PATH')
         require(type(entry) is dict and set(entry) == {'sha256', 'base64'}, 'BUNDLE_ENTRY')
@@ -57,6 +57,8 @@ def main():
         'frozen/core/release_manifest.json': '95f2347ad53ab53030f68a65795cfc5a84ca1c8c41bd03119c9a9fb15d0367c2',
         'frozen/llm/contracts/llm/dependency_lock.json': 'd8356763579dcfee347073a3f0ff72f4a0f67e33a29fa3b4c71012afcfd4ba01',
         'frozen/llm/contracts/llm/llm_contract_manifest.json': '1413b196616c919aeaab243fdd57771e70221ffc53a37f9b018d1881499b8c73',
+        'frozen/canonical_h5_20261003/contracts/llm/dependency_lock.json': '93636f0c4befe7f1e34358e74b1077cc94cb2b82064781485b0183c53357d2f5',
+        'frozen/canonical_h5_20261003/contracts/llm/llm_contract_manifest.json': '9f10296b6944249ded9f5ce2ccfdfa7c53b6e4af670999fe68e9e477e97eaf45',
     }
     for name, expected in pins.items():
         require(name in files and files[name]['sha256'] == expected, 'BUNDLE_FROZEN_PIN')

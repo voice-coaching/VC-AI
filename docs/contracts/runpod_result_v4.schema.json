@@ -8,12 +8,29 @@
     "preparedAudio": {
       "type": "object",
       "additionalProperties": false,
-      "required": ["sha256", "frameCount", "sampleRate", "measurementSource"],
+      "required": [
+        "sha256",
+        "frameCount",
+        "sampleRate",
+        "measurementSource"
+      ],
       "properties": {
-        "sha256": {"$ref": "#/$defs/sha256"},
-        "frameCount": {"type": "integer", "minimum": 0, "maximum": 9007199254740991},
-        "sampleRate": {"type": "integer", "minimum": 1, "maximum": 2147483647},
-        "measurementSource": {"const": "SERVER_PREPARED_WAV_PCM_FRAMES"}
+        "sha256": {
+          "$ref": "#/$defs/sha256"
+        },
+        "frameCount": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 9007199254740991
+        },
+        "sampleRate": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 2147483647
+        },
+        "measurementSource": {
+          "const": "SERVER_PREPARED_WAV_PCM_FRAMES"
+        }
       }
     },
     "uuid": {
@@ -1163,10 +1180,16 @@
           "const": "95f2347ad53ab53030f68a65795cfc5a84ca1c8c41bd03119c9a9fb15d0367c2"
         },
         "llmManifestSha256": {
-          "const": "1413b196616c919aeaab243fdd57771e70221ffc53a37f9b018d1881499b8c73"
+          "enum": [
+            "1413b196616c919aeaab243fdd57771e70221ffc53a37f9b018d1881499b8c73",
+            "9f10296b6944249ded9f5ce2ccfdfa7c53b6e4af670999fe68e9e477e97eaf45"
+          ]
         },
         "llmDependencyLockSha256": {
-          "const": "d8356763579dcfee347073a3f0ff72f4a0f67e33a29fa3b4c71012afcfd4ba01"
+          "enum": [
+            "d8356763579dcfee347073a3f0ff72f4a0f67e33a29fa3b4c71012afcfd4ba01",
+            "93636f0c4befe7f1e34358e74b1077cc94cb2b82064781485b0183c53357d2f5"
+          ]
         },
         "scriptSha256": {
           "$ref": "#/$defs/sha256"
@@ -1191,7 +1214,14 @@
           "const": false
         },
         "preparedAudio": {
-          "anyOf": [{"$ref": "#/$defs/preparedAudio"}, {"type": "null"}]
+          "anyOf": [
+            {
+              "$ref": "#/$defs/preparedAudio"
+            },
+            {
+              "type": "null"
+            }
+          ]
         }
       },
       "required": [
@@ -1211,6 +1241,28 @@
         "preparedAudio",
         "visualStatus",
         "visualCorrectiveClaimsAllowed"
+      ],
+      "oneOf": [
+        {
+          "properties": {
+            "llmManifestSha256": {
+              "const": "1413b196616c919aeaab243fdd57771e70221ffc53a37f9b018d1881499b8c73"
+            },
+            "llmDependencyLockSha256": {
+              "const": "d8356763579dcfee347073a3f0ff72f4a0f67e33a29fa3b4c71012afcfd4ba01"
+            }
+          }
+        },
+        {
+          "properties": {
+            "llmManifestSha256": {
+              "const": "9f10296b6944249ded9f5ce2ccfdfa7c53b6e4af670999fe68e9e477e97eaf45"
+            },
+            "llmDependencyLockSha256": {
+              "const": "93636f0c4befe7f1e34358e74b1077cc94cb2b82064781485b0183c53357d2f5"
+            }
+          }
+        }
       ]
     },
     "visual": {
@@ -1921,13 +1973,22 @@
           "const": "95f2347ad53ab53030f68a65795cfc5a84ca1c8c41bd03119c9a9fb15d0367c2"
         },
         "llmManifestSha256": {
-          "const": "1413b196616c919aeaab243fdd57771e70221ffc53a37f9b018d1881499b8c73"
+          "enum": [
+            "1413b196616c919aeaab243fdd57771e70221ffc53a37f9b018d1881499b8c73",
+            "9f10296b6944249ded9f5ce2ccfdfa7c53b6e4af670999fe68e9e477e97eaf45"
+          ]
         },
         "llmDependencyLockSha256": {
-          "const": "d8356763579dcfee347073a3f0ff72f4a0f67e33a29fa3b4c71012afcfd4ba01"
+          "enum": [
+            "d8356763579dcfee347073a3f0ff72f4a0f67e33a29fa3b4c71012afcfd4ba01",
+            "93636f0c4befe7f1e34358e74b1077cc94cb2b82064781485b0183c53357d2f5"
+          ]
         },
         "promptSha256": {
-          "const": "362ccc1f15d2e166110cca52d90fd3d6e81ee85646e96eb7018d8b8278898714"
+          "enum": [
+            "362ccc1f15d2e166110cca52d90fd3d6e81ee85646e96eb7018d8b8278898714",
+            "6f9e8515ae083a62e0500a03e3c2cef073ae78eb696bed8b5857a14b551ff1fd"
+          ]
         }
       },
       "required": [
@@ -1940,6 +2001,34 @@
         "llmManifestSha256",
         "llmDependencyLockSha256",
         "promptSha256"
+      ],
+      "oneOf": [
+        {
+          "properties": {
+            "llmManifestSha256": {
+              "const": "1413b196616c919aeaab243fdd57771e70221ffc53a37f9b018d1881499b8c73"
+            },
+            "llmDependencyLockSha256": {
+              "const": "d8356763579dcfee347073a3f0ff72f4a0f67e33a29fa3b4c71012afcfd4ba01"
+            },
+            "promptSha256": {
+              "const": "362ccc1f15d2e166110cca52d90fd3d6e81ee85646e96eb7018d8b8278898714"
+            }
+          }
+        },
+        {
+          "properties": {
+            "llmManifestSha256": {
+              "const": "9f10296b6944249ded9f5ce2ccfdfa7c53b6e4af670999fe68e9e477e97eaf45"
+            },
+            "llmDependencyLockSha256": {
+              "const": "93636f0c4befe7f1e34358e74b1077cc94cb2b82064781485b0183c53357d2f5"
+            },
+            "promptSha256": {
+              "const": "6f9e8515ae083a62e0500a03e3c2cef073ae78eb696bed8b5857a14b551ff1fd"
+            }
+          }
+        }
       ]
     },
     "score": {
