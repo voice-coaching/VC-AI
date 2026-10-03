@@ -82,6 +82,11 @@ class HttpRuntime:
         self.canonical_reason = "canonical_bootstrap_not_ready"
         self.canonical_dependencies_until = 0.0
         self.canonical_monitor = None
+        try:
+            from .deployment_observation import read_identity
+            self.deployment_identity = read_identity(self.environment)
+        except (OSError, ValueError, KeyError, TypeError):
+            self.deployment_identity = None
 
     def ready(self):
         return (not self.stopping and self.settings is not None and self.executor_ready
@@ -109,6 +114,14 @@ class HttpRuntime:
         return (self.canonical_lane is not None and not self.stopping
                 and self.environment.get("AI_CANONICAL_ADMISSION_ENABLED") == "true"
                 and time.monotonic() < self.canonical_dependencies_until)
+
+    def deployment_snapshot(self):
+        """Authenticated deployment diagnostics; counts only, never job content."""
+        if self.deployment_identity is None:
+            raise HttpFailure(503, 'NOT_READY') from None
+        return dict(protocol='canonical-deployment-v1', workerInstanceId=self.worker_id,
+                    activeJobs=int(self.active is not None), stopping=self.stopping,
+                    **self.deployment_identity)
 
     async def _monitor_canonical(self):
         import httpx

@@ -79,6 +79,10 @@ def create_app(environment=None):
                                  workerRevision=runtime.environment.get("VOICE_COACH_BUILD_REVISION")),
                             status_code=200 if is_ready else 503)
 
+    @app.get("/health/deployment")
+    async def deployment_health():
+        return JSONResponse(runtime.deployment_snapshot(), headers={"Cache-Control": "no-store"})
+
     @app.post("/v1/analysis-jobs")
     async def accept(request: Request):
         payload = await body(request)

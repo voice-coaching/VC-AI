@@ -1,5 +1,9 @@
 # Canonical AI와 동결 LLM 서비스 통합
 
+**수정 계획과 구현:** [FE–AWS–RunPod 연결 복구·재발 방지](api-pipeline-recovery-plan-20261003.md), [코드 변경·운영 인계](api-pipeline-recovery-implementation-20261003.md). 배포 보호·FE 상태 조회 복구·업로드 헤더와 AI 배포 진단을 구현했다. PR 병합, 최초 호환 묶음 복구와 운영 배포·수동 QA는 별도다.
+
+**2026-10-03 16:20 KST 조사:** [세션107 상태 조회502와 배포 계약 불일치](incident-20261003-session107-502.md). Backend 재시작 중 FE 폴링이 중단됐으나 분석61은 COMPLETED/ACCEPT로 반영됐다. 채점 Backend PR99 자동 배포 후 AWS verifier/RunPod는 이전 H5로 남아 현재 canonical 신규 접수는 차단 상태다. 아래 “미배포”는 각 문서 작성 당시 기록이다.
+
 **2026-10-03 채점 구현:** [게이트 제거·Seungun 전체 음소 9항목 채점](scoring-implementation-20261003.md). 새 파생 하네스와 v4 숫자 점수·실패 계약을 구현했다. 아래 H5 운영 관측과 달리 새 채점 경로는 아직 미배포다.
 
 **2026-10-03 15:00–15:13 KST 조사:** [분석 60 내용 거절·점수 미제공 원인](incident-20261003-content-gate-and-score.md). 결과는 Backend에 `COMPLETED / REJECT / INSUFFICIENT_CONTENT`로 적용됐다. 개발용 자음 일치율 gate에서 거절되어 GPT는 호출하지 않았다. 현재 H5와 v4 계약은 성공 시에도 숫자 점수를 생성하지 않는다. 운영 변경 없이 로그·DB·배포 소스를 대조했다.

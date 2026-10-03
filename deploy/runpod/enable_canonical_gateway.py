@@ -1,4 +1,4 @@
-"""Expose one authenticated analysis health route; never change TTS/API auth."""
+"""Expose authenticated canonical and deployment health routes; preserve TTS."""
 import hashlib
 import json
 import os
@@ -13,16 +13,24 @@ def main():
     config = Path("/workspace/intelligentai/deployment/api-gateway/nginx.conf")
     raw = config.read_bytes()
     anchor = b"location = /health/services { proxy_pass http://127.0.0.1:8080; }"
-    addition = b"location = /health/canonical { proxy_pass http://127.0.0.1:8080; }"
-    if raw.count(anchor) != 1 or addition in raw:
+    additions = [b"location = /health/canonical { proxy_pass http://127.0.0.1:8080; }",
+                 b"location = /health/deployment { proxy_pass http://127.0.0.1:8080; }"]
+    if raw.count(anchor) != 1 or any(raw.count(row) > 1 for row in additions):
         raise RuntimeError("GATEWAY_STATE_REQUIRES_RECONCILIATION")
-    backup = Path("/root/.config/intelligentai/gateway-before-canonical.conf")
-    fd = os.open(backup, os.O_WRONLY | os.O_CREAT | os.O_EXCL | os.O_NOFOLLOW, 0o600)
-    with os.fdopen(fd, "wb") as stream:
-        stream.write(raw)
-        stream.flush()
-        os.fsync(stream.fileno())
-    modified = raw.replace(anchor, anchor + b"\n        " + addition)
+    missing = [row for row in additions if row not in raw]
+    if not missing:
+        print(json.dumps({"status": "HEALTH_ROUTES_ALREADY_CONFIGURED"})); return
+    backup = Path("/root/.config/intelligentai") / ("gateway-before-canonical-" + hashlib.sha256(raw).hexdigest() + ".conf")
+    if backup.exists():
+        if backup.is_symlink() or backup.read_bytes() != raw:
+            raise RuntimeError("GATEWAY_BACKUP_MISMATCH")
+    else:
+        fd = os.open(backup, os.O_WRONLY | os.O_CREAT | os.O_EXCL | os.O_NOFOLLOW, 0o600)
+        with os.fdopen(fd, "wb") as stream:
+            stream.write(raw)
+            stream.flush()
+            os.fsync(stream.fileno())
+    modified = raw.replace(anchor, anchor + b"\n        " + b"\n        ".join(missing))
     temporary = config.with_name(".nginx-canonical.conf")
     fd = os.open(temporary, os.O_WRONLY | os.O_CREAT | os.O_EXCL | os.O_NOFOLLOW, 0o644)
     with os.fdopen(fd, "wb") as stream:
