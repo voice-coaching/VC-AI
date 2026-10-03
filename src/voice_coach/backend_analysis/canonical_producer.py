@@ -25,24 +25,28 @@ from .canonical_backend_journal import BackendCanonicalJournal
 from .canonical_process import private_directory, run_guarded
 from .http_models import AnalysisInput
 from .ports import MaterializedAudio
+from .canonical_provenance import check_provenance, git_environment
 
 
 CORE_PYTHON = Path('/workspace/intelligentai/validation/finish_20260916/envs/mac_prod311/bin/python')
 
 
-def core_environment(nltk_data_root: Path) -> dict[str, str]:
+def core_environment(nltk_data_root: Path, core_root: Path | None = None) -> dict[str, str]:
     # Use the already-provisioned read-only corpus, never a download to the
     # service user's nonexistent home. Do not inherit API/storage credentials.
     _require(nltk_data_root.is_absolute() and nltk_data_root.is_dir()
              and os.access(nltk_data_root / 'corpora/cmudict/cmudict', os.R_OK),
              'CANONICAL_NLTK_DATA_UNAVAILABLE')
-    return dict(PATH=str(CORE_PYTHON.parent) + ':/usr/bin:/bin',
+    environment = dict(PATH=str(CORE_PYTHON.parent) + ':/usr/bin:/bin',
                 LANG='C.UTF-8', LC_ALL='C.UTF-8', NLTK_DATA=str(nltk_data_root),
                 PYTHONDONTWRITEBYTECODE='1', PYTHONUNBUFFERED='1',
                 HF_HUB_OFFLINE='1', TRANSFORMERS_OFFLINE='1',
                 HF_HUB_DISABLE_IMPLICIT_TOKEN='1',
                 OMP_NUM_THREADS='2', MKL_NUM_THREADS='2', OPENBLAS_NUM_THREADS='2',
                 NUMEXPR_NUM_THREADS='2')
+    if core_root is not None:
+        environment.update(git_environment(core_root))
+    return environment
 
 
 def check_core_environment(nltk_data_root: Path) -> None:
@@ -108,6 +112,8 @@ class FrozenCanonicalProducer:
         self.artifacts = artifacts
         self.workspace_root = private_directory(workspace_root)
         self.environment = core_environment(nltk_data_root)
+        self.environment.update(git_environment(artifacts.core_root))
+        check_provenance(artifacts.core_root, self.environment)
 
     async def produce(self, request: AnalysisInput, audio: MaterializedAudio, *,
                       deadline_monotonic: float,
