@@ -26,6 +26,7 @@ from .canonical_result import preflight_canonical_result, serialize_canonical_re
 from .canonical_transport import FrozenOpenAITransport
 from .http_models import AnalysisInput, parse_json, RESULT_V5
 from .canonical_handoff import CanonicalHandoffClient, handoff_document
+from .canonical_recovery import persist_handoff
 from .http_settings import HttpSettings
 from .pipeline_timing import PipelineTiming
 from .canonical_async import drain_on_cancel
@@ -147,13 +148,13 @@ async def execute(path: Path, env, diagnostic: dict):
         stage("RESULT_PUBLISH")
         raw = await asyncio.to_thread(serialize_canonical_result, expression,
             request=request, identity=identity, frozen=frozen, prepared_audio=produced.prepared_audio)
+        doc = handoff_document(body, raw, preflight, identity)
+        await asyncio.to_thread(persist_handoff, work, doc, preflight.artifacts)
         published = await handoff.publish(raw)
         print(json.dumps({"event": "canonical_result_publish", "analysisId": request.analysis_id,
                           "executionId": str(request.execution_id), "published": published}), file=sys.stderr, flush=True)
         fence()
         stage("HANDOFF")
-        doc = handoff_document(body, raw, preflight, identity)
-        write_private_new(work / "handoff.json", encode_document(doc))
         await handoff.deliver(doc, preflight.artifacts, active=active, remaining=remaining)
         write_private_new(work / "completed.json", encode_document({"status": "HANDED_OFF"}))
         return
@@ -163,12 +164,12 @@ async def execute(path: Path, env, diagnostic: dict):
         if isinstance(identity, ResultIdentity) and produced is None and active():
             raw = serialize_precore_failure(request=request, identity=identity,
                 failure=ServiceFailure("INTEGRATION", "CANONICAL_EXECUTION_FAILED", "EXECUTION"))
+            doc = handoff_document(body, raw, None, identity)
+            await asyncio.to_thread(persist_handoff, work, doc, ())
             stage("RESULT_PUBLISH")
             await handoff.publish(raw)
             fence()
             stage("HANDOFF")
-            doc = handoff_document(body, raw, None, identity)
-            write_private_new(work / "handoff.json", encode_document(doc))
             await handoff.deliver(doc, (), active=active, remaining=remaining)
             write_private_new(work / "completed.json", encode_document({"status": "HANDED_OFF"}))
             return

@@ -52,6 +52,6 @@ AWS의 기존 호출 주소는 `https://ai.voice-coaching.site`다. RunPod 8082 
 | POST | `/api/internal/ai/analyses/{id}/handoffs/{handoffId}/seal` | Callback Bearer + worker ID | Transfer ownership atomically |
 | GET | `/api/internal/ai/analyses/{id}/handoffs/{handoffId}` | Callback Bearer + worker ID | Reconcile delivery outcome |
 | POST | `/api/internal/ai/archives/{handoffId}/artifacts/{kind}/reconciliation` | Separate operations Bearer | Verify an observed B2 version |
-| GET | `/api/analysis-capabilities/canonical` | User login | Available submission contracts |
+| GET | `/api/analysis-capabilities/canonical` | User login | Available submission contracts and supported analysis scopes |
 | GET | `/api/analyses/{id}/result-contract` | User login + ownership | Current attempt contract |
 | GET | `/api/v3/analyses/{id}` | User login + ownership | Committed v5 public result |
