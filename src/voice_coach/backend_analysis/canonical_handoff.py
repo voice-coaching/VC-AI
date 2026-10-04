@@ -40,9 +40,9 @@ class CanonicalHandoffClient:
             headers={"Authorization": "Bearer " + settings.callback_token,
                      "X-Worker-Instance-Id": str(worker), "Accept-Encoding": "identity"})
 
-    async def _request(self, method, path, raw=None, binary=False):
+    async def _request(self, method, path, raw=None, binary=False, timeout=10):
         headers = {"Content-Type": "application/octet-stream" if binary else "application/json"}
-        async with self.client.stream(method, self.base + path, content=raw, headers=headers) as reply:
+        async with self.client.stream(method, self.base + path, content=raw, headers=headers, timeout=timeout) as reply:
             _require(reply.headers.get("Content-Encoding", "identity") == "identity", "HANDOFF_RESPONSE_INVALID")
             body = bytearray()
             async for chunk in reply.aiter_raw():
@@ -58,15 +58,39 @@ class CanonicalHandoffClient:
                 raise httpx.TransportError("HANDOFF_RETRY")
             _require(False, "HANDOFF_REJECTED")
 
+    async def publish(self, projection_raw):
+        """Best-effort preview, never a durable ACK. Full handoff always follows.
+
+        An old/temporarily unavailable backend can use the existing handoff path.
+        Limit the *whole* optional exchange, including a trickling response, to 2s.
+        """
+        projection = parse_json(projection_raw)
+        try:
+            async with asyncio.timeout(2):
+                reply = await self._request("POST",
+                    f'/api/internal/ai/analyses/{projection["analysisId"]}/handoffs/result',
+                    projection_raw, timeout=2)
+                return (reply.get("status") == "PUBLISHED"
+                    and reply.get("eventId") == projection["eventId"]
+                    and reply.get("payloadSha256") == digest(projection))
+        except Exception:
+            # Do not fail a valid result because the optional acceleration path is unavailable.
+            return False
+
     async def deliver(self, doc, artifacts, *, active, remaining):
         meta = doc["metadata"]
         root = f'/api/internal/ai/analyses/{meta["analysisId"]}/handoffs'
         path = root + "/" + meta["handoffId"]
         raw = encode_document(doc)
-        # Probe before every resend, including unknown POST/seal outcomes.
+        # First send is already idempotent. Probe only after an uncertain transport outcome.
+        first = True
         while active() and remaining() > 0:
             try:
-                state = await self._request("GET", path)
+                if first:
+                    first = False
+                    state = await self._request("POST", root, raw)
+                else:
+                    state = await self._request("GET", path)
                 if state["state"] == "UNKNOWN":
                     state = await self._request("POST", root, raw)
                 _require(state.get("handoffId") == meta["handoffId"]
