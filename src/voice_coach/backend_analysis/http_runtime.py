@@ -59,6 +59,7 @@ class Job:
     task: asyncio.Task | None = None
     finished: float = 0
     canonical_workspace: Path | None = field(default=None, repr=False)
+    worker_id: str | None = None
 
 
 class HttpRuntime:
@@ -79,6 +80,7 @@ class HttpRuntime:
         self.reason = "http_settings_incomplete_or_invalid"
         self.active: dict[tuple[str, str], Job] = {}
         self.canonical_prepare_lock = asyncio.Lock()
+        self.recovery_slots = asyncio.Semaphore(2)
         self.canonical_prepared = False
         self.history = OrderedDict()
         self.stopping = False
@@ -144,6 +146,7 @@ class HttpRuntime:
                 self.canonical_reason = "canonical_configuration_invalid"
         self.monitor = asyncio.create_task(self._monitor())
         if self.canonical_lane is not None:
+            await self._restore_handoffs()
             self.canonical_monitor = asyncio.create_task(self._monitor_canonical())
 
     def canonical_admission_ready(self):
@@ -325,7 +328,7 @@ class HttpRuntime:
 
     def status(self, job, *, details=False):
         body = dict(requestId=str(job.request.event_id), executionId=str(job.request.execution_id),
-                    workerInstanceId=self.worker_id, status="DELIVERING_RESULT" if job.state == "HANDED_OFF" else job.state)
+                    workerInstanceId=job.worker_id or self.worker_id, status="DELIVERING_RESULT" if job.state == "HANDED_OFF" else job.state)
         if details:
             body["reasonCode"] = job.reason
         return body
@@ -385,7 +388,79 @@ class HttpRuntime:
 
     def _identity(self, job):
         return dict(requestId=str(job.request.event_id), executionId=str(job.request.execution_id),
-                    workerInstanceId=self.worker_id)
+                    workerInstanceId=job.worker_id or self.worker_id)
+
+    async def _restore_handoffs(self):
+        from .canonical_recovery import discover
+        for work, body, worker in await asyncio.to_thread(discover, self.canonical_lane.root):
+            key = (body["requestId"], body["executionId"])
+            try:
+                request = AnalysisInput.from_payload(body, self.settings.prefix)
+                if key in self.history or request.is_legacy or request.visual_input is not None:
+                    continue
+                job = Job(body, request, digest(body), state="DELIVERING_RESULT", worker_id=worker)
+                job.canonical_workspace = work
+                job.claimed.set()  # Previously admitted descriptor; no new inference/claim.
+                self.active[key] = self.history[key] = job
+                job.task = asyncio.create_task(self._recover_handoff(job))
+            except Exception:
+                logging.getLogger(__name__).warning("canonical_recovery_descriptor_invalid")
+
+    async def _recover_handoff(self, job):
+        from .canonical_handoff import CanonicalHandoffClient
+        from .canonical_recovery import load_handoff
+        from .canonical_producer import write_private_new
+        from .canonical_codec import encode_document
+        import httpx
+        heartbeat = None
+        client = CanonicalHandoffClient(self.settings, job.worker_id)
+        deadline = time.monotonic() + max(0, (timestamp(job.body["deadlineAt"]) - datetime.now(UTC)).total_seconds())
+        try:
+            async with self.recovery_slots:
+                doc, artifacts = await asyncio.to_thread(load_handoff, job.canonical_workspace, job.body, job.worker_id)
+                while not job.cancel.is_set() and time.monotonic() < deadline:
+                    try:
+                        # Receipt/commit ACK can outlive a lease; inspect it before heartbeat.
+                        state = await client.status(doc)
+                        if state.get("state") in ("RECEIVED", "VERIFYING", "COMMITTED"):
+                            break
+                        if state.get("state") not in ("UNKNOWN", "STAGING"):
+                            raise ValueError("HANDOFF_REJECTED")
+                        sent = time.monotonic()
+                        reply = await self.backend.call(self._path(job, "heartbeat"), self._identity(job),
+                                                        "leaseResponse", budget=max(0, deadline - sent))
+                        self._lease(job, reply, sent)  # Original owner and an unexpired lease are required.
+                        heartbeat = asyncio.create_task(self._heartbeat(job))
+                        await client.deliver(doc, artifacts,
+                            active=lambda: not job.cancel.is_set() and time.monotonic() < min(deadline, job.lease_until),
+                            remaining=lambda: min(deadline, job.lease_until) - time.monotonic(), probe_first=True)
+                        break
+                    except HttpFailure as error:
+                        if error.status not in (429, 500, 502, 503, 504):
+                            raise
+                        await asyncio.sleep(min(1, max(0, deadline - time.monotonic())))
+                    except httpx.TransportError:
+                        await asyncio.sleep(min(1, max(0, deadline - time.monotonic())))
+                else:
+                    raise TimeoutError("HANDOFF_RECOVERY_EXPIRED")
+                await asyncio.to_thread(write_private_new, job.canonical_workspace / "completed.json",
+                                        encode_document({"status": "HANDED_OFF"}))
+                job.state = "HANDED_OFF"
+                logging.getLogger(__name__).info("canonical_handoff_recovered executionId=%s", job.request.execution_id)
+        except asyncio.CancelledError:
+            job.state = "CANCELLED"
+            raise
+        except Exception:
+            job.state = "CANCELLED" if job.cancel.is_set() else "FAILED"
+            job.reason = "INTERNAL_ERROR"
+            logging.getLogger(__name__).warning("canonical_handoff_recovery_failed executionId=%s", job.request.execution_id)
+        finally:
+            if heartbeat:
+                heartbeat.cancel()
+                await asyncio.gather(heartbeat, return_exceptions=True)
+            await client.close()
+            job.finished = time.monotonic()
+            self.active.pop((job.body["requestId"], job.body["executionId"]), None)
 
     def _path(self, job, action):
         return f"/api/internal/ai/analyses/{job.request.analysis_id}/{action}"

@@ -41,6 +41,14 @@ class CanonicalHandoffClient:
                      "X-Worker-Instance-Id": str(worker), "Accept-Encoding": "identity"})
 
     async def _request(self, method, path, raw=None, binary=False, timeout=10):
+        # Bound the complete response, not only each read on a trickling socket.
+        try:
+            async with asyncio.timeout(timeout):
+                return await self._exchange(method, path, raw, binary, timeout)
+        except TimeoutError as error:
+            raise httpx.TransportError("HANDOFF_RETRY") from error
+
+    async def _exchange(self, method, path, raw=None, binary=False, timeout=10):
         headers = {"Content-Type": "application/octet-stream" if binary else "application/json"}
         async with self.client.stream(method, self.base + path, content=raw, headers=headers, timeout=timeout) as reply:
             _require(reply.headers.get("Content-Encoding", "identity") == "identity", "HANDOFF_RESPONSE_INVALID")
@@ -77,13 +85,21 @@ class CanonicalHandoffClient:
             # Do not fail a valid result because the optional acceleration path is unavailable.
             return False
 
-    async def deliver(self, doc, artifacts, *, active, remaining):
+    async def status(self, doc):
+        meta = doc["metadata"]
+        state = await self._request("GET", f'/api/internal/ai/analyses/{meta["analysisId"]}/handoffs/{meta["handoffId"]}')
+        if state.get("state") != "UNKNOWN":
+            _require(state.get("handoffId") == meta["handoffId"]
+                     and state.get("handoffSha256") == doc["handoffSha256"], "HANDOFF_DIGEST_CONFLICT")
+        return state
+
+    async def deliver(self, doc, artifacts, *, active, remaining, probe_first=False):
         meta = doc["metadata"]
         root = f'/api/internal/ai/analyses/{meta["analysisId"]}/handoffs'
         path = root + "/" + meta["handoffId"]
         raw = encode_document(doc)
         # First send is already idempotent. Probe only after an uncertain transport outcome.
-        first = True
+        first = not probe_first
         while active() and remaining() > 0:
             try:
                 if first:
