@@ -76,8 +76,9 @@ def create_app(environment=None):
     async def services():
         is_ready = runtime.ready()
         return JSONResponse(dict(status="ready" if is_ready else "not_ready", workerInstanceId=runtime.worker_id,
-                                 reasonCode=runtime.reason, executorReady=runtime.executor_ready,
-                                 legacyReady=runtime.legacy_ready(), canonicalReady=runtime.canonical_admission_ready(),
+                                 reasonCode=runtime.reason or runtime.canonical_reason,
+                                 executorReady=runtime.handoff_executor_ready(),
+                                 handoffReady=runtime.handoff_admission_ready(),
                                  coachingProvider="OPENAI", coachingModel="gpt-6-astra",
                                  workerRevision=runtime.environment.get("VOICE_COACH_BUILD_REVISION")),
                             status_code=200 if is_ready else 503)
@@ -96,8 +97,7 @@ def create_app(environment=None):
     @app.get("/health/handoff")
     async def handoff_health():
         from .canonical_settings import handoff_schema_digests
-        configured = (runtime.canonical_lane is not None and not runtime.stopping
-                      and runtime.environment.get("AI_CANONICAL_HANDOFF_ENABLED") == "true")
+        configured = runtime.handoff_executor_ready()
         return JSONResponse(dict(contractVersion="voice-coaching.canonical-handoff.v1",
             executorConfigured=configured, admissionEnabled=runtime.handoff_admission_ready(), schemaDigests=handoff_schema_digests()),
             status_code=200 if configured else 503, headers={"Cache-Control": "no-store"})

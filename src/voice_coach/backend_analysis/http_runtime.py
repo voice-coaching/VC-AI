@@ -141,10 +141,13 @@ class HttpRuntime:
         return False  # v4 is retired, regardless of stale environment flags.
 
     def handoff_admission_ready(self):
-        return (self.canonical_lane is not None and not self.stopping and self.canonical_lane.ready()
-                and self.environment.get("AI_CANONICAL_HANDOFF_ENABLED") == "true"
+        return (self.handoff_executor_ready()
                 and time.monotonic() < self.handoff_dependencies_until
                 and time.monotonic() < self.dependencies_until)
+
+    def handoff_executor_ready(self):
+        return (self.canonical_lane is not None and not self.stopping and self.canonical_lane.ready()
+                and self.environment.get("AI_CANONICAL_HANDOFF_ENABLED") == "true")
 
     async def _monitor_handoff(self, client):
         if self.environment.get("AI_CANONICAL_HANDOFF_ENABLED") != "true":

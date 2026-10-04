@@ -19,3 +19,5 @@ Backend `analysis.canonical.handoff.*`의 worker/archive/admission, `INDEFINITE`
 이 문서는 구현 계약이다. 운영 revision·migration·readiness 확인 결과는 배포 후 아래에 별도로 기록한다. 자동 회귀·브라우저 QA·추론 품질 검증은 실행하지 않는다.
 
 Backend archive writer는 `deploy/runpod/provision_backend_handoff_writer.py`로 `canonical-evidence/v5/`에 한정하여 발급한다. 기존 Pod writer·Backend reader와 분리하고 삭제 권한은 부여하지 않는다. 발급 결과는 AWS root 전용 공급 파일에 저장하며 RunPod에는 전달하지 않는다. 키 유효기간은 90일이며 만료 전 교체가 필요하다.
+
+`/health/services`의 `executorReady`는 v5 실행 lane의 실제 준비 상태를 표시하고 `handoffReady`는 Backend 연동까지 포함한다. 폐기된 legacy executor의 상태를 배포 완료 조건으로 사용하지 않는다.
