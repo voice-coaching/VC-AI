@@ -26,6 +26,8 @@
 
 **현재 상한은 세대당 3개 요청, 전체 활성 execution 1개**다. 기존 MFA 수명 제한을 무제한으로 풀지 않았다. 3번째 요청 뒤에는 세대를 종료·회수하고 새로 준비하므로 다음 세대에서 cold 준비 비용이 발생한다. 초기 READY 또는 회수 확인 전에는 새 추론을 받지 않는다. inference/GPT의 불확정 결과는 재실행하지 않는다. 요청 취소·예외는 resident subtree를 회수하며 회수 불명확 시 admission을 닫는다.
 
+후속 로컬 변경에서는 Pod 자원에 맞춰 기본 OFF인 resident 모드의 canonical 실행 상한을 3개로 늘렸다. 위 1개 상한은 opt-in 단일 resident core에 계속 적용된다. 운영 반영과 실제 완료 용량은 [슬롯 산정 기록](capacity-sizing-20261004.md)을 따른다.
+
 Unix socket 입력은 execution/request ID, deadline, case/audio digest만 받는다. 입력·출력 경로는 서버 workspace에서 유도한다. generation 로그는 private `/tmp/vc-core-*`에 남고 자동 삭제 정책을 추가하지 않았다. 운영자는 저장 공간과 재기동 횟수를 감시해야 한다.
 
 Backend offline verifier의 파생 pin, v4 schema의 허용 identity tuple, exporter/stager를 함께 갱신했다. schema의 결과·receipt 의미를 바꾼 것은 아니다. **새 verifier bundle 설치와 양쪽 schema digest 일치가 먼저 필요하다.** 기존 frozen 패키지들도 bundle에 유지한다. Backend verifier가 읽는 원본은 여전히 기존 v4 B2 검증 조건을 충족해야 한다.

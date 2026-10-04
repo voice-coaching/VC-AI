@@ -5,6 +5,8 @@
 | 목적 | 문서 |
 |---|---|
 | canonical v4에 H5 짧은 총평 적용 | [파생 하네스·검증 계약·배포 인계](canonical-integration/h5-application-20261003.md) |
+| 최근 음성 분석 실패와 FE–AWS–RunPod 연결 | [단일 실행 슬롯·429 실패·운영 API 조사](canonical-integration/incident-20261003-capacity-api-audit.md) |
+| RunPod 사양에 맞춘 canonical 동시 실행 슬롯 | [Pod 자원 관측·3개 슬롯 선택·활성화 조건](canonical-integration/capacity-sizing-20261004.md) |
 | GPT-6 날짜별 시스템 프롬프트·하네스 선택 | [H1–H6 버전 목록·현재 적용·원본 해시](gpt6-prompt-harness-catalog-20261003.md) |
 | RunPod lease 갱신 경합 방지 구현·배포 | [lease 판독·오류 진단·운영 확인과 남은 QA](canonical-integration/runpod-lease-hardening-plan-20261003.md) |
 | 10/3 분석 53–56 실패·AWS main 배포·JSON 응답 복구 | [journal JSON 결함 조사와 운영 수정 반영](canonical-integration/incident-20261003-journal-wire.md) |

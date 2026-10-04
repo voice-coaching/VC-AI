@@ -1,4 +1,4 @@
-"""Parent-side isolated canonical lane, sharing the legacy admission slot."""
+"""Parent-side isolated canonical executions with exclusive legacy admission."""
 from __future__ import annotations
 
 from datetime import datetime, UTC
