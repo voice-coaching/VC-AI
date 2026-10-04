@@ -9,6 +9,7 @@ RunPod HTTP proxy의 8082를 분석·TTS 공용 진입점으로 사용한다. �
 | /gateway/health | nginx 자체 생존 | public; 전체 readiness 아님 |
 | /health, /readyz | 기존 분석 127.0.0.1:8080 | 기존 public 정책 |
 | /health/services | 분석 8080 | 기존 분석 Bearer |
+| /health/canonical | 분석 8080; 10/2 추가 | 기존 분석 Bearer, 설정·접수 상태와 계약 SHA 9개 |
 | /v1/analysis-jobs 및 하위 상태·취소 | 분석 8080 | 기존 분석 Bearer |
 | /health/live, /health/ready | TTS 127.0.0.1:8083 | 기존 TTS Bearer |
 | /v1/tts/synthesize | TTS 8083 | 기존 TTS Bearer |

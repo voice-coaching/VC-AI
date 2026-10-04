@@ -1,0 +1,13 @@
+# Canonical contract digests use original bytes, including line endings.
+docs/contracts/runpod_analysis_request_v2.schema.json -text
+docs/contracts/runpod_http_control_v1_2.schema.json -text
+docs/contracts/runpod_result_v4.schema.json -text
+docs/contracts/runpod_canonical_parent.schema.json -text
+docs/contracts/runpod_canonical_input.schema.json -text
+docs/contracts/runpod_canonical_output.schema.json -text
+docs/contracts/runpod_canonical_journal_v1.schema.json -text
+docs/contracts/runpod_http_control_v1.schema.json text eol=lf
+docs/contracts/runpod_result_v1.schema.json text eol=lf
+docs/contracts/runpod_analysis_request_v3.schema.json -text
+docs/contracts/runpod_result_v5.schema.json -text
+docs/contracts/runpod_canonical_handoff_v1.schema.json -text

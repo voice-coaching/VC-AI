@@ -1,0 +1,760 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:voice-coaching:runpod-http-control:v1.2",
+  "title": "RunPod HTTP v1.2 canonical infrastructure and admission readiness",
+  "description": "Coordinated server capability contract; legacy v1.1 controls remain unchanged.",
+  "$comment": "Readiness is based on live server prerequisites, not FE tests or inference-quality QA. A ready infrastructure may have admission disabled. All advertised schema digests must match local packaged bytes.",
+  "$ref": "#/$defs/workerReadinessV2",
+  "$defs": {
+    "leaseResponse": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "analysisId",
+        "requestId",
+        "executionId",
+        "workerInstanceId",
+        "serverTime",
+        "leaseExpiresAt",
+        "continueProcessing"
+      ],
+      "properties": {
+        "analysisId": {
+          "$ref": "#/$defs/positiveLong"
+        },
+        "requestId": {
+          "$ref": "#/$defs/uuid"
+        },
+        "executionId": {
+          "$ref": "#/$defs/uuid"
+        },
+        "workerInstanceId": {
+          "$ref": "#/$defs/uuid"
+        },
+        "serverTime": {
+          "$ref": "#/$defs/utcTimestamp"
+        },
+        "leaseExpiresAt": {
+          "$ref": "#/$defs/utcTimestamp"
+        },
+        "continueProcessing": {
+          "const": true
+        }
+      },
+      "$comment": "Existing heartbeat response shape. A recovery heartbeat cannot create a claim or revive an expired lease."
+    },
+    "resultAck": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "eventId",
+        "analysisId",
+        "requestId",
+        "executionId",
+        "status",
+        "serverTime"
+      ],
+      "properties": {
+        "eventId": {
+          "$ref": "#/$defs/uuid"
+        },
+        "analysisId": {
+          "$ref": "#/$defs/positiveLong"
+        },
+        "requestId": {
+          "$ref": "#/$defs/uuid"
+        },
+        "executionId": {
+          "$ref": "#/$defs/uuid"
+        },
+        "status": {
+          "enum": [
+            "APPLIED",
+            "DUPLICATE"
+          ]
+        },
+        "serverTime": {
+          "$ref": "#/$defs/utcTimestamp"
+        }
+      },
+      "$comment": "Existing result ACK shape. Canonical result/ack reconciliation returns DUPLICATE only, without registering or applying a result."
+    },
+    "evidenceReceipt": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "contractVersion",
+        "receiptId",
+        "association",
+        "workerInstanceId",
+        "manifestSha256",
+        "status",
+        "reasonCode",
+        "serverTime"
+      ],
+      "properties": {
+        "contractVersion": {
+          "const": "voice-coaching.runpod-http.v1.2"
+        },
+        "receiptId": {
+          "$ref": "#/$defs/uuid"
+        },
+        "association": {
+          "$ref": "#/$defs/evidenceManifestAssociation"
+        },
+        "workerInstanceId": {
+          "$ref": "#/$defs/uuid"
+        },
+        "manifestSha256": {
+          "$ref": "#/$defs/sha256"
+        },
+        "status": {
+          "enum": [
+            "PENDING",
+            "VERIFYING",
+            "VERIFIED",
+            "REJECTED",
+            "EXPIRED",
+            "CANCELED"
+          ]
+        },
+        "reasonCode": {
+          "enum": [
+            null,
+            "EVIDENCE_INVALID",
+            "EVIDENCE_STORAGE_UNAVAILABLE",
+            "DEADLINE_EXCEEDED",
+            "EXECUTION_INACTIVE"
+          ]
+        },
+        "serverTime": {
+          "$ref": "#/$defs/utcTimestamp"
+        }
+      },
+      "allOf": [
+        {
+          "if": {
+            "properties": {
+              "status": {
+                "enum": [
+                  "PENDING",
+                  "VERIFYING",
+                  "VERIFIED"
+                ]
+              }
+            }
+          },
+          "then": {
+            "properties": {
+              "reasonCode": {
+                "const": null
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "status": {
+                "const": "REJECTED"
+              }
+            }
+          },
+          "then": {
+            "properties": {
+              "reasonCode": {
+                "enum": [
+                  "EVIDENCE_INVALID",
+                  "EVIDENCE_STORAGE_UNAVAILABLE"
+                ]
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "status": {
+                "const": "EXPIRED"
+              }
+            }
+          },
+          "then": {
+            "properties": {
+              "reasonCode": {
+                "const": "DEADLINE_EXCEEDED"
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "status": {
+                "const": "CANCELED"
+              }
+            }
+          },
+          "then": {
+            "properties": {
+              "reasonCode": {
+                "const": "EXECUTION_INACTIVE"
+              }
+            }
+          }
+        }
+      ]
+    },
+    "evidenceError": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "contractVersion",
+        "reasonCode",
+        "retryable"
+      ],
+      "properties": {
+        "contractVersion": {
+          "const": "voice-coaching.runpod-http.v1.2"
+        },
+        "reasonCode": {
+          "enum": [
+            "UNAUTHENTICATED",
+            "UNSUPPORTED_MEDIA_TYPE",
+            "PAYLOAD_TOO_LARGE",
+            "INVALID_JSON",
+            "VALIDATION_FAILED",
+            "TARGET_NOT_FOUND",
+            "STALE_EXECUTION",
+            "WORKER_CONFLICT",
+            "CLAIM_REQUIRED",
+            "LEASE_EXPIRED",
+            "DEADLINE_EXCEEDED",
+            "ANALYSIS_CANCELLED",
+            "ANALYSIS_TERMINAL",
+            "EVIDENCE_MANIFEST_CONFLICT",
+            "NOT_READY",
+            "DEPENDENCY_UNAVAILABLE",
+            "INTERNAL_ERROR"
+          ]
+        },
+        "retryable": {
+          "type": "boolean"
+        }
+      }
+    },
+    "uuid": {
+      "type": "string",
+      "format": "uuid",
+      "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+    },
+    "positiveLong": {
+      "type": "integer",
+      "minimum": 1,
+      "maximum": 9007199254740991
+    },
+    "artifact": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "kind": {
+          "enum": [
+            "CORE",
+            "BRIDGE_RESULT",
+            "SELECTION_PROJECTION",
+            "BINDING",
+            "ASSOCIATION"
+          ]
+        },
+        "schemaVersion": {
+          "enum": [
+            "canonical_ai_predeploy_v1",
+            "canonical-llm-expression-result-v1",
+            "canonical-llm-expression-input-v1",
+            "voice-coaching.canonical-binding.v1",
+            "voice-coaching.canonical-association.v1"
+          ]
+        },
+        "sha256": {
+          "$ref": "#/$defs/sha256"
+        },
+        "byteSize": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 16777216
+        },
+        "objectKey": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 1000,
+          "pattern": "^[A-Za-z0-9][A-Za-z0-9._/-]*$"
+        },
+        "versionId": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 1024
+        }
+      },
+      "required": [
+        "kind",
+        "schemaVersion",
+        "sha256",
+        "byteSize",
+        "objectKey",
+        "versionId"
+      ],
+      "oneOf": [
+        {
+          "properties": {
+            "kind": {
+              "const": "CORE"
+            },
+            "schemaVersion": {
+              "const": "canonical_ai_predeploy_v1"
+            }
+          }
+        },
+        {
+          "properties": {
+            "kind": {
+              "const": "BRIDGE_RESULT"
+            },
+            "schemaVersion": {
+              "const": "canonical-llm-expression-result-v1"
+            }
+          }
+        },
+        {
+          "properties": {
+            "kind": {
+              "const": "SELECTION_PROJECTION"
+            },
+            "schemaVersion": {
+              "const": "canonical-llm-expression-input-v1"
+            }
+          }
+        },
+        {
+          "properties": {
+            "kind": {
+              "const": "BINDING"
+            },
+            "schemaVersion": {
+              "const": "voice-coaching.canonical-binding.v1"
+            }
+          }
+        },
+        {
+          "properties": {
+            "kind": {
+              "const": "ASSOCIATION"
+            },
+            "schemaVersion": {
+              "const": "voice-coaching.canonical-association.v1"
+            }
+          }
+        }
+      ]
+    },
+    "evidenceManifestAssociation": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "requestId",
+        "executionId",
+        "analysisId",
+        "recordingId",
+        "contentId",
+        "canonicalAnalysisId",
+        "coreSha256"
+      ],
+      "properties": {
+        "requestId": {
+          "$ref": "#/$defs/uuid"
+        },
+        "executionId": {
+          "$ref": "#/$defs/uuid"
+        },
+        "analysisId": {
+          "$ref": "#/$defs/positiveLong"
+        },
+        "recordingId": {
+          "$ref": "#/$defs/positiveLong"
+        },
+        "contentId": {
+          "$ref": "#/$defs/positiveLong"
+        },
+        "canonicalAnalysisId": {
+          "type": "string",
+          "minLength": 1
+        },
+        "coreSha256": {
+          "$ref": "#/$defs/sha256"
+        }
+      }
+    },
+    "evidenceManifest": {
+      "type": "object",
+      "additionalProperties": false,
+      "$comment": "Maximum serialized UTF-8 manifest size is 65536 bytes. Producers and consumers MUST enforce this byte limit outside JSON Schema and hash the actual manifest bytes. Verify association and CORE SHA against the retained original evidence; schema validation alone does not establish a Backend VERIFIED receipt or readiness.",
+      "required": [
+        "schemaVersion",
+        "association",
+        "artifacts"
+      ],
+      "properties": {
+        "schemaVersion": {
+          "const": "voice-coaching.canonical-evidence-manifest.v1"
+        },
+        "association": {
+          "$ref": "#/$defs/evidenceManifestAssociation"
+        },
+        "artifacts": {
+          "type": "array",
+          "minItems": 4,
+          "maxItems": 5,
+          "uniqueItems": true,
+          "items": {
+            "$ref": "#/$defs/artifact"
+          },
+          "allOf": [
+            {
+              "contains": {
+                "required": [
+                  "kind"
+                ],
+                "properties": {
+                  "kind": {
+                    "const": "CORE"
+                  }
+                }
+              },
+              "minContains": 1,
+              "maxContains": 1
+            },
+            {
+              "contains": {
+                "required": [
+                  "kind"
+                ],
+                "properties": {
+                  "kind": {
+                    "const": "BRIDGE_RESULT"
+                  }
+                }
+              },
+              "minContains": 1,
+              "maxContains": 1
+            },
+            {
+              "contains": {
+                "required": [
+                  "kind"
+                ],
+                "properties": {
+                  "kind": {
+                    "const": "BINDING"
+                  }
+                }
+              },
+              "minContains": 1,
+              "maxContains": 1
+            },
+            {
+              "contains": {
+                "required": [
+                  "kind"
+                ],
+                "properties": {
+                  "kind": {
+                    "const": "ASSOCIATION"
+                  }
+                }
+              },
+              "minContains": 1,
+              "maxContains": 1
+            },
+            {
+              "contains": {
+                "required": [
+                  "kind"
+                ],
+                "properties": {
+                  "kind": {
+                    "const": "SELECTION_PROJECTION"
+                  }
+                }
+              },
+              "minContains": 0,
+              "maxContains": 1
+            }
+          ]
+        }
+      }
+    },
+    "sha256": {
+      "type": "string",
+      "pattern": "^[0-9a-f]{64}$"
+    },
+    "utcTimestamp": {
+      "type": "string",
+      "format": "date-time",
+      "pattern": "^[0-9]{4}-(0[1-9]|1[0-2])-(0[1-9]|[12][0-9]|3[01])T([01][0-9]|2[0-3]):[0-5][0-9]:[0-5][0-9][.][0-9]{3}Z$"
+    },
+    "schemaDigest": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "file",
+        "sha256"
+      ],
+      "properties": {
+        "file": {
+          "enum": [
+            "runpod_http_control_v1.schema.json",
+            "runpod_result_v1.schema.json",
+            "runpod_analysis_request_v2.schema.json",
+            "runpod_http_control_v1_2.schema.json",
+            "runpod_result_v4.schema.json",
+            "runpod_canonical_parent.schema.json",
+            "runpod_canonical_input.schema.json",
+            "runpod_canonical_output.schema.json",
+            "runpod_canonical_journal_v1.schema.json"
+          ]
+        },
+        "sha256": {
+          "$ref": "#/$defs/sha256"
+        }
+      }
+    },
+    "workerReadinessV2": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "status",
+        "contractVersion",
+        "serverTime",
+        "legacyReady",
+        "acceptedResultSchemaVersions",
+        "analysisProfiles",
+        "schemaDigests",
+        "canonicalSupported",
+        "canonicalAdmissionEnabled",
+        "canonicalStatus",
+        "evidenceStoreStatus",
+        "reasonCode"
+      ],
+      "properties": {
+        "status": {
+          "enum": [
+            "ready",
+            "not_ready"
+          ]
+        },
+        "contractVersion": {
+          "const": "voice-coaching.runpod-http.v1.2"
+        },
+        "serverTime": {
+          "$ref": "#/$defs/utcTimestamp"
+        },
+        "legacyReady": {
+          "type": "boolean"
+        },
+        "acceptedResultSchemaVersions": {
+          "enum": [
+            [
+              "voice-coaching.runpod-analysis-result.v1",
+              "voice-coaching.runpod-analysis-result.v2",
+              "voice-coaching.runpod-analysis-result.v3"
+            ],
+            [
+              "voice-coaching.runpod-analysis-result.v1",
+              "voice-coaching.runpod-analysis-result.v2",
+              "voice-coaching.runpod-analysis-result.v3",
+              "voice-coaching.runpod-analysis-result.v4"
+            ]
+          ]
+        },
+        "analysisProfiles": {
+          "enum": [
+            [
+              "LEGACY_SEUNGUN_V3"
+            ],
+            [
+              "LEGACY_SEUNGUN_V3",
+              "CANONICAL_FROZEN_20260928_V4"
+            ]
+          ]
+        },
+        "schemaDigests": {
+          "type": "array",
+          "minItems": 3,
+          "maxItems": 9,
+          "uniqueItems": true,
+          "items": {
+            "$ref": "#/$defs/schemaDigest"
+          }
+        },
+        "canonicalSupported": {
+          "type": "boolean"
+        },
+        "canonicalAdmissionEnabled": {
+          "type": "boolean"
+        },
+        "canonicalStatus": {
+          "enum": [
+            "READY",
+            "NOT_READY"
+          ]
+        },
+        "evidenceStoreStatus": {
+          "enum": [
+            "READY",
+            "NOT_READY"
+          ]
+        },
+        "reasonCode": {
+          "enum": [
+            null,
+            "NOT_READY"
+          ]
+        }
+      },
+      "allOf": [
+        {
+          "if": {
+            "properties": {
+              "canonicalSupported": {
+                "const": true
+              }
+            }
+          },
+          "then": {
+            "properties": {
+              "status": {
+                "const": "ready"
+              },
+              "legacyReady": {
+                "const": true
+              },
+              "canonicalStatus": {
+                "const": "READY"
+              },
+              "evidenceStoreStatus": {
+                "const": "READY"
+              },
+              "reasonCode": {
+                "const": null
+              },
+              "acceptedResultSchemaVersions": {
+                "const": [
+                  "voice-coaching.runpod-analysis-result.v1",
+                  "voice-coaching.runpod-analysis-result.v2",
+                  "voice-coaching.runpod-analysis-result.v3",
+                  "voice-coaching.runpod-analysis-result.v4"
+                ]
+              },
+              "analysisProfiles": {
+                "const": [
+                  "LEGACY_SEUNGUN_V3",
+                  "CANONICAL_FROZEN_20260928_V4"
+                ]
+              },
+              "schemaDigests": {
+                "minItems": 9,
+                "maxItems": 9
+              }
+            }
+          },
+          "else": {
+            "properties": {
+              "status": {
+                "const": "not_ready"
+              },
+              "canonicalAdmissionEnabled": {
+                "const": false
+              },
+              "canonicalStatus": {
+                "const": "NOT_READY"
+              },
+              "evidenceStoreStatus": {
+                "const": "NOT_READY"
+              },
+              "reasonCode": {
+                "const": "NOT_READY"
+              },
+              "acceptedResultSchemaVersions": {
+                "const": [
+                  "voice-coaching.runpod-analysis-result.v1",
+                  "voice-coaching.runpod-analysis-result.v2",
+                  "voice-coaching.runpod-analysis-result.v3"
+                ]
+              },
+              "analysisProfiles": {
+                "const": [
+                  "LEGACY_SEUNGUN_V3"
+                ]
+              }
+            }
+          }
+        }
+      ]
+    },
+    "canonicalExecutorReadiness": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "executorConfigured",
+        "admissionEnabled",
+        "reasonCode",
+        "executionQaPerformed",
+        "schemaDigests"
+      ],
+      "properties": {
+        "executorConfigured": {
+          "type": "boolean"
+        },
+        "admissionEnabled": {
+          "type": "boolean"
+        },
+        "reasonCode": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "maxLength": 100
+        },
+        "executionQaPerformed": {
+          "const": false
+        },
+        "schemaDigests": {
+          "type": "array",
+          "minItems": 9,
+          "maxItems": 9,
+          "uniqueItems": true,
+          "items": {
+            "$ref": "#/$defs/schemaDigest"
+          }
+        }
+      },
+      "allOf": [
+        {
+          "if": {
+            "properties": {
+              "admissionEnabled": {
+                "const": true
+              }
+            }
+          },
+          "then": {
+            "properties": {
+              "executorConfigured": {
+                "const": true
+              }
+            }
+          }
+        }
+      ]
+    }
+  }
+}

@@ -1,4 +1,4 @@
-"""Single-slot control plane. Backend leases fence every analysis execution."""
+"""Bounded control plane. Backend leases fence every analysis execution."""
 from __future__ import annotations
 
 import asyncio
@@ -18,6 +18,9 @@ from uuid import uuid4
 from .adapters.backend_http import BackendHttp
 from .http_models import AnalysisInput, CONTRACT, HttpFailure, digest, result_payload, timestamp
 from .http_settings import HttpSettings
+
+
+CANONICAL_COLD_CAPACITY = 3
 
 
 def _executor(connection, environment):
@@ -55,27 +58,76 @@ class Job:
     claimed: asyncio.Event = field(default_factory=asyncio.Event)
     task: asyncio.Task | None = None
     finished: float = 0
+    canonical_workspace: Path | None = field(default=None, repr=False)
 
 
 class HttpRuntime:
     def __init__(self, environment):
         self.environment = dict(environment)
+        # Keep role secrets in the explicit lane configuration, not the ambient
+        # environment inherited by multiprocessing's helper/legacy processes.
+        for name in tuple(os.environ):
+            if name.startswith("AI_CANONICAL_"):
+                os.environ.pop(name, None)
         self.worker_id = str(uuid4())
         self.settings = None
         self.backend = None
         self.process = self.connection = None
         self.executor_ready = False
+        self.openai_checked_until = 0.0
         self.dependencies_until = 0.0
         self.reason = "http_settings_incomplete_or_invalid"
-        self.active: Job | None = None
+        self.active: dict[tuple[str, str], Job] = {}
+        self.canonical_prepare_lock = asyncio.Lock()
+        self.canonical_prepared = False
         self.history = OrderedDict()
         self.stopping = False
         self.monitor = None
+        self.legacy_requested = False
+        self.legacy_bootstrap = None
+        self.canonical_lane = None
+        self.canonical_reason = "canonical_bootstrap_not_ready"
+        self.canonical_dependencies_until = 0.0
+        self.handoff_dependencies_until = 0.0
+        self.canonical_monitor = None
+        try:
+            from .deployment_observation import read_identity
+            self.deployment_identity = read_identity(self.environment)
+        except (OSError, ValueError, KeyError, TypeError):
+            self.deployment_identity = None
 
-    def ready(self):
+    def legacy_ready(self):
         return (not self.stopping and self.settings is not None and self.executor_ready
                 and self.process is not None and self.process.is_alive()
                 and time.monotonic() < self.dependencies_until)
+
+    def ready(self):
+        return self.handoff_admission_ready()
+
+    async def _prepare_legacy(self):
+        try:
+            async with self.canonical_prepare_lock:
+                if self.active:
+                    return
+                self.canonical_prepared = False
+                await self._stop_executor()
+                await self._spawn()
+        except asyncio.CancelledError:
+            raise
+        except Exception:
+            self.executor_ready = False
+            try:
+                await self._stop_executor()
+            except Exception:
+                # Unknown ownership is not permission to admit another model.
+                self.stopping = True
+                self.reason = "executor_cleanup_pending"
+
+    async def _cancel_legacy_bootstrap(self):
+        if self.legacy_bootstrap is not None:
+            self.legacy_bootstrap.cancel()
+            await asyncio.gather(self.legacy_bootstrap, return_exceptions=True)
+            self.legacy_bootstrap = None
 
     async def start(self):
         try:
@@ -83,7 +135,77 @@ class HttpRuntime:
             self.backend = BackendHttp(self.settings)
         except ValueError:
             return
+        if self.environment.get("AI_CANONICAL_BOOTSTRAP_READY") == "true":
+            try:
+                from .canonical_lane import CanonicalLane
+                self.canonical_lane = CanonicalLane(self.environment)
+                self.canonical_reason = None
+            except Exception:
+                self.canonical_reason = "canonical_configuration_invalid"
         self.monitor = asyncio.create_task(self._monitor())
+        if self.canonical_lane is not None:
+            self.canonical_monitor = asyncio.create_task(self._monitor_canonical())
+
+    def canonical_admission_ready(self):
+        return False  # v4 is retired, regardless of stale environment flags.
+
+    def handoff_admission_ready(self):
+        return (self.handoff_executor_ready()
+                and time.monotonic() < self.handoff_dependencies_until
+                and time.monotonic() < self.dependencies_until)
+
+    def handoff_executor_ready(self):
+        return (self.canonical_lane is not None and not self.stopping and self.canonical_lane.ready()
+                and self.environment.get("AI_CANONICAL_HANDOFF_ENABLED") == "true")
+
+    async def _monitor_handoff(self, client):
+        if self.environment.get("AI_CANONICAL_HANDOFF_ENABLED") != "true":
+            return
+        from .canonical_settings import handoff_schema_digests
+        try:
+            async with client.stream("GET", self.settings.callback_base + "/api/internal/ai/worker-readiness/handoff",
+                    headers={"Authorization": "Bearer " + self.settings.callback_token, "Accept-Encoding": "identity"}) as reply:
+                if reply.status_code != 200 or reply.headers.get("Content-Encoding", "identity") != "identity":
+                    raise ValueError()
+                raw = bytearray()
+                async for chunk in reply.aiter_raw():
+                    raw.extend(chunk)
+                    if len(raw) > 65536:
+                        raise ValueError()
+            from .http_models import parse_json
+            state = parse_json(bytes(raw))
+            if (state.get("contractVersion") != "voice-coaching.canonical-handoff.v1"
+                    or not state.get("supported")
+                    or state.get("schemaDigests") != handoff_schema_digests()):
+                raise ValueError()
+            self.handoff_dependencies_until = time.monotonic() + 45
+        except asyncio.CancelledError:
+            raise
+        except Exception:
+            self.handoff_dependencies_until = 0
+
+    def deployment_snapshot(self):
+        """Authenticated deployment diagnostics; counts only, never job content."""
+        if self.deployment_identity is None:
+            raise HttpFailure(503, 'NOT_READY') from None
+        return dict(protocol='canonical-deployment-v1', workerInstanceId=self.worker_id,
+                    activeJobs=len(self.active), stopping=self.stopping,
+                    **self.deployment_identity)
+
+    async def _monitor_canonical(self):
+        import httpx
+        async with httpx.AsyncClient(trust_env=False, follow_redirects=False, timeout=8) as client:
+            while not self.stopping:
+                try:
+                    await self.canonical_lane.refresh()
+                    await self._monitor_handoff(client)
+                    self.canonical_reason = None if time.monotonic() < self.handoff_dependencies_until else "handoff_backend_not_ready"
+                except asyncio.CancelledError:
+                    raise
+                except Exception:
+                    self.handoff_dependencies_until = 0
+                    self.canonical_reason = "handoff_backend_not_ready"
+                await asyncio.sleep(10)
 
     async def _receive(self):
         while not self.stopping:
@@ -100,7 +222,7 @@ class HttpRuntime:
         parent, child = context.Pipe()
         self.connection = parent
         environment = {k: v for k, v in self.environment.items()
-                       if k not in {"AI_ANALYSIS_API_TOKEN", "AI_ANALYSIS_CALLBACK_TOKEN",
+                       if not k.startswith("AI_CANONICAL_") and k not in {"AI_ANALYSIS_API_TOKEN", "AI_ANALYSIS_CALLBACK_TOKEN",
                                     "AI_ANALYSIS_CALLBACK_BASE_URL"}}
         work = Path(environment["AI_ANALYSIS_RESTRICTED_WORKSPACE_ROOT"]) / ("http-" + self.worker_id)
         work.mkdir(mode=0o700, parents=True, exist_ok=True)
@@ -150,18 +272,27 @@ class HttpRuntime:
 
     async def _monitor(self):
         while not self.stopping:
+            stage = "executor_not_ready"
+            previous = self.reason
             try:
-                if self.active is None and (not self.executor_ready or self.process is None or not self.process.is_alive()):
-                    await self._stop_executor()
-                    await self._spawn()
+                stage = "backend_callback_not_ready"
                 response = await self.backend.call("/api/internal/ai/worker-readiness", None, "workerReadiness")
                 if response["status"] != "ready" or response["contractVersion"] != CONTRACT:
                     raise ValueError()
-                import httpx
-                async with httpx.AsyncClient(trust_env=False, timeout=3, follow_redirects=False) as client:
-                    clova = await client.get("http://127.0.0.1:8000/health")
-                    if clova.status_code != 200 or clova.json().get("status") != "ready":
-                        raise ValueError()
+                stage = "openai_configuration_invalid"
+                from .coaching_generator import openai_configuration
+                api_key = openai_configuration(self.environment)
+                stage = "openai_model_unavailable"
+                if time.monotonic() >= self.openai_checked_until:
+                    import httpx
+                    async with httpx.AsyncClient(trust_env=False, timeout=5, follow_redirects=False) as client:
+                        response = await client.get("https://api.openai.com/v1/models/gpt-6-astra",
+                            headers={"Authorization": "Bearer " + api_key})
+                        if response.status_code != 200 or response.json().get("id") != "gpt-6-astra":
+                            raise ValueError()
+                    # Authenticated model visibility, not an inference quality check.
+                    self.openai_checked_until = time.monotonic() + 300
+                stage = "storage_not_ready"
                 from .http_storage import storage_ready
                 if not await asyncio.to_thread(storage_ready, self.environment, self.settings):
                     raise ValueError()
@@ -171,7 +302,10 @@ class HttpRuntime:
                 raise
             except Exception:
                 self.dependencies_until = 0
-                self.reason = "analysis_dependencies_not_ready"
+                self.reason = stage
+            if previous != self.reason:
+                logging.getLogger(__name__).warning("analysis_dependency_state provider=OPENAI model=gpt-6-astra reason=%s",
+                    self.reason or "ready")
             await asyncio.sleep(15)
 
     def _prune(self):
@@ -191,7 +325,7 @@ class HttpRuntime:
 
     def status(self, job, *, details=False):
         body = dict(requestId=str(job.request.event_id), executionId=str(job.request.execution_id),
-                    workerInstanceId=self.worker_id, status=job.state)
+                    workerInstanceId=self.worker_id, status="DELIVERING_RESULT" if job.state == "HANDED_OFF" else job.state)
         if details:
             body["reasonCode"] = job.reason
         return body
@@ -200,6 +334,8 @@ class HttpRuntime:
         if self.settings is None:
             raise HttpFailure(503, "NOT_READY")
         request = AnalysisInput.from_payload(body, self.settings.prefix)
+        if not request.is_legacy and request.visual_input is not None:
+            raise HttpFailure(503, "NOT_READY")
         key, sha = (body["requestId"], body["executionId"]), digest(body)
         self._prune()
         prior = self.history.get(key)
@@ -211,15 +347,25 @@ class HttpRuntime:
             return (200 if prior.finished else 202), self.status(prior)
         if any(k[0] == key[0] and not j.finished for k, j in self.history.items()):
             raise HttpFailure(409, "STALE_EXECUTION")
-        if not self.ready():
-            raise HttpFailure(503, "NOT_READY")
-        if self.active is not None:
+        capacity = (1 if request.is_legacy or self.canonical_lane is None
+                    or self.canonical_lane.resident is not None else CANONICAL_COLD_CAPACITY)
+        if len(self.active) >= capacity or any(
+                job.request.is_legacy for job in self.active.values()):
             raise HttpFailure(429, "CAPACITY_EXCEEDED")
+        from .http_models import RESULT_V5
+        canonical_ready = self.handoff_admission_ready() if request.result_schema_version == RESULT_V5 else self.canonical_admission_ready()
+        if not request.is_legacy and not canonical_ready:
+            raise HttpFailure(503, "NOT_READY")
+        if request.is_legacy and not self.legacy_ready():
+            if self.canonical_lane is not None and self.canonical_lane.resident is not None:
+                raise HttpFailure(503, "NOT_READY")
+            self.legacy_requested = True
+            raise HttpFailure(503, "NOT_READY")
         if timestamp(body["deadlineAt"]) <= datetime.now(UTC):
             raise HttpFailure(409, "DEADLINE_EXCEEDED")
         job = Job(body, request, sha)
         # No await between checking and reserving the slot on this event loop.
-        self.active, self.history[key] = job, job
+        self.active[key] = self.history[key] = job
         try:
             sent = time.monotonic()
             claim = await self.backend.call(self._path(job, "claim"), self._identity(job) |
@@ -227,13 +373,14 @@ class HttpRuntime:
             self._lease(job, claim, sent)
             if job.cancel.is_set():
                 raise HttpFailure(409, "ANALYSIS_CANCELLED")
-            self.connection.send(request)
+            if request.is_legacy:
+                self.connection.send(request)
             job.claimed.set()
-            job.task = asyncio.create_task(self._run(job))
+            job.task = asyncio.create_task(self._run(job) if request.is_legacy else self._run_canonical(job))
             return 202, self.status(job)
         except BaseException:
             self.history.pop(key, None)
-            self.active = None
+            self.active.pop(key, None)
             raise
 
     def _identity(self, job):
@@ -253,6 +400,8 @@ class HttpRuntime:
         job.lease_until = sent + duration - 2
         if time.monotonic() >= job.lease_until:
             raise HttpFailure(409, "LEASE_EXPIRED")
+        if not job.request.is_legacy and self.canonical_lane is not None:
+            self.canonical_lane.publish_lease(job)
 
     async def _heartbeat(self, job):
         delay = 15
@@ -275,6 +424,57 @@ class HttpRuntime:
                     job.cancel.set()
                     return
                 delay = max(1, error.retry_after)
+            except Exception:
+                job.reason = "DEPENDENCY_UNAVAILABLE"
+                job.cancel.set()
+                return
+
+    async def _run_canonical(self, job):
+        from .canonical_process import CanonicalProcessCleanupUnconfirmed
+        heartbeat = asyncio.create_task(self._heartbeat(job))
+        job.state = "RUNNING"
+        cleanup_confirmed = True
+        try:
+            # Prepare shared legacy ownership once before parallel canonical work.
+            async with self.canonical_prepare_lock:
+                if not self.canonical_prepared:
+                    self.legacy_requested = False
+                    await self._cancel_legacy_bootstrap()
+                    await self._stop_executor()
+                    self.canonical_prepared = True
+            job.state = await self.canonical_lane.run(job, self.worker_id)
+        except CanonicalProcessCleanupUnconfirmed:
+            cleanup_confirmed = False
+            self.stopping = True
+            self.canonical_reason = "canonical_cleanup_unconfirmed"
+            for other in self.active.values():
+                other.cancel.set()
+            job.reason = "INTERNAL_ERROR"
+            job.state = "CANCELLING"
+        except asyncio.CancelledError:
+            job.cancel.set()
+            job.state = "CANCELLED"
+        except Exception as error:
+            # No fabricated core/fallback or downgrade. Backend fences timeout/failure.
+            from .canonical_process import CanonicalProcessFailed
+            from .canonical_lease import LEASE_CODES
+            from .canonical_bridge import CanonicalIntegrationError
+            code = "INTERNAL_ERROR"
+            if isinstance(error, CanonicalIntegrationError) and str(error) in LEASE_CODES | {
+                    "CANONICAL_EXECUTION_INACTIVE", "CANONICAL_PROCESS_FAILED"}:
+                code = str(error)
+            logging.getLogger(__name__).warning(
+                "canonical_execution_failed executionId=%s code=%s guardExitStatus=%s",
+                job.request.execution_id, code,
+                error.exit_status if isinstance(error, CanonicalProcessFailed) else None)
+            job.reason = job.reason or "INTERNAL_ERROR"
+            job.state = "CANCELLED" if job.cancel.is_set() else "FAILED"
+        finally:
+            heartbeat.cancel()
+            await asyncio.gather(heartbeat, return_exceptions=True)
+            if cleanup_confirmed:
+                job.finished = time.monotonic()
+                self.active.pop((job.body["requestId"], job.body["executionId"]), None)
 
     async def _run(self, job):
         heartbeat = asyncio.create_task(self._heartbeat(job))
@@ -332,7 +532,7 @@ class HttpRuntime:
                 await asyncio.sleep(180 if not self.stopping else 0)
                 job.state = "CANCELLED"
             job.finished = time.monotonic()
-            self.active = None
+            self.active.pop((job.body["requestId"], job.body["executionId"]), None)
 
     def cancel(self, request_id, execution_id):
         job = self.lookup(request_id, execution_id)
@@ -345,14 +545,21 @@ class HttpRuntime:
 
     async def close(self):
         self.stopping = True
+        if self.canonical_monitor:
+            self.canonical_monitor.cancel()
+            await asyncio.gather(self.canonical_monitor, return_exceptions=True)
         if self.monitor:
             self.monitor.cancel()
             await asyncio.gather(self.monitor, return_exceptions=True)
-        if self.active:
-            self.active.cancel.set()
-            if self.active.task:
-                self.active.task.cancel()
-                await asyncio.gather(self.active.task, return_exceptions=True)
+        jobs = tuple(self.active.values())
+        for job in jobs:
+            job.cancel.set()
+            if job.task:
+                job.task.cancel()
+        await asyncio.gather(*(job.task for job in jobs if job.task), return_exceptions=True)
+        await self._cancel_legacy_bootstrap()
+        if self.canonical_lane is not None:
+            await self.canonical_lane.close()
         await self._stop_executor()
         if self.backend:
             await self.backend.close()

@@ -1,0 +1,2264 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "canonical_ai_output_v1",
+  "title": "Canonical AI pre-LLM output",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "content_gate",
+    "core_result",
+    "expected_phone_count",
+    "feedback_delivery_allowed",
+    "input_validation",
+    "llm_facing_evidence",
+    "mfa_receipt",
+    "native",
+    "prepared_wav_sha256",
+    "pronunciation_evidence",
+    "pronunciation_feedback_source",
+    "request_id",
+    "schema_version",
+    "source_audio_sha256",
+    "stage_durations_s",
+    "timing_marks_monotonic"
+  ],
+  "properties": {
+    "content_gate": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "config_sha256",
+        "measure",
+        "decision"
+      ],
+      "properties": {
+        "config_sha256": {
+          "type": "string",
+          "pattern": "^[0-9a-f]{64}$"
+        },
+        "measure": {
+          "type": [
+            "object",
+            "null"
+          ]
+        },
+        "decision": {
+          "type": [
+            "object",
+            "null"
+          ]
+        }
+      }
+    },
+    "core_result": {
+      "$defs": {
+        "AICoreEvidence": {
+          "additionalProperties": false,
+          "properties": {
+            "code": {
+              "minLength": 1,
+              "title": "Code",
+              "type": "string"
+            },
+            "component": {
+              "enum": [
+                "pronunciation",
+                "prosody"
+              ],
+              "title": "Component",
+              "type": "string"
+            },
+            "expected_index": {
+              "anyOf": [
+                {
+                  "minimum": 0,
+                  "type": "integer"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "default": null,
+              "title": "Expected Index"
+            },
+            "metric_name": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "default": null,
+              "title": "Metric Name"
+            }
+          },
+          "required": [
+            "code",
+            "component"
+          ],
+          "title": "AICoreEvidence",
+          "type": "object"
+        },
+        "AICoreEvidencePolicyResult": {
+          "additionalProperties": false,
+          "properties": {
+            "policy_version": {
+              "const": "ai_core_evidence_policy_v1",
+              "default": "ai_core_evidence_policy_v1",
+              "title": "Policy Version",
+              "type": "string"
+            },
+            "status": {
+              "enum": [
+                "ok",
+                "partial"
+              ],
+              "title": "Status",
+              "type": "string"
+            },
+            "evidence": {
+              "items": {
+                "$ref": "#/$defs/AICoreEvidence"
+              },
+              "title": "Evidence",
+              "type": "array"
+            },
+            "limitations": {
+              "items": {
+                "type": "string"
+              },
+              "minItems": 1,
+              "title": "Limitations",
+              "type": "array"
+            },
+            "natural_language_feedback": {
+              "default": [],
+              "items": {
+                "type": "string"
+              },
+              "title": "Natural Language Feedback",
+              "type": "array"
+            }
+          },
+          "required": [
+            "status",
+            "evidence",
+            "limitations"
+          ],
+          "title": "AICoreEvidencePolicyResult",
+          "type": "object"
+        },
+        "AICoreInsertionCandidate": {
+          "additionalProperties": false,
+          "properties": {
+            "observed_phone": {
+              "minLength": 1,
+              "title": "Observed Phone",
+              "type": "string"
+            },
+            "start_ms": {
+              "minimum": 0.0,
+              "title": "Start Ms",
+              "type": "number"
+            },
+            "end_ms": {
+              "minimum": 0.0,
+              "title": "End Ms",
+              "type": "number"
+            }
+          },
+          "required": [
+            "observed_phone",
+            "start_ms",
+            "end_ms"
+          ],
+          "title": "AICoreInsertionCandidate",
+          "type": "object"
+        },
+        "AICoreMetadata": {
+          "additionalProperties": false,
+          "properties": {
+            "analysis_id": {
+              "minLength": 1,
+              "title": "Analysis Id",
+              "type": "string"
+            },
+            "legacy_analysis_schema_version": {
+              "default": "1.0.0",
+              "title": "Legacy Analysis Schema Version",
+              "type": "string"
+            },
+            "detector_version": {
+              "default": "final_pronunciation_detector_v1",
+              "title": "Detector Version",
+              "type": "string"
+            },
+            "stage1_model_safetensors_sha256": {
+              "default": "1d876792f4262cf43a974856423f11bee5c3148a54efd687794ca577f163465e",
+              "title": "Stage1 Model Safetensors Sha256",
+              "type": "string"
+            },
+            "expected_phone_source": {
+              "default": "g2pk_compat_jamo_v1",
+              "title": "Expected Phone Source",
+              "type": "string"
+            },
+            "reference_version": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "default": null,
+              "title": "Reference Version"
+            },
+            "reference_group": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "default": null,
+              "title": "Reference Group"
+            },
+            "analysis_window_source": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "default": null,
+              "title": "Analysis Window Source"
+            },
+            "reference_window_source": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "default": null,
+              "title": "Reference Window Source"
+            },
+            "notices": {
+              "default": [],
+              "items": {
+                "type": "string"
+              },
+              "title": "Notices",
+              "type": "array"
+            },
+            "legacy_provenance": {
+              "$ref": "#/$defs/Provenance"
+            }
+          },
+          "required": [
+            "analysis_id",
+            "legacy_provenance"
+          ],
+          "title": "AICoreMetadata",
+          "type": "object"
+        },
+        "AICorePhoneDecision": {
+          "additionalProperties": false,
+          "properties": {
+            "expected_index": {
+              "minimum": 0,
+              "title": "Expected Index",
+              "type": "integer"
+            },
+            "expected_phone": {
+              "minLength": 1,
+              "title": "Expected Phone",
+              "type": "string"
+            },
+            "expected_phone_id": {
+              "maximum": 42,
+              "minimum": 0,
+              "title": "Expected Phone Id",
+              "type": "integer"
+            },
+            "observed_candidate": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Observed Candidate"
+            },
+            "alignment_operation": {
+              "enum": [
+                "correct",
+                "substitution",
+                "deletion"
+              ],
+              "title": "Alignment Operation",
+              "type": "string"
+            },
+            "start_ms": {
+              "anyOf": [
+                {
+                  "minimum": 0.0,
+                  "type": "number"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "default": null,
+              "title": "Start Ms"
+            },
+            "end_ms": {
+              "anyOf": [
+                {
+                  "minimum": 0.0,
+                  "type": "number"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "default": null,
+              "title": "End Ms"
+            },
+            "error_score": {
+              "title": "Error Score",
+              "type": "number"
+            },
+            "operating_threshold": {
+              "title": "Operating Threshold",
+              "type": "number"
+            },
+            "is_error": {
+              "title": "Is Error",
+              "type": "boolean"
+            },
+            "hard_error": {
+              "title": "Hard Error",
+              "type": "boolean"
+            },
+            "score_semantics": {
+              "minLength": 1,
+              "title": "Score Semantics",
+              "type": "string"
+            }
+          },
+          "required": [
+            "expected_index",
+            "expected_phone",
+            "expected_phone_id",
+            "observed_candidate",
+            "alignment_operation",
+            "error_score",
+            "operating_threshold",
+            "is_error",
+            "hard_error",
+            "score_semantics"
+          ],
+          "title": "AICorePhoneDecision",
+          "type": "object"
+        },
+        "AICorePronunciationResult": {
+          "additionalProperties": false,
+          "properties": {
+            "status": {
+              "enum": [
+                "ok",
+                "partial",
+                "not_requested",
+                "not_run",
+                "error"
+              ],
+              "title": "Status",
+              "type": "string"
+            },
+            "failure_code": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "default": null,
+              "title": "Failure Code"
+            },
+            "detector_version": {
+              "default": "final_pronunciation_detector_v1",
+              "title": "Detector Version",
+              "type": "string"
+            },
+            "expected_phone_source": {
+              "default": "g2pk_compat_jamo_v1",
+              "title": "Expected Phone Source",
+              "type": "string"
+            },
+            "expected_phones": {
+              "default": [],
+              "items": {
+                "type": "string"
+              },
+              "title": "Expected Phones",
+              "type": "array"
+            },
+            "ctc_hypothesis": {
+              "default": [],
+              "items": {
+                "type": "string"
+              },
+              "title": "Ctc Hypothesis",
+              "type": "array"
+            },
+            "insertion_candidates": {
+              "default": [],
+              "items": {
+                "$ref": "#/$defs/AICoreInsertionCandidate"
+              },
+              "title": "Insertion Candidates",
+              "type": "array"
+            },
+            "phones": {
+              "default": [],
+              "items": {
+                "$ref": "#/$defs/AICorePhoneDecision"
+              },
+              "title": "Phones",
+              "type": "array"
+            },
+            "logits_shape": {
+              "anyOf": [
+                {
+                  "maxItems": 2,
+                  "minItems": 2,
+                  "prefixItems": [
+                    {
+                      "type": "integer"
+                    },
+                    {
+                      "type": "integer"
+                    }
+                  ],
+                  "type": "array"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "default": null,
+              "title": "Logits Shape"
+            },
+            "layer18_shape": {
+              "anyOf": [
+                {
+                  "maxItems": 2,
+                  "minItems": 2,
+                  "prefixItems": [
+                    {
+                      "type": "integer"
+                    },
+                    {
+                      "type": "integer"
+                    }
+                  ],
+                  "type": "array"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "default": null,
+              "title": "Layer18 Shape"
+            },
+            "notices": {
+              "default": [],
+              "items": {
+                "type": "string"
+              },
+              "title": "Notices",
+              "type": "array"
+            },
+            "presentation": {
+              "anyOf": [
+                {
+                  "$ref": "#/$defs/PronunciationPresentation"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "default": null
+            },
+            "presentation_failure_code": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "default": null,
+              "title": "Presentation Failure Code"
+            }
+          },
+          "required": [
+            "status"
+          ],
+          "title": "AICorePronunciationResult",
+          "type": "object"
+        },
+        "AICoreProsodyResult": {
+          "additionalProperties": false,
+          "properties": {
+            "status": {
+              "enum": [
+                "ok",
+                "partial",
+                "not_requested",
+                "not_run",
+                "error"
+              ],
+              "title": "Status",
+              "type": "string"
+            },
+            "legacy_robust_metrics_v1": {
+              "default": [],
+              "items": {
+                "$ref": "#/$defs/AcousticFeature"
+              },
+              "title": "Legacy Robust Metrics V1",
+              "type": "array"
+            },
+            "aihub71557_compatible_metrics_v2": {
+              "anyOf": [
+                {
+                  "$ref": "#/$defs/Aihub71557UserMetricsV2"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "default": null
+            },
+            "aihub71557_reference_comparison_v1": {
+              "anyOf": [
+                {
+                  "$ref": "#/$defs/Aihub71557ReferenceComparison"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "default": null
+            },
+            "analysis_window_source": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "default": null,
+              "title": "Analysis Window Source"
+            },
+            "failure_code": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "default": null,
+              "title": "Failure Code"
+            }
+          },
+          "required": [
+            "status"
+          ],
+          "title": "AICoreProsodyResult",
+          "type": "object"
+        },
+        "AcousticFeature": {
+          "additionalProperties": false,
+          "properties": {
+            "name": {
+              "minLength": 1,
+              "title": "Name",
+              "type": "string"
+            },
+            "unit": {
+              "minLength": 1,
+              "title": "Unit",
+              "type": "string"
+            },
+            "method": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "default": null,
+              "title": "Method"
+            },
+            "points": {
+              "items": {
+                "$ref": "#/$defs/FeaturePoint"
+              },
+              "title": "Points",
+              "type": "array"
+            },
+            "summary": {
+              "additionalProperties": {
+                "anyOf": [
+                  {
+                    "type": "number"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
+              },
+              "title": "Summary",
+              "type": "object"
+            }
+          },
+          "required": [
+            "name",
+            "unit"
+          ],
+          "title": "AcousticFeature",
+          "type": "object"
+        },
+        "Aihub71557MetricComparison": {
+          "additionalProperties": false,
+          "properties": {
+            "metric_name": {
+              "title": "Metric Name",
+              "type": "string"
+            },
+            "user_value": {
+              "anyOf": [
+                {
+                  "type": "number"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "default": null,
+              "title": "User Value"
+            },
+            "reference_n": {
+              "minimum": 1,
+              "title": "Reference N",
+              "type": "integer"
+            },
+            "reference_p10": {
+              "title": "Reference P10",
+              "type": "number"
+            },
+            "reference_p25": {
+              "title": "Reference P25",
+              "type": "number"
+            },
+            "reference_p50": {
+              "title": "Reference P50",
+              "type": "number"
+            },
+            "reference_p75": {
+              "title": "Reference P75",
+              "type": "number"
+            },
+            "reference_p90": {
+              "title": "Reference P90",
+              "type": "number"
+            },
+            "delta_from_p50": {
+              "anyOf": [
+                {
+                  "type": "number"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "default": null,
+              "title": "Delta From P50"
+            },
+            "within_iqr": {
+              "anyOf": [
+                {
+                  "type": "boolean"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Within Iqr"
+            },
+            "within_p10_p90": {
+              "anyOf": [
+                {
+                  "type": "boolean"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Within P10 P90"
+            }
+          },
+          "required": [
+            "metric_name",
+            "reference_n",
+            "reference_p10",
+            "reference_p25",
+            "reference_p50",
+            "reference_p75",
+            "reference_p90",
+            "within_iqr",
+            "within_p10_p90"
+          ],
+          "title": "Aihub71557MetricComparison",
+          "type": "object"
+        },
+        "Aihub71557MetricsV2Result": {
+          "additionalProperties": false,
+          "properties": {
+            "metric_version": {
+              "const": "aihub71557_compatible_metrics_v2",
+              "default": "aihub71557_compatible_metrics_v2",
+              "title": "Metric Version",
+              "type": "string"
+            },
+            "speech_rate": {
+              "anyOf": [
+                {
+                  "type": "number"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "default": null,
+              "title": "Speech Rate"
+            },
+            "articulation_rate": {
+              "anyOf": [
+                {
+                  "type": "number"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "default": null,
+              "title": "Articulation Rate"
+            },
+            "pause_count_per_10_syllables": {
+              "anyOf": [
+                {
+                  "type": "number"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "default": null,
+              "title": "Pause Count Per 10 Syllables"
+            },
+            "pause_duration_per_10_syllables": {
+              "anyOf": [
+                {
+                  "type": "number"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "default": null,
+              "title": "Pause Duration Per 10 Syllables"
+            },
+            "f0_median_hz": {
+              "anyOf": [
+                {
+                  "type": "number"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "default": null,
+              "title": "F0 Median Hz"
+            },
+            "f0_range_st": {
+              "anyOf": [
+                {
+                  "type": "number"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "default": null,
+              "title": "F0 Range St"
+            },
+            "f0_coverage": {
+              "anyOf": [
+                {
+                  "type": "number"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "default": null,
+              "title": "F0 Coverage"
+            },
+            "intensity_range_db": {
+              "anyOf": [
+                {
+                  "type": "number"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "default": null,
+              "title": "Intensity Range Db"
+            },
+            "status": {
+              "minLength": 1,
+              "title": "Status",
+              "type": "string"
+            }
+          },
+          "required": [
+            "status"
+          ],
+          "title": "Aihub71557MetricsV2Result",
+          "type": "object"
+        },
+        "Aihub71557ReferenceComparison": {
+          "additionalProperties": false,
+          "properties": {
+            "metric_version": {
+              "const": "aihub71557_compatible_metrics_v2",
+              "default": "aihub71557_compatible_metrics_v2",
+              "title": "Metric Version",
+              "type": "string"
+            },
+            "reference_version": {
+              "const": "aihub71557_prosody_reference_v1",
+              "default": "aihub71557_prosody_reference_v1",
+              "title": "Reference Version",
+              "type": "string"
+            },
+            "reference_aggregation": {
+              "default": "utterance metrics -> per-speaker median -> speaker-balanced distribution",
+              "title": "Reference Aggregation",
+              "type": "string"
+            },
+            "reference_group": {
+              "enum": [
+                "현직아나운서",
+                "전직아나운서",
+                "아나운서준비생",
+                "전체"
+              ],
+              "title": "Reference Group",
+              "type": "string"
+            },
+            "analysis_window_source": {
+              "const": "mfa_speech_bounds",
+              "title": "Analysis Window Source",
+              "type": "string"
+            },
+            "reference_window_source": {
+              "const": "aihub_json_utterance_bounds",
+              "default": "aihub_json_utterance_bounds",
+              "title": "Reference Window Source",
+              "type": "string"
+            },
+            "reference_file_path": {
+              "format": "path",
+              "title": "Reference File Path",
+              "type": "string"
+            },
+            "reference_file_sha256": {
+              "pattern": "^[0-9a-f]{64}$",
+              "title": "Reference File Sha256",
+              "type": "string"
+            },
+            "extractor_compatibility": {
+              "default": "aihub71557_parity_fixture_v1",
+              "title": "Extractor Compatibility",
+              "type": "string"
+            },
+            "metrics": {
+              "items": {
+                "$ref": "#/$defs/Aihub71557MetricComparison"
+              },
+              "title": "Metrics",
+              "type": "array"
+            }
+          },
+          "required": [
+            "reference_group",
+            "analysis_window_source",
+            "reference_file_path",
+            "reference_file_sha256",
+            "metrics"
+          ],
+          "title": "Aihub71557ReferenceComparison",
+          "type": "object"
+        },
+        "Aihub71557UserMetricsV2": {
+          "additionalProperties": false,
+          "properties": {
+            "metrics": {
+              "$ref": "#/$defs/Aihub71557MetricsV2Result"
+            },
+            "analysis_start_s": {
+              "minimum": 0.0,
+              "title": "Analysis Start S",
+              "type": "number"
+            },
+            "analysis_end_s": {
+              "minimum": 0.0,
+              "title": "Analysis End S",
+              "type": "number"
+            },
+            "analysis_window_source": {
+              "const": "mfa_speech_bounds",
+              "default": "mfa_speech_bounds",
+              "title": "Analysis Window Source",
+              "type": "string"
+            }
+          },
+          "required": [
+            "metrics",
+            "analysis_start_s",
+            "analysis_end_s"
+          ],
+          "title": "Aihub71557UserMetricsV2",
+          "type": "object"
+        },
+        "ExpectedPhoneMetadata": {
+          "additionalProperties": false,
+          "properties": {
+            "expected_index": {
+              "minimum": 0,
+              "title": "Expected Index",
+              "type": "integer"
+            },
+            "phone": {
+              "title": "Phone",
+              "type": "string"
+            },
+            "syllable_index": {
+              "minimum": 0,
+              "title": "Syllable Index",
+              "type": "integer"
+            },
+            "syllable_text": {
+              "title": "Syllable Text",
+              "type": "string"
+            },
+            "word_index": {
+              "minimum": 0,
+              "title": "Word Index",
+              "type": "integer"
+            },
+            "word_text": {
+              "title": "Word Text",
+              "type": "string"
+            },
+            "original_word_index": {
+              "minimum": 0,
+              "title": "Original Word Index",
+              "type": "integer"
+            },
+            "original_word_text": {
+              "title": "Original Word Text",
+              "type": "string"
+            },
+            "role": {
+              "enum": [
+                "onset",
+                "nucleus",
+                "coda"
+              ],
+              "title": "Role",
+              "type": "string"
+            },
+            "acoustically_realized": {
+              "title": "Acoustically Realized",
+              "type": "boolean"
+            },
+            "boundary_relation": {
+              "enum": [
+                "within_word",
+                "cross_word_left",
+                "cross_word_right",
+                "boundary_ambiguous"
+              ],
+              "title": "Boundary Relation",
+              "type": "string"
+            },
+            "provenance_confidence": {
+              "enum": [
+                "high",
+                "ambiguous"
+              ],
+              "title": "Provenance Confidence",
+              "type": "string"
+            },
+            "boundary_position": {
+              "enum": [
+                "interior",
+                "left_boundary",
+                "right_boundary",
+                "cross_word",
+                "ambiguous"
+              ],
+              "title": "Boundary Position",
+              "type": "string"
+            },
+            "source_expected_index": {
+              "anyOf": [
+                {
+                  "minimum": 0,
+                  "type": "integer"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "default": null,
+              "title": "Source Expected Index"
+            },
+            "source_phone": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "default": null,
+              "title": "Source Phone"
+            }
+          },
+          "required": [
+            "expected_index",
+            "phone",
+            "syllable_index",
+            "syllable_text",
+            "word_index",
+            "word_text",
+            "original_word_index",
+            "original_word_text",
+            "role",
+            "acoustically_realized",
+            "boundary_relation",
+            "provenance_confidence",
+            "boundary_position"
+          ],
+          "title": "ExpectedPhoneMetadata",
+          "type": "object"
+        },
+        "FeaturePoint": {
+          "additionalProperties": false,
+          "properties": {
+            "time_s": {
+              "minimum": 0,
+              "title": "Time S",
+              "type": "number"
+            },
+            "value": {
+              "anyOf": [
+                {
+                  "type": "number"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Value"
+            }
+          },
+          "required": [
+            "time_s",
+            "value"
+          ],
+          "title": "FeaturePoint",
+          "type": "object"
+        },
+        "LocalAlignmentItem": {
+          "additionalProperties": false,
+          "properties": {
+            "operation": {
+              "enum": [
+                "correct",
+                "substitution",
+                "deletion",
+                "insertion"
+              ],
+              "title": "Operation",
+              "type": "string"
+            },
+            "expected_index": {
+              "anyOf": [
+                {
+                  "minimum": 0,
+                  "type": "integer"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "default": null,
+              "title": "Expected Index"
+            },
+            "expected_phone": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "default": null,
+              "title": "Expected Phone"
+            },
+            "observed_phone": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "default": null,
+              "title": "Observed Phone"
+            },
+            "start_ms": {
+              "anyOf": [
+                {
+                  "minimum": 0.0,
+                  "type": "number"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "default": null,
+              "title": "Start Ms"
+            },
+            "end_ms": {
+              "anyOf": [
+                {
+                  "minimum": 0.0,
+                  "type": "number"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "default": null,
+              "title": "End Ms"
+            }
+          },
+          "required": [
+            "operation"
+          ],
+          "title": "LocalAlignmentItem",
+          "type": "object"
+        },
+        "ModelVersion": {
+          "additionalProperties": false,
+          "properties": {
+            "role": {
+              "minLength": 1,
+              "title": "Role",
+              "type": "string"
+            },
+            "name": {
+              "minLength": 1,
+              "title": "Name",
+              "type": "string"
+            },
+            "version": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "default": null,
+              "title": "Version"
+            },
+            "revision": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "default": null,
+              "title": "Revision"
+            },
+            "sha256": {
+              "anyOf": [
+                {
+                  "pattern": "^[0-9a-f]{64}$",
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "default": null,
+              "title": "Sha256"
+            }
+          },
+          "required": [
+            "role",
+            "name"
+          ],
+          "title": "ModelVersion",
+          "type": "object"
+        },
+        "PackageVersion": {
+          "additionalProperties": false,
+          "properties": {
+            "name": {
+              "minLength": 1,
+              "title": "Name",
+              "type": "string"
+            },
+            "version": {
+              "minLength": 1,
+              "title": "Version",
+              "type": "string"
+            }
+          },
+          "required": [
+            "name",
+            "version"
+          ],
+          "title": "PackageVersion",
+          "type": "object"
+        },
+        "PresentationCandidate": {
+          "additionalProperties": false,
+          "properties": {
+            "tier": {
+              "enum": [
+                "confirmed",
+                "review",
+                "suppressed"
+              ],
+              "title": "Tier",
+              "type": "string"
+            },
+            "expected_index": {
+              "anyOf": [
+                {
+                  "minimum": 0,
+                  "type": "integer"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "default": null,
+              "title": "Expected Index"
+            },
+            "expected_phone": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "default": null,
+              "title": "Expected Phone"
+            },
+            "observed_candidate": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "default": null,
+              "title": "Observed Candidate"
+            },
+            "raw_alignment_operation": {
+              "enum": [
+                "correct",
+                "substitution",
+                "deletion",
+                "insertion"
+              ],
+              "title": "Raw Alignment Operation",
+              "type": "string"
+            },
+            "local_alignment_operation": {
+              "anyOf": [
+                {
+                  "enum": [
+                    "correct",
+                    "substitution",
+                    "deletion",
+                    "insertion"
+                  ],
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "default": null,
+              "title": "Local Alignment Operation"
+            },
+            "alignment_consistency": {
+              "enum": [
+                "agree",
+                "disagree",
+                "unavailable"
+              ],
+              "title": "Alignment Consistency",
+              "type": "string"
+            },
+            "word_index": {
+              "anyOf": [
+                {
+                  "minimum": 0,
+                  "type": "integer"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "default": null,
+              "title": "Word Index"
+            },
+            "word_text": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "default": null,
+              "title": "Word Text"
+            },
+            "start_ms": {
+              "anyOf": [
+                {
+                  "minimum": 0.0,
+                  "type": "number"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "default": null,
+              "title": "Start Ms"
+            },
+            "end_ms": {
+              "anyOf": [
+                {
+                  "minimum": 0.0,
+                  "type": "number"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "default": null,
+              "title": "End Ms"
+            },
+            "feedback_category": {
+              "title": "Feedback Category",
+              "type": "string"
+            },
+            "diagnostic_granularity": {
+              "enum": [
+                "phone",
+                "phonological_class",
+                "word"
+              ],
+              "title": "Diagnostic Granularity",
+              "type": "string"
+            },
+            "reason_codes": {
+              "items": {
+                "type": "string"
+              },
+              "title": "Reason Codes",
+              "type": "array"
+            }
+          },
+          "required": [
+            "tier",
+            "raw_alignment_operation",
+            "alignment_consistency",
+            "feedback_category",
+            "diagnostic_granularity",
+            "reason_codes"
+          ],
+          "title": "PresentationCandidate",
+          "type": "object"
+        },
+        "PresentationSummary": {
+          "additionalProperties": false,
+          "properties": {
+            "state": {
+              "enum": [
+                "well_done_candidate",
+                "good_with_tip",
+                "needs_practice",
+                "retry_required",
+                "calibration_required"
+              ],
+              "title": "State",
+              "type": "string"
+            },
+            "confirmed_phone_count": {
+              "minimum": 0,
+              "title": "Confirmed Phone Count",
+              "type": "integer"
+            },
+            "review_phone_count": {
+              "minimum": 0,
+              "title": "Review Phone Count",
+              "type": "integer"
+            },
+            "suppressed_phone_count": {
+              "minimum": 0,
+              "title": "Suppressed Phone Count",
+              "type": "integer"
+            },
+            "confirmed_word_count": {
+              "minimum": 0,
+              "title": "Confirmed Word Count",
+              "type": "integer"
+            },
+            "review_word_count": {
+              "minimum": 0,
+              "title": "Review Word Count",
+              "type": "integer"
+            },
+            "notices": {
+              "default": [],
+              "items": {
+                "type": "string"
+              },
+              "title": "Notices",
+              "type": "array"
+            }
+          },
+          "required": [
+            "state",
+            "confirmed_phone_count",
+            "review_phone_count",
+            "suppressed_phone_count",
+            "confirmed_word_count",
+            "review_word_count"
+          ],
+          "title": "PresentationSummary",
+          "type": "object"
+        },
+        "PronunciationPresentation": {
+          "additionalProperties": false,
+          "properties": {
+            "policy_version": {
+              "default": "pronunciation_reliability_v1",
+              "enum": [
+                "pronunciation_reliability_v1",
+                "pronunciation_reliability_v2_mvp_review_only"
+              ],
+              "title": "Policy Version",
+              "type": "string"
+            },
+            "expected_phone_metadata": {
+              "items": {
+                "$ref": "#/$defs/ExpectedPhoneMetadata"
+              },
+              "title": "Expected Phone Metadata",
+              "type": "array"
+            },
+            "confirmed_candidates": {
+              "items": {
+                "$ref": "#/$defs/PresentationCandidate"
+              },
+              "title": "Confirmed Candidates",
+              "type": "array"
+            },
+            "review_candidates": {
+              "items": {
+                "$ref": "#/$defs/PresentationCandidate"
+              },
+              "title": "Review Candidates",
+              "type": "array"
+            },
+            "suppressed_candidates": {
+              "items": {
+                "$ref": "#/$defs/PresentationCandidate"
+              },
+              "title": "Suppressed Candidates",
+              "type": "array"
+            },
+            "word_candidates": {
+              "items": {
+                "$ref": "#/$defs/WordCandidate"
+              },
+              "title": "Word Candidates",
+              "type": "array"
+            },
+            "summary": {
+              "$ref": "#/$defs/PresentationSummary"
+            }
+          },
+          "required": [
+            "expected_phone_metadata",
+            "confirmed_candidates",
+            "review_candidates",
+            "suppressed_candidates",
+            "word_candidates",
+            "summary"
+          ],
+          "title": "PronunciationPresentation",
+          "type": "object"
+        },
+        "Provenance": {
+          "additionalProperties": false,
+          "properties": {
+            "created_at_utc": {
+              "format": "date-time",
+              "title": "Created At Utc",
+              "type": "string"
+            },
+            "git_commit": {
+              "minLength": 1,
+              "title": "Git Commit",
+              "type": "string"
+            },
+            "dirty_worktree": {
+              "title": "Dirty Worktree",
+              "type": "boolean"
+            },
+            "packages": {
+              "items": {
+                "$ref": "#/$defs/PackageVersion"
+              },
+              "title": "Packages",
+              "type": "array"
+            },
+            "models": {
+              "items": {
+                "$ref": "#/$defs/ModelVersion"
+              },
+              "title": "Models",
+              "type": "array"
+            },
+            "runtime": {
+              "$ref": "#/$defs/RuntimeEnvironment"
+            },
+            "config_sha256": {
+              "pattern": "^[0-9a-f]{64}$",
+              "title": "Config Sha256",
+              "type": "string"
+            },
+            "dependency_lock_sha256": {
+              "pattern": "^[0-9a-f]{64}$",
+              "title": "Dependency Lock Sha256",
+              "type": "string"
+            }
+          },
+          "required": [
+            "created_at_utc",
+            "git_commit",
+            "dirty_worktree",
+            "runtime",
+            "config_sha256",
+            "dependency_lock_sha256"
+          ],
+          "title": "Provenance",
+          "type": "object"
+        },
+        "RuntimeEnvironment": {
+          "additionalProperties": false,
+          "properties": {
+            "platform_role": {
+              "enum": [
+                "mac_smoke",
+                "dlpc_formal",
+                "test",
+                "unknown"
+              ],
+              "title": "Platform Role",
+              "type": "string"
+            },
+            "operating_system": {
+              "minLength": 1,
+              "title": "Operating System",
+              "type": "string"
+            },
+            "architecture": {
+              "minLength": 1,
+              "title": "Architecture",
+              "type": "string"
+            },
+            "python_version": {
+              "minLength": 1,
+              "title": "Python Version",
+              "type": "string"
+            }
+          },
+          "required": [
+            "platform_role",
+            "operating_system",
+            "architecture",
+            "python_version"
+          ],
+          "title": "RuntimeEnvironment",
+          "type": "object"
+        },
+        "WordCandidate": {
+          "additionalProperties": false,
+          "properties": {
+            "word_index": {
+              "minimum": 0,
+              "title": "Word Index",
+              "type": "integer"
+            },
+            "word_text": {
+              "title": "Word Text",
+              "type": "string"
+            },
+            "start_ms": {
+              "minimum": 0.0,
+              "title": "Start Ms",
+              "type": "number"
+            },
+            "end_ms": {
+              "minimum": 0.0,
+              "title": "End Ms",
+              "type": "number"
+            },
+            "tier": {
+              "enum": [
+                "confirmed",
+                "review"
+              ],
+              "title": "Tier",
+              "type": "string"
+            },
+            "expected_phone_indices": {
+              "items": {
+                "type": "integer"
+              },
+              "title": "Expected Phone Indices",
+              "type": "array"
+            },
+            "operations": {
+              "items": {
+                "type": "string"
+              },
+              "title": "Operations",
+              "type": "array"
+            },
+            "feedback_category": {
+              "title": "Feedback Category",
+              "type": "string"
+            },
+            "raw_observed_phones": {
+              "items": {
+                "type": "string"
+              },
+              "title": "Raw Observed Phones",
+              "type": "array"
+            },
+            "evidence_count": {
+              "minimum": 1,
+              "title": "Evidence Count",
+              "type": "integer"
+            },
+            "alignment_consistency": {
+              "enum": [
+                "agree",
+                "disagree",
+                "unavailable"
+              ],
+              "title": "Alignment Consistency",
+              "type": "string"
+            },
+            "local_word_alignment": {
+              "items": {
+                "$ref": "#/$defs/LocalAlignmentItem"
+              },
+              "title": "Local Word Alignment",
+              "type": "array"
+            }
+          },
+          "required": [
+            "word_index",
+            "word_text",
+            "start_ms",
+            "end_ms",
+            "tier",
+            "expected_phone_indices",
+            "operations",
+            "feedback_category",
+            "raw_observed_phones",
+            "evidence_count",
+            "alignment_consistency",
+            "local_word_alignment"
+          ],
+          "title": "WordCandidate",
+          "type": "object"
+        }
+      },
+      "additionalProperties": false,
+      "properties": {
+        "schema_version": {
+          "const": "ai_core_result_v1",
+          "default": "ai_core_result_v1",
+          "title": "Schema Version",
+          "type": "string"
+        },
+        "status": {
+          "enum": [
+            "ok",
+            "partial",
+            "error"
+          ],
+          "title": "Status",
+          "type": "string"
+        },
+        "pronunciation": {
+          "$ref": "#/$defs/AICorePronunciationResult"
+        },
+        "prosody": {
+          "$ref": "#/$defs/AICoreProsodyResult"
+        },
+        "policy": {
+          "$ref": "#/$defs/AICoreEvidencePolicyResult"
+        },
+        "metadata": {
+          "$ref": "#/$defs/AICoreMetadata"
+        }
+      },
+      "required": [
+        "status",
+        "pronunciation",
+        "prosody",
+        "policy",
+        "metadata"
+      ],
+      "title": "AICoreResultV1",
+      "type": "object",
+      "$id": "urn:canonical-ai:core-result-v1"
+    },
+    "expected_phone_count": {
+      "type": [
+        "integer",
+        "null"
+      ]
+    },
+    "feedback_delivery_allowed": {
+      "type": "boolean"
+    },
+    "input_validation": {
+      "$defs": {
+        "ErrorCode": {
+          "enum": [
+            "invalid_script",
+            "invalid_audio",
+            "audio_conversion_failed",
+            "g2p_failed",
+            "alignment_failed",
+            "textgrid_parse_failed",
+            "acoustic_analysis_failed",
+            "dependency_missing",
+            "model_missing",
+            "internal_error"
+          ],
+          "title": "ErrorCode",
+          "type": "string"
+        },
+        "JsonValue": {},
+        "PipelineError": {
+          "additionalProperties": false,
+          "properties": {
+            "code": {
+              "$ref": "#/$defs/ErrorCode"
+            },
+            "stage": {
+              "$ref": "#/$defs/PipelineStage"
+            },
+            "message_ko": {
+              "minLength": 1,
+              "title": "Message Ko",
+              "type": "string"
+            },
+            "recoverable": {
+              "default": false,
+              "title": "Recoverable",
+              "type": "boolean"
+            },
+            "details": {
+              "additionalProperties": {
+                "$ref": "#/$defs/JsonValue"
+              },
+              "title": "Details",
+              "type": "object"
+            }
+          },
+          "required": [
+            "code",
+            "stage",
+            "message_ko"
+          ],
+          "title": "PipelineError",
+          "type": "object"
+        },
+        "PipelineStage": {
+          "enum": [
+            "input",
+            "audio",
+            "g2p",
+            "alignment",
+            "textgrid",
+            "acoustic",
+            "feedback",
+            "storage",
+            "dependency",
+            "internal"
+          ],
+          "title": "PipelineStage",
+          "type": "string"
+        }
+      },
+      "additionalProperties": false,
+      "description": "Development-only sidecar; never part of ai_core_result_v1.",
+      "properties": {
+        "schema_version": {
+          "const": "input_validation_result_v1",
+          "default": "input_validation_result_v1",
+          "title": "Schema Version",
+          "type": "string"
+        },
+        "gate_version": {
+          "default": "phase2_gate_spec_v1",
+          "enum": [
+            "phase2_gate_spec_v1",
+            "demo_content_gate_calibration_v2"
+          ],
+          "title": "Gate Version",
+          "type": "string"
+        },
+        "status": {
+          "enum": [
+            "ACCEPT",
+            "REJECT",
+            "INCONCLUSIVE",
+            "SYSTEM_FAILURE"
+          ],
+          "title": "Status",
+          "type": "string"
+        },
+        "reason_code": {
+          "anyOf": [
+            {
+              "enum": [
+                "AUDIO_DECODE_OR_CORRUPTION",
+                "SILENCE_OR_NO_SPEECH",
+                "ALIGNMENT_FAILURE",
+                "SYSTEM_ANALYSIS_FAILURE",
+                "INSUFFICIENT_CONTENT",
+                "TRANSCRIPT_MISMATCH"
+              ],
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "title": "Reason Code"
+        },
+        "stage": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/PipelineStage"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "evidence": {
+          "additionalProperties": {
+            "$ref": "#/$defs/JsonValue"
+          },
+          "title": "Evidence",
+          "type": "object"
+        },
+        "source_provenance": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "title": "Source Provenance"
+        },
+        "original_error": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/PipelineError"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "subject": {
+          "enum": [
+            "RECORDING",
+            "ANALYSIS_SYSTEM",
+            "UNKNOWN"
+          ],
+          "title": "Subject",
+          "type": "string"
+        },
+        "decision_basis": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "title": "Decision Basis"
+        }
+      },
+      "required": [
+        "status",
+        "reason_code",
+        "stage",
+        "evidence",
+        "source_provenance",
+        "original_error",
+        "subject",
+        "decision_basis"
+      ],
+      "title": "InputValidationResultV1",
+      "type": "object",
+      "$id": "urn:canonical-ai:input-validation-v1"
+    },
+    "llm_facing_evidence": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "schema_version",
+        "pronunciation_items",
+        "prosody"
+      ],
+      "properties": {
+        "schema_version": {
+          "const": "llm_pronunciation_evidence_v1"
+        },
+        "pronunciation_items": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+              "comparison_phone",
+              "end_ms",
+              "expected_phone",
+              "feedback_type",
+              "message_scope",
+              "start_ms",
+              "word",
+              "word_index"
+            ],
+            "properties": {
+              "comparison_phone": {
+                "type": "string"
+              },
+              "end_ms": {
+                "type": "number"
+              },
+              "expected_phone": {
+                "type": "string"
+              },
+              "feedback_type": {
+                "const": "CLEAR_CONTRAST"
+              },
+              "message_scope": {
+                "type": "string"
+              },
+              "start_ms": {
+                "type": "number"
+              },
+              "word": {
+                "type": "string"
+              },
+              "word_index": {
+                "type": "integer"
+              }
+            }
+          }
+        },
+        "prosody": {
+          "type": [
+            "object",
+            "null"
+          ]
+        }
+      }
+    },
+    "mfa_receipt": {
+      "type": [
+        "object",
+        "null"
+      ]
+    },
+    "native": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "device",
+        "dtype",
+        "model_revision",
+        "weights_sha256",
+        "ctc_runs"
+      ],
+      "properties": {
+        "device": {
+          "const": "cpu"
+        },
+        "dtype": {
+          "const": "float32"
+        },
+        "model_revision": {
+          "const": "e26ff9dfb62169acf445d0060ef56863c018b20e"
+        },
+        "weights_sha256": {
+          "type": "string",
+          "pattern": "^[0-9a-f]{64}$"
+        },
+        "ctc_runs": {
+          "type": [
+            "array",
+            "null"
+          ]
+        }
+      }
+    },
+    "prepared_wav_sha256": {
+      "type": [
+        "string",
+        "null"
+      ],
+      "pattern": "^[0-9a-f]{64}$"
+    },
+    "pronunciation_evidence": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "decision_reason",
+          "expected_index",
+          "expected_phone",
+          "llm_visible",
+          "localization_status",
+          "mfa_ipa",
+          "phone_end_s",
+          "phone_start_s",
+          "policy_warning",
+          "presentation_state",
+          "role",
+          "word",
+          "word_end_s",
+          "word_index",
+          "word_start_s"
+        ],
+        "properties": {
+          "best_competitor_logit": {
+            "type": "number"
+          },
+          "best_competitor_phone": {
+            "type": "string"
+          },
+          "best_competitor_token": {
+            "type": "string"
+          },
+          "consonant_run_count": {
+            "type": "integer"
+          },
+          "decision_reason": {
+            "type": "string"
+          },
+          "expected_index": {
+            "type": "integer"
+          },
+          "expected_logit": {
+            "type": "number"
+          },
+          "expected_phone": {
+            "type": "string"
+          },
+          "llm_visible": {
+            "type": "boolean"
+          },
+          "local_margin": {
+            "type": "number"
+          },
+          "localization_status": {
+            "type": "string"
+          },
+          "margin": {
+            "type": "number"
+          },
+          "mfa_ipa": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "native_phone": {
+            "type": "string"
+          },
+          "native_token": {
+            "type": "string"
+          },
+          "phone_end_s": {
+            "type": [
+              "null",
+              "number"
+            ]
+          },
+          "phone_start_s": {
+            "type": [
+              "null",
+              "number"
+            ]
+          },
+          "policy_warning": {
+            "type": "integer"
+          },
+          "presentation_state": {
+            "enum": [
+              "CLEAR_CONTRAST",
+              "AMBIGUOUS_CONTRAST",
+              "INSUFFICIENT_EVIDENCE",
+              "NO_FEEDBACK"
+            ]
+          },
+          "role": {
+            "type": "string"
+          },
+          "run_frame_end_exclusive": {
+            "type": "integer"
+          },
+          "run_frame_start": {
+            "type": "integer"
+          },
+          "word": {
+            "type": "string"
+          },
+          "word_end_s": {
+            "type": "number"
+          },
+          "word_index": {
+            "type": "integer"
+          },
+          "word_start_s": {
+            "type": "number"
+          }
+        }
+      }
+    },
+    "pronunciation_feedback_source": {
+      "const": "REFINED_P1_ONLY"
+    },
+    "request_id": {
+      "type": "string",
+      "minLength": 1
+    },
+    "schema_version": {
+      "const": "canonical_ai_predeploy_v1"
+    },
+    "source_audio_sha256": {
+      "type": "string",
+      "pattern": "^[0-9a-f]{64}$"
+    },
+    "stage_durations_s": {
+      "type": "object",
+      "additionalProperties": {
+        "type": [
+          "number",
+          "null"
+        ]
+      }
+    },
+    "timing_marks_monotonic": {
+      "type": "object",
+      "additionalProperties": {
+        "type": [
+          "number",
+          "null"
+        ]
+      }
+    }
+  }
+}

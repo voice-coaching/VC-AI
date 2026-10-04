@@ -1,0 +1,393 @@
+{
+  "type": "object",
+  "additionalProperties": false,
+  "properties": {
+    "schemaVersion": {
+      "const": "canonical-llm-expression-input-v1"
+    },
+    "attemptScope": {
+      "type": "string",
+      "minLength": 1
+    },
+    "task": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "mode": {
+          "const": "COACHING"
+        },
+        "language": {
+          "const": "ko"
+        },
+        "objective": {
+          "const": "practice_and_check_improvement"
+        }
+      },
+      "required": [
+        "mode",
+        "language",
+        "objective"
+      ]
+    },
+    "sourceIdentity": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "coreSha256": {
+          "type": "string",
+          "pattern": "^[0-9a-f]{64}$"
+        },
+        "parentManifestSha256": {
+          "type": "string",
+          "pattern": "^[0-9a-f]{64}$"
+        },
+        "scriptSha256": {
+          "type": "string",
+          "pattern": "^[0-9a-f]{64}$"
+        },
+        "audioSha256": {
+          "type": "string",
+          "pattern": "^[0-9a-f]{64}$"
+        },
+        "canonicalAudioSha256": {
+          "type": "string",
+          "pattern": "^[0-9a-f]{64}$"
+        }
+      },
+      "required": [
+        "coreSha256",
+        "parentManifestSha256",
+        "scriptSha256",
+        "audioSha256",
+        "canonicalAudioSha256"
+      ]
+    },
+    "globalStatus": {
+      "const": "ACCEPT"
+    },
+    "utterance": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "text": {
+          "type": "string",
+          "minLength": 1
+        }
+      },
+      "required": [
+        "text"
+      ]
+    },
+    "coverage": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "evaluatedConsonantPositions": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "visiblePositionCount": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "permittedPatternCount": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "includedCandidateIds": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "minLength": 1
+          }
+        },
+        "omittedCandidateIds": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "minLength": 1
+          }
+        },
+        "selectionPolicy": {
+          "const": "repetition_then_first_occurrence_max3"
+        },
+        "omittedReason": {
+          "enum": [
+            "EXISTING_MAX3_SELECTION",
+            null
+          ]
+        },
+        "presentationStateCounts": {
+          "type": "object",
+          "additionalProperties": {
+            "type": "integer",
+            "minimum": 0
+          }
+        }
+      },
+      "required": [
+        "evaluatedConsonantPositions",
+        "visiblePositionCount",
+        "permittedPatternCount",
+        "includedCandidateIds",
+        "omittedCandidateIds",
+        "selectionPolicy",
+        "omittedReason",
+        "presentationStateCounts"
+      ]
+    },
+    "candidates": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "candidateId": {
+            "type": "string",
+            "minLength": 1
+          },
+          "evidenceIds": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "minLength": 1
+            }
+          },
+          "expectedPhone": {
+            "type": "string",
+            "minLength": 1
+          },
+          "observedCandidate": {
+            "type": "string",
+            "minLength": 1
+          },
+          "expectedRole": {
+            "enum": [
+              "onset",
+              "nucleus",
+              "coda"
+            ]
+          },
+          "roleSemantics": {
+            "const": "FROZEN_G2P_EXPECTED_PHONE_ROLE"
+          },
+          "repetitionCount": {
+            "type": "integer",
+            "minimum": 1
+          },
+          "claimScope": {
+            "const": "MODEL_OBSERVATION_NOT_CONFIRMED_ARTICULATION"
+          },
+          "disposition": {
+            "const": "PRONUNCIATION_REVIEW"
+          },
+          "presentationState": {
+            "const": "CLEAR_CONTRAST"
+          },
+          "guidance": {
+            "type": "object",
+            "additionalProperties": false,
+            "properties": {
+              "guidanceId": {
+                "type": "string",
+                "minLength": 1
+              },
+              "revision": {
+                "const": "basic-practice-v1"
+              },
+              "scope": {
+                "const": "GENERAL_TARGET_PRACTICE_NOT_PERSONAL_CAUSE"
+              },
+              "action": {
+                "type": "string",
+                "minLength": 1
+              },
+              "practice": {
+                "type": "string",
+                "minLength": 1
+              },
+              "selfCheck": {
+                "type": "string",
+                "minLength": 1
+              }
+            },
+            "required": [
+              "guidanceId",
+              "revision",
+              "scope",
+              "action",
+              "practice",
+              "selfCheck"
+            ]
+          },
+          "facts": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "additionalProperties": false,
+              "properties": {
+                "evidenceId": {
+                  "type": "string",
+                  "minLength": 1
+                },
+                "expectedIndex": {
+                  "type": "integer",
+                  "minimum": 0
+                },
+                "location": {
+                  "type": "object",
+                  "additionalProperties": false,
+                  "properties": {
+                    "word": {
+                      "type": "string",
+                      "minLength": 1
+                    },
+                    "wordIndex": {
+                      "type": "integer",
+                      "minimum": 0
+                    },
+                    "wordStartS": {
+                      "type": "number",
+                      "minimum": 0
+                    },
+                    "wordEndS": {
+                      "type": "number",
+                      "minimum": 0
+                    },
+                    "phoneStartS": {
+                      "type": "number",
+                      "minimum": 0
+                    },
+                    "phoneEndS": {
+                      "type": "number",
+                      "minimum": 0
+                    },
+                    "timingProvenance": {
+                      "const": "MFA_LOCATION_ONLY"
+                    }
+                  },
+                  "required": [
+                    "word",
+                    "wordIndex",
+                    "wordStartS",
+                    "wordEndS",
+                    "phoneStartS",
+                    "phoneEndS",
+                    "timingProvenance"
+                  ]
+                },
+                "localizationStatus": {
+                  "type": "string",
+                  "minLength": 1
+                }
+              },
+              "required": [
+                "evidenceId",
+                "expectedIndex",
+                "location",
+                "localizationStatus"
+              ]
+            }
+          }
+        },
+        "required": [
+          "candidateId",
+          "evidenceIds",
+          "expectedPhone",
+          "observedCandidate",
+          "expectedRole",
+          "roleSemantics",
+          "repetitionCount",
+          "claimScope",
+          "disposition",
+          "presentationState",
+          "guidance",
+          "facts"
+        ]
+      },
+      "maxItems": 3
+    },
+    "reviewReasonCounts": {
+      "type": "object",
+      "additionalProperties": {
+        "type": "integer",
+        "minimum": 0
+      }
+    },
+    "visual": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "status": {
+          "const": "NOT_CONNECTED"
+        },
+        "correctiveClaimsAllowed": {
+          "const": false
+        }
+      },
+      "required": [
+        "status",
+        "correctiveClaimsAllowed"
+      ]
+    },
+    "prosody": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "status": {
+          "type": "string",
+          "minLength": 1
+        },
+        "expressionPermission": {
+          "const": "NO_APPROVED_GUIDANCE_MAPPING"
+        },
+        "evidenceRetention": {
+          "const": "PRESERVED_IN_LOCAL_CORE"
+        }
+      },
+      "required": [
+        "status",
+        "expressionPermission",
+        "evidenceRetention"
+      ]
+    },
+    "score": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "validity": {
+          "enum": [
+            "INSUFFICIENT_EVIDENCE",
+            "NOT_CALIBRATED"
+          ]
+        },
+        "overallScore": {
+          "const": null
+        }
+      },
+      "required": [
+        "validity",
+        "overallScore"
+      ]
+    },
+    "previousAttempt": {
+      "const": null
+    }
+  },
+  "required": [
+    "schemaVersion",
+    "attemptScope",
+    "task",
+    "sourceIdentity",
+    "globalStatus",
+    "utterance",
+    "coverage",
+    "candidates",
+    "reviewReasonCounts",
+    "visual",
+    "prosody",
+    "score",
+    "previousAttempt"
+  ],
+  "$schema": "https://json-schema.org/draft/2020-12/schema"
+}

@@ -2,6 +2,14 @@
 
 작성일: 2026-09-30. **P0/P1 구현·RunPod 배포 완료: `32d98e3`, 01:35 KST. [실행 기록](p0-p1-deployment.md)을 따른다. P2는 비활성이다.** 아래 계획의 과거 기준 SHA와 제안은 작성 당시 기록으로 유지한다. 실제 생성·품질 QA는 미실행이다.
 
+후속 canonical Native/P1·MFA·frozen LLM 통합은 이 입술 P0/P1 배포와 다른 작업이다. [canonical 통합 조사와 진행 상태](../canonical-integration/README.md)를 따른다. Frozen STEP7의 영상은 `NOT_CONNECTED`이므로 이 문서의 CTC/Seungun 입술 연결을 새 MFA 후보에 자동 적용하지 않는다.
+
+후속 사용자 결정에 따른 [callback v4 전면 개편 계획](../canonical-integration/callback-v4-plan.md)을 별도로 작성했다.
+10/2 Backend/DB 확장과 RunPod 전체 실행기·부팅·writer 키 주입은 운영 반영했고
+후속 Backend reader·검증·journal/apply와 명시 opt-in 단독 음성 v4 접수도 활성화했다.
+[최신 실제 범위·미수행 실행 QA](../canonical-integration/rollout-execution-20261002.md#제한-v4-접수-활성화)를 따른다.
+기존 입술 P0/P1과 canonical의 visual NOT_CONNECTED는 별개이며 FE 테스트는 FE 개발자가 수행한다.
+
 [목차](README.md) · [목표 설계와 입력 예시](gpt6-integration-design.md) · [9/30 최신 운영 재조사](../runpod-current-pipeline.md)
 
 ## 1. 범위와 유지할 결정

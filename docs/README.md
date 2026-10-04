@@ -4,7 +4,17 @@
 
 | 목적 | 문서 |
 |---|---|
-| 현재 RunPod 구성·실측 상태·코드 근거 | [현재 배포 파이프라인 — 9/30 01:38~01:44 KST](runpod-current-pipeline.md) |
+| canonical v4에 H5 짧은 총평 적용 | [파생 하네스·검증 계약·배포 인계](canonical-integration/h5-application-20261003.md) |
+| 최근 음성 분석 실패와 FE–AWS–RunPod 연결 | [단일 실행 슬롯·429 실패·운영 API 조사](canonical-integration/incident-20261003-capacity-api-audit.md) |
+| RunPod 사양에 맞춘 canonical 동시 실행 슬롯 | [Pod 자원 관측·3개 슬롯 선택·활성화 조건](canonical-integration/capacity-sizing-20261004.md) |
+| GPT-6 날짜별 시스템 프롬프트·하네스 선택 | [H1–H6 버전 목록·현재 적용·원본 해시](gpt6-prompt-harness-catalog-20261003.md) |
+| RunPod lease 갱신 경합 방지 구현·배포 | [lease 판독·오류 진단·운영 확인과 남은 QA](canonical-integration/runpod-lease-hardening-plan-20261003.md) |
+| 10/3 분석 53–56 실패·AWS main 배포·JSON 응답 복구 | [journal JSON 결함 조사와 운영 수정 반영](canonical-integration/incident-20261003-journal-wire.md) |
+| 현재 RunPod 구성·실측 상태·코드 근거 | [현재 배포 파이프라인 — 10/2 canonical 활성화 포함](runpod-current-pipeline.md) |
+| 실행기·부팅·운영 키·제한 v4 접수 활성 | [10/2 운영 배포와 실제 관측·미수행 QA](canonical-integration/rollout-execution-20261002.md#제한-v4-접수-활성화) |
+| 새 canonical core·frozen LLM 통합 진행 | [원본 위치·차이 분석·내부 연결 구현·남은 작업](canonical-integration/README.md) |
+| callback v3 → v4 전면 개편 계획 | [canonical 상태·scoped ID·MFA 무손실 보존과 서비스 전환](canonical-integration/callback-v4-plan.md) |
+| v4 운영 제한 키·전체 통합·배포 순서 | [역할별 비밀 주입·남은 구현·활성화 gate·원복 계획](canonical-integration/production-rollout-plan.md) |
 | 통합 8082 HTTPS 공개·재기동 복원 결과 | [통합 API 배포](runpod_api_gateway_20260930.md) |
 | 기동·복원·안전한 변경 | [RunPod 배포 안내](../deploy/runpod/README.md) |
 | 자동 배포와 관측 범위 | [GitHub Actions 안내](../deploy/runpod/GITHUB_ACTIONS.md) |

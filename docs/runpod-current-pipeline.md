@@ -2,7 +2,23 @@
 
 [문서 목차](README.md) · [운영 절차](../deploy/runpod/README.md) · [운영 API](api/specification.md) · [입술 분석](video-lip-analysis/README.md)
 
+**10/2 17:55 KST 후속:** [testvideo1 실제 API 검증](canonical-integration/testvideo1-verification-20261002.md).
+G2P 환경·MFA zombie 회수 수정 `0adcdef`를 배포했다. 최신 overlay는
+`41f30bdb15f02c2f2141845fddfb7b95b9004c7a4fde5b406943ed1f4e518d1d`다.
+분석 51 core `ACCEPT / ok` 확인 후 Backend journal JSON wire 오류를 발견했다.
+Backend PR #95 준비, 운영 교체 승인 대기이며 전체 callback E2E는 미완료다.
+아래 overlay·미수행 표기는 각 관측 시점의 이력이다.
+
+**10/2 11:39~11:41 KST 후속:** [실행기·부팅·키 주입 및 제한 v4 활성](canonical-integration/rollout-execution-20261002.md#제한-v4-접수-활성화)을
+운영 확인했다. Backend reader·검증·journal/apply 및 양쪽 admission ON이다.
+명시 opt-in 단독 음성 발음 학습만 해당하며 기존 분석/TTS와 공개 API는 유지한다.
+현재 overlay는 `b3fb15bc9b4027faeabfd089f7a0f3f2750391f766392412bb72634e08c0f6f5`다.
+아래 9/30 source revision만으로 추가 코드를 식별하지 않는다. 실제 추론·callback E2E는
+미수행이며 FE 테스트는 FE 개발자 책임이다. 이하 9/30 관측은 당시 이력이다.
+
 **관측: 2026-09-30 01:38~01:44 KST / 2026-09-29 16:38~16:44 UTC.** 실행 중인 Pod와 AWS를 읽기 전용으로 조사했다. 이 문서를 현재 상태의 진입점으로 사용하고, 날짜별 배포 기록은 당시 이력으로 읽는다. 이후 상태 변화까지 보장하는 실시간 문서는 아니다.
+
+후속 2026-09-30 21:02:44 KST RunPod 인증 분석 readiness에서도 같은 `32d98e3`가 확인됐다. 새 canonical core와 frozen LLM은 별도 artifact이며 아직 운영 경로가 아니다. [원본 위치·계약 차이·통합 진행](canonical-integration/README.md)을 참고한다. 이 후속 확인으로 아래 AWS·TTS 관측 시각을 갱신한 것은 아니다.
 
 ## 결론과 조사 범위
 

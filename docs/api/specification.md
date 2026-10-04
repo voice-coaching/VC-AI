@@ -1,3 +1,5 @@
+> Current analysis API: [v5-only migration](../canonical-integration/v5-only-migration-20261004.md). Earlier v4 entries below are legacy documentation.
+
 # API 명세 - intelligentAI
 
 현재 운영과 별도 연구 API의 계약을 구분한다. **2026-09-30 01:38~01:44 KST 실행 소스·설정 재조사** 기준이다. 생성 요청을 새로 보내 검증한 결과는 아니며 [운영 관측](../runpod-current-pipeline.md)을 함께 읽는다.
@@ -18,6 +20,13 @@ AWS Backend의 기존 base URL은 `https://ai.voice-coaching.site`, nginx upstre
 | `/health/services` | 분석 Bearer | status, workerInstanceId, reasonCode, executorReady, coachingProvider, coachingModel, workerRevision; 200/503 |
 | `/health/live` | TTS Bearer | 독립 TTS liveness |
 | `/health/ready` | TTS Bearer | 독립 TTS readiness·synthesis revision; 준비 시 200 |
+
+10/2 11:39~11:41 KST 추가 관측: `/health/canonical`은 분석 Bearer로 내부 8080 및
+8082/AWS gateway에서 제공한다. `executorConfigured`, `admissionEnabled`, `reasonCode`,
+`executionQaPerformed`, `schemaDigests`(공유 계약 9개)를 반환한다.
+설정 준비 true / 접수 true / 실행 QA false를 관측했다. 신규 경로의 schema는
+control v1.2의 `$defs.canonicalExecutorReadiness`다. 인증 없이 공개하는 health가 아니다.
+기존 health/API 응답 shape는 변경하지 않았다.
 
 이번 AWS 도메인의 인증 상세 health는 분석 `OPENAI/gpt-6-astra`, workerRevision `32d98e39767b56697bc7e58fb50e3e9d61432349`, TTS `melo-ko-practice-r1`로 모두 ready였다. 분석 readiness의 OpenAI 모델 접근 성공은 300초 캐시되며 실제 GPT 생성·영상 완주·품질 QA를 뜻하지 않는다.
 
@@ -55,6 +64,17 @@ AWS Backend의 기존 base URL은 `https://ai.voice-coaching.site`, nginx upstre
 성공 응답은 `audio/mpeg`, 헤더 `X-Request-Id`, `X-TTS-Revision`, `X-Audio-SHA256`, `X-Audio-Duration-Ms`다. revision 또는 같은 requestId의 payload 충돌은 409, 미준비는 503, queue 포화는 429, 합성 대기 초과는 504다. 단일 엔진 lock의 대기 상한은 2초, 합성 결과 대기 상한은 22초다. 동일 요청 결과 캐시는 메모리 최대 8개·120초다. gateway read timeout은 30초, AWS의 TTS upstream read는 35초이며 자동 upstream 재시도는 하지 않는다.
 
 이번 작업에서는 실제 합성 POST를 보내지 않았다. 저장된 음성의 재생과 신규 합성을 구분한다.
+
+## Canonical v4 운영 연결 (명시 opt-in)
+
+2026-10-02 서버 배포·readiness 관측 기준이다. 실제 업무 E2E 통과를 뜻하지 않는다.
+
+- `POST /v1/analysis-jobs`의 request v2는 [별도 schema](../contracts/runpod_analysis_request_v2.schema.json)의 고정 canonical profile/result v4를 사용한다. 실행기와 같은 슬롯/claim/heartbeat에 연결했다. 최신 Backend readiness·계약 SHA가 맞지 않으면 claim 전에 `503 NOT_READY`로 차단한다. 기존 v1 body·digest·응답은 유지하며 canonical 실패를 legacy 결과로 바꾸지 않는다.
+- Backend `/api/training-sessions/{sessionId}/analyze`, `/{sessionId}/analysis/retry`는 기존 body/envelope를 유지한다. `X-Analysis-Result-Schema`가 없으면 legacy, 정확히 `voice-coaching.runpod-analysis-result.v4`이면 준비된 서버에서 canonical을 선택한다. 미준비는 `503 ANALYSIS_INTEGRATION_UNAVAILABLE`, 알 수 없거나 중복된 헤더는 `400 INVALID_INPUT_VALUE`다. 초기 범위는 품질 PASS 단독 음성 PRONUNCIATION이며 영상/course/title exam은 제외한다. origin/JWT/소유 관계 검증은 유지한다.
+- 인증 `GET /api/internal/ai/worker-readiness/v2`는 기존 readiness와 별도다. [제어 v1.2](../contracts/runpod_http_control_v1_2.schema.json)에 따라 준비 시 HTTP 200 ready, v1~v4 지원 목록, canonical/evidence READY 및 실제 admission을 반환한다. 미준비는 HTTP 503/NOT_READY다. `Cache-Control: no-store`와 독립 legacyReady 필드를 유지한다. 이번 관측은 canonicalSupported/admission 모두 true다.
+- [result v4](../contracts/runpod_result_v4.schema.json)의 Backend reader·독립 verifier·journal/apply·ACK 경로를 활성화했다. private evidence 등록/receipt와 별도 canonical 조회는 기존 legacy DTO와 분리한다. 실제 원본 PUT/readback·callback E2E 및 FE 소비 테스트는 수행하지 않았다.
+
+남은 경계와 담당자 인계는 [v4 구현 현황](../canonical-integration/callback-v4-plan.md#14-구현-진행-현황)을 따른다. 별도 코드 작성·컴파일은 요청 완주나 품질 QA 통과가 아니다.
 
 ## 별도 연구·loopback 검수 API
 
@@ -173,3 +193,8 @@ field는 거부한다.
   `status`
 - Status: `200`, token 누락·불일치 `403`, unknown hash `404`, 중복 POST `409`,
   profile·field·notes·interval 계약 위반 `422`
+
+
+## Canonical v5 handoff (2026-10-04)
+
+[Contract, ownership, worker states and rollout](../canonical-integration/handoff-v5-20261004.md). RunPod transfers immutable originals to Backend PostgreSQL; result verification/commit precedes the independent B2 archive outbox. v4 receipt semantics remain unchanged. Implementation is not deployment or inference QA.

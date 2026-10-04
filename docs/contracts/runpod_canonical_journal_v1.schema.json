@@ -1,0 +1,529 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://voice-coaching.example/contracts/canonical-journal.v1",
+  "$ref": "#/$defs/journalSnapshot",
+  "$defs": {
+    "uuid": {
+      "type": "string",
+      "format": "uuid",
+      "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+    },
+    "positiveLong": {
+      "type": "integer",
+      "minimum": 1,
+      "maximum": 9007199254740991
+    },
+    "sha256": {
+      "type": "string",
+      "pattern": "^[0-9a-f]{64}$"
+    },
+    "artifact": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "kind": {
+          "enum": [
+            "CORE",
+            "BRIDGE_RESULT",
+            "SELECTION_PROJECTION",
+            "BINDING",
+            "ASSOCIATION"
+          ]
+        },
+        "schemaVersion": {
+          "enum": [
+            "canonical_ai_predeploy_v1",
+            "canonical-llm-expression-result-v1",
+            "canonical-llm-expression-input-v1",
+            "voice-coaching.canonical-binding.v1",
+            "voice-coaching.canonical-association.v1"
+          ]
+        },
+        "sha256": {
+          "$ref": "#/$defs/sha256"
+        },
+        "byteSize": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 16777216
+        },
+        "objectKey": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 1000,
+          "pattern": "^[A-Za-z0-9][A-Za-z0-9._/-]*$"
+        },
+        "versionId": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 1024
+        }
+      },
+      "required": [
+        "kind",
+        "schemaVersion",
+        "sha256",
+        "byteSize",
+        "objectKey",
+        "versionId"
+      ],
+      "oneOf": [
+        {
+          "properties": {
+            "kind": {
+              "const": "CORE"
+            },
+            "schemaVersion": {
+              "const": "canonical_ai_predeploy_v1"
+            }
+          }
+        },
+        {
+          "properties": {
+            "kind": {
+              "const": "BRIDGE_RESULT"
+            },
+            "schemaVersion": {
+              "const": "canonical-llm-expression-result-v1"
+            }
+          }
+        },
+        {
+          "properties": {
+            "kind": {
+              "const": "SELECTION_PROJECTION"
+            },
+            "schemaVersion": {
+              "const": "canonical-llm-expression-input-v1"
+            }
+          }
+        },
+        {
+          "properties": {
+            "kind": {
+              "const": "BINDING"
+            },
+            "schemaVersion": {
+              "const": "voice-coaching.canonical-binding.v1"
+            }
+          }
+        },
+        {
+          "properties": {
+            "kind": {
+              "const": "ASSOCIATION"
+            },
+            "schemaVersion": {
+              "const": "voice-coaching.canonical-association.v1"
+            }
+          }
+        }
+      ]
+    },
+    "evidenceManifestAssociation": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "requestId",
+        "executionId",
+        "analysisId",
+        "recordingId",
+        "contentId",
+        "canonicalAnalysisId",
+        "coreSha256"
+      ],
+      "properties": {
+        "requestId": {
+          "$ref": "#/$defs/uuid"
+        },
+        "executionId": {
+          "$ref": "#/$defs/uuid"
+        },
+        "analysisId": {
+          "$ref": "#/$defs/positiveLong"
+        },
+        "recordingId": {
+          "$ref": "#/$defs/positiveLong"
+        },
+        "contentId": {
+          "$ref": "#/$defs/positiveLong"
+        },
+        "canonicalAnalysisId": {
+          "type": "string",
+          "minLength": 1
+        },
+        "coreSha256": {
+          "$ref": "#/$defs/sha256"
+        }
+      }
+    },
+    "revision": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 100,
+      "pattern": "^[A-Za-z0-9][A-Za-z0-9._:/+-]*$"
+    },
+    "artifactMetadata": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "kind": {
+          "enum": [
+            "CORE",
+            "BRIDGE_RESULT",
+            "SELECTION_PROJECTION",
+            "BINDING",
+            "ASSOCIATION"
+          ]
+        },
+        "schemaVersion": {
+          "enum": [
+            "canonical_ai_predeploy_v1",
+            "canonical-llm-expression-result-v1",
+            "canonical-llm-expression-input-v1",
+            "voice-coaching.canonical-binding.v1",
+            "voice-coaching.canonical-association.v1"
+          ]
+        },
+        "sha256": {
+          "$ref": "#/$defs/sha256"
+        },
+        "byteSize": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 16777216
+        }
+      },
+      "required": [
+        "kind",
+        "schemaVersion",
+        "sha256",
+        "byteSize"
+      ],
+      "oneOf": [
+        {
+          "properties": {
+            "kind": {
+              "const": "CORE"
+            },
+            "schemaVersion": {
+              "const": "canonical_ai_predeploy_v1"
+            }
+          }
+        },
+        {
+          "properties": {
+            "kind": {
+              "const": "BRIDGE_RESULT"
+            },
+            "schemaVersion": {
+              "const": "canonical-llm-expression-result-v1"
+            }
+          }
+        },
+        {
+          "properties": {
+            "kind": {
+              "const": "SELECTION_PROJECTION"
+            },
+            "schemaVersion": {
+              "const": "canonical-llm-expression-input-v1"
+            }
+          }
+        },
+        {
+          "properties": {
+            "kind": {
+              "const": "BINDING"
+            },
+            "schemaVersion": {
+              "const": "voice-coaching.canonical-binding.v1"
+            }
+          }
+        },
+        {
+          "properties": {
+            "kind": {
+              "const": "ASSOCIATION"
+            },
+            "schemaVersion": {
+              "const": "voice-coaching.canonical-association.v1"
+            }
+          }
+        }
+      ]
+    },
+    "journalPrepare": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "association": {
+          "$ref": "#/$defs/evidenceManifestAssociation"
+        },
+        "artifacts": {
+          "type": "array",
+          "minItems": 4,
+          "maxItems": 5,
+          "uniqueItems": true,
+          "items": {
+            "$ref": "#/$defs/artifactMetadata"
+          },
+          "allOf": [
+            {
+              "contains": {
+                "required": [
+                  "kind"
+                ],
+                "properties": {
+                  "kind": {
+                    "const": "CORE"
+                  }
+                }
+              },
+              "minContains": 1,
+              "maxContains": 1
+            },
+            {
+              "contains": {
+                "required": [
+                  "kind"
+                ],
+                "properties": {
+                  "kind": {
+                    "const": "BRIDGE_RESULT"
+                  }
+                }
+              },
+              "minContains": 1,
+              "maxContains": 1
+            },
+            {
+              "contains": {
+                "required": [
+                  "kind"
+                ],
+                "properties": {
+                  "kind": {
+                    "const": "BINDING"
+                  }
+                }
+              },
+              "minContains": 1,
+              "maxContains": 1
+            },
+            {
+              "contains": {
+                "required": [
+                  "kind"
+                ],
+                "properties": {
+                  "kind": {
+                    "const": "ASSOCIATION"
+                  }
+                }
+              },
+              "minContains": 1,
+              "maxContains": 1
+            },
+            {
+              "contains": {
+                "required": [
+                  "kind"
+                ],
+                "properties": {
+                  "kind": {
+                    "const": "SELECTION_PROJECTION"
+                  }
+                }
+              },
+              "minContains": 0,
+              "maxContains": 1
+            }
+          ]
+        }
+      },
+      "required": [
+        "association",
+        "artifacts"
+      ]
+    },
+    "journalReference": {
+      "$ref": "#/$defs/artifact"
+    },
+    "journalArtifact": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "metadata": {
+          "$ref": "#/$defs/artifactMetadata"
+        },
+        "state": {
+          "enum": [
+            "DECLARED",
+            "PREPARED",
+            "UPLOADING",
+            "UPLOADED",
+            "VERIFIED"
+          ]
+        },
+        "reference": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/artifact"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        }
+      },
+      "required": [
+        "metadata",
+        "state",
+        "reference"
+      ]
+    },
+    "journalSnapshot": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "contractVersion": {
+          "const": "voice-coaching.canonical-journal.v1"
+        },
+        "requestId": {
+          "$ref": "#/$defs/uuid"
+        },
+        "executionId": {
+          "$ref": "#/$defs/uuid"
+        },
+        "analysisId": {
+          "$ref": "#/$defs/positiveLong"
+        },
+        "workerInstanceId": {
+          "$ref": "#/$defs/uuid"
+        },
+        "eventId": {
+          "$ref": "#/$defs/uuid"
+        },
+        "workerRevision": {
+          "$ref": "#/$defs/revision"
+        },
+        "pipelineRevision": {
+          "$ref": "#/$defs/revision"
+        },
+        "association": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/evidenceManifestAssociation"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "artifacts": {
+          "type": "array",
+          "maxItems": 5,
+          "items": {
+            "$ref": "#/$defs/journalArtifact"
+          }
+        },
+        "manifestSha256": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/sha256"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "receiptId": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/uuid"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "callbackStatus": {
+          "enum": [
+            "ABSENT",
+            "PENDING",
+            "VERIFYING",
+            "VERIFIED",
+            "APPLIED",
+            "REJECTED",
+            "CANCELED",
+            "EXPIRED"
+          ]
+        },
+        "producerStarted": {
+          "type": "boolean"
+        }
+      },
+      "required": [
+        "contractVersion",
+        "requestId",
+        "executionId",
+        "analysisId",
+        "workerInstanceId",
+        "eventId",
+        "workerRevision",
+        "pipelineRevision",
+        "association",
+        "artifacts",
+        "manifestSha256",
+        "receiptId",
+        "callbackStatus",
+        "producerStarted"
+      ]
+    },
+    "journalMetadata": {
+      "$ref": "#/$defs/artifactMetadata"
+    },
+    "journalAck": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "eventId",
+        "analysisId",
+        "requestId",
+        "executionId",
+        "status",
+        "serverTime"
+      ],
+      "properties": {
+        "eventId": {
+          "$ref": "#/$defs/uuid"
+        },
+        "analysisId": {
+          "$ref": "#/$defs/positiveLong"
+        },
+        "requestId": {
+          "$ref": "#/$defs/uuid"
+        },
+        "executionId": {
+          "$ref": "#/$defs/uuid"
+        },
+        "status": {
+          "enum": [
+            "APPLIED",
+            "DUPLICATE"
+          ]
+        },
+        "serverTime": {
+          "$ref": "#/$defs/utcTimestamp"
+        }
+      },
+      "$comment": "Existing result ACK shape. Canonical result/ack reconciliation returns DUPLICATE only, without registering or applying a result."
+    },
+    "utcTimestamp": {
+      "type": "string",
+      "format": "date-time",
+      "pattern": "^[0-9]{4}-(0[1-9]|1[0-2])-(0[1-9]|[12][0-9]|3[01])T([01][0-9]|2[0-3]):[0-5][0-9]:[0-5][0-9][.][0-9]{3}Z$"
+    }
+  }
+}
