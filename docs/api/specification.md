@@ -1,3 +1,5 @@
+> Current analysis API: [v5-only migration](../canonical-integration/v5-only-migration-20261004.md). Earlier v4 entries below are legacy documentation.
+
 # API 명세 - intelligentAI
 
 현재 운영과 별도 연구 API의 계약을 구분한다. **2026-09-30 01:38~01:44 KST 실행 소스·설정 재조사** 기준이다. 생성 요청을 새로 보내 검증한 결과는 아니며 [운영 관측](../runpod-current-pipeline.md)을 함께 읽는다.

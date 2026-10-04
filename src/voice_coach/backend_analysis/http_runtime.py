@@ -97,7 +97,7 @@ class HttpRuntime:
                 and time.monotonic() < self.dependencies_until)
 
     def ready(self):
-        return self.legacy_ready() or self.canonical_admission_ready() or self.handoff_admission_ready()
+        return self.handoff_admission_ready()
 
     async def _prepare_legacy(self):
         try:
@@ -138,11 +138,7 @@ class HttpRuntime:
             self.canonical_monitor = asyncio.create_task(self._monitor_canonical())
 
     def canonical_admission_ready(self):
-        return (self.canonical_lane is not None and not self.stopping
-                and self.canonical_lane.ready()
-                and self.environment.get("AI_CANONICAL_ADMISSION_ENABLED") == "true"
-                and time.monotonic() < self.canonical_dependencies_until
-                and time.monotonic() < self.dependencies_until)
+        return False  # v4 is retired, regardless of stale environment flags.
 
     def handoff_admission_ready(self):
         return (self.canonical_lane is not None and not self.stopping and self.canonical_lane.ready()
@@ -186,38 +182,17 @@ class HttpRuntime:
 
     async def _monitor_canonical(self):
         import httpx
-        from .canonical_codec import validate_document
-        from .canonical_settings import schema_digests
-        expected = {row["file"]: row["sha256"] for row in schema_digests()}
         async with httpx.AsyncClient(trust_env=False, follow_redirects=False, timeout=8) as client:
             while not self.stopping:
-                await self._monitor_handoff(client)
                 try:
                     await self.canonical_lane.refresh()
-                    async with client.stream("GET", self.settings.callback_base + "/api/internal/ai/worker-readiness/v2",
-                            headers={"Authorization": "Bearer " + self.settings.callback_token,
-                                     "Accept-Encoding": "identity"}) as response:
-                        if response.status_code != 200 or response.headers.get("Content-Encoding", "identity") != "identity":
-                            raise ValueError()
-                        raw = bytearray()
-                        async for chunk in response.aiter_raw():
-                            raw.extend(chunk)
-                            if len(raw) > 65536:
-                                raise ValueError()
-                    from .http_models import parse_json
-                    state = parse_json(bytes(raw))
-                    validate_document(state, "workerReadinessV2", schema_name="control")
-                    actual = {row["file"]: row["sha256"] for row in state["schemaDigests"]}
-                    if (not state["canonicalSupported"] or not state["canonicalAdmissionEnabled"]
-                            or actual != expected or len(state["schemaDigests"]) != len(expected)):
-                        raise ValueError()
-                    self.canonical_dependencies_until = time.monotonic() + 45
-                    self.canonical_reason = None
+                    await self._monitor_handoff(client)
+                    self.canonical_reason = None if time.monotonic() < self.handoff_dependencies_until else "handoff_backend_not_ready"
                 except asyncio.CancelledError:
                     raise
                 except Exception:
-                    self.canonical_dependencies_until = 0
-                    self.canonical_reason = "canonical_backend_not_ready"
+                    self.handoff_dependencies_until = 0
+                    self.canonical_reason = "handoff_backend_not_ready"
                 await asyncio.sleep(10)
 
     async def _receive(self):
@@ -288,11 +263,6 @@ class HttpRuntime:
             stage = "executor_not_ready"
             previous = self.reason
             try:
-                if (self.active is None and (self.canonical_lane is None or self.legacy_requested)
-                        and not self.legacy_ready()
-                        and (self.process is None or not self.process.is_alive())
-                        and (self.legacy_bootstrap is None or self.legacy_bootstrap.done())):
-                    self.legacy_bootstrap = asyncio.create_task(self._prepare_legacy())
                 stage = "backend_callback_not_ready"
                 response = await self.backend.call("/api/internal/ai/worker-readiness", None, "workerReadiness")
                 if response["status"] != "ready" or response["contractVersion"] != CONTRACT:

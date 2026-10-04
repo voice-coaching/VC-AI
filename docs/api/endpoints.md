@@ -1,3 +1,5 @@
+> Current analysis API: [v5-only migration](../canonical-integration/v5-only-migration-20261004.md). Earlier v4 entries below are legacy documentation.
+
 # 엔드포인트 목록 - intelligentAI
 
 이 문서는 목록 전용이다. Request/Response 상세를 작성하지 않는다.

@@ -13,7 +13,7 @@ def main():
     config = Path("/workspace/intelligentai/deployment/api-gateway/nginx.conf")
     raw = config.read_bytes()
     anchor = b"location = /health/services { proxy_pass http://127.0.0.1:8080; }"
-    additions = [b"location = /health/canonical { proxy_pass http://127.0.0.1:8080; }",
+    additions = [b"location = /health/handoff { proxy_pass http://127.0.0.1:8080; }",
                  b"location = /health/deployment { proxy_pass http://127.0.0.1:8080; }"]
     if raw.count(anchor) != 1 or any(raw.count(row) > 1 for row in additions):
         raise RuntimeError("GATEWAY_STATE_REQUIRES_RECONCILIATION")
@@ -30,7 +30,7 @@ def main():
             stream.write(raw)
             stream.flush()
             os.fsync(stream.fileno())
-    modified = raw.replace(anchor, anchor + b"\n        " + b"\n        ".join(missing))
+    modified = raw.replace(b"        location = /health/canonical { proxy_pass http://127.0.0.1:8080; }\n", b"").replace(anchor, anchor + b"\n        " + b"\n        ".join(missing))
     temporary = config.with_name(".nginx-canonical.conf")
     fd = os.open(temporary, os.O_WRONLY | os.O_CREAT | os.O_EXCL | os.O_NOFOLLOW, 0o644)
     with os.fdopen(fd, "wb") as stream:

@@ -43,7 +43,7 @@ def canonical_ready(timeout=120):
             token = next(line.split("=", 1)[1] for line in
                 Path("/run/intelligentai/analysis-http.env").read_text().splitlines()
                 if line.startswith("AI_ANALYSIS_API_TOKEN="))
-            with opener.open(Request("http://127.0.0.1:8080/health/canonical",
+            with opener.open(Request("http://127.0.0.1:8080/health/handoff",
                     headers={"Authorization": "Bearer " + token}), timeout=5) as response:
                 state = json.load(response)
             if state.get("executorConfigured") is True and state.get("admissionEnabled") is True:
@@ -155,7 +155,7 @@ def main():
                         "installed_source_mismatch")
             print(json.dumps({"status": "DEPLOYED_BACKEND_GATED",
                 "canonicalBootstrapReady": env.get("AI_CANONICAL_BOOTSTRAP_READY") == "true",
-                "canonicalAdmissionConfigured": env.get("AI_CANONICAL_ADMISSION_ENABLED") == "true",
+                "handoffConfigured": env.get("AI_CANONICAL_HANDOFF_ENABLED") == "true",
                 "overlaySha256": metadata["overlaySha256"], "bundleSha256": sha(raw),
                 "backup": str(backup), "files": len(records)}), flush=True)
         except BaseException:

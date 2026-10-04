@@ -4,7 +4,7 @@ import json
 from pathlib import Path
 import re
 
-from .canonical_settings import schema_digests
+from .canonical_settings import handoff_schema_digests
 
 
 def read_identity(environment):
@@ -21,4 +21,4 @@ def read_identity(environment):
         ('llmLockSha256', llm / 'dependency_lock.json'))}
     return dict(sourceGitRevision=integration['sourceGitRevision'],
                 bundleSha256=integration['bundleSha256'], **hashes,
-                schemaDigests=schema_digests())
+                schemaDigests=[{"file": name, "sha256": sha} for name, sha in handoff_schema_digests().items()])

@@ -112,7 +112,7 @@ def validate_analysis_request(body):
     if not isinstance(body, dict):
         raise HttpFailure(422, "VALIDATION_FAILED")
     version = body.get("schemaVersion")
-    if not isinstance(version, str) or version not in (REQUEST_V1, REQUEST_V2, REQUEST_V3):
+    if not isinstance(version, str) or version != REQUEST_V3:
         raise HttpFailure(422, "VALIDATION_FAILED")
     validate(body, "analysisRequest", request_version=version)
     if version == REQUEST_V2 and (

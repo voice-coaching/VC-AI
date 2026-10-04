@@ -16,23 +16,19 @@ from uuid import UUID
 
 from .canonical_bridge import CanonicalIntegrationError, FrozenCanonicalArtifacts, FrozenCanonicalCoaching, _require
 from .canonical_backend_journal import BackendCanonicalJournal, BackendJournalFailure
-from .canonical_backend_delivery import BackendCanonicalDelivery
 from .canonical_codec import encode_document
 from .canonical_lease import LEASE_CODES, read_lease
-from .canonical_evidence_store import evidence_store_from_environment
 from .canonical_process import CanonicalProcessFailed, check_guard_python, private_directory
 from .canonical_producer import (
     FrozenCanonicalProducer, check_core_environment, read_private_result, write_private_new,
 )
-from .canonical_receipt_client import CanonicalReceiptClient
 from .canonical_result import preflight_canonical_result, serialize_canonical_result, serialize_precore_failure, ServiceFailure, ResultIdentity
-from .canonical_retention import retain_canonical_preflight
 from .canonical_transport import FrozenOpenAITransport
 from .http_models import AnalysisInput, parse_json, RESULT_V5
 from .canonical_handoff import CanonicalHandoffClient, handoff_document
 from .http_settings import HttpSettings
 from .pipeline_timing import PipelineTiming
-from .canonical_async import blocking, drain_on_cancel
+from .canonical_async import drain_on_cancel
 from .adapters.s3_object_store import (
     S3CompatibleRestrictedObjectStore, S3ObjectStoreSettings, create_s3_client_from_environment,
 )
@@ -59,12 +55,6 @@ def check(env):
     if frozen.artifacts.identity.scoring:
         bridge.scoring_policy()
     FrozenOpenAITransport(env["OPENAI_API_KEY"])
-    if env.get("AI_CANONICAL_HANDOFF_ENABLED") != "true":
-        store = evidence_store_from_environment(env)
-        try:
-            store.assert_private()
-        finally:
-            store.close()
 
 
 async def execute(path: Path, env, diagnostic: dict):
@@ -105,10 +95,7 @@ async def execute(path: Path, env, diagnostic: dict):
     frozen = FrozenCanonicalCoaching(artifacts(env))
     journal = BackendCanonicalJournal(settings, request_raw=encode_document(body), worker_id=worker,
                                       remaining_seconds=remaining, execution_is_active=active)
-    receipt_client = CanonicalReceiptClient(settings, worker)
-    delivery = BackendCanonicalDelivery(settings, journal)
-    handoff = CanonicalHandoffClient(settings, worker) if request.result_schema_version == RESULT_V5 else None
-    store = None if handoff else evidence_store_from_environment(env)
+    handoff = CanonicalHandoffClient(settings, worker)
     recordings = create_s3_client_from_environment(env)
     audio_context = None
     acquired = False
@@ -157,38 +144,18 @@ async def execute(path: Path, env, diagnostic: dict):
         preflight = await asyncio.to_thread(preflight_canonical_result, expression,
             request=request, frozen=frozen, prepared_audio=produced.prepared_audio)
         fence()
-        if handoff is not None:
-            stage("HANDOFF")
-            raw = await asyncio.to_thread(serialize_canonical_result, expression,
-                request=request, identity=identity, frozen=frozen, prepared_audio=produced.prepared_audio)
-            doc = handoff_document(body, raw, preflight, identity)
-            write_private_new(work / "handoff.json", encode_document(doc))
-            await handoff.deliver(doc, preflight.artifacts, active=active, remaining=remaining)
-            write_private_new(work / "completed.json", encode_document({"status": "HANDED_OFF"}))
-            return
-        stage("RETAIN")
-        retained = await blocking(retain_canonical_preflight, preflight,
-            store=store, journal=journal, deadline_monotonic=deadline, execution_is_active=active,
-            concurrency=2)
-        stage("RECEIPT")
-        receipt = await receipt_client.await_verified(retained, journal=journal,
-            deadline_monotonic=deadline, execution_is_active=active)
-        fence()
-        stage("CALLBACK")
+        stage("HANDOFF")
         raw = await asyncio.to_thread(serialize_canonical_result, expression,
-            request=request, identity=identity, frozen=frozen, receipt=receipt,
-            prepared_audio=produced.prepared_audio)
-        write_private_new(work / "callback.json", raw)
-        ack = await delivery.deliver(raw, identity=identity,
-            execution_is_active=active, remaining_seconds=remaining)
-        _require(ack["status"] in ("APPLIED", "DUPLICATE"), "CANONICAL_ACK_INVALID")
-        result = parse_json(raw)
-        write_private_new(work / "completed.json",
-                          encode_document({"status": result["status"]}))
+            request=request, identity=identity, frozen=frozen, prepared_audio=produced.prepared_audio)
+        doc = handoff_document(body, raw, preflight, identity)
+        write_private_new(work / "handoff.json", encode_document(doc))
+        await handoff.deliver(doc, preflight.artifacts, active=active, remaining=remaining)
+        write_private_new(work / "completed.json", encode_document({"status": "HANDED_OFF"}))
+        return
     except Exception:
         # A failure before a valid core has no fabricated core/artifact/score.
         # Post-core errors keep the private scratch for investigation, not a false success.
-        if handoff is not None and isinstance(identity, ResultIdentity) and produced is None and active():
+        if isinstance(identity, ResultIdentity) and produced is None and active():
             raw = serialize_precore_failure(request=request, identity=identity,
                 failure=ServiceFailure("INTEGRATION", "CANONICAL_EXECUTION_FAILED", "EXECUTION"))
             doc = handoff_document(body, raw, None, identity)
@@ -202,12 +169,7 @@ async def execute(path: Path, env, diagnostic: dict):
         primary_failure = sys.exception()
         timing.finish("FAILED" if primary_failure is not None else "OK")
         cleanup_failure = None
-        actions = [(recordings.close, False),
-                   (delivery.close, True), (receipt_client.close, True), (journal.close, False)]
-        if store is not None:
-            actions.append((store.close, False))
-        if handoff is not None:
-            actions.append((handoff.close, True))
+        actions = [(recordings.close, False), (journal.close, False), (handoff.close, True)]
         if acquired:
             actions.insert(0, (lambda: audio_context.__exit__(None, None, None), False))
         for action, is_async in actions:

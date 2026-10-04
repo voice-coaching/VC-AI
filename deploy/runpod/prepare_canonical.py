@@ -45,8 +45,7 @@ def prepare(values):
     values["AI_CANONICAL_BOOTSTRAP_READY"] = "false"
     # Backend verification/apply readiness is a separate server-side rollout.
     values["AI_CANONICAL_ADMISSION_ENABLED"] = "false"
-    if values.get("AI_CANONICAL_HANDOFF_ENABLED") != "true" and not ENVELOPE.is_file():
-        return
+    values["AI_CANONICAL_HANDOFF_ENABLED"] = "true"
     lock = ROOT / "app/deploy/runpod/canonical-requirements.lock"
     if not PYTHON.is_file():
         subprocess.run(["/usr/bin/python3.12", "-m", "venv", str(PYTHON.parent.parent)],
@@ -64,27 +63,16 @@ def prepare(values):
                 executable = p.stat().st_mode & 0o111
                 os.chown(p, 0, 10001)
                 os.chmod(p, 0o750 if executable else 0o640)
-    # v5 archives with the Backend writer; Pod need not receive that credential.
-    if values.get("AI_CANONICAL_HANDOFF_ENABLED") != "true":
-        result = subprocess.run([str(PYTHON), str(Path(__file__)), "--decode"],
-            input=json.dumps(values).encode(), capture_output=True, timeout=15,
-            env={"PATH": "/usr/bin:/bin", "PYTHONDONTWRITEBYTECODE": "1"})
-        if result.returncode != 0:
-            raise ValueError("canonical_secret_unavailable")
-        values.update(json.loads(result.stdout))
+    # v5 never injects a B2 writer into the inference process.
+    for key in tuple(values):
+        if key.startswith("AI_CANONICAL_EVIDENCE_"):
+            values.pop(key)
     values.update({
         "AI_CANONICAL_PYTHON": str(PYTHON),
         "AI_CANONICAL_WORKSPACE_ROOT": str(WORK),
         "AI_CANONICAL_CORE_ROOT": "/workspace/intelligentai/releases/canonical_scored_core_20261003_v2",
         "AI_CANONICAL_LLM_ROOT": "/workspace/intelligentai/validation/canonical_scored_h5_20261003_v3",
-        "AI_CANONICAL_PIPELINE_REVISION": "canonical-scored-H5-20261003-v3",
-        "AI_CANONICAL_EVIDENCE_B2_ENDPOINT": "https://s3.us-east-005.backblazeb2.com",
-        "AI_CANONICAL_EVIDENCE_B2_REGION": "us-east-005",
-        "AI_CANONICAL_EVIDENCE_B2_BUCKET": "speakai2026",
-        "AI_CANONICAL_EVIDENCE_B2_PREFIX": "canonical-evidence/v1/",
-        "AI_CANONICAL_EVIDENCE_RETENTION_DAYS": "INDEFINITE",
-        "AI_CANONICAL_EVIDENCE_DELETION_GRACE_HOURS": "INDEFINITE",
-        "AI_CANONICAL_EVIDENCE_ORPHAN_GRACE_HOURS": "INDEFINITE",
+        "AI_CANONICAL_PIPELINE_REVISION": "canonical-handoff-H5-20261004-v5",
     })
     WORK.mkdir(mode=0o700, exist_ok=True)
     if values.get('AI_CANONICAL_RESIDENT_ENABLED') == 'true':
@@ -106,7 +94,7 @@ def prepare(values):
     values["AI_CANONICAL_BOOTSTRAP_READY"] = "true"
     # Actual admission additionally requires fresh authenticated Backend readiness
     # and identical schemas in HttpRuntime, never this configuration flag alone.
-    values["AI_CANONICAL_ADMISSION_ENABLED"] = "false" if values.get("AI_CANONICAL_HANDOFF_ENABLED") == "true" else "true"
+    values["AI_CANONICAL_ADMISSION_ENABLED"] = "false"
 
 
 if __name__ == "__main__":

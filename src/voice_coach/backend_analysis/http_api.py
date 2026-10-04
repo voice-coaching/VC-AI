@@ -99,21 +99,8 @@ def create_app(environment=None):
         configured = (runtime.canonical_lane is not None and not runtime.stopping
                       and runtime.environment.get("AI_CANONICAL_HANDOFF_ENABLED") == "true")
         return JSONResponse(dict(contractVersion="voice-coaching.canonical-handoff.v1",
-            executorConfigured=configured, schemaDigests=handoff_schema_digests()),
+            executorConfigured=configured, admissionEnabled=runtime.handoff_admission_ready(), schemaDigests=handoff_schema_digests()),
             status_code=200 if configured else 503, headers={"Cache-Control": "no-store"})
-
-    @app.get("/health/canonical")
-    async def canonical_health(request: Request):
-        # The shared middleware authenticates every non-public health route.
-        from .canonical_settings import schema_digests
-        ready = runtime.canonical_lane is not None and not runtime.stopping
-        return JSONResponse({
-            "executorConfigured": ready,
-            "admissionEnabled": runtime.canonical_admission_ready(),
-            "reasonCode": runtime.canonical_reason,
-            "executionQaPerformed": False,
-            "schemaDigests": schema_digests(),
-        }, status_code=200 if ready else 503)
 
     @app.get("/v1/analysis-jobs/{request_id}")
     async def status(request_id: str, request: Request):
