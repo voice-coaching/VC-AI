@@ -1,5 +1,7 @@
 # Canonical AI와 동결 LLM 서비스 통합
 
+**2026-10-04 후속 구현:** [v5 결과 직접 전달](direct-result-20261004.md). 결과를 근거 인계 전에 공개하고 AWS 중복 의미 검증·FE 상태 polling/결과 재조회를 사용자 대기에서 제거한다. 이 변경의 배포와 성능 재측정은 별도다.
+
 **수정 계획과 구현:** [FE–AWS–RunPod 연결 복구·재발 방지](api-pipeline-recovery-plan-20261003.md), [코드 변경·운영 인계](api-pipeline-recovery-implementation-20261003.md). 배포 보호·FE 상태 조회 복구·업로드 헤더와 AI 배포 진단을 구현했다. PR 병합, 최초 호환 묶음 복구와 운영 배포·수동 QA는 별도다.
 
 **2026-10-03 16:20 KST 조사:** [세션107 상태 조회502와 배포 계약 불일치](incident-20261003-session107-502.md). Backend 재시작 중 FE 폴링이 중단됐으나 분석61은 COMPLETED/ACCEPT로 반영됐다. 채점 Backend PR99 자동 배포 후 AWS verifier/RunPod는 이전 H5로 남아 현재 canonical 신규 접수는 차단 상태다. 아래 “미배포”는 각 문서 작성 당시 기록이다.

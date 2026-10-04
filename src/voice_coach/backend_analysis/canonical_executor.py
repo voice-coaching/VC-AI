@@ -144,9 +144,14 @@ async def execute(path: Path, env, diagnostic: dict):
         preflight = await asyncio.to_thread(preflight_canonical_result, expression,
             request=request, frozen=frozen, prepared_audio=produced.prepared_audio)
         fence()
-        stage("HANDOFF")
+        stage("RESULT_PUBLISH")
         raw = await asyncio.to_thread(serialize_canonical_result, expression,
             request=request, identity=identity, frozen=frozen, prepared_audio=produced.prepared_audio)
+        published = await handoff.publish(raw)
+        print(json.dumps({"event": "canonical_result_publish", "analysisId": request.analysis_id,
+                          "executionId": str(request.execution_id), "published": published}), file=sys.stderr, flush=True)
+        fence()
+        stage("HANDOFF")
         doc = handoff_document(body, raw, preflight, identity)
         write_private_new(work / "handoff.json", encode_document(doc))
         await handoff.deliver(doc, preflight.artifacts, active=active, remaining=remaining)
@@ -158,6 +163,10 @@ async def execute(path: Path, env, diagnostic: dict):
         if isinstance(identity, ResultIdentity) and produced is None and active():
             raw = serialize_precore_failure(request=request, identity=identity,
                 failure=ServiceFailure("INTEGRATION", "CANONICAL_EXECUTION_FAILED", "EXECUTION"))
+            stage("RESULT_PUBLISH")
+            await handoff.publish(raw)
+            fence()
+            stage("HANDOFF")
             doc = handoff_document(body, raw, None, identity)
             write_private_new(work / "handoff.json", encode_document(doc))
             await handoff.deliver(doc, (), active=active, remaining=remaining)
