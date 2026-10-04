@@ -45,7 +45,7 @@ def prepare(values):
     values["AI_CANONICAL_BOOTSTRAP_READY"] = "false"
     # Backend verification/apply readiness is a separate server-side rollout.
     values["AI_CANONICAL_ADMISSION_ENABLED"] = "false"
-    if not ENVELOPE.is_file():
+    if values.get("AI_CANONICAL_HANDOFF_ENABLED") != "true" and not ENVELOPE.is_file():
         return
     lock = ROOT / "app/deploy/runpod/canonical-requirements.lock"
     if not PYTHON.is_file():
@@ -64,12 +64,14 @@ def prepare(values):
                 executable = p.stat().st_mode & 0o111
                 os.chown(p, 0, 10001)
                 os.chmod(p, 0o750 if executable else 0o640)
-    result = subprocess.run([str(PYTHON), str(Path(__file__)), "--decode"],
-        input=json.dumps(values).encode(), capture_output=True, timeout=15,
-        env={"PATH": "/usr/bin:/bin", "PYTHONDONTWRITEBYTECODE": "1"})
-    if result.returncode != 0:
-        raise ValueError("canonical_secret_unavailable")
-    values.update(json.loads(result.stdout))
+    # v5 archives with the Backend writer; Pod need not receive that credential.
+    if values.get("AI_CANONICAL_HANDOFF_ENABLED") != "true":
+        result = subprocess.run([str(PYTHON), str(Path(__file__)), "--decode"],
+            input=json.dumps(values).encode(), capture_output=True, timeout=15,
+            env={"PATH": "/usr/bin:/bin", "PYTHONDONTWRITEBYTECODE": "1"})
+        if result.returncode != 0:
+            raise ValueError("canonical_secret_unavailable")
+        values.update(json.loads(result.stdout))
     values.update({
         "AI_CANONICAL_PYTHON": str(PYTHON),
         "AI_CANONICAL_WORKSPACE_ROOT": str(WORK),
@@ -104,7 +106,7 @@ def prepare(values):
     values["AI_CANONICAL_BOOTSTRAP_READY"] = "true"
     # Actual admission additionally requires fresh authenticated Backend readiness
     # and identical schemas in HttpRuntime, never this configuration flag alone.
-    values["AI_CANONICAL_ADMISSION_ENABLED"] = "true"
+    values["AI_CANONICAL_ADMISSION_ENABLED"] = "false" if values.get("AI_CANONICAL_HANDOFF_ENABLED") == "true" else "true"
 
 
 if __name__ == "__main__":

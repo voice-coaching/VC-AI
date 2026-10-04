@@ -1,0 +1,226 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$defs": {
+    "uuid": {
+      "type": "string",
+      "format": "uuid",
+      "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+    },
+    "sha256": {
+      "type": "string",
+      "pattern": "^[0-9a-f]{64}$"
+    },
+    "positiveLong": {
+      "type": "integer",
+      "minimum": 1,
+      "maximum": 9007199254740991
+    },
+    "artifactMetadata": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "kind": {
+          "enum": [
+            "CORE",
+            "BRIDGE_RESULT",
+            "SELECTION_PROJECTION",
+            "BINDING",
+            "ASSOCIATION"
+          ]
+        },
+        "schemaVersion": {
+          "enum": [
+            "canonical_ai_predeploy_v1",
+            "canonical-llm-expression-result-v1",
+            "canonical-llm-expression-input-v1",
+            "voice-coaching.canonical-binding.v1",
+            "voice-coaching.canonical-association.v1"
+          ]
+        },
+        "sha256": {
+          "$ref": "#/$defs/sha256"
+        },
+        "byteSize": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 16777216
+        }
+      },
+      "required": [
+        "kind",
+        "schemaVersion",
+        "sha256",
+        "byteSize"
+      ],
+      "oneOf": [
+        {
+          "properties": {
+            "kind": {
+              "const": "CORE"
+            },
+            "schemaVersion": {
+              "const": "canonical_ai_predeploy_v1"
+            }
+          }
+        },
+        {
+          "properties": {
+            "kind": {
+              "const": "BRIDGE_RESULT"
+            },
+            "schemaVersion": {
+              "const": "canonical-llm-expression-result-v1"
+            }
+          }
+        },
+        {
+          "properties": {
+            "kind": {
+              "const": "SELECTION_PROJECTION"
+            },
+            "schemaVersion": {
+              "const": "canonical-llm-expression-input-v1"
+            }
+          }
+        },
+        {
+          "properties": {
+            "kind": {
+              "const": "BINDING"
+            },
+            "schemaVersion": {
+              "const": "voice-coaching.canonical-binding.v1"
+            }
+          }
+        },
+        {
+          "properties": {
+            "kind": {
+              "const": "ASSOCIATION"
+            },
+            "schemaVersion": {
+              "const": "voice-coaching.canonical-association.v1"
+            }
+          }
+        }
+      ]
+    },
+    "handoffMetadata": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "schemaVersion": {
+          "const": "voice-coaching.canonical-handoff.v1"
+        },
+        "handoffId": {
+          "$ref": "#/$defs/uuid"
+        },
+        "requestId": {
+          "$ref": "#/$defs/uuid"
+        },
+        "executionId": {
+          "$ref": "#/$defs/uuid"
+        },
+        "eventId": {
+          "$ref": "#/$defs/uuid"
+        },
+        "workerInstanceId": {
+          "$ref": "#/$defs/uuid"
+        },
+        "analysisId": {
+          "$ref": "#/$defs/positiveLong"
+        },
+        "recordingId": {
+          "$ref": "#/$defs/positiveLong"
+        },
+        "contentId": {
+          "$ref": "#/$defs/positiveLong"
+        },
+        "requestSha256": {
+          "$ref": "#/$defs/sha256"
+        },
+        "projectionSha256": {
+          "$ref": "#/$defs/sha256"
+        },
+        "artifacts": {
+          "type": "array",
+          "maxItems": 5,
+          "items": {
+            "$ref": "#/$defs/artifactMetadata"
+          }
+        }
+      },
+      "required": [
+        "schemaVersion",
+        "handoffId",
+        "requestId",
+        "executionId",
+        "eventId",
+        "workerInstanceId",
+        "analysisId",
+        "recordingId",
+        "contentId",
+        "requestSha256",
+        "projectionSha256",
+        "artifacts"
+      ]
+    },
+    "handoff": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "metadata": {
+          "$ref": "#/$defs/handoffMetadata"
+        },
+        "handoffSha256": {
+          "$ref": "#/$defs/sha256"
+        },
+        "projection": {
+          "type": "object"
+        },
+        "inlineArtifacts": {
+          "type": "object",
+          "maxProperties": 5,
+          "propertyNames": {
+            "enum": [
+              "CORE",
+              "BRIDGE_RESULT",
+              "SELECTION_PROJECTION",
+              "BINDING",
+              "ASSOCIATION"
+            ]
+          },
+          "additionalProperties": {
+            "type": "string",
+            "maxLength": 2097152
+          }
+        }
+      },
+      "required": [
+        "metadata",
+        "handoffSha256",
+        "projection",
+        "inlineArtifacts"
+      ]
+    },
+    "archiveReconciliation": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "versionId"
+      ],
+      "properties": {
+        "versionId": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 1024,
+          "pattern": "^[^\\u0000-\\u001f\\u007f]+$",
+          "not": {
+            "const": "null"
+          }
+        }
+      }
+    }
+  },
+  "$ref": "#/$defs/handoff"
+}

@@ -30,6 +30,8 @@ def paths(revision):
         'docs/contracts/runpod_analysis_request_v2.schema.json',
         'docs/contracts/runpod_http_control_v1_2.schema.json',
         'docs/contracts/runpod_result_v4.schema.json',
+        'docs/contracts/runpod_result_v5.schema.json',
+        'docs/contracts/runpod_analysis_request_v3.schema.json',
     }
     selected = fixed | {p for p in tracked if
         (p.startswith('src/voice_coach/backend_analysis/canonical_') and p.endswith('.py'))

@@ -70,6 +70,6 @@ class CanonicalLane:
                 await self.resident.stop()
             raise
         result = parse_json(read_private_result(work / "completed.json", work, 1024))
-        if set(result) != {"status"} or result["status"] not in ("COMPLETED", "FAILED"):
+        if set(result) != {"status"} or result["status"] not in ("COMPLETED", "FAILED", "HANDED_OFF"):
             raise ValueError("canonical_completion_invalid")
         return result["status"]

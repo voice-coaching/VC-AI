@@ -25,10 +25,11 @@ from .canonical_producer import (
     FrozenCanonicalProducer, check_core_environment, read_private_result, write_private_new,
 )
 from .canonical_receipt_client import CanonicalReceiptClient
-from .canonical_result import preflight_canonical_result, serialize_canonical_result
+from .canonical_result import preflight_canonical_result, serialize_canonical_result, serialize_precore_failure, ServiceFailure, ResultIdentity
 from .canonical_retention import retain_canonical_preflight
 from .canonical_transport import FrozenOpenAITransport
-from .http_models import AnalysisInput, parse_json
+from .http_models import AnalysisInput, parse_json, RESULT_V5
+from .canonical_handoff import CanonicalHandoffClient, handoff_document
 from .http_settings import HttpSettings
 from .pipeline_timing import PipelineTiming
 from .canonical_async import blocking, drain_on_cancel
@@ -58,11 +59,12 @@ def check(env):
     if frozen.artifacts.identity.scoring:
         bridge.scoring_policy()
     FrozenOpenAITransport(env["OPENAI_API_KEY"])
-    store = evidence_store_from_environment(env)
-    try:
-        store.assert_private()
-    finally:
-        store.close()
+    if env.get("AI_CANONICAL_HANDOFF_ENABLED") != "true":
+        store = evidence_store_from_environment(env)
+        try:
+            store.assert_private()
+        finally:
+            store.close()
 
 
 async def execute(path: Path, env, diagnostic: dict):
@@ -105,10 +107,12 @@ async def execute(path: Path, env, diagnostic: dict):
                                       remaining_seconds=remaining, execution_is_active=active)
     receipt_client = CanonicalReceiptClient(settings, worker)
     delivery = BackendCanonicalDelivery(settings, journal)
-    store = evidence_store_from_environment(env)
+    handoff = CanonicalHandoffClient(settings, worker) if request.result_schema_version == RESULT_V5 else None
+    store = None if handoff else evidence_store_from_environment(env)
     recordings = create_s3_client_from_environment(env)
     audio_context = None
     acquired = False
+    identity = produced = None
     try:
         stage("RESERVE_AND_MATERIALIZE")
         media_root = work / "media"
@@ -153,6 +157,15 @@ async def execute(path: Path, env, diagnostic: dict):
         preflight = await asyncio.to_thread(preflight_canonical_result, expression,
             request=request, frozen=frozen, prepared_audio=produced.prepared_audio)
         fence()
+        if handoff is not None:
+            stage("HANDOFF")
+            raw = await asyncio.to_thread(serialize_canonical_result, expression,
+                request=request, identity=identity, frozen=frozen, prepared_audio=produced.prepared_audio)
+            doc = handoff_document(body, raw, preflight, identity)
+            write_private_new(work / "handoff.json", encode_document(doc))
+            await handoff.deliver(doc, preflight.artifacts, active=active, remaining=remaining)
+            write_private_new(work / "completed.json", encode_document({"status": "HANDED_OFF"}))
+            return
         stage("RETAIN")
         retained = await blocking(retain_canonical_preflight, preflight,
             store=store, journal=journal, deadline_monotonic=deadline, execution_is_active=active,
@@ -172,13 +185,29 @@ async def execute(path: Path, env, diagnostic: dict):
         result = parse_json(raw)
         write_private_new(work / "completed.json",
                           encode_document({"status": result["status"]}))
+    except Exception:
+        # A failure before a valid core has no fabricated core/artifact/score.
+        # Post-core errors keep the private scratch for investigation, not a false success.
+        if handoff is not None and isinstance(identity, ResultIdentity) and produced is None and active():
+            raw = serialize_precore_failure(request=request, identity=identity,
+                failure=ServiceFailure("INTEGRATION", "CANONICAL_EXECUTION_FAILED", "EXECUTION"))
+            doc = handoff_document(body, raw, None, identity)
+            write_private_new(work / "handoff.json", encode_document(doc))
+            await handoff.deliver(doc, (), active=active, remaining=remaining)
+            write_private_new(work / "completed.json", encode_document({"status": "HANDED_OFF"}))
+            return
+        raise
     finally:
         # Parent guard handles abrupt death; never delete external retained evidence.
         primary_failure = sys.exception()
         timing.finish("FAILED" if primary_failure is not None else "OK")
         cleanup_failure = None
-        actions = [(recordings.close, False), (store.close, False),
+        actions = [(recordings.close, False),
                    (delivery.close, True), (receipt_client.close, True), (journal.close, False)]
+        if store is not None:
+            actions.append((store.close, False))
+        if handoff is not None:
+            actions.append((handoff.close, True))
         if acquired:
             actions.insert(0, (lambda: audio_context.__exit__(None, None, None), False))
         for action, is_async in actions:

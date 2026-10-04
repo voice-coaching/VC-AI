@@ -30,14 +30,13 @@ Unix socket 입력은 execution/request ID, deadline, case/audio digest만 받�
 
 Backend offline verifier의 파생 pin, v4 schema의 허용 identity tuple, exporter/stager를 함께 갱신했다. schema의 결과·receipt 의미를 바꾼 것은 아니다. **새 verifier bundle 설치와 양쪽 schema digest 일치가 먼저 필요하다.** 기존 frozen 패키지들도 bundle에 유지한다. Backend verifier가 읽는 원본은 여전히 기존 v4 B2 검증 조건을 충족해야 한다.
 
-## 미구현 범위
+## 후속 구현과 남은 범위
 
-- P3: v5 request/result profile, 영속 handoff API·테이블, RECEIVED 이후 heartbeat 소유권 이전, v3 public result/eligibility.
-- P4: 결과 commit 후 Backend writer/archive outbox, B2 장애와 사용자 완료 분리, PUT 불확정 결과 reconciliation.
+- P3/P4: [v5 영속 인계·archive worker](handoff-v5-20261004.md)에 후속 코드를 추가했다. 배포·개발자 수용은 별도다.
 - P2 후속: 추론 1개 + GPT/인계 1개를 겹치는 execution별 context, 3회 제한 이후의 장기 상주 수명 검증.
 - P5 후속: 새 profile capability/FE parser, MFA feature 내부의 추가 계측·실측에 따른 변경.
 
-따라서 현재도 **B2 보존·receipt·callback 완료를 기다린다**. detached task만 띄우고 성공을 반환하는 변경은 하지 않았다. 완료 순서 변경은 위 새 계약과 영속 소유권 처리가 구현되어야 한다.
+기존 v4는 **B2 보존·receipt·callback 완료를 기다린다**. 새 v5는 모든 원본의 영속 인계·의미 검증 후 결과를 확정하고 B2를 후처리한다. 별도 배포와 명시적 활성화가 필요하다.
 
 ## 확인과 인계
 

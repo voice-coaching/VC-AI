@@ -19,6 +19,9 @@ from .domain import AnalysisWorkerResult
 CONTRACT = "voice-coaching.runpod-http.v1.1"
 REQUEST_V1 = "voice-coaching.runpod-analysis-request.v1"
 REQUEST_V2 = "voice-coaching.runpod-analysis-request.v2"
+REQUEST_V3 = "voice-coaching.runpod-analysis-request.v3"
+RESULT_V5 = "voice-coaching.runpod-analysis-result.v5"
+HANDOFF_PROFILE = "CANONICAL_HANDOFF_20261004_V5"
 RESULT_V3 = "voice-coaching.runpod-analysis-result.v3"
 RESULT_V4 = "voice-coaching.runpod-analysis-result.v4"
 LEGACY_PROFILE = "LEGACY_SEUNGUN_V3"
@@ -82,9 +85,9 @@ def validator(kind: str, result: bool = False, *, request_version: str = REQUEST
     root = Path(__file__).resolve().parents[3]
     filename = "runpod_result_v1.schema.json" if result else "runpod_http_control_v1.schema.json"
     if request_version != REQUEST_V1:
-        if result or kind != "analysisRequest" or request_version != REQUEST_V2:
+        if result or kind != "analysisRequest" or request_version not in (REQUEST_V2, REQUEST_V3):
             raise HttpFailure(422, "VALIDATION_FAILED")
-        filename = "runpod_analysis_request_v2.schema.json"
+        filename = "runpod_analysis_request_v3.schema.json" if request_version == REQUEST_V3 else "runpod_analysis_request_v2.schema.json"
     schema = json.loads((root / "docs/contracts" / filename).read_text(encoding="utf-8"))
     schema["$ref"] = "#/$defs/" + kind
     return DecimalDraft202012Validator(schema, format_checker=FormatChecker())
@@ -109,7 +112,7 @@ def validate_analysis_request(body):
     if not isinstance(body, dict):
         raise HttpFailure(422, "VALIDATION_FAILED")
     version = body.get("schemaVersion")
-    if not isinstance(version, str) or version not in (REQUEST_V1, REQUEST_V2):
+    if not isinstance(version, str) or version not in (REQUEST_V1, REQUEST_V2, REQUEST_V3):
         raise HttpFailure(422, "VALIDATION_FAILED")
     validate(body, "analysisRequest", request_version=version)
     if version == REQUEST_V2 and (
@@ -221,9 +224,9 @@ class AnalysisInput:
                                        mime_type=video["mimeType"], file_size_bytes=video["fileSizeBytes"],
                                        duration_ms=video["durationMs"]) if video else None,
                    request_schema_version=body["schemaVersion"],
-                   analysis_profile=(body["analysisProfile"] if body["schemaVersion"] == REQUEST_V2
+                   analysis_profile=(body["analysisProfile"] if body["schemaVersion"] in (REQUEST_V2, REQUEST_V3)
                                      else LEGACY_PROFILE),
-                   result_schema_version=(body["resultSchemaVersion"] if body["schemaVersion"] == REQUEST_V2
+                   result_schema_version=(body["resultSchemaVersion"] if body["schemaVersion"] in (REQUEST_V2, REQUEST_V3)
                                           else RESULT_V3))
 
 

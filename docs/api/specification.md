@@ -191,3 +191,8 @@ field는 거부한다.
   `status`
 - Status: `200`, token 누락·불일치 `403`, unknown hash `404`, 중복 POST `409`,
   profile·field·notes·interval 계약 위반 `422`
+
+
+## Canonical v5 handoff (2026-10-04)
+
+[Contract, ownership, worker states and rollout](../canonical-integration/handoff-v5-20261004.md). RunPod transfers immutable originals to Backend PostgreSQL; result verification/commit precedes the independent B2 archive outbox. v4 receipt semantics remain unchanged. Implementation is not deployment or inference QA.

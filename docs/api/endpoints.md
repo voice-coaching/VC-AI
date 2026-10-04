@@ -37,3 +37,19 @@ AWS의 기존 호출 주소는 `https://ai.voice-coaching.site`다. RunPod 8082 
 | GET | /api/v1/review-items/{item_hash}/audio | `X-Review-Token` | 제한 WAV의 loopback stream |
 | POST | /api/v1/review-items/{item_hash}/review | `X-Review-Token` | 최초 판정 원자 저장 |
 | PUT | /api/v1/review-items/{item_hash}/review | `X-Review-Token` | 기존 판정 원자 교체 |
+
+
+## Canonical v5 handoff
+
+| Method | Path | Authentication | Purpose |
+|---|---|---|---|
+| GET | `/health/handoff` (RunPod) | API Bearer | Executor configuration and schema digests |
+| GET | `/api/internal/ai/worker-readiness/handoff` | Callback Bearer | Backend verification readiness |
+| POST | `/api/internal/ai/analyses/{id}/handoffs` | Callback Bearer + worker ID | Durable original handoff |
+| PUT | `/api/internal/ai/analyses/{id}/handoffs/{handoffId}/artifacts/{kind}` | Callback Bearer + worker ID | Stage raw artifact |
+| POST | `/api/internal/ai/analyses/{id}/handoffs/{handoffId}/seal` | Callback Bearer + worker ID | Transfer ownership atomically |
+| GET | `/api/internal/ai/analyses/{id}/handoffs/{handoffId}` | Callback Bearer + worker ID | Reconcile delivery outcome |
+| POST | `/api/internal/ai/archives/{handoffId}/artifacts/{kind}/reconciliation` | Separate operations Bearer | Verify an observed B2 version |
+| GET | `/api/analysis-capabilities/canonical` | User login | Available submission contracts |
+| GET | `/api/analyses/{id}/result-contract` | User login + ownership | Current attempt contract |
+| GET | `/api/v3/analyses/{id}` | User login + ownership | Committed v5 public result |

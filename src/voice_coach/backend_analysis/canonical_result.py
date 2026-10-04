@@ -1,4 +1,4 @@
-"""Private canonical v4 preflight and serialization; no storage or activation.
+"""Private canonical v4/v5 preflight and serialization; no storage or activation.
 
 The calling server owns admission, current execution/lease, prepared-WAV
 verification and authenticated Backend receipt lookup. A local artifact upload,
@@ -36,6 +36,12 @@ from .canonical_codec import (
 if TYPE_CHECKING:
     from .http_models import AnalysisInput
 
+
+from .http_models import REQUEST_V2, REQUEST_V3, RESULT_V4, RESULT_V5, CANONICAL_PROFILE, HANDOFF_PROFILE
+
+def _canonical_profile(request):
+    return (request.request_schema_version, request.result_schema_version, request.analysis_profile) in {
+        (REQUEST_V2, RESULT_V4, CANONICAL_PROFILE), (REQUEST_V3, RESULT_V5, HANDOFF_PROFILE)}
 
 RESULT_VERSION = "voice-coaching.runpod-analysis-result.v4"
 PROFILE = "CANONICAL_FROZEN_20260928_V4"
@@ -162,8 +168,7 @@ class ServiceFailure:
 
 def _binding_and_association(request: AnalysisInput, core: dict, raw: bytes,
                              prepared_audio: PreparedAudioIdentity | None, harness: HarnessIdentity):
-    _require(request.analysis_profile == PROFILE and request.result_schema_version == RESULT_VERSION
-             and request.request_schema_version == "voice-coaching.runpod-analysis-request.v2",
+    _require(_canonical_profile(request),
              "CANONICAL_PROFILE_REQUIRED")
     _require(_sha(request.script_text.encode("utf-8")) == request.script_sha256,
              "ADMITTED_SCRIPT_MISMATCH")
@@ -361,16 +366,15 @@ def _verified_retention(receipt: TrustedBackendVerifiedReceipt, preflight: Canon
 def _base_document(request: AnalysisInput, identity: ResultIdentity, harness: HarnessIdentity = H5) -> dict:
     _require(type(identity) is ResultIdentity and type(identity.event_id) is UUID
              and type(identity.worker_instance_id) is UUID, "RESULT_IDENTITY_INVALID")
-    _require(request.analysis_profile == PROFILE and request.result_schema_version == RESULT_VERSION
-             and request.request_schema_version == "voice-coaching.runpod-analysis-request.v2",
+    _require(_canonical_profile(request),
              "CANONICAL_PROFILE_REQUIRED")
     _require(_sha(request.script_text.encode("utf-8")) == request.script_sha256, "ADMITTED_SCRIPT_MISMATCH")
-    return dict(schemaVersion=RESULT_VERSION, eventId=str(identity.event_id),
+    return dict(schemaVersion=request.result_schema_version, eventId=str(identity.event_id),
                 requestId=str(request.event_id), executionId=str(request.execution_id),
                 workerInstanceId=str(identity.worker_instance_id), analysisId=request.analysis_id,
                 recordingId=request.recording_id, contentId=request.content_id,
                 workerRevision=identity.worker_revision, pipelineRevision=identity.pipeline_revision,
-                analysisProfile=PROFILE,
+                analysisProfile=request.analysis_profile,
                 sourceIdentity=dict(scriptSha256=request.script_sha256, audioSha256=request.audio_sha256,
                                     preparedWavSha256=None, canonicalAnalysisId=None, coreSha256=None,
                                     parentManifestSha256=harness.core_sha256,
@@ -400,10 +404,10 @@ def _public_selection(view, expression):
 
 def serialize_canonical_result(
     result: CanonicalExpressionResult, *, request: AnalysisInput, identity: ResultIdentity,
-    frozen: FrozenCanonicalCoaching, receipt: TrustedBackendVerifiedReceipt,
+    frozen: FrozenCanonicalCoaching, receipt: TrustedBackendVerifiedReceipt | None = None,
     prepared_audio: PreparedAudioIdentity | None = None,
 ) -> bytes:
-    """Return private callback bytes only with a trusted Backend VERIFIED receipt.
+    """Build v4 with a verified B2 receipt, or v5 for durable-original handoff.
 
     No upload, receipt issuance, event-ID creation or readiness mutation occurs.
     Caller must persist/reuse these exact bytes for retransmission. A full-sized
@@ -411,7 +415,11 @@ def serialize_canonical_result(
     every original remains required in the verified artifact set.
     """
     preflight = preflight_canonical_result(result, request=request, frozen=frozen, prepared_audio=prepared_audio)
-    retained = _verified_retention(receipt, preflight)
+    if request.result_schema_version == RESULT_V4:
+        retained = _verified_retention(receipt, preflight)
+    else:
+        _require(receipt is None, "V5_RECEIPT_FORBIDDEN")
+        retained = None
     core = _read_json(result.core_bytes)
     expression = _read_json(result.expression_bytes)
     view = _read_json(result.selection_bytes) if result.selection_bytes is not None else None
@@ -429,6 +437,8 @@ def serialize_canonical_result(
                                    evidence=dict(artifactKind="CORE", sha256=_sha(result.core_bytes),
                                                  pointers=dict(EVIDENCE_POINTERS))),
                     selection=_public_selection(view, expression), coaching=expression, retainedEvidence=retained)
+    if request.result_schema_version == RESULT_V5:
+        del document["retainedEvidence"]
     document["score"] = _public_score(expression, view, frozen.artifacts.identity)
     if expression["adapterStatus"] == "FAIL_CLOSED":
         document.update(status="FAILED", failure=ServiceFailure(
@@ -463,6 +473,8 @@ def serialize_precore_failure(*, request: AnalysisInput, identity: ResultIdentit
     document = _base_document(request, identity)
     document.update(status="FAILED", failure=failure.to_document(), canonical=None,
                     selection=None, coaching=None, retainedEvidence=None)
+    if request.result_schema_version == RESULT_V5:
+        del document["retainedEvidence"]
     validate_canonical_result_document(document)
     raw = _wire(document)
     _require(len(raw) <= MAX_RESULT_BYTES, "RESULT_ENVELOPE_TOO_LARGE")
@@ -479,16 +491,20 @@ def validate_canonical_result_document(
     deserialized from a callback. Remote ingress must independently retrieve and
     validate its retained originals before calling this boundary.
     """
-    _validate(document, "result")
+    v5 = document.get("schemaVersion") == RESULT_V5
+    _validate(document, "result", schema_name="v5" if v5 else "v4")
     _require(len(_wire(document)) <= MAX_RESULT_BYTES, "RESULT_ENVELOPE_TOO_LARGE")
     if document["canonical"] is None:
         _require(preflight is None and receipt is None and document["failure"]["origin"] == "INTEGRATION",
                  "PRECORE_FAILURE_INVALID")
         return
-    _require(type(preflight) is CanonicalPreflight and type(receipt) is TrustedBackendVerifiedReceipt,
-             "VERIFIED_ORIGINALS_REQUIRED")
-    retained = _verified_retention(receipt, preflight)
-    _require(document["retainedEvidence"] == retained, "RECEIPT_DOCUMENT_MISMATCH")
+    _require(type(preflight) is CanonicalPreflight, "VERIFIED_ORIGINALS_REQUIRED")
+    if v5:
+        _require(receipt is None, "V5_RECEIPT_FORBIDDEN")
+    else:
+        _require(type(receipt) is TrustedBackendVerifiedReceipt, "VERIFIED_ORIGINALS_REQUIRED")
+        retained = _verified_retention(receipt, preflight)
+        _require(document["retainedEvidence"] == retained, "RECEIPT_DOCUMENT_MISMATCH")
     result = preflight.result
     core = _read_json(result.core_bytes)
     association = _read_json(result.association_bytes)

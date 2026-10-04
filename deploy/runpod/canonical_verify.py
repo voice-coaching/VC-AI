@@ -13,7 +13,7 @@ import os
 from pathlib import Path
 import struct
 import sys
-from types import ModuleType
+from types import ModuleType, SimpleNamespace
 from uuid import UUID
 
 PROTOCOL = 'voice-coaching.canonical-offline-verification.v1'
@@ -123,7 +123,7 @@ def main():
         from voice_coach.backend_analysis.canonical_bridge import (
             CORE_MANIFEST_SHA256, LLM_MANIFEST_SHA256, LLM_LOCK_SHA256,
         )
-        print(json.dumps(dict(protocol=PROTOCOL, status='READY', coreManifestSha256=CORE_MANIFEST_SHA256,
+        print(json.dumps(dict(protocol=PROTOCOL, status='READY', handoffContractVersion='voice-coaching.canonical-handoff.v1', coreManifestSha256=CORE_MANIFEST_SHA256,
                               llmManifestSha256=LLM_MANIFEST_SHA256, llmLockSha256=LLM_LOCK_SHA256,
                               h5ManifestSha256=H5.manifest_sha256, h5LockSha256=H5.lock_sha256,
                               scoredCoreManifestSha256=SCORED.core_sha256,
@@ -134,12 +134,12 @@ def main():
     header = _read_json(frame(1024), 1024)
     if (type(header) is not dict or set(header) != {'protocol', 'operation', 'receiptId'}
             or header['protocol'] != PROTOCOL
-            or header['operation'] not in {'VERIFY_EVIDENCE', 'VERIFY_CALLBACK', 'VERIFY_PRECORE'}):
+            or header['operation'] not in {'VERIFY_EVIDENCE', 'VERIFY_CALLBACK', 'VERIFY_PRECORE', 'VERIFY_HANDOFF'}):
         raise ValueError('VERIFIER_HEADER_INVALID')
     operation = header['operation']
     request_bytes = frame(65536)
     request = AnalysisInput.from_payload(parse_json(request_bytes), args.recordings_prefix)
-    if request.analysis_profile != 'CANONICAL_FROZEN_20260928_V4':
+    if request.analysis_profile not in {'CANONICAL_FROZEN_20260928_V4', 'CANONICAL_HANDOFF_20261004_V5'}:
         raise ValueError('VERIFIER_PROFILE_INVALID')
     response = dict(protocol=PROTOCOL, status='VALID', requestSha256=hashlib.sha256(request_bytes).hexdigest(),
                     manifestSha256=None, callbackSha256=None)
@@ -147,30 +147,33 @@ def main():
     if operation != 'VERIFY_PRECORE':
         raw_manifest = frame(65536)
         manifest = _read_json(raw_manifest, 65536)
-        _validate(manifest, 'evidenceManifest', schema_name='control')
+        handoff = operation == 'VERIFY_HANDOFF'
+        _validate(manifest, 'handoffMetadata' if handoff else 'evidenceManifest', schema_name='handoff' if handoff else 'control')
         originals = {}
         references = []
         for reference in manifest['artifacts']:
-            reference = ArtifactReference.from_document(reference)
+            reference = (SimpleNamespace(kind=reference["kind"],byte_size=reference["byteSize"],sha256=reference["sha256"])
+                         if handoff else ArtifactReference.from_document(reference))
             raw = frame(16 * 1024 * 1024)
             if (reference.kind in originals or len(raw) != reference.byte_size
                     or hashlib.sha256(raw).hexdigest() != reference.sha256):
                 raise ValueError('VERIFIER_ORIGINAL_MISMATCH')
             originals[reference.kind] = raw
             references.append(reference)
-        private = CanonicalExpressionResult(originals['CORE'], originals['BINDING'], originals['ASSOCIATION'],
-                                            originals['BRIDGE_RESULT'], originals.get('SELECTION_PROJECTION'))
-        association = _read_json(private.association_bytes)
-        _validate(association, 'association')
-        selected = harness_identity(association['llmManifestSha256'])
-        frozen = {S7: frozen, H5: h5, SCORED_V1: scored_v1, SCORED_V2: scored_v2, SCORED: scored, RESIDENT: resident}[selected]
-        metadata = association['preparedAudio']
-        prepared = PreparedAudioIdentity.from_document(metadata) if metadata is not None else None
-        # This verifies authenticated producer measurements and their binding,
-        # not an independent re-decode of the original/prepared audio on Backend.
-        preflight = preflight_canonical_result(private, request=request, frozen=frozen, prepared_audio=prepared)
-        if preflight.association.to_document() != manifest['association']:
-            raise ValueError('VERIFIER_ASSOCIATION_MISMATCH')
+        if originals:
+            private = CanonicalExpressionResult(originals['CORE'], originals['BINDING'], originals['ASSOCIATION'],
+                                                originals['BRIDGE_RESULT'], originals.get('SELECTION_PROJECTION'))
+            association = _read_json(private.association_bytes)
+            _validate(association, 'association')
+            selected = harness_identity(association['llmManifestSha256'])
+            frozen = {S7: frozen, H5: h5, SCORED_V1: scored_v1, SCORED_V2: scored_v2, SCORED: scored, RESIDENT: resident}[selected]
+            metadata = association['preparedAudio']
+            prepared = PreparedAudioIdentity.from_document(metadata) if metadata is not None else None
+            # This verifies authenticated producer measurements and their binding,
+            # not an independent re-decode of the original/prepared audio on Backend.
+            preflight = preflight_canonical_result(private, request=request, frozen=frozen, prepared_audio=prepared)
+            if not handoff and preflight.association.to_document() != manifest['association']:
+                raise ValueError('VERIFIER_ASSOCIATION_MISMATCH')
         manifest_sha = hashlib.sha256(raw_manifest).hexdigest()
         response['manifestSha256'] = manifest_sha
         if operation == 'VERIFY_CALLBACK':
@@ -187,6 +190,13 @@ def main():
         callback_bytes = frame(1024 * 1024)
         document = _read_json(callback_bytes, 1024 * 1024)
         validate_canonical_result_document(document, preflight=preflight, receipt=receipt)
+        if operation == 'VERIFY_HANDOFF':
+            from voice_coach.backend_analysis.http_models import digest
+            if (request.result_schema_version != 'voice-coaching.runpod-analysis-result.v5'
+                    or digest(parse_json(request_bytes)) != manifest['requestSha256']
+                    or digest(parse_json(callback_bytes)) != manifest['projectionSha256']
+                    or any(document[k] != manifest[k] for k in ('eventId','workerInstanceId','requestId','executionId','analysisId','recordingId','contentId'))):
+                raise ValueError('VERIFIER_HANDOFF_MISMATCH')
         expected = dict(requestId=str(request.event_id), executionId=str(request.execution_id),
                         analysisId=request.analysis_id, recordingId=request.recording_id, contentId=request.content_id,
                         analysisProfile=request.analysis_profile, schemaVersion=request.result_schema_version)

@@ -33,3 +33,10 @@ def child_environment(environment):
                   PYTHONPATH=str(Path(__file__).resolve().parents[2]),
                   AWS_EC2_METADATA_DISABLED="true")
     return values
+
+
+def handoff_schema_digests():
+    root = Path(__file__).resolve().parents[3] / "docs/contracts"
+    return {**{row["file"]: row["sha256"] for row in schema_digests()}, **{name: hashlib.sha256((root / name).read_bytes()).hexdigest() for name in (
+        "runpod_analysis_request_v3.schema.json", "runpod_result_v5.schema.json",
+        "runpod_canonical_handoff_v1.schema.json")}}

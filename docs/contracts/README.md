@@ -37,3 +37,6 @@ READY/NOT_READY 및 executor 진단 정의로 확장했다. 새 SHA는
 이전 rubric을 GPT 이름으로 바꾸면 같은 schema ID의 의미가 달라지고 과거 결과를 오해한다. 정의 제거는 별도 계약 개정·과거 데이터 reader 검토·Backend 합의 후 진행한다. 신규 schema 추가와 별개로 기존 v1/v2/v3 schema는 변경하지 않았다.
 
 공개 영상 sampleCount=null, referenceStatus=NOT_VALIDATED, correctiveClaimsAllowed=false는 현재 v1 계약이다. P0/P1의 내부 v2에는 유효 표본 수·사용 시각·후보 결속·관찰 정책·statement 참조가 구현·배포됐다. 공개 응답은 기존 allowlist로 투영하므로 새 내부 필드를 추가하지 않는다. [확정 구현](../video-lip-analysis/p0-p1-deployment.md)을 따르며, [개선 설계](../video-lip-analysis/gpt6-integration-design.md)의 가상 예시 전체를 공개 계약으로 취급하지 않는다. P2 개인 교정은 비활성이다.
+
+
+Opt-in v5: `runpod_analysis_request_v3.schema.json`, `runpod_result_v5.schema.json`, `runpod_canonical_handoff_v1.schema.json`. See [durable handoff](../canonical-integration/handoff-v5-20261004.md). Existing v4 schemas are unchanged.

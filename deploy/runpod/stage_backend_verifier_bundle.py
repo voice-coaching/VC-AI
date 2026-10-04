@@ -25,6 +25,7 @@ REQUIRED_APP_FILES = frozenset({
         'runpod_canonical_output', 'runpod_http_control_v1_2',
         'runpod_http_control_v1', 'runpod_analysis_request_v2',
         'runpod_result_v1', 'runpod_canonical_journal_v1',
+        'runpod_result_v5', 'runpod_analysis_request_v3', 'runpod_canonical_handoff_v1',
     )),
 })
 

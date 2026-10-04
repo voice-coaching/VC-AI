@@ -61,8 +61,12 @@ def encode_document(value) -> bytes:
 
 @lru_cache(maxsize=6)
 def _schema(name: str):
-    _require(name in {"parent", "input", "output", "v4", "control", "journal"}, "CANONICAL_SCHEMA_UNKNOWN")
-    if name == "journal":
+    _require(name in {"parent", "input", "output", "v4", "v5", "handoff", "control", "journal"}, "CANONICAL_SCHEMA_UNKNOWN")
+    if name == "handoff":
+        filename = "runpod_canonical_handoff_v1.schema.json"
+    elif name == "v5":
+        filename = "runpod_result_v5.schema.json"
+    elif name == "journal":
         filename = "runpod_canonical_journal_v1.schema.json"
     elif name == "control":
         filename = "runpod_http_control_v1_2.schema.json"

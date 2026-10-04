@@ -83,6 +83,7 @@ class HttpRuntime:
         self.canonical_lane = None
         self.canonical_reason = "canonical_bootstrap_not_ready"
         self.canonical_dependencies_until = 0.0
+        self.handoff_dependencies_until = 0.0
         self.canonical_monitor = None
         try:
             from .deployment_observation import read_identity
@@ -96,7 +97,7 @@ class HttpRuntime:
                 and time.monotonic() < self.dependencies_until)
 
     def ready(self):
-        return self.legacy_ready() or self.canonical_admission_ready()
+        return self.legacy_ready() or self.canonical_admission_ready() or self.handoff_admission_ready()
 
     async def _prepare_legacy(self):
         try:
@@ -143,6 +144,38 @@ class HttpRuntime:
                 and time.monotonic() < self.canonical_dependencies_until
                 and time.monotonic() < self.dependencies_until)
 
+    def handoff_admission_ready(self):
+        return (self.canonical_lane is not None and not self.stopping and self.canonical_lane.ready()
+                and self.environment.get("AI_CANONICAL_HANDOFF_ENABLED") == "true"
+                and time.monotonic() < self.handoff_dependencies_until
+                and time.monotonic() < self.dependencies_until)
+
+    async def _monitor_handoff(self, client):
+        if self.environment.get("AI_CANONICAL_HANDOFF_ENABLED") != "true":
+            return
+        from .canonical_settings import handoff_schema_digests
+        try:
+            async with client.stream("GET", self.settings.callback_base + "/api/internal/ai/worker-readiness/handoff",
+                    headers={"Authorization": "Bearer " + self.settings.callback_token, "Accept-Encoding": "identity"}) as reply:
+                if reply.status_code != 200 or reply.headers.get("Content-Encoding", "identity") != "identity":
+                    raise ValueError()
+                raw = bytearray()
+                async for chunk in reply.aiter_raw():
+                    raw.extend(chunk)
+                    if len(raw) > 65536:
+                        raise ValueError()
+            from .http_models import parse_json
+            state = parse_json(bytes(raw))
+            if (state.get("contractVersion") != "voice-coaching.canonical-handoff.v1"
+                    or not state.get("supported")
+                    or state.get("schemaDigests") != handoff_schema_digests()):
+                raise ValueError()
+            self.handoff_dependencies_until = time.monotonic() + 45
+        except asyncio.CancelledError:
+            raise
+        except Exception:
+            self.handoff_dependencies_until = 0
+
     def deployment_snapshot(self):
         """Authenticated deployment diagnostics; counts only, never job content."""
         if self.deployment_identity is None:
@@ -158,6 +191,7 @@ class HttpRuntime:
         expected = {row["file"]: row["sha256"] for row in schema_digests()}
         async with httpx.AsyncClient(trust_env=False, follow_redirects=False, timeout=8) as client:
             while not self.stopping:
+                await self._monitor_handoff(client)
                 try:
                     await self.canonical_lane.refresh()
                     async with client.stream("GET", self.settings.callback_base + "/api/internal/ai/worker-readiness/v2",
@@ -309,7 +343,7 @@ class HttpRuntime:
 
     def status(self, job, *, details=False):
         body = dict(requestId=str(job.request.event_id), executionId=str(job.request.execution_id),
-                    workerInstanceId=self.worker_id, status=job.state)
+                    workerInstanceId=self.worker_id, status="DELIVERING_RESULT" if job.state == "HANDED_OFF" else job.state)
         if details:
             body["reasonCode"] = job.reason
         return body
@@ -333,7 +367,9 @@ class HttpRuntime:
             raise HttpFailure(409, "STALE_EXECUTION")
         if self.active is not None:
             raise HttpFailure(429, "CAPACITY_EXCEEDED")
-        if not request.is_legacy and not self.canonical_admission_ready():
+        from .http_models import RESULT_V5
+        canonical_ready = self.handoff_admission_ready() if request.result_schema_version == RESULT_V5 else self.canonical_admission_ready()
+        if not request.is_legacy and not canonical_ready:
             raise HttpFailure(503, "NOT_READY")
         if request.is_legacy and not self.legacy_ready():
             if self.canonical_lane is not None and self.canonical_lane.resident is not None:
