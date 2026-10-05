@@ -14,8 +14,9 @@ def git(*args):
     return subprocess.check_output(['git', '-C', str(ROOT), *args])
 
 
-def paths(revision):
+def paths(revision, base_revision=None):
     tracked = git('ls-tree', '-r', '--name-only', revision).decode().splitlines()
+    changed = set(git('diff', '--name-only', base_revision, revision).decode().splitlines()) if base_revision else set(tracked)
     fixed = {
         'src/voice_coach/backend_analysis/http_api.py',
         'src/voice_coach/backend_analysis/http_models.py',
@@ -34,7 +35,7 @@ def paths(revision):
         'docs/contracts/runpod_analysis_request_v3.schema.json',
     }
     selected = fixed | {p for p in tracked if
-        (p.startswith(('src/voice_coach/backend_analysis/', 'src/voice_coach/direct_analysis/')) and p.endswith('.py'))
+        (p.startswith(('src/voice_coach/backend_analysis/', 'src/voice_coach/direct_analysis/')) and p.endswith('.py') and p in changed)
         or (p.startswith('docs/contracts/') and p.endswith('.schema.json'))}
     if not selected.issubset(set(tracked)):
         raise ValueError('commit_required_before_packaging')
@@ -44,18 +45,23 @@ def paths(revision):
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument('--revision', required=True, help='Full committed AI Git SHA')
+    parser.add_argument('--base-revision', help='Existing immutable base; unchanged base files are not overlay writes')
     parser.add_argument('--list-paths', action='store_true')
     parser.add_argument('--base-inventory', type=Path)
     parser.add_argument('--output', type=Path)
     args = parser.parse_args()
     if not re.fullmatch('[0-9a-f]{40}', args.revision):
         raise ValueError('full_revision_required')
-    selected = paths(args.revision)
+    if args.base_revision and not re.fullmatch('[0-9a-f]{40}', args.base_revision):
+        raise ValueError('full_base_revision_required')
+    selected = paths(args.revision, args.base_revision)
     if args.list_paths:
         print(json.dumps(selected)); return
     if args.base_inventory is None or args.output is None:
         parser.error('--base-inventory and --output are required')
     base = json.loads(args.base_inventory.read_bytes())
+    if args.base_revision and base['baseRevision'] != args.base_revision:
+        raise ValueError('base_revision_mismatch')
     if (not re.fullmatch('[0-9a-f]{64}', base['baseOverlaySha256'])
             or not re.fullmatch('[0-9a-f]{40}', base['baseRevision'])
             or set(base['files']) != set(selected)):
