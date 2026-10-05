@@ -35,7 +35,9 @@ async def execute(folder: Path):
                           doc["audioSha256"], doc["fileSizeBytes"], doc["contentId"])
     deadline = time.monotonic() + max(0, doc["deadlineAt"] - time.time())
     artifacts = FrozenCanonicalArtifacts(Path(os.environ["AI_CANONICAL_CORE_ROOT"]),
-                                         Path(os.environ["AI_CANONICAL_LLM_ROOT"]))
+                                         Path(os.environ["AI_CANONICAL_LLM_ROOT"]),
+                                         Path(os.environ['AI_CANONICAL_VERIFIED_GENERATION'])
+                                         if os.environ.get('AI_CANONICAL_VERIFIED_GENERATION') else None)
     require_native_execution(artifacts)
     frozen = FrozenCanonicalCoaching(artifacts)
     work = Path(os.environ["AI_CANONICAL_WORKSPACE_ROOT"]) / str(request.execution_id)

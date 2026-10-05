@@ -86,6 +86,7 @@ class FrozenCanonicalArtifacts:
 
     core_root: Path = field(repr=False)
     llm_root: Path = field(repr=False)
+    verified_generation: Path | None = field(default=None, repr=False)
 
     @property
     def identity(self):
@@ -99,6 +100,9 @@ class FrozenCanonicalArtifacts:
         manifest = _pinned_json(core, "release_manifest.json", identity.core_sha256)
         _pinned_json(llm, "contracts/llm/llm_contract_manifest.json", identity.manifest_sha256)
         lock = _pinned_json(llm, "contracts/llm/dependency_lock.json", identity.lock_sha256)
+        from .canonical_generation import generation_verified
+        if generation_verified(self, identity):
+            return lock
         for root, files in ((core, manifest["file_sha256"]), (llm, lock["files"])):
             for relative, expected in files.items():
                 _require(_file_sha(_contained_file(root, relative)) == expected,

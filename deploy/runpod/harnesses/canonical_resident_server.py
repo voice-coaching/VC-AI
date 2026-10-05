@@ -32,14 +32,16 @@ def main():
     args = parser.parse_args()
     workspace = args.workspace.resolve(strict=True)
     generation = args.generation.resolve(strict=True)
+    started = time.monotonic()
+    started_cpu = time.process_time()
     runtime, local = prepare(generation)
+    print(json.dumps(dict(event='resident_runtime_prepare', elapsedSeconds=time.monotonic()-started, cpuSeconds=time.process_time()-started_cpu)), flush=True)
     mfa_socket = str(generation / 'mfa.sock')
     if len(mfa_socket.encode()) >= 104:
         raise ValueError('RESIDENT_SOCKET_PATH')
     host = None
     client = None
     server = None
-    started = time.monotonic()
     try:
         with (generation / 'mfa.log').open('xb') as log:
             host = subprocess.Popen([APP_PY, '-B', '-u', str(ROOT / 'scripts/blackbox_host.py'),
@@ -47,12 +49,21 @@ def main():
                 '--receipt', str(generation / 'host_ready.json')],
                 cwd=ROOT, stdout=log, stderr=log, start_new_session=True)
         # Import and model preparation overlap the independent MFA bootstrap.
+        import_started = time.monotonic()
+        import_started_cpu = time.process_time()
         sys.path.insert(0, str(ROOT / 'source/scripts'))
         import run_canonical_batch as batch
         from blackbox_client import BlackBoxMFAClient
+        print(json.dumps(dict(event='resident_ai_import', elapsedSeconds=time.monotonic()-import_started, cpuSeconds=time.process_time()-import_started_cpu)), flush=True)
         batch.checked_contract()
+        model_started = time.monotonic()
+        model_started_cpu = time.process_time()
         native = batch.load_native()
-        batch.G2pService()  # Corpus/dependency preparation, not an inference fixture.
+        print(json.dumps(dict(event='resident_native_load', elapsedSeconds=time.monotonic()-model_started, cpuSeconds=time.process_time()-model_started_cpu)), flush=True)
+        g2p_started = time.monotonic()
+        g2p_started_cpu = time.process_time()
+        batch.load_g2p()  # The same engine is reused; request observation state is separate.
+        print(json.dumps(dict(event='resident_g2p_prepare', elapsedSeconds=time.monotonic()-g2p_started, cpuSeconds=time.process_time()-g2p_started_cpu)), flush=True)
         while not (generation / 'host_ready.json').exists():
             if host.poll() is not None or time.monotonic() - started > 300:
                 raise RuntimeError('MFA_NOT_READY')
@@ -72,7 +83,7 @@ def main():
         print(json.dumps(dict(event='canonical_cold_prepare', elapsedSeconds=time.monotonic()-started)), flush=True)
         seen = set()
         # Preserve the historical worker's three-request lifecycle bound. A new
-        # generation starts only after its complete subtree has been reclaimed.
+        # dispatch target is replaced only after per-request cleanup and DONE.
         for _ in range(3):
             conn, _ = server.accept()
             with conn:
@@ -108,7 +119,9 @@ def main():
                 if time.monotonic() >= request['deadline']:
                     raise ValueError('RESIDENT_DEADLINE')
                 stream.write(json.dumps(dict(executionId=execution, status='DONE')).encode() + b'\n')
+                print(json.dumps(dict(event='resident_result_ready', executionId=execution)), flush=True)
                 stream.close()
+        (generation / 'draining.json').write_text('{"status":"DRAINING"}\n')
         client.call('close')
     finally:
         if server: server.close()

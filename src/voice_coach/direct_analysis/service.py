@@ -129,7 +129,8 @@ class AnalysisService:
         self.store.update(job_id, status="RUNNING", startedAt=time.time(),
                           deadlineAt=time.time() + self.store.settings.deadline_seconds)
         self.resident.requests += 1
-        env = self.env | {"AI_CANONICAL_RESIDENT_SOCKET": str(self.resident.socket)}
+        env = self.env | {"AI_CANONICAL_RESIDENT_SOCKET": str(self.resident.socket),
+                          "AI_CANONICAL_VERIFIED_GENERATION": str(self.resident.generation)}
         with (folder / "executor.log").open("ab") as log:
             self.process = await asyncio.create_subprocess_exec(sys.executable, "-B", "-m",
                 "voice_coach.direct_analysis.worker", str(folder), env=env,

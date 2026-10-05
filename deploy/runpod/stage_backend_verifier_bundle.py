@@ -17,7 +17,7 @@ BASE = Path('/opt/alpha-canonical/releases')
 REQUIRED_APP_FILES = frozenset({
     'app/deploy/runpod/canonical_verify.py',
     *(f'app/src/voice_coach/backend_analysis/{name}.py' for name in (
-        'canonical_bridge', 'canonical_codec', 'canonical_media', 'canonical_harness',
+        'canonical_generation', 'canonical_bridge', 'canonical_codec', 'canonical_media', 'canonical_harness',
         'canonical_result', 'http_models', 'domain',
         'native_execution', 'native_phone_contract', 'native_phone_assessment', 'phone_rubric',
     )),
@@ -54,6 +54,7 @@ def main():
                      'frozen/canonical_scored_core_20261003_v1/', 'frozen/canonical_scored_h5_20261003_v1/',
                      'frozen/canonical_scored_h5_20261003_v3/', 'frozen/canonical_scored_core_20261003_v2/', 'frozen/canonical_scored_h5_20261003_v2/',
                      'frozen/canonical_resident_core_20261004_v1/', 'frozen/canonical_resident_h5_20261004_v1/',
+                     'frozen/canonical_native_core_20261005_v2/', 'frozen/canonical_native_h5_20261005_v2/',
                      'frozen/canonical_native_core_20261004_v1/', 'frozen/canonical_native_h5_20261004_v1/',
                      'app/src/voice_coach/', 'app/docs/contracts/'))
                      or name == 'app/deploy/runpod/canonical_verify.py')
@@ -83,6 +84,14 @@ def main():
         'frozen/canonical_h5_20261003/contracts/llm/dependency_lock.json': '93636f0c4befe7f1e34358e74b1077cc94cb2b82064781485b0183c53357d2f5',
         'frozen/canonical_h5_20261003/contracts/llm/llm_contract_manifest.json': '9f10296b6944249ded9f5ce2ccfdfa7c53b6e4af670999fe68e9e477e97eaf45',
     }
+    native_v2 = {
+        'frozen/canonical_native_core_20261005_v2/release_manifest.json': '68cda53df72be9dace15f3829a840c27f40efbbfee1a561f8e58d314b4991aad',
+        'frozen/canonical_native_h5_20261005_v2/contracts/llm/dependency_lock.json': '93ccb06cafb9128f4ae02f111ca4bfb599305f84ecce01e41971e69822ba1ec6',
+        'frozen/canonical_native_h5_20261005_v2/contracts/llm/llm_contract_manifest.json': '7dfc26fb088300165b4a564847d0a489092b0ab830ef591943a40f31ecb85747',
+    }
+    if any(name.startswith(('frozen/canonical_native_core_20261005_v2/',
+                            'frozen/canonical_native_h5_20261005_v2/')) for name in files):
+        pins.update(native_v2)
     for name, expected in pins.items():
         require(name in files and files[name]['sha256'] == expected, 'BUNDLE_FROZEN_PIN')
     identities = {name: files[name]['sha256'] for name in sorted(files)}

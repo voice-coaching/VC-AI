@@ -6,8 +6,22 @@ def resident_runner(runner):
     runner = replace_once(runner, "from concurrent.futures import ThreadPoolExecutor",
                           "from functools import lru_cache\nfrom concurrent.futures import ThreadPoolExecutor")
     runner = replace_once(runner, "def checked_contract():", "@lru_cache(maxsize=1)\ndef checked_contract():")
+    runner = replace_once(runner, "def checked_contract():\n", "def checked_contract():\n    started = time.perf_counter()\n    cpu_started = time.process_time()\n")
+    runner = replace_once(runner, "    return z\n", "    print(json.dumps(dict(event='native_contract_prepare', elapsedSeconds=time.perf_counter()-started, cpuSeconds=time.process_time()-cpu_started)), flush=True)\n    return z\n")
+    runner = replace_once(runner,
+        "    assert sha(MODEL / 'pytorch_model.bin') == WEIGHTS_SHA, 'NATIVE_WEIGHT_SHA_MISMATCH'",
+        "    weights_started, weights_cpu = time.perf_counter(), time.process_time()\n"
+        "    assert sha(MODEL / 'pytorch_model.bin') == WEIGHTS_SHA, 'NATIVE_WEIGHT_SHA_MISMATCH'\n"
+        "    print(json.dumps(dict(event='native_weight_hash', elapsedSeconds=time.perf_counter()-weights_started,\n"
+        "        cpuSeconds=time.process_time()-weights_cpu, fileBytes=(MODEL/'pytorch_model.bin').stat().st_size)), flush=True)")
+    runner = replace_once(runner, "        self.real = G2pService()", "        self.real = load_g2p()")
     marker = "def run_batch(cases, output: Path, parallel: bool, blackbox_socket: str | None = None, blackbox_runtime: str | None = None):"
     loader = '''@lru_cache(maxsize=1)
+def load_g2p():
+    return G2pService()
+
+
+@lru_cache(maxsize=1)
 def load_native():
     from native_core_adapter import assessment_policy
     assessment_policy()  # Fail before loading models when calibration is missing.
