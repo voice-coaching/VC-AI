@@ -221,10 +221,12 @@ def main():
         if isinstance(error, CanonicalProcessFailed):
             diagnostic.update(code="CANONICAL_PROCESS_FAILED", guardExitStatus=error.exit_status)
         elif isinstance(error, BackendJournalFailure):
-            diagnostic.update(code=str(error), upstreamStatus=error.status)
+            diagnostic.update(code=str(error), upstreamStatus=error.upstream_status,
+                              failureKind=error.failure_kind)
         elif isinstance(error, CanonicalIntegrationError) and str(error) in {
                 "CANONICAL_GUARD_RUNTIME_UNAVAILABLE", "CANONICAL_PROCESS_CLEANUP_UNCONFIRMED",
                 "BACKEND_JOURNAL_RESPONSE_INVALID", "CANONICAL_EXECUTION_INACTIVE",
+                "EVIDENCE_EXECUTION_INACTIVE", "PRODUCER_OUTCOME_UNKNOWN", "JOURNAL_REVISION_MISMATCH",
                 "CANONICAL_SCHEMA_INVALID", "CANONICAL_OUTPUT_CHANGED"} | LEASE_CODES:
             diagnostic["code"] = str(error)
         print(json.dumps(diagnostic), file=sys.stderr)
