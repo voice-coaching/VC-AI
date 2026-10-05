@@ -25,6 +25,7 @@ def child_environment(environment):
         "AWS_ACCESS_KEY_ID", "AWS_SECRET_ACCESS_KEY", "AWS_SESSION_TOKEN",
         "OPENAI_API_KEY", "VOICE_COACH_BUILD_REVISION",
         "AI_ANALYSIS_NLTK_DATA_ROOT",
+        "AI_ANALYSIS_RESOURCE_PROFILE",
     }
     values = {k: v for k, v in environment.items()
               if k in names or k.startswith("AI_CANONICAL_")}

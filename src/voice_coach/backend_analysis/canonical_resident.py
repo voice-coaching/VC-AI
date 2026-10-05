@@ -61,7 +61,8 @@ class _ResidentGeneration:
                          '--workspace', self.env['AI_CANONICAL_WORKSPACE_ROOT'],
                          '--generation', str(self.generation), '--socket', str(self.socket)],
                 cwd=self.artifacts.core_root,
-                environment=core_environment(Path(self.env['AI_ANALYSIS_NLTK_DATA_ROOT'])),
+                environment=core_environment(Path(self.env['AI_ANALYSIS_NLTK_DATA_ROOT']),
+                    cpu_threads=1 if self.env.get('AI_ANALYSIS_RESOURCE_PROFILE') == 'dlpc-4cpu' else 2),
                 log_path=self.generation / 'resident.log', deadline_monotonic=time.monotonic()+86400,
                 execution_is_active=lambda: not self.stopping and self.keep_running()))
         if self.task is not None and not self.task.done():

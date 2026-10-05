@@ -1,5 +1,7 @@
 # Canonical AI와 동결 LLM 서비스 통합
 
+**2026-10-05 DLPC 이전:** [계획](dlpc-migration-plan-20261005.md), [실행 기록](dlpc-migration-execution-20261005.md). 자산 이전 및 DLPC budget 구현 진행 중이며 운영 전환·품질 검증은 별도다.
+
 **2026-10-04 API 경계 구현:** [완료·재녹음·화면 복구·전송 복구 인계](../api-boundary-implementation-20261004.md). PR용 구현이며 운영 배포·실제 QA는 별도다.
 
 **2026-10-04 후속 구현:** [v5 결과 직접 전달](direct-result-20261004.md). 결과를 근거 인계 전에 공개하고 AWS 중복 의미 검증·FE 상태 polling/결과 재조회를 사용자 대기에서 제거한다. 이 변경의 배포와 성능 재측정은 별도다.
