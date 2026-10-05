@@ -19,6 +19,7 @@ REQUIRED_APP_FILES = frozenset({
     *(f'app/src/voice_coach/backend_analysis/{name}.py' for name in (
         'canonical_bridge', 'canonical_codec', 'canonical_media', 'canonical_harness',
         'canonical_result', 'http_models', 'domain',
+        'native_execution', 'native_phone_contract', 'native_phone_assessment', 'phone_rubric',
     )),
     *(f'app/docs/contracts/{name}.schema.json' for name in (
         'runpod_result_v4', 'runpod_canonical_parent', 'runpod_canonical_input',
@@ -26,6 +27,7 @@ REQUIRED_APP_FILES = frozenset({
         'runpod_http_control_v1', 'runpod_analysis_request_v2',
         'runpod_result_v1', 'runpod_canonical_journal_v1',
         'runpod_result_v5', 'runpod_analysis_request_v3', 'runpod_canonical_handoff_v1',
+        'native_phone_evidence', 'native_logits',
     )),
 })
 
@@ -52,6 +54,7 @@ def main():
                      'frozen/canonical_scored_core_20261003_v1/', 'frozen/canonical_scored_h5_20261003_v1/',
                      'frozen/canonical_scored_h5_20261003_v3/', 'frozen/canonical_scored_core_20261003_v2/', 'frozen/canonical_scored_h5_20261003_v2/',
                      'frozen/canonical_resident_core_20261004_v1/', 'frozen/canonical_resident_h5_20261004_v1/',
+                     'frozen/canonical_native_core_20261004_v1/', 'frozen/canonical_native_h5_20261004_v1/',
                      'app/src/voice_coach/', 'app/docs/contracts/'))
                      or name == 'app/deploy/runpod/canonical_verify.py')
                 and not any(p == '.env' or p.startswith('.env.') for p in path.parts), 'BUNDLE_PATH')
@@ -60,6 +63,9 @@ def main():
         require(len(content) <= 2 * 1024 * 1024 and hashlib.sha256(content).hexdigest() == entry['sha256'], 'BUNDLE_HASH')
         decoded[name] = content
     pins = {
+        'frozen/canonical_native_core_20261004_v1/release_manifest.json': '9e2a2107db7d30fe8910c8984687974d85b95120760e2bcce53d57640a5d5a32',
+        'frozen/canonical_native_h5_20261004_v1/contracts/llm/dependency_lock.json': '798b47b6f5355b120141a7fa730350739298082549036233ea5804226dbad80c',
+        'frozen/canonical_native_h5_20261004_v1/contracts/llm/llm_contract_manifest.json': '358365399f7445ab0a77797ce46619979955503c4faac8185724e2225aa5205c',
         'frozen/canonical_resident_core_20261004_v1/release_manifest.json': 'ce16f635da012237b5316b36161d5eeff9432279cd08dbbe7967f5ab7ace7f7e',
         'frozen/canonical_resident_h5_20261004_v1/contracts/llm/dependency_lock.json': '1945dcf2fad7fc97621830abed34353c2d372d8224cc9ad11a9c422eabfdf9f4',
         'frozen/canonical_resident_h5_20261004_v1/contracts/llm/llm_contract_manifest.json': '885a2f0a67494dc3bebed28962222bfe95a0143292fe2de04194b84ea8beadc5',

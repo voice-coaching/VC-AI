@@ -70,15 +70,12 @@ def prepare(values):
     values.update({
         "AI_CANONICAL_PYTHON": str(PYTHON),
         "AI_CANONICAL_WORKSPACE_ROOT": str(WORK),
-        "AI_CANONICAL_CORE_ROOT": "/workspace/intelligentai/releases/canonical_scored_core_20261003_v2",
-        "AI_CANONICAL_LLM_ROOT": "/workspace/intelligentai/validation/canonical_scored_h5_20261003_v3",
-        "AI_CANONICAL_PIPELINE_REVISION": "canonical-handoff-H5-20261004-v5",
+        "AI_CANONICAL_CORE_ROOT": "/workspace/intelligentai/releases/canonical_native_core_20261004_v1",
+        "AI_CANONICAL_LLM_ROOT": "/workspace/intelligentai/validation/canonical_native_h5_20261004_v1",
+        "AI_CANONICAL_PIPELINE_REVISION": "canonical-native-H5-20261004-v1",
+        "AI_CANONICAL_RESIDENT_ENABLED": "true",
     })
     WORK.mkdir(mode=0o700, exist_ok=True)
-    if values.get('AI_CANONICAL_RESIDENT_ENABLED') == 'true':
-        values.update(AI_CANONICAL_CORE_ROOT='/workspace/intelligentai/releases/canonical_resident_core_20261004_v1',
-                      AI_CANONICAL_LLM_ROOT='/workspace/intelligentai/validation/canonical_resident_h5_20261004_v1',
-                      AI_CANONICAL_PIPELINE_REVISION='canonical-resident-H5-20261004-v1')
     if WORK.is_symlink() or WORK.resolve() != WORK:
         raise ValueError("canonical_workspace_invalid")
     os.chown(WORK, 10001, 10001)

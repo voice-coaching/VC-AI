@@ -1,0 +1,11 @@
+{
+  "assessmentRevision": "native-phone-assessment-v1",
+  "inventoryRevision": "native-phone-inventory-v1",
+  "featureRevision": "native-expected-margin-run-fp32-v1",
+  "modelRevision": "e26ff9dfb62169acf445d0060ef56863c018b20e",
+  "modelWeightsSha256": "b2ec663558606d651a718fa1eaa20c6d504df173725ecbc66df74c22267e2d68",
+  "status": "DRAFT",
+  "mappingApprovals": [],
+  "rules": [],
+  "validation": null
+}

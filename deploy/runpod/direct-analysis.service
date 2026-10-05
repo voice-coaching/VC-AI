@@ -1,0 +1,21 @@
+[Unit]
+Description=Public direct Native voice analysis
+After=network-online.target
+
+[Service]
+Type=simple
+User=intelligentai
+WorkingDirectory=/opt/intelligentai/app
+EnvironmentFile=/etc/intelligentai/direct-analysis.env
+Environment=PYTHONPATH=/opt/intelligentai/app/src
+Environment=PYTHONDONTWRITEBYTECODE=1
+ExecStart=/opt/intelligentai/envs/scorer/bin/python -B scripts/serve_direct_analysis.py
+KillMode=control-group
+TimeoutStopSec=90
+Restart=on-failure
+RestartSec=5
+UMask=0077
+NoNewPrivileges=true
+
+[Install]
+WantedBy=multi-user.target

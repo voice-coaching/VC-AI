@@ -22,10 +22,19 @@ def strict_json(raw):
 
 
 def score_core(core, *, evidence_units, prompt, transport):
+    """Historical harness compatibility; new Native releases use native_gpt_rubric."""
     if core["input_validation"]["status"] != "ACCEPT":
         return dict(status="NOT_REQUESTED")
     try:
         sheet = worksheet(evidence_rows(core["core_result"]["pronunciation"]), evidence_units=evidence_units)
+        return render_worksheet(sheet, prompt=prompt, transport=transport)
+    except Exception:
+        return dict(status="UNSCORABLE")
+
+
+def render_worksheet(sheet, *, prompt, transport):
+    """Provider IO is shared; evidence extraction belongs to each pinned harness."""
+    try:
         body = dict(model="gpt-6-astra", max_completion_tokens=1200, reasoning_effort="low",
                     response_format={"type": "json_object"}, store=False,
                     messages=[dict(role="system", content=prompt),

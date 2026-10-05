@@ -10,4 +10,6 @@ docs/contracts/runpod_http_control_v1.schema.json text eol=lf
 docs/contracts/runpod_result_v1.schema.json text eol=lf
 docs/contracts/runpod_analysis_request_v3.schema.json -text
 docs/contracts/runpod_result_v5.schema.json -text
+docs/contracts/native_phone_evidence.schema.json -text
+docs/contracts/native_logits.schema.json -text
 docs/contracts/runpod_canonical_handoff_v1.schema.json -text

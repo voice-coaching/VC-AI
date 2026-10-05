@@ -14,15 +14,18 @@ import os
 from pathlib import Path
 import stat
 import subprocess
-import sys
 import time
 from typing import Callable
 
 from .canonical_bridge import FrozenCanonicalArtifacts, MAX_CORE_BYTES, _encode, _require
 from .canonical_codec import read_document, validate_document
 from .canonical_media import PreparedAudioIdentity, measure_prepared_wav
-from .canonical_backend_journal import BackendCanonicalJournal
-from .canonical_process import private_directory, run_guarded
+from typing import Protocol
+
+
+class ProducerJournal(Protocol):
+    def start_producer(self, request) -> None: ...
+from .canonical_process import private_directory
 from .http_models import AnalysisInput
 from .ports import MaterializedAudio
 from .canonical_provenance import check_provenance
@@ -104,13 +107,16 @@ def read_private_result(path: Path, root: Path, limit: int) -> bytes:
 
 class FrozenCanonicalProducer:
     def __init__(self, artifacts: FrozenCanonicalArtifacts, workspace_root: Path,
-                 journal: BackendCanonicalJournal, *, nltk_data_root: Path, resident_socket: Path | None = None):
-        _require(type(journal) is BackendCanonicalJournal, 'BACKEND_JOURNAL_REQUIRED')
+                 journal: ProducerJournal, *, nltk_data_root: Path, resident_socket: Path | None = None):
+        _require(callable(getattr(journal, 'start_producer', None)), 'PRODUCER_JOURNAL_REQUIRED')
         self.journal = journal
         self.artifacts = artifacts
         self.workspace_root = private_directory(workspace_root)
         self.environment = core_environment(nltk_data_root)
         self.resident_socket = resident_socket
+        from .native_execution import require_native_execution
+        require_native_execution(artifacts)
+        _require(resident_socket is not None, 'NATIVE_RESIDENT_REQUIRED_NO_ONESHOT_FALLBACK')
         check_provenance(artifacts.core_root)
 
     async def produce(self, request: AnalysisInput, audio: MaterializedAudio, *,
@@ -142,6 +148,7 @@ class FrozenCanonicalProducer:
         private_directory(work)
         case_path = work / 'admitted-case.json'
         write_private_new(case_path, _encode([dict(id=str(request.event_id),
+                                                   executionId=str(request.execution_id),
                                                    audio=str(audio.path), script=request.script_text)]))
         output = work / 'release-output'
         # The frozen conda build lacks pidfd bindings. Supervision stays in the
@@ -150,14 +157,6 @@ class FrozenCanonicalProducer:
             from .canonical_resident import produce_resident
             await produce_resident(self.resident_socket, request=request, case_path=case_path,
                                    deadline=deadline_monotonic, active=execution_is_active)
-        else:
-            await run_guarded(guard_python=Path(sys.executable),
-                              command=[str(CORE_PYTHON), '-B', '-u',
-                                       str(self.artifacts.core_root / 'scripts/run_release.py'),
-                                       '--cases', str(case_path), '--output', str(output)],
-                              cwd=self.artifacts.core_root, environment=self.environment,
-                              log_path=work / 'producer.log', deadline_monotonic=deadline_monotonic,
-                              execution_is_active=execution_is_active)
         raw = read_private_result(output / 'candidate/results' / (str(request.event_id) + '.json'),
                                   work, MAX_CORE_BYTES)
         core = read_document(raw, MAX_CORE_BYTES)

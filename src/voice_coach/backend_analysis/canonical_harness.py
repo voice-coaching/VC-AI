@@ -10,6 +10,7 @@ class HarnessIdentity:
     prompt_sha256: str
     core_sha256: str = "95f2347ad53ab53030f68a65795cfc5a84ca1c8c41bd03119c9a9fb15d0367c2"
     scoring: bool = False
+    native: bool = False
 
 
 S7 = HarnessIdentity(
@@ -63,7 +64,18 @@ RESIDENT = HarnessIdentity(
 )
 RESIDENT_CORE_DIRECTORY = 'canonical_resident_core_20261004_v1'
 RESIDENT_LLM_DIRECTORY = 'canonical_resident_h5_20261004_v1'
-HARNESSES = {value.manifest_sha256: value for value in (S7, H5, SCORED_V1, SCORED_V2, SCORED, RESIDENT)}
+# Native DRAFT is registered for source/archival validation only. The separate
+# native_execution allowlist remains empty until calibration and developer QA.
+NATIVE = HarnessIdentity(
+    'canonical-native-h5-20261004-v1',
+    '358365399f7445ab0a77797ce46619979955503c4faac8185724e2225aa5205c',
+    '798b47b6f5355b120141a7fa730350739298082549036233ea5804226dbad80c',
+    SCORED.prompt_sha256,
+    '9e2a2107db7d30fe8910c8984687974d85b95120760e2bcce53d57640a5d5a32', True, True,
+)
+NATIVE_CORE_DIRECTORY = 'canonical_native_core_20261004_v1'
+NATIVE_LLM_DIRECTORY = 'canonical_native_h5_20261004_v1'
+HARNESSES = {value.manifest_sha256: value for value in (S7, H5, SCORED_V1, SCORED_V2, SCORED, RESIDENT, NATIVE)}
 
 
 def harness_identity(manifest_sha256: str) -> HarnessIdentity:

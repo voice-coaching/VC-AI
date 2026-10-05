@@ -1,0 +1,20 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "Private Native logits retained inside the asynchronous core archive",
+  "anyOf": [
+    {"type": "null"},
+    {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["schemaVersion", "encoding", "rows", "columns", "sha256", "data"],
+      "properties": {
+        "schemaVersion": {"const": "native-logits-fp32-v1"},
+        "encoding": {"const": "base64-le-f32"},
+        "rows": {"type": "integer", "minimum": 1, "maximum": 30000},
+        "columns": {"const": 45},
+        "sha256": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
+        "data": {"type": "string", "contentEncoding": "base64", "maxLength": 7200000}
+      }
+    }
+  ]
+}

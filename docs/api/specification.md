@@ -228,3 +228,9 @@ FE는 지원 범위를 녹음/업로드 전에 확인하고, 위 필드가 빠�
 - 저장 조회는 한 번에 최대 120초, 요청별 15초, 5초 간격으로 제한한다. 지연 후 사용자가 조회만 다시 시작할 수 있고 자동 analyze/retry 제출은 없다.
 - complete 요청의 totalLearningSeconds는 새 페이지 recorder의 0초가 아닌 현재 선택된 서버 녹음 durationMs로 계산한다. duration이 없으면 임의의 1초를 만들지 않는다.
 - 실행 상태 조회로 확인한 RunPod INTERNAL_ERROR/DEPENDENCY_UNAVAILABLE terminal FAILED는 Backend failure_code=runpod_execution_failed, 공개 serviceFailure={origin:RUNPOD, code:CANONICAL_EXECUTION_FAILED, stage:EXECUTION}으로 구분한다. UNKNOWN/404/409/5xx만으로 terminal 실패를 만들지 않는다.
+
+## 2026-10-05 직접 음성 분석 (별도 서비스, 미배포)
+
+사용자 결정으로 FE가 RunPod에 인증/게이트웨이 없이 raw WAV를 제출한다. direct-analysis.v1 UUID 계약은 AWS numeric ID 기반 v5 요청을 대체하여 위장하지 않는다. 일반 독립 연습에서만 기능 flag로 선택하며 기존 세션·과정·시험은 기존 계약을 유지한다.
+
+원자적 로컬 결과 공개 뒤 SSE 결과를 FE에 제공하고, B2 및 AWS direct history 저장은 별도 worker가 재시도한다. AWS 계정 이력 연결은 결과 표시 후 기존 로그인으로 처리하며 RunPod 접수에 영향을 주지 않는다. Native DRAFT allowlist가 비어 있어 운영 활성화는 미완료다. 전체 입력·응답·실패·내구성 계약은 [직접 분석 구현 기록](../canonical-integration/direct-ingress-implementation-20261005.md)을 따른다.
