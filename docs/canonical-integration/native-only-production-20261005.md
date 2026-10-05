@@ -6,7 +6,7 @@
 
 사용자는 `/workspace/intelligentai/releases/canonical_ai_pre_llm_20260928_100247Z_421fda`를 기준으로 구형 실행 경로를 완전히 제거하도록 요청했다. 최신 지시는 **최신 파이프라인을 먼저 배포하고 실제 출력의 채점 근거 필드를 측정**하는 것이다. 이전의 보정 자료 확보 후 전환 조건을 대체한다.
 
-Native v4 패키지와 AWS 검증기를 별도 경로에 배치하고 파일 무결성·설치 readiness를 확인했다. 활성화와 요청 측정은 진행 중이다. 분석 실행 승인은 정확한 core/H5 digest로 등록하며, 채점 정책은 DRAFT를 유지한다. 분석 실행과 수치 채점의 근거 조건을 분리한다.
+Native v4 패키지와 AWS 검증기를 배포하고 2026-10-05 21:38 KST 접수를 재개했다. 실제 API 요청 84·85를 측정했다. 분석 실행 승인은 정확한 core/H5 digest로 등록하며, 채점 정책은 DRAFT를 유지한다. 분석 실행과 수치 채점의 근거 조건을 분리한다. **Native 코어는 성공했지만 기존 채점 어댑터가 UNSCORABLE을 반환해 최종 작업 상태는 FAILED다. 정상 채점·코칭 완료로 보고하지 않는다.**
 
 ## 추가 제거한 구형 경로
 
@@ -33,7 +33,7 @@ Native v4 패키지와 AWS 검증기를 별도 경로에 배치하고 파일 무
 - H5 dependency lock SHA: `1b8cb378b889817e14bf06be5065b04016589f6b74dcd5501776dde758f38259`.
 - `calibrationStatus=DRAFT`. 실행 allowlist 등록은 사용자의 분석 배포 지시이며 채점 보정·품질 QA 승인과 다르다.
 - Python 75개 소스 컴파일 및 Python 3.11 문법 확인, core/H5 manifest의 모든 파일 digest 대조, `git diff --check` 통과.
-- 추론·회귀 테스트·GPT 생성·브라우저 QA는 실행하지 않았다. 위 확인은 실제 동작·품질 검증이 아니다.
+- 이후 사용자가 명시한 실제 음성 요청 2건을 수행했다. 첫 요청의 디렉터리 접근 오류를 수정하고 두 번째 요청의 결과 전달·DB 저장·B2 보관까지 확인했다. 자동 회귀 테스트·브라우저 QA는 하지 않았다. GPT 호출은 채점 어댑터에서 차단되어 0회다.
 
 ## RunPod에서 찾은 보정 관련 자료
 
@@ -60,3 +60,56 @@ Native v4 패키지와 AWS 검증기를 별도 경로에 배치하고 파일 무
 4. 관측 결과·채점 가능 여부를 구분해서 보고한다. 없는 필드와 점수는 만들어내지 않는다.
 
 보정 자료 부족을 분석 배포의 선행조건으로 사용하지 않는다. 수치 채점이 가능하다는 보증으로도 해석하지 않는다.
+
+## 운영 적용 결과
+
+- RunPod 실행 코드: `ed73c19d8bd80507423be02b73e279b9f08580d8`, bundle `7d5e5206b7ff8e7c1d4b051d31c8614cf553800d55e7e9be596f3f92e23a0fb9`.
+- 활성 core: `/workspace/intelligentai/releases/canonical_native_core_20261005_v4`. 지정한 September 28 원본의 Native 모델·MFA·P1 정책을 보존한 파생 릴리스다.
+- 활성 H5: `/workspace/intelligentai/validation/canonical_native_h5_20261005_v4`.
+- AWS JAR: `caf8c3384b1ed47eec5c9b29f1240641387876b3`, SHA `3c024f630db35dd33b487c05dc9ccfead03f07980d35d323fb727e023e69fdf3`.
+- AWS verifier: `8178f478498057ea1decb898f5624035ea3c6bfed4d811adc3f17b87a5a54214`, 별도 Python 3.12/NumPy 2.4.6 환경. 이 번들의 구형 코드들은 과거 저장 결과 검증 전용이며 새 추론에 사용하지 않는다.
+- FE: GitHub Production 배포 성공 revision `20429a40e3d61617d94e1edc6e3f34897b2c3dd5`, 운영 페이지의 공개 JS 18개를 배포 프로필에 고정. FE 코드는 이번에 변경하지 않았다.
+- AWS 배포 상태 `COMPLETE`, 유지보수 hold 해제. RunPod services/handoff readiness 통과.
+- 최초 요청 84의 `EXPRESSION` 오류: 새 `direct_analysis` 디렉터리가 root:root 0700으로 생성되어 서비스 계정이 접근하지 못했다. root:voice-coach 0750으로 수정하고 실제 서비스 UID의 import를 확인했다. 배포 도구도 새 source parent 권한을 명시하도록 수정했다. 구형 추론으로 롤백하지 않았다.
+
+## 실제 측정: 요청 85
+
+2026-10-05 21:49:54–21:51:08 KST. session 136, recording 101, request `be482733-e750-4fdc-aa12-0049f0619a58`, execution `ece02b7b-e682-4b55-b4ea-22a3f5b5af92`.
+
+입력은 `tests/testaudio1.m4a`, 문장 **한국은행은 오늘 기준금리를 동결한다고 발표했습니다.**. 16 kHz mono WAV 5.1413125초. 측정 경로는 `FE의 /api/backend 프록시 → AWS v5 접수 → RunPod Native → v3 결과 조회`이며 브라우저 렌더링 시간은 측정하지 않았다. 로그인·업로드는 아래 분석 POST 시간에 포함하지 않는다.
+
+| 구간 | 초 |
+|---|---:|
+| 분석 POST 시작 → RunPod 실행 단계 시작 | 10.030 |
+| 예약·다운로드 병렬 준비 | 3.228 |
+| Native 코어 전체 | 32.031 |
+| 결과 어댑터 처리, GPT 호출 없음 | 2.146 |
+| RunPod 결과 preflight | 1.903 |
+| 결과 공개 | 2.908 |
+| 공개 완료 → 측정 클라이언트 결과 수신 | 0.918 |
+| **분석 POST → 첫 공개 결과 수신** | **53.165** |
+
+코어 내부 Native forward는 **0.571초**, MFA 요청 구간 **27.326초**, 근거 생성 **0.019초**, 코어 내부 전체 **29.621초**다. 외부 core 전체와 내부 전체 차이 **2.411초**는 생산자 시작·검증·출력 처리 등에 해당한다. 내부 Native·기대 음소 준비는 병렬이므로 각 구간을 단순 합산하지 않는다. 최초 서비스 기동 Native cold prepare **80.709초**는 요청 전에 끝나 위 표에 포함되지 않는다.
+
+AWS 비동기 handoff 전송 1.936초는 결과 공개 뒤 시작해 첫 결과 수신과 겹친다. 첫 결과 수신은 21:50:47.207, DB analyzed_at은 21:50:57.185, B2 ARCHIVED는 21:51:08.193이다. DB·보관 완료를 기다리지 않고 결과가 공개됐다. handoff `COMMITTED`, archive `ARCHIVED`, 각각 1회 처리했다.
+
+이 수치는 **정상 GPT 코칭 완료 시간 비교에 사용하면 안 된다.** 채점이 차단되어 GPT 생성 시간이 없다. 최초 요청 84는 core 23.712초 후 접근 권한 오류로 실패했고, 위 표는 수정 후 요청 85다.
+
+## 최신 출력의 채점 근거 필드
+
+| 실제 존재하는 필드 | 요청 85 관측 |
+|---|---|
+| `nativeScoringLogits` | FP32 256 × 45, digest 포함 |
+| `nativeScoringEvidence.positions` | 기대 음소 58개, 기대 표지·항목·역할·원본 index |
+| `alignmentOperation` | MATCH 51, SUBSTITUTION 7; 발음 정확도 정답 판정은 아님 |
+| `observedRuns`, `mfaWords` | 관측 run 58개, MFA 단어 5개 |
+| `nativeFrameSpan`, `mfaWordSpan`, `features` | frame/margin 근거 54개; 프레임 구간 미확정 2개 |
+| 음소별 항목 표지 | 모음 23, 평음 11, 격음 1, 마찰음 5, 파찰음 1, 비음 12, 유음 5, 경음 0 |
+| 모델 및 실행 근거 | Native revision `e26ff9d…`, weights `b2ec6635…`, inferenceCount 1 |
+| 구형 검출기 상태 | `RETIRED_NOT_EXECUTED`, stage1 weights null |
+
+**현재 9항목 채점 입력으로 완성된 필드는 없다.** `acousticAssessment`는 58개 모두 UNKNOWN이며, Native 토큰 매핑 미확정 2개와 프레임 구간 미확정 2개가 관측됐다. 기존 계산기가 요구하는 명확/불명확 오류·삭제 분류 및 그에 따른 evidenceUnits/RUBRIC_RESULT가 만들어지지 않는다. 기준표 자체의 변경 여부와는 별개다.
+
+실제 결과는 core `ok`, 입력 판정 `ACCEPT`, 점수 `{overallScore:null, validity:UNSCORABLE, reason:SCORING_FAILED}`, adapter `FAIL_CLOSED/SCORING_UNSCORABLE`, generation `NOT_DISPATCHED`, dispatchAttempts 0이다. **GPT 답변은 없다.** 최신 모델의 원시 관측 부재가 아니라 현재 Native→채점 어댑터가 수치 응답 전에 차단하는 상태다. 점수 처리 계약을 후속 변경할 때 이 관측 결과를 사용하며 정렬 MATCH를 정확한 발음으로 임의 승격하지 않는다.
+
+측정 원본의 비밀값 없는 요약은 로컬 `C:/Users/Public/Documents/ESTsoft/CreatorTemp/native-production-v4-20261005/`의 `pod-metrics-b.json`, `aws-metrics-b.json`, `client-timing-b.jsonl`, `evidence-summary.json`이다. 서버의 인증 상태 파일은 문서·커밋에 포함하지 않는다.

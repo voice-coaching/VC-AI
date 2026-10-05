@@ -120,6 +120,14 @@ def main():
                     helper.atomic(root / path, data, 0o640)
                     if root == APP:
                         os.chown(root / path, 0, 10001)
+                        # Atomic writes create new package parents under umask 077.
+                        # The service must be able to traverse those source directories.
+                        parent = (root / path).parent
+                        while parent != APP:
+                            require(not parent.is_symlink(), "unexpected_source_parent_symlink")
+                            os.chown(parent, 0, 10001)
+                            parent.chmod(0o750)
+                            parent = parent.parent
             entries = {entry["path"]: entry for entry in manifest["files"]}
             for path, data in records.items():
                 entries[path] = {"path": path, "sha256": sha(data), "mode": "100644"}
