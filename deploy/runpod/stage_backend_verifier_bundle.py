@@ -16,6 +16,8 @@ BASE = Path('/opt/alpha-canonical/releases')
 # private dependency closure, including the extracted codec, as one new release.
 REQUIRED_APP_FILES = frozenset({
     'app/deploy/runpod/canonical_verify.py',
+    'app/src/voice_coach/direct_analysis/__init__.py',
+    'app/src/voice_coach/direct_analysis/domain.py',
     *(f'app/src/voice_coach/backend_analysis/{name}.py' for name in (
         'canonical_generation', 'canonical_bridge', 'canonical_codec', 'canonical_media', 'canonical_harness',
         'canonical_result', 'http_models', 'domain',
@@ -40,10 +42,10 @@ def require(condition, code):
 def main():
     require(sys.platform == 'linux' and os.geteuid() == 0, 'ROOT_LINUX_REQUIRED')
     os.umask(0o022)
-    raw = sys.stdin.buffer.read(12 * 1024 * 1024 + 1)
-    require(0 < len(raw) <= 12 * 1024 * 1024, 'BUNDLE_SIZE')
+    raw = sys.stdin.buffer.read(16 * 1024 * 1024 + 1)
+    require(0 < len(raw) <= 16 * 1024 * 1024, 'BUNDLE_SIZE')
     files = json.loads(raw)
-    require(type(files) is dict and 90 <= len(files) <= 600, 'BUNDLE_FILES')
+    require(type(files) is dict and 90 <= len(files) <= 800, 'BUNDLE_FILES')
     require(REQUIRED_APP_FILES.issubset(files), 'BUNDLE_APP_DEPENDENCIES_MISSING')
     decoded = {}
     for name, entry in files.items():
@@ -54,7 +56,7 @@ def main():
                      'frozen/canonical_scored_core_20261003_v1/', 'frozen/canonical_scored_h5_20261003_v1/',
                      'frozen/canonical_scored_h5_20261003_v3/', 'frozen/canonical_scored_core_20261003_v2/', 'frozen/canonical_scored_h5_20261003_v2/',
                      'frozen/canonical_resident_core_20261004_v1/', 'frozen/canonical_resident_h5_20261004_v1/',
-                     'frozen/canonical_native_core_20261005_v2/', 'frozen/canonical_native_h5_20261005_v2/',
+                     'frozen/canonical_native_core_20261005_v4/', 'frozen/canonical_native_h5_20261005_v4/',
                      'frozen/canonical_native_core_20261004_v1/', 'frozen/canonical_native_h5_20261004_v1/',
                      'app/src/voice_coach/', 'app/docs/contracts/'))
                      or name == 'app/deploy/runpod/canonical_verify.py')
@@ -85,12 +87,12 @@ def main():
         'frozen/canonical_h5_20261003/contracts/llm/llm_contract_manifest.json': '9f10296b6944249ded9f5ce2ccfdfa7c53b6e4af670999fe68e9e477e97eaf45',
     }
     native_v2 = {
-        'frozen/canonical_native_core_20261005_v2/release_manifest.json': '68cda53df72be9dace15f3829a840c27f40efbbfee1a561f8e58d314b4991aad',
-        'frozen/canonical_native_h5_20261005_v2/contracts/llm/dependency_lock.json': '93ccb06cafb9128f4ae02f111ca4bfb599305f84ecce01e41971e69822ba1ec6',
-        'frozen/canonical_native_h5_20261005_v2/contracts/llm/llm_contract_manifest.json': '7dfc26fb088300165b4a564847d0a489092b0ab830ef591943a40f31ecb85747',
+        'frozen/canonical_native_core_20261005_v4/release_manifest.json': 'f1009fcdbf75515ddc13e915dcbbf19dfac751ce39779e404749c4f51dd74841',
+        'frozen/canonical_native_h5_20261005_v4/contracts/llm/dependency_lock.json': '1b8cb378b889817e14bf06be5065b04016589f6b74dcd5501776dde758f38259',
+        'frozen/canonical_native_h5_20261005_v4/contracts/llm/llm_contract_manifest.json': 'efc705b042cb1b18d4babff4f5949f37622154e979b1c07b33afdc36eeb89428',
     }
-    if any(name.startswith(('frozen/canonical_native_core_20261005_v2/',
-                            'frozen/canonical_native_h5_20261005_v2/')) for name in files):
+    if any(name.startswith(('frozen/canonical_native_core_20261005_v4/',
+                            'frozen/canonical_native_h5_20261005_v4/')) for name in files):
         pins.update(native_v2)
     for name, expected in pins.items():
         require(name in files and files[name]['sha256'] == expected, 'BUNDLE_FROZEN_PIN')

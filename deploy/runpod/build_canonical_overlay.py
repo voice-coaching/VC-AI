@@ -34,8 +34,8 @@ def paths(revision):
         'docs/contracts/runpod_analysis_request_v3.schema.json',
     }
     selected = fixed | {p for p in tracked if
-        (p.startswith('src/voice_coach/backend_analysis/canonical_') and p.endswith('.py'))
-        or (p.startswith('docs/contracts/runpod_canonical_') and p.endswith('.schema.json'))}
+        (p.startswith(('src/voice_coach/backend_analysis/', 'src/voice_coach/direct_analysis/')) and p.endswith('.py'))
+        or (p.startswith('docs/contracts/') and p.endswith('.schema.json'))}
     if not selected.issubset(set(tracked)):
         raise ValueError('commit_required_before_packaging')
     return sorted(selected)
@@ -69,7 +69,7 @@ def main():
         records.append(dict(path=name, beforeSha256=before,
                             sha256=hashlib.sha256(raw).hexdigest(),
                             content=base64.b64encode(raw).decode()))
-    raw = json.dumps(dict(sourceGitRevision=args.revision,
+    raw = json.dumps(dict(sourceGitRevision=args.revision, forbidLegacyRollback=True,
         baseOverlaySha256=base['baseOverlaySha256'], baseRevision=base['baseRevision'],
         files=records), sort_keys=True, separators=(',', ':')).encode()
     args.output.parent.mkdir(parents=True, exist_ok=True)

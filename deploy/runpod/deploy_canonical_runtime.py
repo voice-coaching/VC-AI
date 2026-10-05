@@ -34,7 +34,7 @@ def require(condition, reason):
         raise RuntimeError(reason)
 
 
-def canonical_ready(timeout=120):
+def canonical_ready(timeout=300):
     """Authenticated operational readiness only; never sends an analysis job."""
     opener = build_opener(ProxyHandler({}))
     deadline = time.monotonic() + timeout
@@ -76,7 +76,7 @@ def main():
         for row in bundle["files"]:
             path = row["path"]
             require(path not in records and path.startswith(
-                ("src/voice_coach/backend_analysis/", "deploy/runpod/", "docs/contracts/"))
+                ("src/voice_coach/backend_analysis/", "src/voice_coach/direct_analysis/", "deploy/runpod/", "docs/contracts/"))
                 and ".." not in Path(path).parts and not Path(path).is_absolute(), "source_path_invalid")
             data = base64.b64decode(row["content"], validate=True)
             require(sha(data) == row["sha256"], "source_digest_invalid")
@@ -111,6 +111,7 @@ def main():
         boot_env = helper.boot_environment(topology["boot"])
         stopped = False
         resumed = False
+        keep_stopped = False
         try:
             helper.stop_managed(topology)
             stopped = True
@@ -159,6 +160,12 @@ def main():
                 "overlaySha256": metadata["overlaySha256"], "bundleSha256": sha(raw),
                 "backup": str(backup), "files": len(records)}), flush=True)
         except BaseException:
+            if stopped and bundle.get("forbidLegacyRollback") is True:
+                # Native-only migration must never restart the retired inference path.
+                keep_stopped = True
+                if resumed:
+                    helper.stop_managed(helper.topology())
+                raise
             # Never restore files over a live new generation after readiness failure.
             if stopped:
                 if resumed:
@@ -182,7 +189,7 @@ def main():
                 helper.ready(bundle["baseRevision"], timeout=300)
             raise
         finally:
-            if helper.alive(topology["boot"]):
+            if not keep_stopped and helper.alive(topology["boot"]):
                 helper.send(topology["boot"], signal.SIGCONT)
 
 

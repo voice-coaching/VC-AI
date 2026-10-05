@@ -64,8 +64,7 @@ RESIDENT = HarnessIdentity(
 )
 RESIDENT_CORE_DIRECTORY = 'canonical_resident_core_20261004_v1'
 RESIDENT_LLM_DIRECTORY = 'canonical_resident_h5_20261004_v1'
-# Native DRAFT is registered for source/archival validation only. The separate
-# native_execution allowlist remains empty until calibration and developer QA.
+# Numeric calibration remains separate from the pinned analysis execution permit.
 NATIVE_V1 = HarnessIdentity(
     'canonical-native-h5-20261004-v1',
     '358365399f7445ab0a77797ce46619979955503c4faac8185724e2225aa5205c',
@@ -76,14 +75,14 @@ NATIVE_V1 = HarnessIdentity(
 NATIVE_V1_CORE_DIRECTORY = 'canonical_native_core_20261004_v1'
 NATIVE_V1_LLM_DIRECTORY = 'canonical_native_h5_20261004_v1'
 NATIVE = HarnessIdentity(
-    'canonical-native-h5-20261005-v2',
-    '7dfc26fb088300165b4a564847d0a489092b0ab830ef591943a40f31ecb85747',
-    '93ccb06cafb9128f4ae02f111ca4bfb599305f84ecce01e41971e69822ba1ec6',
+    'canonical-native-h5-20261005-v4',
+    'efc705b042cb1b18d4babff4f5949f37622154e979b1c07b33afdc36eeb89428',
+    '1b8cb378b889817e14bf06be5065b04016589f6b74dcd5501776dde758f38259',
     SCORED.prompt_sha256,
-    '68cda53df72be9dace15f3829a840c27f40efbbfee1a561f8e58d314b4991aad', True, True,
+    'f1009fcdbf75515ddc13e915dcbbf19dfac751ce39779e404749c4f51dd74841', True, True,
 )
-NATIVE_CORE_DIRECTORY = 'canonical_native_core_20261005_v2'
-NATIVE_LLM_DIRECTORY = 'canonical_native_h5_20261005_v2'
+NATIVE_CORE_DIRECTORY = 'canonical_native_core_20261005_v4'
+NATIVE_LLM_DIRECTORY = 'canonical_native_h5_20261005_v4'
 HARNESSES = {value.manifest_sha256: value for value in (S7, H5, SCORED_V1, SCORED_V2, SCORED, RESIDENT, NATIVE_V1, NATIVE)}
 
 

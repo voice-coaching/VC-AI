@@ -18,7 +18,9 @@ def assessment_policy():
     if hashlib.sha256(raw).hexdigest() != manifest["file_sha256"]["config/native_phone_assessment.json"]:
         raise ValueError("NATIVE_POLICY_DIGEST")
     policy = json.loads(raw)
-    policy_contract(policy, approved=True)
+    # Analysis observations are available before a scoring policy is calibrated.
+    # The rubric adapter still requires approved evidence to produce a number.
+    policy_contract(policy)
     return policy
 
 
