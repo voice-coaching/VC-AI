@@ -114,7 +114,7 @@ aws ec2 authorize-security-group-ingress \
 
 남은 완료 조건은 다음과 같다.
 
-1. NAS quota 증설 또는 별도 영속 저장소, 검증된 백업·복원과 private 설정 재주입/플랫폼 시작 경로 확정.
+1. B2 자산 백업 검증은 완료. 실제 복원 기동 확인, private 설정 재주입 및 플랫폼 시작 경로 확정.
 2. DLPC→AWS TCP 22 허용 후 전용 tunnel의 두 loopback endpoint 연결 확인.
 3. AGENTS.md에 따라 개발자의 실제 추론·점수/피드백/TTS 품질 QA, 검토된 새 core/H5 identity의 AI·Backend 등록 및 TTS revision/fingerprint 전환.
 4. 기존 작업·lease/journal drain과 전체 readiness 확인 후 AWS upstream 전환, 그 이후 RunPod 중지. RunPod 삭제는 별도 결정.
