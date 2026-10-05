@@ -21,10 +21,10 @@ class CanonicalLane:
         check_guard_python(self.python)
         self.root = private_directory(Path(environment["AI_CANONICAL_WORKSPACE_ROOT"]))
         self.app = Path(__file__).resolve().parents[3]
-        self.resident = None
-        if environment.get('AI_CANONICAL_RESIDENT_ENABLED') == 'true':
-            from .canonical_resident import CanonicalResidentCore
-            self.resident = CanonicalResidentCore(self.environment, self.python)
+        if environment.get('AI_CANONICAL_RESIDENT_ENABLED') != 'true':
+            raise ValueError('NATIVE_RESIDENT_REQUIRED')
+        from .canonical_resident import CanonicalResidentCore
+        self.resident = CanonicalResidentCore(self.environment, self.python)
 
     def ready(self):
         return self.resident is None or self.resident.ready()

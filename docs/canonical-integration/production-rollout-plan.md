@@ -1,5 +1,7 @@
 # Canonical v4 운영 제한 키·통합·배포 실행 계획
 
+**2026-10-04 Native 전환 작업본:** [전체 음소 채점 구현 현황](native-full-phone-implementation-20261004.md). 새 소스는 구형 추론을 거절하며 Native 정책은 DRAFT다. 보정/개발자 QA/BE·FE 계약 반영 전에는 이 작업본을 운영에 활성화하지 않는다. 아래 기록은 과거 운영 이력이다.
+
 **2026-10-03 추가:** 새 채점 identity·배포 순서·확인 범위는 [채점 구현 정본](scoring-implementation-20261003.md)을 따른다. 기존 운영 기록은 새 경로의 배포·추론 성공 증거가 아니다. AWS 검증 묶음/Backend/FE가 새 점수 계약을 지원한 뒤 RunPod 파생 core/H5를 활성화한다.
 
 **최신 실행: 2026-10-02 11:39~11:41 KST [서버 배포·제한 v4 접수 활성](rollout-execution-20261002.md#제한-v4-접수-활성화).**

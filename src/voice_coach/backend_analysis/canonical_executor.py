@@ -44,6 +44,9 @@ def check(env):
     """Static import/pin/config and read-only private ACL, never generation."""
     from .canonical_producer import CORE_PYTHON
     HttpSettings.from_environment(env)
+    from .native_execution import require_native_execution
+    require_native_execution(artifacts(env))
+    _require(env.get('AI_CANONICAL_RESIDENT_ENABLED') == 'true', 'NATIVE_RESIDENT_REQUIRED')
     check_guard_python(Path(sys.executable))
     private_directory(Path(env["AI_CANONICAL_WORKSPACE_ROOT"]))
     _require(CORE_PYTHON.is_file() and os.access(CORE_PYTHON, os.X_OK),

@@ -52,12 +52,6 @@ def main():
         from blackbox_client import BlackBoxMFAClient
         batch.checked_contract()
         native = batch.load_native()
-        from korean_pronunciation_poc.final_pronunciation_artifacts import load_final_pronunciation_artifacts
-        from korean_pronunciation_poc.final_pronunciation_detector import get_final_pronunciation_runtime
-        config = json.loads((batch.RECOVERY / 'configs/candidate_alignment_config.json').read_bytes())
-        final = config['final_pronunciation']
-        get_final_pronunciation_runtime(load_final_pronunciation_artifacts(Path(final['artifact_root'])),
-                                       device=final.get('device', 'cpu'))
         batch.G2pService()  # Corpus/dependency preparation, not an inference fixture.
         while not (generation / 'host_ready.json').exists():
             if host.poll() is not None or time.monotonic() - started > 300:
@@ -101,7 +95,8 @@ def main():
                 if cases.resolve(strict=True) != cases or cases.stat().st_size > 65536 or digest(cases) != request['caseSha256']:
                     raise ValueError('RESIDENT_CASE_IDENTITY')
                 cases_value = json.loads(cases.read_bytes())
-                if len(cases_value) != 1 or cases_value[0]['id'] != request_id:
+                if (len(cases_value) != 1 or cases_value[0]['id'] != request_id
+                        or cases_value[0].get('executionId') != execution):
                     raise ValueError('RESIDENT_CASE_BINDING')
                 audio = Path(cases_value[0]['audio'])
                 if (audio.resolve(strict=True) != audio or not audio.is_relative_to(workspace / execution / 'media')

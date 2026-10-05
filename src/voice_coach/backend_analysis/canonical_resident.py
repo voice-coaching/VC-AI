@@ -23,10 +23,11 @@ class CanonicalResidentCore:
         self.prepared = False
         self.requests = 0
         self.next_start = 0.0
+        self.prepare_deadline = 0.0
         self.artifacts = FrozenCanonicalArtifacts(Path(environment['AI_CANONICAL_CORE_ROOT']),
                                                   Path(environment['AI_CANONICAL_LLM_ROOT']))
-        from .canonical_harness import RESIDENT
-        _require(self.artifacts.identity == RESIDENT, 'RESIDENT_RELEASE_REQUIRED')
+        from .native_execution import require_native_execution
+        require_native_execution(self.artifacts)
 
     def ready(self):
         return not self.stopping and not self.blocked and self.prepared and self.requests < 3 and self.task is not None and not self.task.done()
@@ -47,6 +48,7 @@ class CanonicalResidentCore:
             self.generation = private_directory(Path(tempfile.mkdtemp(prefix='vc-core-', dir='/tmp')))
             self.socket = self.generation / 'core.sock'
             self.requests = 0
+            self.prepare_deadline = time.monotonic() + 300
             self.task = asyncio.create_task(run_guarded(guard_python=self.guard_python,
                 command=[str(CORE_PYTHON), '-B', '-u', str(self.artifacts.core_root / 'scripts/run_resident.py'),
                          '--workspace', self.env['AI_CANONICAL_WORKSPACE_ROOT'],
@@ -63,6 +65,11 @@ class CanonicalResidentCore:
                 _require(record == dict(status='READY', coreManifestSha256=self.artifacts.identity.core_sha256),
                          'RESIDENT_READY_IDENTITY')
                 self.prepared = True
+            elif not self.prepared and time.monotonic() >= self.prepare_deadline:
+                # A stalled model load must not leave readiness pending all day.
+                # stop() drains the guarded subtree before another generation.
+                await self.stop()
+                self.next_start = time.monotonic() + 30
 
     async def stop(self):
         self.prepared = False

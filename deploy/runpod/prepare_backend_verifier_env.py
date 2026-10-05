@@ -12,7 +12,7 @@ import subprocess
 import sys
 
 BASE = Path('/opt/alpha-canonical')
-TARGET = BASE / 'venvs' / 'py312-jsonschema4251-rfc014'
+TARGET = BASE / 'venvs' / 'py312-jsonschema4251-rfc014-numpy246-native'
 
 
 def require(condition, code):
@@ -48,7 +48,7 @@ def main():
     completed = subprocess.run([
         python, '-m', 'pip', 'install', '--no-input', '--no-cache-dir', '--only-binary=:all:',
         '--index-url', 'https://pypi.org/simple', '--timeout', '20', '--retries', '1',
-        '--report', str(TARGET / 'install-report.json'), 'jsonschema==4.25.1', 'rfc8785==0.1.4',
+        '--report', str(TARGET / 'install-report.json'), 'jsonschema==4.25.1', 'rfc8785==0.1.4', 'numpy==2.4.6',
     ], env=environment, timeout=240, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
     require(completed.returncode == 0, 'VERIFIER_DEPENDENCY_INSTALL_FAILED')
     result = subprocess.check_output([python, '-I', '-c',
@@ -57,7 +57,8 @@ def main():
         env=environment, timeout=10)
     metadata = json.loads(result)
     require(metadata['python'].startswith('3.12.') and metadata['packages']['jsonschema'] == '4.25.1'
-            and metadata['packages']['rfc8785'] == '0.1.4', 'VERIFIER_DEPENDENCY_VERSION_MISMATCH')
+            and metadata['packages']['rfc8785'] == '0.1.4' and metadata['packages']['numpy'] == '2.4.6',
+            'VERIFIER_DEPENDENCY_VERSION_MISMATCH')
     metadata.update(utc=datetime.datetime.now(datetime.timezone.utc).isoformat(), path=str(TARGET),
                     applicationDeployed=False, runtimeSecretsInjected=False, admissionChanged=False)
     with (TARGET / 'installation.json').open('x', encoding='utf-8') as stream:

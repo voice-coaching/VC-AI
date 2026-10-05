@@ -40,6 +40,9 @@ if TYPE_CHECKING:
 from .http_models import REQUEST_V2, REQUEST_V3, RESULT_V4, RESULT_V5, CANONICAL_PROFILE, HANDOFF_PROFILE
 
 def _canonical_profile(request):
+    from voice_coach.direct_analysis.domain import DirectInput
+    if type(request) is DirectInput:
+        return True
     return (request.request_schema_version, request.result_schema_version, request.analysis_profile) in {
         (REQUEST_V2, RESULT_V4, CANONICAL_PROFILE), (REQUEST_V3, RESULT_V5, HANDOFF_PROFILE)}
 
@@ -185,7 +188,9 @@ def _binding_and_association(request: AnalysisInput, core: dict, raw: bytes,
                    source_audio_sha256=request.audio_sha256,
                    prepared_wav_sha256=core["prepared_wav_sha256"],
                    provenance_source="admitted-http-canonical-producer-v1")
-    identity = ExecutionAssociation(request.event_id, request.execution_id, request.analysis_id,
+    from voice_coach.direct_analysis.domain import DirectAssociation, DirectInput
+    association_type = DirectAssociation if type(request) is DirectInput else ExecutionAssociation
+    identity = association_type(request.event_id, request.execution_id, request.analysis_id,
                                     request.recording_id, request.content_id, core_id, _sha(raw))
     association = dict(identity.to_document(), parentManifestSha256=harness.core_sha256,
                        llmManifestSha256=harness.manifest_sha256, llmDependencyLockSha256=harness.lock_sha256,
@@ -263,7 +268,11 @@ def preflight_canonical_result(
     association = _read_json(result.association_bytes)
     expression = _read_json(result.expression_bytes)
     _validate(binding, "binding")
-    _validate(association, "association")
+    from voice_coach.direct_analysis.domain import DirectInput
+    if type(request) is not DirectInput:
+        _validate(association, "association")
+    # Direct associations use UUID job/audio IDs, not invented Backend integers.
+    # Full exact association is reconstructed and compared immediately below.
     _validate(expression, "coaching")
     expected_binding, expected_association, identity = _binding_and_association(
         request, core, result.core_bytes, prepared_audio, frozen.artifacts.identity)
@@ -272,7 +281,12 @@ def preflight_canonical_result(
              and expression["coreInputValidation"] == core["input_validation"], "EXPRESSION_CORE_MISMATCH")
     bridge = frozen._bridge()
     if frozen.artifacts.identity.scoring:
-        bridge.verify_scoring(core, expression.get("scoring"))
+        native_args = {}
+        if frozen.artifacts.identity.native:
+            from .native_execution import admitted_binding
+            native_args['native_binding'] = admitted_binding(request,
+                core_sha256=frozen.artifacts.identity.core_sha256, prepared_sha256=core.get('prepared_wav_sha256'))
+        bridge.verify_scoring(core, expression.get("scoring"), **native_args)
     else:
         _require("scoring" not in expression, "UNEXPECTED_SCORING_RECORD")
     try:
@@ -327,7 +341,9 @@ def preflight_canonical_result(
                    ("BINDING", result.binding_bytes), ("ASSOCIATION", result.association_bytes)]
     if result.selection_bytes is not None:
         raw_by_kind.append(("SELECTION_PROJECTION", result.selection_bytes))
-    artifacts = tuple(PrivateArtifact(kind, ARTIFACT_SCHEMAS[kind], raw) for kind, raw in raw_by_kind)
+    artifacts = tuple(PrivateArtifact(kind,
+        "voice-coaching.direct-association.v1" if type(request) is DirectInput and kind == "ASSOCIATION"
+        else ARTIFACT_SCHEMAS[kind], raw) for kind, raw in raw_by_kind)
     _require(all(0 < len(a.raw) <= MAX_ARTIFACT_BYTES for a in artifacts), "EVIDENCE_SIZE_INVALID")
     return CanonicalPreflight(result, identity, artifacts)
 

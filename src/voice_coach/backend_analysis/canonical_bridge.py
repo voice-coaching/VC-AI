@@ -152,6 +152,9 @@ class FrozenCanonicalCoaching:
         # a cached pyc. Relative legacy_pure import retains frozen semantics.
         source = {}
         modules = ("phone_rubric", "gpt_rubric", "legacy_pure", "adapter") if identity.scoring else ("legacy_pure", "adapter")
+        if identity.native:
+            modules = ("phone_rubric", "native_phone_contract", "native_phone_alignment", "native_phone_assessment",
+                       "native_phone_evidence", "gpt_rubric", "native_gpt_rubric", "legacy_pure", "adapter")
         for name in modules:
             relative = f"bridge/{name}.py"
             raw = _contained_file(root, relative).read_bytes()
@@ -243,7 +246,12 @@ class FrozenCanonicalCoaching:
             # its original prepare call. This extra deterministic preparation
             # never invokes transport; each harness owns its pinned prompt.
             pass
-        result = bridge.dispatch(core_bytes, request.script_text, binding, transport=transport)
+        native_args = {}
+        if self.artifacts.identity.native:
+            from .native_execution import admitted_binding
+            native_args['native_binding'] = admitted_binding(request,
+                core_sha256=self.artifacts.identity.core_sha256, prepared_sha256=prepared_sha)
+        result = bridge.dispatch(core_bytes, request.script_text, binding, transport=transport, **native_args)
         identity = self.artifacts.identity
         association = dict(requestId=str(request.event_id), executionId=str(request.execution_id),
                            analysisId=request.analysis_id, recordingId=request.recording_id,
@@ -256,5 +264,10 @@ class FrozenCanonicalCoaching:
                            preparedWavSha256=prepared_sha,
                            preparedAudio=prepared_identity.to_document() if prepared_identity is not None else None,
                            visualStatus="NOT_CONNECTED", visualCorrectiveClaimsAllowed=False)
+        from voice_coach.direct_analysis.domain import DirectInput
+        if type(request) is DirectInput:
+            association["schemaVersion"] = "voice-coaching.direct-association.v1"
+            association["jobId"] = association.pop("analysisId")
+            association["audioAssetId"] = association.pop("recordingId")
         return CanonicalExpressionResult(core_bytes, _encode(binding),
                                          _encode(association), _encode(result), selection_bytes)

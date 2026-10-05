@@ -55,3 +55,20 @@ AWS의 기존 호출 주소는 `https://ai.voice-coaching.site`다. RunPod 8082 
 | GET | `/api/analysis-capabilities/canonical` | User login | Available submission contracts and supported analysis scopes |
 | GET | `/api/analyses/{id}/result-contract` | User login + ownership | Current attempt contract |
 | GET | `/api/v3/analyses/{id}` | User login + ownership | Committed v5 public result |
+
+## Direct analysis (separate service, default OFF)
+
+Implemented in an isolated worktree on 2026-10-05; not deployed. [Contract and rollout prerequisites](../canonical-integration/direct-ingress-implementation-20261005.md).
+
+| Method | Path | Authentication | Purpose |
+|---|---|---|---|
+| POST | `/api/v1/analyses` | None | Persist raw WAV and enqueue UUID job |
+| GET | `/api/v1/analyses?clientAttemptId=UUID` | None | Recover admission after lost response |
+| GET | `/api/v1/analyses/{jobId}` | None | State and inline result |
+| GET | `/api/v1/analyses/{jobId}/events` | None | SSE with inline result |
+| POST | `/api/v1/analyses/{jobId}/cancellations` | None | Cancel queued/running job |
+| GET | `/readyz` | None | Direct Native execution readiness |
+| POST | `/api/internal/ai/direct-analysis-history` (AWS) | Callback bearer | Background history event |
+| POST | `/api/direct-analysis-history/{jobId}/link` (AWS) | Existing user login | Link history after displaying result |
+| GET | `/api/direct-analysis-history/{jobId}` (AWS) | Existing user login | History save state |
+| GET | `/api/direct-analysis-history` (AWS) | Existing user login | Independent practice history |

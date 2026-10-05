@@ -58,8 +58,9 @@ def evidence_rows(pronunciation):
     return rows
 
 
-def worksheet(rows, *, evidence_units):
+def worksheet(rows, *, evidence_units, revision=REVISION):
     """Explicit versioned state weights are mandatory; never infer missing units."""
+    require(revision in {REVISION, "phone-rubric-native-v1"}, "SCORING_RUBRIC_REVISION")
     require(type(evidence_units) is dict and set(evidence_units) == set(STATES)
             and all(type(v) is int for v in evidence_units.values())
             and evidence_units == EVIDENCE_UNITS,
@@ -90,19 +91,20 @@ def worksheet(rows, *, evidence_units):
     total = (Decimal(100 * weighted) / Decimal(4 * applicable)).quantize(
         Decimal("0.1"), rounding=ROUND_HALF_UP)
     return dict(
-        RUBRIC_JSON=dict(rubricRevision=REVISION, evidenceUnits=dict(evidence_units),
+        RUBRIC_JSON=dict(rubricRevision=revision, evidenceUnits=dict(evidence_units),
                         criteria=[dict(id=k, weight=w, phones=list(p)) for k, w, p in CRITERIA],
                         levels=[dict(level=l, minimumPercent=p) for l, p in LEVELS],
                         aggregation=dict(rounding="HALF_UP", decimalPlaces=1,
                                          missingCategory="not_applicable_exclude_weight")),
         INPUT_DATA=dict(criteria=model_rows, applicableWeight=applicable,
                         aggregationDenominator=4*applicable),
-        RUBRIC_RESULT=dict(rubricRevision=REVISION, criteria=grades, overallScore=float(total)))
+        RUBRIC_RESULT=dict(rubricRevision=revision, criteria=grades, overallScore=float(total)))
 
 
 def validate_response(result, expected):
     require(type(result) is dict and set(result) == {"rubricRevision", "criteria", "overallScore"}
-            and result["rubricRevision"] == REVISION, "SCORING_RESPONSE_INVALID")
+            and expected.get("rubricRevision") in {REVISION, "phone-rubric-native-v1"}
+            and result["rubricRevision"] == expected["rubricRevision"], "SCORING_RESPONSE_INVALID")
     require(type(result["criteria"]) is list and len(result["criteria"]) == len(CRITERIA),
             "SCORING_RESPONSE_CRITERIA")
     for actual, wanted in zip(result["criteria"], expected["criteria"], strict=True):
@@ -115,8 +117,9 @@ def validate_response(result, expected):
     return dict(expected)
 
 
-def validate_policy(policy):
-    require(type(policy) is dict and policy.get("rubricRevision") == REVISION
+def validate_policy(policy, *, revision=REVISION):
+    require(revision in {REVISION, "phone-rubric-native-v1"}, "SCORING_RUBRIC_REVISION")
+    require(type(policy) is dict and policy.get("rubricRevision") == revision
             and policy.get("evidenceUnits") == EVIDENCE_UNITS
             and all(type(v) is int for v in policy["evidenceUnits"].values()), "SCORING_POLICY_IDENTITY")
     rows = policy.get("criteria")

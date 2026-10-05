@@ -23,6 +23,8 @@ def restrict_process():
     if sys.platform != 'linux' or sys.version_info[:2] != (3, 12):
         raise RuntimeError('VERIFIER_RUNTIME_INVALID')
     import resource
+    os.environ['OPENBLAS_NUM_THREADS'] = '1'
+    os.environ['OMP_NUM_THREADS'] = '1'
     resource.setrlimit(resource.RLIMIT_CORE, (0, 0))
     resource.setrlimit(resource.RLIMIT_AS, (1024 * 1024 * 1024, 1024 * 1024 * 1024))
     resource.setrlimit(resource.RLIMIT_CPU, (90, 90))
@@ -88,6 +90,7 @@ def main():
         H5, S7, SCORED, H5_DIRECTORY, SCORED_CORE_DIRECTORY, SCORED_LLM_DIRECTORY, harness_identity,
         SCORED_V1, SCORED_V1_CORE_DIRECTORY, SCORED_V1_LLM_DIRECTORY, SCORED_V2, SCORED_V2_LLM_DIRECTORY,
         RESIDENT, RESIDENT_CORE_DIRECTORY, RESIDENT_LLM_DIRECTORY,
+        NATIVE, NATIVE_CORE_DIRECTORY, NATIVE_LLM_DIRECTORY,
     )
     frozen = FrozenCanonicalCoaching(FrozenCanonicalArtifacts(args.core_root, args.llm_root))
     h5 = FrozenCanonicalCoaching(FrozenCanonicalArtifacts(args.core_root, args.llm_root.parent / H5_DIRECTORY))
@@ -100,6 +103,8 @@ def main():
     # Installation failure is not invalid user evidence. Validate it before reading a job.
     resident = FrozenCanonicalCoaching(FrozenCanonicalArtifacts(
         args.core_root.parent / RESIDENT_CORE_DIRECTORY, args.llm_root.parent / RESIDENT_LLM_DIRECTORY))
+    native = FrozenCanonicalCoaching(FrozenCanonicalArtifacts(
+        args.core_root.parent / NATIVE_CORE_DIRECTORY, args.llm_root.parent / NATIVE_LLM_DIRECTORY))
     try:
         frozen._bridge()
         if frozen.artifacts.identity != S7 or h5.artifacts.identity != H5:
@@ -117,6 +122,12 @@ def main():
         if resident.artifacts.identity != RESIDENT:
             raise RuntimeError('VERIFIER_HARNESS_ROOT_MISMATCH')
         resident._bridge().scoring_policy()
+        if native.artifacts.llm_root.exists():
+            if native.artifacts.identity != NATIVE:
+                raise RuntimeError('VERIFIER_HARNESS_ROOT_MISMATCH')
+            native._bridge()  # Source integrity only; DRAFT is not execution readiness.
+            if version('numpy') != '2.4.6':
+                raise RuntimeError('VERIFIER_NATIVE_NUMERIC_RUNTIME')
     except Exception:
         raise RuntimeError('VERIFIER_DEPENDENCIES_UNAVAILABLE') from None
     if args.check_installation:
@@ -129,7 +140,10 @@ def main():
                               scoredCoreManifestSha256=SCORED.core_sha256,
                               scoredManifestSha256=SCORED.manifest_sha256, scoredLockSha256=SCORED.lock_sha256,
                               residentCoreManifestSha256=RESIDENT.core_sha256,
-                              residentManifestSha256=RESIDENT.manifest_sha256, residentLockSha256=RESIDENT.lock_sha256)))
+                              residentManifestSha256=RESIDENT.manifest_sha256, residentLockSha256=RESIDENT.lock_sha256,
+                              **(dict(nativeCoreManifestSha256=NATIVE.core_sha256,
+                                      nativeManifestSha256=NATIVE.manifest_sha256, nativeLockSha256=NATIVE.lock_sha256)
+                                 if native.artifacts.llm_root.exists() else {}))))
         return
     header = _read_json(frame(1024), 1024)
     if (type(header) is not dict or set(header) != {'protocol', 'operation', 'receiptId'}
@@ -166,12 +180,17 @@ def main():
             association = _read_json(private.association_bytes)
             _validate(association, 'association')
             selected = harness_identity(association['llmManifestSha256'])
-            frozen = {S7: frozen, H5: h5, SCORED_V1: scored_v1, SCORED_V2: scored_v2, SCORED: scored, RESIDENT: resident}[selected]
+            frozen = {S7: frozen, H5: h5, SCORED_V1: scored_v1, SCORED_V2: scored_v2, SCORED: scored, RESIDENT: resident, NATIVE: native}[selected]
             metadata = association['preparedAudio']
             prepared = PreparedAudioIdentity.from_document(metadata) if metadata is not None else None
             # This verifies authenticated producer measurements and their binding,
             # not an independent re-decode of the original/prepared audio on Backend.
             preflight = preflight_canonical_result(private, request=request, frozen=frozen, prepared_audio=prepared)
+            if selected.native:
+                from voice_coach.backend_analysis.native_execution import admitted_binding
+                core = _read_json(private.core_bytes, 16 * 1024 * 1024)
+                frozen._bridge().verify_archive(core, native_binding=admitted_binding(request,
+                    core_sha256=selected.core_sha256, prepared_sha256=core.get('prepared_wav_sha256')))
             if not handoff and preflight.association.to_document() != manifest['association']:
                 raise ValueError('VERIFIER_ASSOCIATION_MISMATCH')
         manifest_sha = hashlib.sha256(raw_manifest).hexdigest()

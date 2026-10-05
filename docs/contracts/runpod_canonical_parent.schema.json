@@ -196,9 +196,16 @@
               "type": "string"
             },
             "stage1_model_safetensors_sha256": {
-              "default": "1d876792f4262cf43a974856423f11bee5c3148a54efd687794ca577f163465e",
-              "title": "Stage1 Model Safetensors Sha256",
-              "type": "string"
+              "anyOf": [
+                {
+                  "default": "1d876792f4262cf43a974856423f11bee5c3148a54efd687794ca577f163465e",
+                  "title": "Stage1 Model Safetensors Sha256",
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ]
             },
             "expected_phone_source": {
               "default": "g2pk_compat_jamo_v1",
@@ -2259,6 +2266,575 @@
           "null"
         ]
       }
+    },
+    "nativeScoringEvidence": {
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "title": "Private Native full-phone evidence; numerical and attempt binding checks also required",
+      "anyOf": [
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "schemaVersion",
+            "status",
+            "binding",
+            "modelRevision",
+            "modelWeightsSha256",
+            "expectedPhoneRevision",
+            "inventoryRevision",
+            "alignmentRevision",
+            "assessmentRevision",
+            "assessmentPolicySha256",
+            "rubricRevision",
+            "device",
+            "dtype",
+            "inferenceCount",
+            "expectedCount",
+            "frameCount",
+            "logitsSha256",
+            "sourceMetadata",
+            "excludedExpectedPositions",
+            "observedRuns",
+            "nonPhoneRuns",
+            "possibleInsertions",
+            "mfaWords",
+            "positions",
+            "failureReasons"
+          ],
+          "properties": {
+            "schemaVersion": {
+              "const": "native-phone-evidence-v1"
+            },
+            "status": {
+              "enum": [
+                "READY",
+                "UNSCORABLE"
+              ]
+            },
+            "binding": {
+              "type": "object",
+              "additionalProperties": false,
+              "required": [
+                "requestId",
+                "executionId",
+                "sourceAudioSha256",
+                "preparedWavSha256",
+                "scriptSha256",
+                "coreManifestSha256",
+                "vocabularySha256"
+              ],
+              "properties": {
+                "requestId": {
+                  "type": "string",
+                  "format": "uuid"
+                },
+                "executionId": {
+                  "type": "string",
+                  "format": "uuid"
+                },
+                "sourceAudioSha256": {
+                  "type": "string",
+                  "pattern": "^[0-9a-f]{64}$"
+                },
+                "preparedWavSha256": {
+                  "type": "string",
+                  "pattern": "^[0-9a-f]{64}$"
+                },
+                "scriptSha256": {
+                  "type": "string",
+                  "pattern": "^[0-9a-f]{64}$"
+                },
+                "coreManifestSha256": {
+                  "type": "string",
+                  "pattern": "^[0-9a-f]{64}$"
+                },
+                "vocabularySha256": {
+                  "type": "string",
+                  "pattern": "^[0-9a-f]{64}$"
+                }
+              }
+            },
+            "modelRevision": {
+              "const": "e26ff9dfb62169acf445d0060ef56863c018b20e"
+            },
+            "modelWeightsSha256": {
+              "const": "b2ec663558606d651a718fa1eaa20c6d504df173725ecbc66df74c22267e2d68"
+            },
+            "expectedPhoneRevision": {
+              "const": "native-expected-phones-v1"
+            },
+            "inventoryRevision": {
+              "const": "native-phone-inventory-v1"
+            },
+            "alignmentRevision": {
+              "const": "native-phone-alignment-v1"
+            },
+            "assessmentRevision": {
+              "const": "native-phone-assessment-v1"
+            },
+            "assessmentPolicySha256": {
+              "type": "string",
+              "pattern": "^[0-9a-f]{64}$"
+            },
+            "rubricRevision": {
+              "const": "phone-rubric-native-v1"
+            },
+            "device": {
+              "const": "cpu"
+            },
+            "dtype": {
+              "const": "float32"
+            },
+            "inferenceCount": {
+              "const": 1
+            },
+            "expectedCount": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 4096
+            },
+            "frameCount": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 30000
+            },
+            "logitsSha256": {
+              "type": "string",
+              "pattern": "^[0-9a-f]{64}$"
+            },
+            "sourceMetadata": {
+              "type": "array",
+              "items": {
+                "type": "object"
+              },
+              "maxItems": 8192
+            },
+            "excludedExpectedPositions": {
+              "type": "array",
+              "items": {
+                "type": "object",
+                "additionalProperties": false,
+                "required": [
+                  "sourceIndex",
+                  "reason"
+                ],
+                "properties": {
+                  "sourceIndex": {
+                    "type": "integer",
+                    "minimum": 0
+                  },
+                  "reason": {
+                    "const": "SILENT_ONSET_IEUNG"
+                  }
+                }
+              },
+              "maxItems": 8192
+            },
+            "observedRuns": {
+              "type": "array",
+              "items": {
+                "type": "object",
+                "additionalProperties": false,
+                "required": [
+                  "index",
+                  "token_id",
+                  "start_frame",
+                  "end_frame"
+                ],
+                "properties": {
+                  "index": {
+                    "type": "integer",
+                    "minimum": 0
+                  },
+                  "token_id": {
+                    "type": "integer",
+                    "minimum": 0,
+                    "maximum": 44
+                  },
+                  "start_frame": {
+                    "type": "integer",
+                    "minimum": 0
+                  },
+                  "end_frame": {
+                    "type": "integer",
+                    "minimum": 0
+                  }
+                }
+              },
+              "maxItems": 30000
+            },
+            "nonPhoneRuns": {
+              "type": "array",
+              "items": {
+                "type": "object",
+                "additionalProperties": false,
+                "required": [
+                  "tokenId",
+                  "startFrame",
+                  "endFrame"
+                ],
+                "properties": {
+                  "tokenId": {
+                    "enum": [
+                      40,
+                      42
+                    ]
+                  },
+                  "startFrame": {
+                    "type": "integer",
+                    "minimum": 0
+                  },
+                  "endFrame": {
+                    "type": "integer",
+                    "minimum": 0
+                  }
+                }
+              },
+              "maxItems": 30000
+            },
+            "possibleInsertions": {
+              "type": "array",
+              "items": {
+                "type": "integer",
+                "minimum": 0
+              },
+              "maxItems": 30000
+            },
+            "mfaWords": {
+              "type": "array",
+              "items": {
+                "type": "object",
+                "additionalProperties": false,
+                "required": [
+                  "wordIndex",
+                  "startSeconds",
+                  "endSeconds"
+                ],
+                "properties": {
+                  "wordIndex": {
+                    "type": "integer",
+                    "minimum": 0
+                  },
+                  "startSeconds": {
+                    "type": "number",
+                    "minimum": 0
+                  },
+                  "endSeconds": {
+                    "type": "number",
+                    "minimum": 0
+                  }
+                }
+              },
+              "maxItems": 4096
+            },
+            "positions": {
+              "type": "array",
+              "items": {
+                "type": "object",
+                "additionalProperties": false,
+                "required": [
+                  "expectedIndex",
+                  "permittedTokenClassIds",
+                  "candidates",
+                  "alignmentOperation",
+                  "selectedRunId",
+                  "reasonCodes",
+                  "expectedPhone",
+                  "criterionId",
+                  "role",
+                  "sourceIndex",
+                  "wordIndex",
+                  "syllableIndex",
+                  "acousticAssessment",
+                  "assessmentRuleId",
+                  "nativeFrameSpan",
+                  "mfaWordSpan",
+                  "features"
+                ],
+                "properties": {
+                  "expectedIndex": {
+                    "type": "integer",
+                    "minimum": 0
+                  },
+                  "permittedTokenClassIds": {
+                    "type": "array",
+                    "items": {
+                      "type": "integer",
+                      "minimum": 0
+                    },
+                    "maxItems": 40
+                  },
+                  "candidates": {
+                    "type": "array",
+                    "items": {
+                      "type": "object",
+                      "additionalProperties": false,
+                      "required": [
+                        "operation",
+                        "runId"
+                      ],
+                      "properties": {
+                        "operation": {
+                          "enum": [
+                            "MATCH",
+                            "SUBSTITUTION",
+                            "DELETION_CANDIDATE"
+                          ]
+                        },
+                        "runId": {
+                          "anyOf": [
+                            {
+                              "type": "integer",
+                              "minimum": 0
+                            },
+                            {
+                              "type": "null"
+                            }
+                          ]
+                        }
+                      }
+                    },
+                    "maxItems": 30001
+                  },
+                  "alignmentOperation": {
+                    "enum": [
+                      "MATCH",
+                      "SUBSTITUTION",
+                      "DELETION_CANDIDATE",
+                      "UNKNOWN"
+                    ]
+                  },
+                  "selectedRunId": {
+                    "anyOf": [
+                      {
+                        "type": "integer",
+                        "minimum": 0
+                      },
+                      {
+                        "type": "null"
+                      }
+                    ]
+                  },
+                  "reasonCodes": {
+                    "type": "array",
+                    "items": {
+                      "type": "string"
+                    },
+                    "maxItems": 16
+                  },
+                  "expectedPhone": {
+                    "type": "string"
+                  },
+                  "criterionId": {
+                    "type": "string"
+                  },
+                  "role": {
+                    "enum": [
+                      "onset",
+                      "nucleus",
+                      "coda"
+                    ]
+                  },
+                  "sourceIndex": {
+                    "type": "integer",
+                    "minimum": 0
+                  },
+                  "wordIndex": {
+                    "type": "integer",
+                    "minimum": 0
+                  },
+                  "syllableIndex": {
+                    "type": "integer",
+                    "minimum": 0
+                  },
+                  "acousticAssessment": {
+                    "enum": [
+                      "CLEAR",
+                      "FLAGGED",
+                      "DELETED",
+                      "UNKNOWN"
+                    ]
+                  },
+                  "assessmentRuleId": {
+                    "anyOf": [
+                      {
+                        "type": "string"
+                      },
+                      {
+                        "type": "null"
+                      }
+                    ]
+                  },
+                  "nativeFrameSpan": {
+                    "anyOf": [
+                      {
+                        "type": "array",
+                        "items": {
+                          "type": "integer",
+                          "minimum": 0
+                        },
+                        "minItems": 2,
+                        "maxItems": 2
+                      },
+                      {
+                        "type": "null"
+                      }
+                    ]
+                  },
+                  "mfaWordSpan": {
+                    "anyOf": [
+                      {
+                        "type": "object",
+                        "additionalProperties": false,
+                        "required": [
+                          "wordIndex",
+                          "startSeconds",
+                          "endSeconds"
+                        ],
+                        "properties": {
+                          "wordIndex": {
+                            "type": "integer",
+                            "minimum": 0
+                          },
+                          "startSeconds": {
+                            "type": "number",
+                            "minimum": 0
+                          },
+                          "endSeconds": {
+                            "type": "number",
+                            "minimum": 0
+                          }
+                        }
+                      },
+                      {
+                        "type": "null"
+                      }
+                    ]
+                  },
+                  "features": {
+                    "anyOf": [
+                      {
+                        "type": "object",
+                        "additionalProperties": false,
+                        "required": [
+                          "definition",
+                          "startFrame",
+                          "endFrame",
+                          "expectedClassIds",
+                          "competitorClassIds",
+                          "margin",
+                          "frameCount",
+                          "logitsWindowSha256"
+                        ],
+                        "properties": {
+                          "definition": {
+                            "const": "native-expected-margin-run-fp32-v1"
+                          },
+                          "startFrame": {
+                            "type": "integer",
+                            "minimum": 0
+                          },
+                          "endFrame": {
+                            "type": "integer",
+                            "minimum": 0
+                          },
+                          "expectedClassIds": {
+                            "type": "array",
+                            "items": {
+                              "type": "integer",
+                              "minimum": 0
+                            },
+                            "maxItems": 40
+                          },
+                          "competitorClassIds": {
+                            "type": "array",
+                            "items": {
+                              "type": "integer",
+                              "minimum": 0
+                            },
+                            "maxItems": 40
+                          },
+                          "margin": {
+                            "type": "number"
+                          },
+                          "frameCount": {
+                            "type": "integer",
+                            "minimum": 0
+                          },
+                          "logitsWindowSha256": {
+                            "type": "string",
+                            "pattern": "^[0-9a-f]{64}$"
+                          }
+                        }
+                      },
+                      {
+                        "type": "null"
+                      }
+                    ]
+                  }
+                }
+              },
+              "maxItems": 4096
+            },
+            "failureReasons": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              },
+              "maxItems": 16
+            }
+          }
+        },
+        {
+          "type": "null"
+        }
+      ]
+    },
+    "nativeScoringLogits": {
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "title": "Private Native logits retained inside the asynchronous core archive",
+      "anyOf": [
+        {
+          "type": "null"
+        },
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "schemaVersion",
+            "encoding",
+            "rows",
+            "columns",
+            "sha256",
+            "data"
+          ],
+          "properties": {
+            "schemaVersion": {
+              "const": "native-logits-fp32-v1"
+            },
+            "encoding": {
+              "const": "base64-le-f32"
+            },
+            "rows": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 30000
+            },
+            "columns": {
+              "const": 45
+            },
+            "sha256": {
+              "type": "string",
+              "pattern": "^[0-9a-f]{64}$"
+            },
+            "data": {
+              "type": "string",
+              "contentEncoding": "base64",
+              "maxLength": 7200000
+            }
+          }
+        }
+      ]
     }
   }
 }
