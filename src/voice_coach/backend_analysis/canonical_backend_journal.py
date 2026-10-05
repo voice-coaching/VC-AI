@@ -1,13 +1,18 @@
 """Process-bound authenticated Backend journal; no DB credentials or local SQLite.
 
 Methods are synchronous for bounded storage stages. The async executor MUST run
-them off its heartbeat loop. No automatic network retries, inference replay, or
-unknown-outcome PUT retries. Late checkpoint writes cannot read/resurrect jobs.
+them off its heartbeat loop. Only reservation transport failures may recover by
+reading the same execution and, when absent, repeating the identical reservation
+once. No inference replay or automatic checkpoint retries.
 """
 from __future__ import annotations
 
 import hashlib
+import json
 import math
+import socket
+import ssl
+import time
 from typing import Callable
 from uuid import UUID
 import httpx
@@ -21,9 +26,34 @@ from .journal_http import JournalHttp
 
 
 class BackendJournalFailure(CanonicalIntegrationError):
-    def __init__(self, status: int):
+    def __init__(self, status: int, *, failure_kind: str = 'HTTP_RESPONSE'):
         super().__init__('BACKEND_JOURNAL_UNAVAILABLE' if status >= 500 else 'BACKEND_JOURNAL_REJECTED')
         self.status = status
+        self.failure_kind = failure_kind
+        # A locally mapped 503 must not be reported as an actual upstream reply.
+        self.upstream_status = status if failure_kind == 'HTTP_RESPONSE' else None
+
+
+def _transport_failure_kind(error):
+    cause = error
+    for _ in range(8):
+        if isinstance(cause, ssl.SSLError):
+            return 'TLS_ERROR'
+        if isinstance(cause, socket.gaierror):
+            return 'DNS_ERROR'
+        cause = cause.__cause__ or cause.__context__
+        if cause is None:
+            break
+    for kind, cls in (
+        ('CONNECT_TIMEOUT', httpx.ConnectTimeout), ('READ_TIMEOUT', httpx.ReadTimeout),
+        ('WRITE_TIMEOUT', httpx.WriteTimeout), ('POOL_TIMEOUT', httpx.PoolTimeout),
+        ('CONNECT_ERROR', httpx.ConnectError), ('READ_ERROR', httpx.ReadError),
+        ('WRITE_ERROR', httpx.WriteError), ('PROTOCOL_ERROR', httpx.ProtocolError),
+        ('REQUEST_TIMEOUT', TimeoutError),
+    ):
+        if isinstance(error, cls):
+            return kind
+    return 'TRANSPORT_ERROR'
 
 
 class BackendCanonicalJournal:
@@ -69,11 +99,24 @@ class BackendCanonicalJournal:
                 _require(reply.headers.get('Content-Type', '').split(';')[0].strip() == 'application/json',
                          'JOURNAL_CONTENT_TYPE')
                 return read_document(bytes(body), 65536)
+        started = time.monotonic()
         try:
             return self._http.run(request(), min(10, budget))
-        except (httpx.HTTPError, TimeoutError):
+        except BackendJournalFailure as error:
+            self._failure_event(error, method, suffix, started)
+            raise
+        except (httpx.HTTPError, TimeoutError) as error:
+            failure = BackendJournalFailure(503, failure_kind=_transport_failure_kind(error))
+            self._failure_event(failure, method, suffix, started)
             # In particular /start and /begin may already be committed. Never auto-repeat.
-            raise BackendJournalFailure(503) from None
+            raise failure from None
+
+    def _failure_event(self, error, method, suffix, started):
+        print(json.dumps(dict(event='canonical_journal_failure',
+            requestId=str(self.request.event_id), executionId=str(self.request.execution_id),
+            action='RESERVE' if suffix == '/reserve' else ('STATUS' if suffix == '' else 'CHECKPOINT'),
+            method=method, failureKind=error.failure_kind, upstreamStatus=error.upstream_status,
+            elapsedSeconds=time.monotonic()-started)), flush=True)
 
     def _snapshot(self, value):
         # Identify the upstream wire boundary without exposing private schema instances.
@@ -96,11 +139,39 @@ class BackendCanonicalJournal:
     def reserve(self, *, worker_revision: str, pipeline_revision: str) -> ResultIdentity:
         validate_document(worker_revision, 'revision')
         validate_document(pipeline_revision, 'revision')
-        value = self._snapshot(self._call('POST', '/reserve', self._raw,
-            headers={'X-Worker-Revision': worker_revision, 'X-Pipeline-Revision': pipeline_revision}))
+        headers = {'X-Worker-Revision': worker_revision, 'X-Pipeline-Revision': pipeline_revision}
+        recovered = False
+        try:
+            value = self._snapshot(self._call('POST', '/reserve', self._raw, headers=headers))
+        except BackendJournalFailure as error:
+            if error.upstream_status is not None or error.failure_kind not in {
+                    'CONNECT_TIMEOUT', 'READ_TIMEOUT', 'WRITE_TIMEOUT', 'POOL_TIMEOUT',
+                    'CONNECT_ERROR', 'READ_ERROR', 'WRITE_ERROR', 'PROTOCOL_ERROR', 'REQUEST_TIMEOUT'}:
+                raise
+            value = self._recover_reservation(headers)
+            recovered = True
         _require(value['workerRevision'] == worker_revision and value['pipelineRevision'] == pipeline_revision,
                  'JOURNAL_REVISION_MISMATCH')
+        _require(value['producerStarted'] is False, 'PRODUCER_OUTCOME_UNKNOWN')
+        if recovered:
+            print(json.dumps(dict(event='canonical_journal_reservation_recovered',
+                requestId=str(self.request.event_id), executionId=str(self.request.execution_id))), flush=True)
         return ResultIdentity(UUID(value['eventId']), self.worker_id, worker_revision, pipeline_revision)
+
+    def _recover_reservation(self, headers):
+        # Keep the live lease/deadline on every call; status() deliberately allows
+        # late reads for other use cases and must not be used for this recovery.
+        try:
+            return self._snapshot(self._call('GET', ''))
+        except BackendJournalFailure as error:
+            if error.upstream_status != 404:
+                raise
+        _require(self._active() is True and self._remaining() > 0.25,
+                 'EVIDENCE_EXECUTION_INACTIVE')
+        time.sleep(0.25)
+        # Backend /reserve is idempotent for identical execution/worker/raw bytes
+        # and revisions. It never starts a producer. A second failure escapes.
+        return self._snapshot(self._call('POST', '/reserve', self._raw, headers=headers))
 
     def start_producer(self, request: AnalysisInput):
         _require(request == self.request, 'JOURNAL_BINDING_MISMATCH')
