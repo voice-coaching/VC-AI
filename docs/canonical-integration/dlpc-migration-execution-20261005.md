@@ -1,6 +1,6 @@
 # DLPC migration execution — 2026-10-05
 
-상태: **DLPC 자산 설치, 진단 API·Native/MFA·독립 TTS 기동 확인 완료. 영속 복구·AWS 연결·개발자 QA가 남아 운영 전환 미완료.** 최종 기동 관측: 2026-10-06 00:11 KST.
+상태: **DLPC 자산 설치, 진단 API·Native/MFA·독립 TTS 기동 확인 완료. B2 자산 백업 검증 완료. 재기동 복구·AWS 연결·개발자 QA가 남아 운영 전환 미완료.** 최종 기동 관측: 2026-10-06 00:11 KST.
 
 AI `main` 대상 draft [PR #23](https://github.com/voice-coaching/intelligentAI/pull/23)에 통합한다. Backend/FE와 운영 nginx upstream은 변경하지 않았다.
 
@@ -77,6 +77,8 @@ TTS service SHA-256는 `8f25077eab50503b914e530866225d8984899dac2dcbf2791c622d90
 NAS `~/.local/share/intelligentai/migration/20261005`의 비밀 제외 archive는 14,123,270,144바이트에서 `Disk quota exceeded`로 실패했다. 실패한 partial만 정리했고 `backup.json`에 실패 상태를 보존했다. 다른 UID로 quota를 우회하지 않았다. 원본 RunPod를 보존한 상태에서 진단 설치만 진행했으며 **영속 백업 완료로 보지 않는다**. PC의 현 B2 설정은 필수값 검사를 통과하지 못해 대체 B2 객체 조회를 수행하지 못했다.
 
 컨테이너 재생성 시 자산 복원, private 설정 재주입 및 플랫폼 시작 hook이 필요하다. `/etc`, `/run`, overlay가 유지된다고 가정하지 않는다. 이전 전용 SSH 키의 홈 보존만으로 전체 서비스 복구가 보장되지 않는다.
+
+2026-10-06 사용자는 영속 자산 백업 대상으로 Backblaze B2를 지정하고 인증 수단을 제공했다. 기존 비공개 `speakai2026` 버킷을 확인했고 DLPC 설치 자산 16.06GB를 NAS 임시 archive 없이 직접 전송하고 전체 재다운로드 SHA-256·압축 구조·manifest 검증을 01:29:45 KST에 완료했다. 완료 영수증·검증 범위는 [B2 백업 기록](dlpc-b2-backup-20261006.md)을 따른다. NAS quota 증설은 이 백업 경로의 선행 조건이 아니다.
 
 ## AWS 연결
 

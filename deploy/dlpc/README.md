@@ -65,6 +65,18 @@ The DLPC root overlay and `/run` do not survive container recreation. A platform
 startup hook and restore procedure must be confirmed before declaring migration
 complete. Do not use another UID to bypass a NAS quota.
 
+The user selected private Backblaze B2 for durable assets after the NAS quota
+failure. `b2_backup.py` archives the installed paths, derived v2 releases and
+nonsecret receipts directly to B2 (64 MiB parts, at most two in flight). It does
+not stage a large archive on NAS. A short-lived Native API authorization object
+arrives on stdin; the master key is not sent to DLPC or stored in an archive.
+Completion requires full download SHA-256/size, tar integrity, and a separately
+uploaded/downloaded manifest. It does not back up OS images, private settings,
+SSH keys, recordings or pending journals, and it is not a restore/boot test.
+See the [B2 backup record](../../docs/canonical-integration/dlpc-b2-backup-20261006.md)
+for exact object identities and operational results. Keep the original source
+until the separate deployment cutover gates are satisfied.
+
 ## Service startup and cutover
 
 Provision `/etc/intelligentai/analysis.env` as root:root 0600 and the separate TTS
