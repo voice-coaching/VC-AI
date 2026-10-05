@@ -33,6 +33,7 @@ def main():
         if not source.is_absolute() or '..' in source.parts or not source.exists():
             raise ValueError('SOURCE_PATH_INVALID')
         reply = subprocess.run(['rsync', '-rlcRn', '--no-owner', '--no-group', '--out-format=%i',
+            '--include=**/certifi/cacert.pem',
             '--exclude=__pycache__', '--exclude=.git', '--exclude=.env*', '--exclude=*.env',
             '--exclude=*.key', '--exclude=*.pem', '--exclude=secrets', '--exclude=*.log',
             '-e', 'ssh -o BatchMode=yes -o ConnectTimeout=15', name,

@@ -20,6 +20,9 @@ def main():
     if hashlib.sha256(raw).hexdigest() != SOURCE_SHA:
         raise ValueError('TTS_SOURCE_CHANGED')
     source = raw.decode()
+    revision = 'melo-ko-practice-dlpc-r1'
+    source = replace_once(source, 'REVISION = os.environ.get("TTS_REVISION", "melo-ko-practice-r1")',
+                          'REVISION = "' + revision + '"')
     source = replace_once(source, 'from fastapi import FastAPI, Request',
         "from resource_budget import ResourceBudget\nBUDGET = ResourceBudget.from_environment({'AI_ANALYSIS_RESOURCE_PROFILE': 'dlpc-4cpu'})\n\nfrom fastapi import FastAPI, Request")
     source = replace_once(source, '    torch.set_num_threads(2)',
@@ -41,7 +44,7 @@ def main():
     identity = dict(parentServiceSha256=SOURCE_SHA, serviceSha256=hashlib.sha256(source.encode()).hexdigest(),
                     gpuBudgetSha256=hashlib.sha256(helper).hexdigest(), cpuThreads=1,
                     resourceBudgetSha256=hashlib.sha256(budget).hexdigest(),
-                    qualityVerified=False)
+                    revision=revision, qualityVerified=False)
     (args.destination / 'dlpc-manifest.json').write_text(json.dumps(identity, indent=2) + '\n')
     print(json.dumps(identity))
 

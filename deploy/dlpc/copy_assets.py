@@ -62,6 +62,7 @@ def main():
             if free < size + 5 * 1024**3:
                 raise RuntimeError('TARGET_CAPACITY_RESERVE')
             subprocess.run(['rsync', '-aRz', '--no-owner', '--no-group', '--partial',
+                '--include=**/certifi/cacert.pem',
                 '--exclude=__pycache__', '--exclude=.git', '--exclude=.env*', '--exclude=*.env', '--exclude=*.key',
                 '--exclude=*.pem', '--exclude=secrets', '--exclude=*.log',
                 '-e', 'ssh -o BatchMode=yes -o ConnectTimeout=15',

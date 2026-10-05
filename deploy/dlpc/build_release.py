@@ -23,7 +23,7 @@ def build(core, h5, destination, device):
     lm = json.loads(parent_raw)
     _, llm = load_files(h5, 'contracts/llm/dependency_lock.json', lm['dependency_lock_sha256'], 'files')
     suffix = 'cuda' if device == 'cuda:0' else 'cpu'
-    name = 'canonical_dlpc_' + suffix + '_20261005_v1'
+    name = 'canonical_dlpc_' + suffix + '_20261005_v2'
     runner = files['source/scripts/run_canonical_batch.py'].decode()
     runner = replace_once(runner, 'import torch\n', 'import torch\nfrom gpu_budget import configure_torch, gpu_slot\n')
     runner = replace_once(runner, 'torch.set_num_threads(8)', 'configure_torch(torch)')
@@ -64,9 +64,29 @@ def build(core, h5, destination, device):
     for key in ('OMP_NUM_THREADS', 'MKL_NUM_THREADS', 'OPENBLAS_NUM_THREADS', 'NUMEXPR_NUM_THREADS'):
         common = replace_once(common, key + "='2'", key + "='1'")
     files['runtime_bundle/demo_common.py'] = common.encode()
+    watchdog = files['runtime_bundle/memory_watchdog.py'].decode()
+    start = watchdog.index('def cgroup():')
+    end = watchdog.index('def snapshot(', start)
+    accounting = (Path(__file__).parent / 'memory_accounting.py').read_text()
+    accounting = accounting[accounting.index('def memory_snapshot():'):].replace(
+        'def memory_snapshot():', 'def cgroup():', 1)
+    watchdog = watchdog[:start] + accounting + '\n\n' + watchdog[end:]
+    watchdog = replace_once(watchdog, "cg['max']-cg['current']", "cg['available_bytes']")
+    watchdog = replace_once(watchdog, "s['cgroup']['max']-s['cgroup']['current']", "s['cgroup']['available_bytes']")
+    watchdog = replace_once(watchdog, "return 'CGROUP_HEADROOM'", "return 'MEMORY_HEADROOM'")
+    files['runtime_bundle/memory_watchdog.py'] = watchdog.encode()
+    config = json.loads(files['runtime_bundle/configs/supervisor.json'])
+    config['other_service_reserve_bytes'] = 2 * 1024**3
+    config['admission_reserve_bytes'] = config['other_service_reserve_bytes'] + config['abort_combined_rss_bytes']
+    config['dlpc_basis'] = dict(hostRamGiB=11, admissionAnalyses=1,
+        accounting='minimum observed MemAvailable and finite cgroup headroom',
+        historicalRssLimitsPreserved=True, hardCapEstablished=False)
+    files['runtime_bundle/configs/supervisor.json'] = encode(config)
     identity = json.loads(files['config/historical_runtime_identity.json'])
-    identity['source_files']['demo_common.py']['sha256'] = sha(files['runtime_bundle/demo_common.py'])
-    identity['source_files']['demo_common.py']['copied_sha256'] = sha(files['runtime_bundle/demo_common.py'])
+    for relative in ('demo_common.py', 'memory_watchdog.py', 'configs/supervisor.json'):
+        identity['source_files'][relative]['sha256'] = sha(files['runtime_bundle/' + relative])
+        identity['source_files'][relative]['copied_sha256'] = sha(files['runtime_bundle/' + relative])
+    identity['dlpc_derivation'] = 'thread and measured memory admission changes; historical QA is not DLPC QA'
     files['config/historical_runtime_identity.json'] = encode(identity)
     # Serialize cold preparation; the 11 GiB host must not load both generations.
     server = files['scripts/run_resident.py'].decode()

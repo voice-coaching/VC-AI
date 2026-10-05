@@ -12,6 +12,10 @@ The RunPod SSH relay is used for migration only.
   in the existing runtime.
 - The profile survives the canonical child environment allowlist. Core import
   preparation and resident subprocess environments use one math-library thread.
+- The v2 package adapts the historical MFA memory watchdog to measured
+  MemAvailable and finite cgroup v1/v2 headroom. Unavailable limits/OOM counters
+  remain unknown. Its reserve is 2 GiB plus the preserved MFA combined RSS limit
+  at admission; per-process RSS limits and monitoring remain enabled.
 - `build_release.py` verifies the observed Native v4 hashes and creates a new
   immutable core/H5 pair. Native and MFA use one CPU thread; Native preparation
   precedes MFA startup. CUDA uses FP32 with TF32 disabled and records `cuda:0` in
@@ -22,6 +26,10 @@ The RunPod SSH relay is used for migration only.
   lock serializes model loads and GPU execution across processes. TTS waits up
   to two seconds for an inference slot; Native waits up to 120 seconds within
   its externally supervised request lifetime. OS process exit releases the lock.
+- The changed TTS executable has revision `melo-ko-practice-dlpc-r1`. Switch the
+  Backend revision/fingerprint with its upstream, after validation. Keeping the
+  old request revision intentionally returns `REVISION_MISMATCH`; do not mix
+  cached audio from the two executable identities.
 - Model weights, preprocessing, rate, seed, scoring policy and three-request
   resident recycling are preserved. Two-request overlap and standby generations
   are disabled pending developer measurements. No numerical parity is claimed.
@@ -37,6 +45,8 @@ The destination must already be owned by the migration user. The disk reserve is
 `verify_copy.py` compares file contents using rsync checksums and link targets.
 Run it after all copy processes finish. Frozen manifests and model SHA-256 checks
 remain additional runtime gates. This is transfer integrity, not inference QA.
+The public `certifi/cacert.pem` roots are an explicit exception to PEM exclusion;
+private keys and env files remain excluded. Removing these roots breaks HTTPS.
 
 `install_staged.py` requires the completed verification receipt and empty final
 paths. It preserves `/workspace` and `/opt/intelligentai` absolute paths needed
@@ -44,8 +54,13 @@ by the frozen conda environments. It installs a dedicated UID/GID 10001 and
 private runtime directories. Existing installations are rejected. A partial
 installation leaves `installation.json`; reconcile its moves before retrying.
 
-Store a private, verified durable asset backup before moving staging into final
-paths. A successful tiny NFS write does not establish available user quota.
+Store a private, verified durable asset backup before production cutover. A
+diagnostic installation may proceed while the verified source remains available,
+but is not a completed migration. A tiny NFS write does not establish user quota.
+`backup_staging.py` archives an intact verified staging tree as its owner; it is
+not an installed-tree backup or restore command. Once installation has moved the
+tree, do not rerun that helper against the now-empty staging path. A failed
+partial is removed, while its failure receipt is retained.
 The DLPC root overlay and `/run` do not survive container recreation. A platform
 startup hook and restore procedure must be confirmed before declaring migration
 complete. Do not use another UID to bypass a NAS quota.
@@ -56,6 +71,10 @@ Provision `/etc/intelligentai/analysis.env` as root:root 0600 and the separate T
 token `/run/voice-coaching-tts/token` as UID/GID 10001, mode 0600. Transfer these
 outside model archives. `launch.py` injects role settings explicitly and binds
 both HTTP listeners to loopback. The supervisor owns restarts and bounded logs.
+`receive_settings.py` accepts bounded role settings on SSH stdin, refuses existing
+files, and never logs values. Container recreation needs a separate secure source
+to inject them again. The SSH supervisor uses UID 120067, not the numeric login
+name 2020067 (which Supervisor would interpret as a different UID).
 
 `supervisord.conf` initially starts only the diagnostic analysis listener.
 It keeps canonical bootstrap/handoff disabled so staging cannot restore a

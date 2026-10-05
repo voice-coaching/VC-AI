@@ -61,9 +61,11 @@ def main():
                     continue
                 mode = p.stat().st_mode
                 os.chown(p, 0, 10001)
-                p.chmod(0o550 if p.is_dir() or mode & 0o111 else 0o440)
+                # Worker group is read-only. Keep owner write so copy2-created
+                # worker-owned scratch files can be updated by frozen MFA code.
+                p.chmod(0o750 if p.is_dir() or mode & 0o111 else 0o640)
     os.chown('/usr/bin/python3.10', 0, 10001)
-    os.chmod('/usr/bin/python3.10', 0o550)
+    os.chmod('/usr/bin/python3.10', 0o750)
     for name, owner, mode in (
         ('/run/intelligentai', 0, 0o711), ('/run/intelligentai/logs', 0, 0o700),
         ('/run/intelligentai/worker', 10001, 0o700),
