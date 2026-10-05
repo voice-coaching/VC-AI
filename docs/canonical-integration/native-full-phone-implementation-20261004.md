@@ -6,6 +6,8 @@
 
 설계 정본: [전체 음소 설계](native-full-phone-scoring-design-20261004.md), [초기화 지연 계획](native-only-latency-plan-20261004.md).
 
+2026-10-05 후속 구현: [코어 준비 지연 개선](core-preparation-implementation-20261005.md). Native v2 소스 패키지, MFA version CLI 제거, G2P 재사용, 조건부 검증 재사용과 예비 세대 준비를 추가했다. DRAFT 실행 제한은 유지한다.
+
 ## 구현한 경로
 
 1. 기존 Native CPU FP32 forward의 logits/argmax를 `native_core_adapter.py`에 전달한다. 추가 모델 추론은 없다. P1 코칭 정책과 threshold는 변경하지 않았다.

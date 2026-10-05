@@ -8,11 +8,12 @@ from pathlib import Path
 
 from native_base_source import CORE_PARENT, native_base
 from native_resident_source import resident_runner
+from native_mfa_source import resident_mfa
 from native_source_pruning import prune
 from release_packaging import encode, load_files, replace_once, sha, write_release
 
-CORE_DIRECTORY = "canonical_native_core_20261004_v1"
-LLM_DIRECTORY = "canonical_native_h5_20261004_v1"
+CORE_DIRECTORY = "canonical_native_core_20261005_v2"
+LLM_DIRECTORY = "canonical_native_h5_20261005_v2"
 H5_PARENT = "9f10296b6944249ded9f5ce2ccfdfa7c53b6e4af670999fe68e9e477e97eaf45"
 H5_LOCK = "93636f0c4befe7f1e34358e74b1077cc94cb2b82064781485b0183c53357d2f5"
 MODULES = ("phone_rubric", "native_phone_contract", "native_phone_alignment", "native_phone_assessment",
@@ -48,6 +49,7 @@ def build(core_source, h5_source, destination, policy_path):
     policy_contract(policy)
     manifest, files, identity, content_sha = native_base(core_source)
     removed = prune(files)
+    resident_mfa(files)
     runner = resident_runner(files["source/scripts/run_canonical_batch.py"].decode())
     files["source/scripts/run_canonical_batch.py"] = runner.encode()
     for name, raw in sources.items():

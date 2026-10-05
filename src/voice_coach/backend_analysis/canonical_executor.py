@@ -37,7 +37,9 @@ from .adapters.s3_object_store import (
 
 def artifacts(env):
     return FrozenCanonicalArtifacts(Path(env["AI_CANONICAL_CORE_ROOT"]),
-                                    Path(env["AI_CANONICAL_LLM_ROOT"]))
+                                    Path(env["AI_CANONICAL_LLM_ROOT"]),
+                                    Path(env['AI_CANONICAL_VERIFIED_GENERATION'])
+                                    if env.get('AI_CANONICAL_VERIFIED_GENERATION') else None)
 
 
 def check(env):

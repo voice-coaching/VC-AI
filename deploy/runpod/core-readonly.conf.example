@@ -1,0 +1,6 @@
+# Optional systemd service drop-in. Requires mount namespace support.
+# Install only after approved v2 artifacts exist at these exact configured paths.
+# The source directories must have no writable aliases exposed to this service.
+[Service]
+BindReadOnlyPaths=/workspace/intelligentai/releases/canonical_native_core_20261005_v2
+BindReadOnlyPaths=/workspace/intelligentai/validation/canonical_native_h5_20261005_v2

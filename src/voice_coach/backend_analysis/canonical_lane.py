@@ -58,6 +58,7 @@ class CanonicalLane:
                 raise ValueError('RESIDENT_NOT_READY')
             self.resident.requests += 1
             environment['AI_CANONICAL_RESIDENT_SOCKET'] = str(self.resident.socket)
+            environment['AI_CANONICAL_VERIFIED_GENERATION'] = str(self.resident.generation)
         try:
             await run_guarded(guard_python=self.python,
                 command=[str(self.python), "-B", "-m", "voice_coach.backend_analysis.canonical_executor",
