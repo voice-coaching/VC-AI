@@ -2090,7 +2090,10 @@
       ],
       "properties": {
         "device": {
-          "const": "cpu"
+          "enum": [
+            "cpu",
+            "cuda:0"
+          ]
         },
         "dtype": {
           "const": "float32"

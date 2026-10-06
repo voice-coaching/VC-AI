@@ -15,13 +15,16 @@ def install(raw, expected):
         raise ValueError('OVERLAY_DIGEST_MISMATCH')
     body = json.loads(raw)
     roots = {'app': Path('/opt/intelligentai/app'),
-             'core': Path('/workspace/intelligentai/releases/canonical_dlpc_gop_cuda_20261007_v1'),
-             'llm': Path('/workspace/intelligentai/validation/canonical_dlpc_gop_cuda_20261007_v1_h5')}
+             'core': Path('/workspace/intelligentai/releases/canonical_dlpc_gop_cuda_20261007_v2'),
+             'llm': Path('/workspace/intelligentai/validation/canonical_dlpc_gop_cuda_20261007_v2_h5')}
+    roots['mfa'] = Path('/workspace/intelligentai/validation/finish_20260916/latency_optimization_20260921T044013_2c3be9/mfa_startup_recovery_20260921T065201_ac461c/mfa_preflight_optimization_20260922T043055Z_0d7f6a/candidate')
     decoded = []
     for name, row in body['files'].items():
         role, relative = name.split('/', 1)
         if role not in roots or PurePosixPath(relative).is_absolute() or any(x in ('', '.', '..') for x in relative.split('/')) or '\\' in relative:
             raise ValueError('OVERLAY_PATH')
+        if role == 'mfa' and (relative != 'mfa.py' or row['sha256'] != 'ebecb9600d0cfc90264042db5b1cd43d0f7ca5aa83275924a5e3fef8b7fd7aee'):
+            raise ValueError('MFA_OPTIMIZATION_PIN')
         data = base64.b64decode(row['base64'], validate=True)
         if hashlib.sha256(data).hexdigest() != row['sha256']:
             raise ValueError('OVERLAY_FILE_HASH')

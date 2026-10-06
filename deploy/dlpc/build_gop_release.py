@@ -23,7 +23,7 @@ def build(core, h5, destination, device):
     lm = json.loads(parent_raw)
     _, llm = load_files(h5, 'contracts/llm/dependency_lock.json', lm['dependency_lock_sha256'], 'files')
     suffix = 'cuda' if device == 'cuda:0' else 'cpu'
-    name = 'canonical_dlpc_gop_' + suffix + '_20261007_v1'
+    name = 'canonical_dlpc_gop_' + suffix + '_20261007_v2'
     runner = files['source/scripts/run_canonical_batch.py'].decode()
     runner = replace_once(runner, 'import torch\n', 'import torch\nfrom gpu_budget import configure_torch, gpu_slot\n')
     runner = replace_once(runner, 'torch.set_num_threads(8)', 'configure_torch(torch)')
@@ -35,6 +35,12 @@ def build(core, h5, destination, device):
         runner = replace_once(runner, '    with torch.inference_mode():', '    with gpu_slot(), torch.inference_mode():')
         runner = replace_once(runner, "inp.input_values.to('cpu')", "inp.input_values.to('cuda:0')")
         runner = runner.replace("'device': 'cpu'", "'device': 'cuda:0'")
+    # Frozen output schemas must identify the actual CUDA observation device.
+    for package, path in ((files, 'contracts/canonical_ai_output.schema.json'),
+                          (llm, 'contracts/llm/canonical_parent.schema.json')):
+        schema = json.loads(package[path])
+        schema['properties']['native']['properties']['device'] = {'const': device}
+        package[path] = encode(schema)
     files['source/scripts/run_canonical_batch.py'] = runner.encode()
     preflight = json.loads(files['config/release_preflight_identity.json'])
     preflight['release_blackbox_runner_sha256'] = sha(runner.encode())

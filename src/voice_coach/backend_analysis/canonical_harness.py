@@ -106,14 +106,14 @@ SEUNGUN_GPT = HarnessIdentity(
 SEUNGUN_CORE_DIRECTORY = 'canonical_seungun_gop_core_20261006_v1'
 SEUNGUN_LLM_DIRECTORY = 'canonical_seungun_gop_gpt_20261006_v1'
 DLPC_GOP = HarnessIdentity(
-    'canonical-dlpc-gop-cuda-20261007-v1',
-    'b74328de0b00cdf229c50810730c95d57d5a0e1bf73c7257b40310f8a0e57b02',
-    '16e5b9fae8e837111183b7509fe985559d49f82d34c4db416b1f3abe4ae359a5',
+    'canonical-dlpc-gop-cuda-20261007-v2',
+    '1612539f82a0b6e2c5c0b3551440b8094ca979bd8ab5d898386713bd0d1f54b7',
+    '3e2e81b43b1c1298266df428bc01ef0761d37f413073824cae2000623ea2eb3c',
     SEUNGUN_GPT.prompt_sha256,
-    'b634e1304f0710a719d4e64eb265c06e99cc36ccd175bc6cd002009780f2ed97', True, True, True, True,
+    'f6d56e1decc160f0ca38cc8d52303f3de20945f872d714bf6a2e743ed94c0391', True, True, True, True,
 )
-DLPC_GOP_CORE_DIRECTORY = 'canonical_dlpc_gop_cuda_20261007_v1'
-DLPC_GOP_LLM_DIRECTORY = 'canonical_dlpc_gop_cuda_20261007_v1_h5'
+DLPC_GOP_CORE_DIRECTORY = 'canonical_dlpc_gop_cuda_20261007_v2'
+DLPC_GOP_LLM_DIRECTORY = 'canonical_dlpc_gop_cuda_20261007_v2_h5'
 HARNESSES = {value.manifest_sha256: value for value in (S7, H5, SCORED_V1, SCORED_V2, SCORED, RESIDENT, NATIVE_V1, NATIVE, SEUNGUN_GPT_V1, SEUNGUN_GPT, DLPC_GOP)}
 
 

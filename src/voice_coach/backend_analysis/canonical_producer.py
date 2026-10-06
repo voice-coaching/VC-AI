@@ -49,6 +49,12 @@ def core_environment(nltk_data_root: Path, *, cpu_threads: int = 2) -> dict[str,
                 OMP_NUM_THREADS=str(cpu_threads), MKL_NUM_THREADS=str(cpu_threads),
                 OPENBLAS_NUM_THREADS=str(cpu_threads), NUMEXPR_NUM_THREADS=str(cpu_threads),
                 TOKENIZERS_PARALLELISM='false')
+    if cpu_threads == 1:
+        # DLPC's host cuDNN and this frozen Torch wheel have different major-9
+        # sublibrary revisions. Resolve all cuDNN components from the wheel.
+        cudnn = CORE_PYTHON.parent.parent / 'lib/python3.11/site-packages/nvidia/cudnn/lib'
+        _require(cudnn.is_dir(), 'DLPC_CUDNN_RUNTIME_MISSING')
+        environment['LD_LIBRARY_PATH'] = str(cudnn)
     return environment
 
 

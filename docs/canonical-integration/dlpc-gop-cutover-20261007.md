@@ -17,3 +17,9 @@ The user explicitly approved the fixed SSH recovery command, private settings re
 - B2 key is restricted to `readFiles`, one bucket and `intelligentai/recovery/dlpc-20261006/`; stored root-only on AWS.
 - DLPC received both settings and restricted B2 auth successfully. Secret values were not logged.
 - Production upstream is still RunPod at this checkpoint. CUDA/TTS samples and cutover are pending.
+
+## Actual sample findings
+
+TTS returned HTTP 200, 63,679 bytes, 5,277 ms, matching audio SHA-256 in 1.62 seconds. Human listening quality is not verified.
+
+Initial CUDA analysis QA exposed three migration defects: missing MFA optimization source, host/wheel cuDNN sublibrary mismatch, and a CPU-only observation device schema. The frozen MFA source (`ebecb960?fd7aee`) is now included in the recovery overlay. DLPC core processes select their own wheel cuDNN path; CUDA observations use the registered v2 frozen schema. Earlier failed QA attempts are preserved and never replayed.

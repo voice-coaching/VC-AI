@@ -6,8 +6,8 @@ import json
 from pathlib import Path
 
 ROOTS = {
-    'canonical_dlpc_gop_cuda_20261007_v1': Path('/workspace/intelligentai/releases/canonical_dlpc_gop_cuda_20261007_v1'),
-    'canonical_dlpc_gop_cuda_20261007_v1_h5': Path('/workspace/intelligentai/validation/canonical_dlpc_gop_cuda_20261007_v1_h5'),
+    'canonical_dlpc_gop_cuda_20261007_v2': Path('/workspace/intelligentai/releases/canonical_dlpc_gop_cuda_20261007_v2'),
+    'canonical_dlpc_gop_cuda_20261007_v2_h5': Path('/workspace/intelligentai/validation/canonical_dlpc_gop_cuda_20261007_v2_h5'),
     'canonical_seungun_core_20261006_v1': Path('/workspace/intelligentai/releases/canonical_seungun_core_20261006_v1'),
     'canonical_seungun_gop_core_20261006_v1': Path('/workspace/intelligentai/releases/canonical_seungun_gop_core_20261006_v1'),
     'canonical_seungun_gpt_20261006_v1': Path('/workspace/intelligentai/validation/canonical_seungun_gpt_20261006_v1'),
@@ -28,8 +28,8 @@ ROOTS = {
     'canonical_scored_h5_20261003_v2': Path('/workspace/intelligentai/validation/canonical_scored_h5_20261003_v2'),
 }
 PINS = {
-    'canonical_dlpc_gop_cuda_20261007_v1': ('release_manifest.json', 'b634e1304f0710a719d4e64eb265c06e99cc36ccd175bc6cd002009780f2ed97'),
-    'canonical_dlpc_gop_cuda_20261007_v1_h5': ('contracts/llm/dependency_lock.json', '16e5b9fae8e837111183b7509fe985559d49f82d34c4db416b1f3abe4ae359a5'),
+    'canonical_dlpc_gop_cuda_20261007_v2': ('release_manifest.json', 'f6d56e1decc160f0ca38cc8d52303f3de20945f872d714bf6a2e743ed94c0391'),
+    'canonical_dlpc_gop_cuda_20261007_v2_h5': ('contracts/llm/dependency_lock.json', '3e2e81b43b1c1298266df428bc01ef0761d37f413073824cae2000623ea2eb3c'),
     'canonical_seungun_core_20261006_v1': ('release_manifest.json', '20acb7275aa06d0be4aca1a567420ea603c0eec084e50c651c96501903034f1b'),
     'canonical_seungun_gop_core_20261006_v1': ('release_manifest.json', '818a3c16cba39dfcfa9f1083865db7f122a3eba40bc332d85256da94d1d6fb1e'),
     'canonical_seungun_gpt_20261006_v1': ('contracts/llm/dependency_lock.json', '3f4ce0a44ae75192fe7fea3b03b879c21ab0b2be7cc0a620522c60c2155b674b'),
@@ -50,7 +50,7 @@ PINS = {
     'canonical_scored_h5_20261003_v2': ('contracts/llm/dependency_lock.json', 'b4ff1aa729d9c981a048d5b7df1293d9637df53269d0598d7ae6069f2b0cc989'),
 }
 MANIFESTS = {
-    'canonical_dlpc_gop_cuda_20261007_v1_h5': 'b74328de0b00cdf229c50810730c95d57d5a0e1bf73c7257b40310f8a0e57b02',
+    'canonical_dlpc_gop_cuda_20261007_v2_h5': '1612539f82a0b6e2c5c0b3551440b8094ca979bd8ab5d898386713bd0d1f54b7',
     'canonical_seungun_gpt_20261006_v1': '6a3bf7c872e718086cb9add4d48412c825188310cdc9eb394089301dd784ff57',
     'canonical_seungun_gop_gpt_20261006_v1': 'f90440b764f78f32c989dc0785f41262397cc22e1d1ca48c40361189b81f86d5',
     'canonical_native_h5_20261005_v4': 'efc705b042cb1b18d4babff4f5949f37622154e979b1c07b33afdc36eeb89428',
@@ -73,7 +73,7 @@ def main():
     omitted = set()
     for optional in (
         {'canonical_native_core_20261005_v4', 'canonical_native_h5_20261005_v4'},
-        {'canonical_dlpc_gop_cuda_20261007_v1_h5', 'canonical_dlpc_gop_cuda_20261007_v1'},
+        {'canonical_dlpc_gop_cuda_20261007_v2_h5', 'canonical_dlpc_gop_cuda_20261007_v2'},
     ):
         present = {kind for kind in optional if roots[kind].exists()}
         if present and present != optional:
