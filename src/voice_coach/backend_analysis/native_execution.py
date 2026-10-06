@@ -10,16 +10,17 @@ from .phone_rubric import require
 # Operator-authorized analysis releases. This does not approve a scoring policy
 # or assert inference/quality QA. Scoring checks its own calibrated evidence.
 APPROVED_NATIVE_EXECUTIONS: frozenset[tuple[str, str]] = frozenset({(
-    "f1009fcdbf75515ddc13e915dcbbf19dfac751ce39779e404749c4f51dd74841",
-    "efc705b042cb1b18d4babff4f5949f37622154e979b1c07b33afdc36eeb89428",
+    "20acb7275aa06d0be4aca1a567420ea603c0eec084e50c651c96501903034f1b",
+    "6a3bf7c872e718086cb9add4d48412c825188310cdc9eb394089301dd784ff57",
 )})
 
 
 def require_native_execution(artifacts):
     identity = artifacts.identity
     require(identity.native, "RETIRED_CORE_EXECUTION_FORBIDDEN")
-    policy = json.loads((artifacts.core_root / "config/native_phone_assessment.json").read_bytes())
-    policy_contract(policy)
+    if not identity.gpt_grading:
+        policy = json.loads((artifacts.core_root / "config/native_phone_assessment.json").read_bytes())
+        policy_contract(policy)
     require((identity.core_sha256, identity.manifest_sha256) in APPROVED_NATIVE_EXECUTIONS,
             "NATIVE_RELEASE_DEVELOPER_QA_REQUIRED")
 

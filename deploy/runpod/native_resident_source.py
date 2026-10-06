@@ -2,7 +2,7 @@
 from release_packaging import replace_once
 
 
-def resident_runner(runner):
+def resident_runner(runner, *, include_scoring=True):
     runner = replace_once(runner, "from concurrent.futures import ThreadPoolExecutor",
                           "from functools import lru_cache\nfrom concurrent.futures import ThreadPoolExecutor")
     runner = replace_once(runner, "def checked_contract():", "@lru_cache(maxsize=1)\ndef checked_contract():")
@@ -42,6 +42,10 @@ def load_native():
 
 
 '''
+    if not include_scoring:
+        loader = loader.replace("    from native_core_adapter import assessment_policy\n    assessment_policy()  # Verify policy identity; scoring readiness is separate.\n", "")
+        loader = loader.replace("    from native_scoring.native_phone_contract import NUMPY_VERSION\n    if np.__version__ != NUMPY_VERSION:\n        raise RuntimeError('NATIVE_NUMERIC_RUNTIME_VERSION')\n", "")
+        loader = loader.replace("    from native_scoring.native_phone_assessment import validate_vocabulary\n    validate_vocabulary(vr)\n", "")
     runner = replace_once(runner, marker, loader + marker.replace("):", ", resident=None):"))
     start = runner.index("    torch.set_num_threads(8)", runner.index("def run_batch("))
     end = runner.index("    spec = importlib.util.spec_from_file_location", start)
@@ -57,7 +61,8 @@ def load_native():
     runner = replace_once(runner,
         "        close = client.call('close')\n        (output/'mfa_close.json').write_text(json.dumps(close,indent=2)+'\\n')\n    finally:\n        client.close()",
         "    finally:\n        pass  # Resident owner closes the client at the generation boundary.")
-    runner = replace_once(runner, "            marks['core_json_done'] = time.perf_counter()",
+    if include_scoring:
+        runner = replace_once(runner, "            marks['core_json_done'] = time.perf_counter()",
         "            marks['native_scoring_start'] = time.perf_counter()\n"
         "            from native_core_adapter import attach_native_evidence\n"
         "            attach_native_evidence(envelope, case=case, state=state, vocabulary=vr, legacy=legacy, output=output)\n"

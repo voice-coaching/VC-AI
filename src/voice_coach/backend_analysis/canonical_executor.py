@@ -145,7 +145,8 @@ async def execute(path: Path, env, diagnostic: dict):
         stage("EXPRESSION")
         expression = await asyncio.to_thread(frozen.express_admitted, request, audio=audio,
             core_bytes=produced.raw, prepared_wav=produced.prepared_wav,
-            producer_workspace=produced.workspace, transport=FrozenOpenAITransport(env["OPENAI_API_KEY"]))
+            producer_workspace=produced.workspace, transport=FrozenOpenAITransport(env["OPENAI_API_KEY"],
+                combined_grading=frozen.artifacts.identity.gpt_grading))
         fence()
         stage("PREFLIGHT")
         preflight = await asyncio.to_thread(preflight_canonical_result, expression,

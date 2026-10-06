@@ -22,18 +22,19 @@ class _NoRedirect(HTTPRedirectHandler):
 
 
 class FrozenOpenAITransport:
-    def __init__(self, api_key: str):
+    def __init__(self, api_key: str, *, combined_grading: bool = False):
         _require(isinstance(api_key, str) and bool(api_key.strip())
                  and "\r" not in api_key and "\n" not in api_key,
                  "CANONICAL_PROVIDER_CONFIGURATION")
         self._api_key = api_key
+        self._completion_tokens = 3000 if combined_grading else 1200
 
     def __call__(self, payload: bytes, *, timeout: float) -> bytes:
         _require(type(payload) is bytes and 0 < len(payload) <= MAX_REQUEST_BYTES,
                  "CANONICAL_REQUEST_SIZE")
         _require(timeout == 120, "FROZEN_TIMEOUT_MISMATCH")
         body = _json(payload)
-        expected = dict(model="gpt-6-astra", max_completion_tokens=1200,
+        expected = dict(model="gpt-6-astra", max_completion_tokens=self._completion_tokens,
                         reasoning_effort="low", response_format={"type": "json_object"}, store=False)
         _require(isinstance(body, dict) and set(body) == set(expected) | {"messages"}
                  and all(body.get(key) == value for key, value in expected.items())

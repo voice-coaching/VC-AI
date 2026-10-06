@@ -6,6 +6,8 @@ import json
 from pathlib import Path
 
 ROOTS = {
+    'canonical_seungun_core_20261006_v1': Path('/workspace/intelligentai/releases/canonical_seungun_core_20261006_v1'),
+    'canonical_seungun_gpt_20261006_v1': Path('/workspace/intelligentai/validation/canonical_seungun_gpt_20261006_v1'),
     'canonical_native_core_20261005_v4': Path('/workspace/intelligentai/releases/canonical_native_core_20261005_v4'),
     'canonical_native_h5_20261005_v4': Path('/workspace/intelligentai/validation/canonical_native_h5_20261005_v4'),
     'canonical_native_core_20261004_v1': Path('/workspace/intelligentai/releases/canonical_native_core_20261004_v1'),
@@ -22,6 +24,8 @@ ROOTS = {
     'canonical_scored_h5_20261003_v2': Path('/workspace/intelligentai/validation/canonical_scored_h5_20261003_v2'),
 }
 PINS = {
+    'canonical_seungun_core_20261006_v1': ('release_manifest.json', '20acb7275aa06d0be4aca1a567420ea603c0eec084e50c651c96501903034f1b'),
+    'canonical_seungun_gpt_20261006_v1': ('contracts/llm/dependency_lock.json', '3f4ce0a44ae75192fe7fea3b03b879c21ab0b2be7cc0a620522c60c2155b674b'),
     'canonical_native_core_20261005_v4': ('release_manifest.json', 'f1009fcdbf75515ddc13e915dcbbf19dfac751ce39779e404749c4f51dd74841'),
     'canonical_native_h5_20261005_v4': ('contracts/llm/dependency_lock.json', '1b8cb378b889817e14bf06be5065b04016589f6b74dcd5501776dde758f38259'),
     'canonical_native_core_20261004_v1': ('release_manifest.json', '9e2a2107db7d30fe8910c8984687974d85b95120760e2bcce53d57640a5d5a32'),
@@ -38,6 +42,7 @@ PINS = {
     'canonical_scored_h5_20261003_v2': ('contracts/llm/dependency_lock.json', 'b4ff1aa729d9c981a048d5b7df1293d9637df53269d0598d7ae6069f2b0cc989'),
 }
 MANIFESTS = {
+    'canonical_seungun_gpt_20261006_v1': '6a3bf7c872e718086cb9add4d48412c825188310cdc9eb394089301dd784ff57',
     'canonical_native_h5_20261005_v4': 'efc705b042cb1b18d4babff4f5949f37622154e979b1c07b33afdc36eeb89428',
     'canonical_native_h5_20261004_v1': '358365399f7445ab0a77797ce46619979955503c4faac8185724e2225aa5205c',
     'canonical_resident_h5_20261004_v1': '885a2f0a67494dc3bebed28962222bfe95a0143292fe2de04194b84ea8beadc5',

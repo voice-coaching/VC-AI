@@ -11,6 +11,7 @@ class HarnessIdentity:
     core_sha256: str = "95f2347ad53ab53030f68a65795cfc5a84ca1c8c41bd03119c9a9fb15d0367c2"
     scoring: bool = False
     native: bool = False
+    gpt_grading: bool = False
 
 
 S7 = HarnessIdentity(
@@ -83,7 +84,17 @@ NATIVE = HarnessIdentity(
 )
 NATIVE_CORE_DIRECTORY = 'canonical_native_core_20261005_v4'
 NATIVE_LLM_DIRECTORY = 'canonical_native_h5_20261005_v4'
-HARNESSES = {value.manifest_sha256: value for value in (S7, H5, SCORED_V1, SCORED_V2, SCORED, RESIDENT, NATIVE_V1, NATIVE)}
+SEUNGUN_GPT = HarnessIdentity(
+    'canonical-seungun-gpt-20261006-v1',
+    '6a3bf7c872e718086cb9add4d48412c825188310cdc9eb394089301dd784ff57',
+    '3f4ce0a44ae75192fe7fea3b03b879c21ab0b2be7cc0a620522c60c2155b674b',
+    '883e1d43faaf26541efbd37b897ead7f4fca556b3bd8cf03608f43870382f127',
+    '20acb7275aa06d0be4aca1a567420ea603c0eec084e50c651c96501903034f1b',
+    True, True, True,
+)
+SEUNGUN_CORE_DIRECTORY = 'canonical_seungun_core_20261006_v1'
+SEUNGUN_LLM_DIRECTORY = 'canonical_seungun_gpt_20261006_v1'
+HARNESSES = {value.manifest_sha256: value for value in (S7, H5, SCORED_V1, SCORED_V2, SCORED, RESIDENT, NATIVE_V1, NATIVE, SEUNGUN_GPT)}
 
 
 def harness_identity(manifest_sha256: str) -> HarnessIdentity:

@@ -72,7 +72,8 @@ async def execute(folder: Path):
     marks["coreFinishedAt"] = marks["expressionStartedAt"] = time.time()
     expression = await asyncio.to_thread(frozen.express_admitted, request, audio=audio,
         core_bytes=produced.raw, prepared_wav=produced.prepared_wav,
-        producer_workspace=produced.workspace, transport=FrozenOpenAITransport(os.environ["OPENAI_API_KEY"]))
+        producer_workspace=produced.workspace, transport=FrozenOpenAITransport(os.environ["OPENAI_API_KEY"],
+            combined_grading=artifacts.identity.gpt_grading))
     marks["expressionFinishedAt"] = marks["validationStartedAt"] = time.time()
     preflight = await asyncio.to_thread(preflight_canonical_result, expression,
         request=request, frozen=frozen, prepared_audio=produced.prepared_audio)
