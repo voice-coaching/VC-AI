@@ -147,8 +147,12 @@ class AnalysisService:
         await asyncio.to_thread(self.store.update, job_id, status="RUNNING", startedAt=time.time(),
                           deadlineAt=time.time() + self.store.settings.deadline_seconds)
         self.resident.requests += 1
-        env = self.env | {"AI_CANONICAL_RESIDENT_SOCKET": str(self.resident.socket),
+        from voice_coach.backend_analysis.canonical_settings import child_environment
+        env = child_environment(self.env) | {"AI_CANONICAL_RESIDENT_SOCKET": str(self.resident.socket),
                           "AI_CANONICAL_VERIFIED_GENERATION": str(self.resident.generation)}
+        for key in ("AI_ANALYSIS_API_TOKEN", "AI_ANALYSIS_CALLBACK_TOKEN", "AWS_ACCESS_KEY_ID",
+                    "AWS_SECRET_ACCESS_KEY", "AWS_SESSION_TOKEN"):
+            env.pop(key, None)
         with (folder / "executor.log").open("ab") as log:
             self.process = await asyncio.create_subprocess_exec(str(self.python), "-B", "-m",
                 "voice_coach.direct_analysis.worker", str(folder), env=env,
@@ -173,6 +177,10 @@ class AnalysisService:
                             else:
                                 self.store.update(job_id, status="FAILED", failure="EXECUTION_FAILED")
                 await asyncio.to_thread(finish)
+                if self.process.returncode != 0:
+                    # A pre-dispatch failure and an interrupted dispatch must not
+                    # desynchronize the parent's three-request generation budget.
+                    await self.resident.stop()
             finally:
                 await self.kill()
                 self.process = None

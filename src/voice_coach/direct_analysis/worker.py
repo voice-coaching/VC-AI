@@ -24,8 +24,20 @@ class LocalProducerJournal:
         self.folder = folder
 
     def start_producer(self, request):
-        write_private_new(self.folder / "producer-started.json", encoded({
-            "executionId": str(request.execution_id), "requestId": str(request.event_id)}))
+        # Network spool has atomic/exclusive file creation but synthetic UID/mode.
+        # Never apply scratch's private_directory check to this durable journal.
+        fd = os.open(self.folder / "producer-started.json",
+                     os.O_WRONLY | os.O_CREAT | os.O_EXCL | os.O_NOFOLLOW, 0o600)
+        with os.fdopen(fd, "wb") as stream:
+            stream.write(encoded({"executionId": str(request.execution_id),
+                                  "requestId": str(request.event_id)}))
+            stream.flush()
+            os.fsync(stream.fileno())
+        fd = os.open(self.folder, os.O_RDONLY | os.O_DIRECTORY)
+        try:
+            os.fsync(fd)
+        finally:
+            os.close(fd)
 
 
 async def execute(folder: Path):
@@ -95,7 +107,10 @@ async def execute(folder: Path):
 if __name__ == "__main__":
     try:
         asyncio.run(execute(Path(sys.argv[1]).resolve(strict=True)))
-    except Exception:
+    except Exception as error:
         # Private exception contents can contain prompt/provider details.
-        print("DIRECT_EXECUTION_FAILED", flush=True)
+        import re
+        code = str(error)
+        print("DIRECT_EXECUTION_FAILED " + (code if re.fullmatch(r"[A-Z][A-Z0-9_]{0,100}", code)
+                                            else type(error).__name__), flush=True)
         raise SystemExit(1)
