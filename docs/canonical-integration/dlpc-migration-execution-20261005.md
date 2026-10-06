@@ -1,8 +1,8 @@
 # DLPC migration execution — 2026-10-05
 
-상태: **B2 자산 복원·비밀 재주입·분석 API/TTS 재기동 완료. DLPC→AWS 22132 직접 역방향 터널과 AWS 경유 health 응답 확인 완료. 분석 접수는 비활성이고 운영 upstream 전환·품질 QA·플랫폼 자동 복구는 미완료.** 최신 관측: 2026-10-06 16:24:30 KST.
+상태: **B2 자산 복원·분석/TTS 기동, AWS 양방향 인증·nginx 전환 후보·진단 bootstrap 확인 완료. 승인된 비밀 복구본은 AWS root 전용으로 보관했다. 분석 접수는 비활성이며 운영 upstream 전환·품질 QA·플랫폼 자동 복구는 미완료.** 최신 관측: 2026-10-06 17:21:22 KST. 개별 서비스 관측 시각은 아래 기록을 따른다.
 
-초기 변경은 AI `main` 대상 [PR #23](https://github.com/voice-coaching/intelligentAI/pull/23)으로 병합됐다. 재시작 복구·SSH 후속 변경은 draft [PR #25](https://github.com/voice-coaching/intelligentAI/pull/25)에 반영한다. Backend/FE와 운영 nginx upstream은 변경하지 않았다.
+초기 변경 [PR #23](https://github.com/voice-coaching/intelligentAI/pull/23)과 재시작 복구·SSH 후속 [PR #25](https://github.com/voice-coaching/intelligentAI/pull/25)는 main에 병합됐다. 이번 후속은 `feat/dlpc-aws-completion-20261006`에서 진행한다. Backend/FE와 운영 nginx upstream은 변경하지 않았다.
 
 ## 범위와 실제 기준선
 
@@ -262,6 +262,107 @@ bootstrap/handoff/admission을 끈 상태다. 분석 supervisor에서 오래된 
 별도로 저장해 백업 안의 과거 기동 영수증과 구분했다. 플랫폼 재시작 hook과 비밀의
 지속적인 안전한 공급원은 아직 확정하지 않았으며, 이번 수동 복원이 자동 복구를 뜻하지 않는다.
 
+### 2026-10-06 16:45–16:47 KST — B2 병용 계획을 위한 재조회
+
+이번 요청은 마이그레이션 계획 수립이다. RunPod API, RunPod→DLPC SSH,
+B2 Native `b2_get_file_info`로 필요한 상태만 읽었다. 서비스·설정·객체 변경은 없다.
+
+- RunPod는 RUNNING이며 공개 SSH는 `194.68.245.79:22132`다. 실행 설정은
+  `canonical_native_core_20261005_v4` / `canonical_native_h5_20261005_v4`,
+  worker revision `32d98e39767b56697bc7e58fb50e3e9d61432349`를 가리킨다.
+- DLPC 관측 시각은 07:46:14 UTC. affinity는 `[28,34,36,38]`, RAM 총 11GiB,
+  MemAvailable 8,386,880KiB, swap 0이다. A5000 VRAM은 총 24,564MiB 중
+  1,021MiB 사용이다. 실제 분석 부하의 peak나 전체 Native 준비 관측이 아니다.
+- root와 `/opt`, `/workspace`는 동일한 50GiB overlay다. 사용
+  27,871,256,576 bytes, 가용 25,815,834,624 bytes(24.04GiB)다.
+- `du -x -B1 -s` 결과: `/opt/intelligentai` 7,099,842,560 bytes,
+  `/workspace/intelligentai` 12,541,898,752 bytes,
+  `/workspace/voice-coaching-tts` 7,126,769,664 bytes.
+- `/tmp`는 5GiB tmpfs, `/var/tmp`는 1GiB tmpfs다. 홈은 `soft,nocto` 옵션의
+  NFS4이며 공유 전체 여유를 개인 quota로 해석하지 않는다. quota 명령과
+  cgroup `memory.max`, `memory.current`, `cpu.max` 파일은 확인되지 않았다.
+- 분석/TTS supervisor는 RUNNING, DLPC 내부 분석 `/health` 200,
+  `/readyz` 503이다. AWS 경유 HTTP와 인증된 TTS readiness는 이번에 재조회하지
+  않았으며 위 16:24 KST 관측과 구분한다.
+- B2의 고정 archive/manifest file ID를 조회해 각각 16,062,581,191 및
+  42,449,956 bytes와 완료 객체 상태를 확인했다. 이번 조회는 다운로드나
+  전체 hash 재검증을 포함하지 않는다. 기존 복원 영수증은 보존되어 있다.
+
+결론: 현재 실행 자산은 로컬 디스크에 수용된다. 재생성 복구·운영 업데이트 시
+공간 최고치·영속 journal·비밀 공급원은 별도 해결해야 한다. [계획 개정안](dlpc-migration-plan-20261005.md)에
+로컬 실행/B2 보관 역할, 50GiB 예산, 분할 배포, 재시작·전환·원복 조건을 추가했다.
+이 계획만으로 코드·자동 복구·품질 검증·운영 전환이 완료된 것은 아니다.
+
+### 2026-10-06 16:59–17:21 KST — AWS 접점 재검토·복구 도구 설치
+
+사용자가 AWS 연결을 포함해 계획을 재검토하고 실행하도록 요청했다. PR #25는 이미
+main에 병합됐으므로 `origin/main`의 `2abbbdc`에서
+`feat/dlpc-aws-completion-20261006` 브랜치를 만들었다. 사용자 root checkout의 기존
+수정과 AGENTS 충돌은 보존했다. Backend는 `develop`의 `00ba384`를 별도 worktree로
+조회했으며 코드·배포는 수정하지 않았다.
+
+#### 실제 AWS 연결과 인증
+
+Backend는 분석/TTS 모두 `https://ai.voice-coaching.site`를 사용한다. nginx는 아직
+RunPod gateway 8082에 연결되어 있다. 독립 `intelligentai-dlpc-sshd`는 active,
+기존 별도 `voice-coaching-tts-tunnel`은 inactive다. 오래된 서비스를 재활성화하지 않았다.
+
+17:10:28 KST, AWS에 설치한 `check_aws_connection.py`의 관측:
+
+| 확인 | 결과 |
+|---|---|
+| DLPC 분석 `/health` / `/readyz` | 200 / 503 |
+| DLPC 분석 `/health/services` 기존 분석 token | 503, 인증은 통과하나 준비되지 않음 |
+| DLPC 분석/TTS 무인증 readiness 요청 | 각각 401 |
+| DLPC 분석 `/health/deployment` 인증 요청 | 200, activeJobs 0 |
+| DLPC TTS `/health/ready` 기존 TTS token | 200, `melo-ko-practice-dlpc-r1` |
+| AWS Backend handoff readiness | 200 |
+
+17:14:12 KST에는 **DLPC에서 AWS로** callback token을 사용해 동일 handoff endpoint의
+200, `voice-coaching.canonical-handoff.v1`, admissionEnabled true를 확인했다.
+이는 실제 분석/GPT/결과 인계를 실행한 것이 아니다. Backend TTS 설정은 여전히
+`melo-ko-practice-r1`이므로 주소만 전환하면 revision 불일치가 생긴다.
+
+nginx 후보를 `/root/.config/intelligentai/dlpc-cutover-20261006/ai.conf`에 만들었다.
+원본 SHA-256은 `e8b979412a57a17d3c0c52ef664a56c1286b37ac4bbb5f6d0dcc8a4626eb0cac`,
+후보는 `32597b165ae8e9570ee90007e5d639a61564620b09146ad4b5485869f8c0220f`다.
+전체 nginx 설정의 include에서 대상 한 파일만 후보로 바꾼 `syntax.conf`로 `nginx -t`
+exit 0을 확인했다. 운영 파일 교체·reload는 하지 않았다.
+
+#### 복구·저장 설정
+
+- `/opt/intelligentai/ops/dlpc-20261006/`와 영속 홈
+  `~/.local/share/intelligentai/recovery/`에 비밀 없는 B2 복구·bootstrap 도구를 설치했다.
+  기존 B2 객체는 재작성하지 않았다. 새 `restore_assets.py`는 빈 대상에서만 기존 고정
+  다운로드/복원기를 순서대로 실행하고 상태 실패를 보존한다. 새 wrapper로 전체 cold
+  복원을 다시 수행한 것은 아니다.
+- `prepare_restored_runtime.py`를 재실행 가능하게 수정했다. 기존 토큰은 같아야 하며,
+  GPU lock inode는 교체하지 않는다. root 디스크의 `/var/lib/intelligentai/work`와
+  private 하위 디렉터리를 실제 생성했다.
+- 현재 설치에 대해 bootstrap prepare 및 진단 시작을 실행했다. 기존 AWS 터널 PID
+  88040과 분석/TTS가 RUNNING임을 확인했고 재시작·접수 활성화는 하지 않았다.
+  플랫폼 자동 hook은 확인되지 않았으며 설치하지 않았다.
+- `resource_budget.py`의 DLPC 프로필에 디스크 14GiB·inode 10,000 하한 검사를 추가했다.
+  default 프로필은 유지한다. 이것은 코드 변경이며 실행 중인 attested API 또는 TTS
+  복사본에는 주입하지 않았다. 캐시 LRU나 작업별 하드 quota를 구현한 것은 아니다.
+- 실제 v5는 `BackendCanonicalJournal`을 사용한다. 초기 조사에서 구형
+  `CanonicalEvidenceJournal`의 로컬 영속 mount 요구를 v5 필수 조건으로 잘못 연결했고,
+  소스 대조 후 정정했다. 사용자는 영속 자산을 B2에 두기로 재확인했다.
+  DLPC scratch 유실 전에 AWS가 받지 못한 작업의 복구까지 완료된 것으로 표현하지 않는다.
+
+비밀 전달은 최초 자동 승인 검토에서 명시적 승인 부족으로 거절됐다. 사용자 전용 보관 승인
+후 기존 분석/TTS 설정만 SSH stdin을 통해 AWS
+`/root/.config/intelligentai/dlpc-recovery-20261006/`에 보관했다. 17:21:22 KST에
+디렉터리 root:root 0700, `analysis.env`/`tts-token` root:root 0600 및 symlink 아님을
+확인했다. 비밀값은 출력·Git·B2 일반 archive에 넣지 않았다. 저장본은 접수 비활성이며
+AWS tunnel key에 파일 읽기·shell 권한을 추가하지 않았다. 이 공급원이 DLPC에 자동으로
+전달되는 기능은 별도이며 현재는 운영자 재주입이 필요하다.
+
+새 CUDA core/H5 실행 승인과 AI/BE schema/verifier 등록, TTS synthesis fingerprint,
+개발자 품질 QA, 최종 upstream 전환·RunPod 중지는 미완료다. `AGENTS.md`는 QA를
+개발자가 직접 수행하도록 하므로 이 작업에서 실제 녹음 추론이나 품질 승인을 대신하지 않았다.
+새 운영 준비 코드가 `NATIVE_RELEASE_DEVELOPER_QA_REQUIRED`를 우회하지 않는다.
+
 ## 검증 및 남은 완료 조건
 
 지금까지 수행한 확인은 소스 비교, 부모 manifest/hash 검증, 후보 소스 컴파일, 자산 무결성 대조, 실제 대상의 자원·접속·기동 상태 확인이다. 자동 회귀 테스트, 브라우저 QA, 음성/점수/피드백 품질 검증은 수행하지 않았다.
@@ -270,9 +371,9 @@ bootstrap/handoff/admission을 끈 상태다. 분석 supervisor에서 오래된 
 
 남은 완료 조건은 다음과 같다.
 
-1. B2 수동 복원·private 설정 재주입·서비스 재기동은 완료. 플랫폼 자동 시작/복원 hook과 RunPod 종료 후의 비밀 공급원 확정.
+1. B2 수동 복원·서비스 기동 및 AWS의 별도 private 설정 공급원 보관은 완료. 재생성 후 운영자 재주입 경로와 플랫폼 시작/복원 hook 확정.
 2. AWS 22132 직접 터널과 두 endpoint 응답 확인은 완료. 재생성 후 터널·서비스 자동 복구는 별도 검증 필요.
 3. AGENTS.md에 따라 개발자의 실제 추론·점수/피드백/TTS 품질 QA, 검토된 새 core/H5 identity의 AI·Backend 등록 및 TTS revision/fingerprint 전환.
 4. 기존 작업·lease/journal drain과 전체 readiness 확인 후 AWS upstream 전환, 그 이후 RunPod 중지. RunPod 삭제는 별도 결정.
 
-실행 명령과 설정 경계는 [DLPC 배포 안내](../../deploy/dlpc/README.md), 설계는 [마이그레이션 계획](dlpc-migration-plan-20261005.md)을 따른다. API liveness와 실제 분석/GPT/TTS 품질 통과를 구분한다.
+실행 명령과 설정 경계는 [구현 revision의 DLPC 배포 안내](https://github.com/voice-coaching/intelligentAI/blob/9737a5ea171cb182b564a2edbcb1646b4fd1385b/deploy/dlpc/README.md), 설계는 [마이그레이션 계획](dlpc-migration-plan-20261005.md)을 따른다. 현재 로컬 사용자 브랜치에는 `deploy/dlpc/`가 없으므로 구현 revision을 명시한다. API liveness와 실제 분석/GPT/TTS 품질 통과를 구분한다.

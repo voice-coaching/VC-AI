@@ -1,5 +1,58 @@
 # DLPC deployment
 
+## AWS follow-up, 2026-10-06
+
+`check_aws_connection.py` runs read-only on AWS as root. It reads only the relevant
+private Backend settings, disables redirects/proxies for credentialed checks,
+and checks the two loopback endpoints, unauthenticated rejection and Backend
+handoff readiness. `--require-ready` returns exit 2 for known readiness/config
+blockers. It does not approve quality, fingerprint compatibility, drain or cutover.
+Actual checks found analysis 200/503, TTS ready 200, missing-auth 401 for both,
+and Backend handoff 200. DLPC also reached Backend handoff directly with auth.
+Backend's old TTS revision must change together with the new approved synthesis
+fingerprint and upstream. The nginx candidate passes syntax validation but is
+not active. Existing public TLS endpoints remain the integration boundary.
+
+`store_aws_recovery_settings.py` accepts the same role-scoped stdin document as
+`receive_settings.py` and stores it in a new AWS root-only directory. It never
+prints values, changes live Backend settings or grants the tunnel key access.
+The first transfer was rejected by automatic approval review. After explicit
+user approval, analysis/TTS settings were stored at
+`/root/.config/intelligentai/dlpc-recovery-20261006/` with root-only 0700/0600
+permissions. This is a separate recovery source, not automatic secret delivery.
+
+Persistent home now contains `~/.local/share/intelligentai/recovery/` with the
+reviewed recovery tools, without tokens. `restore_assets.py` orchestrates the
+pinned B2 downloader/installer in an empty container, retaining failed state for
+inspection. Its stdin is the short-lived Native auth object, not a master key.
+After verified installation it removes only the local 16.06GB compressed copy,
+retains B2 objects/receipts, and replaces the historical supervisor config with
+the diagnostic version that omits the obsolete AWS:22 tunnel. Private settings
+are then separately supplied using `receive_settings.py`.
+
+Run `sudo python3 ~/.local/share/intelligentai/recovery/bootstrap.py` from the
+DLPC platform terminal once assets and settings are present. `--prepare-only`
+only prepares private directories/token/lock. Preparation is idempotent and
+preserves a live GPU lock inode; a mismatched existing token fails closed.
+Bootstrap starts the separate AWS tunnel and diagnostic analysis/TTS managers,
+never enables admission or silently replaces an existing production config.
+The actual current-installation invocation succeeded. A platform recreation hook
+is not installed; full cold recovery with this new wrapper is not verified.
+
+The root-disk work area is `/var/lib/intelligentai/work`, not persistent storage.
+The updated launcher moves generic temporary files there, but explicit old
+canonical/media workspace settings remain authoritative until their pending
+jobs are reconciled. The updated `dlpc-4cpu` ResourceBudget requires 14GiB disk
+headroom and 10,000 available inodes, in addition to RAM admission. This is not a
+hard disk quota, cache collector or proof of maximum-input memory/disk usage.
+Source changes are not hot-patched into the running attested API/TTS package.
+
+The active v5 executor uses AWS `BackendCanonicalJournal`. The legacy local
+SQLite mount guard does not mandate a new DLPC ext4 volume for this path.
+DLPC scratch preserves pre-handoff resend bytes only while its storage survives;
+AWS accepted handoffs and delivery state remain authoritative after recreation.
+Never automatically rerun a producer whose outcome is uncertain.
+
 This deployment uses the existing API contracts and AWS HTTPS domain. Historical
 `RUNPOD_HTTP` transport names remain wire identifiers, not a RunPod dependency.
 The RunPod SSH relay is used for migration only.

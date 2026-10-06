@@ -4,6 +4,7 @@ Requires separately received root-only settings. Does not start services or
 enable production admission, and never prints credential values.
 """
 import os
+import hmac
 from pathlib import Path
 import pwd
 import socket
@@ -29,10 +30,17 @@ def main():
         ('/run/intelligentai/worker/work', 10001, 0o700),
         ('/run/intelligentai/canonical', 10001, 0o700),
         ('/run/voice-coaching-tts', 10001, 0o700),
+        ('/var/lib/intelligentai', 0, 0o711),
+        ('/var/lib/intelligentai/work', 10001, 0o700),
+        ('/var/lib/intelligentai/work/tmp', 10001, 0o700),
+        ('/var/lib/intelligentai/work/tmp/matplotlib', 10001, 0o700),
+        ('/var/lib/intelligentai/work/tmp/huggingface', 10001, 0o700),
+        ('/var/lib/intelligentai/work/analysis', 10001, 0o700),
+        ('/var/lib/intelligentai/work/canonical', 10001, 0o700),
     ):
         p = Path(name)
         p.mkdir(parents=True, exist_ok=True)
-        if p.is_symlink() or not p.is_dir():
+        if p.resolve(strict=True) != p or not p.is_dir():
             raise ValueError('PRIVATE_DIRECTORY_REQUIRED')
         os.chown(p, owner, 10001 if owner else 0)
         p.chmod(mode)
@@ -40,15 +48,31 @@ def main():
     if not 32 <= len(token) <= 512 or any(c in token for c in b' \t\r\n'):
         raise ValueError('TTS_TOKEN_SHAPE')
     destination = Path('/run/voice-coaching-tts/token')
-    with destination.open('xb') as stream:
-        stream.write(token + b'\n')
-    os.chown(destination, 10001, 10001)
-    destination.chmod(0o600)
+    if destination.exists() or destination.is_symlink():
+        info = destination.lstat()
+        if (not stat.S_ISREG(info.st_mode) or info.st_uid != 10001
+                or stat.S_IMODE(info.st_mode) != 0o600
+                or not hmac.compare_digest(destination.read_bytes().strip(), token)):
+            raise ValueError('EXISTING_TTS_TOKEN_DIFFERS')
+    else:
+        with destination.open('xb') as stream:
+            stream.write(token + b'\n')
+            stream.flush()
+            os.fsync(stream.fileno())
+        os.chown(destination, 10001, 10001)
+        destination.chmod(0o600)
     lock = Path('/run/intelligentai/gpu.lock')
-    with lock.open('xb'):
-        pass
-    os.chown(lock, 10001, 10001)
-    lock.chmod(0o600)
+    if lock.exists() or lock.is_symlink():
+        info = lock.lstat()
+        if (not stat.S_ISREG(info.st_mode) or info.st_uid != 10001
+                or stat.S_IMODE(info.st_mode) != 0o600):
+            raise ValueError('EXISTING_GPU_LOCK_INVALID')
+        # Never replace a live flock inode during an idempotent preparation.
+    else:
+        with lock.open('xb'):
+            pass
+        os.chown(lock, 10001, 10001)
+        lock.chmod(0o600)
     print('Private runtime directories, GPU lock and TTS token prepared; services not started')
 
 

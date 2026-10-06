@@ -7,6 +7,7 @@ import stat
 
 ROOT = Path('/opt/intelligentai')
 STATE = Path('/run/intelligentai')
+WORK = Path('/var/lib/intelligentai/work')  # Root disk scratch, not durable state.
 UID = GID = 10001
 
 
@@ -49,13 +50,16 @@ def main():
                     or k in {'OPENAI_API_KEY', 'VOICE_COACH_BUILD_REVISION'}})
         env.update(PYTHONPATH=str(ROOT / 'app/src') + ':' + str(ROOT / 'app/seungun/src') + ':' + str(ROOT / 'http-python'),
                    VOICE_COACH_REPOSITORY_ROOT=str(ROOT / 'app'), HOME=str(STATE / 'worker'),
-                   TMPDIR=str(STATE / 'worker/tmp'), MPLCONFIGDIR=str(STATE / 'worker/tmp/matplotlib'),
-                   HF_HOME=str(STATE / 'worker/tmp/huggingface'), AWS_EC2_METADATA_DISABLED='true',
+                   TMPDIR=str(WORK / 'tmp'), MPLCONFIGDIR=str(WORK / 'tmp/matplotlib'),
+                   HF_HOME=str(WORK / 'tmp/huggingface'), AWS_EC2_METADATA_DISABLED='true',
                    AI_ANALYSIS_RESOURCE_PROFILE='dlpc-4cpu', AI_CANONICAL_STANDBY_RESERVE_BYTES='0',
                    AI_CANONICAL_STANDBY_MIN_FREE_BYTES='0')
         if not args.admit:
             # Staging must not restore/claim another host's production journal.
             env.update(AI_CANONICAL_BOOTSTRAP_READY='false', AI_CANONICAL_HANDOFF_ENABLED='false')
+        # Explicit existing settings win: never hide an old pending workspace.
+        env.setdefault('AI_CANONICAL_WORKSPACE_ROOT', str(WORK / 'canonical'))
+        env.setdefault('AI_ANALYSIS_RESTRICTED_WORKSPACE_ROOT', str(WORK / 'analysis'))
         command = [str(ROOT / 'envs/scorer/bin/python'), '-m', 'uvicorn',
                    'voice_coach.backend_analysis.http_api:create_app', '--factory',
                    '--host', '127.0.0.1', '--port', '8080', '--workers', '1',
@@ -65,7 +69,7 @@ def main():
         tts = Path('/workspace/voice-coaching-tts')
         env.update(PYTHONPATH=str(tts / 'MeloTTS'), HF_HOME=str(tts / 'hf'),
                    NLTK_DATA=str(tts / 'nltk'), TTS_TOKEN_FILE='/run/voice-coaching-tts/token',
-                   TTS_DEVICE='cuda:0', HOME=str(STATE / 'worker'))
+                   TTS_DEVICE='cuda:0', HOME=str(STATE / 'worker'), TMPDIR=str(WORK / 'tmp'))
         command = [str(tts / 'venv/bin/python'), '-m', 'uvicorn', 'server:app',
                    '--host', '127.0.0.1', '--port', '8083', '--workers', '1',
                    '--no-access-log', '--no-proxy-headers', '--log-level', 'warning']
