@@ -106,6 +106,31 @@ aws ec2 authorize-security-group-ingress \
 
 `prepare_aws_upstream.py`로 AWS에 별도 nginx 후보를 생성했다. 기존 인증·TLS·도메인은 보존하고 분석 18080/TTS 18083으로 라우팅하며 후보 안에 RunPod proxy 주소가 남지 않음을 확인한다. `nginx -t` 문법 검사는 성공했다. 운영 설정 교체나 reload는 수행하지 않았다.
 
+### 2026-10-06 10:10–10:14 KST — SSH 허용 후 재관측
+
+사용자가 CloudShell의 성공 응답을 제공했다. 규칙 `sgr-06447804fcea57215`는
+`sg-010a1f52288abc31e`에 `203.246.112.21/32`의 TCP 22 ingress를 허용한다.
+이는 사용자 제공 설정 변경 근거이며 실제 연결 성공과 구분한다.
+
+- RunPod API로 현재 RUNNING 및 SSH 연결 주소를 재확인한 뒤 DLPC에 접속했다.
+- DLPC hostname은 기존 대상과 일치한다. 서로 다른 HTTPS IP 조회 두 곳 모두
+  `203.246.112.21`을 반환했고 조회 프로세스에는 proxy 환경 변수가 없었다.
+- EC2 IMDS에서 대상 `i-0bc40bb2d99a81e86`, 공개 IP와 위 보안 그룹 연결을 재확인했다.
+- EC2는 `0.0.0.0:22`에서 listen 중이며 PC SSH는 정상이다. iptables INPUT/OUTPUT는
+  ACCEPT이고 firewalld는 inactive다. 이것으로 AWS 네트워크 ACL까지 허용됐다고 판단하지 않는다.
+- DLPC→AWS 443은 연결됐으나 22는 반복 타임아웃이다.
+- EC2에서 해당 출발 IP의 22/443 SYN 헤더만 35초간 관측했다. 443 SYN 2건은 도착했고
+  22 SYN은 관측되지 않았다. 페이로드를 수집하지 않았다. 관측 종료 코드 124는 제한 시간 종료다.
+- 분석 API와 TTS supervisor는 RUNNING, aws-tunnel은 STOPPED다. TCP 경로가 열리지 않아
+  터널 기동·운영 upstream 교체·RunPod 중지는 수행하지 않았다.
+
+현재 증거로는 키 인증 전 네트워크 경로에서 차단되며, DLPC 측 외부 SSH 제한과 AWS
+네트워크 ACL 중 원인은 아직 확정할 수 없다. EC2 역할의 보안 설정 조회 권한이 없어
+사용자에게 CloudShell의 보안 그룹 규칙·대상 subnet 네트워크 ACL 조회를 요청했다.
+규칙 추가 명령을 반복하거나 전체 인터넷에 SSH를 개방하지 않는다.
+조회 계약: [보안 그룹 규칙](https://docs.aws.amazon.com/cli/latest/reference/ec2/describe-security-group-rules.html),
+[네트워크 ACL](https://docs.aws.amazon.com/cli/latest/reference/ec2/describe-network-acls.html).
+
 ## 검증 및 남은 완료 조건
 
 지금까지 수행한 확인은 소스 비교, 부모 manifest/hash 검증, 후보 소스 컴파일, 자산 무결성 대조, 실제 대상의 자원·접속·기동 상태 확인이다. 자동 회귀 테스트, 브라우저 QA, 음성/점수/피드백 품질 검증은 수행하지 않았다.
@@ -115,7 +140,7 @@ aws ec2 authorize-security-group-ingress \
 남은 완료 조건은 다음과 같다.
 
 1. B2 자산 백업 검증은 완료. 실제 복원 기동 확인, private 설정 재주입 및 플랫폼 시작 경로 확정.
-2. DLPC→AWS TCP 22 허용 후 전용 tunnel의 두 loopback endpoint 연결 확인.
+2. 보안 그룹 SSH 규칙 추가는 사용자 응답으로 확인. 남은 TCP 22 타임아웃 원인(네트워크 ACL/DLPC egress)을 해결한 뒤 전용 tunnel의 두 loopback endpoint 연결 확인.
 3. AGENTS.md에 따라 개발자의 실제 추론·점수/피드백/TTS 품질 QA, 검토된 새 core/H5 identity의 AI·Backend 등록 및 TTS revision/fingerprint 전환.
 4. 기존 작업·lease/journal drain과 전체 readiness 확인 후 AWS upstream 전환, 그 이후 RunPod 중지. RunPod 삭제는 별도 결정.
 
