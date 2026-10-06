@@ -67,7 +67,9 @@ def main():
                     raise ValueError('SERVICE_TRANSITION_IN_PROGRESS')
                 command(ctl + ['start', name])
         print(json.dumps(dict(diagnosticServicesRunning=True, productionAdmission=False,
-                              inferenceQualityVerified=False, platformHookInstalled=False)))
+                              inferenceQualityVerified=False,
+                              platformHookFilesPresent=(Path('/home/2020067/.jupyter/jupyter_server_config.py').is_file()
+                                  and (TOOLS / 'recover_on_start.py').is_file()))))
 
 
 if __name__ == '__main__':

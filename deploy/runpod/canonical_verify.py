@@ -92,6 +92,7 @@ def main():
         RESIDENT, RESIDENT_CORE_DIRECTORY, RESIDENT_LLM_DIRECTORY,
         NATIVE, NATIVE_CORE_DIRECTORY, NATIVE_LLM_DIRECTORY,
         NATIVE_V1, NATIVE_V1_CORE_DIRECTORY, NATIVE_V1_LLM_DIRECTORY,
+        DLPC_CUDA, DLPC_CUDA_CORE_DIRECTORY, DLPC_CUDA_LLM_DIRECTORY,
     )
     frozen = FrozenCanonicalCoaching(FrozenCanonicalArtifacts(args.core_root, args.llm_root))
     h5 = FrozenCanonicalCoaching(FrozenCanonicalArtifacts(args.core_root, args.llm_root.parent / H5_DIRECTORY))
@@ -109,6 +110,8 @@ def main():
     native_v1 = FrozenCanonicalCoaching(FrozenCanonicalArtifacts(
         args.core_root.parent / NATIVE_V1_CORE_DIRECTORY, args.llm_root.parent / NATIVE_V1_LLM_DIRECTORY))
     installed_native = None
+    dlpc_cuda = FrozenCanonicalCoaching(FrozenCanonicalArtifacts(
+        args.core_root.parent / DLPC_CUDA_CORE_DIRECTORY, args.llm_root.parent / DLPC_CUDA_LLM_DIRECTORY))
     try:
         frozen._bridge()
         if frozen.artifacts.identity != S7 or h5.artifacts.identity != H5:
@@ -126,7 +129,9 @@ def main():
         if resident.artifacts.identity != RESIDENT:
             raise RuntimeError('VERIFIER_HARNESS_ROOT_MISMATCH')
         resident._bridge().scoring_policy()
-        for identity, implementation in ((NATIVE_V1, native_v1), (NATIVE, native)):
+        for identity, implementation in ((NATIVE_V1, native_v1), (NATIVE, native), (DLPC_CUDA, dlpc_cuda)):
+            if implementation.artifacts.core_root.exists() != implementation.artifacts.llm_root.exists():
+                raise RuntimeError('VERIFIER_NATIVE_PAIR_INCOMPLETE')
             if implementation.artifacts.llm_root.exists():
                 if implementation.artifacts.identity != identity:
                     raise RuntimeError('VERIFIER_HARNESS_ROOT_MISMATCH')
@@ -186,7 +191,7 @@ def main():
             association = _read_json(private.association_bytes)
             _validate(association, 'association')
             selected = harness_identity(association['llmManifestSha256'])
-            frozen = {S7: frozen, H5: h5, SCORED_V1: scored_v1, SCORED_V2: scored_v2, SCORED: scored, RESIDENT: resident, NATIVE_V1: native_v1, NATIVE: native}[selected]
+            frozen = {S7: frozen, H5: h5, SCORED_V1: scored_v1, SCORED_V2: scored_v2, SCORED: scored, RESIDENT: resident, NATIVE_V1: native_v1, NATIVE: native, DLPC_CUDA: dlpc_cuda}[selected]
             metadata = association['preparedAudio']
             prepared = PreparedAudioIdentity.from_document(metadata) if metadata is not None else None
             # This verifies authenticated producer measurements and their binding,

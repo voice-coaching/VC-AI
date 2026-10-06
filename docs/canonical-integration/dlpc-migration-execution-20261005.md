@@ -377,3 +377,9 @@ AWS tunnel key에 파일 읽기·shell 권한을 추가하지 않았다. 이 공
 4. 기존 작업·lease/journal drain과 전체 readiness 확인 후 AWS upstream 전환, 그 이후 RunPod 중지. RunPod 삭제는 별도 결정.
 
 실행 명령과 설정 경계는 [구현 revision의 DLPC 배포 안내](https://github.com/voice-coaching/intelligentAI/blob/9737a5ea171cb182b564a2edbcb1646b4fd1385b/deploy/dlpc/README.md), 설계는 [마이그레이션 계획](dlpc-migration-plan-20261005.md)을 따른다. 현재 로컬 사용자 브랜치에는 `deploy/dlpc/`가 없으므로 구현 revision을 명시한다. API liveness와 실제 분석/GPT/TTS 품질 통과를 구분한다.
+## 2026-10-06 후속 전환 작업
+
+최신 후속 작업은 [전환 준비 기록](dlpc-cutover-preparation-20261006.md)에 있다.
+CUDA source/schema와 비활성 AWS verifier, TTS env 후보를 추가했다.
+시작 hook/비밀 export 설치는 구체 승인 대기이며 실제 QA·drain·upstream 전환은 미수행이다.
+기존 내용은 앞선 관측 이력으로 보존한다.
