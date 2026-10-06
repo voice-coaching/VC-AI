@@ -45,7 +45,7 @@ def main():
     raw = sys.stdin.buffer.read(16 * 1024 * 1024 + 1)
     require(0 < len(raw) <= 16 * 1024 * 1024, 'BUNDLE_SIZE')
     files = json.loads(raw)
-    # The additive DLPC CUDA pair takes the full historical closure to 816 files.
+    # Retained historical releases plus the GOP pair need more than 800 files.
     require(type(files) is dict and 90 <= len(files) <= 900, 'BUNDLE_FILES')
     require(REQUIRED_APP_FILES.issubset(files), 'BUNDLE_APP_DEPENDENCIES_MISSING')
     decoded = {}

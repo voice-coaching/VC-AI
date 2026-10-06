@@ -68,7 +68,6 @@ def main():
     omitted = set()
     for optional in (
         {'canonical_native_core_20261005_v4', 'canonical_native_h5_20261005_v4'},
-        {'canonical_dlpc_cuda_20261005_v2', 'canonical_dlpc_cuda_20261005_v2_h5'},
     ):
         present = {kind for kind in optional if roots[kind].exists()}
         if present and present != optional:
