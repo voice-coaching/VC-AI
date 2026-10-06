@@ -1,6 +1,6 @@
 # DLPC migration execution — 2026-10-05
 
-상태: **DLPC 자산 설치, 진단 API·Native/MFA·독립 TTS 기동 확인 완료. B2 자산 백업 검증 완료. 재기동 복구·AWS 연결·개발자 QA가 남아 운영 전환 미완료.** 최종 기동 관측: 2026-10-06 00:11 KST.
+상태: **DLPC 재시작 후 관리 접속 복구. 비영속 실행 자산이 사라져 B2 복구 다운로드 중이며 분석·TTS는 미기동. AWS 전용 SSH 22132 리스너 준비 완료, 보안 그룹 허용·터널 연결은 대기. 운영 전환 미완료.** 과거 기동 관측: 2026-10-06 00:11 KST; 재시작 후 재관측: 10-06 14:56 KST 이후.
 
 AI `main` 대상 draft [PR #23](https://github.com/voice-coaching/intelligentAI/pull/23)에 통합한다. Backend/FE와 운영 nginx upstream은 변경하지 않았다.
 
@@ -173,6 +173,45 @@ DLPC 사용자 터미널에서 공개 지문과 일치하는 기존 `.ssh/*.pub`
 RunPod 공개 포트 22132와 AWS 22의 차이는 확인했지만 DLPC의 실제 과거 발신 명령은
 아직 미확인이다. DLPC 외부 SSH 전체 차단이나 특정 포트 차단으로 단정하지 않는다.
 
+### 2026-10-06 14:56 KST 이후 — 접속 복구·초기화 확인·AWS 22132 준비
+
+사용자 첨부 로그에서 RunPod `194.68.245.79:22132` 공개키 인증과 `23990` remote
+forward 성공을 확인했다. RunPod→DLPC 관리 키가 거절돼 사용자가 기존 공개키를 다시
+등록했고, 이후 `J3990.2020067.notebook.dlpc`로 직접 접속하는 데 성공했다.
+
+DLPC 프로세스에서 실제 정상 명령을 확인했다. 전용
+`~/.ssh/runpod_s8hb5b0l5k4qlx_tunnel`로 `ssh -v -NT -p 22132`, 고정 known_hosts,
+IdentitiesOnly/BatchMode/ExitOnForwardFailure, keepalive 30초/3회,
+`-R 127.0.0.1:23990:127.0.0.1:22`를 사용했다. 기존 명령 이력 파일에는 생성 명령이
+남아 있지 않았으므로 성공 로그와 실행 중 argv가 근거다.
+
+- DLPC→RunPod 22132는 SSH 배너까지 수신, AWS 22는 timeout, AWS 443은 연결.
+- 발신 IP는 재시작 후에도 `203.246.112.21`이다. 특정 포트 또는 경로의 제한 가능성이
+  있으나 22 실패 원인을 아직 확정하지 않았다.
+- AWS에 기존 sshd/nginx와 별개인 `intelligentai-dlpc-sshd.service`를 기동했다.
+  `/etc/ssh/sshd_config_intelligentai_dlpc`의 공개 포트는 22132이며 기존 승인된 DLPC
+  키만 별도 authorized_keys 파일에 사용한다. ec2-user와 DLPC IP만 허용하고 비밀번호,
+  셸 세션(MaxSessions 0), root 로그인, 직접 포워딩은 금지한다. 역방향 포워딩은
+  loopback 18080/18083만 허용한다. 기존 22번 서비스와 운영 HTTPS는 변경하지 않았다.
+- `sshd -t` 성공과 systemd active를 확인했다. EC2 역할의 DescribeSecurityGroupRules와
+  DescribeNetworkAcls는 UnauthorizedOperation이다. 사용자에게 22132의 DLPC /32
+  보안 그룹 규칙 추가를 요청했다. DLPC→AWS 22132는 아직 timeout으로 연결 성공 미확인이다.
+- DLPC 홈에 `.local/share/intelligentai/aws-tunnel/start_aws_tunnel.py`를 설치하고
+  `--prepare-only`를 완료했다. UID 120067에서 기존 전용 키와 HostKeyAlias를 사용한다.
+  기존 분석 supervisor와 독립 실행하며 재시작 후 호출은 필요하다. 플랫폼 자동 시작
+  hook은 아직 연결하지 않았다. RunPod 경유를 운영 터널에 포함하지 않는다.
+
+재시작으로 `/opt/intelligentai`, `/workspace/intelligentai`, `/workspace/voice-coaching-tts`,
+`/etc/intelligentai/analysis.env`, `/run/voice-coaching-tts/token`이 없어진 것을 확인했다.
+홈의 AWS 전용 SSH 키는 남았다. root overlay는 50GiB 중 약 52.67GB 가용이지만
+`/var/tmp`는 별도 1GB tmpfs다. 첫 복구 도구는 공간 검사에서 쓰기 전에 멈췄고,
+다운로드 경로를 `/opt/intelligentai-b2-restore-20261006`으로 변경했다.
+
+`b2_restore.py`로 B2의 정확한 manifest/archive file ID를 재다운로드 중이다.
+manifest 42,449,956 bytes의 SHA-256은 일치한다. archive는 16,062,581,191 bytes의
+해시 검증 완료 후에만 설치할 수 있다. 현재 단계는 다운로드이며 추출·비밀 재주입·기동은
+아직 하지 않았다. 토큰은 SSH stdin과 worker 메모리에만 전달하고 파일에 저장하지 않는다.
+
 ## 검증 및 남은 완료 조건
 
 지금까지 수행한 확인은 소스 비교, 부모 manifest/hash 검증, 후보 소스 컴파일, 자산 무결성 대조, 실제 대상의 자원·접속·기동 상태 확인이다. 자동 회귀 테스트, 브라우저 QA, 음성/점수/피드백 품질 검증은 수행하지 않았다.
@@ -181,8 +220,8 @@ RunPod 공개 포트 22132와 AWS 22의 차이는 확인했지만 DLPC의 실제
 
 남은 완료 조건은 다음과 같다.
 
-1. B2 자산 백업 검증은 완료. 실제 복원 기동 확인, private 설정 재주입 및 플랫폼 시작 경로 확정.
-2. 보안 그룹 SSH 규칙 추가는 사용자 응답으로 확인. 남은 TCP 22 타임아웃 원인(네트워크 ACL/DLPC egress)을 해결한 뒤 전용 tunnel의 두 loopback endpoint 연결 확인.
+1. B2 자산 백업 검증은 완료. 재시작 후 실제 다운로드·복원·private 설정 재주입·기동을 완료하고 플랫폼 시작 경로 확정.
+2. AWS 전용 SSH 22132의 DLPC /32 보안 그룹 허용 후 터널 인증·두 loopback endpoint 연결 확인. 기존 22번 timeout 원인은 미확정.
 3. AGENTS.md에 따라 개발자의 실제 추론·점수/피드백/TTS 품질 QA, 검토된 새 core/H5 identity의 AI·Backend 등록 및 TTS revision/fingerprint 전환.
 4. 기존 작업·lease/journal drain과 전체 readiness 확인 후 AWS upstream 전환, 그 이후 RunPod 중지. RunPod 삭제는 별도 결정.
 

@@ -112,3 +112,28 @@ operational status checks. They reserve inference, score comparison and feedback
 quality QA for the developer. No automated regression suite or browser QA is
 part of this migration. See the [execution record](../../docs/canonical-integration/dlpc-migration-execution-20261005.md)
 for actual progress and blockers.
+
+## After container recreation (2026-10-06)
+
+Actual recreation erased `/opt`, `/workspace`, `/etc/intelligentai`, and `/run`.
+The NAS home retained SSH keys. The prior ready state is historical, not current.
+`b2_restore.py` downloads the pinned manifest and 16.06GB archive into the empty
+root disk under `/opt/intelligentai-b2-restore-20261006`; `/var/tmp` is only a
+1GB tmpfs. Credentials enter on stdin, and extraction is separate after digest
+verification. Download completion does not mean installation or service readiness.
+
+The AWS SSH listener is prepared by `prepare_aws_tunnel_listener.py`: dedicated
+22132, the existing approved key only, source IP/user restrictions, no sessions,
+and only loopback 18080/18083 reverse forwards. Existing sshd/nginx stay in place.
+The operator must allow DLPC's /32 at 22132 in the AWS security group.
+
+The persistent DLPC home launcher is
+`~/.local/share/intelligentai/aws-tunnel/start_aws_tunnel.py`.
+Run it as user 2020067 (UID 120067), not root, after network access is confirmed.
+`--prepare-only` creates its private configuration without starting a connection.
+The separate supervisor uses `/tmp/intelligentai-aws-tunnel-120067`, bounded logs,
+and the pinned AWS host identity (`HostKeyAlias=13.209.184.226`). It requires
+explicit reinvocation after recreation until a platform startup hook is wired.
+Do not also start the historical `aws-tunnel` entry from the archived analysis
+supervisor. Apply the current configuration before restoring service operation.
+The transport has not yet been verified across AWS 22132.
