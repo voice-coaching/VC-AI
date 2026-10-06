@@ -65,6 +65,8 @@ class Job:
 class HttpRuntime:
     def __init__(self, environment):
         self.environment = dict(environment)
+        from .resource_budget import ResourceBudget
+        self.resource_budget = ResourceBudget.from_environment(self.environment)
         # Keep role secrets in the explicit lane configuration, not the ambient
         # environment inherited by multiprocessing's helper/legacy processes.
         for name in tuple(os.environ):
@@ -352,8 +354,11 @@ class HttpRuntime:
             raise HttpFailure(409, "STALE_EXECUTION")
         capacity = (1 if request.is_legacy or self.canonical_lane is None
                     or self.canonical_lane.resident is not None else CANONICAL_COLD_CAPACITY)
+        capacity = min(capacity, self.resource_budget.max_active)
         if len(self.active) >= capacity or any(
                 job.request.is_legacy for job in self.active.values()):
+            raise HttpFailure(429, "CAPACITY_EXCEEDED")
+        if not self.resource_budget.can_admit():
             raise HttpFailure(429, "CAPACITY_EXCEEDED")
         from .http_models import RESULT_V5
         canonical_ready = self.handoff_admission_ready() if request.result_schema_version == RESULT_V5 else self.canonical_admission_ready()

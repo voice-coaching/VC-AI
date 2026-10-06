@@ -1,5 +1,7 @@
 # Canonical AI와 동결 LLM 서비스 통합
 
+**2026-10-06 DLPC 이전:** [계획](dlpc-migration-plan-20261005.md), [실행 기록](dlpc-migration-execution-20261005.md). 설치·진단 API·Native/MFA CUDA·독립 TTS 기동을 확인했다. [B2 자산 백업 검증](dlpc-b2-backup-20261006.md)을 완료했다. AWS SSH, 재기동 복구 설정, 개발자 QA가 남아 운영 전환은 미완료다.
+
 **2026-10-04 API 경계 구현:** [완료·재녹음·화면 복구·전송 복구 인계](../api-boundary-implementation-20261004.md). PR용 구현이며 운영 배포·실제 QA는 별도다.
 
 **2026-10-04 후속 구현:** [v5 결과 직접 전달](direct-result-20261004.md). 결과를 근거 인계 전에 공개하고 AWS 중복 의미 검증·FE 상태 polling/결과 재조회를 사용자 대기에서 제거한다. 이 변경의 배포와 성능 재측정은 별도다.
