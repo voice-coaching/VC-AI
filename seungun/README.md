@@ -22,8 +22,8 @@ gate 통과 근거가 아니다.
 삭제된 과거 문서를 복원하거나 추측하지 않는다. 현재 존재하는 다음 문서와
 계약만 사용한다.
 
-- [발음 피드백 구현과 보완 계획](../docs/clova_detailed_feedback_20260909.md)
-- [연구 데이터 수집·저장 계획](../docs/backblaze_external_data_plan_20260909.md)
+- 발음 피드백 구현과 보완 계획 (`clova_detailed_feedback_20260909.md`, ?? checkout?? ??? ?? ??)
+- 연구 데이터 수집·저장 계획 (`backblaze_external_data_plan_20260909.md`, ?? checkout?? ??? ?? ??)
 - [현재 저장소 작업 지침](../AGENTS.md)
 - [수동 감사 관측을 포함한 작업 기록](docs/WORK_LOG_AND_FINDINGS_KO.md)
 
