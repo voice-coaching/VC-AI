@@ -27,7 +27,31 @@ def main():
 
     tts = private_upstream(match.group(), 18083)
     health = tts.replace('location = /v1/tts/synthesize {', 'location ~ ^/health/(live|ready)$ {')
-    candidate = source[:match.start()] + tts + '\n\n' + health + source[match.end():]
+    # Direct analysis carries a binary WAV body (20 MiB), metadata in a header,
+    # and SSE results. It cannot inherit the 64 KiB internal JSON route budget.
+    direct = '''    location ^~ /direct/ {
+        client_max_body_size 20m;
+        client_body_timeout 60s;
+        proxy_pass http://127.0.0.1:18080;
+        proxy_http_version 1.1;
+        proxy_set_header Host $host;
+        proxy_set_header X-Real-IP $remote_addr;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto $scheme;
+        proxy_set_header Authorization $http_authorization;
+        proxy_set_header Connection "";
+        proxy_request_buffering off;
+        proxy_buffering off;
+        proxy_cache off;
+        proxy_next_upstream off;
+        proxy_connect_timeout 15s;
+        proxy_send_timeout 65s;
+        proxy_read_timeout 930s;
+    }'''
+    if re.search(r'location\s+[^\n]*\/direct|large_client_header_buffers', source):
+        raise ValueError('EXISTING_DIRECT_CONFIGURATION_REQUIRES_REVIEW')
+    candidate = (source[:match.start()] + '    large_client_header_buffers 4 32k;\n\n'
+                 + direct + '\n\n' + tts + '\n\n' + health + source[match.end():])
     candidate = private_upstream(candidate, 18080)
     candidate = candidate.replace('    location / {',
         '    location = /gateway/health {\n        default_type application/json;\n'

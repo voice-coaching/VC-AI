@@ -21,7 +21,7 @@ def main():
     for key, value in values.items():
         if not isinstance(key, str) or not re.fullmatch('[A-Z][A-Z0-9_]*', key):
             raise ValueError('PRIVATE_SETTINGS_NAME')
-        if (not key.startswith(('AI_ANALYSIS_', 'AI_CANONICAL_', 'AWS_'))
+        if (not key.startswith(('AI_ANALYSIS_', 'AI_CANONICAL_', 'AI_DIRECT_', 'AWS_'))
                 and key not in {'OPENAI_API_KEY', 'VOICE_COACH_BUILD_REVISION'}):
             raise ValueError('PRIVATE_SETTINGS_ROLE')
         if not isinstance(value, str) or any(c in value for c in '\r\n\x00'):
