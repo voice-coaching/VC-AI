@@ -131,6 +131,23 @@ aws ec2 authorize-security-group-ingress \
 조회 계약: [보안 그룹 규칙](https://docs.aws.amazon.com/cli/latest/reference/ec2/describe-security-group-rules.html),
 [네트워크 ACL](https://docs.aws.amazon.com/cli/latest/reference/ec2/describe-network-acls.html).
 
+### 2026-10-06 10:18–10:20 KST — 요청된 역방향 SSH 실제 기동
+
+사용자 요청대로 RunPod→DLPC SSH 관리 경로로 접속한 뒤 DLPC supervisor의
+`aws-tunnel`을 기동했다. 전용 키와 고정 known_hosts를 사용하며 설정은 다음과 같다.
+
+- DLPC에서 `ssh -NT -R 127.0.0.1:18080:127.0.0.1:8080 -R 127.0.0.1:18083:127.0.0.1:8083 ec2-user@13.209.184.226` 실행.
+- SSH 자체 오류: `connect to host 13.209.184.226 port 22: Connection timed out`.
+- supervisor의 `start` 호출은 일시적으로 성공을 반환했지만 후속 상태는 재시도 STARTING이었다.
+  이를 터널 연결 성공으로 판단하지 않았다. AWS의 18080/18083 리스너가 없음을 별도로 확인했다.
+- 10:20 KST에 실패 재시도 중인 aws-tunnel만 중단했다. 분석 API와 TTS는 계속 RUNNING이다.
+
+현재 구성은 이미 역방향 포워딩이다. DLPC로 들어오는 외부 SSH 연결은 필요하지 않지만,
+DLPC에서 AWS SSH 서버로 나가는 TCP 연결은 필요하다. RunPod를 통해 관리 명령을 실행하는
+것만으로 이 연결의 출발점이 RunPod로 바뀌지는 않는다. 외부 SSH 제한이 ingress인지
+egress인지와 허용 포트를 사용자에게 확인 요청했다. 현 증거만으로 DLPC 정책과 AWS ACL 중
+차단 위치를 확정하지 않는다. 운영 upstream 교체와 RunPod 중지는 미수행이다.
+
 ## 검증 및 남은 완료 조건
 
 지금까지 수행한 확인은 소스 비교, 부모 manifest/hash 검증, 후보 소스 컴파일, 자산 무결성 대조, 실제 대상의 자원·접속·기동 상태 확인이다. 자동 회귀 테스트, 브라우저 QA, 음성/점수/피드백 품질 검증은 수행하지 않았다.
