@@ -282,7 +282,7 @@ def preflight_canonical_result(
     bridge = frozen._bridge()
     if frozen.artifacts.identity.scoring:
         native_args = {}
-        if frozen.artifacts.identity.native:
+        if frozen.artifacts.identity.native and not frozen.artifacts.identity.gpt_grading:
             from .native_execution import admitted_binding
             native_args['native_binding'] = admitted_binding(request,
                 core_sha256=frozen.artifacts.identity.core_sha256, prepared_sha256=core.get('prepared_wav_sha256'))
@@ -301,7 +301,8 @@ def preflight_canonical_result(
             view = _read_json(result.selection_bytes)
             _validate(view, schema_name="input")
             _selection_semantics(core, view, prepared_audio)
-        if (frozen.artifacts.identity.scoring and expression.get("scoring") == {"status": "UNSCORABLE"}):
+        if (frozen.artifacts.identity.scoring and not frozen.artifacts.identity.gpt_grading
+                and expression.get("scoring") == {"status": "UNSCORABLE"}):
             _require(expression["adapterStatus"] == "FAIL_CLOSED"
                      and expression["errorCode"] == "SCORING_UNSCORABLE", "SCORING_FAILURE_STATUS")
         elif skip:

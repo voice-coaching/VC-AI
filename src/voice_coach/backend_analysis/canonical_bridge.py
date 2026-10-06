@@ -156,9 +156,11 @@ class FrozenCanonicalCoaching:
         # a cached pyc. Relative legacy_pure import retains frozen semantics.
         source = {}
         modules = ("phone_rubric", "gpt_rubric", "legacy_pure", "adapter") if identity.scoring else ("legacy_pure", "adapter")
-        if identity.native:
+        if identity.native and not identity.gpt_grading:
             modules = ("phone_rubric", "native_phone_contract", "native_phone_alignment", "native_phone_assessment",
                        "native_phone_evidence", "gpt_rubric", "native_gpt_rubric", "legacy_pure", "adapter")
+        if identity.gpt_grading:
+            modules = ("legacy_pure", "adapter")
         for name in modules:
             relative = f"bridge/{name}.py"
             raw = _contained_file(root, relative).read_bytes()
@@ -251,7 +253,7 @@ class FrozenCanonicalCoaching:
             # never invokes transport; each harness owns its pinned prompt.
             pass
         native_args = {}
-        if self.artifacts.identity.native:
+        if self.artifacts.identity.native and not self.artifacts.identity.gpt_grading:
             from .native_execution import admitted_binding
             native_args['native_binding'] = admitted_binding(request,
                 core_sha256=self.artifacts.identity.core_sha256, prepared_sha256=prepared_sha)

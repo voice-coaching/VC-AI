@@ -1114,7 +1114,8 @@
             "ce16f635da012237b5316b36161d5eeff9432279cd08dbbe7967f5ab7ace7f7e",
             "9e2a2107db7d30fe8910c8984687974d85b95120760e2bcce53d57640a5d5a32",
             "68cda53df72be9dace15f3829a840c27f40efbbfee1a561f8e58d314b4991aad",
-            "f1009fcdbf75515ddc13e915dcbbf19dfac751ce39779e404749c4f51dd74841"
+            "f1009fcdbf75515ddc13e915dcbbf19dfac751ce39779e404749c4f51dd74841",
+            "20acb7275aa06d0be4aca1a567420ea603c0eec084e50c651c96501903034f1b"
           ]
         },
         "core_sha256": {
@@ -1192,7 +1193,8 @@
             "ce16f635da012237b5316b36161d5eeff9432279cd08dbbe7967f5ab7ace7f7e",
             "9e2a2107db7d30fe8910c8984687974d85b95120760e2bcce53d57640a5d5a32",
             "68cda53df72be9dace15f3829a840c27f40efbbfee1a561f8e58d314b4991aad",
-            "f1009fcdbf75515ddc13e915dcbbf19dfac751ce39779e404749c4f51dd74841"
+            "f1009fcdbf75515ddc13e915dcbbf19dfac751ce39779e404749c4f51dd74841",
+            "20acb7275aa06d0be4aca1a567420ea603c0eec084e50c651c96501903034f1b"
           ]
         },
         "llmManifestSha256": {
@@ -1205,7 +1207,8 @@
             "885a2f0a67494dc3bebed28962222bfe95a0143292fe2de04194b84ea8beadc5",
             "358365399f7445ab0a77797ce46619979955503c4faac8185724e2225aa5205c",
             "7dfc26fb088300165b4a564847d0a489092b0ab830ef591943a40f31ecb85747",
-            "efc705b042cb1b18d4babff4f5949f37622154e979b1c07b33afdc36eeb89428"
+            "efc705b042cb1b18d4babff4f5949f37622154e979b1c07b33afdc36eeb89428",
+            "6a3bf7c872e718086cb9add4d48412c825188310cdc9eb394089301dd784ff57"
           ]
         },
         "llmDependencyLockSha256": {
@@ -1218,7 +1221,8 @@
             "1945dcf2fad7fc97621830abed34353c2d372d8224cc9ad11a9c422eabfdf9f4",
             "798b47b6f5355b120141a7fa730350739298082549036233ea5804226dbad80c",
             "93ccb06cafb9128f4ae02f111ca4bfb599305f84ecce01e41971e69822ba1ec6",
-            "1b8cb378b889817e14bf06be5065b04016589f6b74dcd5501776dde758f38259"
+            "1b8cb378b889817e14bf06be5065b04016589f6b74dcd5501776dde758f38259",
+            "3f4ce0a44ae75192fe7fea3b03b879c21ab0b2be7cc0a620522c60c2155b674b"
           ]
         },
         "scriptSha256": {
@@ -1387,6 +1391,19 @@
             },
             "llmDependencyLockSha256": {
               "const": "1b8cb378b889817e14bf06be5065b04016589f6b74dcd5501776dde758f38259"
+            }
+          }
+        },
+        {
+          "properties": {
+            "parentManifestSha256": {
+              "const": "20acb7275aa06d0be4aca1a567420ea603c0eec084e50c651c96501903034f1b"
+            },
+            "llmManifestSha256": {
+              "const": "6a3bf7c872e718086cb9add4d48412c825188310cdc9eb394089301dd784ff57"
+            },
+            "llmDependencyLockSha256": {
+              "const": "3f4ce0a44ae75192fe7fea3b03b879c21ab0b2be7cc0a620522c60c2155b674b"
             }
           }
         }
@@ -2088,7 +2105,8 @@
             "ce16f635da012237b5316b36161d5eeff9432279cd08dbbe7967f5ab7ace7f7e",
             "9e2a2107db7d30fe8910c8984687974d85b95120760e2bcce53d57640a5d5a32",
             "68cda53df72be9dace15f3829a840c27f40efbbfee1a561f8e58d314b4991aad",
-            "f1009fcdbf75515ddc13e915dcbbf19dfac751ce39779e404749c4f51dd74841"
+            "f1009fcdbf75515ddc13e915dcbbf19dfac751ce39779e404749c4f51dd74841",
+            "20acb7275aa06d0be4aca1a567420ea603c0eec084e50c651c96501903034f1b"
           ]
         },
         "llmManifestSha256": {
@@ -2101,7 +2119,8 @@
             "885a2f0a67494dc3bebed28962222bfe95a0143292fe2de04194b84ea8beadc5",
             "358365399f7445ab0a77797ce46619979955503c4faac8185724e2225aa5205c",
             "7dfc26fb088300165b4a564847d0a489092b0ab830ef591943a40f31ecb85747",
-            "efc705b042cb1b18d4babff4f5949f37622154e979b1c07b33afdc36eeb89428"
+            "efc705b042cb1b18d4babff4f5949f37622154e979b1c07b33afdc36eeb89428",
+            "6a3bf7c872e718086cb9add4d48412c825188310cdc9eb394089301dd784ff57"
           ]
         },
         "llmDependencyLockSha256": {
@@ -2114,13 +2133,15 @@
             "1945dcf2fad7fc97621830abed34353c2d372d8224cc9ad11a9c422eabfdf9f4",
             "798b47b6f5355b120141a7fa730350739298082549036233ea5804226dbad80c",
             "93ccb06cafb9128f4ae02f111ca4bfb599305f84ecce01e41971e69822ba1ec6",
-            "1b8cb378b889817e14bf06be5065b04016589f6b74dcd5501776dde758f38259"
+            "1b8cb378b889817e14bf06be5065b04016589f6b74dcd5501776dde758f38259",
+            "3f4ce0a44ae75192fe7fea3b03b879c21ab0b2be7cc0a620522c60c2155b674b"
           ]
         },
         "promptSha256": {
           "enum": [
             "362ccc1f15d2e166110cca52d90fd3d6e81ee85646e96eb7018d8b8278898714",
-            "6f9e8515ae083a62e0500a03e3c2cef073ae78eb696bed8b5857a14b551ff1fd"
+            "6f9e8515ae083a62e0500a03e3c2cef073ae78eb696bed8b5857a14b551ff1fd",
+            "883e1d43faaf26541efbd37b897ead7f4fca556b3bd8cf03608f43870382f127"
           ]
         }
       },
@@ -2277,6 +2298,22 @@
             },
             "promptSha256": {
               "const": "6f9e8515ae083a62e0500a03e3c2cef073ae78eb696bed8b5857a14b551ff1fd"
+            }
+          }
+        },
+        {
+          "properties": {
+            "parentManifestSha256": {
+              "const": "20acb7275aa06d0be4aca1a567420ea603c0eec084e50c651c96501903034f1b"
+            },
+            "llmManifestSha256": {
+              "const": "6a3bf7c872e718086cb9add4d48412c825188310cdc9eb394089301dd784ff57"
+            },
+            "llmDependencyLockSha256": {
+              "const": "3f4ce0a44ae75192fe7fea3b03b879c21ab0b2be7cc0a620522c60c2155b674b"
+            },
+            "promptSha256": {
+              "const": "883e1d43faaf26541efbd37b897ead7f4fca556b3bd8cf03608f43870382f127"
             }
           }
         }
@@ -2915,7 +2952,8 @@
                       "885a2f0a67494dc3bebed28962222bfe95a0143292fe2de04194b84ea8beadc5",
                       "358365399f7445ab0a77797ce46619979955503c4faac8185724e2225aa5205c",
                       "7dfc26fb088300165b4a564847d0a489092b0ab830ef591943a40f31ecb85747",
-                      "efc705b042cb1b18d4babff4f5949f37622154e979b1c07b33afdc36eeb89428"
+                      "efc705b042cb1b18d4babff4f5949f37622154e979b1c07b33afdc36eeb89428",
+                      "6a3bf7c872e718086cb9add4d48412c825188310cdc9eb394089301dd784ff57"
                     ]
                   }
                 }
