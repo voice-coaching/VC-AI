@@ -72,23 +72,27 @@ class DeliveryWorkers:
 
     def archive(self, doc):
         from voice_coach.backend_analysis.canonical_evidence_store import evidence_store_from_environment
-        from voice_coach.backend_analysis.adapters.s3_object_store import create_s3_client_from_environment
         folder = self.store.directory(doc["jobId"])
         evidence = evidence_store_from_environment(self.environment)
         # Reuse configured endpoint/client. UUID namespace deliberately separate from v5 integer IDs.
         client, settings = evidence._client, evidence._settings
         references = []
         try:
-            for path in sorted((folder / "artifacts").glob("*.json")):
+            paths = [(path, path.stem, "application/json", ".json")
+                     for path in sorted((folder / "artifacts").glob("*.json"))]
+            paths.append((folder / "audio.wav", "AUDIO", "audio/wav", ".wav"))
+            for path, kind, content_type, extension in paths:
                 raw = path.read_bytes()
                 sha = hashlib.sha256(raw).hexdigest()
-                key = settings.prefix.rstrip("/") + "/direct/" + doc["jobId"] + "/" + path.stem + "/" + sha + ".json"
-                marker = folder / ("archived-" + path.stem + ".json")
+                if kind == "AUDIO" and sha != doc["audioSha256"]:
+                    raise ValueError("RECORDING_ARCHIVE_MISMATCH")
+                key = settings.prefix.rstrip("/") + "/direct/" + doc["jobId"] + "/" + kind + "/" + sha + extension
+                marker = folder / ("archived-" + kind + ".json")
                 if marker.exists():
                     references.append(json.loads(marker.read_bytes()))
                     continue
                 response = client.put_object(Bucket=settings.bucket, Key=key, Body=raw,
-                    ContentType="application/json", Metadata={"sha256": sha})
+                    ContentType=content_type, Metadata={"sha256": sha})
                 version = response.get("VersionId")
                 if not version or version == "null":
                     raise ValueError("VERSIONED_ARCHIVE_REQUIRED")
@@ -96,24 +100,17 @@ class DeliveryWorkers:
                 with downloaded["Body"] as body:
                     if hashlib.sha256(body.read(len(raw) + 1)).hexdigest() != sha:
                         raise ValueError("ARCHIVE_DIGEST_MISMATCH")
-                ref = dict(kind=path.stem, objectKey=key, versionId=version, sha256=sha, byteSize=len(raw))
+                ref = dict(kind=kind, objectKey=key, versionId=version, sha256=sha, byteSize=len(raw))
                 atomic(marker, encoded(ref))
                 references.append(ref)
         finally:
             client.close()
-        recordings = create_s3_client_from_environment(self.environment)
-        try:
-            audio = (folder / "audio.wav").read_bytes()
-            key = self.environment["AI_DIRECT_RECORDING_PREFIX"].rstrip("/") + "/" + doc["jobId"] + ".wav"
-            bucket = self.environment["AI_ANALYSIS_OBJECT_STORAGE_BUCKET"]
-            recordings.put_object(Bucket=bucket, Key=key, Body=audio, ContentType="audio/wav",
-                                  Metadata={"sha256": doc["audioSha256"]})
-            head = recordings.head_object(Bucket=bucket, Key=key)
-            if head["ContentLength"] != len(audio) or head.get("Metadata", {}).get("sha256") != doc["audioSha256"]:
-                raise ValueError("RECORDING_ARCHIVE_MISMATCH")
-        finally:
-            recordings.close()
-        atomic(folder / "archive.json", encoded(dict(artifacts=references, recordingObjectKey=key)))
+        # Direct audio has no AWS upload intent. Preserve it with the scoped B2
+        # writer, not the read-only recordings client used for legacy downloads.
+        recording = next(ref for ref in references if ref["kind"] == "AUDIO")
+        atomic(folder / "archive.json", encoded(dict(schemaVersion="voice-coaching.direct-archive.v2",
+            storage="B2", artifacts=[ref for ref in references if ref["kind"] != "AUDIO"],
+            recording=recording)))
 
     def history(self, doc):
         folder = self.store.directory(doc["jobId"])
