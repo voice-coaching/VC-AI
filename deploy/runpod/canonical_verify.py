@@ -93,6 +93,7 @@ def main():
         NATIVE, NATIVE_CORE_DIRECTORY, NATIVE_LLM_DIRECTORY,
         NATIVE_V1, NATIVE_V1_CORE_DIRECTORY, NATIVE_V1_LLM_DIRECTORY,
         SEUNGUN_GPT, SEUNGUN_CORE_DIRECTORY, SEUNGUN_LLM_DIRECTORY,
+        DLPC_GOP, DLPC_GOP_CORE_DIRECTORY, DLPC_GOP_LLM_DIRECTORY,
         SEUNGUN_GPT_V1, SEUNGUN_V1_CORE_DIRECTORY, SEUNGUN_V1_LLM_DIRECTORY,
     )
     frozen = FrozenCanonicalCoaching(FrozenCanonicalArtifacts(args.core_root, args.llm_root))
@@ -110,6 +111,8 @@ def main():
         args.core_root.parent / NATIVE_CORE_DIRECTORY, args.llm_root.parent / NATIVE_LLM_DIRECTORY))
     native_v1 = FrozenCanonicalCoaching(FrozenCanonicalArtifacts(
         args.core_root.parent / NATIVE_V1_CORE_DIRECTORY, args.llm_root.parent / NATIVE_V1_LLM_DIRECTORY))
+    dlpc_gop = FrozenCanonicalCoaching(FrozenCanonicalArtifacts(
+        args.core_root.parent / DLPC_GOP_CORE_DIRECTORY, args.llm_root.parent / DLPC_GOP_LLM_DIRECTORY))
     installed_native = None
     seungun = FrozenCanonicalCoaching(FrozenCanonicalArtifacts(
         args.core_root.parent / SEUNGUN_CORE_DIRECTORY, args.llm_root.parent / SEUNGUN_LLM_DIRECTORY))
@@ -132,7 +135,7 @@ def main():
         if resident.artifacts.identity != RESIDENT:
             raise RuntimeError('VERIFIER_HARNESS_ROOT_MISMATCH')
         resident._bridge().scoring_policy()
-        for identity, implementation in ((NATIVE_V1, native_v1), (NATIVE, native), (DLPC_CUDA, dlpc_cuda)):
+        for identity, implementation in ((NATIVE_V1, native_v1), (NATIVE, native)):
             if implementation.artifacts.core_root.exists() != implementation.artifacts.llm_root.exists():
                 raise RuntimeError('VERIFIER_NATIVE_PAIR_INCOMPLETE')
             if implementation.artifacts.llm_root.exists():
@@ -147,6 +150,13 @@ def main():
                 raise RuntimeError('VERIFIER_HARNESS_ROOT_MISMATCH')
             seungun._bridge().scoring_policy()
             installed_native = SEUNGUN_GPT
+        if dlpc_gop.artifacts.core_root.exists() != dlpc_gop.artifacts.llm_root.exists():
+            raise RuntimeError("VERIFIER_DLPC_PAIR_INCOMPLETE")
+        if dlpc_gop.artifacts.llm_root.exists():
+            if dlpc_gop.artifacts.identity != DLPC_GOP:
+                raise RuntimeError("VERIFIER_HARNESS_ROOT_MISMATCH")
+            dlpc_gop._bridge().scoring_policy()
+            installed_native = DLPC_GOP
     except Exception:
         raise RuntimeError('VERIFIER_DEPENDENCIES_UNAVAILABLE') from None
     if args.check_installation:
@@ -199,7 +209,7 @@ def main():
             association = _read_json(private.association_bytes)
             _validate(association, 'association')
             selected = harness_identity(association['llmManifestSha256'])
-            frozen = {S7: frozen, H5: h5, SCORED_V1: scored_v1, SCORED_V2: scored_v2, SCORED: scored, RESIDENT: resident, NATIVE_V1: native_v1, NATIVE: native, SEUNGUN_GPT: seungun, SEUNGUN_GPT_V1: seungun_v1}[selected]
+            frozen = {S7: frozen, H5: h5, SCORED_V1: scored_v1, SCORED_V2: scored_v2, SCORED: scored, RESIDENT: resident, NATIVE_V1: native_v1, NATIVE: native, SEUNGUN_GPT: seungun, SEUNGUN_GPT_V1: seungun_v1, DLPC_GOP: dlpc_gop}[selected]
             metadata = association['preparedAudio']
             prepared = PreparedAudioIdentity.from_document(metadata) if metadata is not None else None
             # This verifies authenticated producer measurements and their binding,
