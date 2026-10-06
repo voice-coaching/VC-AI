@@ -27,6 +27,7 @@ def paths(revision, base_revision=None):
         'src/voice_coach/backend_analysis/phone_rubric.py',
         'src/voice_coach/backend_analysis/gpt_rubric.py',
         'deploy/runpod/prepare_http.py', 'deploy/runpod/prepare_canonical.py',
+        'deploy/runpod/prepare_direct.py',
         'deploy/runpod/canonical-requirements.lock',
         'docs/contracts/runpod_analysis_request_v2.schema.json',
         'docs/contracts/runpod_http_control_v1_2.schema.json',

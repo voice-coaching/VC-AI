@@ -90,7 +90,7 @@ def create_app():
 
     @app.get("/api/v1/analyses/{job_id}")
     async def result(job_id: str):
-        return JSONResponse(app.state.service.view(job_id), headers={"Cache-Control": "no-store"})
+        return JSONResponse(await asyncio.to_thread(app.state.service.view, job_id), headers={"Cache-Control": "no-store"})
 
     @app.get("/api/v1/analyses")
     async def find(clientAttemptId: str):
@@ -98,7 +98,7 @@ def create_app():
 
     @app.post("/api/v1/analyses/{job_id}/cancellations")
     async def cancel(job_id: str):
-        return JSONResponse(app.state.service.cancel(job_id), headers={"Cache-Control": "no-store"})
+        return JSONResponse(await asyncio.to_thread(app.state.service.cancel, job_id), headers={"Cache-Control": "no-store"})
 
     @app.get("/api/v1/analyses/{job_id}/events")
     async def events(job_id: str, request: Request):
@@ -106,7 +106,7 @@ def create_app():
         async def stream():
             previous = None
             while not await request.is_disconnected():
-                view = app.state.service.view(job_id)
+                view = await asyncio.to_thread(app.state.service.view, job_id)
                 if view["sequence"] != previous:
                     previous = view["sequence"]
                     yield f"id: {previous}\nevent: analysis\ndata: {json.dumps(view, ensure_ascii=False)}\n\n"

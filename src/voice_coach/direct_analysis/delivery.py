@@ -5,6 +5,7 @@ import json
 import os
 import random
 import time
+from pathlib import Path
 from urllib.request import Request, build_opener, ProxyHandler, HTTPRedirectHandler
 from urllib.error import HTTPError
 
@@ -21,6 +22,17 @@ class DeliveryWorkers:
         self.store = store
         self.tasks = []
         self.stop = False
+        self.environment = dict(os.environ)
+        private = self.environment.get("AI_DIRECT_DELIVERY_ENV_FILE")
+        if private:
+            path = Path(private)
+            info = path.stat()
+            if not path.is_absolute() or path.is_symlink() or info.st_uid != 0 or info.st_mode & 0o027:
+                raise ValueError("DIRECT_DELIVERY_ENV_PERMISSIONS")
+            for line in path.read_text().splitlines():
+                if line and not line.startswith("#"):
+                    key, value = line.split("=", 1)
+                    self.environment[key] = value
 
     def start(self):
         self.tasks = [asyncio.create_task(self.lane(kind)) for kind in ("archive", "history")]
@@ -38,19 +50,19 @@ class DeliveryWorkers:
                     break
                 if doc["status"] != "RESULT_READY" or doc[state] in ("COMPLETE", "CONFLICT") or doc.get(kind + "Next", 0) > time.time():
                     continue
-                self.store.update(doc["jobId"], **{state: "RUNNING"})
+                await asyncio.to_thread(self.store.update, doc["jobId"], **{state: "RUNNING"})
                 try:
                     archived_sent = await asyncio.to_thread(self.archive if kind == "archive" else self.history, doc)
                     # Send the later archive state even if an earlier summary was acknowledged.
                     complete = kind == "archive" or archived_sent
-                    self.store.update(doc["jobId"], **{state: "COMPLETE" if complete else "PENDING", kind + "Next": time.time() + 3})
+                    await asyncio.to_thread(self.store.update, doc["jobId"], **{state: "COMPLETE" if complete else "PENDING", kind + "Next": time.time() + 3})
                 except HTTPError as exc:
                     if kind == "history" and exc.code in (409, 422):
-                        self.store.update(doc["jobId"], **{state: "CONFLICT"})
+                        await asyncio.to_thread(self.store.update, doc["jobId"], **{state: "CONFLICT"})
                     else:
-                        self.retry(doc, kind, state)
+                        await asyncio.to_thread(self.retry, doc, kind, state)
                 except Exception:
-                    self.retry(doc, kind, state)
+                    await asyncio.to_thread(self.retry, doc, kind, state)
             await asyncio.sleep(1)
 
     def retry(self, doc, kind, state):
@@ -62,7 +74,7 @@ class DeliveryWorkers:
         from voice_coach.backend_analysis.canonical_evidence_store import evidence_store_from_environment
         from voice_coach.backend_analysis.adapters.s3_object_store import create_s3_client_from_environment
         folder = self.store.directory(doc["jobId"])
-        evidence = evidence_store_from_environment(os.environ)
+        evidence = evidence_store_from_environment(self.environment)
         # Reuse configured endpoint/client. UUID namespace deliberately separate from v5 integer IDs.
         client, settings = evidence._client, evidence._settings
         references = []
@@ -89,11 +101,11 @@ class DeliveryWorkers:
                 references.append(ref)
         finally:
             client.close()
-        recordings = create_s3_client_from_environment(os.environ)
+        recordings = create_s3_client_from_environment(self.environment)
         try:
             audio = (folder / "audio.wav").read_bytes()
-            key = os.environ["AI_DIRECT_RECORDING_PREFIX"].rstrip("/") + "/" + doc["jobId"] + ".wav"
-            bucket = os.environ["AI_ANALYSIS_OBJECT_STORAGE_BUCKET"]
+            key = self.environment["AI_DIRECT_RECORDING_PREFIX"].rstrip("/") + "/" + doc["jobId"] + ".wav"
+            bucket = self.environment["AI_ANALYSIS_OBJECT_STORAGE_BUCKET"]
             recordings.put_object(Bucket=bucket, Key=key, Body=audio, ContentType="audio/wav",
                                   Metadata={"sha256": doc["audioSha256"]})
             head = recordings.head_object(Bucket=bucket, Key=key)
@@ -113,11 +125,11 @@ class DeliveryWorkers:
             scriptSha256=doc["scriptSha256"], contentId=doc["contentId"], scriptText=doc["scriptText"],
             resultSha256=hashlib.sha256(raw).hexdigest(), result=json.loads(raw),
             archive=json.loads((folder / "archive.json").read_bytes()) if archived else None)
-        base = os.environ["AI_DIRECT_HISTORY_BASE_URL"].rstrip("/")
+        base = self.environment["AI_DIRECT_HISTORY_BASE_URL"].rstrip("/")
         if not base.startswith("https://"):
             raise ValueError("HISTORY_HTTPS_REQUIRED")
         req = Request(base + "/api/internal/ai/direct-analysis-history", data=encoded(payload), method="POST",
-            headers={"Authorization": "Bearer " + os.environ["AI_ANALYSIS_CALLBACK_TOKEN"], "Content-Type": "application/json"})
+            headers={"Authorization": "Bearer " + self.environment["AI_ANALYSIS_CALLBACK_TOKEN"], "Content-Type": "application/json"})
         with build_opener(ProxyHandler({}), NoRedirect()).open(req, timeout=10) as response:
             if response.status not in (200, 202):
                 raise ValueError("HISTORY_ACK_INVALID")

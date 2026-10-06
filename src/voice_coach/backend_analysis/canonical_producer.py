@@ -71,6 +71,7 @@ class ProducedCanonicalCore:
     workspace: Path = field(repr=False)
     prepared_wav: Path | None = field(repr=False)
     prepared_audio: PreparedAudioIdentity | None
+    timings: dict[str, float] = field(default_factory=dict)
 
 
 def write_private_new(path: Path, raw: bytes) -> None:
@@ -127,7 +128,9 @@ class FrozenCanonicalProducer:
         _require(execution_is_active() is True and time.monotonic() < deadline_monotonic,
                  'CANONICAL_EXECUTION_INACTIVE')
         # All immutable source digests are checked before any model subprocess.
+        marks = {"started": time.monotonic()}
         await asyncio.to_thread(self.artifacts.verify)
+        marks["artifactsVerified"] = time.monotonic()
         _require(audio.sha256 == request.audio_sha256
                  and audio.byte_count == request.file_size_bytes,
                  'ADMITTED_AUDIO_MISMATCH')
@@ -137,6 +140,7 @@ class FrozenCanonicalProducer:
                          and hashlib.file_digest(stream, 'sha256').hexdigest() == audio.sha256,
                          'ADMITTED_AUDIO_MISMATCH')
         await asyncio.to_thread(verify_audio)
+        marks["audioVerified"] = time.monotonic()
         _require(hashlib.sha256(request.script_text.encode('utf-8')).hexdigest() == request.script_sha256,
                  'ADMITTED_SCRIPT_MISMATCH')
         # Durable one-shot start precedes process creation, even on ephemeral scratch.
@@ -151,12 +155,14 @@ class FrozenCanonicalProducer:
                                                    executionId=str(request.execution_id),
                                                    audio=str(audio.path), script=request.script_text)]))
         output = work / 'release-output'
+        marks["prepared"] = time.monotonic()
         # The frozen conda build lacks pidfd bindings. Supervision stays in the
         # checked canonical executor environment; only the model uses CORE_PYTHON.
         if self.resident_socket is not None:
             from .canonical_resident import produce_resident
             await produce_resident(self.resident_socket, request=request, case_path=case_path,
                                    deadline=deadline_monotonic, active=execution_is_active)
+        marks["inferenceFinished"] = time.monotonic()
         raw = read_private_result(output / 'candidate/results' / (str(request.event_id) + '.json'),
                                   work, MAX_CORE_BYTES)
         core = read_document(raw, MAX_CORE_BYTES)
@@ -172,4 +178,11 @@ class FrozenCanonicalProducer:
             identity = measure_prepared_wav(prepared, core['prepared_wav_sha256'])
         _require(execution_is_active() is True and time.monotonic() < deadline_monotonic,
                  'CANONICAL_EXECUTION_INACTIVE')
-        return ProducedCanonicalCore(raw, work, prepared, identity)
+        marks["outputValidated"] = time.monotonic()
+        timings = {name: marks[end]-marks[start] for name, start, end in (
+            ("artifactVerificationSeconds", "started", "artifactsVerified"),
+            ("audioVerificationSeconds", "artifactsVerified", "audioVerified"),
+            ("preparationSeconds", "audioVerified", "prepared"),
+            ("residentSeconds", "prepared", "inferenceFinished"),
+            ("outputValidationSeconds", "inferenceFinished", "outputValidated"))}
+        return ProducedCanonicalCore(raw, work, prepared, identity, timings)

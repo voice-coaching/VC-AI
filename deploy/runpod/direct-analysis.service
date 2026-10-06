@@ -4,12 +4,12 @@ After=network-online.target
 
 [Service]
 Type=simple
-User=intelligentai
+User=voice-coach
 WorkingDirectory=/opt/intelligentai/app
 EnvironmentFile=/etc/intelligentai/direct-analysis.env
 Environment=PYTHONPATH=/opt/intelligentai/app/src
 Environment=PYTHONDONTWRITEBYTECODE=1
-ExecStart=/opt/intelligentai/envs/scorer/bin/python -B scripts/serve_direct_analysis.py
+ExecStart=/opt/intelligentai/envs/canonical/bin/python -B scripts/serve_direct_analysis.py
 KillMode=control-group
 TimeoutStopSec=90
 Restart=on-failure

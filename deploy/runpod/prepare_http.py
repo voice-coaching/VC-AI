@@ -75,6 +75,9 @@ def main():
         values["AI_CANONICAL_BOOTSTRAP_READY"] = "false"
         values["AI_CANONICAL_ADMISSION_ENABLED"] = "false"
         print("canonical_bootstrap_not_ready")
+    if values.get("AI_DIRECT_ENABLED") == "true":
+        from prepare_direct import prepare as prepare_direct
+        prepare_direct(values)
     _write_private(GENERATED, values)
     print("analysis_http_listener_environment_prepared")
 

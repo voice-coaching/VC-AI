@@ -29,6 +29,7 @@ class LocalProducerJournal:
 
 
 async def execute(folder: Path):
+    marks = {"workerStartedAt": time.time()}
     doc = json.loads((folder / "job.json").read_bytes())
     request = DirectInput(UUID(doc["jobId"]), UUID(doc["requestId"]), UUID(doc["executionId"]),
                           UUID(doc["audioAssetId"]), doc["scriptText"], doc["scriptSha256"],
@@ -43,22 +44,27 @@ async def execute(folder: Path):
     work = Path(os.environ["AI_CANONICAL_WORKSPACE_ROOT"]) / str(request.execution_id)
     (work / "media").mkdir(parents=True, mode=0o700)
     audio_path = work / "media/audio.wav"
-    # Same persistent volume: immutable bytes, no remote audio download.
-    os.link(folder / "audio.wav", audio_path)
+    # Local copy from the accepted spool, no AWS reservation or remote download.
+    # Hardlinks cannot cross from the network spool to owned POSIX scratch.
+    write_private_new(audio_path, (folder / "audio.wav").read_bytes())
+    (work / "core").mkdir(mode=0o700)
     audio = MaterializedAudio(audio_path, request.file_size_bytes, request.audio_sha256)
-    marks = {"coreStartedAt": time.time()}
-    active = lambda: time.monotonic() < deadline and json.loads((folder / "job.json").read_bytes())["status"] == "RUNNING"
+    marks["coreStartedAt"] = time.time()
+    # Parent owns cancellation and kills the bounded worker/resident subtree.
+    # Do not poll the network spool on every resident response wait tick.
+    active = lambda: time.monotonic() < deadline
     produced = await FrozenCanonicalProducer(artifacts, work / "core", LocalProducerJournal(folder),
         nltk_data_root=Path(os.environ["AI_ANALYSIS_NLTK_DATA_ROOT"]),
         resident_socket=Path(os.environ["AI_CANONICAL_RESIDENT_SOCKET"])).produce(
             request, audio, deadline_monotonic=deadline, execution_is_active=active)
-    marks["coreFinishedAt"] = marks["gptStartedAt"] = time.time()
+    marks["coreFinishedAt"] = marks["expressionStartedAt"] = time.time()
     expression = await asyncio.to_thread(frozen.express_admitted, request, audio=audio,
         core_bytes=produced.raw, prepared_wav=produced.prepared_wav,
         producer_workspace=produced.workspace, transport=FrozenOpenAITransport(os.environ["OPENAI_API_KEY"]))
-    marks["gptFinishedAt"] = time.time()
+    marks["expressionFinishedAt"] = marks["validationStartedAt"] = time.time()
     preflight = await asyncio.to_thread(preflight_canonical_result, expression,
         request=request, frozen=frozen, prepared_audio=produced.prepared_audio)
+    marks["validationFinishedAt"] = time.time()
     core = json.loads(expression.core_bytes)
     coaching = json.loads(expression.expression_bytes)
     selection = json.loads(expression.selection_bytes) if expression.selection_bytes else None
@@ -75,11 +81,15 @@ async def execute(folder: Path):
         failure="CANONICAL_ANALYSIS_FAILED" if failed else None)
     artifacts_root = folder / "artifacts"
     artifacts_root.mkdir(mode=0o700)
-    for artifact in preflight.artifacts:
-        atomic(artifacts_root / (artifact.kind + ".json"), artifact.raw)
+    await asyncio.gather(*(asyncio.to_thread(atomic,
+        artifacts_root / (artifact.kind + ".json"), artifact.raw) for artifact in preflight.artifacts))
     # Publish only after originals are recoverable locally, never wait for B2/AWS.
+    marks["artifactsDurableAt"] = time.time()
     atomic(folder / "result.json", encoded(public))
-    atomic(folder / "worker-complete.json", encoded({"timing": marks, "failed": failed}))
+    marks["resultDurableAt"] = time.time()
+    atomic(folder / "worker-complete.json", encoded({"timing": marks, "failed": failed,
+        "coreTiming": core.get("stage_durations_s"), "producerTiming": produced.timings,
+        "dispatchAttempts": coaching.get("dispatchAttempts")}))
 
 
 if __name__ == "__main__":
