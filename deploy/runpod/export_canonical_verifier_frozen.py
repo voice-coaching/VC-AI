@@ -65,11 +65,15 @@ def main():
     parser.add_argument('--app-root', type=Path, help='Include the complete offline verifier application closure')
     args = parser.parse_args()
     roots = {kind: args.frozen_root / kind if args.frozen_root else root for kind, root in ROOTS.items()}
-    optional = {'canonical_native_core_20261005_v4', 'canonical_native_h5_20261005_v4'}
-    present = {kind for kind in optional if roots[kind].exists()}
-    if present and present != optional:
-        raise ValueError('NATIVE_V2_PAIR_INCOMPLETE')
-    omitted = optional - present
+    omitted = set()
+    for optional in (
+        {'canonical_native_core_20261005_v4', 'canonical_native_h5_20261005_v4'},
+        {'canonical_dlpc_cuda_20261005_v2', 'canonical_dlpc_cuda_20261005_v2_h5'},
+    ):
+        present = {kind for kind in optional if roots[kind].exists()}
+        if present and present != optional:
+            raise ValueError('NATIVE_PAIR_INCOMPLETE')
+        omitted.update(optional - present)
     files = {}
     def add(kind, relative, expected):
         root = roots[kind].resolve(strict=True)

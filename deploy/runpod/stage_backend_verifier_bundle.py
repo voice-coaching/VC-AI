@@ -45,7 +45,8 @@ def main():
     raw = sys.stdin.buffer.read(16 * 1024 * 1024 + 1)
     require(0 < len(raw) <= 16 * 1024 * 1024, 'BUNDLE_SIZE')
     files = json.loads(raw)
-    require(type(files) is dict and 90 <= len(files) <= 800, 'BUNDLE_FILES')
+    # The additive DLPC CUDA pair takes the full historical closure to 816 files.
+    require(type(files) is dict and 90 <= len(files) <= 900, 'BUNDLE_FILES')
     require(REQUIRED_APP_FILES.issubset(files), 'BUNDLE_APP_DEPENDENCIES_MISSING')
     decoded = {}
     for name, entry in files.items():
@@ -104,6 +105,13 @@ def main():
     if any(name.startswith(('frozen/canonical_native_core_20261005_v4/',
                             'frozen/canonical_native_h5_20261005_v4/')) for name in files):
         pins.update(native_v2)
+    if any(name.startswith(('frozen/canonical_dlpc_cuda_20261005_v2/',
+                            'frozen/canonical_dlpc_cuda_20261005_v2_h5/')) for name in files):
+        pins.update({
+            'frozen/canonical_dlpc_cuda_20261005_v2/release_manifest.json': '4d29ddf6da45d43de6ceb0b07b70cecaf291ae5bc92b700ece6b320a8e6c423d',
+            'frozen/canonical_dlpc_cuda_20261005_v2_h5/contracts/llm/dependency_lock.json': 'fc48fc935df8c4fb90c0a9345651c047a320da220fe46c12e6e00d395a6c556d',
+            'frozen/canonical_dlpc_cuda_20261005_v2_h5/contracts/llm/llm_contract_manifest.json': 'de8f66aa7688404f2f59fc17e67dd2c250cf746d58f9697bebd8fee87095f5f9',
+        })
     for name, expected in pins.items():
         require(name in files and files[name]['sha256'] == expected, 'BUNDLE_FROZEN_PIN')
     identities = {name: files[name]['sha256'] for name in sorted(files)}
