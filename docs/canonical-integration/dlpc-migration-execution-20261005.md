@@ -148,6 +148,31 @@ DLPC에서 AWS SSH 서버로 나가는 TCP 연결은 필요하다. RunPod를 통
 egress인지와 허용 포트를 사용자에게 확인 요청했다. 현 증거만으로 DLPC 정책과 AWS ACL 중
 차단 위치를 확정하지 않는다. 운영 upstream 교체와 RunPod 중지는 미수행이다.
 
+### 2026-10-06 11:49 KST 이후 — DLPC 재시작 후 관리 접속 미복구
+
+사용자가 DLPC 재시작을 알린 뒤 RunPod API로 RUNNING 및 공개 SSH
+`194.68.245.79:22132`를 확인했다. `ssh dlpc-migration`은 여전히
+`127.0.0.1:23990: Connection refused`로 실패했고, RunPod에서 해당 리스너와
+DLPC 발 SSH 세션을 찾지 못했다. DLPC 내부 자산·서비스·로그의 재시작 후 상태는
+접근 불가로 미확인이다. 과거 RUNNING 관측을 현재 상태로 대신하지 않는다.
+
+RunPod SSH 별칭은 user `2020067`, host `127.0.0.1`, port `23990`, 전용 identity
+`/root/.ssh/dlpc_j3990_migration`을 사용한다. 명령 이력에는 `ssh dlpc-migration`이
+남아 있지만 터널 생성 명령 전체는 확인되지 않았다. auth.log/sshd.log가 없고
+sshd journal도 비어 있으며 현재 sshd의 stdout/stderr는 `/dev/null`이다.
+
+RunPod authorized_keys에서 기존 DLPC→RunPod 터널용 공개키를 확인했다.
+공개 지문은 `SHA256:v/MPGcyDcg0ZVr456p/wzohrYk1zeZRiih96KjdCPc8`이며 같은 키가
+두 번 등록돼 있다. 등록 내용은 변경하지 않았다. 확인된 공개 포트·별칭으로 복구할
+경로는 DLPC 발 `ssh -NT -p 22132 -R 127.0.0.1:23990:127.0.0.1:22 root@194.68.245.79`다.
+이것은 확인한 토폴로지로 구성한 복구 명령이며 과거 로그에서 그대로 추출한 명령은 아니다.
+
+DLPC 사용자 터미널에서 공개 지문과 일치하는 기존 `.ssh/*.pub`의 개인키를 선택해
+위 연결을 복구하도록 요청했다. 비밀키 복사·공개키 추가는 하지 않는다. 이 관리 접속이
+복구돼야 DLPC의 실제 이전 연결 명령·로그·재시작 설정을 읽고 AWS 경로와 비교할 수 있다.
+RunPod 공개 포트 22132와 AWS 22의 차이는 확인했지만 DLPC의 실제 과거 발신 명령은
+아직 미확인이다. DLPC 외부 SSH 전체 차단이나 특정 포트 차단으로 단정하지 않는다.
+
 ## 검증 및 남은 완료 조건
 
 지금까지 수행한 확인은 소스 비교, 부모 manifest/hash 검증, 후보 소스 컴파일, 자산 무결성 대조, 실제 대상의 자원·접속·기동 상태 확인이다. 자동 회귀 테스트, 브라우저 QA, 음성/점수/피드백 품질 검증은 수행하지 않았다.
