@@ -41,3 +41,49 @@ Native/G2P와 MFA bootstrap은 이미 겹쳐 실행되고 있다. Native 0.571�
 ## 검증 범위
 
 자동 회귀 테스트와 브라우저 QA는 실행하지 않는다. 구문·컴파일·정적 확인, 요청된 운영 상태와 단일 음성 측정만 별도로 기록한다. 전체 단계 시간은 동일 executionId로 비교하고 병렬 구간은 합산하지 않는다. 운영 활성화 및 재측정 결과는 실제 수행 후 아래에 추가한다.
+
+## 직접 경로 재측정 — 2026-10-06 13:51 KST
+
+동일 testaudio1 PCM 164,600 bytes, job `0ac6f28f-80d3-414a-be30-4a6a2e36164a`, execution `1091523b-3547-40ec-b994-9dc692144c00`. 클라이언트가 공개 RunPod HTTPS에 직접 POST하고 SSE를 수신했다. 브라우저 렌더링 시간을 측정한 것은 아니다.
+
+| 구간 | 초 |
+|---|---:|
+| POST 시작 → 접수 응답 | 1.283 |
+| POST 시작 → RUNNING SSE 관측 | 1.725 |
+| RunPod 접수 기록 → 실행 시작 (동일 서버 시계) | 0.104 |
+| worker 프로세스 시작 | 0.336 |
+| 코어 전체 | 20.202 |
+| 표현 경로 | 0.966 |
+| RunPod 결과 검증 | 0.823 |
+| 근거 병렬 쓰기 | 0.024 |
+| 결과 쓰기 | 0.005 |
+| 결과 기록 → 공개 상태 전환 | 0.083 |
+| 서버 접수 → 공개 | 22.553 |
+| **클라이언트 POST → 최초 RESULT_READY SSE** | **23.947** |
+
+코어 세부: artifact 검증 0.472초, audio 검증 0.001초, 준비 0.006초, resident 호출 19.543초, 출력 검증 0.173초. Native 모델 0.858초, decode 0.193초, MFA 호출 17.169초. 기대 음소 준비와 Native 실행은 겹치므로 합산하지 않는다.
+
+MFA worker 17.024초: 정렬 workflow 12.272초(특징 추출 6.408초 포함), 분석 0.538초, export 0.034초, cleanup 0.198초. 나머지 준비 약 3.982초. 그래프 구성과 GMM 정렬 개별 시간은 현재 로그에 없어 미측정으로 남긴다.
+
+이전 53.165초 대비 결과 수신은 약 55% 감소했다. **MFA 알고리즘은 바꾸지 않았으므로 MFA 27.326→17.169초 차이를 이번 코드의 인과 효과로 단정하지 않는다.** warm cache·동시 부하에 따른 변동을 포함한 단일 관측이다. 코어 외 대기는 약 21.134→3.745초로 줄었다.
+
+결과 전달은 RESULT_READY지만 내용은 `UNSCORABLE/SCORING_FAILED`, adapter FAIL_CLOSED, GPT dispatch 0회다. 기존 Native DRAFT 채점 정책 상태이며 성공적인 점수 생성·코칭 품질 검증으로 보고하지 않는다. 초기 첫 직접 시도는 FUSE journal 소유권 검사에서 실패했으며 이 관측에서 제외했다. 실패 요청은 자동 재실행하지 않았다.
+
+## 배포 및 남은 범위
+
+- RunPod 공개 8080 포트의 `/direct`에 연결한다. 별도 Pod 포트 변경이나 AWS proxy가 필요 없다.
+- 지속 볼륨의 flock/fsync를 실제 계정으로 확인했다. FUSE 소유권과 POSIX scratch 검사를 분리했다.
+- 사용자 인증 게이트는 없으며, 이력 계정 연결과 서버 간 history 전달만 기존 인증을 사용한다.
+- 대기 worker 예산: 추가 준비 reserve 6 GiB, 최소 여유 6 GiB. container limit 약 50 GB, 관측 사용량 약 28 GB. 메모리 여유가 없으면 추가 worker를 강제로 시작하지 않는다.
+- 첫 코드 활성화 과정에서 설정 namespace 검증 및 복호화 Python 불일치로 13:30~13:39 KST 분석 기동이 보류됐다. 수정 후 Native로 복구했다. TTS 프로세스는 재기동하지 않았다.
+- AWS V40 적용을 확인하고 direct-history API를 활성화했다. 사용자 결과 공개와 history/archive 완료 상태는 분리된다.
+- 직접 음성은 B2 전용 writer의 versioned AUDIO 객체로 보관한다. archive v2는 `storage=B2`, `recording={kind,objectKey,versionId,sha256,byteSize}`와 5개 근거 artifact 참조를 AWS에 전달한다. 기존 녹음 다운로드용 S3 client로 직접 음성을 PUT하지 않는다.
+- FE dev PR #60: 기본 공개 origin과 `/direct` base path 보존. 운영 PR #61. 독립 연습만 해당하며, 코스·시험·기존 세션은 정수형 분석 ID를 요구하는 완료 계약의 비동기 projection이 아직 필요하다. 전체 화면 전환 완료로 보고하지 않는다.
+
+최종 운영 확인:
+
+- RunPod code revision `1125c06`, bundle `b4fa7ed92d7f7f2f4c396cfc4eeba3d0f955cc545a418724cbdd207c31f8e51c`; `/direct/readyz` ready. Native 모델과 H5 pin은 기존 v4와 동일하다.
+- 위 측정 job의 `archiveStatus=COMPLETE`, `historySyncStatus=COMPLETE`, AUDIO 포함 6개 B2 versioned 객체 보관을 확인했다. 전용 테스트 사용자 40의 이력 연결 응답은 `SAVED`다. 초기 보관 클라이언트 수정 전 재시도 8회가 있었으므로 이 시도의 보관 소요시간을 정상 archive 성능으로 사용하지 않는다.
+- FE #60(dev), #61(main) 병합. main `bc2f39126457705460463c50623ac45dca49e41a`의 Vercel 상태 SUCCESS. 공개 JS에서 RunPod `/direct` 기본 주소와 기본 활성화 분기를 확인했다. 공개 자산 18개 hash 및 새 RunPod source/bundle을 AWS 운영 배포 profile에 갱신했다. Vercel 빌드 로그·브라우저 QA는 수행하지 않았다.
+
+전체 전환의 다음 구현 단위는 course/exam/session의 `directJobId → 이력·세션·성적` 비동기 projection이다. 기존 세션 소유권·시험 콘텐츠 일치·완료 적격성은 결과 표시 후 처리하되 유지해야 한다. 분석 ID를 임의 정수로 만들거나 AWS 분석을 다시 호출하는 fallback은 사용하지 않는다. MFA 추가 세분화는 정렬 그래프 구성과 GMM 정렬을 각각 계측하는 동일 모델 파생 릴리스에서 진행한다.
