@@ -72,7 +72,8 @@ async def execute(folder: Path):
     marks["coreFinishedAt"] = marks["expressionStartedAt"] = time.time()
     expression = await asyncio.to_thread(frozen.express_admitted, request, audio=audio,
         core_bytes=produced.raw, prepared_wav=produced.prepared_wav,
-        producer_workspace=produced.workspace, transport=FrozenOpenAITransport(os.environ["OPENAI_API_KEY"]))
+        producer_workspace=produced.workspace, transport=FrozenOpenAITransport(os.environ["OPENAI_API_KEY"],
+            combined_grading=artifacts.identity.gpt_grading))
     marks["expressionFinishedAt"] = marks["validationStartedAt"] = time.time()
     preflight = await asyncio.to_thread(preflight_canonical_result, expression,
         request=request, frozen=frozen, prepared_audio=produced.prepared_audio)
@@ -84,7 +85,7 @@ async def execute(folder: Path):
     public = dict(decision={k: core["input_validation"][k] for k in ("status", "reason_code", "stage")},
         coreStatus=core["core_result"]["status"],
         score=_public_score(coaching, selection, artifacts.identity),
-        coaching={k: coaching[k] for k in ("schemaVersion", "adapterStatus", "generationStatus", "dispatchAttempts", "items")},
+        coaching={k: coaching[k] for k in ("schemaVersion", "adapterStatus", "generationStatus", "dispatchAttempts", "items", "feedback") if k in coaching},
         selection=_public_selection(selection, coaching),
         sourceIdentity=dict(requestId=str(request.event_id), executionId=str(request.execution_id),
             audioSha256=request.audio_sha256, scriptSha256=request.script_sha256,

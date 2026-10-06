@@ -1,6 +1,6 @@
 # RunPod 사양 기반 canonical 동시 실행 3건 선택 — 2026-10-04
 
-작업 유형: 운영 자원 평가·서비스 실행기 설정 변경. 사용자의 최신 요청에 따라 Pod 사양을 확인해 슬롯 수를 선택했다. `.codex/ai_rule_developer/GLOBAL_RULES.md`, 아키텍처·서비스·외부 연동·API 규칙, `.codex/backend-http.md`, `.codex/runpod.md`를 적용했다.
+작업 유형: 운영 자원 평가·서비스 실행기 설정 변경. 사용자의 최신 요청에 따라 Pod 사양을 확인해 슬롯 수를 선택했다. ?? ?? ?? ?? `GLOBAL_RULES.md`, 아키텍처·서비스·외부 연동·API 규칙, `.codex/backend-http.md`, `.codex/runpod.md`를 적용했다.
 
 ## 코드 동작
 

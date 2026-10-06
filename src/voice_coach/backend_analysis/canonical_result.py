@@ -282,7 +282,7 @@ def preflight_canonical_result(
     bridge = frozen._bridge()
     if frozen.artifacts.identity.scoring:
         native_args = {}
-        if frozen.artifacts.identity.native:
+        if frozen.artifacts.identity.native and not frozen.artifacts.identity.gpt_grading:
             from .native_execution import admitted_binding
             native_args['native_binding'] = admitted_binding(request,
                 core_sha256=frozen.artifacts.identity.core_sha256, prepared_sha256=core.get('prepared_wav_sha256'))
@@ -301,11 +301,18 @@ def preflight_canonical_result(
             view = _read_json(result.selection_bytes)
             _validate(view, schema_name="input")
             _selection_semantics(core, view, prepared_audio)
-        if (frozen.artifacts.identity.scoring and expression.get("scoring") == {"status": "UNSCORABLE"}):
+        if (frozen.artifacts.identity.scoring and not frozen.artifacts.identity.gpt_grading
+                and expression.get("scoring") == {"status": "UNSCORABLE"}):
             _require(expression["adapterStatus"] == "FAIL_CLOSED"
                      and expression["errorCode"] == "SCORING_UNSCORABLE", "SCORING_FAILURE_STATUS")
         elif skip:
             _require(expression["adapterStatus"] == skip, "ADAPTER_STATUS_MISMATCH")
+        elif frozen.artifacts.identity.gop_grading:
+            _require(expected_view is None and expression["adapterStatus"] == "READY"
+                     and expression["items"] == [] and expression["dispatchAttempts"] == 1,
+                     "GOP_EXPRESSION_CONTRACT")
+            _require(isinstance(expression.get("feedback"), str) and 0 < len(expression["feedback"]) <= 4000,
+                     "GOP_FEEDBACK_CONTRACT")
         else:
             _require(expression["adapterStatus"] == "READY", "ADAPTER_STATUS_MISMATCH")
             items = expression["items"]

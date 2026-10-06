@@ -8,8 +8,8 @@
 
 ## 문서에서 확인한 근거
 
-- [HTTP 배포 기록](runpod_http_deployment_20260913.md): 9월 13일 저장소·readiness·AWS 설정이 미설정이었다.
-- [A40 이전 기록](runpod_a40_migration_20260915.md): 9월 15일 Pod 환경의 HTTP JSON에는 callback URL과 양방향 토큰만 있었다.
+- HTTP 배포 기록 (`runpod_http_deployment_20260913.md`, ?? checkout?? ??? ?? ??): 9월 13일 저장소·readiness·AWS 설정이 미설정이었다.
+- A40 이전 기록 (`runpod_a40_migration_20260915.md`, ?? checkout?? ??? ?? ??): 9월 15일 Pod 환경의 HTTP JSON에는 callback URL과 양방향 토큰만 있었다.
 - [9월 28일 운영 관측](runpod_deployed_pipeline_20260928.md): 당시 준비 상태는 정상이었으나 컨테이너 재생성 후 비밀 복원까지 검증한 기록은 아니었다.
 - [현재 배포 안내](../deploy/runpod/README.md): `RUNPOD_ANALYSIS_HTTP_ENV_JSON`이 있으면 root private source를 갱신하고 `/run` 실행 설정을 생성한다. 오래된 JSON은 수동으로 보충한 임시 설정을 재기동 시 다시 덮어쓸 수 있다.
 

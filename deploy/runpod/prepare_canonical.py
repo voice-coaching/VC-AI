@@ -70,9 +70,9 @@ def prepare(values):
     values.update({
         "AI_CANONICAL_PYTHON": str(PYTHON),
         "AI_CANONICAL_WORKSPACE_ROOT": str(WORK),
-        "AI_CANONICAL_CORE_ROOT": "/workspace/intelligentai/releases/canonical_native_core_20261005_v4",
-        "AI_CANONICAL_LLM_ROOT": "/workspace/intelligentai/validation/canonical_native_h5_20261005_v4",
-        "AI_CANONICAL_PIPELINE_REVISION": "canonical-native-H5-20261005-v4",
+        "AI_CANONICAL_CORE_ROOT": "/workspace/intelligentai/releases/canonical_seungun_gop_core_20261006_v1",
+        "AI_CANONICAL_LLM_ROOT": "/workspace/intelligentai/validation/canonical_seungun_gop_gpt_20261006_v1",
+        "AI_CANONICAL_PIPELINE_REVISION": "canonical-seungun-gop-gpt-20261006-v1",
         "AI_CANONICAL_RESIDENT_ENABLED": "true",
     })
     WORK.mkdir(mode=0o700, exist_ok=True)

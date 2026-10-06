@@ -6,8 +6,10 @@ import json
 from pathlib import Path
 
 ROOTS = {
-    'canonical_dlpc_cuda_20261005_v2': Path('/workspace/intelligentai/releases/canonical_dlpc_cuda_20261005_v2'),
-    'canonical_dlpc_cuda_20261005_v2_h5': Path('/workspace/intelligentai/validation/canonical_dlpc_cuda_20261005_v2_h5'),
+    'canonical_seungun_core_20261006_v1': Path('/workspace/intelligentai/releases/canonical_seungun_core_20261006_v1'),
+    'canonical_seungun_gop_core_20261006_v1': Path('/workspace/intelligentai/releases/canonical_seungun_gop_core_20261006_v1'),
+    'canonical_seungun_gpt_20261006_v1': Path('/workspace/intelligentai/validation/canonical_seungun_gpt_20261006_v1'),
+    'canonical_seungun_gop_gpt_20261006_v1': Path('/workspace/intelligentai/validation/canonical_seungun_gop_gpt_20261006_v1'),
     'canonical_native_core_20261005_v4': Path('/workspace/intelligentai/releases/canonical_native_core_20261005_v4'),
     'canonical_native_h5_20261005_v4': Path('/workspace/intelligentai/validation/canonical_native_h5_20261005_v4'),
     'canonical_native_core_20261004_v1': Path('/workspace/intelligentai/releases/canonical_native_core_20261004_v1'),
@@ -24,8 +26,10 @@ ROOTS = {
     'canonical_scored_h5_20261003_v2': Path('/workspace/intelligentai/validation/canonical_scored_h5_20261003_v2'),
 }
 PINS = {
-    'canonical_dlpc_cuda_20261005_v2': ('release_manifest.json', '4d29ddf6da45d43de6ceb0b07b70cecaf291ae5bc92b700ece6b320a8e6c423d'),
-    'canonical_dlpc_cuda_20261005_v2_h5': ('contracts/llm/dependency_lock.json', 'fc48fc935df8c4fb90c0a9345651c047a320da220fe46c12e6e00d395a6c556d'),
+    'canonical_seungun_core_20261006_v1': ('release_manifest.json', '20acb7275aa06d0be4aca1a567420ea603c0eec084e50c651c96501903034f1b'),
+    'canonical_seungun_gop_core_20261006_v1': ('release_manifest.json', '818a3c16cba39dfcfa9f1083865db7f122a3eba40bc332d85256da94d1d6fb1e'),
+    'canonical_seungun_gpt_20261006_v1': ('contracts/llm/dependency_lock.json', '3f4ce0a44ae75192fe7fea3b03b879c21ab0b2be7cc0a620522c60c2155b674b'),
+    'canonical_seungun_gop_gpt_20261006_v1': ('contracts/llm/dependency_lock.json', '74784bf0c7ba99628ed2ff8db19157c63d22a2a1cd66c58000ad2e811dc93160'),
     'canonical_native_core_20261005_v4': ('release_manifest.json', 'f1009fcdbf75515ddc13e915dcbbf19dfac751ce39779e404749c4f51dd74841'),
     'canonical_native_h5_20261005_v4': ('contracts/llm/dependency_lock.json', '1b8cb378b889817e14bf06be5065b04016589f6b74dcd5501776dde758f38259'),
     'canonical_native_core_20261004_v1': ('release_manifest.json', '9e2a2107db7d30fe8910c8984687974d85b95120760e2bcce53d57640a5d5a32'),
@@ -42,7 +46,8 @@ PINS = {
     'canonical_scored_h5_20261003_v2': ('contracts/llm/dependency_lock.json', 'b4ff1aa729d9c981a048d5b7df1293d9637df53269d0598d7ae6069f2b0cc989'),
 }
 MANIFESTS = {
-    'canonical_dlpc_cuda_20261005_v2_h5': 'de8f66aa7688404f2f59fc17e67dd2c250cf746d58f9697bebd8fee87095f5f9',
+    'canonical_seungun_gpt_20261006_v1': '6a3bf7c872e718086cb9add4d48412c825188310cdc9eb394089301dd784ff57',
+    'canonical_seungun_gop_gpt_20261006_v1': 'f90440b764f78f32c989dc0785f41262397cc22e1d1ca48c40361189b81f86d5',
     'canonical_native_h5_20261005_v4': 'efc705b042cb1b18d4babff4f5949f37622154e979b1c07b33afdc36eeb89428',
     'canonical_native_h5_20261004_v1': '358365399f7445ab0a77797ce46619979955503c4faac8185724e2225aa5205c',
     'canonical_resident_h5_20261004_v1': '885a2f0a67494dc3bebed28962222bfe95a0143292fe2de04194b84ea8beadc5',

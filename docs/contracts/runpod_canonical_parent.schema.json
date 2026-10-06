@@ -2835,6 +2835,17 @@
           }
         }
       ]
+    },
+    "phonemeAssessment": {
+      "type": "object",
+      "required": [
+        "revision"
+      ],
+      "properties": {
+        "revision": {
+          "const": "gop-ctc-af-sd-native-v1"
+        }
+      }
     }
   }
 }

@@ -1,5 +1,7 @@
 # Canonical AI와 동결 LLM 서비스 통합
 
+2026-10-06 ?? ??: [GOP ??? GPT ?? ???](seungun-gop-gpt-20261006.md). ? PR? ????? ???? ?? ?? ??? ? ?? ??? ???? ???.
+
 **2026-10-06 AWS–DLPC 후속:** [개정 계획](dlpc-migration-plan-20261005.md) · [실행 기록](dlpc-migration-execution-20261005.md). 양방향 인증, nginx 전환 후보 문법, 진단 bootstrap을 확인했다. 승인된 비밀 복구본은 AWS root 전용으로 보관했고 영속 자산은 B2에 유지한다. 운영 전환·CUDA 승인/개발자 QA·자동 cold 복구는 미완료다.
 
 **2026-10-06 DLPC 이전:** [계획](dlpc-migration-plan-20261005.md) · [실행 기록](dlpc-migration-execution-20261005.md) · [B2 백업](dlpc-b2-backup-20261006.md). B2 자산 복원·분석/TTS 재기동과 AWS 22132 직접 터널을 통한 health 응답을 확인했다. 자동 복구·개발자 QA·운영 upstream 전환은 미완료다.

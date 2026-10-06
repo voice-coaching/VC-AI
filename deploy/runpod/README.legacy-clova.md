@@ -6,7 +6,7 @@
 
 `AI_ANALYSIS_TRANSPORT=runpod_http`를 Pod 프로세스 환경에 설정하면 `prepare_runtime.py`가 `prepare_http.py`를 실행하고 manager가 `services.http.json`을 선택한다. `redis_stream`은 기존 구성, `disabled`는 Clova만 시작한다. 미설정 시 기존 Redis 배포 호환성을 유지한다. HTTP와 Redis 분석 worker를 함께 실행하지 않는다.
 
-HTTP listener는 UID/GID 10001로 `0.0.0.0:8080`에서 실행된다. `/health`는 liveness, `/readyz`는 모델·자산·설정·저장소·Backend 계약 연결 상태다. 설정 누락 시 진단용 listener를 시작하고 업무 접수는 차단한다. 인증된 `/health/services`에서 준비 상태를 확인한다. 상세 API·배포 순서는 [보완계획](../../docs/runpod_http_implementation_plan_20260913.md), 필드·시간 계약은 [v1.1 계약](../../docs/runpod_http_contract_v1_20260913.md)을 따른다.
+HTTP listener는 UID/GID 10001로 `0.0.0.0:8080`에서 실행된다. `/health`는 liveness, `/readyz`는 모델·자산·설정·저장소·Backend 계약 연결 상태다. 설정 누락 시 진단용 listener를 시작하고 업무 접수는 차단한다. 인증된 `/health/services`에서 준비 상태를 확인한다. 상세 API·배포 순서는 보완계획 (`runpod_http_implementation_plan_20260913.md`, ?? checkout?? ??? ?? ??), 필드·시간 계약은 v1.1 계약 (`runpod_http_contract_v1_20260913.md`, ?? checkout?? ??? ?? ??)을 따른다.
 
 비밀 공급원은 `RUNPOD_ANALYSIS_HTTP_ENV_JSON` 또는 root 전용 `/root/.config/intelligentai/analysis-http.env`다. 준비 단계가 `/run/intelligentai/analysis-http.env`를 생성한다. reset 복원에는 Pod의 지속 비밀 공급원이 필요하다. JSON/env 값을 소스·일반 archive에 넣지 않는다. 필수 연결 항목은 다음과 같다.
 
@@ -24,7 +24,7 @@ HTTP 배포 attestation은 `voice-coaching.analysis-http-deployment.v1`이며 �
 
 ## 적용 범위
 
-이 문서는 기존 Redis 분석 worker와 Clova를 관리하는 배포 절차의 정본이다. 새 HTTP 전송은 [별도 수정 계획](../../docs/runpod_http_callback_revision_plan_20260910.md)의 구현 상태를 확인한다. 아래 Redis/HMAC 설정을 새 HTTP 계약의 필수값으로 추가하지 않는다.
+이 문서는 기존 Redis 분석 worker와 Clova를 관리하는 배포 절차의 정본이다. 새 HTTP 전송은 별도 수정 계획 (`runpod_http_callback_revision_plan_20260910.md`, ?? checkout?? ??? ?? ??)의 구현 상태를 확인한다. 아래 Redis/HMAC 설정을 새 HTTP 계약의 필수값으로 추가하지 않는다.
 
 PC에서 운영 대상·접속을 확인하는 순서는 [RunPod 운영 안내](../../.codex/runpod.md)를 따른다. 이 문서에는 현재 Pod 주소·상태를 보관하지 않는다.
 
@@ -57,7 +57,7 @@ INT8의 BF16→FP16 형 변환 경고는 같은 프로세스에서 최초 한 �
 
 완료 요청은 GPU에서 한 번에 하나만 처리한다. 이미 처리 중이면 HTTP 503을 반환하며 대기열에 넣지 않는다. 상세 피드백을 위해 서버는 토큰 생성 단계마다 150초 제한을 확인해 초과 시 HTTP 504를 반환하며, 클라이언트 기본 제한은 180초다. 출력 토큰 상한까지 종료 토큰을 생성하지 못한 응답도 정상 완료로 반환하지 않는다. `/health.last_completion`에서 입력·출력 토큰 수, 생성 시간, 종료 사유를 확인할 수 있으며 원문은 기록하지 않는다.
 
-상세 피드백 정책은 `grounded-detail-v1-20260909`다. 입력 v4의 `requiredFragments`는 관찰값과 연습 단계가 실제 메시지에 남도록 검증한다. 기존 v3 결과는 v4로 읽을 수 있지만, 없는 분석 근거를 자동으로 보충하지는 않는다. `/health`는 `feedback_policy_revision`, `grounded_input_schema`, `maximum_new_tokens`도 제공한다. 출력 한도 확대는 응답 시간을 늘릴 수 있으며, 이전 127토큰 답변의 약 33초 기록을 새 상세 답변의 지연으로 사용하지 않는다. [상세 수정과 분석 보완 계획](../../docs/clova_detailed_feedback_20260909.md)을 따른다.
+상세 피드백 정책은 `grounded-detail-v1-20260909`다. 입력 v4의 `requiredFragments`는 관찰값과 연습 단계가 실제 메시지에 남도록 검증한다. 기존 v3 결과는 v4로 읽을 수 있지만, 없는 분석 근거를 자동으로 보충하지는 않는다. `/health`는 `feedback_policy_revision`, `grounded_input_schema`, `maximum_new_tokens`도 제공한다. 출력 한도 확대는 응답 시간을 늘릴 수 있으며, 이전 127토큰 답변의 약 33초 기록을 새 상세 답변의 지연으로 사용하지 않는다. 상세 수정과 분석 보완 계획 (`clova_detailed_feedback_20260909.md`, ?? checkout?? ??? ?? ??)을 따른다.
 
 ## Docker 배포 대안
 
@@ -101,7 +101,7 @@ Custom Redis CA·별도 credential 파일을 선택하면 해당 파일도 재�
 
 영구 overlay를 갱신할 때는 각 파일 SHA-256과 `overlay-manifest.json`의 `sourceRevision`을 함께 기록한다. `prepare_runtime.py`는 검증한 파일만 `/opt`에 적용하고 영상 release의 `0440` 권한 및 UID 10001의 임시 작업 디렉터리를 복원한다. 배포 후 프로세스·버전·health 확인은 추론 품질·실제 Redis/S3 요청 검증과 별도다.
 
-과거 이전 근거는 [실행 기록](../../docs/runpod_b2_storage_migration_execution.md)을 따른다. 전체 원본 BF16 파일을 사용하는 실행 시 양자화이므로 디스크가 8bit 모델 크기로 자동 축소되는 것은 아니다.
+과거 이전 근거는 실행 기록 (`runpod_b2_storage_migration_execution.md`, ?? checkout?? ??? ?? ??)을 따른다. 전체 원본 BF16 파일을 사용하는 실행 시 양자화이므로 디스크가 8bit 모델 크기로 자동 축소되는 것은 아니다.
 
 ## 고정 VLM의 attention 선택 보정
 

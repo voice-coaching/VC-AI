@@ -15,7 +15,7 @@
 
 로컬 관측은 선택 자료인 `.codex/local/state.json`, 과거 이력은 `.codex/local/history.md`에 둔다. 다른 clone에는 없을 수 있다. 없으면 미확인으로 취급하고 현재 작업에 필요한 경우에만 조회한다. 기존 `session-state.md`는 위치 안내만 남긴다.
 
-상태 기록은 자동 갱신되지 않는다. 각 관측의 대상, 원본 시각, source, lastObserved, lastCheck, 코드/배포 revision, evidence를 유지한다. 조회 실패를 이전 성공으로 덮어쓰지 않고 모르는 시각·revision은 null로 둔다. [상세 형식·개정 기록](../docs/codex_document_revision_plan_20260910.md)을 따른다.
+상태 기록은 자동 갱신되지 않는다. 각 관측의 대상, 원본 시각, source, lastObserved, lastCheck, 코드/배포 revision, evidence를 유지한다. 조회 실패를 이전 성공으로 덮어쓰지 않고 모르는 시각·revision은 null로 둔다. 상세 형식·개정 기록 (`codex_document_revision_plan_20260910.md`, ?? checkout?? ??? ?? ??)을 따른다.
 
 문서 편집 시각은 새 원격 관측 시각이 아니다. 사용자 결정은 AGENTS, 설계 제안은 해당 계획, 과거 실행은 이력에 기록한다. 오래된 기록을 실행 예제의 대상 기본값으로 쓰지 않는다.
 

@@ -81,7 +81,7 @@ canonical_sources:
       sha256: 5b78d0fffd5421a2308c158cc850baeb41c909abfab603b5b958e0d889ca53f7
     - path: configs/experiments/e02_confidence_guard_v1.yaml
       scope: e00_static_contract
-      sha256: 696491190f3ac158b6fd08f355848de91d0b23dee28d2df1de1349479fc22afb
+      sha256: a365f2ad4fb9b2933d3740ea25bf18acf7d5184683deba9a7ce21a46fdf370dc
     - path: configs/coaching/e02_confidence_guard_input_v1.schema.json
       scope: e00_static_contract
       sha256: 2382601910d088ed3fb0b8d839bc38c6f992cf60fc592a8043ea586e76807e73
@@ -117,7 +117,7 @@ canonical_sources:
       sha256: 06580d68588a8cfe6ca7010dd8e9bbff2167f201ee82eb36f35b6f02689d80c3
     - path: seungun/README.md
       scope: seungun_audio_canonical
-      sha256: 95c5710826aace484949f7a57182ca39a62894ce637f341684d394b5994f4e95
+      sha256: 3f30c7896019c1ed023c77e1b4c697250c523cdd0cbd2a09b8c5baf5c5282003
     - path: seungun/docs/CURRENT_PIPELINE_KO.md.md
       scope: seungun_audio_canonical
       sha256: fc9ca5126c7f8ce3245188602e2563c40ba3bfa72473cadcd74d80bf91cef495
@@ -141,10 +141,10 @@ canonical_sources:
       sha256: 7c885d9d863d1a505bb074e5be33b63e262b191585bcf7a02a03162ca0f1ba86
     - path: docs/api/endpoints.md
       scope: api_contract
-      sha256: 5beca1f9b1b06a86596b41229c26a1b48cd72daaad03c6ced0494cef48056b5c
+      sha256: a27afea4ae407910ce01014634470395b08b1f24d41706401a7aeb0675c46216
     - path: docs/api/specification.md
       scope: api_contract
-      sha256: b6ad172a51a6d6125c5b8fee506514e27e448677fc1a780249930def3e7aafc5
+      sha256: b366726c91de7737e9f4a27874221f329db0e4fceb8a6a33dd0464ab7f67168a
 
 predecessors:
   s108:
@@ -174,7 +174,7 @@ predecessors:
   c02_e02:
     validation_order: 3
     config_path: configs/experiments/e02_confidence_guard_v1.yaml
-    config_sha256: 696491190f3ac158b6fd08f355848de91d0b23dee28d2df1de1349479fc22afb
+    config_sha256: a365f2ad4fb9b2933d3740ea25bf18acf7d5184683deba9a7ce21a46fdf370dc
     contract_path: src/voice_coach/evaluation/e02_confidence_guard_contract.py
     contract_sha256: f01e069a0026d52e14e760bf0b7f65f1ded9cd8aaf2624f52b77ce49fc89fff9
     c02_bundle_commit_path: artifacts/coaching/c02/commit.json
