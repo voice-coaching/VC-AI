@@ -50,7 +50,7 @@ canonical_sources:
       sha256: 201973a25e75da77ec86468a60094c22ac3d3376d936d5e2d089531d52b5d6d3
     - path: seungun/README.md
       scope: seungun_audio_canonical
-      sha256: 95c5710826aace484949f7a57182ca39a62894ce637f341684d394b5994f4e95
+      sha256: 3f30c7896019c1ed023c77e1b4c697250c523cdd0cbd2a09b8c5baf5c5282003
     - path: seungun/docs/CURRENT_PIPELINE_KO.md.md
       scope: seungun_audio_canonical
       sha256: fc9ca5126c7f8ce3245188602e2563c40ba3bfa72473cadcd74d80bf91cef495
@@ -74,10 +74,10 @@ canonical_sources:
       sha256: 7c885d9d863d1a505bb074e5be33b63e262b191585bcf7a02a03162ca0f1ba86
     - path: docs/api/endpoints.md
       scope: api_contract
-      sha256: 5beca1f9b1b06a86596b41229c26a1b48cd72daaad03c6ced0494cef48056b5c
+      sha256: a27afea4ae407910ce01014634470395b08b1f24d41706401a7aeb0675c46216
     - path: docs/api/specification.md
       scope: api_contract
-      sha256: b6ad172a51a6d6125c5b8fee506514e27e448677fc1a780249930def3e7aafc5
+      sha256: b366726c91de7737e9f4a27874221f329db0e4fceb8a6a33dd0464ab7f67168a
 
 predecessor_s107:
   deep_validation_required: true

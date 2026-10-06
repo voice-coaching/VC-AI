@@ -3,8 +3,8 @@ from __future__ import annotations
 
 from .canonical_bridge import _require as require
 
-# Operator-authorized analysis releases. This does not approve a scoring policy
-# or assert inference/quality QA. Scoring checks its own calibrated evidence.
+# Execution identity only: prevent an old release from entering new analysis.
+# GPT judges the single rubric; no calibration approval is consulted here.
 APPROVED_NATIVE_EXECUTIONS: frozenset[tuple[str, str]] = frozenset({(
     "818a3c16cba39dfcfa9f1083865db7f122a3eba40bc332d85256da94d1d6fb1e",
     "f90440b764f78f32c989dc0785f41262397cc22e1d1ca48c40361189b81f86d5",
