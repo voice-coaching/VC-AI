@@ -1,5 +1,17 @@
 # Seungun 원본 → GPT 채점·피드백 전환
 
+## 운영 반영 관측 — 2026-10-06 17:13 KST
+
+- RunPod `s8hb5b0l5k4qlx`: AI revision `ef789373aac654ce40ac504104478aa3b8f64c24`, pipeline `canonical-seungun-gpt-20261006-v1` 배포 완료. `/direct/readyz`는 `ready=true`, 직접 접수 중지 파일은 없음.
+- AWS: Backend `f0e1f070500e865b6effde266b051a48d0cb2056` JAR와 새 Python verifier를 함께 활성화했다. 양쪽 handoff readiness·9개 schema digest·배포 identity 검사가 통과했고 maintenance를 해제했다. DB 마이그레이션은 없다.
+- FE: [PR #62](https://github.com/voice-coaching/VC-FE/pull/62) 병합 revision `dc261398e98ffca930ee4c20ffe88242f525d06d`의 운영 자산을 확인했다. 실제 mono 16 kHz PCM 변환으로 RunPod 입력 계약에 맞춘다.
+- AI [PR #26](https://github.com/voice-coaching/intelligentAI/pull/26), BE [PR #110](https://github.com/voice-coaching/VC-BE/pull/110)은 병합 전이며 위 revision을 운영에 직접 반영했다. 후속 문서 commit은 운영 코드 revision과 구분한다.
+- 소스 컴파일, Java 21 `bootJar -x test`, FE TypeScript·포맷, 설치 digest·readiness를 확인했다. 실제 녹음 요청, GPT 생성·점수·피드백 품질, 브라우저 QA, 자동 회귀 테스트는 실행하지 않았다. readiness를 실제 생성 성공으로 해석하지 않는다.
+
+운영 bundle: `8379b43819915268f209bdf17ac3ced47f4cbac6d37c57a759ad37bc573800e7`.
+AWS JAR SHA-256: `9855c16fbd00d0dbbbba6ad51dd0f6953489d54cfef476e2f5349b4d84cb6093`.
+Verifier bundle: `7943d4ccc49247949019fef2dd2599b8be478b638fe46e641bc044c99e03c763`.
+
 2026-10-06 사용자 결정: 완성된 Seungun 출력과 채점표를 GPT에 전달한다. 서버의 별도 Native 음소 판정·보정 정책과 사전 검산표를 GPT 호출 선행조건으로 사용하지 않는다. 이 결정이 과거 서버 수치 판정/`RUBRIC_RESULT` 강제 명세를 대체한다.
 
 ## 실행 구조
