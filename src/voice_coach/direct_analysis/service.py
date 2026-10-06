@@ -28,6 +28,10 @@ class AnalysisService:
         self.ready_error = None
         self.stopping = False
         self.env = dict(os.environ)
+        for suffix in ("RESERVE_BYTES", "MIN_FREE_BYTES"):
+            key = "AI_DIRECT_STANDBY_" + suffix
+            if key in self.env:
+                self.env["AI_CANONICAL_STANDBY_" + suffix] = self.env[key]
         self.python = Path(self.env.get("AI_CANONICAL_PYTHON", sys.executable))
         # Network volumes may not support service UID/mode semantics. Keep the
         # guarded inference workspace on local POSIX scratch; spool stays durable.

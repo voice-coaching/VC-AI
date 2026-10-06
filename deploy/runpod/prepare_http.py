@@ -40,6 +40,16 @@ def main():
             if any(any(word in key for word in ("AUTHORIZATION", "CONSENT", "REDIS")) for key in settings):
                 raise ValueError()
             values.update(settings)
+        # Provider-injected JSON refreshes SOURCE on boot. Keep reviewed direct
+        # rollout settings in an independent root-owned file so they survive it.
+        direct_source = SOURCE.with_name("direct-api.env")
+        if direct_source.exists():
+            raw = read_private_file(direct_source, 16384, owner_only=True).decode("utf-8")
+            direct_settings = _settings(_pairs([tuple(line.split("=", 1)) for line in raw.splitlines()
+                if line.strip() and not line.lstrip().startswith("#")]))
+            if any(not key.startswith("AI_DIRECT_") for key in direct_settings):
+                raise ValueError("direct_setting_namespace")
+            values.update(direct_settings)
         revision = json.loads((RUNTIME / "deployment.json").read_text())["sourceRevision"]
         if re.fullmatch(r"[0-9a-f]{40}", revision) is None:
             raise ValueError()
