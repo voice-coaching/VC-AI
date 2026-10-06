@@ -67,6 +67,14 @@ def main():
         if not any(assets):
             record('restoring_assets')
             run('restore_assets.py', export('b2'), timeout=10800)
+            record('restoring_gop_overlay')
+            run('restore_runtime_overlay.py', export('b2'), timeout=180)
+        record('checking_cuda_libraries')
+        run('restore_cuda_libraries.py', export('b2'), timeout=900)
+        from restore_runtime_overlay import SHA256
+        metadata = json.loads(Path('/opt/intelligentai/deployment.json').read_bytes())
+        if metadata.get('canonicalIntegration', {}).get('bundleSha256') != SHA256:
+            raise ValueError('GOP_OVERLAY_RECONCILIATION_REQUIRED')
         files = [Path('/etc/intelligentai') / n for n in ('analysis.env', 'tts-token')]
         if any(p.exists() for p in files) and not all(p.exists() for p in files):
             raise ValueError('PARTIAL_SETTINGS_REQUIRE_OPERATOR')

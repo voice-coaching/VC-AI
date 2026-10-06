@@ -12,7 +12,8 @@ SOURCE = Path(__file__).resolve().parent
 TARGET = HOME / '.local/share/intelligentai/recovery/startup-20261006'
 FILES = ('recover_on_start.py', 'bootstrap.py', 'prepare_restored_runtime.py',
          'receive_settings.py', 'restore_assets.py', 'restore_downloaded.py',
-         'b2_restore.py', 'b2_backup.py', 'supervisord.conf')
+         'b2_restore.py', 'b2_backup.py', 'supervisord.conf',
+         'install_runtime_overlay.py', 'restore_runtime_overlay.py', 'restore_cuda_libraries.py')
 
 
 def main():

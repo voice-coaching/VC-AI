@@ -1,5 +1,7 @@
 # Canonical AI와 동결 LLM 서비스 통합
 
+**2026-10-07 01:45 KST DLPC 운영 전환 완료:** [배포·샘플·복구 기록](dlpc-gop-cutover-20261007.md). 최신 병합 GOP를 DLPC CUDA에 배포하고 AWS 분석/TTS upstream을 전환했다. 실제 분석·GPT·B2 보관·Backend 이력 동기화 및 TTS 샘플을 확인했다. RunPod 중지(`EXITED`) 후에도 AWS 경유 분석/TTS 준비 상태는 200이다. 재생성 후 전체 복구와 청취 품질 검증은 미수행이며 복구 시 운영 접수 재개에는 별도 상태 대조가 필요하다. 아래 기록은 각 관측 시점 기준이다.
+
 2026-10-06 ?? ??: [GOP ??? GPT ?? ???](seungun-gop-gpt-20261006.md). ? PR? ????? ???? ?? ?? ??? ? ?? ??? ???? ???.
 
 **2026-10-06 AWS–DLPC 후속:** [개정 계획](dlpc-migration-plan-20261005.md) · [실행 기록](dlpc-migration-execution-20261005.md). 양방향 인증, nginx 전환 후보 문법, 진단 bootstrap을 확인했다. 승인된 비밀 복구본은 AWS root 전용으로 보관했고 영속 자산은 B2에 유지한다. 운영 전환·CUDA 승인/개발자 QA·자동 cold 복구는 미완료다.
