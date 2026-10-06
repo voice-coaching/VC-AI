@@ -23,3 +23,5 @@ The user explicitly approved the fixed SSH recovery command, private settings re
 TTS returned HTTP 200, 63,679 bytes, 5,277 ms, matching audio SHA-256 in 1.62 seconds. Human listening quality is not verified.
 
 Initial CUDA analysis QA exposed three migration defects: missing MFA optimization source, host/wheel cuDNN sublibrary mismatch, and a CPU-only observation device schema. The frozen MFA source (`ebecb960?fd7aee`) is now included in the recovery overlay. DLPC core processes select their own wheel cuDNN path; CUDA observations use the registered v2 frozen schema. Earlier failed QA attempts are preserved and never replayed.
+
+The initial wheel-only `LD_LIBRARY_PATH` change did not fix cuDNN. The 9.20 wheel omits `tensor_ir`, so it loads DLPC's 9.24 system sublibrary. A process-scoped coherent 9.24 preload passed a real CUDA convolution. The deployment copies that observed set into a private immutable runtime directory and backs it up separately. The wheel files themselves matched their RECORD hashes. This matches the upstream report: https://github.com/pytorch/pytorch/issues/188892 .
