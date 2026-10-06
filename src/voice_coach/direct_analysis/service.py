@@ -59,8 +59,11 @@ class AnalysisService:
                 self.ready_error = "APPROVED_NATIVE_RELEASE_REQUIRED"
         self.task = asyncio.create_task(self.loop())
 
-    def ready(self):
+    def core_ready(self):
         return self.store.settings.enabled and not self.ready_error and self.resident is not None and self.resident.ready() and not self.stopping
+
+    def ready(self):
+        return self.core_ready() and not Path("/run/intelligentai/direct-admission.closed").exists()
 
     def known_attempt(self, attempt):
         try:
@@ -127,7 +130,7 @@ class AnalysisService:
                     # Prepare the next generation during inference, but keep the
                     # current socket owned by this execution until it finishes.
                     await self.resident.refresh(dispatch_active=self.active is not None)
-                if self.ready() and self.active is None:
+                if self.core_ready() and self.active is None:
                     job = next((d for d in self.store.documents() if d["status"] == "QUEUED"), None)
                     if job:
                         self.active = job["jobId"]

@@ -95,7 +95,12 @@ def create_app(environment=None):
 
     @app.get("/health/deployment")
     async def deployment_health():
-        return JSONResponse(runtime.deployment_snapshot(), headers={"Cache-Control": "no-store"})
+        state = runtime.deployment_snapshot()
+        if direct is not None:
+            count = sum(d["status"] in ("QUEUED", "RUNNING") for d in direct.state.store.documents())
+            state["directJobs"] = count
+            state["activeJobs"] += count
+        return JSONResponse(state, headers={"Cache-Control": "no-store"})
 
     @app.post("/v1/analysis-jobs")
     async def accept(request: Request):

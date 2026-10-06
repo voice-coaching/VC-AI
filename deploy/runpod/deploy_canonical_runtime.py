@@ -109,6 +109,21 @@ def main():
         (backup / "target-bundle.json").write_bytes(raw)
         topology = helper.topology()
         boot_env = helper.boot_environment(topology["boot"])
+        # Direct clients bypass AWS maintenance. Close only new direct admission;
+        # existing queued jobs continue to execute and results remain readable.
+        direct_hold = Path('/run/intelligentai/direct-admission.closed')
+        require(not direct_hold.exists(), 'direct_admission_already_closed')
+        helper.atomic(direct_hold, b'canonical deployment\n', 0o644)
+        direct_root = Path('/workspace/intelligentai/direct-spool')
+        deadline = time.monotonic() + 930
+        try:
+            while any(json.loads(p.read_bytes()).get('status') in ('QUEUED', 'RUNNING')
+                      for p in direct_root.glob('*/job.json')):
+                require(time.monotonic() < deadline, 'direct_jobs_not_drained')
+                time.sleep(1)
+        except BaseException:
+            direct_hold.unlink(missing_ok=True)
+            raise
         stopped = False
         resumed = False
         keep_stopped = False
@@ -162,6 +177,7 @@ def main():
             for path, data in records.items():
                 require((APP / path).read_bytes() == data and (OVERLAY / path).read_bytes() == data,
                         "installed_source_mismatch")
+            direct_hold.unlink(missing_ok=True)
             print(json.dumps({"status": "DEPLOYED_BACKEND_GATED",
                 "canonicalBootstrapReady": env.get("AI_CANONICAL_BOOTSTRAP_READY") == "true",
                 "handoffConfigured": env.get("AI_CANONICAL_HANDOFF_ENABLED") == "true",
@@ -199,6 +215,7 @@ def main():
         finally:
             if not keep_stopped and helper.alive(topology["boot"]):
                 helper.send(topology["boot"], signal.SIGCONT)
+                direct_hold.unlink(missing_ok=True)
 
 
 if __name__ == "__main__":
