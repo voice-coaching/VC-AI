@@ -16,15 +16,16 @@ from .service import AnalysisService
 from .store import JobStore
 
 
-def create_app():
-    settings = Settings(root=Path(os.environ["AI_DIRECT_SPOOL_ROOT"]),
-        enabled=os.environ.get("AI_DIRECT_ENABLED", "false") == "true",
-        origins=tuple(x.strip() for x in os.environ.get("AI_DIRECT_ALLOWED_ORIGINS", "").split(",") if x.strip()))
+def create_app(environment=None):
+    environment = dict(os.environ if environment is None else environment)
+    settings = Settings(root=Path(environment["AI_DIRECT_SPOOL_ROOT"]),
+        enabled=environment.get("AI_DIRECT_ENABLED", "false") == "true",
+        origins=tuple(x.strip() for x in environment.get("AI_DIRECT_ALLOWED_ORIGINS", "").split(",") if x.strip()))
     @asynccontextmanager
     async def lifespan(app):
         store = JobStore(settings)
-        service = AnalysisService(store)
-        delivery = DeliveryWorkers(store)
+        service = AnalysisService(store, environment)
+        delivery = DeliveryWorkers(store, environment)
         app.state.store, app.state.service = store, service
         app.state.uploads = 0
         await service.start()
@@ -53,7 +54,8 @@ def create_app():
     @app.get("/readyz")
     async def ready():
         active = app.state.service.ready()
-        return JSONResponse({"ready": active, "authentication": "NONE", "maximumAudioBytes": settings.maximum_bytes},
+        return JSONResponse({"ready": active, "reasonCode": app.state.service.ready_error or (None if active else "CORE_WARMING"),
+                            "authentication": "NONE", "maximumAudioBytes": settings.maximum_bytes},
                             status_code=200 if active else 503)
 
     @app.post("/api/v1/analyses")

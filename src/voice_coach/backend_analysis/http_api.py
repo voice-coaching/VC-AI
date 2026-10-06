@@ -16,7 +16,7 @@ def create_app(environment=None):
     direct = None
     if runtime.environment.get("AI_DIRECT_ENABLED") == "true":
         from voice_coach.direct_analysis.api import create_app as create_direct_app
-        direct = create_direct_app()
+        direct = create_direct_app(runtime.environment)
 
     @asynccontextmanager
     async def lifespan(app):

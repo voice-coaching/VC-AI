@@ -18,7 +18,7 @@ from .store import JobStore, atomic, encoded
 
 
 class AnalysisService:
-    def __init__(self, store: JobStore):
+    def __init__(self, store: JobStore, environment=None):
         self.store = store
         self.active = None
         self.process = None
@@ -27,7 +27,7 @@ class AnalysisService:
         self.resident = None
         self.ready_error = None
         self.stopping = False
-        self.env = dict(os.environ)
+        self.env = dict(os.environ if environment is None else environment)
         for suffix in ("RESERVE_BYTES", "MIN_FREE_BYTES"):
             key = "AI_DIRECT_STANDBY_" + suffix
             if key in self.env:

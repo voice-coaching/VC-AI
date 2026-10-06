@@ -18,11 +18,11 @@ class NoRedirect(HTTPRedirectHandler):
 
 
 class DeliveryWorkers:
-    def __init__(self, store):
+    def __init__(self, store, environment=None):
         self.store = store
         self.tasks = []
         self.stop = False
-        self.environment = dict(os.environ)
+        self.environment = dict(os.environ if environment is None else environment)
         private = self.environment.get("AI_DIRECT_DELIVERY_ENV_FILE")
         if private:
             path = Path(private)
