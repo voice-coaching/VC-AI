@@ -1,6 +1,6 @@
 # Backblaze B2 수집·복원 안내
 
-작업 경계는 [AGENTS.md](../AGENTS.md), 상세 저장·활용 설계는 [외부 데이터 계획](../docs/backblaze_external_data_plan_20260909.md)을 따른다. 버킷 ID·이름과 credential은 작업 시 env에서 읽으며 현재 접속 여부는 별도로 확인한다.
+작업 경계는 [AGENTS.md](../AGENTS.md), 상세 저장·활용 설계는 외부 데이터 계획 (`backblaze_external_data_plan_20260909.md`, ?? checkout?? ??? ?? ??)을 따른다. 버킷 ID·이름과 credential은 작업 시 env에서 읽으며 현재 접속 여부는 별도로 확인한다.
 
 ## 수집·복원 판단
 
@@ -100,7 +100,7 @@ manifest의 **file ID·크기·SHA-256**을 기준으로 [Native 다운로드](h
 
 소규모 자료는 작업별 임시 파일에 받고 크기·hash 일치 후 사용한다. 실패한 partial 파일은 사용하지 않고 정리한다. 정리 대상의 절대 경로가 그 작업의 임시 폴더 내부인지 확인한다. 대형 자료는 필요한 shard/part만 선택하고, 전체 archive를 RunPod 영구 디스크에 복원하지 않는다.
 
-특정 PDF의 보관·검증 사례는 [외부 데이터 기록](../docs/backblaze_external_data_plan_20260909.md)에 남긴다. 사례의 객체 key·크기·hash를 일반 다운로드의 기본값으로 복제하지 않는다. 저장 사례는 범용 캐시·중단 재개 구현이나 교육 내용의 제품 반영을 의미하지 않는다.
+특정 PDF의 보관·검증 사례는 외부 데이터 기록 (`backblaze_external_data_plan_20260909.md`, ?? checkout?? ??? ?? ??)에 남긴다. 사례의 객체 key·크기·hash를 일반 다운로드의 기본값으로 복제하지 않는다. 저장 사례는 범용 캐시·중단 재개 구현이나 교육 내용의 제품 반영을 의미하지 않는다.
 
 ## 신규 자료 업로드 절차
 
@@ -117,9 +117,9 @@ manifest의 **file ID·크기·SHA-256**을 기준으로 [Native 다운로드](h
 
 ## 보관 위치와 복구 근거
 
-기존 `intelligentai/datasets/`, `intelligentai/models/`, `intelligentai/recovery/`와 신규 원본·파생·교육 release의 역할은 [저장 계획](../docs/backblaze_external_data_plan_20260909.md)을 따른다. 구조를 맞추기 위해 기존 원본을 복제하지 않는다. prefix의 실제 값은 env와 대상 manifest를 확인한다.
+기존 `intelligentai/datasets/`, `intelligentai/models/`, `intelligentai/recovery/`와 신규 원본·파생·교육 release의 역할은 저장 계획 (`backblaze_external_data_plan_20260909.md`, ?? checkout?? ??? ?? ??)을 따른다. 구조를 맞추기 위해 기존 원본을 복제하지 않는다. prefix의 실제 값은 env와 대상 manifest를 확인한다.
 
-과거 복구 객체는 [이전 실행 기록](../docs/runpod_b2_storage_migration_execution.md), 로컬에 있을 경우 `.codex/local/history.md`와 원본 영수증에서 찾는다. 해당 revision과 file ID·hash를 확인한다. 이름에 과거 Pod ID가 포함됐다는 이유만으로 복구 객체를 삭제하지 않는다.
+과거 복구 객체는 이전 실행 기록 (`runpod_b2_storage_migration_execution.md`, ?? checkout?? ??? ?? ??), 로컬에 있을 경우 `.codex/local/history.md`와 원본 영수증에서 찾는다. 해당 revision과 file ID·hash를 확인한다. 이름에 과거 Pod ID가 포함됐다는 이유만으로 복구 객체를 삭제하지 않는다.
 
 overlay는 전체 모델·Python 환경·비밀 설정의 복구 보장이 아니다. manifest의 포함 범위와 대상 디스크 여유를 확인하고 필요한 파일만 복원한다. 비밀값을 복구 archive에 추가하지 않는다.
 

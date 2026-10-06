@@ -31,7 +31,7 @@ B2 Master Native Key는 S3/AWS credential로 사용하지 않는다. 자세한 �
 | Pod `/root/.config/intelligentai/analysis-http.env` | 현재 HTTP/GPT의 root 전용 source. 비공개 JSON 주입이 있으면 준비 코드의 우선순위 확인 |
 | Pod `/run/intelligentai/analysis-http.env` | 현재 HTTP 준비 단계가 검증 후 생성하는 실행용 파일. Clova 설정은 제거됨 |
 
-PC 사본의 현재 ACL을 확인한다. 공유 `/workspace`의 권한 제한 이력은 [배치 기록](../docs/backblaze_external_data_plan_20260909.md)에 있으며 비밀파일은 공유 볼륨·overlay·일반 복구 archive에 넣지 않는다. `/root`·`/run`은 컨테이너 재생성 시 사라질 수 있다.
+PC 사본의 현재 ACL을 확인한다. 공유 `/workspace`의 권한 제한 이력은 배치 기록 (`backblaze_external_data_plan_20260909.md`, ?? checkout?? ??? ?? ??)에 있으며 비밀파일은 공유 볼륨·overlay·일반 복구 archive에 넣지 않는다. `/root`·`/run`은 컨테이너 재생성 시 사라질 수 있다.
 
 .env는 해당 프로세스가 명시적으로 읽어야 한다. 현재 B2 파일을 [boot](../deploy/runpod/boot.sh)와 [prepare_runtime](../deploy/runpod/prepare_runtime.py)이 자동으로 읽는 구성으로 설명하지 않는다.
 

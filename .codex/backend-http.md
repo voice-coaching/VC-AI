@@ -1,6 +1,6 @@
 # Backend–RunPod HTTP 작업 안내
 
-작업 경계는 [AGENTS.md](../AGENTS.md), 상세 계약과 설계 제안은 [HTTP 수정 계획](../docs/runpod_http_callback_revision_plan_20260910.md)을 따른다. 이 안내는 운영 API 구현 완료 기록이 아니다.
+작업 경계는 [AGENTS.md](../AGENTS.md), 상세 계약과 설계 제안은 HTTP 수정 계획 (`runpod_http_callback_revision_plan_20260910.md`, ?? checkout?? ??? ?? ??)을 따른다. 이 안내는 운영 API 구현 완료 기록이 아니다.
 
 2026-09-28 실제 배포는 HTTP + GPT-only 코칭이다. [배포 관측](../docs/runpod_deployed_pipeline_20260928.md)의 제어 v1.1·완료 coaching 결과 v3·null 점수와 실제 Pod 코드를 우선 대조한다. 로컬 HEAD가 배포보다 오래될 수 있으며 아래 로컬 파일만으로 현재 provider를 판단하지 않는다.
 

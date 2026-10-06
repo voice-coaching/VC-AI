@@ -1,6 +1,6 @@
 # testvideo1 운영 파이프라인 소요시간 — 2026-10-03
 
-작업 유형: 운영 측정·성능 분석. `.codex/ai_rule_developer/GLOBAL_RULES.md`, `.codex/runpod.md`, `.codex/backend-http.md`를 적용했다. 사용자가 요청한 실제 음성 분석 1회를 실행했으며 서비스 코드·설정·배포는 변경하지 않았다.
+작업 유형: 운영 측정·성능 분석. ?? ?? ?? ?? `GLOBAL_RULES.md`, `.codex/runpod.md`, `.codex/backend-http.md`를 적용했다. 사용자가 요청한 실제 음성 분석 1회를 실행했으며 서비스 코드·설정·배포는 변경하지 않았다.
 
 ## 결과와 측정 범위
 

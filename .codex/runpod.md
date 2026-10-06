@@ -70,4 +70,4 @@ Invoke-RestMethod -Uri 'http://127.0.0.1:18080/readyz' -TimeoutSec 15
 
 결과는 로컬 관측에 대상·원본 관측 시각·source·확인 범위를 갱신하고 과거 이력은 보존한다. 복구 객체는 [B2 안내](backblaze.md)로 file ID·크기·hash를 확인한다. overlay 백업을 모델·환경·비밀 설정의 완전한 복구본으로 가정하지 않는다.
 
-과거 사례는 [GPU·RAM 조사](../docs/runpod_gpu_capacity_assessment.md), [이전 실행 기록](../docs/runpod_b2_storage_migration_execution.md), [영상 실행 기록](../docs/runpod_video_pipeline_validation_20260909.md), [상세 피드백 변경](../docs/clova_detailed_feedback_20260909.md)을 참고한다. 사례의 시각·정책 revision을 보존한다.
+과거 사례는 GPU·RAM 조사 (`runpod_gpu_capacity_assessment.md`, ?? checkout?? ??? ?? ??), 이전 실행 기록 (`runpod_b2_storage_migration_execution.md`, ?? checkout?? ??? ?? ??), 영상 실행 기록 (`runpod_video_pipeline_validation_20260909.md`, ?? checkout?? ??? ?? ??), 상세 피드백 변경 (`clova_detailed_feedback_20260909.md`, ?? checkout?? ??? ?? ??)을 참고한다. 사례의 시각·정책 revision을 보존한다.

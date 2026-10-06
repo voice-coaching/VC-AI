@@ -1,6 +1,6 @@
 # 최근 음성 분석 실패와 FE–AWS–RunPod 연결 조사 — 2026-10-03
 
-작업 유형은 운영 장애 조사·외부 연동 평가다. `.codex/ai_rule_developer/GLOBAL_RULES.md`, `.codex/runpod.md`, `.codex/backend-http.md`, `.codex/env.md`와 VC-BE의 운영·외부 연동 규칙을 적용했다. 2026-10-03 23:21–23:38 KST에 Pod `s8hb5b0l5k4qlx`, AWS `alpha-backend.service`, VC-BE/VC-FE 소스와 운영 FE 자산을 **읽기 전용**으로 대조했다. 새 분석 요청, 서비스 재시작, 배포, 자동 QA는 수행하지 않았다.
+작업 유형은 운영 장애 조사·외부 연동 평가다. ?? ?? ?? ?? `GLOBAL_RULES.md`, `.codex/runpod.md`, `.codex/backend-http.md`, `.codex/env.md`와 VC-BE의 운영·외부 연동 규칙을 적용했다. 2026-10-03 23:21–23:38 KST에 Pod `s8hb5b0l5k4qlx`, AWS `alpha-backend.service`, VC-BE/VC-FE 소스와 운영 FE 자산을 **읽기 전용**으로 대조했다. 새 분석 요청, 서비스 재시작, 배포, 자동 QA는 수행하지 않았다.
 
 ## 현재 배포와 연결 확인
 
