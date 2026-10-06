@@ -45,9 +45,12 @@ def main():
         direct_source = SOURCE.with_name("direct-api.env")
         if direct_source.exists():
             raw = read_private_file(direct_source, 16384, owner_only=True).decode("utf-8")
-            direct_settings = _settings(_pairs([tuple(line.split("=", 1)) for line in raw.splitlines()
-                if line.strip() and not line.lstrip().startswith("#")]))
-            if any(not key.startswith("AI_DIRECT_") for key in direct_settings):
+            direct_settings = _pairs([tuple(line.split("=", 1)) for line in raw.splitlines()
+                if line.strip() and not line.lstrip().startswith("#")])
+            if len(direct_settings) > 32 or any(
+                re.fullmatch(r"AI_DIRECT_[A-Z0-9_]+", key) is None
+                or any(c in value for c in "\r\n\x00") or value != value.strip()
+                or value.startswith(("'", '"')) for key, value in direct_settings.items()):
                 raise ValueError("direct_setting_namespace")
             values.update(direct_settings)
         revision = json.loads((RUNTIME / "deployment.json").read_text())["sourceRevision"]
