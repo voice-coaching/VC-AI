@@ -212,3 +212,9 @@ The dedicated AWS authorized_keys file omits the invalid key option
 `permitopen="none"`; key options require a host:port pair. Direct forwarding is
 still prohibited by the separate daemon's `PermitOpen none` and
 `AllowTcpForwarding remote`; MaxSessions 0 blocks shell/subsystem sessions.
+## 2026-10-06 전환 전 후속 작업
+
+현재 단계와 승인 중단점은 [전환 준비 기록](../../docs/canonical-integration/dlpc-cutover-preparation-20261006.md)을 따른다.
+`recover_on_start.py`·Jupyter hook·고정 SSH exporter는 준비된 코드이며 아직 설치하지 않았다.
+CUDA source/schema 등록과 AWS 비활성 verifier 설치는 실행 승인과 별개다.
+`prepare_backend_tts.py`는 비활성 env 후보만 작성하며 drain·전환·재시작을 수행하지 않는다.

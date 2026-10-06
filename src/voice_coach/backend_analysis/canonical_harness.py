@@ -83,7 +83,17 @@ NATIVE = HarnessIdentity(
 )
 NATIVE_CORE_DIRECTORY = 'canonical_native_core_20261005_v4'
 NATIVE_LLM_DIRECTORY = 'canonical_native_h5_20261005_v4'
-HARNESSES = {value.manifest_sha256: value for value in (S7, H5, SCORED_V1, SCORED_V2, SCORED, RESIDENT, NATIVE_V1, NATIVE)}
+# Source identity registration does not grant inference execution approval.
+DLPC_CUDA = HarnessIdentity(
+    'canonical-dlpc-cuda-H5-20261005-v2',
+    'de8f66aa7688404f2f59fc17e67dd2c250cf746d58f9697bebd8fee87095f5f9',
+    'fc48fc935df8c4fb90c0a9345651c047a320da220fe46c12e6e00d395a6c556d',
+    SCORED.prompt_sha256,
+    '4d29ddf6da45d43de6ceb0b07b70cecaf291ae5bc92b700ece6b320a8e6c423d', True, True,
+)
+DLPC_CUDA_CORE_DIRECTORY = 'canonical_dlpc_cuda_20261005_v2'
+DLPC_CUDA_LLM_DIRECTORY = 'canonical_dlpc_cuda_20261005_v2_h5'
+HARNESSES = {value.manifest_sha256: value for value in (S7, H5, SCORED_V1, SCORED_V2, SCORED, RESIDENT, NATIVE_V1, NATIVE, DLPC_CUDA)}
 
 
 def harness_identity(manifest_sha256: str) -> HarnessIdentity:

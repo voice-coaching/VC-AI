@@ -6,6 +6,8 @@ import json
 from pathlib import Path
 
 ROOTS = {
+    'canonical_dlpc_cuda_20261005_v2': Path('/workspace/intelligentai/releases/canonical_dlpc_cuda_20261005_v2'),
+    'canonical_dlpc_cuda_20261005_v2_h5': Path('/workspace/intelligentai/validation/canonical_dlpc_cuda_20261005_v2_h5'),
     'canonical_native_core_20261005_v4': Path('/workspace/intelligentai/releases/canonical_native_core_20261005_v4'),
     'canonical_native_h5_20261005_v4': Path('/workspace/intelligentai/validation/canonical_native_h5_20261005_v4'),
     'canonical_native_core_20261004_v1': Path('/workspace/intelligentai/releases/canonical_native_core_20261004_v1'),
@@ -22,6 +24,8 @@ ROOTS = {
     'canonical_scored_h5_20261003_v2': Path('/workspace/intelligentai/validation/canonical_scored_h5_20261003_v2'),
 }
 PINS = {
+    'canonical_dlpc_cuda_20261005_v2': ('release_manifest.json', '4d29ddf6da45d43de6ceb0b07b70cecaf291ae5bc92b700ece6b320a8e6c423d'),
+    'canonical_dlpc_cuda_20261005_v2_h5': ('contracts/llm/dependency_lock.json', 'fc48fc935df8c4fb90c0a9345651c047a320da220fe46c12e6e00d395a6c556d'),
     'canonical_native_core_20261005_v4': ('release_manifest.json', 'f1009fcdbf75515ddc13e915dcbbf19dfac751ce39779e404749c4f51dd74841'),
     'canonical_native_h5_20261005_v4': ('contracts/llm/dependency_lock.json', '1b8cb378b889817e14bf06be5065b04016589f6b74dcd5501776dde758f38259'),
     'canonical_native_core_20261004_v1': ('release_manifest.json', '9e2a2107db7d30fe8910c8984687974d85b95120760e2bcce53d57640a5d5a32'),
@@ -38,6 +42,7 @@ PINS = {
     'canonical_scored_h5_20261003_v2': ('contracts/llm/dependency_lock.json', 'b4ff1aa729d9c981a048d5b7df1293d9637df53269d0598d7ae6069f2b0cc989'),
 }
 MANIFESTS = {
+    'canonical_dlpc_cuda_20261005_v2_h5': 'de8f66aa7688404f2f59fc17e67dd2c250cf746d58f9697bebd8fee87095f5f9',
     'canonical_native_h5_20261005_v4': 'efc705b042cb1b18d4babff4f5949f37622154e979b1c07b33afdc36eeb89428',
     'canonical_native_h5_20261004_v1': '358365399f7445ab0a77797ce46619979955503c4faac8185724e2225aa5205c',
     'canonical_resident_h5_20261004_v1': '885a2f0a67494dc3bebed28962222bfe95a0143292fe2de04194b84ea8beadc5',
@@ -55,11 +60,15 @@ def main():
     parser.add_argument('--app-root', type=Path, help='Include the complete offline verifier application closure')
     args = parser.parse_args()
     roots = {kind: args.frozen_root / kind if args.frozen_root else root for kind, root in ROOTS.items()}
-    optional = {'canonical_native_core_20261005_v4', 'canonical_native_h5_20261005_v4'}
-    present = {kind for kind in optional if roots[kind].exists()}
-    if present and present != optional:
-        raise ValueError('NATIVE_V2_PAIR_INCOMPLETE')
-    omitted = optional - present
+    omitted = set()
+    for optional in (
+        {'canonical_native_core_20261005_v4', 'canonical_native_h5_20261005_v4'},
+        {'canonical_dlpc_cuda_20261005_v2', 'canonical_dlpc_cuda_20261005_v2_h5'},
+    ):
+        present = {kind for kind in optional if roots[kind].exists()}
+        if present and present != optional:
+            raise ValueError('NATIVE_PAIR_INCOMPLETE')
+        omitted.update(optional - present)
     files = {}
     def add(kind, relative, expected):
         root = roots[kind].resolve(strict=True)
