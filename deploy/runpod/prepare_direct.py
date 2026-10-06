@@ -1,9 +1,10 @@
 """Prepare direct execution scratch and a separately scoped archive environment."""
 import os
+import json
+import subprocess
 from pathlib import Path
 
 from prepare_worker import _write_private
-from prepare_canonical import decode
 
 
 def prepare(values):
@@ -20,7 +21,11 @@ def prepare(values):
     source = Path("/root/.config/intelligentai/direct-delivery-settings.env")
     settings = dict(line.split("=", 1) for line in source.read_text().splitlines()
                     if line and not line.startswith("#"))
-    settings.update(decode(values))
+    decoded = subprocess.run([values["AI_CANONICAL_PYTHON"],
+        str(Path(__file__).with_name("prepare_canonical.py")), "--decode"],
+        input=json.dumps({"AI_ANALYSIS_CALLBACK_TOKEN": values["AI_ANALYSIS_CALLBACK_TOKEN"]}).encode(),
+        stdout=subprocess.PIPE, stderr=subprocess.DEVNULL, timeout=20, check=True)
+    settings.update(json.loads(decoded.stdout))
     target = Path("/run/intelligentai/direct-delivery.env")
     _write_private(target, settings)
     os.chown(target, 0, 10001)
