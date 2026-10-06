@@ -69,6 +69,7 @@ def main():
     paths = {
         'analysisLiveness': ('http://127.0.0.1:18080/health', None),
         'analysisReadiness': ('http://127.0.0.1:18080/readyz', None),
+        'directReadiness': ('http://127.0.0.1:18080/direct/readyz', None),
         'analysisAuthenticated': ('http://127.0.0.1:18080/health/services', api_token),
         'analysisUnauthenticated': ('http://127.0.0.1:18080/health/services', None),
         'analysisDeployment': ('http://127.0.0.1:18080/health/deployment', api_token),
@@ -82,7 +83,7 @@ def main():
     deployment = observed['analysisDeployment'][1]
     reasons = []
     for name in ('analysisLiveness', 'analysisReadiness', 'analysisAuthenticated',
-                 'analysisDeployment', 'ttsReadiness', 'backendHandoff'):
+                 'analysisDeployment', 'directReadiness', 'ttsReadiness', 'backendHandoff'):
         if observed[name][0] != 200:
             reasons.append(name + '_not_ready')
     for name in ('analysisUnauthenticated', 'ttsUnauthenticated'):

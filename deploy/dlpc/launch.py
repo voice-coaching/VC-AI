@@ -45,7 +45,7 @@ def main():
                OMP_NUM_THREADS='1', MKL_NUM_THREADS='1', OPENBLAS_NUM_THREADS='1', NUMEXPR_NUM_THREADS='1')
     if args.role == 'analysis':
         settings = private_settings(Path('/etc/intelligentai/analysis.env'))
-        allowed = ('AI_ANALYSIS_', 'AI_CANONICAL_', 'AWS_')
+        allowed = ('AI_ANALYSIS_', 'AI_CANONICAL_', 'AI_DIRECT_', 'AWS_')
         env.update({k: v for k, v in settings.items() if k.startswith(allowed)
                     or k in {'OPENAI_API_KEY', 'VOICE_COACH_BUILD_REVISION'}})
         env.update(PYTHONPATH=str(ROOT / 'app/src') + ':' + str(ROOT / 'app/seungun/src') + ':' + str(ROOT / 'http-python'),
@@ -56,7 +56,8 @@ def main():
                    AI_CANONICAL_STANDBY_MIN_FREE_BYTES='0')
         if not args.admit:
             # Staging must not restore/claim another host's production journal.
-            env.update(AI_CANONICAL_BOOTSTRAP_READY='false', AI_CANONICAL_HANDOFF_ENABLED='false')
+            env.update(AI_CANONICAL_BOOTSTRAP_READY='false', AI_CANONICAL_HANDOFF_ENABLED='false',
+                       AI_DIRECT_ENABLED='false')
         # Explicit existing settings win: never hide an old pending workspace.
         env.setdefault('AI_CANONICAL_WORKSPACE_ROOT', str(WORK / 'canonical'))
         env.setdefault('AI_ANALYSIS_RESTRICTED_WORKSPACE_ROOT', str(WORK / 'analysis'))

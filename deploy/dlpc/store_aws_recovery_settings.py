@@ -26,7 +26,7 @@ def main():
     settings = document['analysis']
     for key, value in settings.items():
         if (not re.fullmatch('[A-Z][A-Z0-9_]*', key)
-                or (not key.startswith(('AI_ANALYSIS_', 'AI_CANONICAL_', 'AWS_'))
+                or (not key.startswith(('AI_ANALYSIS_', 'AI_CANONICAL_', 'AI_DIRECT_', 'AWS_'))
                     and key not in {'OPENAI_API_KEY', 'VOICE_COACH_BUILD_REVISION'})
                 or not isinstance(value, str) or any(c in value for c in '\r\n\x00')):
             raise ValueError('SETTINGS_ROLE_OR_VALUE')
@@ -35,7 +35,8 @@ def main():
         raise ValueError('TTS_TOKEN_SHAPE')
     # Restore diagnostically. Operator gates must be satisfied again at cutover.
     settings.update(AI_CANONICAL_BOOTSTRAP_READY='false',
-                    AI_CANONICAL_HANDOFF_ENABLED='false', AI_CANONICAL_ADMISSION_ENABLED='false')
+                    AI_CANONICAL_HANDOFF_ENABLED='false', AI_CANONICAL_ADMISSION_ENABLED='false',
+                    AI_DIRECT_ENABLED='false')
     os.umask(0o077)
     ROOT.mkdir(mode=0o700, parents=True, exist_ok=False)
     for name, content in (
