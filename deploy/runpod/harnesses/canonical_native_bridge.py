@@ -11,7 +11,7 @@ _NativeCoachingBridge = Bridge
 class Bridge(_NativeCoachingBridge):
     def scoring_policy(self):
         self.integrity()
-        policy_contract(self.read("native_phone_assessment.json"), approved=True)
+        policy_contract(self.read("native_phone_assessment.json"))
         rubric = self.read("scoring_rubric.json")
         validate_policy(rubric, revision=RUBRIC_REVISION)
         return rubric

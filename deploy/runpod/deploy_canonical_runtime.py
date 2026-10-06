@@ -34,7 +34,7 @@ def require(condition, reason):
         raise RuntimeError(reason)
 
 
-def canonical_ready(timeout=120):
+def canonical_ready(timeout=300):
     """Authenticated operational readiness only; never sends an analysis job."""
     opener = build_opener(ProxyHandler({}))
     deadline = time.monotonic() + timeout
@@ -76,7 +76,7 @@ def main():
         for row in bundle["files"]:
             path = row["path"]
             require(path not in records and path.startswith(
-                ("src/voice_coach/backend_analysis/", "deploy/runpod/", "docs/contracts/"))
+                ("src/voice_coach/backend_analysis/", "src/voice_coach/direct_analysis/", "deploy/runpod/", "docs/contracts/"))
                 and ".." not in Path(path).parts and not Path(path).is_absolute(), "source_path_invalid")
             data = base64.b64decode(row["content"], validate=True)
             require(sha(data) == row["sha256"], "source_digest_invalid")
@@ -109,8 +109,24 @@ def main():
         (backup / "target-bundle.json").write_bytes(raw)
         topology = helper.topology()
         boot_env = helper.boot_environment(topology["boot"])
+        # Direct clients bypass AWS maintenance. Close only new direct admission;
+        # existing queued jobs continue to execute and results remain readable.
+        direct_hold = Path('/run/intelligentai/direct-admission.closed')
+        require(not direct_hold.exists(), 'direct_admission_already_closed')
+        helper.atomic(direct_hold, b'canonical deployment\n', 0o644)
+        direct_root = Path('/workspace/intelligentai/direct-spool')
+        deadline = time.monotonic() + 930
+        try:
+            while any(json.loads(p.read_bytes()).get('status') in ('QUEUED', 'RUNNING')
+                      for p in direct_root.glob('*/job.json')):
+                require(time.monotonic() < deadline, 'direct_jobs_not_drained')
+                time.sleep(1)
+        except BaseException:
+            direct_hold.unlink(missing_ok=True)
+            raise
         stopped = False
         resumed = False
+        keep_stopped = False
         try:
             helper.stop_managed(topology)
             stopped = True
@@ -119,6 +135,14 @@ def main():
                     helper.atomic(root / path, data, 0o640)
                     if root == APP:
                         os.chown(root / path, 0, 10001)
+                        # Atomic writes create new package parents under umask 077.
+                        # The service must be able to traverse those source directories.
+                        parent = (root / path).parent
+                        while parent != APP:
+                            require(not parent.is_symlink(), "unexpected_source_parent_symlink")
+                            os.chown(parent, 0, 10001)
+                            parent.chmod(0o750)
+                            parent = parent.parent
             entries = {entry["path"]: entry for entry in manifest["files"]}
             for path, data in records.items():
                 entries[path] = {"path": path, "sha256": sha(data), "mode": "100644"}
@@ -153,12 +177,19 @@ def main():
             for path, data in records.items():
                 require((APP / path).read_bytes() == data and (OVERLAY / path).read_bytes() == data,
                         "installed_source_mismatch")
+            direct_hold.unlink(missing_ok=True)
             print(json.dumps({"status": "DEPLOYED_BACKEND_GATED",
                 "canonicalBootstrapReady": env.get("AI_CANONICAL_BOOTSTRAP_READY") == "true",
                 "handoffConfigured": env.get("AI_CANONICAL_HANDOFF_ENABLED") == "true",
                 "overlaySha256": metadata["overlaySha256"], "bundleSha256": sha(raw),
                 "backup": str(backup), "files": len(records)}), flush=True)
         except BaseException:
+            if stopped and bundle.get("forbidLegacyRollback") is True:
+                # Native-only migration must never restart the retired inference path.
+                keep_stopped = True
+                if resumed:
+                    helper.stop_managed(helper.topology())
+                raise
             # Never restore files over a live new generation after readiness failure.
             if stopped:
                 if resumed:
@@ -182,8 +213,9 @@ def main():
                 helper.ready(bundle["baseRevision"], timeout=300)
             raise
         finally:
-            if helper.alive(topology["boot"]):
+            if not keep_stopped and helper.alive(topology["boot"]):
                 helper.send(topology["boot"], signal.SIGCONT)
+                direct_hold.unlink(missing_ok=True)
 
 
 if __name__ == "__main__":

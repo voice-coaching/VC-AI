@@ -18,16 +18,24 @@ from .store import JobStore, atomic, encoded
 
 
 class AnalysisService:
-    def __init__(self, store: JobStore):
+    def __init__(self, store: JobStore, environment=None):
         self.store = store
         self.active = None
         self.process = None
         self.task = None
+        self.execution_task = None
         self.resident = None
         self.ready_error = None
         self.stopping = False
-        self.env = dict(os.environ)
-        workspace = store.root / "executions"
+        self.env = dict(os.environ if environment is None else environment)
+        for suffix in ("RESERVE_BYTES", "MIN_FREE_BYTES"):
+            key = "AI_DIRECT_STANDBY_" + suffix
+            if key in self.env:
+                self.env["AI_CANONICAL_STANDBY_" + suffix] = self.env[key]
+        self.python = Path(self.env.get("AI_CANONICAL_PYTHON", sys.executable))
+        # Network volumes may not support service UID/mode semantics. Keep the
+        # guarded inference workspace on local POSIX scratch; spool stays durable.
+        workspace = Path(self.env.get("AI_DIRECT_WORKSPACE_ROOT", str(store.root / "executions")))
         workspace.mkdir(mode=0o700, exist_ok=True)
         self.env["AI_CANONICAL_WORKSPACE_ROOT"] = str(workspace)
 
@@ -46,13 +54,16 @@ class AnalysisService:
             self.ready_error = "RECOVERY_CONFIRMATION_REQUIRED"
         if self.store.settings.enabled and not self.ready_error:
             try:
-                self.resident = CanonicalResidentCore(self.env, Path(sys.executable))
+                self.resident = CanonicalResidentCore(self.env, self.python)
             except Exception:
                 self.ready_error = "APPROVED_NATIVE_RELEASE_REQUIRED"
         self.task = asyncio.create_task(self.loop())
 
-    def ready(self):
+    def core_ready(self):
         return self.store.settings.enabled and not self.ready_error and self.resident is not None and self.resident.ready() and not self.stopping
+
+    def ready(self):
+        return self.core_ready() and not Path("/run/intelligentai/direct-admission.closed").exists()
 
     def known_attempt(self, attempt):
         try:
@@ -106,33 +117,47 @@ class AnalysisService:
     async def loop(self):
         while not self.stopping:
             try:
-                if self.resident and self.active is None:
-                    await self.resident.refresh()
-                if self.ready() and self.active is None:
+                if self.execution_task and self.execution_task.done():
+                    try:
+                        self.execution_task.result()
+                    except Exception:
+                        self.store.update(self.active, status="FAILED", failure="EXECUTION_FAILED")
+                        self.ready_error = "EXECUTION_RECOVERY_REQUIRED"
+                    finally:
+                        self.execution_task = None
+                        self.active = None
+                if self.resident:
+                    # Prepare the next generation during inference, but keep the
+                    # current socket owned by this execution until it finishes.
+                    await self.resident.refresh(dispatch_active=self.active is not None)
+                if self.core_ready() and self.active is None:
                     job = next((d for d in self.store.documents() if d["status"] == "QUEUED"), None)
                     if job:
                         self.active = job["jobId"]
-                        await self.execute(job)
-                        self.active = None
+                        self.execution_task = asyncio.create_task(self.execute(job))
             except asyncio.CancelledError:
                 raise
             except Exception:
-                if self.active:
+                if self.active and self.execution_task is None:
                     self.store.update(self.active, status="FAILED", failure="EXECUTION_FAILED")
-                self.active = None
+                    self.active = None
                 self.ready_error = "EXECUTION_RECOVERY_REQUIRED"
             await asyncio.sleep(.1)
 
     async def execute(self, doc):
         job_id = doc["jobId"]
         folder = self.store.directory(job_id)
-        self.store.update(job_id, status="RUNNING", startedAt=time.time(),
+        await asyncio.to_thread(self.store.update, job_id, status="RUNNING", startedAt=time.time(),
                           deadlineAt=time.time() + self.store.settings.deadline_seconds)
         self.resident.requests += 1
-        env = self.env | {"AI_CANONICAL_RESIDENT_SOCKET": str(self.resident.socket),
+        from voice_coach.backend_analysis.canonical_settings import child_environment
+        env = child_environment(self.env) | {"AI_CANONICAL_RESIDENT_SOCKET": str(self.resident.socket),
                           "AI_CANONICAL_VERIFIED_GENERATION": str(self.resident.generation)}
+        for key in ("AI_ANALYSIS_API_TOKEN", "AI_ANALYSIS_CALLBACK_TOKEN", "AWS_ACCESS_KEY_ID",
+                    "AWS_SECRET_ACCESS_KEY", "AWS_SESSION_TOKEN"):
+            env.pop(key, None)
         with (folder / "executor.log").open("ab") as log:
-            self.process = await asyncio.create_subprocess_exec(sys.executable, "-B", "-m",
+            self.process = await asyncio.create_subprocess_exec(str(self.python), "-B", "-m",
                 "voice_coach.direct_analysis.worker", str(folder), env=env,
                 stdout=log, stderr=log, start_new_session=True)
             try:
@@ -146,13 +171,19 @@ class AnalysisService:
                         await asyncio.wait_for(self.process.wait(), .2)
                     except asyncio.TimeoutError:
                         pass
-                with self.store.lock:
-                    if self.store.read(job_id)["status"] != "CANCELLED":
-                        if self.process.returncode == 0 and (folder / "worker-complete.json").exists():
-                            timing = json.loads((folder / "worker-complete.json").read_bytes())["timing"]
-                            self.store.update(job_id, status="RESULT_READY", resultReadyAt=time.time(), timing=timing)
-                        else:
-                            self.store.update(job_id, status="FAILED", failure="EXECUTION_FAILED")
+                def finish():
+                    with self.store.mutation_lock:
+                        if self.store.read(job_id)["status"] != "CANCELLED":
+                            if self.process.returncode == 0 and (folder / "worker-complete.json").exists():
+                                timing = json.loads((folder / "worker-complete.json").read_bytes())["timing"]
+                                self.store.update(job_id, status="RESULT_READY", resultReadyAt=time.time(), timing=timing)
+                            else:
+                                self.store.update(job_id, status="FAILED", failure="EXECUTION_FAILED")
+                await asyncio.to_thread(finish)
+                if self.process.returncode != 0:
+                    # A pre-dispatch failure and an interrupted dispatch must not
+                    # desynchronize the parent's three-request generation budget.
+                    await self.resident.stop()
             finally:
                 await self.kill()
                 self.process = None
@@ -167,6 +198,9 @@ class AnalysisService:
         if self.task:
             self.task.cancel()
             await asyncio.gather(self.task, return_exceptions=True)
+        if self.execution_task:
+            self.execution_task.cancel()
+            await asyncio.gather(self.execution_task, return_exceptions=True)
         await self.kill()
         if self.resident:
             await self.resident.close()

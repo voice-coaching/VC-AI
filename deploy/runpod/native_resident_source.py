@@ -24,7 +24,7 @@ def load_g2p():
 @lru_cache(maxsize=1)
 def load_native():
     from native_core_adapter import assessment_policy
-    assessment_policy()  # Fail before loading models when calibration is missing.
+    assessment_policy()  # Verify policy identity; scoring readiness is separate.
     from native_scoring.native_phone_contract import NUMPY_VERSION
     if np.__version__ != NUMPY_VERSION:
         raise RuntimeError('NATIVE_NUMERIC_RUNTIME_VERSION')

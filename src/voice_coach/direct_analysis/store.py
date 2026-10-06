@@ -39,6 +39,7 @@ def atomic(path: Path, value: bytes) -> None:
 class JobStore:
     def __init__(self, settings: Settings):
         self.settings, self.lock = settings, RLock()
+        self.mutation_lock = RLock()
         self.root = settings.root
         if not self.root.is_absolute() or str(self.root).startswith(("/run/", "/tmp/")):
             raise DirectFailure("PERSISTENT_SPOOL_REQUIRED", 503)
@@ -70,10 +71,11 @@ class JobStore:
 
     def write(self, doc):
         atomic(self.directory(doc["jobId"]) / "job.json", encoded(doc))
-        self.cache[doc["jobId"]] = dict(doc)
+        with self.lock:
+            self.cache[doc["jobId"]] = dict(doc)
 
     def update(self, job_id, **changes):
-        with self.lock:
+        with self.mutation_lock:
             doc = self.read(job_id)
             doc.update(changes, sequence=doc["sequence"] + 1, updatedAt=time())
             self.write(doc)
@@ -100,7 +102,7 @@ class JobStore:
         attempt = str(UUID(attempt))
         sha = hashlib.sha256(audio).hexdigest()
         request_sha = hashlib.sha256(encoded([script, sha, content_id, claim_sha])).hexdigest()
-        with self.lock:
+        with self.mutation_lock:
             if attempt in self.attempts:
                 doc = self.read(self.attempts[attempt])
                 if doc["requestSha256"] != request_sha:
@@ -126,7 +128,8 @@ class JobStore:
                        archiveStatus="PENDING", historySyncStatus="PENDING", failure=None)
             atomic(folder / "audio.wav", audio)
             self.write(doc)
-            self.attempts[attempt] = job_id
+            with self.lock:
+                self.attempts[attempt] = job_id
             return doc
 
     def view(self, job_id):
@@ -139,7 +142,7 @@ class JobStore:
                     "schemaVersion": "voice-coaching.direct-analysis.v1", "result": result}
 
     def cancel(self, job_id):
-        with self.lock:
+        with self.mutation_lock:
             doc = self.read(job_id)
             if doc["status"] in ("RESULT_READY", "FAILED", "CANCELLED"):
                 return self.view(job_id)

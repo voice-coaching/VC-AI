@@ -17,7 +17,7 @@ def main():
     for name in requested:
         if (not isinstance(name, str) or PurePosixPath(name).is_absolute()
                 or '..' in PurePosixPath(name).parts
-                or not name.startswith(('src/voice_coach/backend_analysis/', 'deploy/runpod/', 'docs/contracts/'))
+                or not name.startswith(('src/voice_coach/backend_analysis/', 'src/voice_coach/direct_analysis/', 'deploy/runpod/', 'docs/contracts/'))
                 or not name.endswith(('.py', '.schema.json', 'canonical-requirements.lock'))):
             raise ValueError('source_path_invalid')
         digests = []

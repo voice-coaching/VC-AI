@@ -1,5 +1,5 @@
 """Authenticated asynchronous analysis API; health never claims inference success."""
-from contextlib import asynccontextmanager
+from contextlib import AsyncExitStack, asynccontextmanager
 import hmac
 import logging
 import os
@@ -13,12 +13,21 @@ from .http_runtime import HttpRuntime
 
 def create_app(environment=None):
     runtime = HttpRuntime(os.environ if environment is None else environment)
+    direct = None
+    if runtime.environment.get("AI_DIRECT_ENABLED") == "true":
+        from voice_coach.direct_analysis.api import create_app as create_direct_app
+        direct = create_direct_app(runtime.environment)
 
     @asynccontextmanager
     async def lifespan(app):
         await runtime.start()
-        yield
-        await runtime.close()
+        try:
+            async with AsyncExitStack() as stack:
+                if direct is not None:
+                    await stack.enter_async_context(direct.router.lifespan_context(direct))
+                yield
+        finally:
+            await runtime.close()
 
     app = FastAPI(lifespan=lifespan, docs_url=None, redoc_url=None, openapi_url=None)
     app.state.runtime = runtime
@@ -40,7 +49,8 @@ def create_app(environment=None):
     @app.middleware("http")
     async def boundary(request: Request, call_next):
         try:
-            if request.url.path not in ("/health", "/readyz"):
+            public_direct = direct is not None and request.url.path.startswith("/direct/")
+            if not public_direct and request.url.path not in ("/health", "/readyz"):
                 values = request.headers.getlist("authorization")
                 configured = runtime.environment.get("AI_ANALYSIS_API_TOKEN", "")
                 if (not configured or len(values) != 1 or not values[0].startswith("Bearer ")
@@ -85,7 +95,12 @@ def create_app(environment=None):
 
     @app.get("/health/deployment")
     async def deployment_health():
-        return JSONResponse(runtime.deployment_snapshot(), headers={"Cache-Control": "no-store"})
+        state = runtime.deployment_snapshot()
+        if direct is not None:
+            count = sum(d["status"] in ("QUEUED", "RUNNING") for d in direct.state.store.documents())
+            state["directJobs"] = count
+            state["activeJobs"] += count
+        return JSONResponse(state, headers={"Cache-Control": "no-store"})
 
     @app.post("/v1/analysis-jobs")
     async def accept(request: Request):
@@ -118,4 +133,6 @@ def create_app(environment=None):
         code, result = runtime.cancel(request_id, payload["executionId"])
         return JSONResponse(result, status_code=code)
 
+    if direct is not None:
+        app.mount("/direct", direct)
     return app

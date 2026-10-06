@@ -6,8 +6,8 @@ import json
 from pathlib import Path
 
 ROOTS = {
-    'canonical_native_core_20261005_v2': Path('/workspace/intelligentai/releases/canonical_native_core_20261005_v2'),
-    'canonical_native_h5_20261005_v2': Path('/workspace/intelligentai/validation/canonical_native_h5_20261005_v2'),
+    'canonical_native_core_20261005_v4': Path('/workspace/intelligentai/releases/canonical_native_core_20261005_v4'),
+    'canonical_native_h5_20261005_v4': Path('/workspace/intelligentai/validation/canonical_native_h5_20261005_v4'),
     'canonical_native_core_20261004_v1': Path('/workspace/intelligentai/releases/canonical_native_core_20261004_v1'),
     'canonical_native_h5_20261004_v1': Path('/workspace/intelligentai/validation/canonical_native_h5_20261004_v1'),
     'canonical_resident_core_20261004_v1': Path('/workspace/intelligentai/releases/canonical_resident_core_20261004_v1'),
@@ -22,8 +22,8 @@ ROOTS = {
     'canonical_scored_h5_20261003_v2': Path('/workspace/intelligentai/validation/canonical_scored_h5_20261003_v2'),
 }
 PINS = {
-    'canonical_native_core_20261005_v2': ('release_manifest.json', '68cda53df72be9dace15f3829a840c27f40efbbfee1a561f8e58d314b4991aad'),
-    'canonical_native_h5_20261005_v2': ('contracts/llm/dependency_lock.json', '93ccb06cafb9128f4ae02f111ca4bfb599305f84ecce01e41971e69822ba1ec6'),
+    'canonical_native_core_20261005_v4': ('release_manifest.json', 'f1009fcdbf75515ddc13e915dcbbf19dfac751ce39779e404749c4f51dd74841'),
+    'canonical_native_h5_20261005_v4': ('contracts/llm/dependency_lock.json', '1b8cb378b889817e14bf06be5065b04016589f6b74dcd5501776dde758f38259'),
     'canonical_native_core_20261004_v1': ('release_manifest.json', '9e2a2107db7d30fe8910c8984687974d85b95120760e2bcce53d57640a5d5a32'),
     'canonical_native_h5_20261004_v1': ('contracts/llm/dependency_lock.json', '798b47b6f5355b120141a7fa730350739298082549036233ea5804226dbad80c'),
     'canonical_resident_core_20261004_v1': ('release_manifest.json', 'ce16f635da012237b5316b36161d5eeff9432279cd08dbbe7967f5ab7ace7f7e'),
@@ -38,7 +38,7 @@ PINS = {
     'canonical_scored_h5_20261003_v2': ('contracts/llm/dependency_lock.json', 'b4ff1aa729d9c981a048d5b7df1293d9637df53269d0598d7ae6069f2b0cc989'),
 }
 MANIFESTS = {
-    'canonical_native_h5_20261005_v2': '7dfc26fb088300165b4a564847d0a489092b0ab830ef591943a40f31ecb85747',
+    'canonical_native_h5_20261005_v4': 'efc705b042cb1b18d4babff4f5949f37622154e979b1c07b33afdc36eeb89428',
     'canonical_native_h5_20261004_v1': '358365399f7445ab0a77797ce46619979955503c4faac8185724e2225aa5205c',
     'canonical_resident_h5_20261004_v1': '885a2f0a67494dc3bebed28962222bfe95a0143292fe2de04194b84ea8beadc5',
     'canonical_scored_h5_20261003_v3': 'e3d6d6be9d896ede8d75d5f35f5daf4520a8d42f484e5f84a6fc32f8a05fb2e3',
@@ -55,7 +55,7 @@ def main():
     parser.add_argument('--app-root', type=Path, help='Include the complete offline verifier application closure')
     args = parser.parse_args()
     roots = {kind: args.frozen_root / kind if args.frozen_root else root for kind, root in ROOTS.items()}
-    optional = {'canonical_native_core_20261005_v2', 'canonical_native_h5_20261005_v2'}
+    optional = {'canonical_native_core_20261005_v4', 'canonical_native_h5_20261005_v4'}
     present = {kind for kind in optional if roots[kind].exists()}
     if present and present != optional:
         raise ValueError('NATIVE_V2_PAIR_INCOMPLETE')

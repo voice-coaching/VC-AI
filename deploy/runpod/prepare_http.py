@@ -40,6 +40,19 @@ def main():
             if any(any(word in key for word in ("AUTHORIZATION", "CONSENT", "REDIS")) for key in settings):
                 raise ValueError()
             values.update(settings)
+        # Provider-injected JSON refreshes SOURCE on boot. Keep reviewed direct
+        # rollout settings in an independent root-owned file so they survive it.
+        direct_source = SOURCE.with_name("direct-api.env")
+        if direct_source.exists():
+            raw = read_private_file(direct_source, 16384, owner_only=True).decode("utf-8")
+            direct_settings = _pairs([tuple(line.split("=", 1)) for line in raw.splitlines()
+                if line.strip() and not line.lstrip().startswith("#")])
+            if len(direct_settings) > 32 or any(
+                re.fullmatch(r"AI_DIRECT_[A-Z0-9_]+", key) is None
+                or any(c in value for c in "\r\n\x00") or value != value.strip()
+                or value.startswith(("'", '"')) for key, value in direct_settings.items()):
+                raise ValueError("direct_setting_namespace")
+            values.update(direct_settings)
         revision = json.loads((RUNTIME / "deployment.json").read_text())["sourceRevision"]
         if re.fullmatch(r"[0-9a-f]{40}", revision) is None:
             raise ValueError()
@@ -75,6 +88,9 @@ def main():
         values["AI_CANONICAL_BOOTSTRAP_READY"] = "false"
         values["AI_CANONICAL_ADMISSION_ENABLED"] = "false"
         print("canonical_bootstrap_not_ready")
+    if values.get("AI_DIRECT_ENABLED") == "true":
+        from prepare_direct import prepare as prepare_direct
+        prepare_direct(values)
     _write_private(GENERATED, values)
     print("analysis_http_listener_environment_prepared")
 

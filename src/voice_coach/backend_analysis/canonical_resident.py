@@ -168,7 +168,7 @@ class CanonicalResidentCore:
             self.standby = None
         self.next_standby = time.monotonic()+30
 
-    async def refresh(self):
+    async def refresh(self, *, dispatch_active=False):
         if self.blocked or self.stopping:
             return
         for old in list(self.retired):
@@ -190,7 +190,7 @@ class CanonicalResidentCore:
             self.blocked = True
             return
         draining = self.current.requests >= 3 and self.current.generation is not None and (self.current.generation / 'draining.json').exists()
-        if self.standby and self.standby.ready() and (draining or old_done):
+        if not dispatch_active and self.standby and self.standby.ready() and (draining or old_done):
             self.retired.append(self.current)
             self.current, self.standby = self.standby, None
             self.current.keep_running = lambda: True
@@ -198,7 +198,7 @@ class CanonicalResidentCore:
                 await self.preparing
                 self.preparing = None
             print(json.dumps(dict(event='resident_generation_promoted')), flush=True)
-        elif not (self.standby and (draining or old_done)):
+        elif not dispatch_active and not (self.standby and (draining or old_done)):
             await self.current.refresh()
         if self.current.blocked:
             self.blocked = True
@@ -206,7 +206,7 @@ class CanonicalResidentCore:
         # Recycle failed/ended standby instead of reserving a dead slot forever.
         if self.standby and self.standby.task and self.standby.task.done() and self.preparing is None:
             await self._drop_standby()
-        if (self.reserve and self.current.ready() and self.current.requests >= 1
+        if (self.reserve and self.current.ready()
                 and self.standby is None and not self.retired and time.monotonic() >= self.next_standby):
             free = available_cgroup_memory()
             if free is not None and free >= self.reserve + self.minimum_free:

@@ -4,11 +4,16 @@ The transformations operate only on a new release's in-memory files. Historical
 releases remain readable, and are never edited or used as inference fallbacks.
 """
 import ast
+import json
+import re
+
+from release_packaging import encode
 
 
 PREFIX = "source/src/korean_pronunciation_poc/"
 RETIRED = {"final_pronunciation_detector", "final_pronunciation_artifacts", "xlsr_pronunciation",
-           "expected_phone_parity", "pronunciation_acceptance"}
+           "expected_phone_parity", "pronunciation_acceptance", "pronunciation_calibration",
+           "pronunciation_mvp_policy"}
 
 
 def module(files, name):
@@ -62,6 +67,16 @@ def prune(files):
     for node in ast.walk(config):
         if isinstance(node, ast.ClassDef) and node.name in {"XlsrPronunciationSettings", "FinalPronunciationSettings"}:
             node.body = ast.parse('enabled: Literal[False] = False').body
+        if isinstance(node, ast.FunctionDef) and node.name == "load_config":
+            # Retain only an explicit rejection of retired configuration. Never
+            # resolve a retired model/checkpoint path, including disabled ones.
+            start = next(i for i, n in enumerate(node.body) if assigned(n) == {"pronunciation"})
+            end = next(i for i, n in enumerate(node.body) if assigned(n) == {"aihub71557"})
+            node.body[start:end] = ast.parse(
+                'for name in ("pronunciation", "final_pronunciation"):\n'
+                '    if data.get(name, {"enabled": False}) != {"enabled": False}:\n'
+                '        raise ValueError("RETIRED_PRONUNCIATION_CONFIG_FORBIDDEN")\n'
+                '    data[name] = {"enabled": False}\n').body
     save(files, "config", config)
     # Pure Hangul symbol tables have no model or checkpoint dependency.
     symbols = module(files, "xlsr_pronunciation")
@@ -72,7 +87,7 @@ def prune(files):
     reliability.body = [node for node in reliability.body if not (
         isinstance(node, ast.FunctionDef) and node.lineno >= 340)]
     reliability.body = [node for node in reliability.body if not (
-        isinstance(node, ast.ImportFrom) and node.module == "final_pronunciation_detector")]
+        isinstance(node, ast.ImportFrom) and node.module in {"final_pronunciation_detector", "pronunciation_mvp_policy"})]
     for node in ast.walk(reliability):
         if isinstance(node, ast.ImportFrom) and node.module == "xlsr_pronunciation":
             node.module = "phone_symbols"
@@ -126,12 +141,56 @@ def prune(files):
             del files[path]
     if len(removed) != len(RETIRED):
         raise ValueError("NATIVE_PRUNING_SOURCE_CHANGED")
+    # These alternative experiment entrypoints still imported the retired
+    # detector via `from package import detector`, which the old audit missed.
+    identity = json.loads(files['config/historical_runtime_identity.json'])
+    for relative in ('demo_e2e.py', 'launch_experiment.py'):
+        name = 'runtime_bundle/' + relative
+        if name not in files or relative not in identity['source_files']:
+            raise ValueError('NATIVE_RETIRED_ENTRYPOINT_SOURCE_CHANGED')
+        del files[name]
+        del identity['source_files'][relative]
+        removed.append(name)
+    files['config/historical_runtime_identity.json'] = encode(identity)
+    config_name = 'source/config/poc.toml'
+    config_text = files[config_name].decode()
+    for section in ('pronunciation', 'final_pronunciation'):
+        config_text, count = re.subn(
+            r'(?ms)^\[' + section + r'\]\n.*?(?=^\[|\Z)',
+            '[' + section + ']\nenabled = false\n\n', config_text)
+        if count != 1:
+            raise ValueError('NATIVE_RETIRED_CONFIG_SOURCE_CHANGED')
+    files[config_name] = config_text.encode()
+    # Match the DTO to the pruned implementation; a default from the old
+    # detector must not imply that this package executed or loaded it.
+    schema_name = 'contracts/canonical_ai_output.schema.json'
+    schema = json.loads(files[schema_name])
+    def retire_schema_defaults(value):
+        if isinstance(value, dict):
+            properties = value.get('properties', {})
+            if 'detector_version' in properties:
+                properties['detector_version']['default'] = 'RETIRED_NOT_EXECUTED'
+            if 'stage1_model_safetensors_sha256' in properties:
+                properties['stage1_model_safetensors_sha256'] = {
+                    'type': 'null', 'default': None,
+                    'title': 'Stage1 Model Safetensors Sha256'}
+            for child in value.values():
+                retire_schema_defaults(child)
+        elif isinstance(value, list):
+            for child in value:
+                retire_schema_defaults(child)
+    retire_schema_defaults(schema)
+    files[schema_name] = encode(schema)
     for name, raw in files.items():
         if name.endswith(".py"):
             tree = ast.parse(raw)
             for node in ast.walk(tree):
-                if isinstance(node, ast.ImportFrom) and (node.module or "").split(".")[-1] in RETIRED:
-                    raise ValueError("NATIVE_RETIRED_IMPORT_REMAINS")
+                if isinstance(node, (ast.ImportFrom, ast.Import)):
+                    modules = {n.name.split('.')[-1] for n in node.names}
+                    if isinstance(node, ast.ImportFrom):
+                        modules.add((node.module or '').split('.')[-1])
+                    if modules & RETIRED:
+                        raise ValueError("NATIVE_RETIRED_IMPORT_REMAINS")
                 if isinstance(node, ast.Call) and isinstance(node.func, ast.Name) and node.func.id in {
                     "run_final_pronunciation_inference", "get_final_pronunciation_runtime", "run_pronunciation_ctc_baseline"}:
                     raise ValueError("NATIVE_RETIRED_CALL_REMAINS")
