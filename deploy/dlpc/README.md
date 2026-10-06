@@ -136,4 +136,26 @@ and the pinned AWS host identity (`HostKeyAlias=13.209.184.226`). It requires
 explicit reinvocation after recreation until a platform startup hook is wired.
 Do not also start the historical `aws-tunnel` entry from the archived analysis
 supervisor. Apply the current configuration before restoring service operation.
-The transport has not yet been verified across AWS 22132.
+The transport was verified across AWS 22132 on 2026-10-06 16:24 KST: analysis
+health 200, readiness 503 (admission disabled), authenticated TTS ready 200.
+See the execution record for the exact scope; no production upstream switch occurred.
+
+After the downloader reports `download_verified`, `restore_downloaded.py` verifies
+both pinned hashes and every archive member against the 141,602-entry inventory,
+extracts into private staging, then installs only into absent target paths. It
+uses absolute `/usr/sbin/groupadd` and `/usr/sbin/useradd` paths because its child
+PATH is intentionally minimal. An interrupted/failed restore must be inspected;
+do not delete state to force a retry over an existing installation.
+
+Receive private settings separately with `receive_settings.py`, then use
+`prepare_restored_runtime.py` to recreate worker directories, GPU lock and the TTS
+token. Apply the current supervisor configuration (without the historical tunnel
+program), start diagnostic analysis, and then start TTS. Keep canonical admission,
+bootstrap and handoff disabled until the independent deployment gates pass.
+The observed manual restore completed. Native preparation/GPT generation/quality
+QA and automatic recovery after platform recreation were not revalidated.
+
+The dedicated AWS authorized_keys file omits the invalid key option
+`permitopen="none"`; key options require a host:port pair. Direct forwarding is
+still prohibited by the separate daemon's `PermitOpen none` and
+`AllowTcpForwarding remote`; MaxSessions 0 blocks shell/subsystem sessions.

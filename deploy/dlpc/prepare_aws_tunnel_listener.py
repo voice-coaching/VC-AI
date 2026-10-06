@@ -80,7 +80,10 @@ RestartSec=5
 WantedBy=multi-user.target
 '''
     os.umask(0o077)
-    for path, body, mode in ((KEYS, matches[0] + '\n', 0o644),
+    # authorized_keys permitopen accepts host:port, not sshd_config's "none".
+    # The dedicated daemon enforces PermitOpen none / remote-only forwarding.
+    restricted_key = matches[0].replace(',permitopen="none"', '')
+    for path, body, mode in ((KEYS, restricted_key + '\n', 0o644),
                              (CONFIG, config, 0o600), (UNIT, unit, 0o644)):
         with path.open('x') as stream:
             stream.write(body)

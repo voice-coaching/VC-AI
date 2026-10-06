@@ -1,8 +1,8 @@
 # DLPC migration execution — 2026-10-05
 
-상태: **DLPC 재시작 후 관리 접속 복구. 비영속 실행 자산이 사라져 B2 복구 다운로드 중이며 분석·TTS는 미기동. AWS 전용 SSH 22132 리스너 준비 완료, 보안 그룹 허용·터널 연결은 대기. 운영 전환 미완료.** 과거 기동 관측: 2026-10-06 00:11 KST; 재시작 후 재관측: 10-06 14:56 KST 이후.
+상태: **B2 자산 복원·비밀 재주입·분석 API/TTS 재기동 완료. DLPC→AWS 22132 직접 역방향 터널과 AWS 경유 health 응답 확인 완료. 분석 접수는 비활성이고 운영 upstream 전환·품질 QA·플랫폼 자동 복구는 미완료.** 최신 관측: 2026-10-06 16:24:30 KST.
 
-AI `main` 대상 draft [PR #23](https://github.com/voice-coaching/intelligentAI/pull/23)에 통합한다. Backend/FE와 운영 nginx upstream은 변경하지 않았다.
+초기 변경은 AI `main` 대상 [PR #23](https://github.com/voice-coaching/intelligentAI/pull/23)으로 병합됐다. 재시작 복구·SSH 후속 변경은 draft [PR #25](https://github.com/voice-coaching/intelligentAI/pull/25)에 반영한다. Backend/FE와 운영 nginx upstream은 변경하지 않았다.
 
 ## 범위와 실제 기준선
 
@@ -212,6 +212,56 @@ manifest 42,449,956 bytes의 SHA-256은 일치한다. archive는 16,062,581,191 
 해시 검증 완료 후에만 설치할 수 있다. 현재 단계는 다운로드이며 추출·비밀 재주입·기동은
 아직 하지 않았다. 토큰은 SSH stdin과 worker 메모리에만 전달하고 파일에 저장하지 않는다.
 
+### 2026-10-06 16:00–16:24 KST — AWS 직접 터널·B2 복원·서비스 응답 확인
+
+사용자가 `sgr-0e01d20ba16a0ba56` 성공 응답을 제공했다. 같은 EC2 보안 그룹에
+DLPC `203.246.112.21/32`의 TCP 22132 ingress를 허용한 규칙이다. DLPC가 AWS
+22132에 도달하는 것을 확인했다. 기존 22번 실패의 구체적인 차단 주체는 미확정이며,
+포트 변경의 성공을 근거로 DLPC 외부 SSH 전체가 차단됐다고 해석하지 않는다.
+
+최초 인증은 기존 키 옵션 `permitopen="none"` 때문에 실패했다. 이 값은
+`sshd_config`의 `PermitOpen none`과 달리 `authorized_keys`의 `host:port` 문법에
+맞지 않았다. 새 전용 authorized_keys 파일에서 이 잘못된 옵션을 제거했다.
+서버의 `PermitOpen none`, `AllowTcpForwarding remote`, `MaxSessions 0`, 두
+`PermitListen`, source IP/user 제한은 유지했다. 기존 일반 SSH의 authorized_keys는
+변경하지 않았다. [OpenSSH 키 옵션 문법](https://man.openbsd.org/sshd.8#permitopen).
+
+- AWS journal: 2026-10-06 07:00:49 UTC(16:00:49 KST)에 DLPC 키 인증 성공.
+- 공개 키 지문: `SHA256:dHg2paRuV1CwJec1WwtEpko5nh4NeImbErhM49OsO5o`.
+- DLPC 전용 supervisor의 aws-tunnel RUNNING, AWS의 127.0.0.1:18080/18083 listen 확인.
+- 실제 운영 터널의 TCP 연결은 DLPC→AWS:22132이며 RunPod는 포함하지 않는다.
+  이번 설치·복구용 관리 SSH만 RunPod를 경유했다.
+
+B2 manifest와 archive를 다운로드한 뒤 고정 SHA-256을 다시 확인했다.
+`restore_downloaded.py`로 tar 141,602개 항목의 경로·타입·권한·소유권·링크를
+manifest와 대조하고 별도 staging에 추출했다. 추출 후 전용 계정 생성 때 PATH에
+`/usr/sbin`이 없어 FileNotFoundError가 발생했다. groupadd/useradd의 절대 경로로
+도구를 수정했다. 이미 추출된 모든 항목의 메타데이터를 다시 대조한 뒤 설치 단계만
+재개했다. 이때까지 실행 경로 이동은 없었으며 기존 설치를 덮어쓰지 않았다.
+복원 영수증은 `/opt/intelligentai-b2-restore-20261006/restore-state.json`이다.
+
+별도 SSH stdin으로 기존 분석/TTS 비밀을 다시 주입하고 `prepare_restored_runtime.py`로
+private 디렉터리·TTS 토큰·GPU lock을 재생성했다. 분석 API는 CUDA v2 후보를 가리키되
+bootstrap/handoff/admission을 끈 상태다. 분석 supervisor에서 오래된 aws-tunnel 항목은
+제거하고 홈의 독립 터널 실행기만 사용한다. TTS는 기존 정상 기동 warmup을 수행했다.
+
+**2026-10-06 16:24:30 KST, AWS 내부에서 관측:**
+
+| 요청 | 결과 |
+|---|---|
+| `http://127.0.0.1:18080/health` | 200, alive |
+| `http://127.0.0.1:18080/readyz` | 503, 분석 접수 비활성 |
+| `http://127.0.0.1:18083/health/ready` + 기존 TTS 인증 | 200, ready, `melo-ko-practice-dlpc-r1` |
+
+이는 실제 터널을 통한 HTTP liveness와 독립 TTS 준비 상태다. 재시작 후 Native/MFA
+준비·GPT 접근/생성·실제 사용자 녹음·피드백 품질 QA는 이번 확인에 포함하지 않았다.
+운영 nginx upstream, Backend, RunPod 실행 상태는 변경하지 않았다.
+
+서비스 응답 확인 후 로컬 16.06GB archive 사본만 삭제했다. B2 원본과 manifest,
+복원/기동 영수증은 보존했다. 최신 관측은 같은 디렉터리의 `operational-receipt.json`에
+별도로 저장해 백업 안의 과거 기동 영수증과 구분했다. 플랫폼 재시작 hook과 비밀의
+지속적인 안전한 공급원은 아직 확정하지 않았으며, 이번 수동 복원이 자동 복구를 뜻하지 않는다.
+
 ## 검증 및 남은 완료 조건
 
 지금까지 수행한 확인은 소스 비교, 부모 manifest/hash 검증, 후보 소스 컴파일, 자산 무결성 대조, 실제 대상의 자원·접속·기동 상태 확인이다. 자동 회귀 테스트, 브라우저 QA, 음성/점수/피드백 품질 검증은 수행하지 않았다.
@@ -220,8 +270,8 @@ manifest 42,449,956 bytes의 SHA-256은 일치한다. archive는 16,062,581,191 
 
 남은 완료 조건은 다음과 같다.
 
-1. B2 자산 백업 검증은 완료. 재시작 후 실제 다운로드·복원·private 설정 재주입·기동을 완료하고 플랫폼 시작 경로 확정.
-2. AWS 전용 SSH 22132의 DLPC /32 보안 그룹 허용 후 터널 인증·두 loopback endpoint 연결 확인. 기존 22번 timeout 원인은 미확정.
+1. B2 수동 복원·private 설정 재주입·서비스 재기동은 완료. 플랫폼 자동 시작/복원 hook과 RunPod 종료 후의 비밀 공급원 확정.
+2. AWS 22132 직접 터널과 두 endpoint 응답 확인은 완료. 재생성 후 터널·서비스 자동 복구는 별도 검증 필요.
 3. AGENTS.md에 따라 개발자의 실제 추론·점수/피드백/TTS 품질 QA, 검토된 새 core/H5 identity의 AI·Backend 등록 및 TTS revision/fingerprint 전환.
 4. 기존 작업·lease/journal drain과 전체 readiness 확인 후 AWS upstream 전환, 그 이후 RunPod 중지. RunPod 삭제는 별도 결정.
 

@@ -1,6 +1,6 @@
 # Canonical AI와 동결 LLM 서비스 통합
 
-**2026-10-06 DLPC 이전:** [계획](dlpc-migration-plan-20261005.md) · [실행 기록](dlpc-migration-execution-20261005.md) · [B2 백업](dlpc-b2-backup-20261006.md). 재시작 후 관리 접속은 복구됐으나 비영속 설치가 사라져 B2 복구 다운로드 중이다. AWS 전용 SSH 22132는 준비됐고 보안 그룹 허용·터널 연결·서비스 복구·개발자 QA가 남아 운영 전환은 미완료다.
+**2026-10-06 DLPC 이전:** [계획](dlpc-migration-plan-20261005.md) · [실행 기록](dlpc-migration-execution-20261005.md) · [B2 백업](dlpc-b2-backup-20261006.md). B2 자산 복원·분석/TTS 재기동과 AWS 22132 직접 터널을 통한 health 응답을 확인했다. 자동 복구·개발자 QA·운영 upstream 전환은 미완료다.
 
 **2026-10-04 API 경계 구현:** [완료·재녹음·화면 복구·전송 복구 인계](../api-boundary-implementation-20261004.md). PR용 구현이며 운영 배포·실제 QA는 별도다.
 
