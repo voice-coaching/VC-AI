@@ -1727,7 +1727,7 @@
                   "expression"
                 ]
               },
-              "minItems": 1
+              "minItems": 0
             },
             "dispatchAttempts": {
               "const": 1
