@@ -58,6 +58,7 @@ def main():
                      'frozen/canonical_resident_core_20261004_v1/', 'frozen/canonical_resident_h5_20261004_v1/',
                      'frozen/canonical_native_core_20261005_v4/', 'frozen/canonical_native_h5_20261005_v4/',
                      'frozen/canonical_seungun_core_20261006_v1/', 'frozen/canonical_seungun_gpt_20261006_v1/',
+                     'frozen/canonical_seungun_gop_core_20261006_v1/', 'frozen/canonical_seungun_gop_gpt_20261006_v1/',
                      'frozen/canonical_native_core_20261004_v1/', 'frozen/canonical_native_h5_20261004_v1/',
                      'app/src/voice_coach/', 'app/docs/contracts/'))
                      or name == 'app/deploy/runpod/canonical_verify.py')
@@ -89,8 +90,11 @@ def main():
     }
     pins.update({
         'frozen/canonical_seungun_core_20261006_v1/release_manifest.json': '20acb7275aa06d0be4aca1a567420ea603c0eec084e50c651c96501903034f1b',
+        'frozen/canonical_seungun_gop_core_20261006_v1/release_manifest.json': '818a3c16cba39dfcfa9f1083865db7f122a3eba40bc332d85256da94d1d6fb1e',
         'frozen/canonical_seungun_gpt_20261006_v1/contracts/llm/dependency_lock.json': '3f4ce0a44ae75192fe7fea3b03b879c21ab0b2be7cc0a620522c60c2155b674b',
+        'frozen/canonical_seungun_gop_gpt_20261006_v1/contracts/llm/dependency_lock.json': '74784bf0c7ba99628ed2ff8db19157c63d22a2a1cd66c58000ad2e811dc93160',
         'frozen/canonical_seungun_gpt_20261006_v1/contracts/llm/llm_contract_manifest.json': '6a3bf7c872e718086cb9add4d48412c825188310cdc9eb394089301dd784ff57',
+        'frozen/canonical_seungun_gop_gpt_20261006_v1/contracts/llm/llm_contract_manifest.json': 'f90440b764f78f32c989dc0785f41262397cc22e1d1ca48c40361189b81f86d5',
     })
     native_v2 = {
         'frozen/canonical_native_core_20261005_v4/release_manifest.json': 'f1009fcdbf75515ddc13e915dcbbf19dfac751ce39779e404749c4f51dd74841',

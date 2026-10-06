@@ -12,6 +12,7 @@ class HarnessIdentity:
     scoring: bool = False
     native: bool = False
     gpt_grading: bool = False
+    gop_grading: bool = False
 
 
 S7 = HarnessIdentity(
@@ -84,7 +85,7 @@ NATIVE = HarnessIdentity(
 )
 NATIVE_CORE_DIRECTORY = 'canonical_native_core_20261005_v4'
 NATIVE_LLM_DIRECTORY = 'canonical_native_h5_20261005_v4'
-SEUNGUN_GPT = HarnessIdentity(
+SEUNGUN_GPT_V1 = HarnessIdentity(
     'canonical-seungun-gpt-20261006-v1',
     '6a3bf7c872e718086cb9add4d48412c825188310cdc9eb394089301dd784ff57',
     '3f4ce0a44ae75192fe7fea3b03b879c21ab0b2be7cc0a620522c60c2155b674b',
@@ -92,9 +93,19 @@ SEUNGUN_GPT = HarnessIdentity(
     '20acb7275aa06d0be4aca1a567420ea603c0eec084e50c651c96501903034f1b',
     True, True, True,
 )
-SEUNGUN_CORE_DIRECTORY = 'canonical_seungun_core_20261006_v1'
-SEUNGUN_LLM_DIRECTORY = 'canonical_seungun_gpt_20261006_v1'
-HARNESSES = {value.manifest_sha256: value for value in (S7, H5, SCORED_V1, SCORED_V2, SCORED, RESIDENT, NATIVE_V1, NATIVE, SEUNGUN_GPT)}
+SEUNGUN_V1_CORE_DIRECTORY = 'canonical_seungun_core_20261006_v1'
+SEUNGUN_V1_LLM_DIRECTORY = 'canonical_seungun_gpt_20261006_v1'
+SEUNGUN_GPT = HarnessIdentity(
+    'canonical-seungun-gop-gpt-20261006-v1',
+    'f90440b764f78f32c989dc0785f41262397cc22e1d1ca48c40361189b81f86d5',
+    '74784bf0c7ba99628ed2ff8db19157c63d22a2a1cd66c58000ad2e811dc93160',
+    '5f3ec5aa81f54fdb3afe28869db2c5791a2133e8a44a23ead52187e9be542ff8',
+    '818a3c16cba39dfcfa9f1083865db7f122a3eba40bc332d85256da94d1d6fb1e',
+    True, True, True, True,
+)
+SEUNGUN_CORE_DIRECTORY = 'canonical_seungun_gop_core_20261006_v1'
+SEUNGUN_LLM_DIRECTORY = 'canonical_seungun_gop_gpt_20261006_v1'
+HARNESSES = {value.manifest_sha256: value for value in (S7, H5, SCORED_V1, SCORED_V2, SCORED, RESIDENT, NATIVE_V1, NATIVE, SEUNGUN_GPT_V1, SEUNGUN_GPT)}
 
 
 def harness_identity(manifest_sha256: str) -> HarnessIdentity:

@@ -161,6 +161,8 @@ class FrozenCanonicalCoaching:
                        "native_phone_evidence", "gpt_rubric", "native_gpt_rubric", "legacy_pure", "adapter")
         if identity.gpt_grading:
             modules = ("legacy_pure", "adapter")
+        if identity.gop_grading:
+            modules = ("adapter",)
         for name in modules:
             relative = f"bridge/{name}.py"
             raw = _contained_file(root, relative).read_bytes()

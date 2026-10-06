@@ -93,6 +93,7 @@ def main():
         NATIVE, NATIVE_CORE_DIRECTORY, NATIVE_LLM_DIRECTORY,
         NATIVE_V1, NATIVE_V1_CORE_DIRECTORY, NATIVE_V1_LLM_DIRECTORY,
         SEUNGUN_GPT, SEUNGUN_CORE_DIRECTORY, SEUNGUN_LLM_DIRECTORY,
+        SEUNGUN_GPT_V1, SEUNGUN_V1_CORE_DIRECTORY, SEUNGUN_V1_LLM_DIRECTORY,
     )
     frozen = FrozenCanonicalCoaching(FrozenCanonicalArtifacts(args.core_root, args.llm_root))
     h5 = FrozenCanonicalCoaching(FrozenCanonicalArtifacts(args.core_root, args.llm_root.parent / H5_DIRECTORY))
@@ -112,6 +113,8 @@ def main():
     installed_native = None
     seungun = FrozenCanonicalCoaching(FrozenCanonicalArtifacts(
         args.core_root.parent / SEUNGUN_CORE_DIRECTORY, args.llm_root.parent / SEUNGUN_LLM_DIRECTORY))
+    seungun_v1 = FrozenCanonicalCoaching(FrozenCanonicalArtifacts(
+        args.core_root.parent / SEUNGUN_V1_CORE_DIRECTORY, args.llm_root.parent / SEUNGUN_V1_LLM_DIRECTORY))
     try:
         frozen._bridge()
         if frozen.artifacts.identity != S7 or h5.artifacts.identity != H5:
@@ -194,7 +197,7 @@ def main():
             association = _read_json(private.association_bytes)
             _validate(association, 'association')
             selected = harness_identity(association['llmManifestSha256'])
-            frozen = {S7: frozen, H5: h5, SCORED_V1: scored_v1, SCORED_V2: scored_v2, SCORED: scored, RESIDENT: resident, NATIVE_V1: native_v1, NATIVE: native, SEUNGUN_GPT: seungun}[selected]
+            frozen = {S7: frozen, H5: h5, SCORED_V1: scored_v1, SCORED_V2: scored_v2, SCORED: scored, RESIDENT: resident, NATIVE_V1: native_v1, NATIVE: native, SEUNGUN_GPT: seungun, SEUNGUN_GPT_V1: seungun_v1}[selected]
             metadata = association['preparedAudio']
             prepared = PreparedAudioIdentity.from_document(metadata) if metadata is not None else None
             # This verifies authenticated producer measurements and their binding,

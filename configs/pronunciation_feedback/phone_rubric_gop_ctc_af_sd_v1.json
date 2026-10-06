@@ -1,0 +1,126 @@
+{
+  "rubricRevision": "phone-rubric-gop-ctc-af-sd-v1",
+  "authority": "GPT assesses each criterion from complete GOP evidence; no server-computed grade",
+  "criteria": [
+    {
+      "id": "vowels",
+      "label": "모음",
+      "weight": 25,
+      "phones": [
+        "ㅏ",
+        "ㅐ",
+        "ㅑ",
+        "ㅒ",
+        "ㅓ",
+        "ㅔ",
+        "ㅕ",
+        "ㅖ",
+        "ㅗ",
+        "ㅘ",
+        "ㅙ",
+        "ㅚ",
+        "ㅛ",
+        "ㅜ",
+        "ㅝ",
+        "ㅞ",
+        "ㅟ",
+        "ㅠ",
+        "ㅡ",
+        "ㅢ",
+        "ㅣ"
+      ]
+    },
+    {
+      "id": "plain_stops",
+      "label": "평음 파열음",
+      "weight": 10,
+      "phones": [
+        "ㄱ",
+        "ㄷ",
+        "ㅂ"
+      ]
+    },
+    {
+      "id": "tense_stops",
+      "label": "경음 파열음",
+      "weight": 10,
+      "phones": [
+        "ㄲ",
+        "ㄸ",
+        "ㅃ"
+      ]
+    },
+    {
+      "id": "aspirated_stops",
+      "label": "격음 파열음",
+      "weight": 10,
+      "phones": [
+        "ㅋ",
+        "ㅌ",
+        "ㅍ"
+      ]
+    },
+    {
+      "id": "fricatives",
+      "label": "마찰음",
+      "weight": 10,
+      "phones": [
+        "ㅅ",
+        "ㅆ",
+        "ㅎ"
+      ]
+    },
+    {
+      "id": "affricates",
+      "label": "파찰음",
+      "weight": 10,
+      "phones": [
+        "ㅈ",
+        "ㅉ",
+        "ㅊ"
+      ]
+    },
+    {
+      "id": "nasals",
+      "label": "비음",
+      "weight": 10,
+      "phones": [
+        "ㄴ",
+        "ㅁ",
+        "ㅇ"
+      ]
+    },
+    {
+      "id": "liquid",
+      "label": "유음",
+      "weight": 5,
+      "phones": [
+        "ㄹ"
+      ]
+    },
+    {
+      "id": "coverage",
+      "label": "기대 음소 대응 범위",
+      "weight": 10,
+      "phones": []
+    }
+  ],
+  "acousticEvidence": "GOP-CTC-AF-SD: log P_CTC(L|X) minus log sum over distinct single-position substitution/deletion transcripts",
+  "stageJudgment": {
+    "4": "consistently strong reference support",
+    "3": "mostly supported with some competition",
+    "2": "mixed support and competition",
+    "1": "competitors dominate",
+    "0": "very weak reference support"
+  },
+  "coverage": "4 * (sampleCount - deletedCount) / (4 * sampleCount); alignment coverage, not correctness",
+  "aggregation": "100 * sum(weight * level) / (4 * sum(applicable weight)); HALF_UP to one decimal only at the end",
+  "notApplicable": "No expected samples: level=null, exclude weight. Missing observations are not zero or full marks.",
+  "limits": [
+    "No exp(GOP) transform or fixed numeric level thresholds",
+    "No human correctness probability claim",
+    "Model-merged vowel distinctions cannot be evaluated",
+    "No extra points for prosody, lips, identity, accent, duration, or a single selected correction"
+  ],
+  "reference": "https://www.isca-archive.org/interspeech_2024/cao24b_interspeech.pdf"
+}

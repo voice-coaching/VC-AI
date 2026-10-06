@@ -307,6 +307,12 @@ def preflight_canonical_result(
                      and expression["errorCode"] == "SCORING_UNSCORABLE", "SCORING_FAILURE_STATUS")
         elif skip:
             _require(expression["adapterStatus"] == skip, "ADAPTER_STATUS_MISMATCH")
+        elif frozen.artifacts.identity.gop_grading:
+            _require(expected_view is None and expression["adapterStatus"] == "READY"
+                     and expression["items"] == [] and expression["dispatchAttempts"] == 1,
+                     "GOP_EXPRESSION_CONTRACT")
+            _require(isinstance(expression.get("feedback"), str) and 0 < len(expression["feedback"]) <= 4000,
+                     "GOP_FEEDBACK_CONTRACT")
         else:
             _require(expression["adapterStatus"] == "READY", "ADAPTER_STATUS_MISMATCH")
             items = expression["items"]
