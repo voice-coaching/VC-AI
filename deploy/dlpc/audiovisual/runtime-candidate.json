@@ -1,0 +1,15 @@
+{
+  "schemaVersion": "voice-coaching.visual-runtime-candidate.v1",
+  "modelSha256": "64184e229b263107bc2b804c6625db1341ff2bb731874b0bcc2fe6544e0bc9ff",
+  "quality": {
+    "minimumFaceScalePixels": 24,
+    "maximumYawDegrees": 30,
+    "maximumPitchDegrees": 20,
+    "detectionConfidence": 0.7,
+    "presenceConfidence": 0.7,
+    "trackingConfidence": 0.7
+  },
+  "visualTimeoutSeconds": 45,
+  "gptAndHandoffReserveSeconds": 60,
+  "developerQaVerified": false
+}

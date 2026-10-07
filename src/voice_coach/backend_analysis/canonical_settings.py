@@ -26,6 +26,7 @@ def child_environment(environment):
         "OPENAI_API_KEY", "VOICE_COACH_BUILD_REVISION",
         "AI_ANALYSIS_NLTK_DATA_ROOT",
         "AI_ANALYSIS_RESOURCE_PROFILE",
+        "AI_ANALYSIS_VISUAL_LANDMARK_MODEL_PATH",
     }
     values = {k: v for k, v in environment.items()
               if k in names or k.startswith("AI_CANONICAL_")}
@@ -44,3 +45,11 @@ def handoff_schema_digests():
         "runpod_analysis_request_v3.schema.json", "runpod_result_v5.schema.json",
         "runpod_canonical_handoff_v1.schema.json")
     return {name: hashlib.sha256((root / name).read_bytes()).hexdigest() for name in names}
+
+
+def audiovisual_schema_digests():
+    root = Path(__file__).resolve().parents[3] / "docs/contracts"
+    return {name: hashlib.sha256((root / name).read_bytes()).hexdigest() for name in (
+        "runpod_analysis_request_v4.schema.json", "runpod_result_v6.schema.json",
+        "runpod_canonical_handoff_v2.schema.json", "runpod_media_preparation_v1.schema.json",
+        "runpod_visual_coaching_input_v1.schema.json")}

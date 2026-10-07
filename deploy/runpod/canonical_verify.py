@@ -68,6 +68,7 @@ def main():
     for name, directory in (
         ('voice_coach', root / 'src/voice_coach'),
         ('voice_coach.backend_analysis', root / 'src/voice_coach/backend_analysis'),
+        ('voice_coach.visual_feedback', root / 'src/voice_coach/visual_feedback'),
     ):
         package = ModuleType(name)
         package.__path__ = [str(directory)]
@@ -95,6 +96,7 @@ def main():
         SEUNGUN_GPT, SEUNGUN_CORE_DIRECTORY, SEUNGUN_LLM_DIRECTORY,
         DLPC_GOP, DLPC_GOP_CORE_DIRECTORY, DLPC_GOP_LLM_DIRECTORY,
         DLPC_ANNOUNCER, DLPC_ANNOUNCER_LLM_DIRECTORY,
+        AUDIOVISUAL, AUDIOVISUAL_LLM_DIRECTORY,
         SEUNGUN_GPT_V1, SEUNGUN_V1_CORE_DIRECTORY, SEUNGUN_V1_LLM_DIRECTORY,
     )
     frozen = FrozenCanonicalCoaching(FrozenCanonicalArtifacts(args.core_root, args.llm_root))
@@ -121,6 +123,9 @@ def main():
         args.core_root.parent / SEUNGUN_CORE_DIRECTORY, args.llm_root.parent / SEUNGUN_LLM_DIRECTORY))
     seungun_v1 = FrozenCanonicalCoaching(FrozenCanonicalArtifacts(
         args.core_root.parent / SEUNGUN_V1_CORE_DIRECTORY, args.llm_root.parent / SEUNGUN_V1_LLM_DIRECTORY))
+    audiovisual = FrozenCanonicalCoaching(FrozenCanonicalArtifacts(
+        args.core_root.parent / DLPC_GOP_CORE_DIRECTORY, args.llm_root.parent / AUDIOVISUAL_LLM_DIRECTORY))
+    audiovisual_installed = False
     try:
         frozen._bridge()
         if frozen.artifacts.identity != S7 or h5.artifacts.identity != H5:
@@ -167,6 +172,11 @@ def main():
                 raise RuntimeError('VERIFIER_HARNESS_ROOT_MISMATCH')
             dlpc_announcer._bridge().scoring_policy()
             installed_native = DLPC_ANNOUNCER
+        if audiovisual.artifacts.llm_root.exists():
+            from voice_coach.backend_analysis.canonical_audiovisual_result import visual_assets
+            visual_assets(audiovisual)
+            audiovisual._bridge().scoring_policy()
+            audiovisual_installed = True
     except Exception:
         raise RuntimeError('VERIFIER_DEPENDENCIES_UNAVAILABLE') from None
     if args.check_installation:
@@ -182,7 +192,10 @@ def main():
                               residentManifestSha256=RESIDENT.manifest_sha256, residentLockSha256=RESIDENT.lock_sha256,
                               **(dict(nativeCoreManifestSha256=installed_native.core_sha256,
                                       nativeManifestSha256=installed_native.manifest_sha256, nativeLockSha256=installed_native.lock_sha256)
-                                 if installed_native is not None else {}))))
+                                 if installed_native is not None else {}),
+                              **(dict(audiovisualManifestSha256=AUDIOVISUAL.manifest_sha256,
+                                      audiovisualLockSha256=AUDIOVISUAL.lock_sha256)
+                                 if audiovisual_installed else {}))))
         return
     header = _read_json(frame(1024), 1024)
     if (type(header) is not dict or set(header) != {'protocol', 'operation', 'receiptId'}
@@ -192,7 +205,7 @@ def main():
     operation = header['operation']
     request_bytes = frame(65536)
     request = AnalysisInput.from_payload(parse_json(request_bytes), args.recordings_prefix)
-    if request.analysis_profile not in {'CANONICAL_FROZEN_20260928_V4', 'CANONICAL_HANDOFF_20261004_V5'}:
+    if request.analysis_profile not in {'CANONICAL_FROZEN_20260928_V4', 'CANONICAL_HANDOFF_20261004_V5', 'CANONICAL_AUDIOVISUAL_20261007_V6'}:
         raise ValueError('VERIFIER_PROFILE_INVALID')
     response = dict(protocol=PROTOCOL, status='VALID', requestSha256=hashlib.sha256(request_bytes).hexdigest(),
                     manifestSha256=None, callbackSha256=None)
@@ -201,7 +214,8 @@ def main():
         raw_manifest = frame(65536)
         manifest = _read_json(raw_manifest, 65536)
         handoff = operation == 'VERIFY_HANDOFF'
-        _validate(manifest, 'handoffMetadata' if handoff else 'evidenceManifest', schema_name='handoff' if handoff else 'control')
+        _validate(manifest, 'handoffMetadata' if handoff else 'evidenceManifest',
+                  schema_name=('handoff2' if request.is_audiovisual else 'handoff') if handoff else 'control')
         originals = {}
         references = []
         for reference in manifest['artifacts']:
@@ -215,11 +229,12 @@ def main():
             references.append(reference)
         if originals:
             private = CanonicalExpressionResult(originals['CORE'], originals['BINDING'], originals['ASSOCIATION'],
-                                                originals['BRIDGE_RESULT'], originals.get('SELECTION_PROJECTION'))
+                                                originals['BRIDGE_RESULT'], originals.get('SELECTION_PROJECTION'),
+                                                originals.get('MEDIA_RECEIPT'), originals.get('VISUAL_EVIDENCE'))
             association = _read_json(private.association_bytes)
-            _validate(association, 'association')
+            _validate(association, 'association', schema_name='v6' if request.is_audiovisual else 'v4')
             selected = harness_identity(association['llmManifestSha256'])
-            frozen = {S7: frozen, H5: h5, SCORED_V1: scored_v1, SCORED_V2: scored_v2, SCORED: scored, RESIDENT: resident, NATIVE_V1: native_v1, NATIVE: native, SEUNGUN_GPT: seungun, SEUNGUN_GPT_V1: seungun_v1, DLPC_GOP: dlpc_gop, DLPC_ANNOUNCER: dlpc_announcer}[selected]
+            frozen = {S7: frozen, H5: h5, SCORED_V1: scored_v1, SCORED_V2: scored_v2, SCORED: scored, RESIDENT: resident, NATIVE_V1: native_v1, NATIVE: native, SEUNGUN_GPT: seungun, SEUNGUN_GPT_V1: seungun_v1, DLPC_GOP: dlpc_gop, DLPC_ANNOUNCER: dlpc_announcer, AUDIOVISUAL: audiovisual}[selected]
             metadata = association['preparedAudio']
             prepared = PreparedAudioIdentity.from_document(metadata) if metadata is not None else None
             # This verifies authenticated producer measurements and their binding,
@@ -250,11 +265,16 @@ def main():
         validate_canonical_result_document(document, preflight=preflight, receipt=receipt)
         if operation == 'VERIFY_HANDOFF':
             from voice_coach.backend_analysis.http_models import digest
-            if (request.result_schema_version != 'voice-coaching.runpod-analysis-result.v5'
+            if (request.result_schema_version not in {'voice-coaching.runpod-analysis-result.v5', 'voice-coaching.runpod-analysis-result.v6'}
                     or digest(parse_json(request_bytes)) != manifest['requestSha256']
                     or digest(parse_json(callback_bytes)) != manifest['projectionSha256']
                     or any(document[k] != manifest[k] for k in ('eventId','workerInstanceId','requestId','executionId','analysisId','recordingId','contentId'))):
                 raise ValueError('VERIFIER_HANDOFF_MISMATCH')
+        if request.is_audiovisual:
+            binding = document.get('mediaBinding', {})
+            if (binding.get('videoSha256') != request.visual_input.sha256
+                    or binding.get('mediaReceiptSha256') != request.media_preparation['receiptSha256']):
+                raise ValueError('VERIFIER_MEDIA_MISMATCH')
         expected = dict(requestId=str(request.event_id), executionId=str(request.execution_id),
                         analysisId=request.analysis_id, recordingId=request.recording_id, contentId=request.content_id,
                         analysisProfile=request.analysis_profile, schemaVersion=request.result_schema_version)

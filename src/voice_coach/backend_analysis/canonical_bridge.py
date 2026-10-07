@@ -127,6 +127,8 @@ class CanonicalExpressionResult:
     # utterance and source identity. None means prepare produced no view; it
     # never means an invented empty candidate selection.
     selection_bytes: bytes | None = field(default=None, repr=False)
+    media_receipt_bytes: bytes | None = field(default=None, repr=False)
+    visual_evidence_bytes: bytes | None = field(default=None, repr=False)
 
 
 def _encode(value) -> bytes:
@@ -200,6 +202,7 @@ class FrozenCanonicalCoaching:
         prepared_wav: Path | None,
         producer_workspace: Path,
         transport: Callable,
+        visual_evidence_bytes: bytes | None = None,
     ) -> CanonicalExpressionResult:
         """Only call on a freshly completed, server-owned canonical execution.
 
@@ -242,11 +245,22 @@ class FrozenCanonicalCoaching:
                        source_audio_sha256=request.audio_sha256,
                        prepared_wav_sha256=prepared_sha,
                        provenance_source="admitted-http-canonical-producer-v1")
+        visual_args, media_receipt_bytes = {}, None
+        if getattr(request, "is_audiovisual", False):
+            from .canonical_audiovisual_result import validated_visual
+            from voice_coach.visual_feedback.coaching_input import prepare_visual_coaching
+            _require(visual_evidence_bytes is not None, "VISUAL_EVIDENCE_REQUIRED")
+            validated_visual(visual_evidence_bytes, request=request, frozen=self,
+                             core=core, prepared_audio=prepared_identity)
+            visual_args["visual"] = prepare_visual_coaching(visual_evidence_bytes, core_bytes=core_bytes)
+            media_receipt_bytes = _encode(request.media_preparation["receipt"])
+        else:
+            _require(visual_evidence_bytes is None, "UNEXPECTED_VISUAL_EVIDENCE")
         # Preserve all three axes and the full original bytes. STEP7 itself owns
         # non-ACCEPT dispatch=0, ranking/order, permission and deterministic fallback.
         selection_bytes = None
         try:
-            _, view, _, _ = bridge.prepare(core_bytes, request.script_text, binding)
+            _, view, _, _ = bridge.prepare(core_bytes, request.script_text, binding, **visual_args)
             if view is not None:
                 selection_bytes = _encode(view)
         except Exception:
@@ -259,7 +273,7 @@ class FrozenCanonicalCoaching:
             from .native_execution import admitted_binding
             native_args['native_binding'] = admitted_binding(request,
                 core_sha256=self.artifacts.identity.core_sha256, prepared_sha256=prepared_sha)
-        result = bridge.dispatch(core_bytes, request.script_text, binding, transport=transport, **native_args)
+        result = bridge.dispatch(core_bytes, request.script_text, binding, transport=transport, **native_args, **visual_args)
         identity = self.artifacts.identity
         association = dict(requestId=str(request.event_id), executionId=str(request.execution_id),
                            analysisId=request.analysis_id, recordingId=request.recording_id,
@@ -272,10 +286,16 @@ class FrozenCanonicalCoaching:
                            preparedWavSha256=prepared_sha,
                            preparedAudio=prepared_identity.to_document() if prepared_identity is not None else None,
                            visualStatus="NOT_CONNECTED", visualCorrectiveClaimsAllowed=False)
+        if visual_evidence_bytes is not None:
+            association.update(visualStatus=_json(visual_evidence_bytes)["visual"]["status"],
+                videoSha256=request.visual_input.sha256,
+                mediaReceiptSha256=request.media_preparation["receiptSha256"],
+                visualEvidenceSha256=_sha(visual_evidence_bytes))
         from voice_coach.direct_analysis.domain import DirectInput
         if type(request) is DirectInput:
             association["schemaVersion"] = "voice-coaching.direct-association.v1"
             association["jobId"] = association.pop("analysisId")
             association["audioAssetId"] = association.pop("recordingId")
         return CanonicalExpressionResult(core_bytes, _encode(binding),
-                                         _encode(association), _encode(result), selection_bytes)
+                                         _encode(association), _encode(result), selection_bytes,
+                                         media_receipt_bytes, visual_evidence_bytes)

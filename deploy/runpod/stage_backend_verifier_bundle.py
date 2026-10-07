@@ -20,8 +20,12 @@ REQUIRED_APP_FILES = frozenset({
     'app/src/voice_coach/direct_analysis/domain.py',
     *(f'app/src/voice_coach/backend_analysis/{name}.py' for name in (
         'canonical_generation', 'canonical_bridge', 'canonical_codec', 'canonical_media', 'canonical_harness',
-        'canonical_result', 'http_models', 'domain',
+        'canonical_result', 'canonical_audiovisual_result', 'media_preparation', 'http_models', 'domain',
         'native_execution', 'native_phone_contract', 'native_phone_assessment', 'phone_rubric',
+    )),
+    *(f'app/src/voice_coach/visual_feedback/{name}.py' for name in (
+        'canonical_verification', 'canonical_service', 'canonical_alignment', 'audiovisual_evidence',
+        'reference_catalog', 'reference_distance', 'lip_geometry', 'feature_protocol', 'coaching_input', 'parallel_analysis',
     )),
     *(f'app/docs/contracts/{name}.schema.json' for name in (
         'runpod_result_v4', 'runpod_canonical_parent', 'runpod_canonical_input',
@@ -29,7 +33,8 @@ REQUIRED_APP_FILES = frozenset({
         'runpod_http_control_v1', 'runpod_analysis_request_v2',
         'runpod_result_v1', 'runpod_canonical_journal_v1',
         'runpod_result_v5', 'runpod_analysis_request_v3', 'runpod_canonical_handoff_v1',
-        'native_phone_evidence', 'native_logits',
+        'native_phone_evidence', 'native_logits', 'runpod_analysis_request_v4', 'runpod_result_v6',
+        'runpod_media_preparation_v1', 'runpod_canonical_handoff_v2', 'runpod_visual_coaching_input_v1',
     )),
 })
 
@@ -61,6 +66,7 @@ def main():
                      'frozen/canonical_seungun_core_20261006_v1/', 'frozen/canonical_seungun_gpt_20261006_v1/',
                      'frozen/canonical_dlpc_gop_cuda_20261007_v2/', 'frozen/canonical_dlpc_gop_cuda_20261007_v2_h5/',
                      'frozen/canonical_dlpc_gop_announcer_20261007_v1_h5/',
+                     'frozen/canonical_dlpc_audiovisual_20261007_v1_h5/',
                      'frozen/canonical_seungun_gop_core_20261006_v1/', 'frozen/canonical_seungun_gop_gpt_20261006_v1/',
                      'frozen/canonical_native_core_20261004_v1/', 'frozen/canonical_native_h5_20261004_v1/',
                      'app/src/voice_coach/', 'app/docs/contracts/'))
@@ -99,6 +105,11 @@ def main():
         'frozen/canonical_seungun_gpt_20261006_v1/contracts/llm/llm_contract_manifest.json': '6a3bf7c872e718086cb9add4d48412c825188310cdc9eb394089301dd784ff57',
         'frozen/canonical_seungun_gop_gpt_20261006_v1/contracts/llm/llm_contract_manifest.json': 'f90440b764f78f32c989dc0785f41262397cc22e1d1ca48c40361189b81f86d5',
     })
+    if any(name.startswith('frozen/canonical_dlpc_audiovisual_20261007_v1_h5/') for name in files):
+        pins.update({
+            'frozen/canonical_dlpc_audiovisual_20261007_v1_h5/contracts/llm/dependency_lock.json': '3de3db047604a68b23427281e724b67fd602e241cca46fce36dc17f84fc6bcfa',
+            'frozen/canonical_dlpc_audiovisual_20261007_v1_h5/contracts/llm/llm_contract_manifest.json': 'ea7e573f0212802b2f6d09043873de31aad870403fab4b4618d4fcc8ae80a1e2',
+        })
     native_v2 = {
         'frozen/canonical_native_core_20261005_v4/release_manifest.json': 'f1009fcdbf75515ddc13e915dcbbf19dfac751ce39779e404749c4f51dd74841',
         'frozen/canonical_native_h5_20261005_v4/contracts/llm/dependency_lock.json': '1b8cb378b889817e14bf06be5065b04016589f6b74dcd5501776dde758f38259',

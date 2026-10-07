@@ -181,3 +181,7 @@ Backend가 만든 immutable `mediaPreparation` 객체에 `schemaVersion`, `sourc
 롤백은 먼저 v6 admission을 닫고 실행 중 작업을 drain 또는 명시적으로 취소한다. v6 결과를 읽을 수 있는 dual reader/verifier/DB 확장은 유지하고 audio v5 producer로 되돌린다. 신규 결과가 저장된 뒤 구 v5-only Backend로 단순 downgrade하거나 migration을 파괴적으로 되돌리지 않는다. 원본 영상/근거를 삭제하는 롤백은 하지 않는다.
 
 AGENTS에 따라 자동 회귀 테스트·실제 품질 QA는 이번 계획 작업에서 실행하지 않았다. 구현 단계의 정적 schema/컴파일 확인과 개발자의 실제 추론·FE·품질 QA를 구분한다. AI main·Backend develop PR 및 FE 대상 브랜치를 확인해 인계하며, PR 작성과 운영 배포는 각각 별도 완료 상태로 기록한다.
+
+## 2026-10-07 구현 후보 반영
+
+현재 구현 사실은 [진행 기록](implementation-progress-20261007.md)과 [v6 인계](audiovisual-v6-handoff-20261007.md)를 따른다. 초안과 달리 첫 v6 후보는 영상 전용이며, 실제 MFA 자음 위치만 사용한다. 참조/보정 catalog는 비어 있어 관찰 전용이다. 아래 계획의 전체 음소·보정 점수·운영 전환까지 완료했다는 의미가 아니다.

@@ -1,7 +1,7 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "$id": "urn:voice-coaching:runpod-analysis-request:v3",
-  "title": "Opt-in canonical v5 durable handoff request",
+  "$id": "urn:voice-coaching:runpod-analysis-request:v4",
+  "title": "Opt-in canonical v6 audiovisual durable handoff request",
   "$comment": "Parsing support is not execution readiness. Keep v1 unchanged. Enforce the 65536-byte body limit, UTF-16 string limits, registered ownership/media metadata, original-payload JCS digest, and lease/deadline outside this schema. No caller-supplied grant, callback URL, model path or storage target is accepted.",
   "$ref": "#/$defs/analysisRequest",
   "$defs": {

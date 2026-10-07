@@ -73,3 +73,7 @@ Backend Java 경로 prefix는 `src/main/java/org/example/voice/`, AI Python pref
 `testvideo1.mp4` 한 개는 포함된 문장·음소/문맥의 exemplar다. 전체 한국어 입술 점수의 검증된 기준은 아니다. 비교·관찰 가능한 범위부터 제공하며, 보정되지 않은 점수와 지원하지 않는 교정은 null/보류 사유로 유지한다.
 
 이번에는 소스·문서만 정적으로 확인했다. 실제 analyze 요청, 추론, GPT 호출, 자동 회귀 테스트, FE 화면 QA, commit/push/PR/배포는 수행하지 않았다.
+
+## 2026-10-07 구현 후보 반영
+
+현재 구현 사실은 [진행 기록](implementation-progress-20261007.md)과 [v6 인계](audiovisual-v6-handoff-20261007.md)를 따른다. 초안과 달리 첫 v6 후보는 영상 전용이며, 실제 MFA 자음 위치만 사용한다. 참조/보정 catalog는 비어 있어 관찰 전용이다. 아래 계획의 전체 음소·보정 점수·운영 전환까지 완료했다는 의미가 아니다.

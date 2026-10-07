@@ -169,5 +169,6 @@ def aggregate(assessments: list[dict], *, target_count: int, visually_eligible_c
     coverage = len(scored) / visually_eligible_count if visually_eligible_count else None
     return dict(score=statistics.mean(scored) if scored and coverage >= minimum_coverage else None,
                 targetCount=target_count, visuallyEligibleCount=visually_eligible_count,
-                observedCount=sum(r["frameCount"] >= 3 for r in assessments),
+                observedCount=sum(r["status"] in {"OBSERVED", "REFERENCE_ONLY", "SCORED"}
+                                  and r["frameCount"] >= 3 for r in assessments),
                 scoredCount=len(scored), coverage=coverage)

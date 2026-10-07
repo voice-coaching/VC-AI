@@ -197,3 +197,7 @@ coverage=|E|/N_{\text{visually eligible target phones}}.
 7. **전환:** 검증한 AI main/Backend develop 변경과 FE reader를 준비한 후 새 immutable bundle과 rollback 묶음으로 drain·전환한다. 코드·schema·reference·prompt·복구 pin을 함께 맞춘다. 현재 운영 전환 완료가 아니다.
 
 완료 근거에는 음성/영상 stage의 실제 시작·종료 시각(중첩 증명), Seungun/GPT dispatch 횟수, score별 출처, null 사유, GPT 제공/참조/표시 영상 근거 수를 포함한다. 참조 자신과의 비교나 기존 API ready 응답으로 새 입술 교정 품질을 통과 처리하지 않는다.
+
+## 2026-10-07 구현 후보 반영
+
+현재 구현 사실은 [진행 기록](implementation-progress-20261007.md)과 [v6 인계](audiovisual-v6-handoff-20261007.md)를 따른다. 초안과 달리 첫 v6 후보는 영상 전용이며, 실제 MFA 자음 위치만 사용한다. 참조/보정 catalog는 비어 있어 관찰 전용이다. 아래 계획의 전체 음소·보정 점수·운영 전환까지 완료했다는 의미가 아니다.

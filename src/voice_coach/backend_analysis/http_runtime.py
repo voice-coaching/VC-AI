@@ -93,6 +93,8 @@ class HttpRuntime:
         self.canonical_reason = "canonical_bootstrap_not_ready"
         self.canonical_dependencies_until = 0.0
         self.handoff_dependencies_until = 0.0
+        self.audiovisual_dependencies_until = 0.0
+        self.audiovisual_assets_until = 0.0
         self.canonical_monitor = None
         try:
             from .deployment_observation import read_identity
@@ -163,6 +165,60 @@ class HttpRuntime:
         return (self.canonical_lane is not None and not self.stopping and self.canonical_lane.ready()
                 and self.environment.get("AI_CANONICAL_HANDOFF_ENABLED") == "true")
 
+    def audiovisual_executor_ready(self):
+        from .canonical_harness import AUDIOVISUAL
+        return (self.handoff_executor_ready()
+                and self.environment.get("AI_CANONICAL_AUDIOVISUAL_ENABLED") == "true"
+                and self.canonical_lane.resident.artifacts.identity == AUDIOVISUAL
+                and time.monotonic() < self.audiovisual_assets_until)
+
+    def audiovisual_admission_ready(self):
+        return (self.audiovisual_executor_ready() and self.handoff_admission_ready()
+                and time.monotonic() < self.audiovisual_dependencies_until)
+
+    def _check_audiovisual_assets(self):
+        from .canonical_bridge import FrozenCanonicalCoaching
+        from .canonical_audiovisual_result import visual_assets
+        from .canonical_process import check_guard_python
+        from voice_coach.pronunciation_attempts.adapters.mediapipe_landmark_worker import _read_model_bytes
+        resident = self.canonical_lane.resident
+        _, configuration = visual_assets(FrozenCanonicalCoaching(resident.artifacts))
+        check_guard_python(Path(self.environment["AI_CANONICAL_VISUAL_PYTHON"]))
+        _read_model_bytes(self.environment["AI_ANALYSIS_VISUAL_LANDMARK_MODEL_PATH"],
+                          configuration["modelSha256"])
+        for tool in ("/usr/bin/ffmpeg", "/usr/bin/ffprobe"):
+            if not os.access(tool, os.X_OK):
+                raise ValueError("VISUAL_EXECUTABLE_UNAVAILABLE")
+
+    async def _monitor_audiovisual(self, client):
+        if self.environment.get("AI_CANONICAL_AUDIOVISUAL_ENABLED") != "true":
+            return
+        from .canonical_settings import audiovisual_schema_digests
+        try:
+            if time.monotonic() >= self.audiovisual_assets_until:
+                await asyncio.to_thread(self._check_audiovisual_assets)
+                self.audiovisual_assets_until = time.monotonic() + 60
+            async with client.stream("GET", self.settings.callback_base + "/api/internal/ai/worker-readiness/audiovisual",
+                    headers={"Authorization": "Bearer " + self.settings.callback_token, "Accept-Encoding": "identity"}) as reply:
+                if reply.status_code != 200 or reply.headers.get("Content-Encoding", "identity") != "identity":
+                    raise ValueError()
+                raw = bytearray()
+                async for chunk in reply.aiter_raw():
+                    raw.extend(chunk)
+                    if len(raw) > 65536:
+                        raise ValueError()
+            from .http_models import parse_json
+            state = parse_json(bytes(raw))
+            if (state.get("contractVersion") != "voice-coaching.canonical-handoff.v2"
+                    or state.get("supported") is not True
+                    or state.get("schemaDigests") != audiovisual_schema_digests()):
+                raise ValueError()
+            self.audiovisual_dependencies_until = time.monotonic() + 45
+        except asyncio.CancelledError:
+            raise
+        except Exception:
+            self.audiovisual_dependencies_until = 0
+
     async def _monitor_handoff(self, client):
         if self.environment.get("AI_CANONICAL_HANDOFF_ENABLED") != "true":
             return
@@ -204,6 +260,7 @@ class HttpRuntime:
                 try:
                     await self.canonical_lane.refresh()
                     await self._monitor_handoff(client)
+                    await self._monitor_audiovisual(client)
                     self.canonical_reason = None if time.monotonic() < self.handoff_dependencies_until else "handoff_backend_not_ready"
                 except asyncio.CancelledError:
                     raise
@@ -339,7 +396,8 @@ class HttpRuntime:
         if self.settings is None:
             raise HttpFailure(503, "NOT_READY")
         request = AnalysisInput.from_payload(body, self.settings.prefix)
-        if not request.is_legacy and request.visual_input is not None:
+        if not request.is_legacy and request.visual_input is not None and not (
+                request.is_audiovisual and self.environment.get("AI_CANONICAL_AUDIOVISUAL_ENABLED") == "true"):
             raise HttpFailure(503, "NOT_READY")
         key, sha = (body["requestId"], body["executionId"]), digest(body)
         self._prune()
@@ -360,8 +418,10 @@ class HttpRuntime:
             raise HttpFailure(429, "CAPACITY_EXCEEDED")
         if not self.resource_budget.can_admit():
             raise HttpFailure(429, "CAPACITY_EXCEEDED")
-        from .http_models import RESULT_V5
-        canonical_ready = self.handoff_admission_ready() if request.result_schema_version == RESULT_V5 else self.canonical_admission_ready()
+        from .http_models import RESULT_V5, RESULT_V6
+        canonical_ready = (self.audiovisual_admission_ready() if request.result_schema_version == RESULT_V6
+                           else self.handoff_admission_ready() if request.result_schema_version == RESULT_V5
+                           else self.canonical_admission_ready())
         if not request.is_legacy and not canonical_ready:
             raise HttpFailure(503, "NOT_READY")
         if request.is_legacy and not self.legacy_ready():
@@ -401,7 +461,7 @@ class HttpRuntime:
             key = (body["requestId"], body["executionId"])
             try:
                 request = AnalysisInput.from_payload(body, self.settings.prefix)
-                if key in self.history or request.is_legacy or request.visual_input is not None:
+                if key in self.history or request.is_legacy or (request.visual_input is not None and not request.is_audiovisual):
                     continue
                 job = Job(body, request, digest(body), state="DELIVERING_RESULT", worker_id=worker)
                 job.canonical_workspace = work
