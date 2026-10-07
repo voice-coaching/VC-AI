@@ -39,6 +39,10 @@
 
 ## H5 후보 pin
 
+후속 사용자 요청에 따른 최대 4문장·단어별 피드백 지침과 새 소스 후보는
+[피드백 간결화 기록](../canonical-integration/concise-feedback-policy-20261007.md)을 따른다.
+아래 v2 pin은 기존 후보 이력이며 새 프롬프트의 운영 활성화를 뜻하지 않는다.
+
 - core: `4cc0cbacd41b5c6f2ac20e6e4840bc5406f4c7ab79ecf53702586eeb5874ecbc`
 - H5: `d70372926d3406842b95c370b5ceb152480e7f0af83ba840028ec8d9ace2dc50`
 - lock: `934729ee467a2eb030c244584c6fa5c3575ca9ed0a43348a59a486199c0f55e9`
