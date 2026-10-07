@@ -60,6 +60,7 @@ def main():
                      'frozen/canonical_native_core_20261005_v4/', 'frozen/canonical_native_h5_20261005_v4/',
                      'frozen/canonical_seungun_core_20261006_v1/', 'frozen/canonical_seungun_gpt_20261006_v1/',
                      'frozen/canonical_dlpc_gop_cuda_20261007_v2/', 'frozen/canonical_dlpc_gop_cuda_20261007_v2_h5/',
+                     'frozen/canonical_dlpc_gop_announcer_20261007_v1_h5/',
                      'frozen/canonical_seungun_gop_core_20261006_v1/', 'frozen/canonical_seungun_gop_gpt_20261006_v1/',
                      'frozen/canonical_native_core_20261004_v1/', 'frozen/canonical_native_h5_20261004_v1/',
                      'app/src/voice_coach/', 'app/docs/contracts/'))
@@ -118,6 +119,12 @@ def main():
             'frozen/canonical_dlpc_gop_cuda_20261007_v2/release_manifest.json': 'f6d56e1decc160f0ca38cc8d52303f3de20945f872d714bf6a2e743ed94c0391',
             'frozen/canonical_dlpc_gop_cuda_20261007_v2_h5/contracts/llm/dependency_lock.json': '3e2e81b43b1c1298266df428bc01ef0761d37f413073824cae2000623ea2eb3c',
             'frozen/canonical_dlpc_gop_cuda_20261007_v2_h5/contracts/llm/llm_contract_manifest.json': '1612539f82a0b6e2c5c0b3551440b8094ca979bd8ab5d898386713bd0d1f54b7',
+        })
+    if any(name.startswith('frozen/canonical_dlpc_gop_announcer_20261007_v1_h5/') for name in files):
+        pins.update({
+            'frozen/canonical_dlpc_gop_cuda_20261007_v2/release_manifest.json': 'f6d56e1decc160f0ca38cc8d52303f3de20945f872d714bf6a2e743ed94c0391',
+            'frozen/canonical_dlpc_gop_announcer_20261007_v1_h5/contracts/llm/dependency_lock.json': 'b605c3b9ba06bbf18fc126770b18de3d2da0d3f70c08e04873f17bc735b948bc',
+            'frozen/canonical_dlpc_gop_announcer_20261007_v1_h5/contracts/llm/llm_contract_manifest.json': 'def65f68a849a2452b0e4dde600f0ef85d99beaa97123d30d97262653ebf8e77',
         })
     for name, expected in pins.items():
         require(name in files and files[name]['sha256'] == expected, 'BUNDLE_FROZEN_PIN')
