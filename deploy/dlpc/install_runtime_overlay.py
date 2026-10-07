@@ -14,9 +14,13 @@ def install(raw, expected):
     if hashlib.sha256(raw).hexdigest() != expected:
         raise ValueError('OVERLAY_DIGEST_MISMATCH')
     body = json.loads(raw)
+    llm_directory = body.get('llmDirectory', 'canonical_dlpc_gop_cuda_20261007_v2_h5')
+    if llm_directory not in {'canonical_dlpc_gop_cuda_20261007_v2_h5',
+                             'canonical_dlpc_gop_announcer_20261007_v1_h5'}:
+        raise ValueError('OVERLAY_LLM_DIRECTORY')
     roots = {'app': Path('/opt/intelligentai/app'),
              'core': Path('/workspace/intelligentai/releases/canonical_dlpc_gop_cuda_20261007_v2'),
-             'llm': Path('/workspace/intelligentai/validation/canonical_dlpc_gop_cuda_20261007_v2_h5')}
+             'llm': Path('/workspace/intelligentai/validation') / llm_directory}
     roots['mfa'] = Path('/workspace/intelligentai/validation/finish_20260916/latency_optimization_20260921T044013_2c3be9/mfa_startup_recovery_20260921T065201_ac461c/mfa_preflight_optimization_20260922T043055Z_0d7f6a/candidate')
     decoded = []
     for name, row in body['files'].items():

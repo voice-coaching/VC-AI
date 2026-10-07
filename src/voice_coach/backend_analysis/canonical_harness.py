@@ -114,7 +114,15 @@ DLPC_GOP = HarnessIdentity(
 )
 DLPC_GOP_CORE_DIRECTORY = 'canonical_dlpc_gop_cuda_20261007_v2'
 DLPC_GOP_LLM_DIRECTORY = 'canonical_dlpc_gop_cuda_20261007_v2_h5'
-HARNESSES = {value.manifest_sha256: value for value in (S7, H5, SCORED_V1, SCORED_V2, SCORED, RESIDENT, NATIVE_V1, NATIVE, SEUNGUN_GPT_V1, SEUNGUN_GPT, DLPC_GOP)}
+DLPC_ANNOUNCER = HarnessIdentity(
+    'canonical-dlpc-gop-announcer-20261007-v1',
+    'def65f68a849a2452b0e4dde600f0ef85d99beaa97123d30d97262653ebf8e77',
+    'b605c3b9ba06bbf18fc126770b18de3d2da0d3f70c08e04873f17bc735b948bc',
+    '977c49744e7af9fc60fdc2eb13c23985692cb00dd71789d8b3c43c3813e3f1b5',
+    DLPC_GOP.core_sha256, True, True, True, True,
+)
+DLPC_ANNOUNCER_LLM_DIRECTORY = 'canonical_dlpc_gop_announcer_20261007_v1_h5'
+HARNESSES = {value.manifest_sha256: value for value in (S7, H5, SCORED_V1, SCORED_V2, SCORED, RESIDENT, NATIVE_V1, NATIVE, SEUNGUN_GPT_V1, SEUNGUN_GPT, DLPC_GOP, DLPC_ANNOUNCER)}
 
 
 def harness_identity(manifest_sha256: str) -> HarnessIdentity:

@@ -94,6 +94,7 @@ def main():
         NATIVE_V1, NATIVE_V1_CORE_DIRECTORY, NATIVE_V1_LLM_DIRECTORY,
         SEUNGUN_GPT, SEUNGUN_CORE_DIRECTORY, SEUNGUN_LLM_DIRECTORY,
         DLPC_GOP, DLPC_GOP_CORE_DIRECTORY, DLPC_GOP_LLM_DIRECTORY,
+        DLPC_ANNOUNCER, DLPC_ANNOUNCER_LLM_DIRECTORY,
         SEUNGUN_GPT_V1, SEUNGUN_V1_CORE_DIRECTORY, SEUNGUN_V1_LLM_DIRECTORY,
     )
     frozen = FrozenCanonicalCoaching(FrozenCanonicalArtifacts(args.core_root, args.llm_root))
@@ -114,6 +115,8 @@ def main():
     dlpc_gop = FrozenCanonicalCoaching(FrozenCanonicalArtifacts(
         args.core_root.parent / DLPC_GOP_CORE_DIRECTORY, args.llm_root.parent / DLPC_GOP_LLM_DIRECTORY))
     installed_native = None
+    dlpc_announcer = FrozenCanonicalCoaching(FrozenCanonicalArtifacts(
+        args.core_root.parent / DLPC_GOP_CORE_DIRECTORY, args.llm_root.parent / DLPC_ANNOUNCER_LLM_DIRECTORY))
     seungun = FrozenCanonicalCoaching(FrozenCanonicalArtifacts(
         args.core_root.parent / SEUNGUN_CORE_DIRECTORY, args.llm_root.parent / SEUNGUN_LLM_DIRECTORY))
     seungun_v1 = FrozenCanonicalCoaching(FrozenCanonicalArtifacts(
@@ -157,6 +160,13 @@ def main():
                 raise RuntimeError("VERIFIER_HARNESS_ROOT_MISMATCH")
             dlpc_gop._bridge().scoring_policy()
             installed_native = DLPC_GOP
+        # Prompt-only derivative shares the existing DLPC core. Its absence is
+        # compatible with installations that have not activated restoration yet.
+        if dlpc_announcer.artifacts.llm_root.exists():
+            if dlpc_announcer.artifacts.identity != DLPC_ANNOUNCER:
+                raise RuntimeError('VERIFIER_HARNESS_ROOT_MISMATCH')
+            dlpc_announcer._bridge().scoring_policy()
+            installed_native = DLPC_ANNOUNCER
     except Exception:
         raise RuntimeError('VERIFIER_DEPENDENCIES_UNAVAILABLE') from None
     if args.check_installation:
@@ -209,7 +219,7 @@ def main():
             association = _read_json(private.association_bytes)
             _validate(association, 'association')
             selected = harness_identity(association['llmManifestSha256'])
-            frozen = {S7: frozen, H5: h5, SCORED_V1: scored_v1, SCORED_V2: scored_v2, SCORED: scored, RESIDENT: resident, NATIVE_V1: native_v1, NATIVE: native, SEUNGUN_GPT: seungun, SEUNGUN_GPT_V1: seungun_v1, DLPC_GOP: dlpc_gop}[selected]
+            frozen = {S7: frozen, H5: h5, SCORED_V1: scored_v1, SCORED_V2: scored_v2, SCORED: scored, RESIDENT: resident, NATIVE_V1: native_v1, NATIVE: native, SEUNGUN_GPT: seungun, SEUNGUN_GPT_V1: seungun_v1, DLPC_GOP: dlpc_gop, DLPC_ANNOUNCER: dlpc_announcer}[selected]
             metadata = association['preparedAudio']
             prepared = PreparedAudioIdentity.from_document(metadata) if metadata is not None else None
             # This verifies authenticated producer measurements and their binding,

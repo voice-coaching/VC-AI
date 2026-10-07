@@ -61,19 +61,20 @@ def main():
             os.fsync(stream.fileno())
         os.chown(destination, 10001, 10001)
         destination.chmod(0o600)
-    lock = Path('/run/intelligentai/gpu.lock')
-    if lock.exists() or lock.is_symlink():
-        info = lock.lstat()
-        if (not stat.S_ISREG(info.st_mode) or info.st_uid != 10001
-                or stat.S_IMODE(info.st_mode) != 0o600):
-            raise ValueError('EXISTING_GPU_LOCK_INVALID')
-        # Never replace a live flock inode during an idempotent preparation.
-    else:
-        with lock.open('xb'):
-            pass
-        os.chown(lock, 10001, 10001)
-        lock.chmod(0o600)
-    print('Private runtime directories, GPU lock and TTS token prepared; services not started')
+    for name in ('gpu.lock', 'analysis.lock'):
+        lock = Path('/run/intelligentai') / name
+        if lock.exists() or lock.is_symlink():
+            info = lock.lstat()
+            if (not stat.S_ISREG(info.st_mode) or info.st_uid != 10001
+                    or stat.S_IMODE(info.st_mode) != 0o600):
+                raise ValueError('EXISTING_RESOURCE_LOCK_INVALID')
+            # Never replace a live flock inode during idempotent preparation.
+        else:
+            with lock.open('xb'):
+                pass
+            os.chown(lock, 10001, 10001)
+            lock.chmod(0o600)
+    print('Private runtime directories, resource locks and TTS token prepared; services not started')
 
 
 if __name__ == '__main__':
