@@ -1,5 +1,9 @@
 # RunPod 영상·입술모양 분석 파이프라인
 
+## 2026-10-07 통합 구현 후보
+
+[통합 계획](backend-audiovisual-implementation-plan-20261007.md)과 [구현 진행 기록](implementation-progress-20261007.md)을 먼저 읽는다. 현재는 미디어 receipt/snapshot 및 순수 계산·병렬 orchestration 기반을 추가한 상태다. v6 접수·GPT·handoff·조회·FE 연결은 아직 미완료이며 아래 9/30 기록을 현재 canonical 영상 지원으로 해석하지 않는다.
+
 2026-09-30 **01:38~01:44 KST**에 실행 중인 RunPod를 다시 읽어 P0/P1 배포 revision `32d98e3` 기준으로 갱신했다. 설계 목표나 과거 실험을 현재 동작으로 간주하지 않는다. 최초 9월 29일 기록과 최신 파일 식별자는 [배포 근거](deployment-evidence.md)에서 구분한다.
 
 ## 핵심 결론
