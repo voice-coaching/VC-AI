@@ -9,6 +9,8 @@
 
 ## 복구 범위
 
+사용자는 확인 질문에 **현재 채점 유지 + 피드백 복원**을 선택했고, DLPC 플랫폼 터미널에서 단발 설치 명령 실행이 가능하다고 답했다.
+
 현재 GOP 채점과 JSON 계약을 유지하면서 전문가 피드백을 복구하는 방식이다. 과거의 `items/candidateId/guidanceId` 출력 계약이나 ‘점수는 서버 책임’ 지시까지 통째로 적용하면 현재 `scoring/feedback` 계약과 충돌한다. 따라서 전체 과거 system 바이트로 되돌린 것은 아니다.
 
 `configs/coaching/announcer_feedback_system_20261007.txt`에 **과거 testvideo2 원문 전체를 그대로** 포함하고, 그 사례에 맞춘 단어별 실천 지도 지침을 복구했다. 인용문의 Git 원문 일치를 확인했다. 새로운 개인 오류를 만들어 내지 않고, 다른 대본에서 사례 단어를 복사하거나 원문 단어를 생략하지 않도록 했다. 운율은 선택적인 문장 표현 연습으로 안내하며 실제로 관측한 오류나 감점 근거로 만들지 않는다.
@@ -46,3 +48,29 @@ AI harness/execution registry, v4/v5의 association/sourceIdentity, verifier exp
 4. 실제 배포 source/bundle/schema, 분석·handoff·direct readiness를 각각 확인하고 접수를 재개한다. AWS 비밀 복구본과 B2 overlay pin도 활성 배포 묶음에 맞춰 갱신해야 재부팅 후 이전 프롬프트로 돌아가지 않는다.
 
 이 문서의 적용 순서는 아직 실행 완료한 작업이 아니다.
+
+## 단발 운영 적용 준비
+
+AWS 고정 SSH exporter에 stage/resume 명령을 추가하는 패치는 자동 승인 검토가 거절했다. 그 확장은 적용하지 않았다. 현재 `activate_announcer_prompt.py`는 이미 허용된 `b2`와 `settings` 조회만 사용한다. AWS hold/activate/resume는 기존 관리자 SSH와 배포 도구로 운영자가 수행한다. SSH 키·리스너·허용 포트·고정 exporter 권한은 변경하지 않는다.
+
+DLPC 명령은 bundle 검증 → direct 접수 hold/drain → `waiting_for_backend_activation` → Backend의 새 schema 확인 → 분석 정지 및 source/LLM 설치 → 분석 준비 확인 → `waiting_for_backend_resume` → AWS의 복구 설정이 새 source/LLM으로 갱신됨을 확인 → direct 접수 재개 순서다. 각 대기 단계는 최대 1시간이며 오류 시 hold를 남긴다. 진행 중인 작업은 강제 재실행하지 않는다. TTS는 재시작하지 않는다. 원복 자료와 상태는 DLPC `/opt/intelligentai/ops/announcer-20261007/`에 root 전용으로 남는다.
+
+2026-10-07 10:58 KST까지 다음 준비를 확인했다. **이 값은 배포 후보 식별자이며 아직 활성화 근거가 아니다.**
+
+| 후보 | 식별자 |
+| --- | --- |
+| AI source | `df90eb10be7165dd29b77454c368da76733eac6b` |
+| Runtime bundle | `b7170dda1a4ec5a520f30dfa88a0f57f649f9c118060975957e7f68b27b94e78`, 14,869,274 bytes |
+| AWS verifier bundle | `fecdeca814a707f32656e286df4edb22d16df6c0bc1020074df7c9c93317bd16`, 983 files |
+| Backend source | `84260c05f2dde80ebec3f0d522726cca1ca8ff63` |
+| Backend JAR | `3799174a245b9e9098d4474f06576cad8fd083ad63b274e77f1933ffdfaac16f` |
+| Installer | `ee7539f971448bf3696c979c5f5165e2576bdac351e054b81909e381e078b48c`, 11,286 bytes |
+
+AWS verifier를 비활성 디렉터리에 설치하고 설치 준비 상태, JAR의 9개 schema, 현재 frontend 자산 호환성을 확인했다. 비활성 runtime profile은 `/root/.config/intelligentai/announcer-20261007/runtime-profile.json`이다. 실행 중인 JAR·profile은 변경하지 않았다.
+
+B2 `speakai2026`의 `intelligentai/recovery/dlpc-20261006/announcer-df90eb10-20261007/`에 두 파일을 저장하고 전체 다운로드 SHA-256을 대조했다. 비밀값·사용자 녹음은 포함하지 않았다.
+
+- Runtime file ID: `4_ze5cc71977ef1880ca60b0c17_f11679934c7b4394b_d20261007_m015732_c005_v0501017_t0020_u01791338252241`
+- Installer file ID: `4_ze5cc71977ef1880ca60b0c17_f107e77b17144395f_d20261007_m015757_c005_v0501042_t0031_u01791338277519`
+
+운영 적용 시 persistent home의 진단 복구 도구도 이 B2 runtime과 새 LLM 디렉터리를 사용하도록 갱신한다. 이것은 별도로 승인 대기 중인 ‘재부팅 후 production 자동 접수 재개’ 구현과 구분한다.
