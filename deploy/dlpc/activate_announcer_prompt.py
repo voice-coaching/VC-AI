@@ -80,7 +80,10 @@ def backend_ready(values, expected):
         doc = json.loads(r.read(131073))
     rows = doc.get('schemaDigests')
     actual = rows if isinstance(rows, dict) else {row['file']: row['sha256'] for row in rows or []}
-    return doc.get('supported') is True and doc.get('admissionEnabled') is True and actual == expected
+    # Backend admission is intentionally closed by the operator's hold phase.
+    # The new, exact contract is the activation signal; resume opens admission
+    # only after both sides have passed readiness.
+    return doc.get('supported') is True and actual == expected
 
 
 def main():
@@ -88,14 +91,29 @@ def main():
     parser.add_argument('--bundle-sha256', required=True)
     parser.add_argument('--bundle-file-id', required=True)
     parser.add_argument('--bundle-bytes', type=int, required=True)
+    parser.add_argument('--resume-waiting', action='store_true',
+                        help='After stopping the old installer, resume only its untouched activation wait')
     args = parser.parse_args()
     if os.geteuid() != 0 or socket.gethostname() != 'J3990.2020067.notebook.dlpc':
         raise ValueError('EXPECTED_DLPC_ROOT_REQUIRED')
     os.umask(0o077)
     # Creation is the one-time transaction guard. A failed previous attempt must
     # be reconciled; it is never overwritten or inferred to be safe to replay.
-    WORK.mkdir(parents=True, exist_ok=False)
-    record('preparing')
+    if args.resume_waiting:
+        for path in (WORK, WORK / 'state.json', WORK / 'plan.json', WORK / 'runtime.json',
+                     WORK / 'analysis.env.before', WORK / 'supervisord.conf.before'):
+            if path.is_symlink() or path.stat().st_uid != 0 or path.stat().st_mode & 0o077:
+                raise ValueError('RESUME_PRIVATE_STATE_REQUIRED')
+        if json.loads((WORK / 'state.json').read_bytes()).get('stage') != 'waiting_for_backend_activation':
+            raise ValueError('RESUME_REQUIRES_ACTIVATION_WAIT')
+        if HOLD.read_text() != 'announcer-prompt-20261007\n':
+            raise ValueError('RESUME_HOLD_OWNER_MISMATCH')
+        if (ENV.read_bytes() != (WORK / 'analysis.env.before').read_bytes()
+                or CONFIG.read_bytes() != (WORK / 'supervisord.conf.before').read_bytes()):
+            raise ValueError('RESUME_CONFIGURATION_CHANGED')
+    else:
+        WORK.mkdir(parents=True, exist_ok=False)
+        record('preparing')
     plan = dict(runtimeSha256=args.bundle_sha256, runtimeFileId=args.bundle_file_id, runtimeBytes=args.bundle_bytes)
     if len(args.bundle_sha256) != 64 or not 0 < plan['runtimeBytes'] < 32 * 1024**2:
         raise ValueError('PROMPT_PLAN_INVALID')
@@ -106,8 +124,14 @@ def main():
     # Only the restricted B2 read auth is returned; no master key is installed.
     sys.path.insert(0, str(TOOLS))
     from b2_backup import B2
-    with B2(export('b2', 60)).read(plan['runtimeFileId']) as reply:
-        raw = reply.read(plan['runtimeBytes'] + 1)
+    if args.resume_waiting:
+        prior = json.loads((WORK / 'plan.json').read_bytes())
+        if any(prior.get(k) != v for k, v in plan.items()):
+            raise ValueError('RESUME_PLAN_CHANGED')
+        raw = (WORK / 'runtime.json').read_bytes()
+    else:
+        with B2(export('b2', 60)).read(plan['runtimeFileId']) as reply:
+            raw = reply.read(plan['runtimeBytes'] + 1)
     if len(raw) != plan['runtimeBytes'] or hashlib.sha256(raw).hexdigest() != plan['runtimeSha256']:
         raise ValueError('PROMPT_RUNTIME_HASH_MISMATCH')
     bundle = json.loads(raw)
@@ -120,13 +144,14 @@ def main():
         'runpod_http_control_v1_2.schema.json', 'runpod_canonical_journal_v1.schema.json',
         'runpod_result_v5.schema.json', 'runpod_analysis_request_v3.schema.json',
         'runpod_canonical_handoff_v1.schema.json')}
-    (WORK / 'runtime.json').write_bytes(raw)
-    (WORK / 'plan.json').write_text(json.dumps(plan))
-    # Preserve local role secrets only in a root-private rollback directory.
-    (WORK / 'analysis.env.before').write_bytes(ENV.read_bytes())
-    (WORK / 'supervisord.conf.before').write_bytes(CONFIG.read_bytes())
-    if HOLD.exists(): raise ValueError('EXISTING_ADMISSION_HOLD')
-    with HOLD.open('x') as f: f.write('announcer-prompt-20261007\n')
+    if not args.resume_waiting:
+        (WORK / 'runtime.json').write_bytes(raw)
+        (WORK / 'plan.json').write_text(json.dumps(plan))
+        # Preserve local role secrets only in a root-private rollback directory.
+        (WORK / 'analysis.env.before').write_bytes(ENV.read_bytes())
+        (WORK / 'supervisord.conf.before').write_bytes(CONFIG.read_bytes())
+        if HOLD.exists(): raise ValueError('EXISTING_ADMISSION_HOLD')
+        with HOLD.open('x') as f: f.write('announcer-prompt-20261007\n')
     record('draining')
     until, consecutive = time.monotonic() + 1200, 0
     while time.monotonic() < until:
@@ -146,7 +171,8 @@ def main():
         time.sleep(5)
     else: raise ValueError('WAITING_FOR_OPERATOR_BACKEND_ACTIVATION')
     record('backend_activated')
-    if fetch('/health/deployment', token).get('activeJobs') != 0:
+    state = fetch('/health/deployment', token)
+    if state.get('activeJobs') != 0 or state.get('directJobs') != 0:
         raise ValueError('DRAIN_CHANGED')
     service('stop', 'analysis')
     record('installing')

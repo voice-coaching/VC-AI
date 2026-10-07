@@ -37,7 +37,7 @@ AI harness/execution registry, v4/v5의 association/sourceIdentity, verifier exp
 - Python 컴파일, JSON 파싱, `git diff --check` 통과.
 - Backend `bootJar --offline --no-daemon -x test -x check` 성공.
 - 자동 회귀 테스트·실제 GPT 생성·음성 품질 QA는 실행하지 않았다.
-- **로컬 소스와 배포용 LLM 묶음 준비 완료, 운영 적용은 미완료.** 현재 운영은 기존 `5f3ec5aa…` prompt를 유지한다. 운영 프롬프트 복구 완료로 보고하지 않는다.
+- **운영 전환 진행 중.** 11:11 KST AWS Backend는 새 계약으로 활성화됐지만 DLPC는 아직 기존 `5f3ec5aa…` prompt를 유지한다. 양쪽 신규 접수는 차단되어 있으며 운영 프롬프트 복구 완료로 보고하지 않는다.
 - RunPod는 중지돼 관리 경유지로 사용할 수 없고, 기존 AWS→DLPC 포워드는 API 전용이다. 운영 적용에는 DLPC 플랫폼 터미널 실행 또는 직접 관리 SSH 경로가 필요하며 사용자에게 요청했다.
 
 ## 적용 순서
@@ -47,7 +47,7 @@ AI harness/execution registry, v4/v5의 association/sourceIdentity, verifier exp
 3. 신규 접수 hold와 진행 작업 drain 후 양쪽 계약을 함께 전환한다. AI의 `AI_CANONICAL_LLM_ROOT`와 pipeline revision을 새 tuple에 맞춘다. 프롬프트 파일만 기존 디렉터리에 덮어쓰면 무결성 검증에 실패한다.
 4. 실제 배포 source/bundle/schema, 분석·handoff·direct readiness를 각각 확인하고 접수를 재개한다. AWS 비밀 복구본과 B2 overlay pin도 활성 배포 묶음에 맞춰 갱신해야 재부팅 후 이전 프롬프트로 돌아가지 않는다.
 
-이 문서의 적용 순서는 아직 실행 완료한 작업이 아니다.
+아래 운영 관측을 기준으로 완료된 단계와 남은 단계를 구분한다.
 
 ## 단발 운영 적용 준비
 
@@ -74,3 +74,14 @@ B2 `speakai2026`의 `intelligentai/recovery/dlpc-20261006/announcer-df90eb10-202
 - Installer file ID: `4_ze5cc71977ef1880ca60b0c17_f107e77b17144395f_d20261007_m015757_c005_v0501042_t0031_u01791338277519`
 
 운영 적용 시 persistent home의 진단 복구 도구도 이 B2 runtime과 새 LLM 디렉터리를 사용하도록 갱신한다. 이것은 별도로 승인 대기 중인 ‘재부팅 후 production 자동 접수 재개’ 구현과 구분한다.
+
+## 11:11–11:16 KST 전환 관측과 설치기 수정
+
+- 사용자가 DLPC 설치기를 실행해 `waiting_for_backend_activation`에 도달했다. AWS에서 direct readiness 503 및 active/direct 작업 0을 확인했다.
+- 기존 runtime profile을 root 전용 `runtime-profile.before.json`으로 보존하고 준비된 profile을 적용했다. 기존 배포 도구의 `hold`에서 모든 drain 항목 0을 두 번 확인했다.
+- Backend `84260c05f2dde80ebec3f0d522726cca1ca8ff63`를 활성화했다. 11:11:46 KST Spring 기동 완료, 재시작 횟수 0, handoff HTTP 200과 새 9개 schema를 확인했다.
+- 설치기의 대기 조건이 Backend hold 중에도 `admissionEnabled=true`를 요구해 진행이 막혔다. Backend 응답은 정상적으로 `supported=true`, `admissionEnabled=false`였다. 접수 차단을 해제해 우회하지 않았다.
+- 설치기는 새 schema의 정확한 일치와 `supported=true`를 활성화 신호로 삼도록 수정했다. `--resume-waiting`은 root 전용 상태·백업·기존 bundle·hold 소유권·변경되지 않은 설정을 확인한 후, 파일 교체 이전 대기 단계만 이어간다. 설치 전 active/direct 작업도 다시 확인한다.
+- 수정 설치기는 Python 컴파일 및 diff 정적 확인을 수행했다. B2에 업로드한 전체 바이트를 다시 받아 hash를 확인했다. 실제 생성·품질 QA는 수행하지 않았다.
+- 수정 설치기: 12,911 bytes, SHA-256 `999736994f6bed9f17047f2c6a5e66329804de4bf5811fda1d4885019e355dae`, B2 file ID `4_ze5cc71977ef1880ca60b0c17_f10720d922a8a0d9f_d20261007_m021450_c005_v0501000_t0027_u01791339290423`.
+- 사용자에게 기존 대기 명령을 Ctrl+C로 중단한 뒤 `deploy/dlpc/resume_announcer_activation.sh` 실행을 요청했다. Backend 단계는 `ACTIVATED`이며 `resume`, AWS 비밀 복구본 identity 갱신, DLPC direct 접수 재개는 아직 수행하지 않았다. runtime bundle과 AI 실행 source 후보는 위 표의 값 그대로다.
