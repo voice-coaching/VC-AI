@@ -6,7 +6,7 @@
 
 - AI: `CreatorTemp/ai-audiovisual-20261007`, [main 대상 PR #34](https://github.com/voice-coaching/intelligentAI/pull/34).
 - Backend: `CreatorTemp/backend-audiovisual-20261007`, [develop 대상 PR #114](https://github.com/voice-coaching/VC-BE/pull/114). PR #113의 DLPC 변경을 기반으로 한다.
-- FE: `origin/dev=ff3dec9`에서 `CreatorTemp/frontend-audiovisual-20261007` 분리. 사용자 원래 checkout 변경은 보존했다.
+- FE: [dev ?? PR #67](https://github.com/voice-coaching/VC-FE/pull/67). `origin/dev=ff3dec9`에서 `CreatorTemp/frontend-audiovisual-20261007` 분리. 사용자 원래 checkout 변경은 보존했다.
 
 ## 구현 범위
 
@@ -38,8 +38,8 @@
 ## H5 후보 pin
 
 - core: `f6d56e1decc160f0ca38cc8d52303f3de20945f872d714bf6a2e743ed94c0391`
-- H5: `ea7e573f0212802b2f6d09043873de31aad870403fab4b4618d4fcc8ae80a1e2`
-- lock: `3de3db047604a68b23427281e724b67fd602e241cca46fce36dc17f84fc6bcfa`
+- H5: `d2a30ff826f275e4c678cb2b50f113371220f47d9145041aadf826745e4f2739`
+- lock: `8126e24d7ed1d0a6cfd0cab20eceff570f8b7fa04767d44471f435a38425c242`
 - prompt: `c727910b9e30c1648adb120cbb5f8ef2178c806285331dfd095fcc39c5aedfee`
 
 기존 announcer package에서 builder로 소스 후보를 생성했다. 기존 frozen 파일은 덮어쓰지 않았다. 새 identity는 읽기/검증에 등록했으며 `native_execution.APPROVED_NATIVE_EXECUTIONS`에 추가하지 않았다. 개발자 QA 완료를 허위로 등록하지 않는다.
@@ -54,3 +54,5 @@
 ## 확인 범위
 
 Python 소스 컴파일, 공통 JSON schema 구조/로컬 참조/바이트 일치, Backend `compileJava`, FE `tsc --noEmit`, diff 정적 확인을 수행한다. **자동 회귀 테스트·브라우저 QA·실제 미디어 decode·MFA/GOP·GPU·GPT 생성·DB migration·운영 배포는 실행하지 않았다.** AGENTS의 개발자 직접 QA 규칙을 따른다.
+
+?? builder? ? JSON ??? ???? LF? ????. Windows/Linux checkout ??? H5 pin? ???? ??? ???? ??? ?? ????. ? pin? ? ?? ?? ????.

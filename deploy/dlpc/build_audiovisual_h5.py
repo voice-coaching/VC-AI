@@ -64,9 +64,9 @@ def build(source: Path, destination: Path):
         "self.prepare(core_bytes, script, binding, visual=visual)\n")
     files["bridge/adapter.py"] = adapter.encode()
     schema = Path(__file__).resolve().parents[2] / "docs/contracts/runpod_visual_coaching_input_v1.schema.json"
-    files["contracts/llm/visual_input.schema.json"] = schema.read_bytes()
+    files["contracts/llm/visual_input.schema.json"] = schema.read_bytes().replace(b"\r\n", b"\n")
     for name in ("reference-catalog.json", "runtime-candidate.json"):
-        files["contracts/visual/" + name] = (Path(__file__).parent / "audiovisual" / name).read_bytes()
+        files["contracts/visual/" + name] = (Path(__file__).parent / "audiovisual" / name).read_bytes().replace(b"\r\n", b"\n")
     lock = encode(dict(files={k: sha(v) for k, v in sorted(files.items())}))
     manifest.update(contract_version=NAME, parent_llm_manifest_sha256=PARENT,
                     dependency_lock_sha256=sha(lock))

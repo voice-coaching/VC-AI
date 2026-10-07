@@ -107,8 +107,8 @@ def main():
     })
     if any(name.startswith('frozen/canonical_dlpc_audiovisual_20261007_v1_h5/') for name in files):
         pins.update({
-            'frozen/canonical_dlpc_audiovisual_20261007_v1_h5/contracts/llm/dependency_lock.json': '3de3db047604a68b23427281e724b67fd602e241cca46fce36dc17f84fc6bcfa',
-            'frozen/canonical_dlpc_audiovisual_20261007_v1_h5/contracts/llm/llm_contract_manifest.json': 'ea7e573f0212802b2f6d09043873de31aad870403fab4b4618d4fcc8ae80a1e2',
+            'frozen/canonical_dlpc_audiovisual_20261007_v1_h5/contracts/llm/dependency_lock.json': '8126e24d7ed1d0a6cfd0cab20eceff570f8b7fa04767d44471f435a38425c242',
+            'frozen/canonical_dlpc_audiovisual_20261007_v1_h5/contracts/llm/llm_contract_manifest.json': 'd2a30ff826f275e4c678cb2b50f113371220f47d9145041aadf826745e4f2739',
         })
     native_v2 = {
         'frozen/canonical_native_core_20261005_v4/release_manifest.json': 'f1009fcdbf75515ddc13e915dcbbf19dfac751ce39779e404749c4f51dd74841',

@@ -125,8 +125,8 @@ DLPC_ANNOUNCER_LLM_DIRECTORY = 'canonical_dlpc_gop_announcer_20261007_v1_h5'
 # Read/verification identity only; this is not a developer execution approval.
 AUDIOVISUAL = HarnessIdentity(
     'canonical-dlpc-audiovisual-20261007-v1',
-    'ea7e573f0212802b2f6d09043873de31aad870403fab4b4618d4fcc8ae80a1e2',
-    '3de3db047604a68b23427281e724b67fd602e241cca46fce36dc17f84fc6bcfa',
+    'd2a30ff826f275e4c678cb2b50f113371220f47d9145041aadf826745e4f2739',
+    '8126e24d7ed1d0a6cfd0cab20eceff570f8b7fa04767d44471f435a38425c242',
     'c727910b9e30c1648adb120cbb5f8ef2178c806285331dfd095fcc39c5aedfee',
     DLPC_GOP.core_sha256, True, True, True, True,
 )
