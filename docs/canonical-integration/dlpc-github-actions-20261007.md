@@ -21,7 +21,8 @@
    [AWS 준비 도구](../../deploy/dlpc/prepare_aws_admin_tunnel.py)와
    [DLPC 최초 설치 도구](../../deploy/dlpc/install_admin_tunnel.py)를 사용한다.
    DLPC 도구는 개인키 없이 AWS 공개키만 받아 localhost 접속만 허용하며 기존 hook에 관리 터널 재연결을 추가한다.
-   DLPC 터미널의 최초 실행과 공개 host key 반환을 기다리는 상태다.
+   2026-10-08 KST 사용자가 DLPC 최초 설치 완료와 공개 host key를 반환했다.
+   AWS 전용 known_hosts에 전달받은 ed25519 host key를 고정했다.
 2. 관리 접속 후 DLPC의 자원·기존 hook·소유권을 관측하고 전용 비특권 Actions runner를 설치한다.
    추론 계정과 분리하며 일반 root 셸 권한이나 비밀 설정 읽기 권한을 runner에 부여하지 않는다.
    runner 계정·고정 sudo controller 권한의 설치 코드도 자동 승인 검토가 거절하여 별도로 승인을 요청했다.
@@ -62,7 +63,8 @@ AWS Backend 배포 도구가 사용하는 운영 runtime profile도 별도 조�
 ## 현재 구현·검증 범위
 
 workflow·client·controller 소스를 작성했고 Python 소스 컴파일과 diff 정적 확인을 수행했다.
-AWS SSH 관리 키·loopback 포트 허용은 적용했다. DLPC hook·runner·sudo 규칙은 아직 설치하지 않았다.
+AWS SSH 관리 키·loopback 포트 허용은 적용했다. DLPC 관리 hook 설치는 사용자 실행 결과로 확인했으며,
+원격 파일 확인은 아직 하지 않았다. runner·sudo 규칙은 아직 설치하지 않았다.
 기존 AWS 복구 exporter에 `admin-bootstrap` 조회를 추가하는 제안은 자동 승인 검토가 별도 권한 확장으로 거절했다.
 exporter는 변경하지 않았으며, 대신 승인된 설치 코드를 DLPC 터미널에서 직접 실행하도록 전달했다.
 실제 배포·자동 회귀 테스트·GPU 추론·GPT 생성·재부팅은 실행하지 않았다.
@@ -70,6 +72,27 @@ exporter는 변경하지 않았으며, 대신 승인된 설치 코드를 DLPC �
 2026-10-07 14:47:45 UTC AWS 경유 재확인에서 분석·direct·TTS·Backend handoff는 HTTP 200이며,
 live AI revision은 여전히 `df90eb10be7165dd29b77454c368da76733eac6b`다.
 이후에 관리 SSH 포트를 열었다는 사실을 새 피드백 배포로 보고하지 않는다.
+
+### 2026-10-07 15:08–15:10 UTC 관리 터널 진단
+
+AWS `18022`는 아직 listen하지 않았고 기존 `18080`·`18083`은 listen 중이었다.
+전용 listener 로그에서 `authorized_keys_intelligentai_dlpc: Permission denied`와
+DLPC IP의 공개키 인증 실패를 확인했다. 준비 도구가 root 소유 공개키 파일을 `0600`으로
+교체하여 로그인 계정 `ec2-user`가 읽지 못한 것이 원인이다. SSH listener는 active였다.
+
+AWS의 해당 공개키 전용 파일을 root 소유 `0644`로 수정했고 `ec2-user` 읽기 가능과
+`sshd -t` 성공을 확인했다. 개인키와 listener 설정 파일은 `0600`을 유지한다.
+준비 도구에도 같은 수정과 root 소유권 보장을 반영했다. 기존 API/TTS SSH 세션은 재시작하지 않았다.
+사용자가 전달한 DLPC host key는 AWS root 전용 known_hosts에 고정했다.
+
+수정 직후에도 `18022`가 없어 DLPC 관리 supervisor 재시작 명령을 사용자에게 전달했다.
+인증 실패로 재시도가 소진됐다는 판단은 AWS 로그와 설정의 `startretries=10`에 근거한 추정이며,
+DLPC supervisor 상태는 SSH 연결 후 확인해야 한다. 아직 관리 SSH 성공이나 자동 배포 완료로 보고하지 않는다.
+
+2026-10-07 15:10:38 UTC AWS 경유 상태 조회에서는 분석 liveness/readiness, direct readiness,
+TTS readiness, Backend handoff가 모두 HTTP 200이고 인증 없는 보호 API 요청은 401이었다.
+분석 activeJobs는 0, live revision은 여전히 `df90eb10be7165dd29b77454c368da76733eac6b`다.
+이는 운영 상태 조회이며 실제 분석·GPT 생성·품질 QA를 수행한 결과가 아니다.
 
 등록 방식은 [GitHub의 self-hosted runner 설치 안내](https://docs.github.com/en/actions/how-tos/manage-runners/self-hosted-runners/add-runners)를 따른다.
 조회한 repository용 Linux x64 패키지는 `2.337.0`, SHA-256

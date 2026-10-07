@@ -35,10 +35,15 @@ def main():
         temp = path.with_name(path.name + '.admin-pending')
         with temp.open('x') as stream:
             stream.write(after); stream.flush(); os.fsync(stream.fileno())
-        temp.chmod(0o600); temp.replace(path)
+        # sshd reads AuthorizedKeysFile as the login user. This file contains
+        # public keys only; root ownership prevents ec2-user from changing it.
+        temp.chmod(0o644 if path == KEYS else 0o600)
+        os.chown(temp, 0, 0)
+        temp.replace(path)
     result = subprocess.run(['/usr/sbin/sshd', '-t', '-f', str(CONFIG)], capture_output=True)
     if result.returncode:
         CONFIG.write_text(config); KEYS.write_text(keys)
+        CONFIG.chmod(0o600); KEYS.chmod(0o644)
         raise ValueError('LISTENER_VALIDATION_FAILED')
     # Only the listener reloads; established reverse API/TTS sessions survive.
     subprocess.run(['systemctl', 'kill', '--kill-who=main', '--signal=HUP',
