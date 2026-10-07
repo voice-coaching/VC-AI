@@ -63,8 +63,8 @@ AWS Backend 배포 도구가 사용하는 운영 runtime profile도 별도 조�
 ## 현재 구현·검증 범위
 
 workflow·client·controller 소스를 작성했고 Python 소스 컴파일과 diff 정적 확인을 수행했다.
-AWS SSH 관리 키·loopback 포트 허용은 적용했다. DLPC 관리 hook 설치는 사용자 실행 결과로 확인했으며,
-원격 파일 확인은 아직 하지 않았다. runner·sudo 규칙은 아직 설치하지 않았다.
+AWS SSH 관리 키·loopback 포트 허용은 적용했다. DLPC 관리 hook과 관리 SSH 접속은
+2026-10-07 15:20 UTC 원격 확인했다. runner·sudo 규칙은 아직 설치하지 않았다.
 기존 AWS 복구 exporter에 `admin-bootstrap` 조회를 추가하는 제안은 자동 승인 검토가 별도 권한 확장으로 거절했다.
 exporter는 변경하지 않았으며, 대신 승인된 설치 코드를 DLPC 터미널에서 직접 실행하도록 전달했다.
 실제 배포·자동 회귀 테스트·GPU 추론·GPT 생성·재부팅은 실행하지 않았다.
@@ -93,6 +93,28 @@ DLPC supervisor 상태는 SSH 연결 후 확인해야 한다. 아직 관리 SSH 
 TTS readiness, Backend handoff가 모두 HTTP 200이고 인증 없는 보호 API 요청은 401이었다.
 분석 activeJobs는 0, live revision은 여전히 `df90eb10be7165dd29b77454c368da76733eac6b`다.
 이는 운영 상태 조회이며 실제 분석·GPT 생성·품질 QA를 수행한 결과가 아니다.
+
+### 2026-10-07 15:20 UTC / 2026-10-08 00:20 KST 관리 SSH 확인
+
+사용자가 DLPC `start.py`를 다시 실행한 뒤 AWS `127.0.0.1:18022` listen을 확인했다.
+사용자가 반환한 host key를 고정한 `StrictHostKeyChecking=yes` 접속이 성공했고,
+대상 hostname은 `J3990.2020067.notebook.dlpc`이며 기존 sudo 사용도 가능했다.
+
+- 관리 supervisor: `admin-tunnel RUNNING`, Jupyter 관리 hook marker 1개.
+- 시작 도구: uid `120067`, mode `0600`, SHA-256
+  `97c4552e123f28e4ac8f8d571d924e2b1e7eaa0449f7817e3043a43c91f04bf3`.
+- 기존 analysis·tts supervisor: 모두 RUNNING. 프로세스 재시작은 하지 않았다.
+- CPU affinity: `[28, 34, 36, 38]`; RAM 총 11GiB, available 약 4.65GiB, swap 없음.
+- root 및 `/opt/intelligentai`, `/var/lib`: 같은 50GiB filesystem, 여유 약 22.79GiB.
+  home NAS의 filesystem 여유는 사용자 quota를 의미하지 않는다.
+- GPU: RTX A5000, 총 24564MiB, 사용 4088MiB, 관측 시 utilization 0%.
+- `intelligentai-actions` 계정과 `/opt/intelligentai/cicd/deploy_source.py`는 아직 없다.
+
+15:20:37 UTC API 재확인에서는 분석·direct·TTS readiness 및 Backend handoff가 200,
+인증 없는 보호 API는 401, activeJobs는 0이었다. live revision은 여전히
+`df90eb10be7165dd29b77454c368da76733eac6b`다. 관리 연결 성공은 최신 main 재배포를 의미하지 않는다.
+runner·고정 controller sudo 권한의 명시 승인 요청은 아직 대기 중이며 배포 활성화 flag는 설정하지 않았다.
+새 분석·GPT 생성·자동 회귀 테스트·재부팅은 수행하지 않았다.
 
 등록 방식은 [GitHub의 self-hosted runner 설치 안내](https://docs.github.com/en/actions/how-tos/manage-runners/self-hosted-runners/add-runners)를 따른다.
 조회한 repository용 Linux x64 패키지는 `2.337.0`, SHA-256
