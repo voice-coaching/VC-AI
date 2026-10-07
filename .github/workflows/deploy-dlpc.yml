@@ -1,0 +1,53 @@
+name: Deploy main to DLPC
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: dlpc-production-deployment
+  cancel-in-progress: false
+
+jobs:
+  preflight:
+    if: github.repository == 'voice-coaching/intelligentAI' && github.ref == 'refs/heads/main'
+    runs-on: ubuntu-24.04
+    steps:
+      - name: Require completed DLPC enrollment
+        env:
+          DEPLOYMENT_ENABLED: ${{ vars.DLPC_DEPLOYMENT_ENABLED }}
+        run: |
+          if [ "$DEPLOYMENT_ENABLED" != 'true' ]; then
+            echo '::error::DLPC deployment is not enrolled. Install the controller/runner and reconcile the approved runtime before enabling DLPC_DEPLOYMENT_ENABLED.'
+            exit 1
+          fi
+  deploy:
+    needs: preflight
+    if: github.repository == 'voice-coaching/intelligentAI' && github.ref == 'refs/heads/main'
+    runs-on: [self-hosted, Linux, X64, intelligentai-dlpc-deploy]
+    timeout-minutes: 50
+    steps:
+      - name: Check out the exact main revision
+        uses: actions/checkout@v7
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+
+      - name: Deploy through the installed controller
+        env:
+          DEPLOY_REVISION: ${{ github.sha }}
+          GH_TOKEN: ${{ github.token }}
+        run: python3 deploy/dlpc/github_deploy.py
+
+      - name: Record deployment result
+        if: always()
+        run: |
+          if [ -f dlpc-deployment-result.json ]; then
+            cat dlpc-deployment-result.json >> "$GITHUB_STEP_SUMMARY"
+          else
+            echo 'Deployment did not produce a receipt. Inspect the failed step; do not infer success.' >> "$GITHUB_STEP_SUMMARY"
+          fi
