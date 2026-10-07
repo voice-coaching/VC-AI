@@ -68,6 +68,7 @@ class LipReference:
     mapping_revision: str
     trajectory: Trajectory
     expert_review_id: str
+    source_sha256: str
 
 
 @dataclass(frozen=True)
@@ -100,7 +101,7 @@ class Calibration:
 def assess_phone(anchor: PhoneAnchor, *, frames: tuple[LipFrame, ...],
                  pcm_sha256: str, video_sha256: str, time_map: VerifiedTimeMap | None,
                  mapping_revision: str, references: tuple[LipReference, ...],
-                 policy: DistancePolicy, calibration: Calibration | None = None) -> dict:
+                 policy: DistancePolicy, source_sha256: str, calibration: Calibration | None = None) -> dict:
     """Null with an explicit reason is a valid outcome; no corrective action is inferred."""
     result = dict(expectedIndex=anchor.expected_index, expectedPhone=anchor.expected_phone,
         role=anchor.role, status="UNSCORABLE", score=None, scoreKind="NONE",
@@ -138,7 +139,7 @@ def assess_phone(anchor: PhoneAnchor, *, frames: tuple[LipFrame, ...],
             raise UnscorableTrajectory("REFERENCE_MISSING")
         if len(eligible) > 32 or len({r.reference_id for r in eligible}) != len(eligible):
             raise UnscorableTrajectory("REFERENCE_CATALOG_INVALID")
-        if any(r.video_sha256 == video_sha256 for r in eligible):
+        if any(r.video_sha256 == video_sha256 or r.source_sha256 == source_sha256 for r in eligible):
             raise UnscorableTrajectory("REFERENCE_SELF_COMPARISON")
         distances = [compare_trajectories(observed, ref.trajectory, policy).distance for ref in eligible]
         distance = statistics.median(distances)
@@ -169,5 +170,6 @@ def aggregate(assessments: list[dict], *, target_count: int, visually_eligible_c
     coverage = len(scored) / visually_eligible_count if visually_eligible_count else None
     return dict(score=statistics.mean(scored) if scored and coverage >= minimum_coverage else None,
                 targetCount=target_count, visuallyEligibleCount=visually_eligible_count,
-                observedCount=sum(r["frameCount"] >= 3 for r in assessments),
+                observedCount=sum(r["status"] in {"OBSERVED", "REFERENCE_ONLY", "SCORED"}
+                                  and r["frameCount"] >= 3 for r in assessments),
                 scoredCount=len(scored), coverage=coverage)

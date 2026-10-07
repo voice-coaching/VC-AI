@@ -37,7 +37,7 @@ if TYPE_CHECKING:
     from .http_models import AnalysisInput
 
 
-from .http_models import REQUEST_V2, REQUEST_V3, RESULT_V4, RESULT_V5, CANONICAL_PROFILE, HANDOFF_PROFILE
+from .http_models import REQUEST_V2, REQUEST_V3, RESULT_V4, RESULT_V5, RESULT_V6, CANONICAL_PROFILE, HANDOFF_PROFILE
 
 def _canonical_profile(request):
     from voice_coach.direct_analysis.domain import DirectInput
@@ -254,6 +254,7 @@ def _selection_semantics(core: dict, view: dict, prepared_audio: PreparedAudioId
 def preflight_canonical_result(
     result: CanonicalExpressionResult, *, request: AnalysisInput,
     frozen: FrozenCanonicalCoaching, prepared_audio: PreparedAudioIdentity | None = None,
+    _visual_payload: dict | None = None,
 ) -> CanonicalPreflight:
     """Validate actual originals before retention, without storage or dispatch.
 
@@ -261,6 +262,9 @@ def preflight_canonical_result(
     adapter/schema subset alone is intentionally insufficient to bless guidance.
     Invalid raw cores are not converted into fake canonical failure states.
     """
+    if getattr(request, "is_audiovisual", False):
+        from .canonical_audiovisual_result import preflight
+        return preflight(result, request=request, frozen=frozen, prepared_audio=prepared_audio)
     _require(type(result) is CanonicalExpressionResult, "CANONICAL_PRIVATE_RESULT_REQUIRED")
     core = _read_json(result.core_bytes, MAX_CORE_BYTES)
     _validate(core, schema_name="parent")
@@ -290,7 +294,8 @@ def preflight_canonical_result(
     else:
         _require("scoring" not in expression, "UNEXPECTED_SCORING_RECORD")
     try:
-        _, expected_view, _, skip = bridge.prepare(result.core_bytes, request.script_text, binding)
+        _, expected_view, _, skip = bridge.prepare(result.core_bytes, request.script_text, binding,
+            **({"visual": _visual_payload} if _visual_payload is not None else {}))
     except Exception as exc:
         _require(result.selection_bytes is None and expression["adapterStatus"] == "FAIL_CLOSED"
                  and expression["errorCode"] == type(exc).__name__, "PREPARE_FAILURE_MISMATCH")
@@ -429,6 +434,8 @@ def serialize_canonical_result(
     result: CanonicalExpressionResult, *, request: AnalysisInput, identity: ResultIdentity,
     frozen: FrozenCanonicalCoaching, receipt: TrustedBackendVerifiedReceipt | None = None,
     prepared_audio: PreparedAudioIdentity | None = None,
+    _visual_payload: dict | None = None,
+    _max_result_bytes: int = MAX_RESULT_BYTES,
 ) -> bytes:
     """Build v4 with a verified B2 receipt, or v5 for durable-original handoff.
 
@@ -437,7 +444,12 @@ def serialize_canonical_result(
     envelope is replaced only by the defined RETAINED_ONLY delivery failure;
     every original remains required in the verified artifact set.
     """
-    preflight = preflight_canonical_result(result, request=request, frozen=frozen, prepared_audio=prepared_audio)
+    if getattr(request, "is_audiovisual", False):
+        from .canonical_audiovisual_result import serialize
+        return serialize(result, request=request, identity=identity, frozen=frozen,
+                         receipt=receipt, prepared_audio=prepared_audio)
+    preflight = preflight_canonical_result(result, request=request, frozen=frozen, prepared_audio=prepared_audio,
+                                          _visual_payload=_visual_payload)
     if request.result_schema_version == RESULT_V4:
         retained = _verified_retention(receipt, preflight)
     else:
@@ -470,7 +482,7 @@ def serialize_canonical_result(
         document.update(status="FAILED", failure=ServiceFailure(
             "CORE", "CORE_SYSTEM_FAILURE", "EXECUTION").to_document())
     raw = _wire(document)
-    if len(raw) > MAX_RESULT_BYTES:
+    if len(raw) > _max_result_bytes:
         document.update(status="FAILED", failure=ServiceFailure(
             "INTEGRATION", "RESULT_ENVELOPE_TOO_LARGE", "SERIALIZATION").to_document(),
                         selection=None, coaching=None)
@@ -479,7 +491,7 @@ def serialize_canonical_result(
             document["score"] = dict(overallScore=None, validity="NOT_AVAILABLE", reason="RESULT_NOT_DELIVERED")
     validate_canonical_result_document(document, preflight=preflight, receipt=receipt)
     raw = _wire(document)
-    _require(len(raw) <= MAX_RESULT_BYTES, "RESULT_SUMMARY_TOO_LARGE")
+    _require(len(raw) <= _max_result_bytes, "RESULT_SUMMARY_TOO_LARGE")
     return raw
 
 
@@ -489,6 +501,9 @@ def serialize_precore_failure(*, request: AnalysisInput, identity: ResultIdentit
     Invalid core bytes require a separate quarantine policy. This does not turn
     them into normal evidence, fabricate a receipt, or support post-core loss.
     """
+    if getattr(request, "is_audiovisual", False):
+        from .canonical_audiovisual_result import precore
+        return precore(request=request, identity=identity, failure=failure)
     _require(type(failure) is ServiceFailure and failure.origin == "INTEGRATION"
              and failure.code in {"CANONICAL_EXECUTION_FAILED", "CORE_CONTRACT_INVALID",
                                   "CANONICAL_BINDING_FAILED", "EVIDENCE_STORAGE_FAILED"},
@@ -514,6 +529,9 @@ def validate_canonical_result_document(
     deserialized from a callback. Remote ingress must independently retrieve and
     validate its retained originals before calling this boundary.
     """
+    if document.get("schemaVersion") == RESULT_V6:
+        from .canonical_audiovisual_result import validate
+        return validate(document, preflight=preflight, receipt=receipt)
     v5 = document.get("schemaVersion") == RESULT_V5
     _validate(document, "result", schema_name="v5" if v5 else "v4")
     _require(len(_wire(document)) <= MAX_RESULT_BYTES, "RESULT_ENVELOPE_TOO_LARGE")

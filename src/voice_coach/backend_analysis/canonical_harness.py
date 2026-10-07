@@ -122,7 +122,17 @@ DLPC_ANNOUNCER = HarnessIdentity(
     DLPC_GOP.core_sha256, True, True, True, True,
 )
 DLPC_ANNOUNCER_LLM_DIRECTORY = 'canonical_dlpc_gop_announcer_20261007_v1_h5'
-HARNESSES = {value.manifest_sha256: value for value in (S7, H5, SCORED_V1, SCORED_V2, SCORED, RESIDENT, NATIVE_V1, NATIVE, SEUNGUN_GPT_V1, SEUNGUN_GPT, DLPC_GOP, DLPC_ANNOUNCER)}
+# Read/verification identity only; this is not a developer execution approval.
+AUDIOVISUAL = HarnessIdentity(
+    'canonical-dlpc-audiovisual-20261007-v2',
+    'd70372926d3406842b95c370b5ceb152480e7f0af83ba840028ec8d9ace2dc50',
+    '934729ee467a2eb030c244584c6fa5c3575ca9ed0a43348a59a486199c0f55e9',
+    'c727910b9e30c1648adb120cbb5f8ef2178c806285331dfd095fcc39c5aedfee',
+    '4cc0cbacd41b5c6f2ac20e6e4840bc5406f4c7ab79ecf53702586eeb5874ecbc', True, True, True, True,
+)
+AUDIOVISUAL_LLM_DIRECTORY = 'canonical_dlpc_audiovisual_20261007_v2_h5'
+AUDIOVISUAL_CORE_DIRECTORY = "canonical_dlpc_audiovisual_core_20261007_v2"
+HARNESSES = {value.manifest_sha256: value for value in (S7, H5, SCORED_V1, SCORED_V2, SCORED, RESIDENT, NATIVE_V1, NATIVE, SEUNGUN_GPT_V1, SEUNGUN_GPT, DLPC_GOP, DLPC_ANNOUNCER, AUDIOVISUAL)}
 
 
 def harness_identity(manifest_sha256: str) -> HarnessIdentity:

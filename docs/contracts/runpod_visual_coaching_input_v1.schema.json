@@ -1,0 +1,247 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "voice-coaching.visual-coaching-input.v1",
+  "type": "object",
+  "additionalProperties": false,
+  "properties": {
+    "schemaVersion": {
+      "enum": [
+        "voice-coaching.visual-coaching-input.v1"
+      ]
+    },
+    "requestId": {
+      "type": "string",
+      "format": "uuid"
+    },
+    "executionId": {
+      "type": "string",
+      "format": "uuid"
+    },
+    "coreSha256": {
+      "type": "string",
+      "pattern": "^[0-9a-f]{64}$"
+    },
+    "visualEvidenceSha256": {
+      "type": "string",
+      "pattern": "^[0-9a-f]{64}$"
+    },
+    "status": {
+      "enum": [
+        "NOT_PROVIDED",
+        "OBSERVED",
+        "REFERENCE_ONLY",
+        "SCORED",
+        "UNSCORABLE",
+        "FAILED",
+        "TIMEOUT"
+      ]
+    },
+    "correctiveClaimsAllowed": {
+      "const": false
+    },
+    "score": {
+      "anyOf": [
+        {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 100
+        },
+        {
+          "type": "null"
+        }
+      ]
+    },
+    "scoreKind": {
+      "enum": [
+        "NONE",
+        "CALIBRATED"
+      ]
+    },
+    "reasonCodes": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "pattern": "^[A-Z][A-Z0-9_]{0,79}$"
+      },
+      "maxItems": 32
+    },
+    "selectionPolicy": {
+      "const": "FIRST_12_OBSERVED_MFA_INDICES_V1"
+    },
+    "availablePhoneCount": {
+      "type": "integer",
+      "minimum": 0,
+      "maximum": 2048
+    },
+    "omittedPhoneCount": {
+      "type": "integer",
+      "minimum": 0,
+      "maximum": 2048
+    },
+    "phones": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "expectedIndex": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 100000
+          },
+          "expectedPhone": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 20
+          },
+          "role": {
+            "enum": [
+              "onset",
+              "nucleus",
+              "coda"
+            ]
+          },
+          "status": {
+            "enum": [
+              "OBSERVED",
+              "REFERENCE_ONLY",
+              "SCORED",
+              "UNSCORABLE"
+            ]
+          },
+          "score": {
+            "anyOf": [
+              {
+                "type": "number",
+                "minimum": 0,
+                "maximum": 100
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "scoreKind": {
+            "enum": [
+              "NONE",
+              "REFERENCE_SIMILARITY",
+              "CALIBRATED"
+            ]
+          },
+          "audioStartSeconds": {
+            "anyOf": [
+              {
+                "type": "number",
+                "minimum": 0,
+                "maximum": 120
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "audioEndSeconds": {
+            "anyOf": [
+              {
+                "type": "number",
+                "minimum": 0,
+                "maximum": 120
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "observations": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "additionalProperties": false,
+              "properties": {
+                "observationId": {
+                  "type": "string",
+                  "pattern": "^[0-9a-f]{64}:phone-[0-9]+:LIP_(APERTURE|WIDTH|AREA)_RANGE$"
+                },
+                "code": {
+                  "enum": [
+                    "LIP_APERTURE_RANGE",
+                    "LIP_WIDTH_RANGE",
+                    "LIP_AREA_RANGE"
+                  ]
+                },
+                "minimum": {
+                  "type": "number",
+                  "minimum": 0,
+                  "maximum": 100
+                },
+                "maximum": {
+                  "type": "number",
+                  "minimum": 0,
+                  "maximum": 100
+                },
+                "unit": {
+                  "enum": [
+                    "FACE_SCALE_NORMALIZED"
+                  ]
+                }
+              },
+              "required": [
+                "observationId",
+                "code",
+                "minimum",
+                "maximum",
+                "unit"
+              ]
+            },
+            "maxItems": 3
+          },
+          "allowedActionIds": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "maxItems": 0
+          },
+          "reasonCodes": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "pattern": "^[A-Z][A-Z0-9_]{0,79}$"
+            },
+            "maxItems": 32
+          }
+        },
+        "required": [
+          "expectedIndex",
+          "expectedPhone",
+          "role",
+          "status",
+          "score",
+          "scoreKind",
+          "audioStartSeconds",
+          "audioEndSeconds",
+          "observations",
+          "allowedActionIds",
+          "reasonCodes"
+        ]
+      },
+      "maxItems": 12
+    }
+  },
+  "required": [
+    "schemaVersion",
+    "requestId",
+    "executionId",
+    "coreSha256",
+    "visualEvidenceSha256",
+    "status",
+    "correctiveClaimsAllowed",
+    "score",
+    "scoreKind",
+    "reasonCodes",
+    "selectionPolicy",
+    "availablePhoneCount",
+    "omittedPhoneCount",
+    "phones"
+  ]
+}

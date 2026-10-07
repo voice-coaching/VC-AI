@@ -229,6 +229,30 @@ FE는 지원 범위를 녹음/업로드 전에 확인하고, 위 필드가 빠�
 - complete 요청의 totalLearningSeconds는 새 페이지 recorder의 0초가 아닌 현재 선택된 서버 녹음 durationMs로 계산한다. duration이 없으면 임의의 1초를 만들지 않는다.
 - 실행 상태 조회로 확인한 RunPod INTERNAL_ERROR/DEPENDENCY_UNAVAILABLE terminal FAILED는 Backend failure_code=runpod_execution_failed, 공개 serviceFailure={origin:RUNPOD, code:CANONICAL_EXECUTION_FAILED, stage:EXECUTION}으로 구분한다. UNKNOWN/404/409/5xx만으로 terminal 실패를 만들지 않는다.
 
+## 2026-10-07 음성·영상 v6 (기본 비활성, 미배포)
+
+기존 음성 v5 계약을 유지하며, 위 capability 표의 VIDEO 미지원 상태는 v6 readiness와 admission이 열린 경우에만 확장된다. 그때 `resultSchemas`에 v6를 추가하고 VIDEO supported를 제공한다. 음성 요청은 v5, 영상 요청은 v6다. 위 v5의 schema 바이트 불변 설명은 당시 변경 범위에 관한 기록이며 이번 후보는 새 frozen tuple 등록과 선택적 MFA 확장으로 공통 schema digest를 함께 갱신한다.
+
+### POST /api/training-sessions/{sessionId}/analyze 및 /analysis/retry
+
+로그인 및 session/선택 recording 소유 확인. `sessionId`는 필수 정수 path, query 없음. body는 기존 `accepted`(필수 boolean, 동의 true), `policyRevision`(필수 nonempty string, 최대 100자)를 유지한다. 영상은 `X-Analysis-Result-Schema: voice-coaching.runpod-analysis-result.v6`, 음성은 v5. 중복·쉼표 결합·알 수 없는 schema 헤더는 거부한다. MP4를 body로 다시 보내지 않으며 같은 등록 recording의 immutable preparation을 사용한다.
+
+200의 표준 ApiResponse에는 기존 분석 접수 DTO가 들어간다. analyze의 `analysisId`(정수), `status`(상태 문자열), `requestedAt`(시간)은 모두 필수다. retry는 여기에 필수 정수 `retryCount`가 추가되는 기존 DTO를 유지한다. 미인증/소유 실패는 기존 401/403, 입력 오류는 400, 지원하지 않는 recording/profile 또는 preparation 불일치는 422(`ANALYSIS_MEDIA_BINDING_INVALID` 포함), 접수 준비 미완료는 503이다. 기존 상태 충돌/동의 정책 검증은 그대로 적용된다.
+
+### GET /api/v3/analyses/{analysisId}
+
+로그인 및 analysis 소유 확인. 정수 path 외 query/body 없음. 200의 v6 public view는 `schemaVersion=voice-coaching.canonical-analysis-view.v3`, `analysisProfile=CANONICAL_AUDIOVISUAL_20261007_V6`다. 기존 v5는 view-v2를 유지한다. 기존 작업/결정/실패/음성 채점/피드백/actions/persistence 필드의 의미를 유지하며 `canonicalAnalysis.visual`만 확장한다. 원시 CORE, 얼굴 좌표, receipt, 파일 경로, 비밀값은 공개하지 않는다.
+
+`visual`은 status, correctiveClaimsAllowed(false), nullable score, scoreKind(NONE/CALIBRATED), coverage, phoneAssessments, reasonCodes, alignmentScope, unresolvedExpectedIndices, omittedPhoneAssessmentCount가 필수다. 전체 상태·음소/관찰 하위 필드의 타입·enum·null·범위는 [v6 schema의 visual 정의](../contracts/runpod_result_v6.schema.json)를 따른다. 공개 음소 상세는 앞 128개 및 256KiB로 제한하며 생략 수를 제공한다. 미확정 음소도 coverage 분모에 남긴다. null은 0이 아니며 연구용 유사도·입술 점수를 음성 점수에 합산하지 않는다. 원본을 전달받아 검증한 결과만 SAVING/RETRYING으로 공개하며 저장 완료는 SAVED다. 조회 실패/소유 및 미발견 오류는 기존 GET 계약을 유지한다.
+
+### GET /health/audiovisual (AI)
+
+기존 Analysis Bearer 인증, path/query/body 없음. body는 `contractVersion`(handoff-v2 string), `executorConfigured`/`admissionEnabled`(boolean), `llmManifestSha256`(pin string), `schemaDigests`(5개 파일 이름→SHA map)가 필수다. 설치 및 자산 확인 시 200, executor 미준비 시 동일 구조의 503. 미인증은 기존 서버 인증 오류다. liveness나 실제 영상/GPT 품질 통과를 뜻하지 않는다.
+
+### GET /api/internal/ai/worker-readiness/audiovisual (Backend)
+
+기존 Callback Bearer 인증, path/query/body 없음. 200 body의 필수 필드는 `contractVersion`(handoff-v2 string), `supported`(boolean), `schemaDigests`(5개 파일 이름→SHA map)다. `supported`는 worker 설정·기존 handoff 지원·V43·offline verifier의 v2 core/H5/lock pin 확인 결과이며 사용자 admission과 다르다. 비활성/미설치는 supported false로 표현한다. admission에는 별도로 AI 설치와 spool 예산을 확인한다. 인증 누락/오류는 401이다. 실제 추론이나 품질 확인은 수행하지 않는다.
+
 ## 2026-10-05 직접 음성 분석 (별도 서비스, 미배포)
 
 사용자 결정으로 FE가 RunPod에 인증/게이트웨이 없이 raw WAV를 제출한다. direct-analysis.v1 UUID 계약은 AWS numeric ID 기반 v5 요청을 대체하여 위장하지 않는다. 일반 독립 연습에서만 기능 flag로 선택하며 기존 세션·과정·시험은 기존 계약을 유지한다.

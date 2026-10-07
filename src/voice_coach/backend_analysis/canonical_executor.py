@@ -71,7 +71,7 @@ async def execute(path: Path, env, diagnostic: dict):
     body, worker = descriptor["request"], UUID(descriptor["workerId"])
     settings = HttpSettings.from_environment(env)
     request = AnalysisInput.from_payload(body, settings.prefix)
-    _require(not request.is_legacy and request.visual_input is None, "CANONICAL_PROFILE_UNSUPPORTED")
+    _require(not request.is_legacy and (request.visual_input is None or request.is_audiovisual), "CANONICAL_PROFILE_UNSUPPORTED")
     deadline = descriptor["deadline"]
     _require(type(deadline) in (int, float) and math.isfinite(deadline), "CANONICAL_DEADLINE")
 
@@ -105,6 +105,8 @@ async def execute(path: Path, env, diagnostic: dict):
     handoff = CanonicalHandoffClient(settings, worker)
     recordings = create_s3_client_from_environment(env)
     audio_context = None
+    video_context = None
+    video_acquired = False
     acquired = False
     identity = produced = None
     try:
@@ -119,6 +121,14 @@ async def execute(path: Path, env, diagnostic: dict):
             value = await asyncio.to_thread(audio_context.__enter__)
             acquired = True
             return value
+        async def materialize_video():
+            nonlocal video_context, video_acquired
+            if not request.is_audiovisual:
+                return None
+            video_context = media.materialize_visual(request)
+            value = await asyncio.to_thread(video_context.__enter__)
+            video_acquired = True
+            return value
 
         # Neither operation depends on the other's result. Drain both before
         # cleanup: cancelling to_thread does not stop its underlying download.
@@ -126,27 +136,51 @@ async def execute(path: Path, env, diagnostic: dict):
             asyncio.to_thread(journal.reserve,
                 worker_revision=env["VOICE_COACH_BUILD_REVISION"],
                 pipeline_revision=env["AI_CANONICAL_PIPELINE_REVISION"]),
-            materialize(), return_exceptions=True)
-        identity, audio = await drain_on_cancel(prepared)
-        for value in (identity, audio):
+            materialize(), materialize_video(), return_exceptions=True)
+        identity, audio, video = await drain_on_cancel(prepared)
+        for value in (identity, audio, video):
             if isinstance(value, BaseException):
                 raise value
         fence()
         stage("CORE")
         core_root = work / "core"
         core_root.mkdir(mode=0o700)
-        produced = await FrozenCanonicalProducer(
+        producer = FrozenCanonicalProducer(
             frozen.artifacts, core_root, journal,
             nltk_data_root=Path(env["AI_ANALYSIS_NLTK_DATA_ROOT"]),
             resident_socket=Path(env['AI_CANONICAL_RESIDENT_SOCKET'])
-                if env.get('AI_CANONICAL_RESIDENT_SOCKET') else None).produce(
-            request, audio, deadline_monotonic=deadline, execution_is_active=active)
+                if env.get('AI_CANONICAL_RESIDENT_SOCKET') else None)
+        visual_bytes = None
+        if request.is_audiovisual:
+            from .canonical_audiovisual_result import visual_assets
+            from .media_preparation import MediaPreparation
+            from voice_coach.visual_feedback.canonical_service import CanonicalAudiovisualService
+            from voice_coach.visual_feedback.adapters.canonical_video_features import (
+                CanonicalVideoFeatures, VideoFeatureConfiguration)
+            catalog, configuration = visual_assets(frozen)
+            _require(env.get("AI_CANONICAL_AUDIOVISUAL_ENABLED") == "true", "AUDIOVISUAL_ADMISSION_CLOSED")
+            video_port = CanonicalVideoFeatures(VideoFeatureConfiguration(
+                Path(env["AI_CANONICAL_VISUAL_PYTHON"]), Path(env["AI_ANALYSIS_VISUAL_LANDMARK_MODEL_PATH"]),
+                configuration["modelSha256"], configuration["quality"]))
+            stage("CORE_AND_VIDEO")
+            parallel = await CanonicalAudiovisualService(video_port=video_port, catalog=catalog).produce(
+                request=request, audio=audio, video=video, producer=producer,
+                media_preparation=MediaPreparation.from_wire(request.media_preparation,
+                    audio_sha256=audio.sha256, video_sha256=video.sha256),
+                deadline=deadline - configuration["gptAndHandoffReserveSeconds"],
+                visual_timeout=configuration["visualTimeoutSeconds"], execution_is_active=active)
+            produced = parallel.audio
+            visual_bytes = encode_document(parallel.visual_evidence)
+            print(json.dumps({"event": "canonical_audiovisual_timing", "executionId": str(request.execution_id),
+                              **parallel.timings}), file=sys.stderr, flush=True)
+        else:
+            produced = await producer.produce(request, audio, deadline_monotonic=deadline, execution_is_active=active)
         fence()
         stage("EXPRESSION")
         expression = await asyncio.to_thread(frozen.express_admitted, request, audio=audio,
             core_bytes=produced.raw, prepared_wav=produced.prepared_wav,
             producer_workspace=produced.workspace, transport=FrozenOpenAITransport(env["OPENAI_API_KEY"],
-                combined_grading=frozen.artifacts.identity.gpt_grading))
+                combined_grading=frozen.artifacts.identity.gpt_grading), visual_evidence_bytes=visual_bytes)
         fence()
         stage("PREFLIGHT")
         preflight = await asyncio.to_thread(preflight_canonical_result, expression,
@@ -189,6 +223,8 @@ async def execute(path: Path, env, diagnostic: dict):
         actions = [(recordings.close, False), (journal.close, False), (handoff.close, True)]
         if acquired:
             actions.insert(0, (lambda: audio_context.__exit__(None, None, None), False))
+        if video_acquired:
+            actions.insert(0, (lambda: video_context.__exit__(None, None, None), False))
         for action, is_async in actions:
             try:
                 if is_async:

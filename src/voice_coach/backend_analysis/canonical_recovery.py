@@ -55,7 +55,8 @@ def discover(root: Path):
 
 def load_handoff(work, body, worker):
     document = parse_json(read_private_result(work / "handoff.json", work, 2 * 1024 * 1024))
-    validate_document(document, "handoff", schema_name="handoff")
+    audiovisual = body.get("resultSchemaVersion") == "voice-coaching.runpod-analysis-result.v6"
+    validate_document(document, "handoff", schema_name="handoff2" if audiovisual else "handoff")
     meta = document["metadata"]
     _require(meta["workerInstanceId"] == worker and meta["requestSha256"] == digest(body)
              and document["handoffSha256"] == digest(meta)

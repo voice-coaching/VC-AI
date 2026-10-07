@@ -1,0 +1,27 @@
+{
+  "schemaVersion": "voice-coaching.lip-reference-catalog.v2",
+  "revision": "observation-only-20261007-v1",
+  "mappingRevision": "mediapipe-468-eye-scale-lips-v1",
+  "contextPolicy": "EXACT_WORD_AND_ROLE_V1",
+  "distancePolicy": {
+    "revision": "research-face-shape-wdtw-20261007-v1",
+    "landmark_weight": 1,
+    "feature_weights": [
+      0,
+      0,
+      0
+    ],
+    "feature_scales": [
+      1,
+      1,
+      1
+    ],
+    "phase_band": 0.25,
+    "phase_penalty": 1,
+    "max_repeat": 2,
+    "max_frames": 120
+  },
+  "minimumCoverage": 1,
+  "references": [],
+  "calibrations": []
+}

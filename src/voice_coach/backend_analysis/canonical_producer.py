@@ -132,8 +132,9 @@ class FrozenCanonicalProducer:
 
     async def produce(self, request: AnalysisInput, audio: MaterializedAudio, *,
                       deadline_monotonic: float,
-                      execution_is_active: Callable[[], bool]) -> ProducedCanonicalCore:
-        _require(not request.is_legacy and request.visual_input is None,
+                      execution_is_active: Callable[[], bool], audio_branch: bool = False) -> ProducedCanonicalCore:
+        _require(not request.is_legacy and (request.visual_input is None or (
+                     audio_branch is True and request.is_audiovisual)),
                  'CANONICAL_PRODUCER_PROFILE')
         _require(execution_is_active() is True and time.monotonic() < deadline_monotonic,
                  'CANONICAL_EXECUTION_INACTIVE')

@@ -15,7 +15,8 @@ from .http_models import digest, parse_json
 def handoff_document(request_body, projection_raw, preflight, identity):
     projection = read_document(projection_raw)
     artifacts = preflight.artifacts if preflight is not None else ()
-    metadata = dict(schemaVersion="voice-coaching.canonical-handoff.v1",
+    audiovisual = request_body.get("resultSchemaVersion") == "voice-coaching.runpod-analysis-result.v6"
+    metadata = dict(schemaVersion="voice-coaching.canonical-handoff.v2" if audiovisual else "voice-coaching.canonical-handoff.v1",
         handoffId=str(identity.event_id), eventId=str(identity.event_id),
         workerInstanceId=str(identity.worker_instance_id),
         **{key: request_body[key] for key in
@@ -28,7 +29,7 @@ def handoff_document(request_body, projection_raw, preflight, identity):
                inlineArtifacts={a.kind: base64.b64encode(a.raw).decode("ascii") for a in artifacts})
     if len(encode_document(doc)) > 2 * 1024 * 1024:
         doc["inlineArtifacts"] = {}
-    validate_document(doc, "handoff", schema_name="handoff")
+    validate_document(doc, "handoff", schema_name="handoff2" if audiovisual else "handoff")
     return doc
 
 
@@ -73,6 +74,8 @@ class CanonicalHandoffClient:
         Limit the *whole* optional exchange, including a trickling response, to 2s.
         """
         projection = parse_json(projection_raw)
+        if projection.get("schemaVersion") == "voice-coaching.runpod-analysis-result.v6":
+            return False  # v6 becomes visible only after Backend semantic verification.
         try:
             async with asyncio.timeout(2):
                 reply = await self._request("POST",
