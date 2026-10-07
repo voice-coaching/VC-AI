@@ -54,6 +54,12 @@ def verified_changes(body, token):
         raise ValueError('MAIN_ANCESTRY_REQUIRED')
     files = compare.get('files', [])
     if len(files)>=300:raise ValueError('COORDINATED_LARGE_RELEASE_REQUIRED')
+    def tree(revision):
+        tree_sha = github('git/commits/'+revision)['tree']['sha']
+        document = github('git/trees/'+tree_sha+'?recursive=1')
+        if document.get('truncated'):raise ValueError('GITHUB_TREE_TRUNCATED')
+        return {row['path']:row for row in document['tree'] if row['type']=='blob'}
+    old_tree, new_tree = tree(base), tree(target)
     expected = {}
     for row in files:
         names = [row['filename']]
@@ -62,7 +68,11 @@ def verified_changes(body, token):
             if name.startswith(PROTECTED) or name.startswith(DEPENDENCIES):
                 raise ValueError('COORDINATED_IMMUTABLE_RELEASE_REQUIRED')
             if name.startswith(PREFIXES):
-                expected[name] = (None if row.get('status')=='removed' or name!=row['filename'] else row['sha'])
+                previous, following = old_tree.get(name), new_tree.get(name)
+                if any(item and item['mode'] not in ('100644','100755') for item in (previous,following)):
+                    raise ValueError('REGULAR_GIT_SOURCE_REQUIRED')
+                expected[name] = dict(before=previous['sha'] if previous else None,
+                    after=following['sha'] if following else None, mode=following['mode'] if following else None)
     rows = body['changes']
     if len(rows)!=len(expected) or {row['path'] for row in rows}!=set(expected):
         raise ValueError('GITHUB_SOURCE_MANIFEST_MISMATCH')
@@ -129,7 +139,9 @@ def deploy(body, raw, token):
     if shutil.disk_usage('/var/lib').free < 14*1024**3+2*len(raw):
         raise ValueError('DEPLOYMENT_DISK_HEADROOM_REQUIRED')
     changes, seen = [], set()
+    preflight_deadline = time.monotonic()+120
     for row in body['changes']:
+        if time.monotonic()>=preflight_deadline:raise ValueError('SOURCE_PREFLIGHT_TIMEOUT')
         name = row['path']; relative = PurePosixPath(name)
         if (name in seen or not name.startswith(PREFIXES) or name.startswith(PROTECTED)
                 or relative.is_absolute() or '..' in relative.parts or '\\' in name):
@@ -140,11 +152,13 @@ def deploy(body, raw, token):
             raise ValueError('SOURCE_PATH_SYMLINK')
         old = path.read_bytes() if path.exists() else None
         digest = hashlib.sha256(old).hexdigest() if old is not None else None
-        if digest != row['beforeSha256']:
+        old_blob = hashlib.sha1(b'blob '+str(len(old)).encode()+b'\0'+old).hexdigest() if old is not None else None
+        if digest != row['beforeSha256'] or old_blob != approved[name]['before']:
             raise ValueError('RUNTIME_SOURCE_DRIFT')
         new = base64.b64decode(row['afterBase64'], validate=True) if row['afterBase64'] is not None else None
         git_blob = hashlib.sha1(b'blob '+str(len(new)).encode()+b'\0'+new).hexdigest() if new is not None else None
-        if git_blob != approved[name]:raise ValueError('GITHUB_BLOB_MISMATCH')
+        if git_blob != approved[name]['after'] or row['mode'] != approved[name]['mode']:
+            raise ValueError('GITHUB_BLOB_MISMATCH')
         if new is not None:
             if len(new) > 2*1024**2 or hashlib.sha256(new).hexdigest() != row['afterSha256']:
                 raise ValueError('SOURCE_DIGEST_MISMATCH')
@@ -154,7 +168,7 @@ def deploy(body, raw, token):
                 compile(new, name, 'exec')
                 result = subprocess.run(['/opt/intelligentai/envs/scorer/bin/python', '-c',
                     'import sys; compile(sys.stdin.buffer.read(), "candidate", "exec")'],
-                    input=new, capture_output=True, timeout=10)
+                    input=new, capture_output=True, timeout=min(10, max(0.1, preflight_deadline-time.monotonic())))
                 if result.returncode:raise ValueError('PRODUCTION_PYTHON_COMPILE_FAILED')
             if name.endswith('.json'):json.loads(new)
         changes.append((path, old, path.stat().st_mode & 0o777 if old is not None else None, new, row['mode']))
