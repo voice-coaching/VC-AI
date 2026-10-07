@@ -163,6 +163,10 @@ B2 cold-recovery bundle 정합성 확인, workflow main 병합과 활성화 변�
 이때 현재 Jupyter hook은 runner를 새로 등록하거나 credential을 복구하지 않는다.
 새 runner의 완전한 cold recreation 복구까지 완료한 것으로 보고하지 않는다.
 
+runner 설치 후 2026-10-07 15:30:49 UTC 최종 상태 조회에서도 분석 liveness/readiness,
+direct readiness, TTS readiness, Backend handoff가 HTTP 200이며 보호 API의 비인증 요청은 401이었다.
+live source/core/H5/lock은 기존 값과 같고 activeJobs는 0이었다. 분석·TTS 재시작이나 application 배포는 하지 않았다.
+
 등록 방식은 [GitHub의 self-hosted runner 설치 안내](https://docs.github.com/en/actions/how-tos/manage-runners/self-hosted-runners/add-runners)를 따른다.
 조회한 repository용 Linux x64 패키지는 `2.337.0`, SHA-256
 `70920811a4f8ad4328818682bca5c6469c1c942fab52448868071d0063816613`이다.
