@@ -37,8 +37,8 @@ AI harness/execution registry, v4/v5의 association/sourceIdentity, verifier exp
 - Python 컴파일, JSON 파싱, `git diff --check` 통과.
 - Backend `bootJar --offline --no-daemon -x test -x check` 성공.
 - 자동 회귀 테스트·실제 GPT 생성·음성 품질 QA는 실행하지 않았다.
-- **운영 전환 진행 중.** 11:11 KST AWS Backend는 새 계약으로 활성화됐지만 DLPC는 아직 기존 `5f3ec5aa…` prompt를 유지한다. 양쪽 신규 접수는 차단되어 있으며 운영 프롬프트 복구 완료로 보고하지 않는다.
-- RunPod는 중지돼 관리 경유지로 사용할 수 없고, 기존 AWS→DLPC 포워드는 API 전용이다. 운영 적용에는 DLPC 플랫폼 터미널 실행 또는 직접 관리 SSH 경로가 필요하며 사용자에게 요청했다.
+- **운영 전환 완료.** 2026-10-07 11:30 KST DLPC 복원본과 AWS Backend 계약을 확인하고 신규 접수를 재개했다. 실제 생성·청취 품질 QA 통과를 의미하지 않는다.
+- RunPod 관리 경유 없이 사용자의 DLPC 플랫폼 터미널 실행과 기존 AWS 관리자 SSH로 적용했다. AWS→DLPC 포워드는 기존 API 전용 구성을 유지한다.
 
 ## 적용 순서
 
@@ -85,3 +85,12 @@ B2 `speakai2026`의 `intelligentai/recovery/dlpc-20261006/announcer-df90eb10-202
 - 수정 설치기는 Python 컴파일 및 diff 정적 확인을 수행했다. B2에 업로드한 전체 바이트를 다시 받아 hash를 확인했다. 실제 생성·품질 QA는 수행하지 않았다.
 - 수정 설치기: 12,911 bytes, SHA-256 `999736994f6bed9f17047f2c6a5e66329804de4bf5811fda1d4885019e355dae`, B2 file ID `4_ze5cc71977ef1880ca60b0c17_f10720d922a8a0d9f_d20261007_m021450_c005_v0501000_t0027_u01791339290423`.
 - 사용자에게 기존 대기 명령을 Ctrl+C로 중단한 뒤 `deploy/dlpc/resume_announcer_activation.sh` 실행을 요청했다. Backend 단계는 `ACTIVATED`이며 `resume`, AWS 비밀 복구본 identity 갱신, DLPC direct 접수 재개는 아직 수행하지 않았다. runtime bundle과 AI 실행 source 후보는 위 표의 값 그대로다.
+
+## 11:30 KST 운영 전환 완료
+
+- 사용자가 수정 설치기를 실행했고 `backend_activated` → `installing`을 보고했다. AWS 경유 authenticated deployment에서 새 source `df90eb10…`, runtime `b7170dda…`, LLM `def65f68…` 일치를 직접 확인했다.
+- 새 분석 readiness 확인 후 기존 AWS 배포 도구 `resume`이 연속 readiness 3회와 계약·frontend·drain 검증을 완료했다. Backend release `84260c05…`는 `VERIFIED` → `COMPLETE`로 전환됐으며 maintenance hold가 제거됐다.
+- root 전용 복구 설정 원본을 보존하고 AWS `dlpc-recovery-20261006/analysis.env`의 `AI_CANONICAL_LLM_ROOT`, `VOICE_COACH_BUILD_REVISION`, `AI_CANONICAL_PIPELINE_REVISION`만 새 identity로 갱신했다. 비밀값과 진단 복구의 admission 설정은 유지했다.
+- 11:30:50 KST 공개 `/readyz`, `/direct/readyz`, 인증된 `/health/services`, `/health/deployment` 모두 HTTP 200. executor/handoff ready, GPT provider `OPENAI`, model `gpt-6-astra`, active/direct jobs 0을 확인했다. Backend handoff는 HTTP 200, supported/admission true, 9개 schema가 활성 profile과 일치했다. 독립 TTS `/health/ready`도 HTTP 200, status ready였다.
+- DLPC direct readiness 정상화는 설치기가 AWS 새 복구 identity를 수신한 뒤 소유한 direct hold를 해제한 동작과 일치한다. DLPC 내부 최종 `state.json`은 관리 경로가 없어 직접 읽지 않았다. 설치 코드에서 이 단계 전 persistent home의 B2 runtime pin 및 새 LLM-aware 복구 도구를 갱신하며, 전체 재생성 복구 실험을 수행한 것은 아니다.
+- 활성 AI runtime은 `df90eb10…`, Backend JAR는 `84260c05…`다. 후속 installer 수정 `917f656…`와 문서 commit은 운영 애플리케이션 source revision과 구분한다. 현재 채점은 유지됐으며 실제 녹음/GPT 생성·품질 QA는 이번 복구에서 실행하지 않았다.
