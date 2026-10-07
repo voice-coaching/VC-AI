@@ -1,0 +1,19 @@
+{
+  "schemaVersion": "voice-coaching.lip-reference-catalog.v1",
+  "revision": "testvideo1-20261007-pending",
+  "references": [
+    {
+      "referenceId": "testvideo1",
+      "sourceSha256": "e11d1d9ac6a04de67bdff5ddda68284d92d910d343bbf28dc764f2879744eac9",
+      "byteSize": 2097382,
+      "sourceLocator": "tests/testvideo1.mp4",
+      "expertStatus": "USER_DESIGNATED",
+      "extractionStatus": "PENDING",
+      "transcript": "쌀과 콩을 깨끗한 그릇에 담아요",
+      "transcriptSource": "historical-analysis-records-requires-review",
+      "phoneReferences": [],
+      "calibrations": []
+    }
+  ],
+  "admissionReady": false
+}

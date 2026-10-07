@@ -1,0 +1,128 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:voice-coaching:media-preparation:v1",
+  "type": "object",
+  "additionalProperties": false,
+  "properties": {
+    "schemaVersion": {
+      "const": "voice-coaching.media-preparation.v1"
+    },
+    "sourceSha256": {
+      "type": "string",
+      "pattern": "^[0-9a-f]{64}$"
+    },
+    "canonicalPcmSha256": {
+      "type": "string",
+      "pattern": "^[0-9a-f]{64}$"
+    },
+    "canonicalVideoSha256": {
+      "oneOf": [
+        {
+          "type": "string",
+          "pattern": "^[0-9a-f]{64}$"
+        },
+        {
+          "type": "null"
+        }
+      ]
+    },
+    "normalizationRevision": {
+      "const": "backend-mp4-pcm-20261007-v1"
+    },
+    "canonicalAudioStartSeconds": {
+      "oneOf": [
+        {
+          "type": "number",
+          "minimum": -86400,
+          "maximum": 86400
+        },
+        {
+          "type": "null"
+        }
+      ]
+    },
+    "canonicalVideoStartSeconds": {
+      "oneOf": [
+        {
+          "type": "number",
+          "minimum": -86400,
+          "maximum": 86400
+        },
+        {
+          "type": "null"
+        }
+      ]
+    },
+    "canonicalAudioTimeBase": {
+      "oneOf": [
+        {
+          "type": "string",
+          "pattern": "^[1-9][0-9]{0,9}/[1-9][0-9]{0,9}$"
+        },
+        {
+          "type": "null"
+        }
+      ]
+    },
+    "canonicalVideoTimeBase": {
+      "oneOf": [
+        {
+          "type": "string",
+          "pattern": "^[1-9][0-9]{0,9}/[1-9][0-9]{0,9}$"
+        },
+        {
+          "type": "null"
+        }
+      ]
+    },
+    "syncStatus": {
+      "enum": [
+        "NOT_APPLICABLE",
+        "UNVERIFIED"
+      ]
+    }
+  },
+  "required": [
+    "schemaVersion",
+    "sourceSha256",
+    "canonicalPcmSha256",
+    "canonicalVideoSha256",
+    "normalizationRevision",
+    "canonicalAudioStartSeconds",
+    "canonicalVideoStartSeconds",
+    "canonicalAudioTimeBase",
+    "canonicalVideoTimeBase",
+    "syncStatus"
+  ],
+  "allOf": [
+    {
+      "if": {
+        "properties": {
+          "canonicalVideoSha256": {
+            "type": "null"
+          }
+        }
+      },
+      "then": {
+        "properties": {
+          "syncStatus": {
+            "const": "NOT_APPLICABLE"
+          },
+          "canonicalVideoStartSeconds": {
+            "type": "null"
+          },
+          "canonicalVideoTimeBase": {
+            "type": "null"
+          }
+        }
+      },
+      "else": {
+        "properties": {
+          "syncStatus": {
+            "const": "UNVERIFIED"
+          }
+        }
+      }
+    }
+  ]
+}
