@@ -8,6 +8,9 @@ from .canonical_bridge import _require as require
 APPROVED_NATIVE_EXECUTIONS: frozenset[tuple[str, str]] = frozenset({(
     "818a3c16cba39dfcfa9f1083865db7f122a3eba40bc332d85256da94d1d6fb1e",
     "f90440b764f78f32c989dc0785f41262397cc22e1d1ca48c40361189b81f86d5",
+), (
+    'f6d56e1decc160f0ca38cc8d52303f3de20945f872d714bf6a2e743ed94c0391',
+    '1612539f82a0b6e2c5c0b3551440b8094ca979bd8ab5d898386713bd0d1f54b7',
 )})
 
 

@@ -1,5 +1,20 @@
 # DLPC deployment
 
+## Current production state — 2026-10-07
+
+Analysis and TTS are deployed on DLPC, reached through AWS port 22132 reverse
+SSH forwards. RunPod is stopped. The former GitHub RunPod deployment workflow
+was disabled and its three deployment secrets and Pod variable removed; its
+YAML is removed in this branch. Current runtime and recovery assets do not
+require a RunPod API key or a running Pod.
+
+See [production cutover](../../docs/canonical-integration/dlpc-gop-cutover-20261007.md)
+and [dependency/reboot audit](../../docs/canonical-integration/dlpc-reboot-audit-20261007.md).
+The installed Jupyter hook restores diagnostic services only. It does not yet
+automatically resume production admission. Full reboot automation is a separate
+pending change, not a capability established by the earlier successful cutover.
+The dated sections below retain their original observation scope.
+
 ## AWS follow-up, 2026-10-06
 
 `check_aws_connection.py` runs read-only on AWS as root. It reads only the relevant

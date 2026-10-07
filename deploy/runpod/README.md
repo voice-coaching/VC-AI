@@ -1,5 +1,7 @@
 # RunPod GPT-6 HTTP 운영 배포
 
+> 2026-10-07: 운영 실행 환경은 DLPC로 이전했다. 이 문서는 과거 RunPod 운영 기록이다. RunPod 배포 Actions는 비활성화했고 전용 GitHub secrets/Pod 변수도 제거했다. 현재 경로는 [DLPC 배포 안내](../dlpc/README.md)와 [운영 전환 기록](../../docs/canonical-integration/dlpc-gop-cutover-20261007.md)을 따른다. 아래 Pod 시작·배포 명령을 현재 운영 절차로 실행하지 않는다.
+
 2026-10-03 02:18 KST: [lease 갱신 경합 방지·종료 진단 배포](../../docs/canonical-integration/runpod-lease-hardening-plan-20261003.md#10-운영-배포-기록).
 `5f582fc`의 lease snapshot reader와 단계별 오류 진단을 runtime/overlay에 적용했다.
 양쪽 readiness와 기존 journal 응답을 확인했으며 실제 분석·경합 QA는 개발자 확인이 남았다.

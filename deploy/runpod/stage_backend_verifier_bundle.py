@@ -42,11 +42,11 @@ def require(condition, code):
 def main():
     require(sys.platform == 'linux' and os.geteuid() == 0, 'ROOT_LINUX_REQUIRED')
     os.umask(0o022)
-    raw = sys.stdin.buffer.read(16 * 1024 * 1024 + 1)
-    require(0 < len(raw) <= 16 * 1024 * 1024, 'BUNDLE_SIZE')
+    raw = sys.stdin.buffer.read(20 * 1024 * 1024 + 1)
+    require(0 < len(raw) <= 20 * 1024 * 1024, 'BUNDLE_SIZE')
     files = json.loads(raw)
-    # Retained historical releases plus the GOP pair need more than 800 files.
-    require(type(files) is dict and 90 <= len(files) <= 900, 'BUNDLE_FILES')
+    # The additive DLPC CUDA pair takes the full historical closure to 816 files.
+    require(type(files) is dict and 90 <= len(files) <= 1000, 'BUNDLE_FILES')
     require(REQUIRED_APP_FILES.issubset(files), 'BUNDLE_APP_DEPENDENCIES_MISSING')
     decoded = {}
     for name, entry in files.items():
@@ -59,6 +59,7 @@ def main():
                      'frozen/canonical_resident_core_20261004_v1/', 'frozen/canonical_resident_h5_20261004_v1/',
                      'frozen/canonical_native_core_20261005_v4/', 'frozen/canonical_native_h5_20261005_v4/',
                      'frozen/canonical_seungun_core_20261006_v1/', 'frozen/canonical_seungun_gpt_20261006_v1/',
+                     'frozen/canonical_dlpc_gop_cuda_20261007_v2/', 'frozen/canonical_dlpc_gop_cuda_20261007_v2_h5/',
                      'frozen/canonical_seungun_gop_core_20261006_v1/', 'frozen/canonical_seungun_gop_gpt_20261006_v1/',
                      'frozen/canonical_native_core_20261004_v1/', 'frozen/canonical_native_h5_20261004_v1/',
                      'app/src/voice_coach/', 'app/docs/contracts/'))
@@ -111,6 +112,12 @@ def main():
             'frozen/canonical_dlpc_cuda_20261005_v2/release_manifest.json': '4d29ddf6da45d43de6ceb0b07b70cecaf291ae5bc92b700ece6b320a8e6c423d',
             'frozen/canonical_dlpc_cuda_20261005_v2_h5/contracts/llm/dependency_lock.json': 'fc48fc935df8c4fb90c0a9345651c047a320da220fe46c12e6e00d395a6c556d',
             'frozen/canonical_dlpc_cuda_20261005_v2_h5/contracts/llm/llm_contract_manifest.json': 'de8f66aa7688404f2f59fc17e67dd2c250cf746d58f9697bebd8fee87095f5f9',
+        })
+    if any(name.startswith('frozen/canonical_dlpc_gop_cuda_20261007_v2/') or name.startswith('frozen/canonical_dlpc_gop_cuda_20261007_v2_h5/') for name in files):
+        pins.update({
+            'frozen/canonical_dlpc_gop_cuda_20261007_v2/release_manifest.json': 'f6d56e1decc160f0ca38cc8d52303f3de20945f872d714bf6a2e743ed94c0391',
+            'frozen/canonical_dlpc_gop_cuda_20261007_v2_h5/contracts/llm/dependency_lock.json': '3e2e81b43b1c1298266df428bc01ef0761d37f413073824cae2000623ea2eb3c',
+            'frozen/canonical_dlpc_gop_cuda_20261007_v2_h5/contracts/llm/llm_contract_manifest.json': '1612539f82a0b6e2c5c0b3551440b8094ca979bd8ab5d898386713bd0d1f54b7',
         })
     for name, expected in pins.items():
         require(name in files and files[name]['sha256'] == expected, 'BUNDLE_FROZEN_PIN')
