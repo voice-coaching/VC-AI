@@ -96,7 +96,7 @@ def main():
         SEUNGUN_GPT, SEUNGUN_CORE_DIRECTORY, SEUNGUN_LLM_DIRECTORY,
         DLPC_GOP, DLPC_GOP_CORE_DIRECTORY, DLPC_GOP_LLM_DIRECTORY,
         DLPC_ANNOUNCER, DLPC_ANNOUNCER_LLM_DIRECTORY,
-        AUDIOVISUAL, AUDIOVISUAL_LLM_DIRECTORY,
+        AUDIOVISUAL, AUDIOVISUAL_CORE_DIRECTORY, AUDIOVISUAL_LLM_DIRECTORY,
         SEUNGUN_GPT_V1, SEUNGUN_V1_CORE_DIRECTORY, SEUNGUN_V1_LLM_DIRECTORY,
     )
     frozen = FrozenCanonicalCoaching(FrozenCanonicalArtifacts(args.core_root, args.llm_root))
@@ -124,7 +124,7 @@ def main():
     seungun_v1 = FrozenCanonicalCoaching(FrozenCanonicalArtifacts(
         args.core_root.parent / SEUNGUN_V1_CORE_DIRECTORY, args.llm_root.parent / SEUNGUN_V1_LLM_DIRECTORY))
     audiovisual = FrozenCanonicalCoaching(FrozenCanonicalArtifacts(
-        args.core_root.parent / DLPC_GOP_CORE_DIRECTORY, args.llm_root.parent / AUDIOVISUAL_LLM_DIRECTORY))
+        args.core_root.parent / AUDIOVISUAL_CORE_DIRECTORY, args.llm_root.parent / AUDIOVISUAL_LLM_DIRECTORY))
     audiovisual_installed = False
     try:
         frozen._bridge()
@@ -172,6 +172,8 @@ def main():
                 raise RuntimeError('VERIFIER_HARNESS_ROOT_MISMATCH')
             dlpc_announcer._bridge().scoring_policy()
             installed_native = DLPC_ANNOUNCER
+        if audiovisual.artifacts.core_root.exists() != audiovisual.artifacts.llm_root.exists():
+            raise RuntimeError('VERIFIER_AUDIOVISUAL_PAIR_INCOMPLETE')
         if audiovisual.artifacts.llm_root.exists():
             from voice_coach.backend_analysis.canonical_audiovisual_result import visual_assets
             visual_assets(audiovisual)
@@ -193,7 +195,8 @@ def main():
                               **(dict(nativeCoreManifestSha256=installed_native.core_sha256,
                                       nativeManifestSha256=installed_native.manifest_sha256, nativeLockSha256=installed_native.lock_sha256)
                                  if installed_native is not None else {}),
-                              **(dict(audiovisualManifestSha256=AUDIOVISUAL.manifest_sha256,
+                              **(dict(audiovisualCoreManifestSha256=AUDIOVISUAL.core_sha256,
+                                      audiovisualManifestSha256=AUDIOVISUAL.manifest_sha256,
                                       audiovisualLockSha256=AUDIOVISUAL.lock_sha256)
                                  if audiovisual_installed else {}))))
         return

@@ -47,6 +47,7 @@ verifier must additionally match them to the retained receipt/association.
     for anchor in located.anchors:
         row = assess_phone(anchor, frames=frames, pcm_sha256=core["prepared_wav_sha256"],
             video_sha256=video_sha, time_map=mapping, mapping_revision=MAPPING.revision,
+            source_sha256=request.media_preparation["receipt"]["sourceSha256"],
             references=catalog.references, policy=catalog.policy, calibration=catalog.calibration_for(anchor))
         if row["videoStartSeconds"] is not None:
             selected = [f for f in frames if row["videoStartSeconds"] <= f.pts_s < row["videoEndSeconds"]]
@@ -151,7 +152,7 @@ class CanonicalAudiovisualService:
                     correctiveClaimsAllowed=False, score=None, scoreKind="NONE", coverage=dict(
                         targetCount=0, visuallyEligibleCount=0, observedCount=0, scoredCount=0, coverage=None),
                     phoneAssessments=[], reasonCodes=[reason],
-                    alignmentScope="CANONICAL_PRONUNCIATION_EVIDENCE_CONSONANTS", unresolvedExpectedIndices=[]))
+                    alignmentScope="CANONICAL_MFA_DETECTOR_PHONES_V1", unresolvedExpectedIndices=[]))
         return AudiovisualProduction(produced, evidence, dict(
             audioSeconds=parallel.audio_finished - parallel.started,
             videoSeconds=parallel.visual_finished - parallel.started,

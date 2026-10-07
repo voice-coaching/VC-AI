@@ -18,7 +18,7 @@ from .feature_protocol import MAPPING
 from .reference_distance import DistancePolicy, Trajectory
 from .parallel_analysis import MediaIntegrityFailure
 
-SCHEMA = "voice-coaching.lip-reference-catalog.v1"
+SCHEMA = "voice-coaching.lip-reference-catalog.v2"
 MAX_CATALOG_BYTES = 8 * 1024 * 1024
 
 
@@ -75,18 +75,32 @@ class ReferenceCatalog:
         references = []
         for item in data["references"]:
             require(type(item) is dict and set(item) == {"referenceId", "videoSha256", "expectedPhone", "role",
-                "context", "expertReviewId", "trajectory"})
+                "context", "expertReviewId", "trajectory", "provenance"})
+            provenance = item["provenance"]
+            require(type(provenance) is dict and set(provenance) == {"sourceSha256", "coreSha256",
+                "preparedWavSha256", "expectedIndex", "audioStartSeconds", "audioEndSeconds",
+                "videoStartSeconds", "videoEndSeconds", "captureSha256"})
+            for key in ("sourceSha256", "coreSha256", "preparedWavSha256", "captureSha256"):
+                sha(provenance[key])
+            require(type(provenance["expectedIndex"]) is int and 0 <= provenance["expectedIndex"] < 2048)
+            from .feature_protocol import finite
+            for start, end in (("audioStartSeconds", "audioEndSeconds"), ("videoStartSeconds", "videoEndSeconds")):
+                require(finite(provenance[start]) and finite(provenance[end])
+                        and -86400 <= provenance[start] < provenance[end] <= 86400)
+            require(0 <= provenance["audioStartSeconds"] < provenance["audioEndSeconds"] <= 120)
             t = item["trajectory"]
             require(type(t) is dict and set(t) == {"times", "landmarks", "features"})
             trajectory = Trajectory(tuple(t["times"]), tuple(tuple(tuple(p) for p in row) for row in t["landmarks"]),
                                     tuple(tuple(row) for row in t["features"]))
             trajectory.validate(policy.max_frames)
+            require(all(provenance["videoStartSeconds"] <= t < provenance["videoEndSeconds"]
+                        for t in trajectory.times))
             require(all(len(row) == len(MAPPING.lip_indices) for row in trajectory.landmarks)
                     and all(len(row) == 3 for row in trajectory.features))
             require(item["role"] in {"onset", "nucleus", "coda"})
             references.append(LipReference(text(item["referenceId"]), sha(item["videoSha256"]),
                 text(item["expectedPhone"], 20), item["role"], text(item["context"]), MAPPING.revision,
-                trajectory, text(item["expertReviewId"])))
+                trajectory, text(item["expertReviewId"]), provenance["sourceSha256"]))
         require(len({r.reference_id for r in references}) == len(references))
         require(type(data["calibrations"]) is list and len(data["calibrations"]) <= 256)
         calibrations = []

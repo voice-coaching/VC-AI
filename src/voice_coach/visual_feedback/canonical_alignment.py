@@ -14,25 +14,36 @@ import wave
 from .audiovisual_evidence import PhoneAnchor, VerifiedTimeMap
 from .parallel_analysis import MediaIntegrityFailure
 
+ALIGNMENT_SCOPE = "CANONICAL_MFA_DETECTOR_PHONES_V1"
+
 
 @dataclass(frozen=True)
 class AlignmentAnchors:
     anchors: tuple[PhoneAnchor, ...]
     unresolved_indices: tuple[int, ...]
     target_count: int
-    scope: str = "CANONICAL_PRONUNCIATION_EVIDENCE_CONSONANTS"
+    scope: str = ALIGNMENT_SCOPE
 
 
 def anchors_from_core(core: dict, *, request_id: str, audio_sha256: str, prepared_sha256: str):
     if (core.get("request_id") != request_id or core.get("source_audio_sha256") != audio_sha256
             or core.get("prepared_wav_sha256") != prepared_sha256):
         raise MediaIntegrityFailure("MFA_ATTEMPT_MISMATCH")
-    rows = core.get("pronunciation_evidence")
+    alignment = core.get("mfa_phone_alignment")
+    if (type(alignment) is not dict or set(alignment) != {"schemaVersion", "indexNamespace", "rows"}
+            or alignment["schemaVersion"] != "voice-coaching.canonical-mfa-phone-alignment.v1"
+            or alignment["indexNamespace"] != "DETECTOR_METADATA_V2"):
+        raise MediaIntegrityFailure("MFA_ALIGNMENT_CONTRACT_REQUIRED")
+    rows = alignment["rows"]
     if type(rows) is not list or len(rows) > 2048:
         raise MediaIntegrityFailure("MFA_EVIDENCE_INVALID")
     indices = [r.get("expected_index") for r in rows]
     if (any(type(i) is not int or i < 0 for i in indices) or indices != sorted(set(indices))):
         raise MediaIntegrityFailure("MFA_INDEX_MISMATCH")
+    count = core.get("expected_phone_count")
+    if (count is None and rows) or (count is not None and (
+            type(count) is not int or not 0 <= count <= 2048 or indices != list(range(count)))):
+        raise MediaIntegrityFailure("MFA_ALIGNMENT_COVERAGE_MISMATCH")
     anchors, unresolved = [], []
     previous_end = 0.0
     for row in rows:
@@ -43,6 +54,7 @@ def anchors_from_core(core: dict, *, request_id: str, audio_sha256: str, prepare
                  and type(row.get("mfa_ipa")) is str and bool(row["mfa_ipa"])
                  and type(row.get("word")) is str and bool(row["word"])
                  and type(row.get("expected_phone")) is str and bool(row["expected_phone"])
+                 and (row.get("role") != "nucleus" or row.get("localization_status") == "EXACT_COUNT_WORD_INDEX")
                  and all(type(t) in (int, float, Decimal) and math.isfinite(t) for t in times))
         if valid:
             ws, start, end, we = map(float, times)
@@ -53,8 +65,9 @@ def anchors_from_core(core: dict, *, request_id: str, audio_sha256: str, prepare
         previous_end = end
         anchors.append(PhoneAnchor(row["expected_index"], row["expected_phone"], row["role"],
             "word:" + row["word"], start, end, "MFA_LOCATION_ONLY"))
-    # This frozen core exports only consonant locations. Do not invent vowel
-    # spans from full-phone CTC/GOP indices or claim whole-utterance coverage.
+    # Detector metadata includes vowels but is a different namespace from full
+    # GOP metadata. Only real MFA spans enter the join; ambiguous entries remain
+    # in the denominator without a fabricated CTC location.
     return AlignmentAnchors(tuple(anchors), tuple(unresolved), len(rows))
 
 

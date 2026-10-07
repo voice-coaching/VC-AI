@@ -46,7 +46,7 @@ Authenticated producer provenance is a separate handoff responsibility.
             and visual["unresolvedExpectedIndices"] == [] and value["frames"] == [] and value["sourcePcm"] is None
             and value["preparedPcm"] is None and value["timeMap"] is None
             and visual["coverage"] == dict(targetCount=0, visuallyEligibleCount=0, observedCount=0, scoredCount=0, coverage=None)
-            and visual["alignmentScope"] == "CANONICAL_PRONUNCIATION_EVIDENCE_CONSONANTS")
+            and visual["alignmentScope"] == "CANONICAL_MFA_DETECTOR_PHONES_V1")
         require(type(visual["reasonCodes"]) is list and len(visual["reasonCodes"]) == 1
                 and visual["reasonCodes"][0] in FAILURE_REASONS)
         if visual["status"] == "TIMEOUT":

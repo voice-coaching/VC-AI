@@ -82,8 +82,15 @@ def media_binding(request, visual_raw=None):
 
 def public_visual(visual):
     # Original assessments remain in VISUAL_EVIDENCE; never silently drop facts.
-    return dict(visual, phoneAssessments=visual["phoneAssessments"][:128],
+    value = dict(visual, phoneAssessments=visual["phoneAssessments"][:128],
                 omittedPhoneAssessmentCount=max(0, len(visual["phoneAssessments"]) - 128))
+    # A valid catalog can contain long IDs for 32 references per phone. Bound
+    # projection bytes as well as count so video cannot crowd out valid audio.
+    while len(encode_document(value)) > 256 * 1024 and value["phoneAssessments"]:
+        value["phoneAssessments"].pop()
+        value["omittedPhoneAssessmentCount"] += 1
+    _require(len(encode_document(value)) <= 256 * 1024, "VISUAL_SUMMARY_TOO_LARGE")
+    return value
 
 
 def serialize(result, *, request, identity, frozen, receipt=None, prepared_audio=None):
@@ -91,12 +98,16 @@ def serialize(result, *, request, identity, frozen, receipt=None, prepared_audio
     _require(receipt is None, "V6_RECEIPT_FORBIDDEN")
     checked = preflight(result, request=request, frozen=frozen, prepared_audio=prepared_audio)
     from voice_coach.visual_feedback.coaching_input import prepare_visual_coaching
+    visual = public_visual(_json(result.visual_evidence_bytes)["visual"])
+    media = media_binding(request, result.visual_evidence_bytes)
+    budget = 1024**2 - len(encode_document(visual)) - len(encode_document(media)) - 128
     raw = serialize_canonical_result(audio_expression(result), request=audio_request(request),
         identity=identity, frozen=frozen, prepared_audio=prepared_audio,
-        _visual_payload=prepare_visual_coaching(result.visual_evidence_bytes, core_bytes=result.core_bytes))
+        _visual_payload=prepare_visual_coaching(result.visual_evidence_bytes, core_bytes=result.core_bytes),
+        _max_result_bytes=budget)
     document = read_document(raw)
     document.update(schemaVersion=RESULT_V6, analysisProfile=AUDIOVISUAL_PROFILE,
-        visual=public_visual(_json(result.visual_evidence_bytes)["visual"]), mediaBinding=media_binding(request, result.visual_evidence_bytes))
+        visual=visual, mediaBinding=media)
     validate(document, preflight=checked)
     raw = encode_document(document)
     _require(len(raw) <= 1024**2, "RESULT_ENVELOPE_TOO_LARGE")
@@ -129,7 +140,7 @@ def unavailable_visual():
     return dict(status="UNSCORABLE", correctiveClaimsAllowed=False, score=None, scoreKind="NONE",
         coverage=dict(targetCount=0, visuallyEligibleCount=0, observedCount=0, scoredCount=0, coverage=None),
         phoneAssessments=[], reasonCodes=["AUDIO_ANALYSIS_UNAVAILABLE"],
-        alignmentScope="CANONICAL_PRONUNCIATION_EVIDENCE_CONSONANTS", unresolvedExpectedIndices=[])
+        alignmentScope="CANONICAL_MFA_DETECTOR_PHONES_V1", unresolvedExpectedIndices=[])
 
 
 def precore(*, request, identity, failure):

@@ -66,7 +66,8 @@ def main():
                      'frozen/canonical_seungun_core_20261006_v1/', 'frozen/canonical_seungun_gpt_20261006_v1/',
                      'frozen/canonical_dlpc_gop_cuda_20261007_v2/', 'frozen/canonical_dlpc_gop_cuda_20261007_v2_h5/',
                      'frozen/canonical_dlpc_gop_announcer_20261007_v1_h5/',
-                     'frozen/canonical_dlpc_audiovisual_20261007_v1_h5/',
+                     'frozen/canonical_dlpc_audiovisual_20261007_v2_h5/',
+                     'frozen/canonical_dlpc_audiovisual_core_20261007_v2/',
                      'frozen/canonical_seungun_gop_core_20261006_v1/', 'frozen/canonical_seungun_gop_gpt_20261006_v1/',
                      'frozen/canonical_native_core_20261004_v1/', 'frozen/canonical_native_h5_20261004_v1/',
                      'app/src/voice_coach/', 'app/docs/contracts/'))
@@ -105,10 +106,11 @@ def main():
         'frozen/canonical_seungun_gpt_20261006_v1/contracts/llm/llm_contract_manifest.json': '6a3bf7c872e718086cb9add4d48412c825188310cdc9eb394089301dd784ff57',
         'frozen/canonical_seungun_gop_gpt_20261006_v1/contracts/llm/llm_contract_manifest.json': 'f90440b764f78f32c989dc0785f41262397cc22e1d1ca48c40361189b81f86d5',
     })
-    if any(name.startswith('frozen/canonical_dlpc_audiovisual_20261007_v1_h5/') for name in files):
+    if any(name.startswith('frozen/canonical_dlpc_audiovisual_20261007_v2_h5/') for name in files):
         pins.update({
-            'frozen/canonical_dlpc_audiovisual_20261007_v1_h5/contracts/llm/dependency_lock.json': '8126e24d7ed1d0a6cfd0cab20eceff570f8b7fa04767d44471f435a38425c242',
-            'frozen/canonical_dlpc_audiovisual_20261007_v1_h5/contracts/llm/llm_contract_manifest.json': 'd2a30ff826f275e4c678cb2b50f113371220f47d9145041aadf826745e4f2739',
+            'frozen/canonical_dlpc_audiovisual_core_20261007_v2/release_manifest.json': '4cc0cbacd41b5c6f2ac20e6e4840bc5406f4c7ab79ecf53702586eeb5874ecbc',
+            'frozen/canonical_dlpc_audiovisual_20261007_v2_h5/contracts/llm/dependency_lock.json': '934729ee467a2eb030c244584c6fa5c3575ca9ed0a43348a59a486199c0f55e9',
+            'frozen/canonical_dlpc_audiovisual_20261007_v2_h5/contracts/llm/llm_contract_manifest.json': 'd70372926d3406842b95c370b5ceb152480e7f0af83ba840028ec8d9ace2dc50',
         })
     native_v2 = {
         'frozen/canonical_native_core_20261005_v4/release_manifest.json': 'f1009fcdbf75515ddc13e915dcbbf19dfac751ce39779e404749c4f51dd74841',

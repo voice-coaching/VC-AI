@@ -2849,6 +2849,141 @@
           "const": "gop-ctc-af-sd-native-v1"
         }
       }
+    },
+    "mfa_phone_alignment": {
+      "additionalProperties": false,
+      "properties": {
+        "indexNamespace": {
+          "const": "DETECTOR_METADATA_V2"
+        },
+        "rows": {
+          "items": {
+            "additionalProperties": false,
+            "properties": {
+              "expected_index": {
+                "maximum": 2047,
+                "minimum": 0,
+                "type": "integer"
+              },
+              "expected_phone": {
+                "maxLength": 20,
+                "minLength": 1,
+                "type": "string"
+              },
+              "localization_status": {
+                "enum": [
+                  "EXACT_COUNT_WORD_INDEX",
+                  "UNIQUE_MONOTONIC_CONSONANT_MATCH",
+                  "WORD_INDEX_UNRESOLVED",
+                  "WORD_TEXT_UNRESOLVED",
+                  "UNRESOLVED_MONOTONIC_AMBIGUITY",
+                  "UNRESOLVED",
+                  "EXPECTED_CONTEXT_AMBIGUOUS",
+                  "VOWEL_LOCATION_UNRESOLVED"
+                ]
+              },
+              "mfa_ipa": {
+                "maxLength": 40,
+                "minLength": 1,
+                "type": [
+                  "string",
+                  "null"
+                ]
+              },
+              "phone_end_s": {
+                "maximum": 120,
+                "minimum": 0,
+                "type": [
+                  "number",
+                  "null"
+                ]
+              },
+              "phone_start_s": {
+                "maximum": 120,
+                "minimum": 0,
+                "type": [
+                  "number",
+                  "null"
+                ]
+              },
+              "role": {
+                "enum": [
+                  "onset",
+                  "nucleus",
+                  "coda"
+                ]
+              },
+              "source_expected_index": {
+                "minimum": 0,
+                "type": [
+                  "integer",
+                  "null"
+                ]
+              },
+              "source_phone": {
+                "maxLength": 20,
+                "minLength": 1,
+                "type": [
+                  "string",
+                  "null"
+                ]
+              },
+              "word": {
+                "maxLength": 200,
+                "minLength": 1,
+                "type": "string"
+              },
+              "word_end_s": {
+                "maximum": 120,
+                "minimum": 0,
+                "type": [
+                  "number",
+                  "null"
+                ]
+              },
+              "word_index": {
+                "minimum": 0,
+                "type": "integer"
+              },
+              "word_start_s": {
+                "maximum": 120,
+                "minimum": 0,
+                "type": [
+                  "number",
+                  "null"
+                ]
+              }
+            },
+            "required": [
+              "expected_index",
+              "source_expected_index",
+              "expected_phone",
+              "source_phone",
+              "word_index",
+              "word",
+              "role",
+              "localization_status",
+              "mfa_ipa",
+              "word_start_s",
+              "phone_start_s",
+              "phone_end_s",
+              "word_end_s"
+            ],
+            "type": "object"
+          },
+          "maxItems": 2048,
+          "type": "array"
+        },
+        "schemaVersion": {
+          "const": "voice-coaching.canonical-mfa-phone-alignment.v1"
+        }
+      },
+      "required": [
+        "schemaVersion",
+        "indexNamespace",
+        "rows"
+      ],
+      "type": "object"
     }
   }
 }

@@ -435,6 +435,7 @@ def serialize_canonical_result(
     frozen: FrozenCanonicalCoaching, receipt: TrustedBackendVerifiedReceipt | None = None,
     prepared_audio: PreparedAudioIdentity | None = None,
     _visual_payload: dict | None = None,
+    _max_result_bytes: int = MAX_RESULT_BYTES,
 ) -> bytes:
     """Build v4 with a verified B2 receipt, or v5 for durable-original handoff.
 
@@ -481,7 +482,7 @@ def serialize_canonical_result(
         document.update(status="FAILED", failure=ServiceFailure(
             "CORE", "CORE_SYSTEM_FAILURE", "EXECUTION").to_document())
     raw = _wire(document)
-    if len(raw) > MAX_RESULT_BYTES:
+    if len(raw) > _max_result_bytes:
         document.update(status="FAILED", failure=ServiceFailure(
             "INTEGRATION", "RESULT_ENVELOPE_TOO_LARGE", "SERIALIZATION").to_document(),
                         selection=None, coaching=None)
@@ -490,7 +491,7 @@ def serialize_canonical_result(
             document["score"] = dict(overallScore=None, validity="NOT_AVAILABLE", reason="RESULT_NOT_DELIVERED")
     validate_canonical_result_document(document, preflight=preflight, receipt=receipt)
     raw = _wire(document)
-    _require(len(raw) <= MAX_RESULT_BYTES, "RESULT_SUMMARY_TOO_LARGE")
+    _require(len(raw) <= _max_result_bytes, "RESULT_SUMMARY_TOO_LARGE")
     return raw
 
 

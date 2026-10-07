@@ -1,5 +1,5 @@
 {
-  "schemaVersion": "voice-coaching.lip-reference-catalog.v1",
+  "schemaVersion": "voice-coaching.lip-reference-catalog.v2",
   "revision": "observation-only-20261007-v1",
   "mappingRevision": "mediapipe-468-eye-scale-lips-v1",
   "contextPolicy": "EXACT_WORD_AND_ROLE_V1",

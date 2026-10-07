@@ -17,7 +17,7 @@ PARENT = "def65f68a849a2452b0e4dde600f0ef85d99beaa97123d30d97262653ebf8e77"
 LOCK = "b605c3b9ba06bbf18fc126770b18de3d2da0d3f70c08e04873f17bc735b948bc"
 CORE = "f6d56e1decc160f0ca38cc8d52303f3de20945f872d714bf6a2e743ed94c0391"
 PROMPT = "977c49744e7af9fc60fdc2eb13c23985692cb00dd71789d8b3c43c3813e3f1b5"
-NAME = "canonical_dlpc_audiovisual_20261007_v1_h5"
+NAME = "canonical_dlpc_audiovisual_20261007_v2_h5"
 
 ADDITIONAL_PROMPT = """
 
@@ -36,7 +36,7 @@ score=null은 점수가 없는 것이며 0점이 아닙니다. 입술 점수·�
 """
 
 
-def build(source: Path, destination: Path):
+def build(source: Path, destination: Path, *, core: Path, core_sha256: str):
     raw = (source / "contracts/llm/llm_contract_manifest.json").read_bytes()
     if sha(raw) != PARENT:
         raise ValueError("AUDIOVISUAL_H5_PARENT_IDENTITY")
@@ -44,11 +44,17 @@ def build(source: Path, destination: Path):
     if manifest["dependency_lock_sha256"] != LOCK or manifest["parent_core_manifest_sha256"] != CORE:
         raise ValueError("AUDIOVISUAL_H5_PARENT_TUPLE")
     _, files = load_files(source, "contracts/llm/dependency_lock.json", LOCK, "files")
+    core_manifest, core_files = load_files(core, "release_manifest.json", core_sha256, "file_sha256")
+    if (core_manifest.get("parent_manifest_sha256") != CORE or
+            core_manifest.get("release_version") != "canonical_dlpc_audiovisual_core_20261007_v2"):
+        raise ValueError("AUDIOVISUAL_CORE_DERIVATION_REQUIRED")
+    files["contracts/llm/canonical_parent.schema.json"] = core_files["contracts/canonical_ai_output.schema.json"]
     prompt_path = "contracts/llm/llm_system_prompt.txt"
     if sha(files[prompt_path]) != PROMPT:
         raise ValueError("AUDIOVISUAL_RESTORED_PROMPT_REQUIRED")
     files[prompt_path] += ADDITIONAL_PROMPT.encode("utf-8")
     adapter = files["bridge/adapter.py"].decode()
+    adapter = replace_once(adapter, 'PARENT = "' + CORE + '"', 'PARENT = "' + core_sha256 + '"')
     adapter = replace_once(adapter, "def prepare(self, core_bytes, script, binding):",
         "def prepare(self, core_bytes, script, binding, *, visual=None):")
     adapter = replace_once(adapter, '        config = self.read("request_config.json")\n        messages =',
@@ -69,12 +75,12 @@ def build(source: Path, destination: Path):
         files["contracts/visual/" + name] = (Path(__file__).parent / "audiovisual" / name).read_bytes().replace(b"\r\n", b"\n")
     lock = encode(dict(files={k: sha(v) for k, v in sorted(files.items())}))
     manifest.update(contract_version=NAME, parent_llm_manifest_sha256=PARENT,
-                    dependency_lock_sha256=sha(lock))
+                    parent_core_manifest_sha256=core_sha256, dependency_lock_sha256=sha(lock))
     manifest_raw = encode(manifest)
     files["contracts/llm/dependency_lock.json"] = lock
     files["contracts/llm/llm_contract_manifest.json"] = manifest_raw
     write_release(destination / NAME, files)
-    return dict(name=NAME, coreManifestSha256=CORE, llmManifestSha256=sha(manifest_raw),
+    return dict(name=NAME, coreManifestSha256=core_sha256, llmManifestSha256=sha(manifest_raw),
         llmLockSha256=sha(lock), promptSha256=sha(files[prompt_path]),
         parentPromptSha256=PROMPT, productionAllowlisted=False, developerQaVerified=False)
 
@@ -83,5 +89,7 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser()
     parser.add_argument("--source", type=Path, required=True)
     parser.add_argument("--destination", type=Path, required=True)
+    parser.add_argument("--core", type=Path, required=True)
+    parser.add_argument("--core-sha256", required=True)
     args = parser.parse_args()
-    print(json.dumps(build(args.source, args.destination)))
+    print(json.dumps(build(args.source, args.destination, core=args.core, core_sha256=args.core_sha256)))
