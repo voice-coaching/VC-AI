@@ -1,5 +1,13 @@
 # DLPC deployment
 
+## MFA/GOP performance candidate — 2026-10-07
+
+See [implementation and remaining gates](../../docs/canonical-integration/dlpc-mfa-gop-implementation-20261007.md).
+`build_performance_release.py` derives a pinned CPU GOP batching/overlap and MFA
+timing candidate. It does not allowlist or deploy it. Developer parity/performance
+QA is pending. `prepare_restored_runtime.py` provisions both GPU and analysis
+locks; both analysis lanes must select the qualified new core together.
+
 ## Current production state — 2026-10-07
 
 Analysis and TTS are deployed on DLPC, reached through AWS port 22132 reverse
