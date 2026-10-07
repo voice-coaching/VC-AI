@@ -26,6 +26,7 @@
 2. 관리 접속 후 DLPC의 자원·기존 hook·소유권을 관측하고 전용 비특권 Actions runner를 설치한다.
    추론 계정과 분리하며 일반 root 셸 권한이나 비밀 설정 읽기 권한을 runner에 부여하지 않는다.
    runner 계정·고정 sudo controller 권한의 설치 코드도 자동 승인 검토가 거절하여 별도로 승인을 요청했다.
+   2026-10-08 KST 사용자의 명시 승인을 받은 뒤 설치·등록했고 GitHub online을 확인했다.
 3. [main workflow](../../.github/workflows/deploy-dlpc.yml)는 main push와 main의 수동 실행만 받는다.
    `intelligentai-dlpc-deploy` label을 사용하고, 동시에 두 배포를 실행하거나 실행 중 배포를 취소하지 않는다.
    등록 완료 전 `DLPC_DEPLOYMENT_ENABLED` 변수를 설정하지 않는다. preflight는 이 경우 명시적으로 실패하며
@@ -64,7 +65,8 @@ AWS Backend 배포 도구가 사용하는 운영 runtime profile도 별도 조�
 
 workflow·client·controller 소스를 작성했고 Python 소스 컴파일과 diff 정적 확인을 수행했다.
 AWS SSH 관리 키·loopback 포트 허용은 적용했다. DLPC 관리 hook과 관리 SSH 접속은
-2026-10-07 15:20 UTC 원격 확인했다. runner·sudo 규칙은 아직 설치하지 않았다.
+2026-10-07 15:20 UTC 원격 확인했다. 이후 전용 runner·고정 controller·sudo 규칙도 설치했고,
+아래 등록 기록에서 실제 권한과 GitHub online을 확인했다. workflow는 아직 main에 병합하지 않았다.
 기존 AWS 복구 exporter에 `admin-bootstrap` 조회를 추가하는 제안은 자동 승인 검토가 별도 권한 확장으로 거절했다.
 exporter는 변경하지 않았으며, 대신 승인된 설치 코드를 DLPC 터미널에서 직접 실행하도록 전달했다.
 실제 배포·자동 회귀 테스트·GPU 추론·GPT 생성·재부팅은 실행하지 않았다.
@@ -115,6 +117,51 @@ TTS readiness, Backend handoff가 모두 HTTP 200이고 인증 없는 보호 API
 `df90eb10be7165dd29b77454c368da76733eac6b`다. 관리 연결 성공은 최신 main 재배포를 의미하지 않는다.
 runner·고정 controller sudo 권한의 명시 승인 요청은 아직 대기 중이며 배포 활성화 flag는 설정하지 않았다.
 새 분석·GPT 생성·자동 회귀 테스트·재부팅은 수행하지 않았다.
+
+### 2026-10-08 KST 승인 후 runner 등록
+
+사용자는 `전용 runner·고정 controller sudo 권한 승인`으로 승인했다.
+[설치 도구](../../deploy/dlpc/install_actions_runner.py)는 다음 두 단계를 분리한다.
+
+1. root 설치 요청 `operation=prepare`: controller 본문과 SHA-256을 stdin으로 받아
+   고정 경로에 설치하고, 공식 runner archive의 고정 SHA-256을 검증한 후 추출한다.
+   설치 전 디스크 17GiB·available RAM 1GiB 이상의 여유를 요구한다.
+2. `operation=register`: 한 시간 유효한 GitHub 등록 토큰을 SSH stdin으로 전달한다.
+   개인 SSH 키·분석 설정·일반 GitHub PAT를 runner에 복사하지 않는다.
+   토큰 요청 응답과 설치 subprocess 출력은 메모리에서 처리하고 비밀값을 출력하지 않는다.
+
+최초 runner 홈 `/var/lib/intelligentai/actions-runner`에서는 .NET runner가 부모 디렉터리의
+읽기 권한을 요구하여 등록이 실패했다. 분석 state 부모의 `0711` 보호 권한을 유지하고
+runner 전용 홈을 `/var/lib/intelligentai-actions`로 옮겨 실행 버전 `2.337.0`과 등록 성공을 확인했다.
+설치 도구도 이 전용 홈을 사용한다. 별도 시스템 라이브러리 설치는 필요하지 않았다.
+
+- 계정: `intelligentai-actions`, uid `999`, 전용 gid `995`, 로그인 셸 `/usr/sbin/nologin`.
+- 홈: `/var/lib/intelligentai-actions`, uid `999`, `0700`; runner credential `0600`.
+- controller: `/opt/intelligentai/cicd/deploy_source.py`, root 소유 `0600`, SHA-256
+  `8ba96c45605b237478c91240a85bcdbaad36011241e5817ff48d9381833a8d68`.
+- sudoers: `/etc/sudoers.d/intelligentai-actions`, root 소유 `0440`, `visudo` 확인 성공.
+  허용 명령은 `/usr/bin/python3 -I /opt/intelligentai/cicd/deploy_source.py` 하나다.
+- runner 계정의 controller `operation=status` 호출은 성공했고 일반 `sudo true`는 거절됐다.
+  `/etc/intelligentai/analysis.env`와 `/root/.ssh`는 읽을 수 없었다.
+- 독립 supervisor: `actions-runner RUNNING`; root socket
+  `/run/intelligentai-actions-supervisor.sock`, private bounded logs, 기존 분석·TTS와 별도 관리.
+- Jupyter runner 시작 marker 1개를 추가했다. root 설치가 남아 있는 재시작에서는
+  고정 `start_runner.py`를 통해 runner supervisor를 재기동한다. 재부팅 시험은 하지 않았다.
+- GitHub repository runner id `21`, 이름 `intelligentai-dlpc`, label `intelligentai-dlpc-deploy`,
+  `online`, `busy=false`를 확인했다.
+
+현재 GitHub main은 `7a825885dc870ab83138ba2583eb139c248c7c3e`, 운영 base는
+`df90eb10be7165dd29b77454c368da76733eac6b`다. 두 revision 사이에는
+`configs/coaching/announcer_feedback_system_20261007.txt`와 요청·결과 contract schema 변경이 있다.
+따라서 현 상태에서 호환 소스 자동 배포만 활성화하면 계약 전환 요구로 차단되는 것이 정상이다.
+`DLPC_DEPLOYMENT_ENABLED`는 미설정이고 PR #37은 Draft다. 실제 소스 배포는 수행하지 않았다.
+
+활성화 전 남은 순서는 새 frozen prompt/core/H5 identity의 개발자 QA 및 AI·Backend 등록,
+기존 coordinated activation을 통한 drain·계약 전환, 운영 source/Backend runtime profile과
+B2 cold-recovery bundle 정합성 확인, workflow main 병합과 활성화 변수 설정이다.
+컨테이너 재생성으로 `/var/lib`·`/opt`가 사라지면 runner account/credential/controller도 사라진다.
+이때 현재 Jupyter hook은 runner를 새로 등록하거나 credential을 복구하지 않는다.
+새 runner의 완전한 cold recreation 복구까지 완료한 것으로 보고하지 않는다.
 
 등록 방식은 [GitHub의 self-hosted runner 설치 안내](https://docs.github.com/en/actions/how-tos/manage-runners/self-hosted-runners/add-runners)를 따른다.
 조회한 repository용 Linux x64 패키지는 `2.337.0`, SHA-256
