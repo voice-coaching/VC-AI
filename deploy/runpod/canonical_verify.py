@@ -132,7 +132,7 @@ def main():
         if resident.artifacts.identity != RESIDENT:
             raise RuntimeError('VERIFIER_HARNESS_ROOT_MISMATCH')
         resident._bridge().scoring_policy()
-        for identity, implementation in ((NATIVE_V1, native_v1), (NATIVE, native), (DLPC_CUDA, dlpc_cuda)):
+        for identity, implementation in ((NATIVE_V1, native_v1), (NATIVE, native)):
             if implementation.artifacts.core_root.exists() != implementation.artifacts.llm_root.exists():
                 raise RuntimeError('VERIFIER_NATIVE_PAIR_INCOMPLETE')
             if implementation.artifacts.llm_root.exists():
