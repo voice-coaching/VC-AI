@@ -66,9 +66,17 @@ def verified_changes(body, token):
         for name, row in new_tree.items():
             if not name.startswith(PREFIXES):continue
             path=APP/name
-            if path.is_symlink() or path.resolve()!=path or row['mode'] not in ('100644','100755'):
-                raise ValueError('RESTART_SOURCE_PATH_INVALID')
-            data=path.read_bytes()
+            if row['mode']=='120000':
+                if not path.is_symlink() or path.parent.resolve()!=path.parent:
+                    raise ValueError('RESTART_SOURCE_PATH_INVALID')
+                target=os.readlink(path)
+                if PurePosixPath(target).is_absolute() or '..' in PurePosixPath(target).parts or '\\' in target or not path.resolve().is_relative_to(APP):
+                    raise ValueError('RESTART_SOURCE_PATH_INVALID')
+                data=target.encode()
+            else:
+                if path.is_symlink() or path.resolve()!=path or row['mode'] not in ('100644','100755'):
+                    raise ValueError('RESTART_SOURCE_PATH_INVALID')
+                data=path.read_bytes()
             digest=hashlib.sha1(b'blob '+str(len(data)).encode()+b'\0'+data).hexdigest()
             if digest!=row['sha']:raise ValueError('RUNTIME_SOURCE_DRIFT')
     expected = {}
