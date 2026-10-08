@@ -241,3 +241,13 @@ still prohibited by the separate daemon's `PermitOpen none` and
 `recover_on_start.py`·Jupyter hook·고정 SSH exporter는 준비된 코드이며 아직 설치하지 않았다.
 CUDA source/schema 등록과 AWS 비활성 verifier 설치는 실행 승인과 별개다.
 `prepare_backend_tts.py`는 비활성 env 후보만 작성하며 drain·전환·재시작을 수행하지 않는다.
+
+## GitHub Actions deployment (2026-10-08)
+
+See the [Actions enrollment and deployment record](../../docs/canonical-integration/dlpc-github-actions-20261007.md)
+for the approved AWS loopback administration tunnel, dedicated DLPC runner, fixed
+root controller, and main-only workflow. The runner is online; the workflow is
+in Draft PR #37 and deployment remains disabled pending the coordinated runtime
+baseline. Runner registration is independent of analysis/TTS readiness.
+The new runner startup hook restarts an existing installation; it does not
+restore runner credentials after container recreation erases the root disk.

@@ -14,6 +14,10 @@ APPROVED_NATIVE_EXECUTIONS: frozenset[tuple[str, str]] = frozenset({(
 ), (
     'f6d56e1decc160f0ca38cc8d52303f3de20945f872d714bf6a2e743ed94c0391',
     'def65f68a849a2452b0e4dde600f0ef85d99beaa97123d30d97262653ebf8e77',
+), (
+    # 2026-10-08 user-authorized prompt-only rollout; the admitted GOP core is unchanged.
+    'f6d56e1decc160f0ca38cc8d52303f3de20945f872d714bf6a2e743ed94c0391',
+    '3e430635a4d714ead5d8e08352e41ff9a2b06c893d73af7f018fb43b4c37f61c',
 )})
 
 
