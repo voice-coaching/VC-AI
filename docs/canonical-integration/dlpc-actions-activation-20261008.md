@@ -44,6 +44,10 @@ PR Ready 전환·main 병합을 별도 명시 승인 대상으로 거절하여 �
 
 AWS 운영 JAR는 `8ce2a0385dae3524559dfc36e14a997f1307a5d1`이며 배포 상태 COMPLETE,
 maintenance marker 없음으로 확인했다. 후보 runtime profile은 root 전용 비활성 경로에만 준비했다.
+DLPC는 2026-10-08 04:05:03 UTC에 운영 source `df90eb10…`, bundle `b7170dda…`,
+기존 음성 H5 `def65f68…`를 보고했다. `/readyz`·`/direct/readyz`는 각각 200,
+active/direct job은 각각 0, direct hold 없음, Actions runner는 RUNNING이었다.
+root controller도 기존 `8ba96c45…`이며 새 force-restart controller는 아직 설치하지 않았다.
 실제 revision·digest·시각·workflow receipt는 전환 확인 후 추가한다. 이 기록은 추론·GPT 생성·
 피드백 품질 QA 통과를 뜻하지 않는다. root 디스크가 지워지는 컨테이너 재생성에서 runner credential의
 자동 복원은 현재 구현돼 있지 않다.
