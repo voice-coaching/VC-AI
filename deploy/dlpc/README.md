@@ -246,8 +246,12 @@ CUDA source/schema 등록과 AWS 비활성 verifier 설치는 실행 승인과 �
 
 See the [Actions enrollment and deployment record](../../docs/canonical-integration/dlpc-github-actions-20261007.md)
 for the approved AWS loopback administration tunnel, dedicated DLPC runner, fixed
-root controller, and main-only workflow. The runner is online; the workflow is
-in Draft PR #37 and deployment remains disabled pending the coordinated runtime
-baseline. Runner registration is independent of analysis/TTS readiness.
+root controller, and main-only workflow. PRs #37/#38 are merged and deployment
+is enabled. The [activation record](../../docs/canonical-integration/dlpc-actions-activation-20261008.md)
+pins deployed source `791ca549…`, the concise audio H5, Backend/schema activation
+and successful Actions force-restart run `37751075955`. Compatible main source
+updates use the controller; frozen contracts, prompts, dependencies and recovery
+baseline/profile promotion still require coordinated operations.
+Runner registration is independent of analysis/TTS readiness.
 The new runner startup hook restarts an existing installation; it does not
 restore runner credentials after container recreation erases the root disk.
