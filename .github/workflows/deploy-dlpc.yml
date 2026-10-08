@@ -4,6 +4,11 @@ on:
   push:
     branches: [main]
   workflow_dispatch:
+    inputs:
+      force_restart:
+        description: Restart the exact current main after verifying installed source
+        type: boolean
+        default: false
 
 permissions:
   contents: read
@@ -41,6 +46,7 @@ jobs:
         env:
           DEPLOY_REVISION: ${{ github.sha }}
           GH_TOKEN: ${{ github.token }}
+          DEPLOY_FORCE_RESTART: ${{ inputs.force_restart || false }}
         run: python3 deploy/dlpc/github_deploy.py
 
       - name: Record deployment result

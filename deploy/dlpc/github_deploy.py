@@ -88,9 +88,11 @@ def main():
                 beforeSha256=hashlib.sha256(before).hexdigest() if before is not None else None,
                 afterSha256=hashlib.sha256(after).hexdigest() if after is not None else None,
                 afterBase64=base64.b64encode(after).decode() if after is not None else None, mode=mode))
+        restart=(os.environ.get('DEPLOY_FORCE_RESTART')=='true'
+                 and os.environ.get('GITHUB_EVENT_NAME')=='workflow_dispatch' and base==target)
         result = (controller(dict(operation='deploy', baseRevision=base, targetRevision=target,
-                                  githubToken=os.environ['GH_TOKEN'], changes=changes))
-                  if changes else dict(status='skipped', reason='NO_COMPATIBLE_RUNTIME_CHANGES', revision=target))
+                                  githubToken=os.environ['GH_TOKEN'], changes=changes, forceRestart=restart))
+                  if changes or restart else dict(status='skipped', reason='NO_COMPATIBLE_RUNTIME_CHANGES', revision=target))
     Path('dlpc-deployment-result.json').write_text(json.dumps(result, indent=2)+'\n')
     print(json.dumps(result))
 

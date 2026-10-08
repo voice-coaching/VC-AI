@@ -18,6 +18,7 @@ import subprocess
 import sys
 import time
 import urllib.request
+import uuid
 
 APP = Path('/opt/intelligentai/app')
 OPS = Path('/opt/intelligentai/cicd')
@@ -50,7 +51,8 @@ def verified_changes(body, token):
     if github('git/ref/heads/main')['object']['sha'] != target:
         raise ValueError('SUPERSEDED_MAIN_REVISION')
     compare = github('compare/'+base+'...'+target)
-    if compare.get('status')!='ahead' or compare.get('merge_base_commit',{}).get('sha')!=base:
+    restart=body.get('forceRestart') is True and base==target and body.get('changes')==[]
+    if compare.get('status')!=('identical' if restart else 'ahead') or compare.get('merge_base_commit',{}).get('sha')!=base:
         raise ValueError('MAIN_ANCESTRY_REQUIRED')
     files = compare.get('files', [])
     if len(files)>=300:raise ValueError('COORDINATED_LARGE_RELEASE_REQUIRED')
@@ -60,6 +62,15 @@ def verified_changes(body, token):
         if document.get('truncated'):raise ValueError('GITHUB_TREE_TRUNCATED')
         return {row['path']:row for row in document['tree'] if row['type']=='blob'}
     old_tree, new_tree = tree(base), tree(target)
+    if restart:
+        for name, row in new_tree.items():
+            if not name.startswith(PREFIXES):continue
+            path=APP/name
+            if path.is_symlink() or path.resolve()!=path or row['mode'] not in ('100644','100755'):
+                raise ValueError('RESTART_SOURCE_PATH_INVALID')
+            data=path.read_bytes()
+            digest=hashlib.sha1(b'blob '+str(len(data)).encode()+b'\0'+data).hexdigest()
+            if digest!=row['sha']:raise ValueError('RUNTIME_SOURCE_DRIFT')
     expected = {}
     for row in files:
         names = [row['filename']]
@@ -172,9 +183,10 @@ def deploy(body, raw, token):
                 if result.returncode:raise ValueError('PRODUCTION_PYTHON_COMPILE_FAILED')
             if name.endswith('.json'):json.loads(new)
         changes.append((path, old, path.stat().st_mode & 0o777 if old is not None else None, new, row['mode']))
-    if not changes:
+    restart=body.get('forceRestart') is True and body['baseRevision']==body['targetRevision']
+    if not changes and not restart:
         raise ValueError('EMPTY_DEPLOYMENT')
-    job = OPS/'transactions'/body['targetRevision']
+    job = OPS/'transactions'/(body['targetRevision']+('-restart-'+uuid.uuid4().hex if restart else ''))
     job.mkdir(parents=True, exist_ok=False)
     def record(status, **extra):
         result = dict(status=status, revision=body['targetRevision'], at=datetime.now(timezone.utc).isoformat(), **extra)
@@ -207,7 +219,8 @@ def deploy(body, raw, token):
             if new is None:path.unlink()
             else:atomic(path, new, 0o750 if mode == '100755' else 0o640)
         doc = json.loads(metadata)
-        doc['canonicalIntegration'].update(sourceGitRevision=body['targetRevision'], bundleSha256=hashlib.sha256(raw).hexdigest())
+        doc['canonicalIntegration'].update(sourceGitRevision=body['targetRevision'],
+            bundleSha256=before['bundleSha256'] if restart else hashlib.sha256(raw).hexdigest())
         atomic(METADATA, (json.dumps(doc, sort_keys=True)+'\n').encode())
         env = values(); env['VOICE_COACH_BUILD_REVISION'] = body['targetRevision']
         atomic(ENV, ''.join(k+'='+v+'\n' for k,v in sorted(env.items())).encode(), 0o600, 0)
@@ -220,7 +233,7 @@ def deploy(body, raw, token):
         except Exception:
             HOLD.write_text(marker)
             raise ValueError('DIRECT_READINESS_FAILED') from None
-        return record('succeeded', coreManifestSha256=before['coreManifestSha256'], llmManifestSha256=before['llmManifestSha256'])
+        return record('succeeded', restarted=True, coreManifestSha256=before['coreManifestSha256'], llmManifestSha256=before['llmManifestSha256'])
     except Exception:
         if mutated:
             if not stopped:service('stop')
