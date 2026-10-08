@@ -123,7 +123,7 @@ def main():
         (WORK/'plan.json').write_text(json.dumps(plan)+'\n');(WORK/'runtime.json').write_bytes(raw)
         (WORK/'deployment.before.json').write_bytes(META.read_bytes());(WORK/'analysis.env.before').write_bytes(ENV.read_bytes())
         (WORK/'supervisord.conf.before').write_bytes(CONFIG.read_bytes());(WORK/'identity.before.json').write_text(json.dumps(before))
-        shutil.copytree(APP,WORK/'app.before',ignore=shutil.ignore_patterns('__pycache__','.git'))
+        shutil.copytree(APP,WORK/'app.before',symlinks=True,ignore=shutil.ignore_patterns('__pycache__','.git'))
         return record('prepared',revision=plan['revision'])
     if json.loads((WORK/'plan.json').read_bytes())!=plan:raise ValueError('RELEASE_PLAN_CHANGED')
     stage=json.loads((WORK/'state.json').read_bytes())['stage']

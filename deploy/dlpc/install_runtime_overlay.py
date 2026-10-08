@@ -38,6 +38,26 @@ def install(raw, expected):
         if target.resolve() != target or target.is_symlink():
             raise ValueError('OVERLAY_SYMLINK')
         decoded.append((target, data, role))
+    # Git stores symlink targets as blobs, not regular file contents. Keep this
+    # separate inventory so an active prompt link cannot overwrite its target.
+    links=[]
+    for relative, value in body.get('appSymlinks', {}).items():
+        path=PurePosixPath(relative); destination=PurePosixPath(value)
+        if (not relative.startswith('configs/pronunciation_feedback/prompts/')
+                or path.is_absolute() or any(x in ('', '.', '..') for x in relative.split('/'))
+                or '\\' in relative or destination.is_absolute() or len(destination.parts)!=1
+                or value in ('', '.', '..') or '\\' in value or 'app/'+relative in body['files']):
+            raise ValueError('OVERLAY_GIT_SYMLINK_PATH')
+        target=roots['app']/relative
+        if target.parent.resolve()!=target.parent:
+            raise ValueError('OVERLAY_GIT_SYMLINK_PARENT')
+        if target.is_symlink():
+            if os.readlink(target)!=value:raise ValueError('OVERLAY_GIT_SYMLINK_DRIFT')
+        elif target.exists():raise ValueError('OVERLAY_GIT_SYMLINK_DRIFT')
+        referent=target.parent/value
+        if not referent.is_relative_to(roots['app']) or 'app/'+str(referent.relative_to(roots['app'])) not in body['files']:
+            raise ValueError('OVERLAY_GIT_SYMLINK_REFERENT')
+        links.append((target,value))
     os.umask(0o027)
     for target, data, role in decoded:
         target.parent.mkdir(parents=True, exist_ok=True)
@@ -49,6 +69,9 @@ def install(raw, expected):
             out.write(data); out.flush(); os.fsync(out.fileno())
         os.chown(temp, 0, 10001); temp.chmod(0o440 if role != 'app' else 0o640)
         temp.replace(target)
+    for target,value in links:
+        if not target.is_symlink():
+            target.symlink_to(value);os.lchown(target,0,10001)
     for role in ('core', 'llm'):
         for folder in sorted((p for p in roots[role].rglob('*') if p.is_dir()), reverse=True):folder.chmod(0o550)
         roots[role].chmod(0o550)

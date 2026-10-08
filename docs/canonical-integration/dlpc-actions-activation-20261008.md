@@ -27,6 +27,18 @@ AI harness·실행 registry·v4/v5 closed tuple, AWS offline verifier, Backend S
 
 ## 실행 기록
 
+### 명시 승인 후 전환 중 발견한 링크 처리 결함
+
+사용자의 명시 승인으로 PR #37을 main `2bca3ba91091d40711b3956b6100373ec370800a`에 병합했다.
+Backend `a35f9e90…`를 drain 후 활성화했으며 양쪽 접수는 전환 완료까지 닫혀 있다.
+DLPC overlay 사전 검증이 기존 active prompt 링크 3개를 발견해 파일 쓰기 전에 중단했다.
+Git mode `120000`의 blob은 링크 목적지이므로 regular source bytes로 설치하지 않는다.
+runtime의 `appSymlinks` inventory로 목적지와 참조 파일을 검증하고 기존 링크를 보존한다.
+cold restore의 누락 링크만 생성하며, force restart는 실제 readlink의 Git blob digest를 대조한다.
+앱 백업도 symlink를 보존한다. 이는 정적 컴파일·운영 경로 보정이며 품질 QA가 아니다.
+
+### 승인 전 준비 기록
+
 2026-10-08 UTC 관측 기준으로 전환 준비만 완료했다. AI PR #37은 Draft/open이며 main에
 workflow가 병합되지 않았고 `DLPC_DEPLOYMENT_ENABLED`도 아직 설정하지 않았다. 자동 승인 검토가
 PR Ready 전환·main 병합을 별도 명시 승인 대상으로 거절하여 사용자 답변을 기다린다.
