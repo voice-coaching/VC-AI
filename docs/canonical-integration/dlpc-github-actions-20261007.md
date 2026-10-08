@@ -167,6 +167,17 @@ runner 설치 후 2026-10-07 15:30:49 UTC 최종 상태 조회에서도 분석 l
 direct readiness, TTS readiness, Backend handoff가 HTTP 200이며 보호 API의 비인증 요청은 401이었다.
 live source/core/H5/lock은 기존 값과 같고 activeJobs는 0이었다. 분석·TTS 재시작이나 application 배포는 하지 않았다.
 
+### 2026-10-08 08:39 UTC 자동 배포 활성화·실제 재배포 완료
+
+이전 절의 미설정·Draft 상태는 과거 관측이다. 사용자 명시 승인 후 PR #37·#38을 병합했고
+`DLPC_DEPLOYMENT_ENABLED=true`를 설정했다. [전환 완료 기록](dlpc-actions-activation-20261008.md)에
+운영 source `791ca549…`, 새 음성 H5, Backend JAR·schema, B2 복구 핀과 중단·복구 과정을 기록했다.
+[Actions run 37751075955](https://github.com/voice-coaching/intelligentAI/actions/runs/37751075955)는
+success이며 DLPC 영수증의 `restarted=true`로 실제 분석 재시작을 확인했다. TTS는 재시작하지 않았다.
+최종 API readiness는 200, 보호 API의 비인증 접근은 401, 진행 작업은 0이었다.
+GPT 모델 접근 readiness와 새 녹음·GPT 생성·품질 QA는 구분한다. 후자는 이번 작업에서 수행하지 않았다.
+호환 source 자동 배포와 rootfs 재생성 후 runner 재등록·복구 baseline 승격은 별도 범위다.
+
 등록 방식은 [GitHub의 self-hosted runner 설치 안내](https://docs.github.com/en/actions/how-tos/manage-runners/self-hosted-runners/add-runners)를 따른다.
 조회한 repository용 Linux x64 패키지는 `2.337.0`, SHA-256
 `70920811a4f8ad4328818682bca5c6469c1c942fab52448868071d0063816613`이다.

@@ -27,6 +27,63 @@ AI harness·실행 registry·v4/v5 closed tuple, AWS offline verifier, Backend S
 
 ## 실행 기록
 
+### 2026-10-08 08:39 UTC / 17:39 KST 완료 관측
+
+사용자의 명시 승인으로 PR #37·#38을 main에 병합하고 실제 운영 전환을 완료했다.
+
+| 대상 | 확인된 운영본 |
+|---|---|
+| AI source | `791ca5496e04a10b6948c69dce97361ee4335f4c` |
+| Runtime | 17,308,951 bytes, SHA-256 `d5ccbc765737499261c1ec9e4cac515caf430c30d3c43cfec96d88fa98e6a443` |
+| B2 복구본 | file ID `4_ze5cc71977ef1880ca60b0c17_f114952e6b08b9921_d20261008_m083112_c005_v0501033_t0033_u01791448272034`, 전체 다운로드 일치 |
+| GOP core | `f6d56e1decc160f0ca38cc8d52303f3de20945f872d714bf6a2e743ed94c0391`, 변경 없음 |
+| 음성 H5 / lock | `3e430635a4d714ead5d8e08352e41ff9a2b06c893d73af7f018fb43b4c37f61c` / `58c26086546abb8b94eb6998671101d67633af426adf373cceb42862ccaf0ec4` |
+| Backend | `a35f9e90e63e1c740d345eec4daa616447fbf381`, 배포 controller 상태 COMPLETE |
+| AWS verifier | `e5d6418f3625813e3d7551f14771b9424cc246b9ddb20b539c78137950f91d47`, JAR와 schema 9개 일치 |
+| Root controller | `69f657d33b2ebf55d1410a0a3f9530284cdd71677cd9047d3d5949ea1bc3373a` |
+| 자동 배포 | `DLPC_DEPLOYMENT_ENABLED=true`, 08:37:31 UTC 설정 |
+| 실제 Actions 재배포 | [run 37751075955](https://github.com/voice-coaching/intelligentAI/actions/runs/37751075955), workflow_dispatch `force_restart=true`, success |
+
+Actions 배포 step은 08:37:50–08:38:37 UTC에 실행됐다. DLPC root transaction
+`791ca5496e04a10b6948c69dce97361ee4335f4c-restart-db5381b6007e4ab08f132215c5c83683`
+영수증은 `status=succeeded`, `restarted=true`와 같은 source/core/H5를 보고했다.
+분석 PID는 `1012945`, TTS PID는 기존 `95166`이었다. 첫 두 push workflow의 실패는
+활성화 변수 설정 전 preflight 기록이며 최종 재배포 실패가 아니다.
+
+08:39:23–27 UTC 조회에서 분석·direct·TTS readiness는 200, 보호 API 비인증 요청은 401,
+Backend/AI handoff는 ready, 진행 작업·drain 항목은 모두 0이었다. 양쪽 접수 차단은 해제됐다.
+GPT 설정은 OPENAI / `gpt-6-astra`, executorReady/handoffReady는 true였다.
+TTS는 `melo-ko-practice-dlpc-r1`이며 재시작하지 않았다. 이는 운영 readiness·모델 접근 확인이며
+새 녹음·GPT 생성·피드백 품질 QA 결과가 아니다. 영상 실행 identity/admission도 활성화하지 않았다.
+
+영속 홈의 복구 file ID/size/SHA와 overlay installer를 갱신했다. AWS 비밀 복구본은
+LLM root·pipeline revision·build revision 3개만 변경하고 나머지 비밀·복구 admission 정책을 보존했다.
+
+#### 설치 중단과 복구
+
+첫 설치는 Backend 기동 직후 handoff 조회에서 중단됐고 supported/schema 확인 후 재개했다.
+이어 기존 prompt 링크 3개가 symlink 사전 검증에서 거절됐다. 두 시도 모두 앱 파일 쓰기 전 중단이다.
+metadata/env/config 및 앱 원본 바이트를 백업과 대조하고 첫 시도 기록을 별도로 보존했다.
+최종 대조 결과 해당 세 active pointer는 Git mode **100644**, 내용은 참조 파일명이었다.
+운영본만 symlink였고 로더는 두 형태를 지원한다. symlink 백업을 보존한 뒤 링크 leaf를 정확한
+Git pointer bytes의 일반 파일로 원자 교체했다. 아래 기록의 “해당 세 파일이 Git mode 120000”이라는
+초기 판단은 정정한다. PR #38의 실제 mode 120000 지원은 별도 호환 처리다.
+
+이 pre-write 실패 후 수정 main을 반영할 때 동일 JAR/schema/verifier/native pin,
+기존 AI source/bundle·진행 작업 0·maintenance 소유를 확인했다. 이전 state/profile을 root 전용으로
+백업하고 `operatorReplan`에 사유·시각·이전 profile digest를 기록하여 AI revision/runtime hash만 재계획했다.
+이 감사된 운영자 복구는 일반 CI의 profile 불변성 검사 우회 기능으로 제공하지 않는다.
+이후 Backend 3회 readiness 확인·resume, DLPC direct resume 및 Actions 실제 재시작을 완료했다.
+
+#### 자동 배포 범위
+
+main push는 전용 runner·root controller로 호환 application source를 배포하며 문서만 바뀌면 skip한다.
+frozen prompt/core/H5·계약·의존성 변경은 조정 배포가 필요하다. 향후 source delta 배포는 이번 고정
+B2 full runtime/profile을 자동 승격하지 않으므로 cold recovery 기준이나 Backend 배포 profile을
+바꿔야 하면 별도 정합성 갱신이 필요하다. 기존 root 설치가 남는 재시작용 runner hook은 설치됐지만,
+root 디스크가 지워지는 컨테이너 재생성에서 runner 계정·credential/controller 자동 재등록은 미구현이다.
+재부팅/재생성 시험은 수행하지 않았다.
+
 ### 명시 승인 후 전환 중 발견한 링크 처리 결함
 
 사용자의 명시 승인으로 PR #37을 main `2bca3ba91091d40711b3956b6100373ec370800a`에 병합했다.
