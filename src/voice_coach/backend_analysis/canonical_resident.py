@@ -21,6 +21,7 @@ class _ResidentGeneration:
         self.stopping = False
         self.blocked = False
         self.prepared = False
+        self.mfa_health = None
         self.requests = 0
         self.keep_running = lambda: True
         self.next_start = 0.0
@@ -31,11 +32,16 @@ class _ResidentGeneration:
         require_native_execution(self.artifacts)
 
     def ready(self):
-        return not self.stopping and not self.blocked and self.prepared and self.requests < 3 and self.task is not None and not self.task.done()
+        return (not self.stopping and not self.blocked and self.prepared
+                and self.requests < 3 and self.task is not None and not self.task.done()
+                and self.mfa_health is not None and self.mfa_health.alive())
 
     async def refresh(self):
         if self.stopping or self.blocked:
             return
+        if self.prepared and (self.mfa_health is None or not self.mfa_health.alive()):
+            print(json.dumps(dict(event='resident_mfa_unavailable', action='retire_generation')), flush=True)
+            await self.stop()
         if self.task is not None and self.task.done():
             error = None if self.task.cancelled() else self.task.exception()
             self.prepared = False
@@ -49,12 +55,16 @@ class _ResidentGeneration:
             before = (readonly_identity(self.artifacts.core_root), readonly_identity(self.artifacts.llm_root))
             verified_at = time.monotonic()
             await asyncio.to_thread(self.artifacts.verify)
+            from .resident_health import check_mfa_import
+            await asyncio.to_thread(check_mfa_import, self.artifacts.core_root, CORE_PYTHON,
+                core_environment(Path(self.env['AI_ANALYSIS_NLTK_DATA_ROOT']), cpu_threads=1))
             self.generation = private_directory(Path(tempfile.mkdtemp(prefix='vc-core-', dir='/tmp')))
             reused = write_verification(self.artifacts, self.generation, before)
             print(json.dumps(dict(event='resident_artifact_verification',
                 elapsedSeconds=time.monotonic()-verified_at, reusable=reused)), flush=True)
             self.socket = self.generation / 'core.sock'
             self.requests = 0
+            self.mfa_health = None
             self.prepare_deadline = time.monotonic() + 300
             self.task = asyncio.create_task(run_guarded(guard_python=self.guard_python,
                 command=[str(CORE_PYTHON), '-B', '-u', str(self.artifacts.core_root / 'scripts/run_resident.py'),
@@ -72,6 +82,9 @@ class _ResidentGeneration:
                 record = json.loads(read_private_result(path, self.generation, 1024))
                 _require(record == dict(status='READY', coreManifestSha256=self.artifacts.identity.core_sha256),
                          'RESIDENT_READY_IDENTITY')
+                if self.mfa_health is None:
+                    from .resident_health import MFAProcessHealth
+                    self.mfa_health = MFAProcessHealth(self.generation)
                 self.prepared = True
             elif not self.prepared and time.monotonic() >= self.prepare_deadline:
                 # A stalled model load must not leave readiness pending all day.
@@ -81,6 +94,7 @@ class _ResidentGeneration:
 
     async def stop(self):
         self.prepared = False
+        self.mfa_health = None
         if self.task is not None:
             self.task.cancel()
             result = await asyncio.gather(self.task, return_exceptions=True)

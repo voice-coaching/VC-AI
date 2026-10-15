@@ -27,6 +27,7 @@ class AnalysisService:
         self.resident = None
         self.ready_error = None
         self.stopping = False
+        self.recovering = False
         self.env = dict(os.environ if environment is None else environment)
         for suffix in ("RESERVE_BYTES", "MIN_FREE_BYTES"):
             key = "AI_DIRECT_STANDBY_" + suffix
@@ -60,7 +61,7 @@ class AnalysisService:
         self.task = asyncio.create_task(self.loop())
 
     def core_ready(self):
-        return self.store.settings.enabled and not self.ready_error and self.resident is not None and self.resident.ready() and not self.stopping
+        return self.store.settings.enabled and not self.ready_error and self.resident is not None and self.resident.ready() and not self.stopping and not self.recovering
 
     def ready(self):
         return self.core_ready() and not Path("/run/intelligentai/direct-admission.closed").exists()
@@ -171,19 +172,30 @@ class AnalysisService:
                         await asyncio.wait_for(self.process.wait(), .2)
                     except asyncio.TimeoutError:
                         pass
+                # A zero exit status can publish a SYSTEM_FAILURE result after
+                # MFA's child has died. Close admission before publishing that
+                # result and retire its generation before accepting more work.
+                self.recovering = True
                 def finish():
                     with self.store.mutation_lock:
                         if self.store.read(job_id)["status"] != "CANCELLED":
                             if self.process.returncode == 0 and (folder / "worker-complete.json").exists():
-                                timing = json.loads((folder / "worker-complete.json").read_bytes())["timing"]
+                                completion = json.loads((folder / "worker-complete.json").read_bytes())
+                                timing = completion["timing"]
                                 self.store.update(job_id, status="RESULT_READY", resultReadyAt=time.time(), timing=timing)
+                                return completion.get("failed") is not False
                             else:
                                 self.store.update(job_id, status="FAILED", failure="EXECUTION_FAILED")
-                await asyncio.to_thread(finish)
-                if self.process.returncode != 0:
+                        return True
+                recycle = await asyncio.to_thread(finish)
+                if recycle:
                     # A pre-dispatch failure and an interrupted dispatch must not
                     # desynchronize the parent's three-request generation budget.
                     await self.resident.stop()
+                    print(json.dumps(dict(event="direct_resident_recycled", reason="FAILED_OR_CANCELLED_EXECUTION")), flush=True)
+                # Cleanup failures leave admission closed and are surfaced by
+                # loop() as EXECUTION_RECOVERY_REQUIRED; never replay the job.
+                self.recovering = False
             finally:
                 await self.kill()
                 self.process = None

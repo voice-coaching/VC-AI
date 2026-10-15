@@ -1,5 +1,69 @@
 # DLPC deployment
 
+## Recovery completed — 2026-10-15
+
+The recreated DLPC runtime was restored from the pinned base archive and the
+2026-10-08 production overlay, including both 2026-10-10 resident patches.
+At 12:24:46 UTC, public analysis/direct/TTS readiness returned 200, Backend
+handoff support and admission were true with matching contracts, and FE CORS
+preflight passed. Source remains `791ca549…`, bundle `d5ccbc76…`.
+See [incident and recovery evidence](../../docs/canonical-integration/incident-20261015-dlpc-cold-recovery.md).
+
+The installed persistent startup helpers now match the reviewed checkout.
+Startup checks Backend support/contracts before starting the executor, then
+requires full Backend admission after startup to avoid a circular cold-start
+dependency. Public readiness includes TTS; failure after releasing this
+recovery's direct hold restores that hold. Runtime preparation also provisions
+the two exact configured direct work/spool directories as service UID/GID 10001,
+mode 0700, without changing their parent permissions or moving job records.
+
+The fixed deployment controller and runner program are installed. At 14:12 UTC,
+GitHub runner `intelligentai-dlpc` was re-registered as ID 22 and confirmed online
+and idle; its dedicated supervisor process was RUNNING. The old offline
+registration (ID 21) was replaced after confirming there were no pending runs.
+Actual inference/quality QA and a subsequent platform recreation were not tested.
+
+## Production recovery update — 2026-10-12
+
+`recover_on_start.py` now restores the pinned base archive and the already
+deployed 2026-10-08 overlay, applies the 2026-10-10 resident fixes, restores
+private settings and CUDA/TTS dependencies, and invokes `start_production.py`.
+The previous diagnostic-only flow remains available as `bootstrap.py`.
+`recover_on_start.py --restore-only` prepares assets/settings without starting
+services; normal startup continues through production readiness checks.
+
+The downloader accepts HTTP 200 only when the requested range is the entire
+object with the exact expected length; resumed ranges still require matching
+HTTP 206 headers. Full SHA-256 verification remains mandatory. `restore_assets.py`
+resumes pinned partial downloads synchronously under the existing download lock.
+Eight bounded 8 MiB range requests reduce stalled-connection delays; writes stay
+in order so an interrupted file is always a resumable contiguous prefix.
+Partial installations and hash mismatches still require reconciliation.
+
+Production startup checks the pinned source/bundle, private settings, Backend
+handoff contract digests and admission, and the TTS synthesis fingerprint. It
+backs up local settings before enabling the four existing production flags and
+the supervisor's `--admit` command. Analysis readiness precedes TTS startup.
+Only this recovery's own direct-admission hold is removed; foreign operator holds
+and interrupted-job receipts are preserved, and no producer is replayed.
+Local analysis/direct/TTS readiness and public analysis/direct readiness are
+required before recording `production_services_ready`.
+
+The existing persistent Jupyter hook is the entry point. Its installed helper
+directory must contain the complete `install_startup_hook.py` file list, including
+`start_production.py` and `restore_tts_runtime.py`. The runtime state is
+`/run/intelligentai-recovery-state.json`; root-only step output is in
+`/run/intelligentai-recovery.log`. Failures retain `failedStep` and `errorCode`.
+An existing healthy installation is checked without deliberately restarting it.
+This does not recreate GitHub Actions runner credentials or recover recordings
+lost from ephemeral storage. Readiness is not inference or quality QA.
+
+At the 2026-10-12 observation, implementation had passed Python syntax and diff
+checks, base restoration was running, and the detached `--restore-only`
+continuation was staged in `recovery/candidate-production-20261012`. The installed
+hook had not yet been updated. The 2026-10-15 completion above supersedes that
+pending installation status. The dated observations below are historical.
+
 ## MFA/GOP performance candidate — 2026-10-07
 
 See [implementation and remaining gates](../../docs/canonical-integration/dlpc-mfa-gop-implementation-20261007.md).
@@ -18,9 +82,8 @@ require a RunPod API key or a running Pod.
 
 See [production cutover](../../docs/canonical-integration/dlpc-gop-cutover-20261007.md)
 and [dependency/reboot audit](../../docs/canonical-integration/dlpc-reboot-audit-20261007.md).
-The installed Jupyter hook restores diagnostic services only. It does not yet
-automatically resume production admission. Full reboot automation is a separate
-pending change, not a capability established by the earlier successful cutover.
+At that observation date the installed Jupyter hook restored diagnostic services
+only. The 2026-10-12 update above supersedes that implementation once installed.
 The dated sections below retain their original observation scope.
 
 ## AWS follow-up, 2026-10-06
@@ -198,6 +261,25 @@ root disk under `/opt/intelligentai-b2-restore-20261006`; `/var/tmp` is only a
 1GB tmpfs. Credentials enter on stdin, and extraction is separate after digest
 verification. Download completion does not mean installation or service readiness.
 
+The downloader uses bounded HTTP byte ranges and retries interrupted transfers.
+After inspecting a failed download and confirming there is no active restore,
+an operator can invoke `b2_restore.py --resume` with fresh restricted B2 auth on
+stdin. It retains the contiguous partial file, validates each range response,
+and checks the complete pinned SHA-256 before marking the download verified.
+Already completed objects are rehashed. A digest mismatch is never bypassed;
+an extraction attempt or existing installation requires separate reconciliation.
+
+`install_runtime_overlay.py` also reconciles the three legacy active prompt
+symlinks from the base backup when the pinned overlay contains exactly the same
+relative pointer names as regular Git blobs. It records the previous links in
+`/opt/intelligentai/ops/overlay-link-recovery/<bundle-sha>/links.json` before
+replacing the leaves. Other symlinks and changed targets remain rejected.
+
+The overlay also assigns service group 10001 and mode 0750 to the MFA
+optimization directory above `candidate/`. That directory is absent from the
+base archive; leaving it root:root prevents the request-time `mfa.py` import
+even when model readiness succeeds. Preserve the pinned adapter bytes.
+
 The AWS SSH listener is prepared by `prepare_aws_tunnel_listener.py`: dedicated
 22132, the existing approved key only, source IP/user restrictions, no sessions,
 and only loopback 18080/18083 reverse forwards. Existing sshd/nginx stay in place.
@@ -255,3 +337,29 @@ baseline/profile promotion still require coordinated operations.
 Runner registration is independent of analysis/TTS readiness.
 The new runner startup hook restarts an existing installation; it does not
 restore runner credentials after container recreation erases the root disk.
+
+The 2026-10-10 direct resident recovery patch retires a generation after a
+published system-failure result, including a zero-exit worker completion. It
+closes readiness during finalization and cleanup and never replays that job.
+`restore_direct_resident.py` checks the exact original and replacement SHA-256,
+requires analysis stopped, backs up the original, and records the override in
+`deployment.json` under `operationalPatches`. `recover_on_start.py` invokes it
+before bootstrap. The pinned replacement source is read from the persistent
+`/home/2020067/intelligentAI/src/voice_coach/direct_analysis/service.py`; updating
+that source requires reviewing and updating the patch hashes. The frozen
+Native/MFA release and model parameters are unchanged.
+
+The additional `restore_resident_health.py` patch is also applied before
+bootstrap. Each resident now imports the request-time MFA adapter under the
+service UID before model startup. Readiness checks the host, sidecar and actual
+MFA worker from the private startup receipt using `/proc` state and kernel
+start time. Exited/zombie processes and reused PIDs fail readiness. An idle
+unhealthy generation is retired through the existing guarded cleanup and
+reprepared; an active execution remains owned until completion/cancellation,
+without inference replay. A structured `resident_mfa_unavailable` event records
+retirement without recording audio, script or credentials. Both patches have
+pinned hashes and separate entries in `deployment.json.operationalPatches`.
+
+Operational interpretation: `RESULT_READY` can contain a system-failure result.
+Inspect `result.decision`, `result.failure` and coaching dispatch status as well
+as readiness; an archive/history ACK alone does not mean analysis succeeded.

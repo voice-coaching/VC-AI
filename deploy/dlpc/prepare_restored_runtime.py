@@ -21,6 +21,18 @@ def main():
         if not stat.S_ISREG(info.st_mode) or info.st_uid != 0 or stat.S_IMODE(info.st_mode) != 0o600:
             raise ValueError('PRIVATE_CONFIG_REQUIRED')
     os.umask(0o077)
+    settings = dict(line.split('=', 1) for line in
+                    Path('/etc/intelligentai/analysis.env').read_text().splitlines()
+                    if line and not line.startswith('#'))
+    # These runtime directories are intentionally absent from the asset backup.
+    # Provision only the known deployment paths, never chmod an arbitrary path
+    # from settings or relocate an existing job journal.
+    for key, expected in (
+        ('AI_DIRECT_SPOOL_ROOT', '/workspace/intelligentai/direct-spool'),
+        ('AI_DIRECT_WORKSPACE_ROOT', '/var/lib/intelligentai/work/direct'),
+    ):
+        if settings.get(key) != expected:
+            raise ValueError('DIRECT_RUNTIME_PATH_CHANGED')
     for name, owner, mode in (
         ('/run/intelligentai', 0, 0o711), ('/run/intelligentai/logs', 0, 0o700),
         ('/run/intelligentai/worker', 10001, 0o700),
@@ -37,6 +49,8 @@ def main():
         ('/var/lib/intelligentai/work/tmp/huggingface', 10001, 0o700),
         ('/var/lib/intelligentai/work/analysis', 10001, 0o700),
         ('/var/lib/intelligentai/work/canonical', 10001, 0o700),
+        ('/var/lib/intelligentai/work/direct', 10001, 0o700),
+        ('/workspace/intelligentai/direct-spool', 10001, 0o700),
     ):
         p = Path(name)
         p.mkdir(parents=True, exist_ok=True)

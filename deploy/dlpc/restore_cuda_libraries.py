@@ -28,8 +28,13 @@ def verify():
 
 def main():
     auth = json.loads(sys.stdin.buffer.read(65537))
-    if TARGET.exists(): verify(); return
     ROOT.mkdir(parents=True, exist_ok=True, mode=0o755)
+    if ROOT.resolve() != ROOT or ROOT.stat().st_uid != 0:
+        raise ValueError('CUDNN_RUNTIME_DIRECTORY_OWNER')
+    # Recovery runs with umask 077. mkdir's requested 0755 alone leaves this
+    # ancestor at 0700, preventing the inference UID from loading the libraries.
+    ROOT.chmod(0o755)
+    if TARGET.exists(): verify(); return
     archive = ROOT / 'cudnn-9.24.0.tar.gz.partial'
     digest = hashlib.sha256(); total = 0
     with B2(auth).read(FILE_ID) as response, archive.open('xb') as out:
