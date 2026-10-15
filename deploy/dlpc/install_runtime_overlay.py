@@ -24,6 +24,12 @@ def install(raw, expected):
              'llm': Path('/workspace/intelligentai/validation') / llm_directory}
     roots['mfa'] = Path('/workspace/intelligentai/validation/finish_20260916/latency_optimization_20260921T044013_2c3be9/mfa_startup_recovery_20260921T065201_ac461c/mfa_preflight_optimization_20260922T043055Z_0d7f6a/candidate')
     decoded = []
+    legacy_links = {}
+    legacy_pointers = {
+        'configs/pronunciation_feedback/prompts/coaching/active.md': 'pronunciation-coaching-v1.md',
+        'configs/pronunciation_feedback/prompts/scoring/active-hierarchy.md': 'pronunciation-hierarchy-v3.md',
+        'configs/pronunciation_feedback/prompts/scoring/active.md': 'pronunciation-v2.md',
+    }
     for name, row in body['files'].items():
         role, relative = name.split('/', 1)
         if role not in roots or PurePosixPath(relative).is_absolute() or any(x in ('', '.', '..') for x in relative.split('/')) or '\\' in relative:
@@ -36,7 +42,15 @@ def install(raw, expected):
         if relative.endswith('.py'): compile(data, name, 'exec')
         target = roots[role] / relative
         if target.resolve() != target or target.is_symlink():
-            raise ValueError('OVERLAY_SYMLINK')
+            # The base backup used symlinks for these three active pointers;
+            # the pinned current Git blobs contain the same relative names.
+            # Replacing only the leaf preserves the referenced prompt bytes.
+            pointer = legacy_pointers.get(relative) if role == 'app' else None
+            if (not pointer or not target.is_symlink() or target.parent.resolve() != target.parent
+                    or os.readlink(target) != pointer or data != pointer.encode()
+                    or 'app/' + str(PurePosixPath(relative).parent / pointer) not in body['files']):
+                raise ValueError('OVERLAY_SYMLINK')
+            legacy_links[str(target)] = pointer
         decoded.append((target, data, role))
     # Git stores symlink targets as blobs, not regular file contents. Keep this
     # separate inventory so an active prompt link cannot overwrite its target.
@@ -59,10 +73,26 @@ def install(raw, expected):
             raise ValueError('OVERLAY_GIT_SYMLINK_REFERENT')
         links.append((target,value))
     os.umask(0o027)
+    if legacy_links:
+        backup = Path('/opt/intelligentai/ops/overlay-link-recovery') / expected
+        backup.mkdir(parents=True, mode=0o700, exist_ok=True)
+        receipt = backup / 'links.json'
+        original = (json.dumps(legacy_links, sort_keys=True) + '\n').encode()
+        if receipt.exists():
+            if receipt.is_symlink() or receipt.read_bytes() != original:
+                raise ValueError('OVERLAY_LINK_BACKUP_CHANGED')
+        else:
+            with receipt.open('xb') as stream:
+                stream.write(original); stream.flush(); os.fsync(stream.fileno())
+            receipt.chmod(0o600)
     for target, data, role in decoded:
         target.parent.mkdir(parents=True, exist_ok=True)
         parent = target.parent
-        while parent != roots[role].parent:
+        # MFA's optimization directory is absent from the base archive. mkdir
+        # creates it as root:root 750, so fixing only candidate/ leaves the
+        # service unable to import mfa.py when the first request arrives.
+        boundary = roots[role].parent.parent if role == 'mfa' else roots[role].parent
+        while parent != boundary:
             os.chown(parent, 0, 10001); parent.chmod(0o750); parent = parent.parent
         temp = target.with_name(target.name + '.dlpc-install')
         with temp.open('xb') as out:

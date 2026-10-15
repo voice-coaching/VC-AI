@@ -4,6 +4,8 @@ Credentials are passed on stdin only. Extraction/activation is a separate step
 after both pinned SHA-256 digests match. Existing target trees are not replaced.
 """
 import argparse
+from concurrent.futures import ThreadPoolExecutor
+import fcntl
 import hashlib
 import json
 import os
@@ -13,6 +15,9 @@ import socket
 import subprocess
 import sys
 import time
+import urllib.error
+import urllib.parse
+import urllib.request
 
 from b2_backup import B2, encoded
 
@@ -34,6 +39,83 @@ def save(state):
     temporary.replace(RUN / 'state.json')
 
 
+def read_range(client, file_id, start, end, size):
+    """Read one bounded range; credentials never follow redirects."""
+    class NoRedirect(urllib.request.HTTPRedirectHandler):
+        def redirect_request(self, *args, **kwargs):
+            return None
+    opener = urllib.request.build_opener(urllib.request.ProxyHandler({}), NoRedirect())
+    raw = bytearray()
+    failures = 0
+    while start + len(raw) <= end:
+        offset = start + len(raw)
+        request = urllib.request.Request(client.download + '/b2api/v4/b2_download_file_by_id?' +
+            urllib.parse.urlencode({'fileId': file_id}), headers={
+                'Authorization': client.token, 'Accept-Encoding': 'identity',
+                'Range': f'bytes={offset}-{end}'})
+        deadline = time.monotonic() + 90
+        before = len(raw)
+        try:
+            with opener.open(request, timeout=30) as reply:
+                partial_response = (reply.status == 206 and
+                    reply.headers.get('Content-Range') == f'bytes {offset}-{end}/{size}')
+                # B2 may return 200 if the range covers the entire object.
+                full_response = (reply.status == 200 and offset == 0 and end == size - 1
+                                 and reply.headers.get('Content-Range') is None)
+                if (not (partial_response or full_response)
+                        or int(reply.headers.get('Content-Length', -1)) != end - offset + 1):
+                    raise ValueError('DOWNLOAD_SIZE_HEADER')
+                while start + len(raw) <= end:
+                    if time.monotonic() >= deadline:
+                        raise TimeoutError('DOWNLOAD_RANGE_DEADLINE')
+                    block = reply.read1(min(1024**2, end - start - len(raw) + 1))
+                    if not block:
+                        raise ConnectionError('SHORT_DOWNLOAD')
+                    raw.extend(block)
+        except (urllib.error.URLError, TimeoutError, ConnectionError):
+            failures = failures + 1 if len(raw) == before else 0
+            if failures >= 4:
+                raise
+            time.sleep(min(2 ** failures, 8))
+    return raw
+
+
+def download(client, file_id, path, size, digest, state):
+    """Resume only the pinned object; a short response never becomes complete."""
+    if path.exists():
+        with path.open('rb') as stream:
+            if path.is_symlink() or path.stat().st_size != size or hashlib.file_digest(stream, 'sha256').hexdigest() != digest:
+                raise ValueError('DOWNLOAD_HASH_MISMATCH')
+        return
+    partial = path.with_suffix(path.suffix + '.partial')
+    if partial.is_symlink():
+        raise ValueError('DOWNLOAD_HASH_MISMATCH')
+    total = partial.stat().st_size if partial.exists() else 0
+    if total > size:
+        raise ValueError('DOWNLOAD_TOO_LARGE')
+    state['downloadedBytes'] = total
+    save(state)
+    # Eight 8 MiB requests bound memory to about 64 MiB. Append only complete
+    # ranges in order, so any interrupted file remains a contiguous prefix.
+    chunk = 8 * 1024**2
+    with ThreadPoolExecutor(max_workers=8) as pool, partial.open('ab') as out:
+        while total < size:
+            pending = [pool.submit(read_range, client, file_id, start, min(start + chunk, size) - 1, size)
+                       for start in range(total, min(total + 8 * chunk, size), chunk)]
+            for future in pending:
+                raw = future.result()
+                out.write(raw)
+                total += len(raw)
+                out.flush()
+                state['downloadedBytes'] = total
+                save(state)
+        os.fsync(out.fileno())
+    with partial.open('rb') as stream:
+        if hashlib.file_digest(stream, 'sha256').hexdigest() != digest:
+            raise ValueError('DOWNLOAD_HASH_MISMATCH')
+    partial.rename(path)
+
+
 def worker(auth):
     state = dict(status='downloading', startedAt=time.time(), objects=[])
     save(state)
@@ -42,30 +124,10 @@ def worker(auth):
         for name, file_id, size, digest in OBJECTS:
             state.update(currentObject=name, downloadedBytes=0, expectedBytes=size)
             save(state)
-            h = hashlib.sha256()
-            total = 0
-            last = 0
             path = RUN / name
-            with client.read(file_id) as reply, path.with_suffix(path.suffix + '.partial').open('xb') as out:
-                if int(reply.headers['Content-Length']) != size:
-                    raise ValueError('DOWNLOAD_SIZE_HEADER')
-                while raw := reply.read(1024 ** 2):
-                    total += len(raw)
-                    if total > size:
-                        raise ValueError('DOWNLOAD_TOO_LARGE')
-                    h.update(raw)
-                    out.write(raw)
-                    if total - last >= 64 * 1024 ** 2:
-                        state['downloadedBytes'] = total
-                        save(state)
-                        last = total
-                out.flush()
-                os.fsync(out.fileno())
-            if total != size or h.hexdigest() != digest:
-                raise ValueError('DOWNLOAD_HASH_MISMATCH')
-            path.with_suffix(path.suffix + '.partial').rename(path)
-            state['objects'].append(dict(name=name, fileId=file_id, bytes=total, sha256=digest))
-        state.update(status='download_verified', downloadedBytes=total, finishedAt=time.time())
+            download(client, file_id, path, size, digest, state)
+            state['objects'].append(dict(name=name, fileId=file_id, bytes=size, sha256=digest))
+        state.update(status='download_verified', downloadedBytes=size, finishedAt=time.time())
         save(state)
     except Exception as error:
         state.update(status='failed', errorType=type(error).__name__)
@@ -80,21 +142,30 @@ def worker(auth):
 def main():
     parser = argparse.ArgumentParser()
     parser.add_argument('--worker', action='store_true')
+    parser.add_argument('--resume', action='store_true', help='Resume an inspected failed download without discarding partial bytes')
     args = parser.parse_args()
     if os.geteuid() != 0 or socket.gethostname() != 'J3990.2020067.notebook.dlpc':
         raise ValueError('EXPECTED_DLPC_ROOT_REQUIRED')
     os.umask(0o077)
     auth = json.loads(sys.stdin.buffer.read(65537))
     if args.worker:
-        worker(auth)
+        with (RUN / 'download.lock').open('a') as lock:
+            fcntl.flock(lock, fcntl.LOCK_EX | fcntl.LOCK_NB)
+            worker(auth)
         return
-    if shutil.disk_usage(RUN.parent).free < 46_000_000_000:
+    recovered = sum(p.stat().st_size for p in RUN.glob('*') if p.is_file()) if args.resume else 0
+    if shutil.disk_usage(RUN.parent).free + recovered < 46_000_000_000:
         raise ValueError('INSUFFICIENT_DOWNLOAD_AND_RESTORE_SPACE')
     if any(Path(p).exists() for p in ('/opt/intelligentai', '/workspace/intelligentai',
                                      '/workspace/voice-coaching-tts')):
         raise ValueError('RESTORE_REQUIRES_EMPTY_RUNTIME_TARGET')
-    RUN.mkdir(mode=0o700, exist_ok=False)
-    with (RUN / 'worker.log').open('xb') as log:
+    if args.resume:
+        if ((RUN / 'restore-state.json').exists() or
+                json.loads((RUN / 'state.json').read_bytes()).get('status') != 'failed'):
+            raise ValueError('FAILED_DOWNLOAD_REQUIRED')
+    else:
+        RUN.mkdir(mode=0o700, exist_ok=False)
+    with (RUN / 'worker.log').open('ab' if args.resume else 'xb') as log:
         process = subprocess.Popen(['/usr/bin/python3', str(Path(__file__).resolve()), '--worker'],
             stdin=subprocess.PIPE, stdout=log, stderr=log, start_new_session=True,
             env=dict(PATH='/usr/bin:/bin', LANG='C.UTF-8', PYTHONDONTWRITEBYTECODE='1'))

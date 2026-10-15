@@ -2,13 +2,14 @@
 
 Pass the short-lived Native API auth object on stdin, as for b2_restore.py.
 Private runtime settings are supplied separately after this command succeeds.
-An interrupted/failed state is retained for reconciliation, never overwritten.
+Pinned interrupted downloads resume; partial installation requires reconciliation.
 """
 import fcntl
 import json
 import os
 from pathlib import Path
 import socket
+import shutil
 import subprocess
 import time
 
@@ -26,24 +27,20 @@ def main():
             '/opt/intelligentai', '/workspace/intelligentai', '/workspace/voice-coaching-tts')]
         if any(installed):
             raise ValueError('EXISTING_INSTALLATION_REQUIRES_RECONCILIATION')
-        if not RUN.exists():
-            subprocess.run(['/usr/bin/python3', str(tools / 'b2_restore.py')], check=True)
-        elif not (RUN / 'state.json').is_file():
-            raise ValueError('RESTORE_STATE_UNKNOWN')
-        deadline = time.monotonic() + 7200
-        while time.monotonic() < deadline:
-            path = RUN / 'state.json'
-            state = json.loads(path.read_bytes()) if path.exists() else {}
-            if state.get('status') == 'download_verified':
-                break
-            if state.get('status') == 'failed':
-                raise ValueError('DOWNLOAD_FAILED_RECONCILE_PARTIAL')
-            time.sleep(3)
-        else:
-            # The download may still be running; do not launch another worker.
-            raise ValueError('DOWNLOAD_WAIT_TIMEOUT_INSPECT_EXISTING_WORKER')
         if (RUN / 'restore-state.json').exists():
             raise ValueError('RESTORE_ALREADY_ATTEMPTED_RECONCILE_STATE')
+        recovered = sum((RUN / (name + suffix)).stat().st_size
+                        for name, _, _, _ in OBJECTS for suffix in ('', '.partial')
+                        if (RUN / (name + suffix)).is_file())
+        if shutil.disk_usage(RUN.parent).free + recovered < 46_000_000_000:
+            raise ValueError('INSUFFICIENT_DOWNLOAD_AND_RESTORE_SPACE')
+        RUN.mkdir(mode=0o700, exist_ok=True)
+        if (RUN / 'state.json').exists():
+            shutil.copyfile(RUN / 'state.json', RUN / ('state.before-' + str(time.time_ns()) + '.json'))
+        # The worker locks the download, resumes pinned partial bytes and
+        # rechecks completed objects. Run synchronously so failures propagate;
+        # an old failed state cannot race with a new background launcher.
+        subprocess.run(['/usr/bin/python3', str(tools / 'b2_restore.py'), '--worker'], check=True)
         subprocess.run(['/usr/bin/python3', str(tools / 'restore_downloaded.py'), '--worker'], check=True)
         state = json.loads((RUN / 'restore-state.json').read_bytes())
         if state.get('status') != 'assets_restored_not_started':
