@@ -11,6 +11,8 @@ CORE = 'f6d56e1decc160f0ca38cc8d52303f3de20945f872d714bf6a2e743ed94c0391'
 H5 = 'def65f68a849a2452b0e4dde600f0ef85d99beaa97123d30d97262653ebf8e77'
 LOCK = 'b605c3b9ba06bbf18fc126770b18de3d2da0d3f70c08e04873f17bc735b948bc'
 PROMPT = '977c49744e7af9fc60fdc2eb13c23985692cb00dd71789d8b3c43c3813e3f1b5'
+J406_H5 = '3e430635a4d714ead5d8e08352e41ff9a2b06c893d73af7f018fb43b4c37f61c'
+J406_LOCK = '58c26086546abb8b94eb6998671101d67633af426adf373cceb42862ccaf0ec4'
 
 
 def source(name):
@@ -53,23 +55,52 @@ def patch_worker(raw):
     return worker.encode()
 
 
-def build(core, h5, destination, threads=2, batch=64):
-    if threads not in (1, 2, 3, 4) or batch not in (32, 64, 128):
+def build(core, h5, destination, threads=None, batch=None, *, profile='legacy'):
+    if profile not in ('legacy', 'dlpc-j406'):
         raise ValueError('PERFORMANCE_PROFILE_NOT_SUPPORTED')
+    j406 = profile == 'dlpc-j406'
+    threads = (8 if j406 else 2) if threads is None else threads
+    batch = (256 if j406 else 64) if batch is None else batch
+    if ((j406 and (threads != 8 or batch not in (128, 256, 512))) or
+            (not j406 and (threads not in (1, 2, 3, 4) or batch not in (32, 64, 128)))):
+        raise ValueError('PERFORMANCE_PROFILE_NOT_SUPPORTED')
+    h5_pin, lock_pin = (J406_H5, J406_LOCK) if j406 else (H5, LOCK)
     manifest, files = load_files(core, 'release_manifest.json', CORE, 'file_sha256')
     lm_raw = (h5 / 'contracts/llm/llm_contract_manifest.json').read_bytes()
-    if sha(lm_raw) != H5:
+    if sha(lm_raw) != h5_pin:
         raise ValueError('PERFORMANCE_H5_PARENT_IDENTITY')
     lm = json.loads(lm_raw)
-    if lm['dependency_lock_sha256'] != LOCK or lm['parent_core_manifest_sha256'] != CORE:
+    if lm['dependency_lock_sha256'] != lock_pin or lm['parent_core_manifest_sha256'] != CORE:
         raise ValueError('PERFORMANCE_PARENT_TUPLE')
-    _, llm = load_files(h5, 'contracts/llm/dependency_lock.json', LOCK, 'files')
-    if not any(sha(raw) == PROMPT for raw in llm.values()):
+    _, llm = load_files(h5, 'contracts/llm/dependency_lock.json', lock_pin, 'files')
+    prompt_pin = sha(llm['contracts/llm/llm_system_prompt.txt'])
+    if not j406 and prompt_pin != PROMPT:
         raise ValueError('PERFORMANCE_RESTORED_PROMPT_REQUIRED')
-    name = f'canonical_dlpc_mfa_gop_20261007_t{threads}_b{batch}_v1'
+    name = (f'canonical_dlpc_mfa_gop_j406_20261016_t{threads}_b{batch}_v1' if j406
+            else f'canonical_dlpc_mfa_gop_20261007_t{threads}_b{batch}_v2')
     files['source/scripts/run_canonical_batch.py'] = patch_runner(files['source/scripts/run_canonical_batch.py'])
+    if j406:
+        runner = files['source/scripts/run_canonical_batch.py'].decode()
+        runner = replace_once(runner, '    configure_torch(torch)\n',
+            '    configure_torch(torch)\n'
+            '    from canonical_native.seungun_gop import check_devices\n'
+            '    check_devices()  # All GOP devices must exist before readiness.\n')
+        files['source/scripts/run_canonical_batch.py'] = runner.encode()
     files['source/scripts/canonical_native/seungun_gop.py'] = replace_once(
         source('gop_cpu.py').decode(), 'MAX_BATCH = 64', f'MAX_BATCH = {batch}').encode()
+    workspace = (2 * 1024**3) if j406 else (64 * 1024**2)
+    if j406:
+        gop = files['source/scripts/canonical_native/seungun_gop.py'].decode()
+        gop = replace_once(gop, 'WORKSPACE_ESTIMATE_BYTES = 64 * 1024**2',
+                           f'WORKSPACE_ESTIMATE_BYTES = {workspace}')
+        gop = replace_once(gop, 'CTC_DEVICES = ("cpu",)',
+                           'CTC_DEVICES = ("cuda:1", "cuda:2")')
+        files['source/scripts/canonical_native/seungun_gop.py'] = gop.encode()
+        # MFA runs concurrently with GPU GOP, with a distinct BLAS budget.
+        common = files['runtime_bundle/demo_common.py'].decode()
+        for key in ('OMP_NUM_THREADS', 'MKL_NUM_THREADS', 'OPENBLAS_NUM_THREADS', 'NUMEXPR_NUM_THREADS'):
+            common = replace_once(common, key + "='1'", key + "='4'")
+        files['runtime_bundle/demo_common.py'] = common.encode()
     files['source/scripts/gop_task.py'] = source('gop_task.py')
     files['scripts/analysis_budget.py'] = source('analysis_budget.py')
     files['runtime_bundle/mfa_timing.py'] = source('mfa_timing.py')
@@ -97,12 +128,17 @@ def build(core, h5, destination, threads=2, batch=64):
     record['copied_sha256'] = sha(files['runtime_bundle/resident_worker.py'])
     identity['source_files']['mfa_timing.py'] = dict(source='deploy/dlpc/performance/mfa_timing.py',
         sha256=sha(source('mfa_timing.py')), copied_sha256=sha(source('mfa_timing.py')))
+    if j406:
+        common_sha = sha(files['runtime_bundle/demo_common.py'])
+        identity['source_files']['demo_common.py'].update(sha256=common_sha, copied_sha256=common_sha)
     identity['dlpc_derivation'] = 'request-local timing; historical QA does not qualify the new overlap candidate'
     files['config/historical_runtime_identity.json'] = encode(identity)
-    profile = dict(profile=name, parentCoreSha256=CORE, parentLlmSha256=H5,
-        cpuThreads=threads, interopThreads=1, mfaJobs=1, mfaBlasThreads=1,
-        gopMaxBatch=batch, gopWorkspaceEstimateBytes=64*1024**2,
-        globalCoreSlots=1, overlap='CPU GOP with MFA after Native and full metadata',
+    profile = dict(profile='dlpc-j406' if j406 else name, parentCoreSha256=CORE, parentLlmSha256=h5_pin,
+        cpuThreads=threads, interopThreads=1, mfaJobs=1, mfaBlasThreads=4 if j406 else 1,
+        gopDevices=['cuda:1', 'cuda:2'] if j406 else ['cpu'],
+        nativeDevice='cuda:0', gopDtype='float64',
+        gopMaxBatch=batch, gopWorkspaceEstimateBytes=workspace,
+        globalCoreSlots=1, overlap='GOP with MFA after Native and full metadata',
         requiredLock='/run/intelligentai/analysis.lock',
         executionApproved=False, qualityVerified=False, productionAllowlisted=False)
     files['config/dlpc_execution_profile.json'] = encode(profile)
@@ -116,7 +152,7 @@ def build(core, h5, destination, threads=2, batch=64):
     llm['bridge/adapter.py'] = replace_once(llm['bridge/adapter.py'].decode(),
         'PARENT = "' + CORE + '"', 'PARENT = "' + sha(core_raw) + '"').encode()
     lock = encode(dict(files={n: sha(raw) for n, raw in sorted(llm.items())}))
-    lm.update(contract_version=name + '_h5', parent_llm_manifest_sha256=H5,
+    lm.update(contract_version=name + '_h5', parent_llm_manifest_sha256=h5_pin,
         parent_core_manifest_sha256=sha(core_raw), dependency_lock_sha256=sha(lock))
     llm_raw = encode(lm)
     llm['contracts/llm/dependency_lock.json'] = lock
@@ -130,7 +166,7 @@ def build(core, h5, destination, threads=2, batch=64):
     write_release(destination / name, files)
     write_release(destination / (name + '_h5'), llm)
     return dict(profile, coreManifestSha256=sha(core_raw), llmManifestSha256=sha(llm_raw),
-        llmLockSha256=sha(lock), promptSha256=PROMPT)
+        llmLockSha256=sha(lock), promptSha256=prompt_pin)
 
 
 if __name__ == '__main__':
@@ -138,7 +174,9 @@ if __name__ == '__main__':
     parser.add_argument('--core', type=Path, required=True)
     parser.add_argument('--h5', type=Path, required=True)
     parser.add_argument('--destination', type=Path, required=True)
-    parser.add_argument('--threads', type=int, choices=(1, 2, 3, 4), default=2)
-    parser.add_argument('--batch', type=int, choices=(32, 64, 128), default=64)
+    parser.add_argument('--profile', choices=('legacy', 'dlpc-j406'), default='legacy')
+    parser.add_argument('--threads', type=int)
+    parser.add_argument('--batch', type=int)
     args = parser.parse_args()
-    print(json.dumps(build(args.core, args.h5, args.destination, args.threads, args.batch)))
+    print(json.dumps(build(args.core, args.h5, args.destination, args.threads, args.batch,
+                           profile=args.profile)))
