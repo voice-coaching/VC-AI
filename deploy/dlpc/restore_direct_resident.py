@@ -5,18 +5,18 @@ import os
 from pathlib import Path
 import socket
 import subprocess
+import host_identity
 
 BEFORE = '213ea2a95d66a464bb6d5d3deb4c216a0cdbbd1988464d3b38c1d69466c78f9e'
 AFTER = '47758c852a7d0e7133b135ef2d75220db71761c3385191c03846e47381595fa0'
 SOURCE = Path('/home/2020067/intelligentAI/src/voice_coach/direct_analysis/service.py')
 TARGET = Path('/opt/intelligentai/app/src/voice_coach/direct_analysis/service.py')
-CTL = ['/usr/gatoai/python/extra/system-py3.12/bin/supervisorctl', '-c',
+CTL = [str(Path(host_identity.current().supervisor_bin) / 'supervisorctl'), '-c',
        '/opt/intelligentai/app/deploy/dlpc/supervisord.conf']
 
 
 def main():
-    if os.geteuid() != 0 or socket.gethostname() != 'J3990.2020067.notebook.dlpc':
-        raise ValueError('EXPECTED_DLPC_ROOT_REQUIRED')
+    identity = host_identity.require_root()
     os.umask(0o077)
     if TARGET.resolve(strict=True) != TARGET or TARGET.stat().st_uid != 0:
         raise ValueError('DIRECT_SERVICE_PATH_CHANGED')

@@ -16,6 +16,7 @@ import subprocess
 import sys
 import tarfile
 import urllib.request
+import host_identity
 
 ACCOUNT = 'intelligentai-actions'
 # Runner.Listener needs read permission on every ancestor. Keep its private home
@@ -25,19 +26,17 @@ OPS = Path('/opt/intelligentai/cicd')
 CONTROLLER = OPS / 'deploy_source.py'
 SUPERVISOR = OPS / 'runner-supervisord.conf'
 SUDOERS = Path('/etc/sudoers.d/intelligentai-actions')
-HOOK = Path('/home/2020067/.jupyter/jupyter_server_config.py')
 PACKAGE = 'https://github.com/actions/runner/releases/download/v2.337.0/actions-runner-linux-x64-2.337.0.tar.gz'
 PACKAGE_SHA256 = '70920811a4f8ad4328818682bca5c6469c1c942fab52448868071d0063816613'
-BIN = '/usr/gatoai/python/extra/system-py3.12/bin/'
-STARTUP = '''import os
+STARTUP_TEMPLATE = '''import os
 from pathlib import Path
 import socket
 import subprocess
-if os.geteuid()!=0 or socket.gethostname()!='J3990.2020067.notebook.dlpc':
+if os.geteuid()!=0 or socket.gethostname()!=HOSTNAME:
     raise SystemExit('EXPECTED_DLPC_ROOT')
 if Path('/var/lib/intelligentai-actions/.runner').is_file():
     config='/opt/intelligentai/cicd/runner-supervisord.conf'
-    binary='/usr/gatoai/python/extra/system-py3.12/bin/'
+    binary=BINARY
     if not Path('/run/intelligentai-actions-supervisor.sock').exists():
         subprocess.run([binary+'supervisord','-c',config],check=True)
     else:
@@ -45,6 +44,12 @@ if Path('/var/lib/intelligentai-actions/.runner').is_file():
         if result.returncode==0 and any(x in result.stdout for x in ('STOPPED','EXITED','FATAL')):
             subprocess.run([binary+'supervisorctl','-c',config,'start','actions-runner'],check=True)
 '''
+
+
+def startup(identity):
+    # Literal per-host values; the startup file runs standalone under python3 -I.
+    head = f'HOSTNAME={identity.hostname!r}\nBINARY={identity.supervisor_bin + "/"!r}\n'
+    return head + STARTUP_TEMPLATE
 
 
 def safe_file(path, data, mode=0o600):
@@ -83,6 +88,8 @@ def prepare(body):
     compile(code, str(CONTROLLER), 'exec')
     private_directory(OPS)
     safe_file(CONTROLLER, code)
+    # The controller imports host_identity from its own root-only directory.
+    safe_file(OPS / 'host_identity.py', Path(host_identity.__file__).read_bytes())
     marker = OPS / 'runner-prepared.json'
     try:entry=account()
     except KeyError:
@@ -168,7 +175,7 @@ stdout_logfile_backups=2
 redirect_stderr=true
 '''
     safe_file(SUPERVISOR,config.encode())
-    safe_file(OPS/'start_runner.py',STARTUP.encode())
+    safe_file(OPS/'start_runner.py',startup(host_identity.current()).encode())
     return dict(stage='prepared',account=ACCOUNT,packageSha256=PACKAGE_SHA256,
                 controllerSha256=hashlib.sha256(code).hexdigest())
 
@@ -182,7 +189,7 @@ def register(body):
         raise ValueError('INVALID_REGISTRATION_TOKEN')
     result=subprocess.run(['/usr/sbin/runuser','-u',ACCOUNT,'--',str(HOME/'config.sh'),
         '--unattended','--url','https://github.com/voice-coaching/intelligentAI',
-        '--token',token,'--name','intelligentai-dlpc',
+        '--token',token,'--name',host_identity.current().runner_name,
         '--labels','intelligentai-dlpc-deploy','--work','_work'],
         cwd=HOME,capture_output=True,timeout=120)
     if result.returncode:raise ValueError('RUNNER_REGISTRATION_FAILED_INSPECT_PRIVATE_DIAGNOSTICS')
@@ -190,6 +197,7 @@ def register(body):
     for name in ('.runner','.credentials','.credentials_rsaparams'):
         p=HOME/name
         if p.exists():p.chmod(0o600)
+    HOOK = host_identity.current().home / '.jupyter/jupyter_server_config.py'
     if HOOK.is_symlink() or not HOOK.is_file():raise ValueError('EXISTING_JUPYTER_HOOK_REQUIRED')
     marker='# intelligentai-actions-runner-20261008'
     addition='\n'+marker+'\nimport subprocess as _actions_subprocess\n'
@@ -200,12 +208,11 @@ def register(body):
     result=subprocess.run(['/usr/bin/python3','-I',str(OPS/'start_runner.py')],capture_output=True,timeout=30)
     if result.returncode:raise ValueError('RUNNER_SUPERVISOR_START_FAILED')
     return dict(stage='registered',account=ACCOUNT,uid=entry.pw_uid,
-                name='intelligentai-dlpc',label='intelligentai-dlpc-deploy')
+                name=host_identity.current().runner_name,label='intelligentai-dlpc-deploy')
 
 
 def main():
-    if os.geteuid()!=0 or socket.gethostname()!='J3990.2020067.notebook.dlpc':
-        raise ValueError('EXPECTED_DLPC_ROOT')
+    host_identity.require_root()
     os.umask(0o077)
     raw=sys.stdin.buffer.read(256*1024+1)
     if len(raw)>256*1024:raise ValueError('INSTALL_INPUT_TOO_LARGE')

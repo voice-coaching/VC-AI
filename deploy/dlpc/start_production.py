@@ -16,16 +16,16 @@ import time
 import urllib.error
 import urllib.request
 
-from restore_runtime_overlay import SHA256
+import deployed_release
+import host_identity
 
 APP = Path('/opt/intelligentai/app')
 CONFIG = APP / 'deploy/dlpc/supervisord.conf'
 ENV = Path('/etc/intelligentai/analysis.env')
 HOLD = Path('/run/intelligentai/direct-admission.closed')
 MARKER = 'dlpc-production-recovery-v1\n'
-BIN = Path('/usr/gatoai/python/extra/system-py3.12/bin')
+BIN = Path(host_identity.current().supervisor_bin)
 TOOLS = Path(__file__).resolve().parent
-REVISION = '791ca5496e04a10b6948c69dce97361ee4335f4c'
 FLAGS = ('AI_CANONICAL_BOOTSTRAP_READY', 'AI_CANONICAL_HANDOFF_ENABLED',
          'AI_CANONICAL_ADMISSION_ENABLED', 'AI_DIRECT_ENABLED')
 
@@ -120,15 +120,14 @@ def replace(path, raw, mode, gid=0):
 
 
 def main():
-    if os.geteuid() != 0 or socket.gethostname() != 'J3990.2020067.notebook.dlpc':
-        raise ValueError('EXPECTED_DLPC_ROOT_REQUIRED')
+    identity = host_identity.require_root()
     os.umask(0o077)
     with open('/run/intelligentai-bootstrap.lock', 'a') as lock:
         fcntl.flock(lock, fcntl.LOCK_EX | fcntl.LOCK_NB)
         metadata = json.loads(Path('/opt/intelligentai/deployment.json').read_bytes())
-        identity = metadata.get('canonicalIntegration', {})
-        if identity.get('bundleSha256') != SHA256 or identity.get('sourceGitRevision') != REVISION:
-            raise ValueError('PRODUCTION_RELEASE_CHANGED')
+        # The pinned baseline, or the release the Actions controller last deployed
+        # (proven by its root-only receipt), so a restart resumes the deployed main.
+        REVISION, SHA256 = deployed_release.accepted(metadata)
         # Read literal private settings with the deployed launcher's parser.
         import importlib.util
         spec = importlib.util.spec_from_file_location('dlpc_launch', APP / 'deploy/dlpc/launch.py')
@@ -146,7 +145,7 @@ def main():
         # full admission again after our executor becomes ready.
         wait_for(lambda: backend_ready(values, require_admission=False),
                  'BACKEND_CONTRACT_NOT_READY', seconds=180)
-        run(['/usr/bin/python3', str(TOOLS / 'prepare_restored_runtime.py')])
+        run([host_identity.current().tools_python, str(TOOLS / 'prepare_restored_runtime.py')])
         if shutil.disk_usage('/var/lib').free < 14 * 1024**3:
             raise ValueError('DISK_HEADROOM_REQUIRED')
         raw = CONFIG.read_text()
@@ -182,11 +181,12 @@ def main():
                 if raw.count(old) != 1:
                     raise ValueError('SUPERVISOR_COMMAND_SHAPE')
                 replace(CONFIG, raw.replace(old, 'command=' + diagnostic + ' --admit\n').encode(), 0o640, 10001)
-        run(['/usr/sbin/runuser', '-u', '2020067', '--', '/usr/bin/python3',
-             '/home/2020067/.local/share/intelligentai/aws-tunnel/start_aws_tunnel.py'])
+        host = host_identity.current()
+        run(['/usr/sbin/runuser', '-u', host.operator, '--', host.tools_python,
+             str(host.home / '.local/share/intelligentai/aws-tunnel/start_aws_tunnel.py')])
         if service_state('analysis') == 'ABSENT':
             run([str(BIN / 'supervisord'), '-c', str(CONFIG)])
-        elif changed:
+        else:
             run([str(BIN / 'supervisorctl'), '-c', str(CONFIG), 'reread'])
             run([str(BIN / 'supervisorctl'), '-c', str(CONFIG), 'update', 'analysis'])
         start('analysis')
@@ -209,8 +209,7 @@ def main():
         if (get('http://127.0.0.1:8080/health/services')[0] not in (401, 403) or
                 get('http://127.0.0.1:8083/health/ready')[0] not in (401, 403)):
             raise ValueError('SERVICE_AUTHENTICATION_REQUIRED')
-        if not backend_ready(values):
-            raise ValueError('BACKEND_ADMISSION_CHANGED')
+        wait_for(lambda: backend_ready(values), 'BACKEND_ADMISSION_CHANGED', seconds=900)
         print('Checking direct and public readiness', flush=True)
         released_hold = False
         if HOLD.exists():

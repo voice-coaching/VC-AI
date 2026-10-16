@@ -5,6 +5,7 @@ import os
 from pathlib import Path
 import socket
 import subprocess
+import host_identity
 
 FILES = {
     'resident_health.py': (None, '7a5a7e4f93bf351a8193c677e193f4fb872c9265e644a0a8467d88d3e62d1214'),
@@ -16,8 +17,7 @@ TARGET = Path('/opt/intelligentai/app/src/voice_coach/backend_analysis')
 
 
 def main():
-    if os.geteuid() != 0 or socket.gethostname() != 'J3990.2020067.notebook.dlpc':
-        raise ValueError('EXPECTED_DLPC_ROOT_REQUIRED')
+    identity = host_identity.require_root()
     os.umask(0o077)
     if TARGET.resolve(strict=True) != TARGET or TARGET.stat().st_uid != 0:
         raise ValueError('HEALTH_TARGET_CHANGED')

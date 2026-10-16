@@ -18,6 +18,11 @@ import subprocess
 import sys
 import time
 
+# Linux < 5.3 (e.g. el7 3.10 hosts) has no pidfd. A direct child's PID cannot be
+# recycled until it is reaped, and only this single-threaded guard reaps, so
+# waitid(P_PID, WNOWAIT) proves the target is still our waitable child there.
+_PIDFD = all((hasattr(os, 'pidfd_open'), hasattr(os, 'P_PIDFD'), hasattr(signal, 'pidfd_send_signal')))
+
 
 def _children() -> set[int]:
     children = set()
@@ -35,6 +40,13 @@ def _reap_owned_tree() -> None:
     # A task stuck in kernel I/O keeps this guard alive and the caller's slot held.
     while True:
         for pid in _children():
+            if not _PIDFD:
+                try:
+                    os.waitid(os.P_PID, pid, os.WEXITED | os.WNOHANG | os.WNOWAIT)
+                    os.kill(pid, signal.SIGKILL)
+                except (ChildProcessError, ProcessLookupError):
+                    pass
+                continue
             try:
                 handle = os.pidfd_open(pid)
             except ProcessLookupError:
@@ -74,12 +86,12 @@ def _reap_exited_adoptees(command_pid: int) -> None:
 def configure_guard() -> bool:
     """Check the real interpreter/kernel and enable subreaping in this process."""
     if sys.platform != 'linux' or not all((
-            hasattr(os, 'pidfd_open'), hasattr(os, 'P_PIDFD'),
-            hasattr(signal, 'pidfd_send_signal'))):
+            hasattr(os, 'waitid'), hasattr(os, 'P_PID'), hasattr(os, 'WNOWAIT'))):
         return False
-    # No child or signal: verify the kernel permits opening our own stable pidfd.
-    descriptor = os.pidfd_open(os.getpid())
-    os.close(descriptor)
+    if _PIDFD:
+        # No child or signal: verify the kernel permits opening our own stable pidfd.
+        descriptor = os.pidfd_open(os.getpid())
+        os.close(descriptor)
     libc = ctypes.CDLL(None, use_errno=True)
     if libc.prctl(36, 1, 0, 0, 0) != 0:  # PR_SET_CHILD_SUBREAPER
         return False

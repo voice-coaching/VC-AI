@@ -9,38 +9,38 @@ from pathlib import Path
 import socket
 import stat
 import subprocess
+import host_identity
 
 
-SUPERVISOR = Path('/usr/gatoai/python/extra/system-py3.12/bin')
-RUNTIME = Path('/tmp/intelligentai-aws-tunnel-120067')
 
 
 def main():
     parser = argparse.ArgumentParser()
     parser.add_argument('--prepare-only', action='store_true')
     args = parser.parse_args()
-    if os.getuid() != 120067 or socket.gethostname() != 'J3990.2020067.notebook.dlpc':
-        raise ValueError('EXPECTED_DLPC_USER_REQUIRED')
-    home = Path('/home/2020067')
-    key = home / '.ssh/intelligentai_aws_20261005'
-    known = home / '.ssh/intelligentai_aws_known_hosts'
+    identity = host_identity.require_operator()
+    aws = identity.aws()
+    SUPERVISOR = Path(identity.supervisor_bin)
+    RUNTIME = Path(f'/tmp/intelligentai-aws-tunnel-{identity.uid}')
+    key, known = aws['key'], aws['known_hosts']
     for path in (key, known):
         info = path.lstat()
-        if not stat.S_ISREG(info.st_mode) or info.st_uid != 120067 or info.st_mode & 0o077:
+        if not stat.S_ISREG(info.st_mode) or info.st_uid != identity.uid or info.st_mode & 0o077:
             raise ValueError('PRIVATE_SSH_SETTINGS_REQUIRED')
     os.umask(0o077)
     RUNTIME.mkdir(mode=0o700, exist_ok=True)
     info = RUNTIME.lstat()
-    if not stat.S_ISDIR(info.st_mode) or info.st_uid != 120067 or info.st_mode & 0o077:
+    if not stat.S_ISDIR(info.st_mode) or info.st_uid != identity.uid or info.st_mode & 0o077:
         raise ValueError('PRIVATE_RUNTIME_REQUIRED')
     config = RUNTIME / 'supervisord.conf'
     command = (
-        '/usr/bin/ssh -F /dev/null -NT -p 22132 -o BatchMode=yes -o IdentitiesOnly=yes '
+        f"/usr/bin/ssh -F /dev/null -NT -p {aws['port']} -o BatchMode=yes -o IdentitiesOnly=yes "
         '-o ConnectTimeout=10 -o ExitOnForwardFailure=yes -o ServerAliveInterval=30 '
-        '-o ServerAliveCountMax=3 -o StrictHostKeyChecking=yes -o HostKeyAlias=13.209.184.226 '
+        f"-o ServerAliveCountMax=3 -o StrictHostKeyChecking=yes -o HostKeyAlias={aws['host']} "
         f'-o UserKnownHostsFile={known} -i {key} '
-        '-R 127.0.0.1:18080:127.0.0.1:8080 -R 127.0.0.1:18083:127.0.0.1:8083 '
-        'ec2-user@13.209.184.226'
+        f"-R 127.0.0.1:{aws['tunnel']['analysis']}:127.0.0.1:8080 "
+        f"-R 127.0.0.1:{aws['tunnel']['tts']}:127.0.0.1:8083 "
+        f"ec2-user@{aws['host']}"
     )
     content = f'''[unix_http_server]
 file={RUNTIME}/supervisor.sock
@@ -75,9 +75,9 @@ redirect_stderr=true
         with config.open('x') as stream:
             stream.write(content)
     if args.prepare_only:
-        print('AWS 22132 tunnel prepared; not started')
+        print(f"AWS {aws['port']} tunnel prepared; not started")
         return
-    with socket.create_connection(('13.209.184.226', 22132), timeout=8) as connection:
+    with socket.create_connection((aws['host'], aws['port']), timeout=8) as connection:
         connection.settimeout(5)
         if not connection.recv(128).startswith(b'SSH-'):
             raise ValueError('AWS_SSH_BANNER_REQUIRED')

@@ -6,6 +6,7 @@ from pathlib import Path
 import sys
 from b2_backup import B2
 from install_runtime_overlay import install
+import host_identity
 
 FILE_ID = '4_ze5cc71977ef1880ca60b0c17_f114952e6b08b9921_d20261008_m083112_c005_v0501033_t0033_u01791448272034'
 SIZE = 17308951

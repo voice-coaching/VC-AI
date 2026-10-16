@@ -21,6 +21,7 @@ import time
 import urllib.error
 import urllib.parse
 import urllib.request
+import host_identity
 
 PART_BYTES = 64 * 1024**2
 PREFIX = 'intelligentai/recovery/dlpc-20261006/'
@@ -347,8 +348,7 @@ def main():
     parser.add_argument('--worker', action='store_true')
     parser.add_argument('--verify-only', action='store_true')
     args = parser.parse_args()
-    if os.geteuid() != 0 or socket.gethostname() != 'J3990.2020067.notebook.dlpc':
-        raise ValueError('VERIFIED_DLPC_ROOT_REQUIRED')
+    identity = host_identity.require_root()
     os.umask(0o077)
     auth = json.loads(sys.stdin.buffer.read(65537))
     if set(auth) != {'apiUrl', 'downloadUrl', 'authorizationToken', 'accountId', 'bucketId', 'bucketName'}:
@@ -363,7 +363,7 @@ def main():
             RUN.mkdir(mode=0o700, exist_ok=False)
         env = dict(PATH='/usr/bin:/bin', LANG='C.UTF-8', PYTHONDONTWRITEBYTECODE='1')
         with (RUN / 'worker.log').open('ab' if args.verify_only else 'xb') as log:
-            command = ['/usr/bin/python3', str(Path(__file__).resolve()), '--worker']
+            command = [identity.tools_python, str(Path(__file__).resolve()), '--worker']
             if args.verify_only:
                 command.append('--verify-only')
             process = subprocess.Popen(command,

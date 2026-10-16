@@ -7,6 +7,7 @@ import shutil
 import sys
 import tarfile
 from b2_backup import B2
+import host_identity
 
 ROOT = Path('/opt/intelligentai/runtime-libs')
 TARGET = ROOT / 'cudnn-9.24.0'

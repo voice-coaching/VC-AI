@@ -14,11 +14,11 @@ import subprocess
 import time
 
 from b2_restore import RUN, OBJECTS
+import host_identity
 
 
 def main():
-    if os.geteuid() != 0 or socket.gethostname() != 'J3990.2020067.notebook.dlpc':
-        raise ValueError('EXPECTED_DLPC_ROOT_REQUIRED')
+    identity = host_identity.require_root()
     os.umask(0o077)
     tools = Path(__file__).resolve().parent
     with open('/run/intelligentai-asset-restore.lock', 'a') as lock:
@@ -40,8 +40,8 @@ def main():
         # The worker locks the download, resumes pinned partial bytes and
         # rechecks completed objects. Run synchronously so failures propagate;
         # an old failed state cannot race with a new background launcher.
-        subprocess.run(['/usr/bin/python3', str(tools / 'b2_restore.py'), '--worker'], check=True)
-        subprocess.run(['/usr/bin/python3', str(tools / 'restore_downloaded.py'), '--worker'], check=True)
+        subprocess.run([host_identity.current().tools_python, str(tools / 'b2_restore.py'), '--worker'], check=True)
+        subprocess.run([host_identity.current().tools_python, str(tools / 'restore_downloaded.py'), '--worker'], check=True)
         state = json.loads((RUN / 'restore-state.json').read_bytes())
         if state.get('status') != 'assets_restored_not_started':
             raise ValueError('ASSET_INSTALLATION_INCOMPLETE')

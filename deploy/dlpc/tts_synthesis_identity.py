@@ -4,6 +4,7 @@ import json
 from pathlib import Path
 import socket
 import subprocess
+import host_identity
 
 ROOT = Path('/workspace/voice-coaching-tts')
 
@@ -17,8 +18,7 @@ def sha(path):
 
 
 def main():
-    if socket.gethostname() != 'J3990.2020067.notebook.dlpc':
-        raise ValueError('EXPECTED_DLPC_REQUIRED')
+    host_identity.current()
     parent = json.loads((ROOT / 'manifest.json').read_bytes())
     source = ROOT / 'service/server.py'
     if sha(source) != '8f25077eab50503b914e530866225d8984899dac2dcbf2791c622d90c36ea83b':
