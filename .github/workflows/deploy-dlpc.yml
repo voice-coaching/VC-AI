@@ -3,6 +3,10 @@ name: Deploy main to DLPC
 on:
   push:
     branches: [main]
+  # Catch-up: a push missed while the DLPC host was down (or its runner offline)
+  # is deployed once it is back. An up-to-date host returns NO_COMPATIBLE_RUNTIME_CHANGES.
+  schedule:
+    - cron: '*/30 * * * *'
   workflow_dispatch:
     inputs:
       force_restart:

@@ -19,13 +19,17 @@ import sys
 import time
 import urllib.request
 import uuid
+# Run as `python3 -I` from sudoers: -I drops the script directory, so load the
+# reviewed identity module only from this root-owned controller directory.
+sys.path.insert(0, str(Path(__file__).resolve().parent))
+import host_identity  # noqa: E402
 
 APP = Path('/opt/intelligentai/app')
 OPS = Path('/opt/intelligentai/cicd')
 METADATA = Path('/opt/intelligentai/deployment.json')
 ENV = Path('/etc/intelligentai/analysis.env')
 HOLD = Path('/run/intelligentai/direct-admission.closed')
-CTL = ['/usr/gatoai/python/extra/system-py3.12/bin/supervisorctl', '-c', str(APP/'deploy/dlpc/supervisord.conf')]
+CTL = [str(Path(host_identity.current().supervisor_bin) / 'supervisorctl'), '-c', str(APP/'deploy/dlpc/supervisord.conf')]
 PREFIXES = ('src/', 'seungun/src/', 'configs/', 'deploy/runpod/')
 PROTECTED = ('docs/contracts/', 'configs/coaching/', 'configs/deployment/', 'deploy/runpod/harnesses/',
              'deploy/runpod/boot.sh', 'deploy/runpod/prepare_runtime.py',
@@ -172,7 +176,10 @@ def deploy(body, raw, token):
         old = path.read_bytes() if path.exists() else None
         digest = hashlib.sha256(old).hexdigest() if old is not None else None
         old_blob = hashlib.sha1(b'blob '+str(len(old)).encode()+b'\0'+old).hexdigest() if old is not None else None
-        if digest != row['beforeSha256'] or old_blob != approved[name]['before']:
+        # A file already holding the exact approved target blob (an operational patch
+        # later merged to main) is not drift; anything else must equal the base blob.
+        at_target = old_blob is not None and old_blob == approved[name]['after']
+        if not at_target and (digest != row['beforeSha256'] or old_blob != approved[name]['before']):
             raise ValueError('RUNTIME_SOURCE_DRIFT')
         new = base64.b64decode(row['afterBase64'], validate=True) if row['afterBase64'] is not None else None
         git_blob = hashlib.sha1(b'blob '+str(len(new)).encode()+b'\0'+new).hexdigest() if new is not None else None
@@ -227,8 +234,8 @@ def deploy(body, raw, token):
             if new is None:path.unlink()
             else:atomic(path, new, 0o750 if mode == '100755' else 0o640)
         doc = json.loads(metadata)
-        doc['canonicalIntegration'].update(sourceGitRevision=body['targetRevision'],
-            bundleSha256=before['bundleSha256'] if restart else hashlib.sha256(raw).hexdigest())
+        bundle = before['bundleSha256'] if restart else hashlib.sha256(raw).hexdigest()
+        doc['canonicalIntegration'].update(sourceGitRevision=body['targetRevision'], bundleSha256=bundle)
         atomic(METADATA, (json.dumps(doc, sort_keys=True)+'\n').encode())
         env = values(); env['VOICE_COACH_BUILD_REVISION'] = body['targetRevision']
         atomic(ENV, ''.join(k+'='+v+'\n' for k,v in sorted(env.items())).encode(), 0o600, 0)
@@ -241,7 +248,8 @@ def deploy(body, raw, token):
         except Exception:
             HOLD.write_text(marker)
             raise ValueError('DIRECT_READINESS_FAILED') from None
-        return record('succeeded', restarted=True, coreManifestSha256=before['coreManifestSha256'], llmManifestSha256=before['llmManifestSha256'])
+        # deployed_release.py lets recovery resume exactly this revision/bundle after a restart.
+        return record('succeeded', restarted=True, bundleSha256=bundle, coreManifestSha256=before['coreManifestSha256'], llmManifestSha256=before['llmManifestSha256'])
     except Exception:
         if mutated:
             if not stopped:service('stop')
@@ -258,8 +266,7 @@ def deploy(body, raw, token):
 
 
 def main():
-    if os.geteuid() != 0 or socket.gethostname() != 'J3990.2020067.notebook.dlpc':
-        raise ValueError('EXPECTED_DLPC_ROOT')
+    identity = host_identity.require_root()
     os.umask(0o077)
     raw = sys.stdin.buffer.read(24*1024**2+1)
     if len(raw) > 24*1024**2:raise ValueError('PAYLOAD_TOO_LARGE')

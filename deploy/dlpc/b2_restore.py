@@ -20,6 +20,7 @@ import urllib.parse
 import urllib.request
 
 from b2_backup import B2, encoded
+import host_identity
 
 
 RUN = Path('/opt/intelligentai-b2-restore-20261006')
@@ -144,8 +145,7 @@ def main():
     parser.add_argument('--worker', action='store_true')
     parser.add_argument('--resume', action='store_true', help='Resume an inspected failed download without discarding partial bytes')
     args = parser.parse_args()
-    if os.geteuid() != 0 or socket.gethostname() != 'J3990.2020067.notebook.dlpc':
-        raise ValueError('EXPECTED_DLPC_ROOT_REQUIRED')
+    identity = host_identity.require_root()
     os.umask(0o077)
     auth = json.loads(sys.stdin.buffer.read(65537))
     if args.worker:
@@ -166,7 +166,7 @@ def main():
     else:
         RUN.mkdir(mode=0o700, exist_ok=False)
     with (RUN / 'worker.log').open('ab' if args.resume else 'xb') as log:
-        process = subprocess.Popen(['/usr/bin/python3', str(Path(__file__).resolve()), '--worker'],
+        process = subprocess.Popen([host_identity.current().tools_python, str(Path(__file__).resolve()), '--worker'],
             stdin=subprocess.PIPE, stdout=log, stderr=log, start_new_session=True,
             env=dict(PATH='/usr/bin:/bin', LANG='C.UTF-8', PYTHONDONTWRITEBYTECODE='1'))
     process.stdin.write(encoded(auth))

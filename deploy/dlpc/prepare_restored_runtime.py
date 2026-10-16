@@ -9,11 +9,11 @@ from pathlib import Path
 import pwd
 import socket
 import stat
+import host_identity
 
 
 def main():
-    if os.geteuid() != 0 or socket.gethostname() != 'J3990.2020067.notebook.dlpc':
-        raise ValueError('EXPECTED_DLPC_ROOT_REQUIRED')
+    identity = host_identity.require_root()
     if pwd.getpwuid(10001).pw_name != 'intelligentai':
         raise ValueError('SERVICE_IDENTITY_REQUIRED')
     for p in (Path('/etc/intelligentai/analysis.env'), Path('/etc/intelligentai/tts-token')):

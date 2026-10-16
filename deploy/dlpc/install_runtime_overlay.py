@@ -6,11 +6,11 @@ import json
 import os
 from pathlib import Path, PurePosixPath
 import socket
+import host_identity
 
 
 def install(raw, expected):
-    if os.geteuid() != 0 or socket.gethostname() != 'J3990.2020067.notebook.dlpc':
-        raise ValueError('EXPECTED_DLPC_ROOT_REQUIRED')
+    identity = host_identity.require_root()
     if hashlib.sha256(raw).hexdigest() != expected:
         raise ValueError('OVERLAY_DIGEST_MISMATCH')
     body = json.loads(raw)

@@ -19,6 +19,7 @@ import tarfile
 import time
 
 from b2_restore import RUN, OBJECTS
+import host_identity
 
 MOVES = ('workspace', 'opt/intelligentai', 'opt/dlpc-migration-20261005',
          'usr/bin/python3.10', 'usr/lib/python3.10')
@@ -34,15 +35,14 @@ def main():
     parser = argparse.ArgumentParser()
     parser.add_argument('--worker', action='store_true')
     args = parser.parse_args()
-    if os.geteuid() != 0 or socket.gethostname() != 'J3990.2020067.notebook.dlpc':
-        raise ValueError('EXPECTED_DLPC_ROOT_REQUIRED')
+    identity = host_identity.require_root()
     os.umask(0o077)
     if not args.worker:
         if (RUN / 'restore-state.json').exists():
             raise ValueError('EXISTING_RESTORE_REQUIRES_INSPECTION')
         save(dict(status='starting', startedAt=time.time()))
         with (RUN / 'restore.log').open('xb') as log:
-            process = subprocess.Popen(['/usr/bin/python3', str(Path(__file__).resolve()), '--worker'],
+            process = subprocess.Popen([identity.tools_python, str(Path(__file__).resolve()), '--worker'],
                 stdin=subprocess.DEVNULL, stdout=log, stderr=log, start_new_session=True,
                 env=dict(PATH='/usr/bin:/bin', LANG='C.UTF-8', PYTHONDONTWRITEBYTECODE='1'))
         (RUN / 'restore-launcher.json').write_text(json.dumps(dict(pid=process.pid)))

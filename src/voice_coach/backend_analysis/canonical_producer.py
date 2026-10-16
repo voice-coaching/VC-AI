@@ -55,6 +55,12 @@ def core_environment(nltk_data_root: Path, *, cpu_threads: int = 2) -> dict[str,
         cudnn = Path('/opt/intelligentai/runtime-libs/cudnn-9.24.0')
         preload = [cudnn / name for name in ('libcudnn.so.9.24.0', 'libcudnn_graph.so.9.24.0')]
         _require(all(p.is_file() for p in preload), 'DLPC_CUDNN_RUNTIME_MISSING')
+        # Preloaded libraries resolve libstdc++ before the interpreter's RPATH. On hosts
+        # whose system libstdc++ predates the core env's (Ubuntu 22.04 / GCC 12), the env's
+        # ICU (sqlite3 -> nltk -> g2pK) then fails on CXXABI_1.3.15; load the env's copy first.
+        runtime_cxx = Path(CORE_PYTHON).parent.parent / 'lib/libstdc++.so.6'
+        if runtime_cxx.is_file():
+            preload.insert(0, runtime_cxx)
         environment['LD_LIBRARY_PATH'] = str(cudnn)
         environment['LD_PRELOAD'] = ':'.join(map(str, preload))
     return environment

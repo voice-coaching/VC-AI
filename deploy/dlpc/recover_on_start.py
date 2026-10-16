@@ -13,9 +13,9 @@ import socket
 import subprocess
 import sys
 import time
+import host_identity
 
 TOOLS = Path(__file__).resolve().parent
-HOME = Path('/home/2020067')
 STATE = Path('/run/intelligentai-recovery-state.json')
 STEP = 'checking'
 
@@ -31,13 +31,9 @@ def record(status, **fields):
 
 
 def export(operation):
-    argv = ['/usr/sbin/runuser', '-u', '2020067', '--', '/usr/bin/ssh', '-F', '/dev/null',
-            '-T', '-p', '22132', '-o', 'BatchMode=yes', '-o', 'IdentitiesOnly=yes',
-            '-o', 'ConnectTimeout=10', '-o', 'StrictHostKeyChecking=yes',
-            '-o', 'HostKeyAlias=13.209.184.226',
-            '-o', 'UserKnownHostsFile=' + str(HOME / '.ssh/intelligentai_aws_known_hosts'),
-            '-i', str(HOME / '.ssh/intelligentai_aws_20261005'),
-            'ec2-user@13.209.184.226', 'dlpc-recovery']
+    identity = host_identity.current()
+    argv = (['/usr/sbin/runuser', '-u', identity.operator, '--'] + identity.ssh_base()
+            + ['ec2-user@' + identity.aws()['host'], 'dlpc-recovery'])
     result = subprocess.run(argv, input=json.dumps({'operation': operation}).encode(),
                             capture_output=True, timeout=60)
     if result.returncode or not 1 <= len(result.stdout) <= 131072:
@@ -46,12 +42,22 @@ def export(operation):
     return result.stdout
 
 
+def released(metadata):
+    # Pinned baseline or the Actions-deployed release with its root-only receipt.
+    import deployed_release
+    try:
+        deployed_release.accepted(metadata)
+        return True
+    except ValueError:
+        return False
+
+
 def run(name, data=None, timeout=180):
     # Root-only diagnostics retain the failing phase without logging stdin.
     with open('/run/intelligentai-recovery.log', 'ab') as log:
         log.write(('\nSTEP ' + name + '\n').encode())
         log.flush()
-        result = subprocess.run(['/usr/bin/python3', str(TOOLS / name)], input=data,
+        result = subprocess.run([host_identity.current().tools_python, str(TOOLS / name)], input=data,
                                 stdout=log, stderr=log, timeout=timeout)
     if result.returncode:
         raise ValueError('RECOVERY_STEP_FAILED_' + name.removesuffix('.py').upper())
@@ -62,8 +68,7 @@ def main():
     parser.add_argument('--restore-only', action='store_true',
                         help='Restore and verify assets/settings without starting services')
     args = parser.parse_args()
-    if os.geteuid() != 0 or socket.gethostname() != 'J3990.2020067.notebook.dlpc':
-        raise ValueError('EXPECTED_DLPC_ROOT_REQUIRED')
+    identity = host_identity.require_root()
     os.umask(0o077)
     with open('/run/intelligentai-recovery.lock', 'a') as lock:
         try:
@@ -79,21 +84,37 @@ def main():
         if all(assets) and restore_state.exists():
             if json.loads(restore_state.read_bytes()).get('status') != 'assets_restored_not_started':
                 raise ValueError('INCOMPLETE_RESTORE_REQUIRES_OPERATOR')
-        if not any(assets):
-            record('restoring_assets')
-            run('restore_assets.py', export('b2'), timeout=10800)
         from restore_runtime_overlay import SHA256
+        if identity.recovery == 'dlpc-j406-20261016':
+            # One verified J406 archive holds the trees, current overlay and cuDNN.
+            from restore_assets_j406 import BUNDLE_SHA256, STAGE
+            if BUNDLE_SHA256 != SHA256:
+                raise ValueError('J406_RECOVERY_BUNDLE_PIN_MISMATCH')
+            j406_state = STAGE / 'state.json'
+            if all(assets) and j406_state.exists():
+                if json.loads(j406_state.read_bytes()).get('status') != 'assets_restored_not_started':
+                    raise ValueError('INCOMPLETE_RESTORE_REQUIRES_OPERATOR')
+            if not any(assets):
+                record('restoring_assets')
+                run('restore_assets_j406.py', export('b2-j406'), timeout=10800)
+            record('checking_cuda_libraries')
+            from restore_cuda_libraries import verify
+            verify()
+        else:
+            if not any(assets):
+                record('restoring_assets')
+                run('restore_assets.py', export('b2'), timeout=10800)
+            metadata = json.loads(Path('/opt/intelligentai/deployment.json').read_bytes())
+            if not released(metadata):
+                if (not restore_state.exists() or
+                        Path('/run/intelligentai/dlpc-supervisor.sock').exists()):
+                    raise ValueError('LIVE_OVERLAY_RECONCILIATION_REQUIRED')
+                record('restoring_gop_overlay')
+                run('restore_runtime_overlay.py', export('b2'), timeout=180)
+            record('checking_cuda_libraries')
+            run('restore_cuda_libraries.py', export('b2'), timeout=900)
         metadata = json.loads(Path('/opt/intelligentai/deployment.json').read_bytes())
-        if metadata.get('canonicalIntegration', {}).get('bundleSha256') != SHA256:
-            if (not restore_state.exists() or
-                    Path('/run/intelligentai/dlpc-supervisor.sock').exists()):
-                raise ValueError('LIVE_OVERLAY_RECONCILIATION_REQUIRED')
-            record('restoring_gop_overlay')
-            run('restore_runtime_overlay.py', export('b2'), timeout=180)
-        record('checking_cuda_libraries')
-        run('restore_cuda_libraries.py', export('b2'), timeout=900)
-        metadata = json.loads(Path('/opt/intelligentai/deployment.json').read_bytes())
-        if metadata.get('canonicalIntegration', {}).get('bundleSha256') != SHA256:
+        if not released(metadata):
             raise ValueError('GOP_OVERLAY_RECONCILIATION_REQUIRED')
         files = [Path('/etc/intelligentai') / n for n in ('analysis.env', 'tts-token')]
         if any(p.exists() for p in files) and not all(p.exists() for p in files):
@@ -105,10 +126,24 @@ def main():
         run('restore_direct_resident.py')
         record('checking_resident_process_health')
         run('restore_resident_health.py')
+        if identity.recovery == 'dlpc-j406-20261016':
+            # The B2 archive predates this patch; reapply it on every recovery.
+            record('checking_host_compat')
+            run('restore_host_compat.py')
         record('restoring_tts_runtime')
         run('restore_tts_runtime.py')
         if args.restore_only:
             record('production_assets_restored_not_started')
+            return
+        # Production ownership is explicit per host. Until the cutover writes this
+        # host's name here, recovery only starts closed diagnostic services, so a
+        # restart cannot admit in parallel with the server that owns the public route.
+        owner = identity.home / '.local/share/intelligentai/recovery/production-owner'
+        if identity.recovery == 'dlpc-j406-20261016' and (
+                owner.is_symlink() or not owner.is_file() or owner.read_text() != identity.hostname + '\n'):
+            record('starting_diagnostic_services_not_production_owner')
+            run('bootstrap.py')
+            record('diagnostic_services_started_not_production_owner')
             return
         record('starting_production_services')
         run('start_production.py', timeout=3600)

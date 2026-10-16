@@ -54,7 +54,7 @@ def blob(revision, path):
 def main():
     if (os.environ.get('GITHUB_REPOSITORY') != 'voice-coaching/intelligentAI'
             or os.environ.get('GITHUB_REF') != 'refs/heads/main'
-            or os.environ.get('GITHUB_EVENT_NAME') not in ('push', 'workflow_dispatch')):
+            or os.environ.get('GITHUB_EVENT_NAME') not in ('push', 'workflow_dispatch', 'schedule')):
         raise ValueError('MAIN_DEPLOYMENT_ONLY')
     target = os.environ['DEPLOY_REVISION']
     if not re.fullmatch('[0-9a-f]{40}', target) or git('rev-parse', 'HEAD').decode().strip() != target:
