@@ -53,8 +53,10 @@ def check(env):
     private_directory(Path(env["AI_CANONICAL_WORKSPACE_ROOT"]))
     _require(CORE_PYTHON.is_file() and os.access(CORE_PYTHON, os.X_OK),
              "CANONICAL_CORE_PYTHON_UNAVAILABLE")
+    from .resource_budget import core_cpu_threads
     check_core_environment(Path(env["AI_ANALYSIS_NLTK_DATA_ROOT"]),
-        cpu_threads=1 if env.get('AI_ANALYSIS_RESOURCE_PROFILE') == 'dlpc-4cpu' else 2)
+        cpu_threads=core_cpu_threads(env),
+        dlpc_runtime=env.get('AI_ANALYSIS_RESOURCE_PROFILE', '').startswith('dlpc-'))
     frozen = FrozenCanonicalCoaching(artifacts(env))
     from .canonical_provenance import check_provenance
     check_provenance(frozen.artifacts.core_root)

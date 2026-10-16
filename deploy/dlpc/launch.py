@@ -48,11 +48,16 @@ def main():
         allowed = ('AI_ANALYSIS_', 'AI_CANONICAL_', 'AI_DIRECT_', 'AWS_')
         env.update({k: v for k, v in settings.items() if k.startswith(allowed)
                     or k in {'OPENAI_API_KEY', 'VOICE_COACH_BUILD_REVISION'}})
+        # Explicit operator profile survives launch; older hosts keep their
+        # existing default. Frozen release selection is still a separate gate.
+        profile = settings.get('AI_ANALYSIS_RESOURCE_PROFILE', 'dlpc-4cpu')
+        if profile not in ('dlpc-4cpu', 'dlpc-j406'):
+            raise ValueError('DLPC_RESOURCE_PROFILE_INVALID')
         env.update(PYTHONPATH=str(ROOT / 'app/src') + ':' + str(ROOT / 'app/seungun/src') + ':' + str(ROOT / 'http-python'),
                    VOICE_COACH_REPOSITORY_ROOT=str(ROOT / 'app'), HOME=str(STATE / 'worker'),
                    TMPDIR=str(WORK / 'tmp'), MPLCONFIGDIR=str(WORK / 'tmp/matplotlib'),
                    HF_HOME=str(WORK / 'tmp/huggingface'), AWS_EC2_METADATA_DISABLED='true',
-                   AI_ANALYSIS_RESOURCE_PROFILE='dlpc-4cpu', AI_CANONICAL_STANDBY_RESERVE_BYTES='0',
+                   AI_ANALYSIS_RESOURCE_PROFILE=profile, AI_CANONICAL_STANDBY_RESERVE_BYTES='0',
                    AI_CANONICAL_STANDBY_MIN_FREE_BYTES='0')
         if not args.admit:
             # Staging must not restore/claim another host's production journal.

@@ -8,6 +8,8 @@ from __future__ import annotations
 
 import math
 import time
+from concurrent.futures import ThreadPoolExecutor
+from contextlib import ExitStack
 
 import torch
 from torch.nn.functional import ctc_loss
@@ -15,6 +17,112 @@ from torch.nn.functional import ctc_loss
 # Release-builder constants, never process-global settings changed per request.
 MAX_BATCH = 64
 WORKSPACE_ESTIMATE_BYTES = 64 * 1024**2
+# Immutable release settings. CPU remains the historical default; CUDA devices
+# are selected by the J406 builder, never silently substituted at request time.
+CTC_DEVICES = ("cpu",)
+
+
+def check_devices():
+    """Check the complete execution topology before resident readiness."""
+    if not CTC_DEVICES or len(set(CTC_DEVICES)) != len(CTC_DEVICES):
+        raise ValueError("GOP_CTC_DEVICES_INVALID")
+    devices = []
+    for name in CTC_DEVICES:
+        device = torch.device(name)
+        if device.type == 'cuda':
+            if device.index is None or device.index >= torch.cuda.device_count():
+                raise RuntimeError("GOP_CUDA_DEVICE_UNAVAILABLE")
+            torch.cuda.get_device_properties(device)
+        elif name != 'cpu':
+            raise ValueError("GOP_CTC_DEVICES_INVALID")
+        devices.append(device)
+    return devices
+
+
+class _Likelihoods:
+    """One bounded queue per device; one copy of the utterance per worker.
+
+    Native acoustic inference has already finished. Only independent CTC
+    transcript likelihoods are sharded; no audio/model inference is repeated.
+    """
+
+    def __init__(self, logp, batch_limit, per_candidate):
+        self.logp = logp
+        self.batch_limit = batch_limit
+        self.per_candidate = per_candidate
+        self.stack = ExitStack()
+        self.workers = []
+        self.pending = []
+
+    def __enter__(self):
+        try:
+            for device in check_devices():
+                name = str(device)
+                pool = self.stack.enter_context(ThreadPoolExecutor(
+                    max_workers=1, thread_name_prefix='ctc-' + name.replace(':', '-')))
+                # All CUDA operations, including allocation, happen in this
+                # device's worker thread. Keep the CPU log_softmax identical.
+                local = pool.submit(self._prepare, device).result()
+                self.workers.append((pool, local))
+            return self
+        except BaseException:
+            self.stack.close()
+            raise
+
+    def _prepare(self, device):
+        with torch.inference_mode():
+            local = self.logp.to(device)
+            limit = self.batch_limit
+            if device.type == 'cuda':
+                free, _ = torch.cuda.mem_get_info(device)
+                # Leave most free VRAM for other residents and allocator peaks.
+                budget = min(WORKSPACE_ESTIMATE_BYTES, free // 4)
+                limit = min(limit, budget // self.per_candidate)
+                if limit < 1:
+                    raise RuntimeError("GOP_CUDA_WORKSPACE_UNAVAILABLE")
+            return local, limit
+
+    @staticmethod
+    def _run(local, batch):
+        logp, _ = local
+        with torch.inference_mode():
+            # Native CUDA CTC requires targets on the same device as log_probs;
+            # length vectors remain on CPU. FP64 avoids the cuDNN FP32 path.
+            flat = torch.tensor([p for seq in batch for p in seq],
+                                dtype=torch.long, device=logp.device)
+            lengths = torch.tensor([len(seq) for seq in batch], dtype=torch.long)
+            loss = ctc_loss(logp[:, None, :].expand(-1, len(batch), -1).contiguous(),
+                            flat, torch.full((len(batch),), logp.shape[0], dtype=torch.long),
+                            lengths, blank=42, reduction="none", zero_infinity=False)
+            return (-loss).cpu().tolist()
+
+    @property
+    def limit(self):
+        return min(local[1] for _, local in self.workers)
+
+    def reference(self, target):
+        pool, local = self.workers[0]
+        return pool.submit(self._run, local, [target]).result()[0]
+
+    def submit(self, candidates, destinations):
+        pool, local = self.workers[len(self.pending)]
+        self.pending.append((pool.submit(self._run, local, candidates), destinations))
+
+    def collect(self, logs):
+        # Preserve candidate order and fail the request on any device error.
+        # No OOM retry that could conceal a different numerical execution path.
+        for future, destinations in self.pending:
+            for positions, value in zip(destinations, future.result()):
+                for phone_index, candidate_index in positions:
+                    logs[phone_index][candidate_index] = value
+        self.pending.clear()
+
+    def __exit__(self, *args):
+        try:
+            return self.stack.__exit__(*args)
+        finally:
+            self.pending.clear()
+            self.workers.clear()
 
 TOKENS = "A B BB CHh D DD E EO EU G GG H I J JJ Kh L M N NG O Ph R S SS Th U euI iA iE iEO iO iU k oA oE p t uEO uI | [UNK] [PAD] <s> </s>".split()
 VOWELS = dict(zip("ㅏㅐㅑㅒㅓㅔㅕㅖㅗㅘㅙㅚㅛㅜㅝㅞㅟㅠㅡㅢㅣ",
@@ -90,20 +198,6 @@ def extract(native, metadata, vocabulary):
                          + 8 * len(target))
     batch_limit = max(1, min(MAX_BATCH, WORKSPACE_ESTIMATE_BYTES // max(1, per_candidate)))
 
-    def likelihood(sequences):
-        values = []
-        for start in range(0, len(sequences), batch_limit):
-            batch = sequences[start:start+batch_limit]
-            lengths = torch.tensor([len(seq) for seq in batch], dtype=torch.long)
-            flat = torch.tensor([p for seq in batch for p in seq], dtype=torch.long)
-            with torch.inference_mode():
-                loss = ctc_loss(logp[:, None, :].expand(-1, len(batch), -1).contiguous(), flat,
-                                torch.full((len(batch),), frames, dtype=torch.long), lengths,
-                                blank=42, reduction="none", zero_infinity=False)
-            values.extend((-loss).tolist())
-        return values
-
-    reference = likelihood([target])[0]
     def alternatives_for(i):
         return sorted({target[:i] + (token,) + target[i+1:] for token in range(40)}
                       | {target[:i] + target[i+1:]})
@@ -112,23 +206,29 @@ def extract(native, metadata, vocabulary):
     # cache would grow quadratically with reference length.
     pending, logs_by_phone = {}, []
 
-    def flush():
-        for destinations, value in zip(pending.values(), likelihood(list(pending))):
-            for phone_index, candidate_index in destinations:
-                logs_by_phone[phone_index][candidate_index] = value
-        pending.clear()
+    likelihoods = _Likelihoods(logp, batch_limit, per_candidate)
+    with likelihoods:
+        reference = likelihoods.reference(target)
 
-    for i in range(len(samples)):
-        alternatives = alternatives_for(i)
-        logs_by_phone.append([None] * len(alternatives))
-        for j, candidate in enumerate(alternatives):
-            if candidate == target:
-                logs_by_phone[i][j] = reference
-                continue
-            pending.setdefault(candidate, []).append((i, j))
-            if len(pending) >= batch_limit:
-                flush()
-    flush()
+        def flush():
+            if pending:
+                likelihoods.submit(list(pending), list(pending.values()))
+                pending.clear()
+                if len(likelihoods.pending) == len(likelihoods.workers):
+                    likelihoods.collect(logs_by_phone)
+
+        for i in range(len(samples)):
+            alternatives = alternatives_for(i)
+            logs_by_phone.append([None] * len(alternatives))
+            for j, candidate in enumerate(alternatives):
+                if candidate == target:
+                    logs_by_phone[i][j] = reference
+                    continue
+                pending.setdefault(candidate, []).append((i, j))
+                if len(pending) >= likelihoods.limit:
+                    flush()
+        flush()
+        likelihoods.collect(logs_by_phone)
     for i, sample in enumerate(samples):
         # Include the canonical transcript exactly once; no token insertion.
         alternatives = alternatives_for(i)

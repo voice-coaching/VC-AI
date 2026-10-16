@@ -5,6 +5,50 @@ import os
 import shutil
 
 
+def effective_cpu_count():
+    """Affinity plus the tightest CPU quota, including cgroup ancestors."""
+    try:
+        count = len(os.sched_getaffinity(0))
+    except (OSError, AttributeError):
+        count = os.cpu_count() or 1
+    roots = [(Path('/sys/fs/cgroup'), 2), (Path('/sys/fs/cgroup/cpu'), 1)]
+    try:
+        for line in Path('/proc/self/cgroup').read_text().splitlines():
+            _, controllers, relative = line.split(':', 2)
+            if not controllers:
+                roots.append((Path('/sys/fs/cgroup') / relative.lstrip('/'), 2))
+            elif 'cpu' in controllers.split(','):
+                roots.append((Path('/sys/fs/cgroup/cpu') / relative.lstrip('/'), 1))
+    except (OSError, ValueError):
+        pass
+    for root, version in roots:
+        boundary = Path('/sys/fs/cgroup') if version == 2 else Path('/sys/fs/cgroup/cpu')
+        while root.is_relative_to(boundary):
+            try:
+                if version == 2:
+                    quota, period = (root / 'cpu.max').read_text().split()
+                    quota, period = int(quota), int(period)
+                else:
+                    quota = int((root / 'cpu.cfs_quota_us').read_text())
+                    period = int((root / 'cpu.cfs_period_us').read_text())
+                if quota > 0 and period > 0:
+                    count = min(count, max(1, quota // period))
+            except (OSError, ValueError):
+                pass
+            root = root.parent
+    return max(1, count)
+
+
+def core_cpu_threads(env):
+    profile = env.get('AI_ANALYSIS_RESOURCE_PROFILE', 'default')
+    if profile == 'dlpc-j406':
+        # Native/GOP get eight, MFA four, the rest is service/encoder headroom.
+        if effective_cpu_count() < 16:
+            raise ValueError('J406_CPU_CAPACITY_REQUIRED')
+        return 8
+    return 1 if profile == 'dlpc-4cpu' else 2
+
+
 def available_memory_bytes():
     """Use the tightest known host/container headroom; unknown fails closed."""
     values = []
@@ -41,9 +85,11 @@ class ResourceBudget:
         profile = env.get('AI_ANALYSIS_RESOURCE_PROFILE', 'default')
         if profile == 'default':
             return cls()
-        if profile == 'dlpc-4cpu':
+        if profile in ('dlpc-4cpu', 'dlpc-j406'):
+            if profile == 'dlpc-j406':
+                core_cpu_threads(env)
             # Two-request overlap is not approved by selecting this profile.
-            return cls(max_active=1, minimum_available_bytes=2 * 1024**3,
+            return cls(max_active=1, minimum_available_bytes=(8 if profile == 'dlpc-j406' else 2) * 1024**3,
                        disk_root=Path('/var/lib/intelligentai/work'),
                        minimum_disk_free_bytes=14 * 1024**3,
                        minimum_free_inodes=10000)

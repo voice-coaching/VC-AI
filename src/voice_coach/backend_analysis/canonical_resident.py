@@ -30,6 +30,11 @@ class _ResidentGeneration:
                                                   Path(environment['AI_CANONICAL_LLM_ROOT']))
         from .native_execution import require_native_execution
         require_native_execution(self.artifacts)
+        if environment.get('AI_ANALYSIS_RESOURCE_PROFILE') == 'dlpc-j406':
+            profile = json.loads((self.artifacts.core_root / 'config/dlpc_execution_profile.json').read_bytes())
+            _require(profile.get('profile') == 'dlpc-j406' and profile.get('cpuThreads') == 8
+                     and profile.get('gopDevices') == ['cuda:1', 'cuda:2'],
+                     'J406_PERFORMANCE_RELEASE_REQUIRED')
 
     def ready(self):
         return (not self.stopping and not self.blocked and self.prepared
@@ -66,13 +71,15 @@ class _ResidentGeneration:
             self.requests = 0
             self.mfa_health = None
             self.prepare_deadline = time.monotonic() + 300
+            from .resource_budget import core_cpu_threads
             self.task = asyncio.create_task(run_guarded(guard_python=self.guard_python,
                 command=[str(CORE_PYTHON), '-B', '-u', str(self.artifacts.core_root / 'scripts/run_resident.py'),
                          '--workspace', self.env['AI_CANONICAL_WORKSPACE_ROOT'],
                          '--generation', str(self.generation), '--socket', str(self.socket)],
                 cwd=self.artifacts.core_root,
                 environment=core_environment(Path(self.env['AI_ANALYSIS_NLTK_DATA_ROOT']),
-                    cpu_threads=1 if self.env.get('AI_ANALYSIS_RESOURCE_PROFILE') == 'dlpc-4cpu' else 2),
+                    cpu_threads=core_cpu_threads(self.env),
+                    dlpc_runtime=self.env.get('AI_ANALYSIS_RESOURCE_PROFILE', '').startswith('dlpc-')),
                 log_path=self.generation / 'resident.log', deadline_monotonic=time.monotonic()+86400,
                 execution_is_active=lambda: not self.stopping and self.keep_running()))
         if self.task is not None and not self.task.done():

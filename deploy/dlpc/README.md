@@ -363,3 +363,64 @@ pinned hashes and separate entries in `deployment.json.operationalPatches`.
 Operational interpretation: `RESULT_READY` can contain a system-failure result.
 Inspect `result.decision`, `result.failure` and coaching dispatch status as well
 as readiness; an archive/history ACK alone does not mean analysis succeeded.
+
+## J406 Seungun performance candidate — 2026-10-16
+
+The local observation found 16 affinity-allowed logical CPUs (Xeon Gold 6338),
+no CPU quota at the container leaf, and a memory limit of 195,421,011,968 bytes
+(182 GiB). `/proc/driver/nvidia/gpus/*/information` identifies three A100 80GB
+PCIe devices. The coding environment does not expose `/dev/nvidia*`, so
+`nvidia-smi` cannot report utilization or confirm CUDA access here. These are
+resource observations, not a performance benchmark or a new service check.
+
+The `dlpc-j406` candidate in `build_performance_release.py` targets single-request
+latency. It keeps the original acoustic forward pass on `cuda:0`, runs FP64 CTC
+candidate likelihoods concurrently on `cuda:1` and `cuda:2`, and overlaps GOP
+with MFA. Native CPU work gets eight threads; MFA BLAS gets four. TTS keeps its
+existing `cuda:0` coordinator, which still serializes TTS and Native GPU work.
+GOP uses the other two GPUs within the global one-analysis lock. HTTP worker
+count, job admission concurrency and the three-request generation lifecycle
+are unchanged.
+
+GOP batches up to 256 unique transcripts across phone positions and reuses the
+reference likelihood. Each GPU retains one utterance log-probability tensor.
+At most one candidate batch per GPU is in flight, and workers are joined before
+request cleanup. Temporary workspace is estimated per candidate and limited to
+the smaller of 2 GiB and one quarter of observed free VRAM per GPU. This is an
+estimate, not a hard allocator cap; insufficient room or a CUDA error produces
+the existing unavailable result, without CPU fallback or inference replay.
+The existing candidate ordering, complete-utterance CTC formula, FP64 precision,
+blank ID and evidence mapping are retained. Numerical parity is still unverified.
+Native CUDA CTC accepts the existing long targets and FP64 log probabilities;
+this does not switch to the cuDNN FP32 path. See [PyTorch CTC documentation](https://docs.pytorch.org/docs/stable/generated/torch.nn.CTCLoss.html).
+
+Build from the pinned deployed GOP core and concise H5 parent, with no inference:
+
+```sh
+python3 deploy/dlpc/build_performance_release.py \
+  --profile dlpc-j406 \
+  --core /path/to/canonical_dlpc_gop_cuda_20261007_v2 \
+  --h5 /path/to/canonical_dlpc_gop_announcer_20261007_v2_h5 \
+  --destination /path/to/new-candidates
+```
+
+The builder verifies every parent file, updates source hashes and both manifests,
+and compiles the packaged Python files. It preserves the concise GPT prompt and
+model parameters. It does not register or activate the new immutable tuple.
+`launch.py` now honors an explicitly selected resource profile; the default
+remains `dlpc-4cpu`. The [profile example](j406-performance.env.example) requires
+16 effective CPUs, checked using affinity and ancestor cgroup quotas. Selecting
+it with the old frozen core fails instead of claiming eight-thread execution
+while the core still pins one thread. J406 keeps its cuDNN and libstdc++ preload
+when its CPU budget increases.
+
+Before coordinated activation, developer QA must compare the old and candidate
+releases on the same approved recordings: warm core wall time and GOP/MFA spans,
+peak CPU RSS and per-GPU VRAM, and original evidence including candidate order,
+likelihoods, selected phones and timestamps. Check short/long inputs, repeated
+tokens, impossible CTC alignments, cancellation and generation cleanup. GPU
+visibility and the provisioned `/run/intelligentai/analysis.lock` must be checked
+in the actual service environment. No automated inference, regression or quality
+QA was run while implementing this candidate; no speedup factor is established.
+AI/Backend release identities and persistent recovery pins must be updated
+together after review, using the coordinated immutable release procedure.

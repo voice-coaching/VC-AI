@@ -34,13 +34,17 @@ from .canonical_provenance import check_provenance
 CORE_PYTHON = Path('/workspace/intelligentai/validation/finish_20260916/envs/mac_prod311/bin/python')
 
 
-def core_environment(nltk_data_root: Path, *, cpu_threads: int = 2) -> dict[str, str]:
+def core_environment(nltk_data_root: Path, *, cpu_threads: int = 2,
+                     dlpc_runtime: bool = False) -> dict[str, str]:
     # Use the already-provisioned read-only corpus, never a download to the
     # service user's nonexistent home. Do not inherit API/storage credentials.
     _require(nltk_data_root.is_absolute() and nltk_data_root.is_dir()
              and os.access(nltk_data_root / 'corpora/cmudict/cmudict', os.R_OK),
              'CANONICAL_NLTK_DATA_UNAVAILABLE')
-    _require(type(cpu_threads) is int and cpu_threads in (1, 2), 'CANONICAL_CPU_BUDGET_INVALID')
+    from .resource_budget import effective_cpu_count
+    _require(type(cpu_threads) is int and cpu_threads in (1, 2, 8)
+             and (cpu_threads <= 2 or cpu_threads <= effective_cpu_count()),
+             'CANONICAL_CPU_BUDGET_INVALID')
     environment = dict(PATH=str(CORE_PYTHON.parent) + ':/usr/bin:/bin',
                 LANG='C.UTF-8', LC_ALL='C.UTF-8', NLTK_DATA=str(nltk_data_root),
                 PYTHONDONTWRITEBYTECODE='1', PYTHONUNBUFFERED='1',
@@ -49,7 +53,7 @@ def core_environment(nltk_data_root: Path, *, cpu_threads: int = 2) -> dict[str,
                 OMP_NUM_THREADS=str(cpu_threads), MKL_NUM_THREADS=str(cpu_threads),
                 OPENBLAS_NUM_THREADS=str(cpu_threads), NUMEXPR_NUM_THREADS=str(cpu_threads),
                 TOKENIZERS_PARALLELISM='false')
-    if cpu_threads == 1:
+    if cpu_threads == 1 or dlpc_runtime:
         # Keep all cuDNN sublibraries in one observed 9.24 set. The bundled
         # 9.20 wheel omits tensor_ir and otherwise loads a mismatched host file.
         cudnn = Path('/opt/intelligentai/runtime-libs/cudnn-9.24.0')
@@ -66,9 +70,11 @@ def core_environment(nltk_data_root: Path, *, cpu_threads: int = 2) -> dict[str,
     return environment
 
 
-def check_core_environment(nltk_data_root: Path, *, cpu_threads: int = 2) -> None:
+def check_core_environment(nltk_data_root: Path, *, cpu_threads: int = 2,
+                           dlpc_runtime: bool = False) -> None:
     """Offline dependency initialization in the actual core interpreter, no inference."""
-    environment = core_environment(nltk_data_root, cpu_threads=cpu_threads)
+    environment = core_environment(nltk_data_root, cpu_threads=cpu_threads,
+                                   dlpc_runtime=dlpc_runtime)
     try:
         result = subprocess.run(
             [str(CORE_PYTHON), '-B', '-c',
