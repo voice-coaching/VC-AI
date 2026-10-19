@@ -1,0 +1,15 @@
+# Versions from deployed MFA; CPU Kaldi satisfies official Kalpy runtime constraints.
+python=3.14.7
+montreal-forced-aligner=3.4.1
+kalpy=0.10.5
+openfst=1.8.4
+pynini=2.1.7
+numpy=2.5.3
+scipy=1.18.1
+librosa=1.0.0
+huggingface_hub=1.31.0
+sqlalchemy=2.0.52
+click=8.5.0
+praatio=6.2.2
+pyyaml=6.0.3
+kaldi=5.5.1172=cpu_*

@@ -1,0 +1,166 @@
+{
+  "schema": "seungun-assets.v1",
+  "files": [
+    {
+      "path": "native/README.md",
+      "bytes": 2177,
+      "sha256": "23972a8b6253311bc7e878a4fceb4e15de0379e036d76af12c881f0a26afc9e7",
+      "url": "https://huggingface.co/slplab/wav2vec2-xls-r-300m_phone-mfa_korean/resolve/e26ff9dfb62169acf445d0060ef56863c018b20e/README.md",
+      "license": "Apache-2.0"
+    },
+    {
+      "path": "native/added_tokens.json",
+      "bytes": 30,
+      "sha256": "e6fbfcadb18a959fef9b7736b9f23fa2f5761674824f0db1263aaaf2e15e0959",
+      "url": "https://huggingface.co/slplab/wav2vec2-xls-r-300m_phone-mfa_korean/resolve/e26ff9dfb62169acf445d0060ef56863c018b20e/added_tokens.json",
+      "license": "Apache-2.0"
+    },
+    {
+      "path": "native/config.json",
+      "bytes": 2063,
+      "sha256": "bc3394c2db0f96a9ab5e68c3a389201266bd21a26fcde109ff9d07accda26bd2",
+      "url": "https://huggingface.co/slplab/wav2vec2-xls-r-300m_phone-mfa_korean/resolve/e26ff9dfb62169acf445d0060ef56863c018b20e/config.json",
+      "license": "Apache-2.0"
+    },
+    {
+      "path": "native/preprocessor_config.json",
+      "bytes": 279,
+      "sha256": "f6a6867d632ee397cab2eb1c6a49dc64d857bb085e0f0463705b0217f4b96da4",
+      "url": "https://huggingface.co/slplab/wav2vec2-xls-r-300m_phone-mfa_korean/resolve/e26ff9dfb62169acf445d0060ef56863c018b20e/preprocessor_config.json",
+      "license": "Apache-2.0"
+    },
+    {
+      "path": "native/pytorch_model.bin",
+      "bytes": 1262083185,
+      "sha256": "b2ec663558606d651a718fa1eaa20c6d504df173725ecbc66df74c22267e2d68",
+      "url": "https://huggingface.co/slplab/wav2vec2-xls-r-300m_phone-mfa_korean/resolve/e26ff9dfb62169acf445d0060ef56863c018b20e/pytorch_model.bin",
+      "license": "Apache-2.0"
+    },
+    {
+      "path": "native/special_tokens_map.json",
+      "bytes": 406,
+      "sha256": "b51414c824f9a5aef78bebd44a22564f5e98c67ab06a6cdb25a07a247febf03f",
+      "url": "https://huggingface.co/slplab/wav2vec2-xls-r-300m_phone-mfa_korean/resolve/e26ff9dfb62169acf445d0060ef56863c018b20e/special_tokens_map.json",
+      "license": "Apache-2.0"
+    },
+    {
+      "path": "native/tokenizer_config.json",
+      "bytes": 366,
+      "sha256": "e32f44c1b50bf3c7a1cf27d64799ba68d479c67baa85cd0c5d1f3fc7c78d798a",
+      "url": "https://huggingface.co/slplab/wav2vec2-xls-r-300m_phone-mfa_korean/resolve/e26ff9dfb62169acf445d0060ef56863c018b20e/tokenizer_config.json",
+      "license": "Apache-2.0"
+    },
+    {
+      "path": "native/vocab.json",
+      "bytes": 500,
+      "sha256": "ca2a65143ce6acf25913f7e354ca7bae767ddb39b99218713057ae117dc87fc9",
+      "url": "https://huggingface.co/slplab/wav2vec2-xls-r-300m_phone-mfa_korean/resolve/e26ff9dfb62169acf445d0060ef56863c018b20e/vocab.json",
+      "license": "Apache-2.0"
+    },
+    {
+      "path": "mfa/.gitattributes",
+      "bytes": 1743,
+      "sha256": "97ad564b4e9db0053fa38d8f94321d1c356c633c033a1a304e7311b1938bcddd",
+      "url": "https://huggingface.co/MontrealCorpusTools/korean_mfa/resolve/0091ffa1f1ef7df380a4f799b3fb5bc80c3f65cd/.gitattributes",
+      "license": "CC-BY-4.0"
+    },
+    {
+      "path": "mfa/README.md",
+      "bytes": 9795,
+      "sha256": "f726e12aa9c5e74d299db4f7bef5f7998c34b715ef1476fb1aa7bc05f49540f2",
+      "url": "https://huggingface.co/MontrealCorpusTools/korean_mfa/resolve/0091ffa1f1ef7df380a4f799b3fb5bc80c3f65cd/README.md",
+      "license": "CC-BY-4.0"
+    },
+    {
+      "path": "mfa/acoustic/final.alimdl",
+      "bytes": 33868683,
+      "sha256": "30f0ae1f6117978348b8d8c0b1130105cf856b6932bcf6e7eee1b9e444e07c84",
+      "url": "https://huggingface.co/MontrealCorpusTools/korean_mfa/resolve/0091ffa1f1ef7df380a4f799b3fb5bc80c3f65cd/acoustic/final.alimdl",
+      "license": "CC-BY-4.0"
+    },
+    {
+      "path": "mfa/acoustic/final.mdl",
+      "bytes": 33868683,
+      "sha256": "e26c3ffd8b7ff641d4a4026b4f144d5dd5c9b255a0a95b4e4e585f39d0f7c2e5",
+      "url": "https://huggingface.co/MontrealCorpusTools/korean_mfa/resolve/0091ffa1f1ef7df380a4f799b3fb5bc80c3f65cd/acoustic/final.mdl",
+      "license": "CC-BY-4.0"
+    },
+    {
+      "path": "mfa/acoustic/lda.mat",
+      "bytes": 14575,
+      "sha256": "7945cd70298f88b8fb49fea654dad9eb8c33082ee9c9ce24116b6688ac8033e7",
+      "url": "https://huggingface.co/MontrealCorpusTools/korean_mfa/resolve/0091ffa1f1ef7df380a4f799b3fb5bc80c3f65cd/acoustic/lda.mat",
+      "license": "CC-BY-4.0"
+    },
+    {
+      "path": "mfa/acoustic/meta.json",
+      "bytes": 9730,
+      "sha256": "0fb6c26ceda3e65934d9186a2d832630316a6e374fca7c69fcbb9b40ef754aaf",
+      "url": "https://huggingface.co/MontrealCorpusTools/korean_mfa/resolve/0091ffa1f1ef7df380a4f799b3fb5bc80c3f65cd/acoustic/meta.json",
+      "license": "CC-BY-4.0"
+    },
+    {
+      "path": "mfa/acoustic/phones.txt",
+      "bytes": 794,
+      "sha256": "37cbcc636415b14f3fe2b5ef82691fdc1babcd44a34a1add1cff59bca217eae8",
+      "url": "https://huggingface.co/MontrealCorpusTools/korean_mfa/resolve/0091ffa1f1ef7df380a4f799b3fb5bc80c3f65cd/acoustic/phones.txt",
+      "license": "CC-BY-4.0"
+    },
+    {
+      "path": "mfa/acoustic/tree",
+      "bytes": 344276,
+      "sha256": "31e25e8a47cfe489edb9319ad10dd973e8c6afbad97853deb09509302ad11be8",
+      "url": "https://huggingface.co/MontrealCorpusTools/korean_mfa/resolve/0091ffa1f1ef7df380a4f799b3fb5bc80c3f65cd/acoustic/tree",
+      "license": "CC-BY-4.0"
+    },
+    {
+      "path": "mfa/dictionary/korean_mfa.dict",
+      "bytes": 934391,
+      "sha256": "49e223fddb518bc441baa4cb9fec1a108e80dae9a2b54e5834dbff30e89c7d34",
+      "url": "https://huggingface.co/MontrealCorpusTools/korean_mfa/resolve/0091ffa1f1ef7df380a4f799b3fb5bc80c3f65cd/dictionary/korean_mfa.dict",
+      "license": "CC-BY-4.0"
+    },
+    {
+      "path": "mfa/dictionary/rules.yaml",
+      "bytes": 2955,
+      "sha256": "3edde0dd28478489174844ca40a65f1638b99347f75426a5e33d6fdaa4d2ec91",
+      "url": "https://huggingface.co/MontrealCorpusTools/korean_mfa/resolve/0091ffa1f1ef7df380a4f799b3fb5bc80c3f65cd/dictionary/rules.yaml",
+      "license": "CC-BY-4.0"
+    },
+    {
+      "path": "mfa/g2p/korean_mfa/graphemes.sym",
+      "bytes": 6452,
+      "sha256": "e34e15810eec94729bf3b5c64d6017d943d61e3953bed9d91a4cd756b3096840",
+      "url": "https://huggingface.co/MontrealCorpusTools/korean_mfa/resolve/0091ffa1f1ef7df380a4f799b3fb5bc80c3f65cd/g2p/korean_mfa/graphemes.sym",
+      "license": "CC-BY-4.0"
+    },
+    {
+      "path": "mfa/g2p/korean_mfa/meta.json",
+      "bytes": 2344,
+      "sha256": "0ee77a72d521c9f021674a96ac532705fdf5e64587311b24035a34366418194c",
+      "url": "https://huggingface.co/MontrealCorpusTools/korean_mfa/resolve/0091ffa1f1ef7df380a4f799b3fb5bc80c3f65cd/g2p/korean_mfa/meta.json",
+      "license": "CC-BY-4.0"
+    },
+    {
+      "path": "mfa/g2p/korean_mfa/model.fst",
+      "bytes": 17545284,
+      "sha256": "f9c7ad663bae63a324aa22a5cec2344b0fd29b71f06d246b4126851aac24434c",
+      "url": "https://huggingface.co/MontrealCorpusTools/korean_mfa/resolve/0091ffa1f1ef7df380a4f799b3fb5bc80c3f65cd/g2p/korean_mfa/model.fst",
+      "license": "CC-BY-4.0"
+    },
+    {
+      "path": "mfa/g2p/korean_mfa/phones.sym",
+      "bytes": 756,
+      "sha256": "d41a2209d0b0b9940b7cc2e28c056a513804e46c91b758cb40019132771e894f",
+      "url": "https://huggingface.co/MontrealCorpusTools/korean_mfa/resolve/0091ffa1f1ef7df380a4f799b3fb5bc80c3f65cd/g2p/korean_mfa/phones.sym",
+      "license": "CC-BY-4.0"
+    },
+    {
+      "path": "nltk/cmudict.zip",
+      "bytes": 896069,
+      "sha256": "d07cca47fd72ad32ea9d8ad1219f85301eeaf4568f8b6b73747506a71fb5afd6",
+      "url": "https://raw.githubusercontent.com/nltk/nltk_data/gh-pages/packages/corpora/cmudict.zip",
+      "license": "BSD-style; see archive README"
+    }
+  ]
+}

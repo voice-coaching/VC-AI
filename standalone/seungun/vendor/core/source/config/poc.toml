@@ -1,0 +1,45 @@
+schema_version = "1.0.0"
+
+[paths]
+project_root = ".."
+output_dir = "outputs"
+work_dir = ".cache/work"
+mfa_executable = ".conda-envs/mfa/bin/mfa"
+mfa_root_dir = ".cache/mfa"
+
+[analysis]
+max_script_chars = 500
+max_audio_s = 60.0
+
+[audio]
+ffmpeg_command = "ffmpeg"
+ffprobe_command = "ffprobe"
+timeout_s = 60
+
+[alignment]
+model_repository = "MontrealCorpusTools/korean_mfa"
+model_license = "CC-BY-4.0"
+model_revision = "0091ffa1f1ef7df380a4f799b3fb5bc80c3f65cd"
+mfa_timeout_s = 120.0
+
+[acoustics]
+pitch_floor_hz = 75.0
+pitch_ceiling_hz = 500.0
+time_step_s = 0.01
+min_silence_s = 0.2
+
+[pronunciation]
+enabled = false
+
+[final_pronunciation]
+enabled = false
+
+[aihub71557]
+enabled = false
+# Approved v2 JSON remains outside Git. The default comparison group is 현직아나운서.
+# reference_path = "/absolute/path/to/aihub71557_prosody_reference_v1.json"
+# reference_group = "현직아나운서"
+
+[ui]
+server_name = "127.0.0.1"
+share = false

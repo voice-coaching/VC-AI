@@ -1,0 +1,36 @@
+{
+  "max_resident_requests": 20,
+  "initial_requests_under_existing_supervisor_contract": 2,
+  "override_after_two_exact_pass_requests": {
+    "max_requests_per_worker": 20,
+    "soft_recycle_worker_tree_rss_bytes": 1708515328,
+    "why": "single-worker measurement only; original execution watchdog remains unchanged; this is not a deployment setting"
+  },
+  "min_plateau_requests": 8,
+  "recent_window": 5,
+  "plateau": {
+    "PSS_and_USS_abs_OLS_slope_bytes_per_request_max": 1048576,
+    "PSS_and_USS_range_max_absolute_bytes": 16777216,
+    "PSS_and_USS_range_max_fraction": 0.02,
+    "RSS_range_max_absolute_bytes": 33554432,
+    "RSS_range_max_fraction": 0.03
+  },
+  "continuing_growth": {
+    "PSS_and_USS_OLS_slope_bytes_per_request_min": 2097152,
+    "positive_differences_min_of_last_four": 3
+  },
+  "latency_stop": "three consecutive increasing post-first resident E2E values each >2x median of preceding resident warm requests (at least3 earlier values)",
+  "predictive_memory_stop": "cleanup worker tree RSS + max observed request peak minus cleanup delta +10% original worker watchdog >= original worker watchdog",
+  "no_tolerance_change": true,
+  "application_process_separate_from_MFA_supervisor": true,
+  "application_watchdog_bytes": 4640208860,
+  "application_budget_basis": {
+    "weights_file_bytes_stat_only": 1261983732,
+    "formula": "3 x checkpoint bytes (weights + load transient/activations allowance) + previous supervisor allowance; heuristic monitored budget; not hard cap"
+  },
+  "total_initial_required_headroom_bytes": 12202981750,
+  "watchdog_original_MFA_bytes": 1708515328,
+  "memory_enforcement": "MONITORED_NOT_HARD_CAPPED",
+  "curve_readout": "PSS/USS boundary + sampled peak at about1s; RSS at0.25s",
+  "interpretation": "engineering plateau for this fixture only, not no-leak proof"
+}

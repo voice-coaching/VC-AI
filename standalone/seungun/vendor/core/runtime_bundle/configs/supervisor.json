@@ -1,0 +1,39 @@
+{
+  "abort_combined_rss_bytes": 2562772992,
+  "abort_supervisor_rss_bytes": 854257664,
+  "abort_worker_tree_rss_bytes": 1708515328,
+  "active_workers": 1,
+  "admission_reserve_bytes": 4710256640,
+  "basis": {
+    "RSS_caveat": "tree sum can double-count shared pages; PSS/USS collected at boundaries only",
+    "initial_cgroup_limit_bytes": 49999998976,
+    "initial_cgroup_usage_bytes": 33250447360,
+    "previous_max_post_first_cleanup_growth_bytes": 64192512,
+    "previous_observed_worker_peak_bytes": 854257664,
+    "service_RSS_sum_bytes": 4376272896,
+    "service_burst_reserve": "max(current service RSS sum, 10% actual cgroup limit)",
+    "soft": "prior observed peak + largest A2/A3 cleanup growth",
+    "watchdog": "2x previous observed worker peak; supervisor allowance 1x prior worker peak; no guarantee between samples"
+  },
+  "concurrency": 1,
+  "dlpc_basis": {
+    "accounting": "minimum observed MemAvailable and finite cgroup headroom",
+    "admissionAnalyses": 1,
+    "hardCapEstablished": false,
+    "historicalRssLimitsPreserved": true,
+    "hostRamGiB": 11
+  },
+  "max_automatic_retries": 0,
+  "max_generations": 1,
+  "max_requests_per_worker": 3,
+  "max_total_resident_requests": 3,
+  "memory_enforcement": "MONITORED_NOT_HARD_CAPPED",
+  "other_service_reserve_bytes": 2147483648,
+  "pending_queue": 1,
+  "queue_timeout_s": 250,
+  "request_timeout_s": 120,
+  "sample_interval_s": 0.25,
+  "shutdown_timeout_s": 10,
+  "soft_recycle_worker_tree_rss_bytes": 918450176,
+  "startup_timeout_s": 120
+}

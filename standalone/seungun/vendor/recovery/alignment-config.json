@@ -1,0 +1,46 @@
+{
+  "schema_version": "1.0.0",
+  "paths": {
+    "project_root": "/workspace/intelligentai/validation/finish_20260916/latency_optimization_20260921T044013_2c3be9/mfa_startup_recovery_20260921T065201_ac461c",
+    "output_dir": "/workspace/intelligentai/validation/finish_20260916/latency_optimization_20260921T044013_2c3be9/mfa_startup_recovery_20260921T065201_ac461c/scratch/candidate_alignment/output",
+    "work_dir": "/workspace/intelligentai/validation/finish_20260916/latency_optimization_20260921T044013_2c3be9/mfa_startup_recovery_20260921T065201_ac461c/scratch/candidate_alignment/work",
+    "mfa_executable": "/workspace/intelligentai/validation/finish_20260916/envs/mfa341/bin/mfa",
+    "mfa_root_dir": "/workspace/intelligentai/validation/finish_20260916/latency_optimization_20260921T044013_2c3be9/bench_20260921T061213_21865d/results/baseline_cpu/request_00/mfa"
+  },
+  "analysis": {
+    "max_script_chars": 500,
+    "max_audio_s": 60.0
+  },
+  "audio": {
+    "ffmpeg_command": "ffmpeg",
+    "ffprobe_command": "ffprobe",
+    "timeout_s": 60
+  },
+  "alignment": {
+    "model_repository": "MontrealCorpusTools/korean_mfa",
+    "model_license": "CC-BY-4.0",
+    "model_revision": "0091ffa1f1ef7df380a4f799b3fb5bc80c3f65cd",
+    "mfa_timeout_s": 120.0
+  },
+  "acoustics": {
+    "pitch_floor_hz": 75.0,
+    "pitch_ceiling_hz": 500.0,
+    "time_step_s": 0.01,
+    "min_silence_s": 0.2
+  },
+  "pronunciation": {
+    "enabled": false
+  },
+  "final_pronunciation": {
+    "enabled": false
+  },
+  "aihub71557": {
+    "enabled": true,
+    "reference_path": "/workspace/intelligentai/validation/finish_20260916/announcer_execution_20260916_051924_447211/validation/reference/aihub71557_prosody_reference_v1.json",
+    "reference_group": "현직아나운서"
+  },
+  "ui": {
+    "server_name": "127.0.0.1",
+    "share": false
+  }
+}

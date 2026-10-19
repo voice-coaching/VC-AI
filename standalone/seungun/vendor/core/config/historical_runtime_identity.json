@@ -1,0 +1,131 @@
+{
+  "decision": "HISTORICAL_MFA_RUNTIME_REUSABLE",
+  "dlpc_derivation": "thread and measured memory admission changes; historical QA is not DLPC QA",
+  "fixtures": {
+    "long": {
+      "duration_s": 36.501313,
+      "legacy_reference": "/workspace/intelligentai/validation/finish_20260916/latency_optimization_20260921T044013_2c3be9/mfa_startup_recovery_20260921T065201_ac461c/results/recovered_cpu/legacy_00.json",
+      "oracle_stages": "/workspace/intelligentai/validation/finish_20260916/latency_optimization_20260921T044013_2c3be9/mfa_startup_recovery_20260921T065201_ac461c/direct_kalpy_20260923T114535Z_e20e14/attempt04/long_oracle/reports/g1_r0_80bbae9a484e.stages",
+      "phone_count": 568,
+      "transcript": "/workspace/intelligentai/validation/finish_20260916/latency_optimization_20260921T044013_2c3be9/mfa_startup_recovery_20260921T065201_ac461c/queue_wait_limited_regression_20260923T060805Z_a4219c/input/transcript.txt",
+      "transcript_sha256": "76abefecd2aae4665def5963344bfa8371567b270f080eb05e5595f18c19f260",
+      "wav": "/workspace/intelligentai/validation/finish_20260916/latency_optimization_20260921T044013_2c3be9/mfa_startup_recovery_20260921T065201_ac461c/queue_wait_limited_regression_20260923T060805Z_a4219c/fixtures/canonical.wav",
+      "wav_sha256_known": "853cb41167fd16b0c22ec3bf27d6a25bd4f5c06f6db7d3ef7cc35ad044b85367",
+      "word_count": 92
+    },
+    "short": {
+      "duration_s": 8.682688,
+      "legacy_reference": "/workspace/intelligentai/validation/finish_20260916/latency_optimization_20260921T044013_2c3be9/mfa_startup_recovery_20260921T065201_ac461c/demo_e2e_memory_20260922T091358Z_8133f7/results/request_00_legacy.json",
+      "oracle_stages": "/workspace/intelligentai/validation/finish_20260916/latency_optimization_20260921T044013_2c3be9/mfa_startup_recovery_20260921T065201_ac461c/direct_kalpy_20260923T114535Z_e20e14/attempt04/short_oracle_evidence",
+      "phone_count": 94,
+      "transcript": "/workspace/intelligentai/validation/finish_20260916/latency_optimization_20260921T044013_2c3be9/mfa_startup_recovery_20260921T065201_ac461c/queue_wait_candidate_20260923T044534Z_707c5a/input/transcript.txt",
+      "transcript_sha256": "dd46acd65645182856a0570e681e9e5f3d66600f7c21a1f680618c6ccd4d6c2e",
+      "wav": "/workspace/intelligentai/validation/finish_20260916/latency_optimization_20260921T044013_2c3be9/mfa_startup_recovery_20260921T065201_ac461c/queue_wait_candidate_20260923T044534Z_707c5a/fixtures/canonical.wav",
+      "wav_sha256_known": "e5a6bde98aab1a8b1def26f2127f762f7ba78268b96658ba57fe0df4531777d5",
+      "word_count": 15
+    }
+  },
+  "flags": {
+    "DIRECT_KALPY_CANDIDATE": "1",
+    "MFA_QUEUE_CANDIDATE": "1",
+    "STAGED_CAPTURE": "0"
+  },
+  "guard_new_sha256": "c91de08bdec06faa9e15b3990ad78db2c94418a337dd09334cddf46301dc87fc",
+  "guard_original_sha256": "eb584c09230cff2fc090e29867f12b1d77b06b9a00531962babe19c6a383f34c",
+  "historical_pass_artifacts": [
+    "/workspace/intelligentai/validation/finish_20260916/latency_optimization_20260921T044013_2c3be9/mfa_startup_recovery_20260921T065201_ac461c/direct_kalpy_sequential_stability_20260923T132700Z_d89479/final_decision.json",
+    "/workspace/intelligentai/validation/finish_20260916/latency_optimization_20260921T044013_2c3be9/mfa_startup_recovery_20260921T065201_ac461c/direct_kalpy_sequential_stability_20260923T132700Z_d89479/attempt02/exact_parity_comparison.json",
+    "/workspace/intelligentai/validation/finish_20260916/latency_optimization_20260921T044013_2c3be9/mfa_startup_recovery_20260921T065201_ac461c/cpu_parallel_limited_regression_20260923T223450Z_e5XbK3/attempt02/validation_summary.json"
+  ],
+  "historical_source_clean": true,
+  "historical_source_commit": "6856e9d357df2e51a5df2595205e77374f801cb2",
+  "local": "/tmp/historical_mfa_sidecar_integration_20260928T082421Z_8c7e84",
+  "model_id": "MontrealCorpusTools/korean_mfa@0091ffa1f1ef7df380a4f799b3fb5bc80c3f65cd",
+  "new_preflight_sha256": "2b1b3c4b7884fe2770632ae67848f0ba98ad538cf1237c14245136f59a81c2aa",
+  "original_preflight_sha256": "0ae9adf4a8447a04ce82731ed3acec2f96b828ab0c3b9d6c234ceb581961179d",
+  "runtime_root": "/workspace/intelligentai/validation/canonical_demo_candidate_20260928T060025Z/historical_mfa_sidecar_integration_20260928T082421Z_8c7e84",
+  "selected_bundle": "/workspace/intelligentai/validation/finish_20260916/latency_optimization_20260921T044013_2c3be9/mfa_startup_recovery_20260921T065201_ac461c/cpu_parallel_limited_regression_20260923T223450Z_e5XbK3/attempt02/evacuation_sequential",
+  "source_files": {
+    "bounded_supervisor.py": {
+      "copied_sha256": "93a57bc24c91aff08412a064f147923cfc1b231e95b83b2128972087d98fd171",
+      "sha256": "48feb9fb1c0698988e982d0ab0ee2fdefd19cf537eeff4d1aee5998a5e9c8bad",
+      "source": "/workspace/intelligentai/validation/finish_20260916/latency_optimization_20260921T044013_2c3be9/mfa_startup_recovery_20260921T065201_ac461c/cpu_parallel_limited_regression_20260923T223450Z_e5XbK3/attempt02/evacuation_sequential/bounded_supervisor.py"
+    },
+    "configs/memory_curve_contract.json": {
+      "copied_sha256": "df2280b584a11e4a1f62c9a8721583f75088a13ffea571dc6f076c8f120c207a",
+      "sha256": "df2280b584a11e4a1f62c9a8721583f75088a13ffea571dc6f076c8f120c207a",
+      "source": "/workspace/intelligentai/validation/finish_20260916/latency_optimization_20260921T044013_2c3be9/mfa_startup_recovery_20260921T065201_ac461c/cpu_parallel_limited_regression_20260923T223450Z_e5XbK3/attempt02/evacuation_sequential/configs/memory_curve_contract.json"
+    },
+    "configs/supervisor.json": {
+      "copied_sha256": "b0c6a7d905b6588926cb8be63d391c70cac2cc0755e269713dbf72ebed55c914",
+      "sha256": "b0c6a7d905b6588926cb8be63d391c70cac2cc0755e269713dbf72ebed55c914",
+      "source": "/workspace/intelligentai/validation/finish_20260916/latency_optimization_20260921T044013_2c3be9/mfa_startup_recovery_20260921T065201_ac461c/cpu_parallel_limited_regression_20260923T223450Z_e5XbK3/attempt02/evacuation_sequential/configs/supervisor.json"
+    },
+    "curve_rules.py": {
+      "copied_sha256": "5f2b2a4d0d2bd4299ec1b0bbdd57501a46d6bb502b5c81565437fe2909cbfbce",
+      "sha256": "5f2b2a4d0d2bd4299ec1b0bbdd57501a46d6bb502b5c81565437fe2909cbfbce",
+      "source": "/workspace/intelligentai/validation/finish_20260916/latency_optimization_20260921T044013_2c3be9/mfa_startup_recovery_20260921T065201_ac461c/cpu_parallel_limited_regression_20260923T223450Z_e5XbK3/attempt02/evacuation_sequential/curve_rules.py"
+    },
+    "demo_common.py": {
+      "copied_sha256": "9c4c2556ef69234a782b9354c24448560e2d3f45fce5177f5e77b267f4b127da",
+      "sha256": "9c4c2556ef69234a782b9354c24448560e2d3f45fce5177f5e77b267f4b127da",
+      "source": "/workspace/intelligentai/validation/finish_20260916/latency_optimization_20260921T044013_2c3be9/mfa_startup_recovery_20260921T065201_ac461c/cpu_parallel_limited_regression_20260923T223450Z_e5XbK3/attempt02/evacuation_sequential/demo_common.py"
+    },
+    "demo_rpc.py": {
+      "copied_sha256": "28a59f59dda67adad7a5529d09df5456d4bb77564a8eefa089502d4b09c45978",
+      "sha256": "28a59f59dda67adad7a5529d09df5456d4bb77564a8eefa089502d4b09c45978",
+      "source": "/workspace/intelligentai/validation/finish_20260916/latency_optimization_20260921T044013_2c3be9/mfa_startup_recovery_20260921T065201_ac461c/cpu_parallel_limited_regression_20260923T223450Z_e5XbK3/attempt02/evacuation_sequential/demo_rpc.py"
+    },
+    "direct_adapter.py": {
+      "copied_sha256": "037217f47e768b9c4f001f901c661d793fd4bf658fac208fc32f279a789392a4",
+      "sha256": "037217f47e768b9c4f001f901c661d793fd4bf658fac208fc32f279a789392a4",
+      "source": "/workspace/intelligentai/validation/finish_20260916/latency_optimization_20260921T044013_2c3be9/mfa_startup_recovery_20260921T065201_ac461c/cpu_parallel_limited_regression_20260923T223450Z_e5XbK3/attempt02/evacuation_sequential/direct_adapter.py"
+    },
+    "lifecycle_debug.py": {
+      "copied_sha256": "ce12c0ffb2fb6651f89f3f099795b828250867f27b0b7d307a9649ed1d5f9bc6",
+      "sha256": "ce12c0ffb2fb6651f89f3f099795b828250867f27b0b7d307a9649ed1d5f9bc6",
+      "source": "/workspace/intelligentai/validation/finish_20260916/latency_optimization_20260921T044013_2c3be9/mfa_startup_recovery_20260921T065201_ac461c/cpu_parallel_limited_regression_20260923T223450Z_e5XbK3/attempt02/evacuation_sequential/lifecycle_debug.py"
+    },
+    "memory_watchdog.py": {
+      "copied_sha256": "0d8e9fb953f214b5c8a70b7da1576cf211bf68307eb0db817a76bda7e87a0020",
+      "sha256": "0d8e9fb953f214b5c8a70b7da1576cf211bf68307eb0db817a76bda7e87a0020",
+      "source": "/workspace/intelligentai/validation/finish_20260916/latency_optimization_20260921T044013_2c3be9/mfa_startup_recovery_20260921T065201_ac461c/cpu_parallel_limited_regression_20260923T223450Z_e5XbK3/attempt02/evacuation_sequential/memory_watchdog.py"
+    },
+    "mfa_entry_control.py": {
+      "copied_sha256": "2b8c0f41227f6b8fea6f10d69232de36f7cba8dc2b9cd4910535aee8f19f7404",
+      "sha256": "2b8c0f41227f6b8fea6f10d69232de36f7cba8dc2b9cd4910535aee8f19f7404",
+      "source": "/workspace/intelligentai/validation/finish_20260916/latency_optimization_20260921T044013_2c3be9/mfa_startup_recovery_20260921T065201_ac461c/cpu_parallel_limited_regression_20260923T223450Z_e5XbK3/attempt02/evacuation_sequential/mfa_entry_control.py"
+    },
+    "mfa_sidecar.py": {
+      "copied_sha256": "24f6aebf4c53522dc44e7a0c872f680f471048addff7fae585a7471af2b936fe",
+      "sha256": "8dc2744926c6793282be594cdfa74e9f42ffb207f71a7674d7f649996bc5c294",
+      "source": "/workspace/intelligentai/validation/finish_20260916/latency_optimization_20260921T044013_2c3be9/mfa_startup_recovery_20260921T065201_ac461c/cpu_parallel_limited_regression_20260923T223450Z_e5XbK3/attempt02/evacuation_sequential/mfa_sidecar.py"
+    },
+    "parallel_adapter.py": {
+      "copied_sha256": "e7b876d6b665221fe10b3368d8533b9ec162f6e6801b59887cf0e5eee27db956",
+      "sha256": "e7b876d6b665221fe10b3368d8533b9ec162f6e6801b59887cf0e5eee27db956",
+      "source": "/workspace/intelligentai/validation/finish_20260916/latency_optimization_20260921T044013_2c3be9/mfa_startup_recovery_20260921T065201_ac461c/cpu_parallel_limited_regression_20260923T223450Z_e5XbK3/attempt02/evacuation_sequential/parallel_adapter.py"
+    },
+    "queue_adapter.py": {
+      "copied_sha256": "7f0ca1528d3d35587c5dc790d5a2395052a5f016add1ae6098b82de52b5ace0b",
+      "sha256": "7f0ca1528d3d35587c5dc790d5a2395052a5f016add1ae6098b82de52b5ace0b",
+      "source": "/workspace/intelligentai/validation/finish_20260916/latency_optimization_20260921T044013_2c3be9/mfa_startup_recovery_20260921T065201_ac461c/cpu_parallel_limited_regression_20260923T223450Z_e5XbK3/attempt02/evacuation_sequential/queue_adapter.py"
+    },
+    "resident_worker.py": {
+      "copied_sha256": "516558c92eaa678d72be5e6333f478f3a0a47d898d0bf762ec6625f5712acb70",
+      "sha256": "516558c92eaa678d72be5e6333f478f3a0a47d898d0bf762ec6625f5712acb70",
+      "source": "/workspace/intelligentai/validation/finish_20260916/latency_optimization_20260921T044013_2c3be9/mfa_startup_recovery_20260921T065201_ac461c/cpu_parallel_limited_regression_20260923T223450Z_e5XbK3/attempt02/evacuation_sequential/resident_worker.py"
+    },
+    "stage_capture.py": {
+      "copied_sha256": "024842807a21ca5eba2a1659d1b1a21d12ba01ecceebf7e17e6bb4b0c340232c",
+      "sha256": "024842807a21ca5eba2a1659d1b1a21d12ba01ecceebf7e17e6bb4b0c340232c",
+      "source": "/workspace/intelligentai/validation/finish_20260916/latency_optimization_20260921T044013_2c3be9/mfa_startup_recovery_20260921T065201_ac461c/cpu_parallel_limited_regression_20260923T223450Z_e5XbK3/attempt02/evacuation_sequential/stage_capture.py"
+    },
+    "worker_transport.py": {
+      "copied_sha256": "6cb707f1361161fcab15c919a688dddacee9d452296050a4fe2b4c8cb2db3f26",
+      "sha256": "6cb707f1361161fcab15c919a688dddacee9d452296050a4fe2b4c8cb2db3f26",
+      "source": "/workspace/intelligentai/validation/finish_20260916/latency_optimization_20260921T044013_2c3be9/mfa_startup_recovery_20260921T065201_ac461c/cpu_parallel_limited_regression_20260923T223450Z_e5XbK3/attempt02/evacuation_sequential/worker_transport.py"
+    }
+  },
+  "supervisor_config_sha256": "f499c562e30db004b59e34042699e6ce0512a6db98c0c2f7860b852fc905ca29"
+}

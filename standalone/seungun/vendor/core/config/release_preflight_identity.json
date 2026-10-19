@@ -1,0 +1,45 @@
+{
+  "base_source_commit": "6856e9d357df2e51a5df2595205e77374f801cb2",
+  "base_source_dirty_status": [
+    " M src/korean_pronunciation_poc/ai_core.py",
+    "?? scripts/__pycache__/",
+    "?? scripts/blackbox_client.py",
+    "?? scripts/canonical_mfa/",
+    "?? scripts/canonical_native/",
+    "?? scripts/run_canonical_batch.py",
+    "?? src/korean_pronunciation_poc/__pycache__/",
+    "?? src/korean_pronunciation_poc/demo_content_evidence.py",
+    "?? src/korean_pronunciation_poc/input_validation.py"
+  ],
+  "gate_config": {
+    "path": "/workspace/intelligentai/releases/canonical_seungun_gop_core_20261006_v1/calibration/content_gate_removed_v1.json",
+    "sha256": "c89f1ad8320105849fecbce8b969f5f48e4d2e4b7fa66bd0c546595902f00a73"
+  },
+  "historical_bundle": "/workspace/intelligentai/validation/finish_20260916/latency_optimization_20260921T044013_2c3be9/mfa_startup_recovery_20260921T065201_ac461c/cpu_parallel_limited_regression_20260923T223450Z_e5XbK3/attempt02/evacuation_sequential",
+  "historical_mfa_model": "MontrealCorpusTools/korean_mfa@0091ffa1f1ef7df380a4f799b3fb5bc80c3f65cd",
+  "historical_supervisor_config_sha256": "f499c562e30db004b59e34042699e6ce0512a6db98c0c2f7860b852fc905ca29",
+  "llm_contract_status": "PENDING_SOURCE_AUDIT",
+  "native_model": {
+    "path": "/workspace/intelligentai/validation/native_korean_phone_eval_20260928T1109KST/native_model/snapshot",
+    "repo": "slplab/wav2vec2-xls-r-300m_phone-mfa_korean",
+    "revision": "e26ff9dfb62169acf445d0060ef56863c018b20e",
+    "weight_sha256": "b2ec663558606d651a718fa1eaa20c6d504df173725ecbc66df74c22267e2d68"
+  },
+  "p1_policy": {
+    "path": "/workspace/intelligentai/validation/p1_native_demo_refinement_20260928T1310KST/contract/refined_p1_policy_contract.json",
+    "sha256": "c3c4a11927b748c4998d3cd0a5a578f9e77faaf4863780be0984edaa95a11d50"
+  },
+  "prior_report_sha256": "d4e04d3e838476602c2721964e3f1531f31af5ea3e1614d4905de06deca0e476",
+  "prior_sha_manifest_sha256": "b61708b7497fb90b82ca6d25c51ab1a02680ceb36b0956b370311e350156e9cd",
+  "prosody_reference": {
+    "path": "/workspace/intelligentai/validation/finish_20260916/announcer_execution_20260916_051924_447211/validation/reference/aihub71557_prosody_reference_v1.json",
+    "sha256": "e230b1fe524b18d008d1d3007d0b098cd718c9704541a70478119a03273ee722"
+  },
+  "release_blackbox_host_sha256": "a984adb5487c9f8f388313b1a8e256832ace7c123d66b68e86f7221d69f66ad6",
+  "release_blackbox_runner_sha256": "7913837515ae9e150097ad582a767d78c19858e380cb47f0f8c1495a82f1f89e",
+  "release_source_boundary_changes": [
+    "blackbox required guard",
+    "local module import for canonical_native.evaluate_smoke"
+  ],
+  "status": "DLPC_DERIVED_DEVELOPER_QA_REQUIRED"
+}

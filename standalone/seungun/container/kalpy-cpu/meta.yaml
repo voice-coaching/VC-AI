@@ -1,0 +1,43 @@
+{% set version = "0.10.5" %}
+package:
+  name: kalpy
+  version: {{ version }}
+source:
+  url: https://files.pythonhosted.org/packages/source/k/kalpy-kaldi/kalpy_kaldi-{{ version }}.tar.gz
+  sha256: 8a895245b735a23cf9e35114d53050c7aaceb00948ad720b2f070f8953e25858
+build:
+  number: 0
+  script: >-
+    KALDI_ROOT="$PREFIX" CMAKE_BUILD_PARALLEL_LEVEL=1
+    CMAKE_ARGS="${CMAKE_ARGS:-} -DCMAKE_INTERPROCEDURAL_OPTIMIZATION=OFF -DCMAKE_BUILD_TYPE=MinSizeRel"
+    "$PYTHON" -m pip install . --no-deps -v
+requirements:
+  build:
+    - {{ compiler('cxx') }}
+    - {{ stdlib('c') }}
+    - cmake
+    - make
+    - ninja
+    - pybind11
+  host:
+    - python 3.14.7
+    - pip
+    - setuptools
+    - setuptools_scm
+    - kaldi 5.5.1172 cpu_*
+    - openfst 1.8.4
+    - pynini
+  run:
+    - python >=3.14,<3.15
+    - numpy
+    - librosa
+    - pyyaml
+    - praatio
+    - openfst 1.8.4
+    - pynini
+    - kaldi 5.5.1172 cpu_*
+about:
+  home: https://github.com/mmcauliffe/kalpy
+  license: MIT
+  license_file: LICENSE
+  summary: CPU build of the deployed Kalpy version for AMD64 or ARM64; no algorithm changes
