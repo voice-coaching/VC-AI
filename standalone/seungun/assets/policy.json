@@ -1,0 +1,24 @@
+{
+  "schema": "P1_REFINED_DEMO_CANDIDATE_CONTRACT_V1",
+  "population": "DEMO_DEVELOPMENT_SET_26_RECORDINGS",
+  "selected_form": "P1_UNIQUE_CONSONANT_RUN_MARGIN_V1",
+  "predeclared_form2_sha256": "ecda2ee3ae3bce31c1628213f6e355e806ed7c9153c2a728bc80a4206d1463ef",
+  "form1_sha256": "b1b85304f04e59c5d4a52358c355908f0ec49e7bc4ce7dbecc14b0957465f278",
+  "theta_raw_ctc_logit_margin": 4.529027462005615,
+  "comparison_operator": ">=",
+  "localization": "unique monotonic consonant-to-MFA-IPA mapping when original phone counts differ; exact-count positions unchanged",
+  "decision": "one role-compatible noncanonical CTC consonant run within unique target interval, optional co-localized vowel ignored, run margin >= threshold; no deletion warning",
+  "warning_unit": "unique word occurrence",
+  "development_result": {
+    "target_hits": 22,
+    "target_denominator": 33,
+    "confirmed_normal_false_alert_words": 6,
+    "error_off_target_unknown_warning_words": 4
+  },
+  "required_next_gate": "new-recording CPU shadow smoke before demo freeze",
+  "device": "CPU float32 only; CUDA FP32 fails selected policy parity at U02_10",
+  "model_revision": "e26ff9dfb62169acf445d0060ef56863c018b20e",
+  "no_production_deployment": true,
+  "no_training": true,
+  "not_independent_performance": true
+}

@@ -1,0 +1,7 @@
+# Preserve deployed source bytes and their manifest identity on Windows clones.
+locks/** text eol=lf
+*.py text eol=lf
+container/Dockerfile text eol=lf
+vendor/** -text
+assets/** -text
+manifests/** -text

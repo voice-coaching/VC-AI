@@ -1,0 +1,11 @@
+{
+  "activeAnalyses": 1,
+  "cpuThreads": 1,
+  "device": "cuda:0",
+  "dtype": "float32",
+  "executionApproved": false,
+  "parentCoreSha256": "818a3c16cba39dfcfa9f1083865db7f122a3eba40bc332d85256da94d1d6fb1e",
+  "profile": "dlpc-4cpu",
+  "qualityVerified": false,
+  "standbyGenerations": 0
+}

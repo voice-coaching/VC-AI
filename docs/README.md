@@ -4,6 +4,7 @@
 
 | 목적 | 문서 |
 |---|---|
+| Seungun 음향 파이프라인을 Windows/macOS에서 독립 실행 | [설치·실행 안내](../standalone/seungun/README.md), [구현 범위·개발자 수용](seungun-standalone-plan-20261019.md) |
 | canonical v4에 H5 짧은 총평 적용 | [파생 하네스·검증 계약·배포 인계](canonical-integration/h5-application-20261003.md) |
 | 최근 음성 분석 실패와 FE–AWS–RunPod 연결 | [단일 실행 슬롯·429 실패·운영 API 조사](canonical-integration/incident-20261003-capacity-api-audit.md) |
 | RunPod 사양에 맞춘 canonical 동시 실행 슬롯 | [Pod 자원 관측·3개 슬롯 선택·활성화 조건](canonical-integration/capacity-sizing-20261004.md) |

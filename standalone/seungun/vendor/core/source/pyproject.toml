@@ -1,0 +1,43 @@
+[project]
+name = "korean-pronunciation-poc"
+version = "0.1.0"
+description = "Evidence-based analysis of Korean scripted reading"
+readme = "README.md"
+requires-python = ">=3.11,<3.12"
+dependencies = [
+  "g2pK==0.9.4",
+  "gradio==6.15.1",
+  "nltk>=3.9,<4",
+  "numpy>=2,<3",
+  "praat-parselmouth==0.4.7",
+  "praatio==6.2.2",
+  "pydantic>=2,<3",
+  "python-mecab-ko==1.3.7",
+  "python-mecab-ko-dic==2.1.1.post2",
+]
+
+[dependency-groups]
+dev = [
+  "mypy>=1.15,<2",
+  "pytest>=8,<10",
+  "ruff>=0.12,<1",
+]
+pronunciation = [
+  "safetensors==0.8.0",
+  "torch==2.13.0",
+  "transformers==5.14.1",
+]
+
+[tool.uv]
+package = false
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+
+[tool.ruff]
+target-version = "py311"
+line-length = 88
+
+[tool.mypy]
+python_version = "3.11"
+strict = true
