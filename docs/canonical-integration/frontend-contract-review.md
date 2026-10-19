@@ -1,6 +1,6 @@
 # VC-FE 공개 소스 기준 v4 호환성 재점검
 
-확인일: 2026-10-01. 대상은 [VC-FE 공개 저장소](https://github.com/voice-coaching/VC-FE)와 [운영 제한 키·통합·배포 계획](production-rollout-plan.md)이다. 공개 원격 refs 조회·fetch 후 immutable commit의 source를 읽었다. FE/Backend/RunPod 운영 배포 SHA·실제 요청·E2E는 이번에 확인하지 않았다. FE 파일·운영 설정은 변경하지 않았다.
+확인일: 2026-10-01. 대상은 [VC-FE 공개 저장소](https://github.com/voice-coaching/VC-FE)와 [현재 v6 계약](v6-unification.md)이다. 공개 원격 refs 조회·fetch 후 immutable commit의 source를 읽었다. FE/Backend/RunPod 운영 배포 SHA·실제 요청·E2E는 이번에 확인하지 않았다. FE 파일·운영 설정은 변경하지 않았다.
 
 ## 1. 기준 브랜치 차이와 판정
 

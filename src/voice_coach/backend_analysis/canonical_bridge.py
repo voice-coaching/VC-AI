@@ -256,6 +256,11 @@ class FrozenCanonicalCoaching:
             media_receipt_bytes = _encode(request.media_preparation["receipt"])
         else:
             _require(visual_evidence_bytes is None, "UNEXPECTED_VISUAL_EVIDENCE")
+        if getattr(request, "is_v6", False) and request.media_preparation is not None:
+            from .media_preparation import MediaPreparation
+            MediaPreparation.from_wire(request.media_preparation, audio_sha256=request.audio_sha256,
+                video_sha256=request.visual_input.sha256 if request.visual_input is not None else None)
+            media_receipt_bytes = _encode(request.media_preparation["receipt"])
         # Preserve all three axes and the full original bytes. STEP7 itself owns
         # non-ACCEPT dispatch=0, ranking/order, permission and deterministic fallback.
         selection_bytes = None
@@ -286,11 +291,11 @@ class FrozenCanonicalCoaching:
                            preparedWavSha256=prepared_sha,
                            preparedAudio=prepared_identity.to_document() if prepared_identity is not None else None,
                            visualStatus="NOT_CONNECTED", visualCorrectiveClaimsAllowed=False)
-        if visual_evidence_bytes is not None:
-            association.update(visualStatus=_json(visual_evidence_bytes)["visual"]["status"],
-                videoSha256=request.visual_input.sha256,
-                mediaReceiptSha256=request.media_preparation["receiptSha256"],
-                visualEvidenceSha256=_sha(visual_evidence_bytes))
+        if getattr(request, "is_v6", False):
+            from .canonical_audiovisual_result import media_binding
+            association.update(media_binding(request, visual_evidence_bytes),
+                visualStatus=_json(visual_evidence_bytes)["visual"]["status"]
+                    if visual_evidence_bytes is not None else "NOT_PROVIDED")
         from voice_coach.direct_analysis.domain import DirectInput
         if type(request) is DirectInput:
             association["schemaVersion"] = "voice-coaching.direct-association.v1"

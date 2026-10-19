@@ -113,7 +113,7 @@ def create_app(environment=None):
     async def handoff_health():
         from .canonical_settings import handoff_schema_digests
         configured = runtime.handoff_executor_ready()
-        return JSONResponse(dict(contractVersion="voice-coaching.canonical-handoff.v1",
+        return JSONResponse(dict(contractVersion="voice-coaching.canonical-handoff.v2",
             executorConfigured=configured, admissionEnabled=runtime.handoff_admission_ready(), schemaDigests=handoff_schema_digests()),
             status_code=200 if configured else 503, headers={"Cache-Control": "no-store"})
 

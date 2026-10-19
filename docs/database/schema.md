@@ -1,31 +1,20 @@
-# DB Schema - intelligentAI
+# 저장 경계와 DB 소유권
 
-- 데이터베이스: 도입하지 않음
+음성 제품의 PostgreSQL schema와 migration은 별도 Backend 저장소가 소유한다.
+이 저장소에 Backend ORM/table을 새로 만들지 않는다. 등록 사용자·녹음 소유 관계,
+claim/heartbeat와 canonical journal, 원본 handoff 검증·commit 및 독립 archive
+outbox의 실제 table·컬럼·migration은 Backend의 해당 배포 revision으로 확인한다.
 
-현재 oracle/API 골격은 무상태다. learner history, attempt 보존기간, 삭제·철회
-요구가 확정되기 전에는 DB를 선택하거나 음성·화자 메타데이터를 저장하지
-않는다. 영속화가 필요해지면 개인정보 영향평가와 보존 정책을 먼저 고정한 뒤
-이 문서에 migration 가능한 schema를 추가한다.
+내부 신규 분석은 [v6 통합 계약](../canonical-integration/v6-unification.md)에 따라
+request v4/result v6/handoff v2를 사용한다. nullable 영상 결속과 association v2의
+저장·검증은 Backend 적용 대상이며 이번 소스 변경은 DB migration을 실행하지 않았다.
+결과 공개·인계 검증 완료와 B2 archive 완료를 같은 상태로 취급하지 않는다.
 
-## 테이블 템플릿
-### table_name
-- 목적:
-- 담당 모듈:
-- Soft delete:
-- Migration:
+AI의 익명 direct는 [JobStore](../../src/voice_coach/direct_analysis/store.py)의
+POSIX spool·원자적 JSON 기록을 사용한다. UUID job/audio identity, 원본 WAV와
+결과·archive/history 재시도 상태를 저장한다. Backend 정수 ID나 사용자 로그인
+관계를 만들지 않으며 direct 이력의 계정 연결은 Backend가 별도 인증으로 처리한다.
 
-| Column | Type | Required | Default | Index | Unique | Description |
-| --- | --- | --- | --- | --- | --- | --- |
-
-## 관계
-| From | To | Cardinality | Delete Behavior | Notes |
-| --- | --- | --- | --- | --- |
-
-## Enum 값
-| Table | Column | Value | Meaning |
-| --- | --- | --- | --- |
-
-
-## Canonical v5 handoff (2026-10-04)
-
-[Contract, ownership, worker states and rollout](../canonical-integration/handoff-v5-20261004.md). RunPod transfers immutable originals to Backend PostgreSQL; result verification/commit precedes the independent B2 archive outbox. v4 receipt semantics remain unchanged. Implementation is not deployment or inference QA.
+연구 oracle API의 무상태 요청은 위 제품 저장 경계와 별개다. 이 저장소의 특허
+검색 도구도 별도 SQLite 저장을 사용하며 음성 제품 PostgreSQL과 결합하지 않는다.
+원본·미완료 journal·사용자 결과를 계약 통합 때문에 삭제하거나 재작성하지 않는다.

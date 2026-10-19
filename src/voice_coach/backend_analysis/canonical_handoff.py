@@ -15,8 +15,9 @@ from .http_models import digest, parse_json
 def handoff_document(request_body, projection_raw, preflight, identity):
     projection = read_document(projection_raw)
     artifacts = preflight.artifacts if preflight is not None else ()
-    audiovisual = request_body.get("resultSchemaVersion") == "voice-coaching.runpod-analysis-result.v6"
-    metadata = dict(schemaVersion="voice-coaching.canonical-handoff.v2" if audiovisual else "voice-coaching.canonical-handoff.v1",
+    _require(request_body.get("resultSchemaVersion") == projection.get("schemaVersion") ==
+             "voice-coaching.runpod-analysis-result.v6", "V6_HANDOFF_REQUIRED")
+    metadata = dict(schemaVersion="voice-coaching.canonical-handoff.v2",
         handoffId=str(identity.event_id), eventId=str(identity.event_id),
         workerInstanceId=str(identity.worker_instance_id),
         **{key: request_body[key] for key in
@@ -29,7 +30,7 @@ def handoff_document(request_body, projection_raw, preflight, identity):
                inlineArtifacts={a.kind: base64.b64encode(a.raw).decode("ascii") for a in artifacts})
     if len(encode_document(doc)) > 2 * 1024 * 1024:
         doc["inlineArtifacts"] = {}
-    validate_document(doc, "handoff", schema_name="handoff2" if audiovisual else "handoff")
+    validate_document(doc, "handoff", schema_name="handoff2")
     return doc
 
 
@@ -68,25 +69,11 @@ class CanonicalHandoffClient:
             _require(False, "HANDOFF_REJECTED")
 
     async def publish(self, projection_raw):
-        """Best-effort preview, never a durable ACK. Full handoff always follows.
-
-        An old/temporarily unavailable backend can use the existing handoff path.
-        Limit the *whole* optional exchange, including a trickling response, to 2s.
-        """
+        """v6 becomes visible only after Backend verifies the durable handoff."""
         projection = parse_json(projection_raw)
-        if projection.get("schemaVersion") == "voice-coaching.runpod-analysis-result.v6":
-            return False  # v6 becomes visible only after Backend semantic verification.
-        try:
-            async with asyncio.timeout(2):
-                reply = await self._request("POST",
-                    f'/api/internal/ai/analyses/{projection["analysisId"]}/handoffs/result',
-                    projection_raw, timeout=2)
-                return (reply.get("status") == "PUBLISHED"
-                    and reply.get("eventId") == projection["eventId"]
-                    and reply.get("payloadSha256") == digest(projection))
-        except Exception:
-            # Do not fail a valid result because the optional acceleration path is unavailable.
-            return False
+        _require(projection.get("schemaVersion") == "voice-coaching.runpod-analysis-result.v6",
+                 "V6_HANDOFF_REQUIRED")
+        return False
 
     async def status(self, doc):
         meta = doc["metadata"]

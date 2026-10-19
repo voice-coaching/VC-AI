@@ -5,7 +5,7 @@
 기존 `POST /api/training-sessions/{sessionId}/analyze`와 retry URL, 동의 body를 유지한다. 선택된 영상 recording과 서버 preparation을 사용한다.
 
 - 영상 요청 헤더: `X-Analysis-Result-Schema: voice-coaching.runpod-analysis-result.v6`.
-- 음성 전용은 기존 v5. v6에 영상이 없으면 접수하지 않는다.
+- 음성 전용도 v6이며 video=null, visual.status=NOT_PROVIDED로 처리한다. 실제 영상이 있을 때만 영상 결속·자산을 요구한다. 전체 신규 계약은 [v6 통합 명세](../canonical-integration/v6-unification.md)를 따른다.
 - 기존 `GET /api/v3/analyses/{analysisId}`에서 영상은 public view v3/profile `CANONICAL_AUDIOVISUAL_20261007_V6`.
 - private 전달은 request v4 → result v6 + handoff v2. `MEDIA_RECEIPT`, `VISUAL_EVIDENCE`, association v2를 추가한다.
 - v6는 검증 없는 result-publish를 사용하지 않는다. 검증된 spool만 SAVING/RETRYING, 저장 완료는 SAVED로 구분한다.
@@ -14,7 +14,7 @@
 
 ## 설정
 
-Backend 기본값은 다음과 같다.
+영상 admission은 별도 Backend의 아래 설정과 실제 준비 상태를 확인한다. 이 checkout은 Backend 설정 적용을 수행하지 않았다.
 
 ```properties
 analysis.canonical.audiovisual.worker-enabled=false
@@ -36,7 +36,7 @@ Linux seccomp, `/usr/bin/ffprobe`, `/usr/bin/ffmpeg`를 사용한다. 영상 특
 
 core/H5/lock pin은 [진행 기록](implementation-progress-20261007.md)의 v2 tuple을 사용한다. 기존 자음 전용 v1 후보는 운영 배포된 버전이 아니다. 참조 catalog v2에는 원본·core·capture digest와 음소 구간 출처를 포함한다. 같은 원본의 재인코딩 영상도 자기 비교로 거부한다. 실제 등록은 [참조 등록 절차](reference-preparation-20261007.md)를 따른다.
 
-AI `/health/audiovisual`, Backend `/api/internal/ai/worker-readiness/audiovisual`은 기존 서버 인증을 요구한다. 공통 schema 5개 digest, H5 pin, 기존 handoff readiness, spool 예산을 확인한다. candidate identity는 아직 실행 승인 목록에 없다.
+AI `/health/audiovisual`, Backend `/api/internal/ai/worker-readiness/audiovisual`은 기존 서버 인증을 요구한다. [공통 schema 11개 digest](../canonical-integration/v6-unification.md), H5 pin, 기존 handoff readiness, spool 예산을 확인한다. candidate identity는 아직 실행 승인 목록에 없다.
 
 ## 담당자 전환 순서
 

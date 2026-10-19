@@ -20,7 +20,7 @@ REQUIRED_APP_FILES = frozenset({
     'app/src/voice_coach/direct_analysis/domain.py',
     *(f'app/src/voice_coach/backend_analysis/{name}.py' for name in (
         'canonical_generation', 'canonical_bridge', 'canonical_codec', 'canonical_media', 'canonical_harness',
-        'canonical_result', 'canonical_audiovisual_result', 'media_preparation', 'http_models', 'domain',
+        'canonical_result', 'canonical_audiovisual_result', 'canonical_settings', 'media_preparation', 'http_models', 'domain',
         'native_execution', 'native_phone_contract', 'native_phone_assessment', 'phone_rubric',
     )),
     *(f'app/src/voice_coach/visual_feedback/{name}.py' for name in (
@@ -32,7 +32,6 @@ REQUIRED_APP_FILES = frozenset({
         'runpod_canonical_output', 'runpod_http_control_v1_2',
         'runpod_http_control_v1', 'runpod_analysis_request_v2',
         'runpod_result_v1', 'runpod_canonical_journal_v1',
-        'runpod_result_v5', 'runpod_analysis_request_v3', 'runpod_canonical_handoff_v1',
         'native_phone_evidence', 'native_logits', 'runpod_analysis_request_v4', 'runpod_result_v6',
         'runpod_media_preparation_v1', 'runpod_canonical_handoff_v2', 'runpod_visual_coaching_input_v1',
     )),

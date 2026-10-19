@@ -19,12 +19,9 @@ from .domain import AnalysisWorkerResult
 CONTRACT = "voice-coaching.runpod-http.v1.1"
 REQUEST_V1 = "voice-coaching.runpod-analysis-request.v1"
 REQUEST_V2 = "voice-coaching.runpod-analysis-request.v2"
-REQUEST_V3 = "voice-coaching.runpod-analysis-request.v3"
 REQUEST_V4 = "voice-coaching.runpod-analysis-request.v4"
 RESULT_V6 = "voice-coaching.runpod-analysis-result.v6"
 AUDIOVISUAL_PROFILE = "CANONICAL_AUDIOVISUAL_20261007_V6"
-RESULT_V5 = "voice-coaching.runpod-analysis-result.v5"
-HANDOFF_PROFILE = "CANONICAL_HANDOFF_20261004_V5"
 RESULT_V3 = "voice-coaching.runpod-analysis-result.v3"
 RESULT_V4 = "voice-coaching.runpod-analysis-result.v4"
 LEGACY_PROFILE = "LEGACY_SEUNGUN_V3"
@@ -88,11 +85,9 @@ def validator(kind: str, result: bool = False, *, request_version: str = REQUEST
     root = Path(__file__).resolve().parents[3]
     filename = "runpod_result_v1.schema.json" if result else "runpod_http_control_v1.schema.json"
     if request_version != REQUEST_V1:
-        if result or kind != "analysisRequest" or request_version not in (REQUEST_V2, REQUEST_V3, REQUEST_V4):
+        if result or kind != "analysisRequest" or request_version != REQUEST_V4:
             raise HttpFailure(422, "VALIDATION_FAILED")
-        filename = "runpod_analysis_request_v3.schema.json" if request_version == REQUEST_V3 else "runpod_analysis_request_v2.schema.json"
-        if request_version == REQUEST_V4:
-            filename = "runpod_analysis_request_v4.schema.json"
+        filename = "runpod_analysis_request_v4.schema.json"
     schema = json.loads((root / "docs/contracts" / filename).read_text(encoding="utf-8"))
     schema["$ref"] = "#/$defs/" + kind
     return DecimalDraft202012Validator(schema, format_checker=FormatChecker())
@@ -117,23 +112,21 @@ def validate_analysis_request(body):
     if not isinstance(body, dict):
         raise HttpFailure(422, "VALIDATION_FAILED")
     version = body.get("schemaVersion")
-    if not isinstance(version, str) or version not in (REQUEST_V3, REQUEST_V4):
+    if version != REQUEST_V4:
         raise HttpFailure(422, "VALIDATION_FAILED")
     validate(body, "analysisRequest", request_version=version)
     if version == REQUEST_V4:
         from .media_preparation import MediaPreparation
         from voice_coach.visual_feedback.parallel_analysis import MediaIntegrityFailure
-        if body.get("video") is None:
+        video = body["video"]
+        if video is not None and body["mediaPreparation"] is None:
             raise HttpFailure(422, "VALIDATION_FAILED")
-        try:
-            MediaPreparation.from_wire(body["mediaPreparation"], audio_sha256=body["audio"]["sha256"],
-                                       video_sha256=body["video"]["sha256"])
-        except MediaIntegrityFailure:
-            raise HttpFailure(422, "VALIDATION_FAILED") from None
-    if version == REQUEST_V2 and (
-            body.get("analysisProfile") != CANONICAL_PROFILE
-            or body.get("resultSchemaVersion") != RESULT_V4):
-        raise HttpFailure(422, "VALIDATION_FAILED")
+        if body["mediaPreparation"] is not None:
+            try:
+                MediaPreparation.from_wire(body["mediaPreparation"], audio_sha256=body["audio"]["sha256"],
+                                           video_sha256=video["sha256"] if video is not None else None)
+            except MediaIntegrityFailure:
+                raise HttpFailure(422, "VALIDATION_FAILED") from None
     return body
 
 
@@ -208,9 +201,13 @@ class AnalysisInput:
     media_preparation: dict | None = field(default=None, repr=False)
 
     @property
-    def is_audiovisual(self):
+    def is_v6(self):
         return (self.request_schema_version, self.result_schema_version, self.analysis_profile) == (
             REQUEST_V4, RESULT_V6, AUDIOVISUAL_PROFILE)
+
+    @property
+    def is_audiovisual(self):
+        return self.is_v6 and self.visual_input is not None
 
     @property
     def is_legacy(self):
@@ -245,10 +242,8 @@ class AnalysisInput:
                                        mime_type=video["mimeType"], file_size_bytes=video["fileSizeBytes"],
                                        duration_ms=video["durationMs"]) if video else None,
                    request_schema_version=body["schemaVersion"],
-                   analysis_profile=(body["analysisProfile"] if body["schemaVersion"] in (REQUEST_V2, REQUEST_V3, REQUEST_V4)
-                                     else LEGACY_PROFILE),
-                   result_schema_version=(body["resultSchemaVersion"] if body["schemaVersion"] in (REQUEST_V2, REQUEST_V3, REQUEST_V4)
-                                          else RESULT_V3),
+                   analysis_profile=body["analysisProfile"],
+                   result_schema_version=body["resultSchemaVersion"],
                    media_preparation=body.get("mediaPreparation"))
 
 

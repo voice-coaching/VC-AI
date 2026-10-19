@@ -42,6 +42,11 @@ def discover(root: Path):
             if (work / "completed.json").exists():
                 continue
             descriptor = parse_json(read_private_result(work / "request.json", work, 70000))
+            if descriptor["request"].get("schemaVersion") != "voice-coaching.runpod-analysis-request.v4":
+                # Preserve retired transport bytes for operator reconciliation;
+                # never relabel an admitted request or rerun its producer.
+                logging.getLogger(__name__).warning("retired_handoff_requires_operator_reconciliation")
+                continue
             body = validate_analysis_request(descriptor["request"])
             worker = str(UUID(descriptor["workerId"]))
             _require(work.name == body["executionId"], "CANONICAL_DESCRIPTOR")
@@ -55,8 +60,7 @@ def discover(root: Path):
 
 def load_handoff(work, body, worker):
     document = parse_json(read_private_result(work / "handoff.json", work, 2 * 1024 * 1024))
-    audiovisual = body.get("resultSchemaVersion") == "voice-coaching.runpod-analysis-result.v6"
-    validate_document(document, "handoff", schema_name="handoff2" if audiovisual else "handoff")
+    validate_document(document, "handoff", schema_name="handoff2")
     meta = document["metadata"]
     _require(meta["workerInstanceId"] == worker and meta["requestSha256"] == digest(body)
              and document["handoffSha256"] == digest(meta)

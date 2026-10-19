@@ -1,8 +1,8 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "$id": "voice-coaching.runpod-analysis-result.v6",
-  "title": "Canonical audio and visual handoff result v6",
-  "$comment": "NOT ACTIVATED. Service validation additionally requires original bytes, frozen prepare equality, full binding/association and authenticated Backend VERIFIED receipt. Max raw UTF-8 callback 1 MiB; byte hashes are not JCS hashes. Imported frozen inputValidation/candidate/coverage/output subtrees are unchanged. Frozen arbitrary diagnostic evidence remains arbitrary only where its pinned schema explicitly allows it; never infer a typed MFA receipt from that schema.",
+  "title": "Unified canonical audio and audiovisual handoff result v6",
+  "$comment": "New internal results use v6 and handoff v2. Audio-only results have visual.status=NOT_PROVIDED and null video/evidence digests; no video evidence is fabricated. audioResult/audioAssociation/audioVisual are internal audio verification structures, not alternate wire versions. Original bytes, frozen prepare, identity and same-source bindings remain mandatory. This source contract does not assert operational activation.",
   "$ref": "#/$defs/result",
   "$defs": {
     "preparedAudio": {
@@ -1218,7 +1218,8 @@
             "f90440b764f78f32c989dc0785f41262397cc22e1d1ca48c40361189b81f86d5",
             "1612539f82a0b6e2c5c0b3551440b8094ca979bd8ab5d898386713bd0d1f54b7",
             "def65f68a849a2452b0e4dde600f0ef85d99beaa97123d30d97262653ebf8e77",
-            "d70372926d3406842b95c370b5ceb152480e7f0af83ba840028ec8d9ace2dc50"
+            "d70372926d3406842b95c370b5ceb152480e7f0af83ba840028ec8d9ace2dc50",
+            "3e430635a4d714ead5d8e08352e41ff9a2b06c893d73af7f018fb43b4c37f61c"
           ]
         },
         "llmDependencyLockSha256": {
@@ -1236,7 +1237,8 @@
             "74784bf0c7ba99628ed2ff8db19157c63d22a2a1cd66c58000ad2e811dc93160",
             "3e2e81b43b1c1298266df428bc01ef0761d37f413073824cae2000623ea2eb3c",
             "b605c3b9ba06bbf18fc126770b18de3d2da0d3f70c08e04873f17bc735b948bc",
-            "934729ee467a2eb030c244584c6fa5c3575ca9ed0a43348a59a486199c0f55e9"
+            "934729ee467a2eb030c244584c6fa5c3575ca9ed0a43348a59a486199c0f55e9",
+            "58c26086546abb8b94eb6998671101d67633af426adf373cceb42862ccaf0ec4"
           ]
         },
         "scriptSha256": {
@@ -1280,13 +1282,34 @@
           ]
         },
         "videoSha256": {
-          "$ref": "#/$defs/sha256"
+          "anyOf": [
+            {
+              "$ref": "#/$defs/sha256"
+            },
+            {
+              "type": "null"
+            }
+          ]
         },
         "mediaReceiptSha256": {
-          "$ref": "#/$defs/sha256"
+          "anyOf": [
+            {
+              "$ref": "#/$defs/sha256"
+            },
+            {
+              "type": "null"
+            }
+          ]
         },
         "visualEvidenceSha256": {
-          "$ref": "#/$defs/sha256"
+          "anyOf": [
+            {
+              "$ref": "#/$defs/sha256"
+            },
+            {
+              "type": "null"
+            }
+          ]
         }
       },
       "required": [
@@ -1492,417 +1515,52 @@
               "const": "934729ee467a2eb030c244584c6fa5c3575ca9ed0a43348a59a486199c0f55e9"
             }
           }
-        }
-      ]
-    },
-    "visual": {
-      "type": "object",
-      "additionalProperties": false,
-      "properties": {
-        "status": {
-          "enum": [
-            "NOT_PROVIDED",
-            "OBSERVED",
-            "REFERENCE_ONLY",
-            "SCORED",
-            "UNSCORABLE",
-            "FAILED",
-            "TIMEOUT"
-          ]
         },
-        "correctiveClaimsAllowed": {
-          "const": false
-        },
-        "score": {
-          "anyOf": [
-            {
-              "type": "number",
-              "minimum": 0,
-              "maximum": 100
-            },
-            {
-              "type": "null"
-            }
-          ]
-        },
-        "scoreKind": {
-          "enum": [
-            "NONE",
-            "CALIBRATED"
-          ]
-        },
-        "coverage": {
-          "type": "object",
-          "additionalProperties": false,
+        {
           "properties": {
-            "targetCount": {
-              "type": "integer",
-              "minimum": 0,
-              "maximum": 2048
+            "parentManifestSha256": {
+              "const": "f6d56e1decc160f0ca38cc8d52303f3de20945f872d714bf6a2e743ed94c0391"
             },
-            "visuallyEligibleCount": {
-              "type": "integer",
-              "minimum": 0,
-              "maximum": 2048
+            "llmManifestSha256": {
+              "const": "3e430635a4d714ead5d8e08352e41ff9a2b06c893d73af7f018fb43b4c37f61c"
             },
-            "observedCount": {
-              "type": "integer",
-              "minimum": 0,
-              "maximum": 2048
-            },
-            "scoredCount": {
-              "type": "integer",
-              "minimum": 0,
-              "maximum": 2048
-            },
-            "coverage": {
-              "anyOf": [
-                {
-                  "type": "number",
-                  "minimum": 0,
-                  "maximum": 1
-                },
-                {
-                  "type": "null"
-                }
-              ]
+            "llmDependencyLockSha256": {
+              "const": "58c26086546abb8b94eb6998671101d67633af426adf373cceb42862ccaf0ec4"
             }
-          },
-          "required": [
-            "targetCount",
-            "visuallyEligibleCount",
-            "observedCount",
-            "scoredCount",
-            "coverage"
-          ]
-        },
-        "phoneAssessments": {
-          "type": "array",
-          "items": {
-            "type": "object",
-            "additionalProperties": false,
-            "properties": {
-              "expectedIndex": {
-                "type": "integer",
-                "minimum": 0,
-                "maximum": 100000
-              },
-              "expectedPhone": {
-                "type": "string",
-                "minLength": 1,
-                "maxLength": 20
-              },
-              "role": {
-                "enum": [
-                  "onset",
-                  "nucleus",
-                  "coda"
-                ]
-              },
-              "status": {
-                "enum": [
-                  "OBSERVED",
-                  "REFERENCE_ONLY",
-                  "SCORED",
-                  "UNSCORABLE"
-                ]
-              },
-              "score": {
-                "anyOf": [
-                  {
-                    "type": "number",
-                    "minimum": 0,
-                    "maximum": 100
-                  },
-                  {
-                    "type": "null"
-                  }
-                ]
-              },
-              "scoreKind": {
-                "enum": [
-                  "NONE",
-                  "REFERENCE_SIMILARITY",
-                  "CALIBRATED"
-                ]
-              },
-              "audioStartSeconds": {
-                "anyOf": [
-                  {
-                    "type": "number",
-                    "minimum": 0,
-                    "maximum": 120
-                  },
-                  {
-                    "type": "null"
-                  }
-                ]
-              },
-              "audioEndSeconds": {
-                "anyOf": [
-                  {
-                    "type": "number",
-                    "minimum": 0,
-                    "maximum": 120
-                  },
-                  {
-                    "type": "null"
-                  }
-                ]
-              },
-              "observations": {
-                "type": "array",
-                "items": {
-                  "type": "object",
-                  "additionalProperties": false,
-                  "properties": {
-                    "observationId": {
-                      "type": "string",
-                      "pattern": "^[0-9a-f]{64}:phone-[0-9]+:LIP_(APERTURE|WIDTH|AREA)_RANGE$"
-                    },
-                    "code": {
-                      "enum": [
-                        "LIP_APERTURE_RANGE",
-                        "LIP_WIDTH_RANGE",
-                        "LIP_AREA_RANGE"
-                      ]
-                    },
-                    "minimum": {
-                      "type": "number",
-                      "minimum": 0,
-                      "maximum": 100
-                    },
-                    "maximum": {
-                      "type": "number",
-                      "minimum": 0,
-                      "maximum": 100
-                    },
-                    "unit": {
-                      "enum": [
-                        "FACE_SCALE_NORMALIZED"
-                      ]
-                    }
-                  },
-                  "required": [
-                    "observationId",
-                    "code",
-                    "minimum",
-                    "maximum",
-                    "unit"
-                  ]
-                },
-                "maxItems": 3
-              },
-              "allowedActionIds": {
-                "type": "array",
-                "items": {
-                  "type": "string"
-                },
-                "maxItems": 0
-              },
-              "reasonCodes": {
-                "type": "array",
-                "items": {
-                  "type": "string",
-                  "pattern": "^[A-Z][A-Z0-9_]{0,79}$"
-                },
-                "maxItems": 32
-              },
-              "referenceDistance": {
-                "anyOf": [
-                  {
-                    "type": "number",
-                    "minimum": 0
-                  },
-                  {
-                    "type": "null"
-                  }
-                ]
-              },
-              "referenceIds": {
-                "type": "array",
-                "items": {
-                  "type": "string",
-                  "minLength": 1,
-                  "maxLength": 200
-                },
-                "maxItems": 32
-              },
-              "calibrationRevision": {
-                "anyOf": [
-                  {
-                    "type": "string",
-                    "minLength": 1,
-                    "maxLength": 200
-                  },
-                  {
-                    "type": "null"
-                  }
-                ]
-              },
-              "videoStartSeconds": {
-                "anyOf": [
-                  {
-                    "type": "number",
-                    "minimum": -86400,
-                    "maximum": 86400
-                  },
-                  {
-                    "type": "null"
-                  }
-                ]
-              },
-              "videoEndSeconds": {
-                "anyOf": [
-                  {
-                    "type": "number",
-                    "minimum": -86400,
-                    "maximum": 86400
-                  },
-                  {
-                    "type": "null"
-                  }
-                ]
-              },
-              "frameCount": {
-                "type": "integer",
-                "minimum": 0,
-                "maximum": 3600
-              }
-            },
-            "required": [
-              "expectedIndex",
-              "expectedPhone",
-              "role",
-              "status",
-              "score",
-              "scoreKind",
-              "audioStartSeconds",
-              "audioEndSeconds",
-              "observations",
-              "allowedActionIds",
-              "reasonCodes",
-              "referenceDistance",
-              "referenceIds",
-              "calibrationRevision",
-              "videoStartSeconds",
-              "videoEndSeconds",
-              "frameCount"
-            ],
-            "allOf": [
-              {
-                "if": {
-                  "properties": {
-                    "scoreKind": {
-                      "const": "NONE"
-                    }
-                  }
-                },
-                "then": {
-                  "properties": {
-                    "score": {
-                      "const": null
-                    }
-                  }
-                }
-              },
-              {
-                "if": {
-                  "properties": {
-                    "status": {
-                      "const": "SCORED"
-                    }
-                  }
-                },
-                "then": {
-                  "properties": {
-                    "scoreKind": {
-                      "const": "CALIBRATED"
-                    },
-                    "score": {
-                      "type": "number",
-                      "minimum": 0,
-                      "maximum": 100
-                    }
-                  }
-                }
-              }
-            ]
-          },
-          "maxItems": 128
-        },
-        "reasonCodes": {
-          "type": "array",
-          "items": {
-            "type": "string",
-            "pattern": "^[A-Z][A-Z0-9_]{0,79}$"
-          },
-          "maxItems": 32
-        },
-        "alignmentScope": {
-          "const": "CANONICAL_MFA_DETECTOR_PHONES_V1"
-        },
-        "unresolvedExpectedIndices": {
-          "type": "array",
-          "items": {
-            "type": "integer",
-            "minimum": 0,
-            "maximum": 100000
-          },
-          "maxItems": 2048
-        },
-        "omittedPhoneAssessmentCount": {
-          "type": "integer",
-          "minimum": 0,
-          "maximum": 2048
+          }
         }
-      },
-      "required": [
-        "status",
-        "correctiveClaimsAllowed",
-        "score",
-        "scoreKind",
-        "coverage",
-        "phoneAssessments",
-        "reasonCodes",
-        "alignmentScope",
-        "unresolvedExpectedIndices",
-        "omittedPhoneAssessmentCount"
       ],
       "allOf": [
         {
           "if": {
             "properties": {
-              "scoreKind": {
-                "const": "NONE"
+              "videoSha256": {
+                "type": "null"
               }
             }
           },
           "then": {
             "properties": {
-              "score": {
-                "const": null
-              }
-            }
-          }
-        },
-        {
-          "if": {
-            "properties": {
-              "status": {
-                "const": "SCORED"
-              }
-            }
-          },
-          "then": {
-            "properties": {
-              "scoreKind": {
-                "const": "CALIBRATED"
+              "visualStatus": {
+                "const": "NOT_PROVIDED"
               },
-              "score": {
-                "type": "number",
-                "minimum": 0,
-                "maximum": 100
+              "visualEvidenceSha256": {
+                "type": "null"
+              }
+            }
+          },
+          "else": {
+            "properties": {
+              "visualStatus": {
+                "not": {
+                  "const": "NOT_PROVIDED"
+                }
+              },
+              "mediaReceiptSha256": {
+                "$ref": "#/$defs/sha256"
+              },
+              "visualEvidenceSha256": {
+                "$ref": "#/$defs/sha256"
               }
             }
           }
@@ -2616,7 +2274,8 @@
             "f90440b764f78f32c989dc0785f41262397cc22e1d1ca48c40361189b81f86d5",
             "1612539f82a0b6e2c5c0b3551440b8094ca979bd8ab5d898386713bd0d1f54b7",
             "def65f68a849a2452b0e4dde600f0ef85d99beaa97123d30d97262653ebf8e77",
-            "d70372926d3406842b95c370b5ceb152480e7f0af83ba840028ec8d9ace2dc50"
+            "d70372926d3406842b95c370b5ceb152480e7f0af83ba840028ec8d9ace2dc50",
+            "3e430635a4d714ead5d8e08352e41ff9a2b06c893d73af7f018fb43b4c37f61c"
           ]
         },
         "llmDependencyLockSha256": {
@@ -2634,7 +2293,8 @@
             "74784bf0c7ba99628ed2ff8db19157c63d22a2a1cd66c58000ad2e811dc93160",
             "3e2e81b43b1c1298266df428bc01ef0761d37f413073824cae2000623ea2eb3c",
             "b605c3b9ba06bbf18fc126770b18de3d2da0d3f70c08e04873f17bc735b948bc",
-            "934729ee467a2eb030c244584c6fa5c3575ca9ed0a43348a59a486199c0f55e9"
+            "934729ee467a2eb030c244584c6fa5c3575ca9ed0a43348a59a486199c0f55e9",
+            "58c26086546abb8b94eb6998671101d67633af426adf373cceb42862ccaf0ec4"
           ]
         },
         "promptSha256": {
@@ -2644,7 +2304,8 @@
             "883e1d43faaf26541efbd37b897ead7f4fca556b3bd8cf03608f43870382f127",
             "5f3ec5aa81f54fdb3afe28869db2c5791a2133e8a44a23ead52187e9be542ff8",
             "977c49744e7af9fc60fdc2eb13c23985692cb00dd71789d8b3c43c3813e3f1b5",
-            "c727910b9e30c1648adb120cbb5f8ef2178c806285331dfd095fcc39c5aedfee"
+            "c727910b9e30c1648adb120cbb5f8ef2178c806285331dfd095fcc39c5aedfee",
+            "ad59ba9124fbe26b9451bcb1a04a5eb1afcb3c819c539d5a25d3ac09a1dc281d"
           ]
         }
       },
@@ -2883,6 +2544,22 @@
               "const": "c727910b9e30c1648adb120cbb5f8ef2178c806285331dfd095fcc39c5aedfee"
             }
           }
+        },
+        {
+          "properties": {
+            "parentManifestSha256": {
+              "const": "f6d56e1decc160f0ca38cc8d52303f3de20945f872d714bf6a2e743ed94c0391"
+            },
+            "llmManifestSha256": {
+              "const": "3e430635a4d714ead5d8e08352e41ff9a2b06c893d73af7f018fb43b4c37f61c"
+            },
+            "llmDependencyLockSha256": {
+              "const": "58c26086546abb8b94eb6998671101d67633af426adf373cceb42862ccaf0ec4"
+            },
+            "promptSha256": {
+              "const": "ad59ba9124fbe26b9451bcb1a04a5eb1afcb3c819c539d5a25d3ac09a1dc281d"
+            }
+          }
         }
       ]
     },
@@ -3008,10 +2685,24 @@
           "additionalProperties": false,
           "properties": {
             "videoSha256": {
-              "$ref": "#/$defs/sha256"
+              "anyOf": [
+                {
+                  "$ref": "#/$defs/sha256"
+                },
+                {
+                  "type": "null"
+                }
+              ]
             },
             "mediaReceiptSha256": {
-              "$ref": "#/$defs/sha256"
+              "anyOf": [
+                {
+                  "$ref": "#/$defs/sha256"
+                },
+                {
+                  "type": "null"
+                }
+              ]
             },
             "visualEvidenceSha256": {
               "anyOf": [
@@ -3564,7 +3255,10 @@
                       "efc705b042cb1b18d4babff4f5949f37622154e979b1c07b33afdc36eeb89428",
                       "6a3bf7c872e718086cb9add4d48412c825188310cdc9eb394089301dd784ff57",
                       "f90440b764f78f32c989dc0785f41262397cc22e1d1ca48c40361189b81f86d5",
-                      "1612539f82a0b6e2c5c0b3551440b8094ca979bd8ab5d898386713bd0d1f54b7"
+                      "1612539f82a0b6e2c5c0b3551440b8094ca979bd8ab5d898386713bd0d1f54b7",
+                      "def65f68a849a2452b0e4dde600f0ef85d99beaa97123d30d97262653ebf8e77",
+                      "3e430635a4d714ead5d8e08352e41ff9a2b06c893d73af7f018fb43b4c37f61c",
+                      "d70372926d3406842b95c370b5ceb152480e7f0af83ba840028ec8d9ace2dc50"
                     ]
                   }
                 }
@@ -3654,7 +3348,11 @@
                   "llmManifestSha256": {
                     "enum": [
                       "f90440b764f78f32c989dc0785f41262397cc22e1d1ca48c40361189b81f86d5",
-                      "1612539f82a0b6e2c5c0b3551440b8094ca979bd8ab5d898386713bd0d1f54b7"
+                      "1612539f82a0b6e2c5c0b3551440b8094ca979bd8ab5d898386713bd0d1f54b7",
+                      "6a3bf7c872e718086cb9add4d48412c825188310cdc9eb394089301dd784ff57",
+                      "def65f68a849a2452b0e4dde600f0ef85d99beaa97123d30d97262653ebf8e77",
+                      "3e430635a4d714ead5d8e08352e41ff9a2b06c893d73af7f018fb43b4c37f61c",
+                      "d70372926d3406842b95c370b5ceb152480e7f0af83ba840028ec8d9ace2dc50"
                     ]
                   }
                 }
@@ -3703,6 +3401,57 @@
               "properties": {
                 "selection": {
                   "$ref": "#/$defs/selection"
+                }
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "mediaBinding": {
+                "properties": {
+                  "videoSha256": {
+                    "type": "null"
+                  }
+                }
+              }
+            }
+          },
+          "then": {
+            "properties": {
+              "visual": {
+                "properties": {
+                  "status": {
+                    "const": "NOT_PROVIDED"
+                  }
+                }
+              },
+              "mediaBinding": {
+                "properties": {
+                  "visualEvidenceSha256": {
+                    "type": "null"
+                  }
+                }
+              }
+            }
+          },
+          "else": {
+            "properties": {
+              "visual": {
+                "properties": {
+                  "status": {
+                    "not": {
+                      "const": "NOT_PROVIDED"
+                    }
+                  }
+                }
+              },
+              "mediaBinding": {
+                "properties": {
+                  "mediaReceiptSha256": {
+                    "$ref": "#/$defs/sha256"
+                  }
                 }
               }
             }
@@ -4274,6 +4023,1554 @@
             },
             "reason": {
               "const": "RESULT_NOT_DELIVERED"
+            }
+          }
+        }
+      ]
+    },
+    "audioVisual": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "status": {
+          "const": "NOT_CONNECTED"
+        },
+        "correctiveClaimsAllowed": {
+          "const": false
+        }
+      },
+      "required": [
+        "status",
+        "correctiveClaimsAllowed"
+      ]
+    },
+    "visual": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "status": {
+          "enum": [
+            "NOT_PROVIDED",
+            "OBSERVED",
+            "REFERENCE_ONLY",
+            "SCORED",
+            "UNSCORABLE",
+            "FAILED",
+            "TIMEOUT"
+          ]
+        },
+        "correctiveClaimsAllowed": {
+          "const": false
+        },
+        "score": {
+          "anyOf": [
+            {
+              "type": "number",
+              "minimum": 0,
+              "maximum": 100
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "scoreKind": {
+          "enum": [
+            "NONE",
+            "CALIBRATED"
+          ]
+        },
+        "coverage": {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "targetCount": {
+              "type": "integer",
+              "minimum": 0,
+              "maximum": 2048
+            },
+            "visuallyEligibleCount": {
+              "type": "integer",
+              "minimum": 0,
+              "maximum": 2048
+            },
+            "observedCount": {
+              "type": "integer",
+              "minimum": 0,
+              "maximum": 2048
+            },
+            "scoredCount": {
+              "type": "integer",
+              "minimum": 0,
+              "maximum": 2048
+            },
+            "coverage": {
+              "anyOf": [
+                {
+                  "type": "number",
+                  "minimum": 0,
+                  "maximum": 1
+                },
+                {
+                  "type": "null"
+                }
+              ]
+            }
+          },
+          "required": [
+            "targetCount",
+            "visuallyEligibleCount",
+            "observedCount",
+            "scoredCount",
+            "coverage"
+          ]
+        },
+        "phoneAssessments": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "properties": {
+              "expectedIndex": {
+                "type": "integer",
+                "minimum": 0,
+                "maximum": 100000
+              },
+              "expectedPhone": {
+                "type": "string",
+                "minLength": 1,
+                "maxLength": 20
+              },
+              "role": {
+                "enum": [
+                  "onset",
+                  "nucleus",
+                  "coda"
+                ]
+              },
+              "status": {
+                "enum": [
+                  "OBSERVED",
+                  "REFERENCE_ONLY",
+                  "SCORED",
+                  "UNSCORABLE"
+                ]
+              },
+              "score": {
+                "anyOf": [
+                  {
+                    "type": "number",
+                    "minimum": 0,
+                    "maximum": 100
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
+              },
+              "scoreKind": {
+                "enum": [
+                  "NONE",
+                  "REFERENCE_SIMILARITY",
+                  "CALIBRATED"
+                ]
+              },
+              "audioStartSeconds": {
+                "anyOf": [
+                  {
+                    "type": "number",
+                    "minimum": 0,
+                    "maximum": 120
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
+              },
+              "audioEndSeconds": {
+                "anyOf": [
+                  {
+                    "type": "number",
+                    "minimum": 0,
+                    "maximum": 120
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
+              },
+              "observations": {
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "additionalProperties": false,
+                  "properties": {
+                    "observationId": {
+                      "type": "string",
+                      "pattern": "^[0-9a-f]{64}:phone-[0-9]+:LIP_(APERTURE|WIDTH|AREA)_RANGE$"
+                    },
+                    "code": {
+                      "enum": [
+                        "LIP_APERTURE_RANGE",
+                        "LIP_WIDTH_RANGE",
+                        "LIP_AREA_RANGE"
+                      ]
+                    },
+                    "minimum": {
+                      "type": "number",
+                      "minimum": 0,
+                      "maximum": 100
+                    },
+                    "maximum": {
+                      "type": "number",
+                      "minimum": 0,
+                      "maximum": 100
+                    },
+                    "unit": {
+                      "enum": [
+                        "FACE_SCALE_NORMALIZED"
+                      ]
+                    }
+                  },
+                  "required": [
+                    "observationId",
+                    "code",
+                    "minimum",
+                    "maximum",
+                    "unit"
+                  ]
+                },
+                "maxItems": 3
+              },
+              "allowedActionIds": {
+                "type": "array",
+                "items": {
+                  "type": "string"
+                },
+                "maxItems": 0
+              },
+              "reasonCodes": {
+                "type": "array",
+                "items": {
+                  "type": "string",
+                  "pattern": "^[A-Z][A-Z0-9_]{0,79}$"
+                },
+                "maxItems": 32
+              },
+              "referenceDistance": {
+                "anyOf": [
+                  {
+                    "type": "number",
+                    "minimum": 0
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
+              },
+              "referenceIds": {
+                "type": "array",
+                "items": {
+                  "type": "string",
+                  "minLength": 1,
+                  "maxLength": 200
+                },
+                "maxItems": 32
+              },
+              "calibrationRevision": {
+                "anyOf": [
+                  {
+                    "type": "string",
+                    "minLength": 1,
+                    "maxLength": 200
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
+              },
+              "videoStartSeconds": {
+                "anyOf": [
+                  {
+                    "type": "number",
+                    "minimum": -86400,
+                    "maximum": 86400
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
+              },
+              "videoEndSeconds": {
+                "anyOf": [
+                  {
+                    "type": "number",
+                    "minimum": -86400,
+                    "maximum": 86400
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
+              },
+              "frameCount": {
+                "type": "integer",
+                "minimum": 0,
+                "maximum": 3600
+              }
+            },
+            "required": [
+              "expectedIndex",
+              "expectedPhone",
+              "role",
+              "status",
+              "score",
+              "scoreKind",
+              "audioStartSeconds",
+              "audioEndSeconds",
+              "observations",
+              "allowedActionIds",
+              "reasonCodes",
+              "referenceDistance",
+              "referenceIds",
+              "calibrationRevision",
+              "videoStartSeconds",
+              "videoEndSeconds",
+              "frameCount"
+            ],
+            "allOf": [
+              {
+                "if": {
+                  "properties": {
+                    "scoreKind": {
+                      "const": "NONE"
+                    }
+                  }
+                },
+                "then": {
+                  "properties": {
+                    "score": {
+                      "const": null
+                    }
+                  }
+                }
+              },
+              {
+                "if": {
+                  "properties": {
+                    "status": {
+                      "const": "SCORED"
+                    }
+                  }
+                },
+                "then": {
+                  "properties": {
+                    "scoreKind": {
+                      "const": "CALIBRATED"
+                    },
+                    "score": {
+                      "type": "number",
+                      "minimum": 0,
+                      "maximum": 100
+                    }
+                  }
+                }
+              }
+            ]
+          },
+          "maxItems": 128
+        },
+        "reasonCodes": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "pattern": "^[A-Z][A-Z0-9_]{0,79}$"
+          },
+          "maxItems": 32
+        },
+        "alignmentScope": {
+          "const": "CANONICAL_MFA_DETECTOR_PHONES_V1"
+        },
+        "unresolvedExpectedIndices": {
+          "type": "array",
+          "items": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 100000
+          },
+          "maxItems": 2048
+        },
+        "omittedPhoneAssessmentCount": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 2048
+        }
+      },
+      "required": [
+        "status",
+        "correctiveClaimsAllowed",
+        "score",
+        "scoreKind",
+        "coverage",
+        "phoneAssessments",
+        "reasonCodes",
+        "alignmentScope",
+        "unresolvedExpectedIndices",
+        "omittedPhoneAssessmentCount"
+      ],
+      "allOf": [
+        {
+          "if": {
+            "properties": {
+              "scoreKind": {
+                "const": "NONE"
+              }
+            }
+          },
+          "then": {
+            "properties": {
+              "score": {
+                "const": null
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "status": {
+                "const": "SCORED"
+              }
+            }
+          },
+          "then": {
+            "properties": {
+              "scoreKind": {
+                "const": "CALIBRATED"
+              },
+              "score": {
+                "type": "number",
+                "minimum": 0,
+                "maximum": 100
+              }
+            }
+          }
+        }
+      ]
+    },
+    "audioAssociation": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "requestId": {
+          "$ref": "#/$defs/uuid"
+        },
+        "executionId": {
+          "$ref": "#/$defs/uuid"
+        },
+        "analysisId": {
+          "$ref": "#/$defs/positiveLong"
+        },
+        "recordingId": {
+          "$ref": "#/$defs/positiveLong"
+        },
+        "contentId": {
+          "$ref": "#/$defs/positiveLong"
+        },
+        "canonicalAnalysisId": {
+          "type": "string",
+          "minLength": 1
+        },
+        "coreSha256": {
+          "$ref": "#/$defs/sha256"
+        },
+        "parentManifestSha256": {
+          "enum": [
+            "95f2347ad53ab53030f68a65795cfc5a84ca1c8c41bd03119c9a9fb15d0367c2",
+            "6ca67fcdaed390cc3da634fbafaef153890e52b8775c431f3fefae7dc122c776",
+            "08fd8a19b6897d0c3890b0944986685830f24e6e676ea19422038b03a940ba80",
+            "ce16f635da012237b5316b36161d5eeff9432279cd08dbbe7967f5ab7ace7f7e",
+            "9e2a2107db7d30fe8910c8984687974d85b95120760e2bcce53d57640a5d5a32",
+            "68cda53df72be9dace15f3829a840c27f40efbbfee1a561f8e58d314b4991aad",
+            "f1009fcdbf75515ddc13e915dcbbf19dfac751ce39779e404749c4f51dd74841",
+            "20acb7275aa06d0be4aca1a567420ea603c0eec084e50c651c96501903034f1b",
+            "818a3c16cba39dfcfa9f1083865db7f122a3eba40bc332d85256da94d1d6fb1e",
+            "f6d56e1decc160f0ca38cc8d52303f3de20945f872d714bf6a2e743ed94c0391",
+            "4cc0cbacd41b5c6f2ac20e6e4840bc5406f4c7ab79ecf53702586eeb5874ecbc"
+          ]
+        },
+        "llmManifestSha256": {
+          "enum": [
+            "1413b196616c919aeaab243fdd57771e70221ffc53a37f9b018d1881499b8c73",
+            "9f10296b6944249ded9f5ce2ccfdfa7c53b6e4af670999fe68e9e477e97eaf45",
+            "820d600fab4c49615050b9a038e7236f0429f68249dc631a39c0f5ab0be6f0f6",
+            "4afc1c2cdbf7b5440742cf154fe96ab2083beda69cd9e07c47a241fb0d784fcf",
+            "e3d6d6be9d896ede8d75d5f35f5daf4520a8d42f484e5f84a6fc32f8a05fb2e3",
+            "885a2f0a67494dc3bebed28962222bfe95a0143292fe2de04194b84ea8beadc5",
+            "358365399f7445ab0a77797ce46619979955503c4faac8185724e2225aa5205c",
+            "7dfc26fb088300165b4a564847d0a489092b0ab830ef591943a40f31ecb85747",
+            "efc705b042cb1b18d4babff4f5949f37622154e979b1c07b33afdc36eeb89428",
+            "6a3bf7c872e718086cb9add4d48412c825188310cdc9eb394089301dd784ff57",
+            "f90440b764f78f32c989dc0785f41262397cc22e1d1ca48c40361189b81f86d5",
+            "1612539f82a0b6e2c5c0b3551440b8094ca979bd8ab5d898386713bd0d1f54b7",
+            "def65f68a849a2452b0e4dde600f0ef85d99beaa97123d30d97262653ebf8e77",
+            "d70372926d3406842b95c370b5ceb152480e7f0af83ba840028ec8d9ace2dc50",
+            "3e430635a4d714ead5d8e08352e41ff9a2b06c893d73af7f018fb43b4c37f61c"
+          ]
+        },
+        "llmDependencyLockSha256": {
+          "enum": [
+            "d8356763579dcfee347073a3f0ff72f4a0f67e33a29fa3b4c71012afcfd4ba01",
+            "93636f0c4befe7f1e34358e74b1077cc94cb2b82064781485b0183c53357d2f5",
+            "17d327b5898b183274418996468b577f3c455d8c1a5868b9cf3e00a34d53114d",
+            "b4ff1aa729d9c981a048d5b7df1293d9637df53269d0598d7ae6069f2b0cc989",
+            "dc3db9cc03a3355ddeb5d5819cd6fd46726935c8ca9b830f513e37163c89f4d8",
+            "1945dcf2fad7fc97621830abed34353c2d372d8224cc9ad11a9c422eabfdf9f4",
+            "798b47b6f5355b120141a7fa730350739298082549036233ea5804226dbad80c",
+            "93ccb06cafb9128f4ae02f111ca4bfb599305f84ecce01e41971e69822ba1ec6",
+            "1b8cb378b889817e14bf06be5065b04016589f6b74dcd5501776dde758f38259",
+            "3f4ce0a44ae75192fe7fea3b03b879c21ab0b2be7cc0a620522c60c2155b674b",
+            "74784bf0c7ba99628ed2ff8db19157c63d22a2a1cd66c58000ad2e811dc93160",
+            "3e2e81b43b1c1298266df428bc01ef0761d37f413073824cae2000623ea2eb3c",
+            "b605c3b9ba06bbf18fc126770b18de3d2da0d3f70c08e04873f17bc735b948bc",
+            "934729ee467a2eb030c244584c6fa5c3575ca9ed0a43348a59a486199c0f55e9",
+            "58c26086546abb8b94eb6998671101d67633af426adf373cceb42862ccaf0ec4"
+          ]
+        },
+        "scriptSha256": {
+          "$ref": "#/$defs/sha256"
+        },
+        "audioSha256": {
+          "$ref": "#/$defs/sha256"
+        },
+        "preparedWavSha256": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/sha256"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "visualStatus": {
+          "const": "NOT_CONNECTED"
+        },
+        "visualCorrectiveClaimsAllowed": {
+          "const": false
+        },
+        "preparedAudio": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/preparedAudio"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        }
+      },
+      "required": [
+        "requestId",
+        "executionId",
+        "analysisId",
+        "recordingId",
+        "contentId",
+        "canonicalAnalysisId",
+        "coreSha256",
+        "parentManifestSha256",
+        "llmManifestSha256",
+        "llmDependencyLockSha256",
+        "scriptSha256",
+        "audioSha256",
+        "preparedWavSha256",
+        "preparedAudio",
+        "visualStatus",
+        "visualCorrectiveClaimsAllowed"
+      ],
+      "oneOf": [
+        {
+          "properties": {
+            "llmManifestSha256": {
+              "const": "1413b196616c919aeaab243fdd57771e70221ffc53a37f9b018d1881499b8c73"
+            },
+            "llmDependencyLockSha256": {
+              "const": "d8356763579dcfee347073a3f0ff72f4a0f67e33a29fa3b4c71012afcfd4ba01"
+            },
+            "parentManifestSha256": {
+              "const": "95f2347ad53ab53030f68a65795cfc5a84ca1c8c41bd03119c9a9fb15d0367c2"
+            }
+          }
+        },
+        {
+          "properties": {
+            "llmManifestSha256": {
+              "const": "9f10296b6944249ded9f5ce2ccfdfa7c53b6e4af670999fe68e9e477e97eaf45"
+            },
+            "llmDependencyLockSha256": {
+              "const": "93636f0c4befe7f1e34358e74b1077cc94cb2b82064781485b0183c53357d2f5"
+            },
+            "parentManifestSha256": {
+              "const": "95f2347ad53ab53030f68a65795cfc5a84ca1c8c41bd03119c9a9fb15d0367c2"
+            }
+          }
+        },
+        {
+          "properties": {
+            "parentManifestSha256": {
+              "const": "6ca67fcdaed390cc3da634fbafaef153890e52b8775c431f3fefae7dc122c776"
+            },
+            "llmManifestSha256": {
+              "const": "820d600fab4c49615050b9a038e7236f0429f68249dc631a39c0f5ab0be6f0f6"
+            },
+            "llmDependencyLockSha256": {
+              "const": "17d327b5898b183274418996468b577f3c455d8c1a5868b9cf3e00a34d53114d"
+            }
+          }
+        },
+        {
+          "properties": {
+            "parentManifestSha256": {
+              "const": "08fd8a19b6897d0c3890b0944986685830f24e6e676ea19422038b03a940ba80"
+            },
+            "llmManifestSha256": {
+              "const": "4afc1c2cdbf7b5440742cf154fe96ab2083beda69cd9e07c47a241fb0d784fcf"
+            },
+            "llmDependencyLockSha256": {
+              "const": "b4ff1aa729d9c981a048d5b7df1293d9637df53269d0598d7ae6069f2b0cc989"
+            }
+          }
+        },
+        {
+          "properties": {
+            "parentManifestSha256": {
+              "const": "08fd8a19b6897d0c3890b0944986685830f24e6e676ea19422038b03a940ba80"
+            },
+            "llmManifestSha256": {
+              "const": "e3d6d6be9d896ede8d75d5f35f5daf4520a8d42f484e5f84a6fc32f8a05fb2e3"
+            },
+            "llmDependencyLockSha256": {
+              "const": "dc3db9cc03a3355ddeb5d5819cd6fd46726935c8ca9b830f513e37163c89f4d8"
+            }
+          }
+        },
+        {
+          "properties": {
+            "parentManifestSha256": {
+              "const": "ce16f635da012237b5316b36161d5eeff9432279cd08dbbe7967f5ab7ace7f7e"
+            },
+            "llmManifestSha256": {
+              "const": "885a2f0a67494dc3bebed28962222bfe95a0143292fe2de04194b84ea8beadc5"
+            },
+            "llmDependencyLockSha256": {
+              "const": "1945dcf2fad7fc97621830abed34353c2d372d8224cc9ad11a9c422eabfdf9f4"
+            }
+          }
+        },
+        {
+          "properties": {
+            "parentManifestSha256": {
+              "const": "9e2a2107db7d30fe8910c8984687974d85b95120760e2bcce53d57640a5d5a32"
+            },
+            "llmManifestSha256": {
+              "const": "358365399f7445ab0a77797ce46619979955503c4faac8185724e2225aa5205c"
+            },
+            "llmDependencyLockSha256": {
+              "const": "798b47b6f5355b120141a7fa730350739298082549036233ea5804226dbad80c"
+            }
+          }
+        },
+        {
+          "properties": {
+            "parentManifestSha256": {
+              "const": "68cda53df72be9dace15f3829a840c27f40efbbfee1a561f8e58d314b4991aad"
+            },
+            "llmManifestSha256": {
+              "const": "7dfc26fb088300165b4a564847d0a489092b0ab830ef591943a40f31ecb85747"
+            },
+            "llmDependencyLockSha256": {
+              "const": "93ccb06cafb9128f4ae02f111ca4bfb599305f84ecce01e41971e69822ba1ec6"
+            }
+          }
+        },
+        {
+          "properties": {
+            "parentManifestSha256": {
+              "const": "f1009fcdbf75515ddc13e915dcbbf19dfac751ce39779e404749c4f51dd74841"
+            },
+            "llmManifestSha256": {
+              "const": "efc705b042cb1b18d4babff4f5949f37622154e979b1c07b33afdc36eeb89428"
+            },
+            "llmDependencyLockSha256": {
+              "const": "1b8cb378b889817e14bf06be5065b04016589f6b74dcd5501776dde758f38259"
+            }
+          }
+        },
+        {
+          "properties": {
+            "parentManifestSha256": {
+              "const": "20acb7275aa06d0be4aca1a567420ea603c0eec084e50c651c96501903034f1b"
+            },
+            "llmManifestSha256": {
+              "const": "6a3bf7c872e718086cb9add4d48412c825188310cdc9eb394089301dd784ff57"
+            },
+            "llmDependencyLockSha256": {
+              "const": "3f4ce0a44ae75192fe7fea3b03b879c21ab0b2be7cc0a620522c60c2155b674b"
+            }
+          }
+        },
+        {
+          "properties": {
+            "parentManifestSha256": {
+              "const": "818a3c16cba39dfcfa9f1083865db7f122a3eba40bc332d85256da94d1d6fb1e"
+            },
+            "llmManifestSha256": {
+              "const": "f90440b764f78f32c989dc0785f41262397cc22e1d1ca48c40361189b81f86d5"
+            },
+            "llmDependencyLockSha256": {
+              "const": "74784bf0c7ba99628ed2ff8db19157c63d22a2a1cd66c58000ad2e811dc93160"
+            }
+          }
+        },
+        {
+          "properties": {
+            "parentManifestSha256": {
+              "const": "f6d56e1decc160f0ca38cc8d52303f3de20945f872d714bf6a2e743ed94c0391"
+            },
+            "llmManifestSha256": {
+              "const": "1612539f82a0b6e2c5c0b3551440b8094ca979bd8ab5d898386713bd0d1f54b7"
+            },
+            "llmDependencyLockSha256": {
+              "const": "3e2e81b43b1c1298266df428bc01ef0761d37f413073824cae2000623ea2eb3c"
+            }
+          }
+        },
+        {
+          "properties": {
+            "parentManifestSha256": {
+              "const": "f6d56e1decc160f0ca38cc8d52303f3de20945f872d714bf6a2e743ed94c0391"
+            },
+            "llmManifestSha256": {
+              "const": "def65f68a849a2452b0e4dde600f0ef85d99beaa97123d30d97262653ebf8e77"
+            },
+            "llmDependencyLockSha256": {
+              "const": "b605c3b9ba06bbf18fc126770b18de3d2da0d3f70c08e04873f17bc735b948bc"
+            }
+          }
+        },
+        {
+          "properties": {
+            "parentManifestSha256": {
+              "const": "4cc0cbacd41b5c6f2ac20e6e4840bc5406f4c7ab79ecf53702586eeb5874ecbc"
+            },
+            "llmManifestSha256": {
+              "const": "d70372926d3406842b95c370b5ceb152480e7f0af83ba840028ec8d9ace2dc50"
+            },
+            "llmDependencyLockSha256": {
+              "const": "934729ee467a2eb030c244584c6fa5c3575ca9ed0a43348a59a486199c0f55e9"
+            }
+          }
+        },
+        {
+          "properties": {
+            "parentManifestSha256": {
+              "const": "f6d56e1decc160f0ca38cc8d52303f3de20945f872d714bf6a2e743ed94c0391"
+            },
+            "llmManifestSha256": {
+              "const": "3e430635a4d714ead5d8e08352e41ff9a2b06c893d73af7f018fb43b4c37f61c"
+            },
+            "llmDependencyLockSha256": {
+              "const": "58c26086546abb8b94eb6998671101d67633af426adf373cceb42862ccaf0ec4"
+            }
+          }
+        }
+      ]
+    },
+    "audioResult": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "schemaVersion": {
+          "const": "voice-coaching.runpod-analysis-result.v6"
+        },
+        "eventId": {
+          "$ref": "#/$defs/uuid"
+        },
+        "requestId": {
+          "$ref": "#/$defs/uuid"
+        },
+        "executionId": {
+          "$ref": "#/$defs/uuid"
+        },
+        "workerInstanceId": {
+          "$ref": "#/$defs/uuid"
+        },
+        "analysisId": {
+          "$ref": "#/$defs/positiveLong"
+        },
+        "recordingId": {
+          "$ref": "#/$defs/positiveLong"
+        },
+        "contentId": {
+          "$ref": "#/$defs/positiveLong"
+        },
+        "status": {
+          "enum": [
+            "COMPLETED",
+            "FAILED"
+          ]
+        },
+        "failure": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/failure"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "workerRevision": {
+          "$ref": "#/$defs/revision"
+        },
+        "pipelineRevision": {
+          "$ref": "#/$defs/revision"
+        },
+        "analysisProfile": {
+          "const": "CANONICAL_AUDIOVISUAL_20261007_V6"
+        },
+        "sourceIdentity": {
+          "$ref": "#/$defs/sourceIdentity"
+        },
+        "canonical": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/canonical"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "selection": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/selection"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "coaching": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/coaching"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "visual": {
+          "$ref": "#/$defs/audioVisual"
+        },
+        "prosodyPolicy": {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "expressionPermission": {
+              "const": "NO_APPROVED_GUIDANCE_MAPPING"
+            }
+          },
+          "required": [
+            "expressionPermission"
+          ]
+        },
+        "score": {
+          "$ref": "#/$defs/score"
+        }
+      },
+      "required": [
+        "schemaVersion",
+        "eventId",
+        "requestId",
+        "executionId",
+        "workerInstanceId",
+        "analysisId",
+        "recordingId",
+        "contentId",
+        "status",
+        "failure",
+        "workerRevision",
+        "pipelineRevision",
+        "analysisProfile",
+        "sourceIdentity",
+        "canonical",
+        "selection",
+        "coaching",
+        "visual",
+        "prosodyPolicy",
+        "score"
+      ],
+      "oneOf": [
+        {
+          "properties": {
+            "status": {
+              "const": "COMPLETED"
+            },
+            "failure": {
+              "const": null
+            },
+            "canonical": {
+              "type": "object",
+              "properties": {
+                "representation": {
+                  "const": "INLINE"
+                },
+                "decision": {
+                  "properties": {
+                    "status": {
+                      "enum": [
+                        "ACCEPT",
+                        "REJECT",
+                        "INCONCLUSIVE"
+                      ]
+                    }
+                  }
+                }
+              }
+            },
+            "coaching": {
+              "$ref": "#/$defs/coaching"
+            }
+          }
+        },
+        {
+          "properties": {
+            "status": {
+              "const": "FAILED"
+            },
+            "failure": {
+              "allOf": [
+                {
+                  "$ref": "#/$defs/failure"
+                },
+                {
+                  "properties": {
+                    "origin": {
+                      "const": "INTEGRATION"
+                    },
+                    "code": {
+                      "enum": [
+                        "CANONICAL_EXECUTION_FAILED",
+                        "CORE_CONTRACT_INVALID",
+                        "CANONICAL_BINDING_FAILED",
+                        "EVIDENCE_STORAGE_FAILED"
+                      ]
+                    }
+                  }
+                }
+              ]
+            },
+            "canonical": {
+              "const": null
+            },
+            "selection": {
+              "const": null
+            },
+            "coaching": {
+              "const": null
+            },
+            "sourceIdentity": {
+              "properties": {
+                "canonicalAnalysisId": {
+                  "const": null
+                },
+                "coreSha256": {
+                  "const": null
+                },
+                "preparedWavSha256": {
+                  "const": null
+                }
+              }
+            },
+            "score": {
+              "properties": {
+                "validity": {
+                  "const": "NOT_AVAILABLE"
+                }
+              }
+            }
+          }
+        },
+        {
+          "properties": {
+            "status": {
+              "const": "FAILED"
+            },
+            "failure": {
+              "allOf": [
+                {
+                  "$ref": "#/$defs/failure"
+                },
+                {
+                  "properties": {
+                    "origin": {
+                      "const": "INTEGRATION"
+                    },
+                    "code": {
+                      "const": "RESULT_ENVELOPE_TOO_LARGE"
+                    },
+                    "stage": {
+                      "const": "SERIALIZATION"
+                    }
+                  }
+                }
+              ]
+            },
+            "canonical": {
+              "type": "object",
+              "properties": {
+                "representation": {
+                  "const": "RETAINED_ONLY"
+                }
+              }
+            },
+            "selection": {
+              "const": null
+            },
+            "coaching": {
+              "const": null
+            }
+          }
+        },
+        {
+          "properties": {
+            "status": {
+              "const": "FAILED"
+            },
+            "failure": {
+              "$ref": "#/$defs/failure"
+            },
+            "canonical": {
+              "type": "object",
+              "properties": {
+                "representation": {
+                  "const": "INLINE"
+                }
+              }
+            },
+            "coaching": {
+              "anyOf": [
+                {
+                  "type": "null"
+                },
+                {
+                  "allOf": [
+                    {
+                      "$ref": "#/$defs/coaching"
+                    },
+                    {
+                      "properties": {
+                        "adapterStatus": {
+                          "enum": [
+                            "FAIL_CLOSED",
+                            "GLOBAL_SYSTEM_FAILURE"
+                          ]
+                        }
+                      }
+                    }
+                  ]
+                }
+              ]
+            }
+          }
+        }
+      ],
+      "allOf": [
+        {
+          "if": {
+            "properties": {
+              "canonical": {
+                "type": "null"
+              }
+            }
+          },
+          "then": {
+            "properties": {
+              "failure": {
+                "type": "object",
+                "properties": {
+                  "origin": {
+                    "const": "INTEGRATION"
+                  }
+                }
+              }
+            }
+          },
+          "else": {
+            "properties": {
+              "sourceIdentity": {
+                "properties": {
+                  "canonicalAnalysisId": {
+                    "type": "string",
+                    "minLength": 1,
+                    "maxLength": 200
+                  },
+                  "coreSha256": {
+                    "$ref": "#/$defs/sha256"
+                  }
+                }
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "status": {
+                "const": "COMPLETED"
+              },
+              "canonical": {
+                "type": "object",
+                "properties": {
+                  "decision": {
+                    "properties": {
+                      "status": {
+                        "const": "ACCEPT"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "then": {
+            "properties": {
+              "selection": {
+                "anyOf": [
+                  {
+                    "$ref": "#/$defs/selection"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
+              },
+              "coaching": {
+                "properties": {
+                  "adapterStatus": {
+                    "enum": [
+                      "READY",
+                      "NO_PERMITTED_COACHING_CONTENT"
+                    ]
+                  }
+                }
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "coaching": {
+                "type": "object",
+                "properties": {
+                  "adapterStatus": {
+                    "const": "GLOBAL_REJECT"
+                  }
+                }
+              }
+            }
+          },
+          "then": {
+            "properties": {
+              "selection": {
+                "const": null
+              },
+              "canonical": {
+                "type": "object",
+                "properties": {
+                  "decision": {
+                    "properties": {
+                      "status": {
+                        "const": "REJECT"
+                      }
+                    }
+                  }
+                }
+              },
+              "status": {
+                "const": "COMPLETED"
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "coaching": {
+                "type": "object",
+                "properties": {
+                  "adapterStatus": {
+                    "const": "GLOBAL_INCONCLUSIVE"
+                  }
+                }
+              }
+            }
+          },
+          "then": {
+            "properties": {
+              "selection": {
+                "const": null
+              },
+              "canonical": {
+                "type": "object",
+                "properties": {
+                  "decision": {
+                    "properties": {
+                      "status": {
+                        "const": "INCONCLUSIVE"
+                      }
+                    }
+                  }
+                }
+              },
+              "status": {
+                "const": "COMPLETED"
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "coaching": {
+                "type": "object",
+                "properties": {
+                  "adapterStatus": {
+                    "const": "GLOBAL_SYSTEM_FAILURE"
+                  }
+                }
+              }
+            }
+          },
+          "then": {
+            "properties": {
+              "selection": {
+                "const": null
+              },
+              "canonical": {
+                "type": "object",
+                "properties": {
+                  "decision": {
+                    "properties": {
+                      "status": {
+                        "const": "SYSTEM_FAILURE"
+                      }
+                    }
+                  }
+                }
+              },
+              "status": {
+                "const": "FAILED"
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "coaching": {
+                "type": "object",
+                "properties": {
+                  "adapterStatus": {
+                    "const": "READY"
+                  }
+                }
+              }
+            }
+          },
+          "then": {
+            "properties": {
+              "status": {
+                "const": "COMPLETED"
+              },
+              "selection": {
+                "anyOf": [
+                  {
+                    "$ref": "#/$defs/selection"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
+              },
+              "canonical": {
+                "type": "object",
+                "properties": {
+                  "decision": {
+                    "properties": {
+                      "status": {
+                        "const": "ACCEPT"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "coaching": {
+                "type": "object",
+                "properties": {
+                  "adapterStatus": {
+                    "const": "NO_PERMITTED_COACHING_CONTENT"
+                  }
+                }
+              }
+            }
+          },
+          "then": {
+            "properties": {
+              "status": {
+                "const": "COMPLETED"
+              },
+              "selection": {
+                "allOf": [
+                  {
+                    "$ref": "#/$defs/selection"
+                  },
+                  {
+                    "properties": {
+                      "candidates": {
+                        "maxItems": 0
+                      }
+                    }
+                  }
+                ]
+              },
+              "canonical": {
+                "type": "object",
+                "properties": {
+                  "decision": {
+                    "properties": {
+                      "status": {
+                        "const": "ACCEPT"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "coaching": {
+                "type": "object",
+                "properties": {
+                  "adapterStatus": {
+                    "const": "FAIL_CLOSED"
+                  }
+                }
+              }
+            }
+          },
+          "then": {
+            "properties": {
+              "status": {
+                "const": "FAILED"
+              },
+              "selection": {
+                "const": null
+              },
+              "failure": {
+                "type": "object",
+                "properties": {
+                  "origin": {
+                    "const": "INTEGRATION"
+                  },
+                  "code": {
+                    "const": "CANONICAL_ADAPTER_FAILED"
+                  },
+                  "stage": {
+                    "const": "ADAPTER"
+                  }
+                }
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "sourceIdentity": {
+                "properties": {
+                  "llmManifestSha256": {
+                    "enum": [
+                      "820d600fab4c49615050b9a038e7236f0429f68249dc631a39c0f5ab0be6f0f6",
+                      "4afc1c2cdbf7b5440742cf154fe96ab2083beda69cd9e07c47a241fb0d784fcf",
+                      "e3d6d6be9d896ede8d75d5f35f5daf4520a8d42f484e5f84a6fc32f8a05fb2e3",
+                      "885a2f0a67494dc3bebed28962222bfe95a0143292fe2de04194b84ea8beadc5",
+                      "358365399f7445ab0a77797ce46619979955503c4faac8185724e2225aa5205c",
+                      "7dfc26fb088300165b4a564847d0a489092b0ab830ef591943a40f31ecb85747",
+                      "efc705b042cb1b18d4babff4f5949f37622154e979b1c07b33afdc36eeb89428",
+                      "6a3bf7c872e718086cb9add4d48412c825188310cdc9eb394089301dd784ff57",
+                      "f90440b764f78f32c989dc0785f41262397cc22e1d1ca48c40361189b81f86d5",
+                      "1612539f82a0b6e2c5c0b3551440b8094ca979bd8ab5d898386713bd0d1f54b7",
+                      "def65f68a849a2452b0e4dde600f0ef85d99beaa97123d30d97262653ebf8e77",
+                      "3e430635a4d714ead5d8e08352e41ff9a2b06c893d73af7f018fb43b4c37f61c",
+                      "d70372926d3406842b95c370b5ceb152480e7f0af83ba840028ec8d9ace2dc50"
+                    ]
+                  }
+                }
+              }
+            }
+          },
+          "then": {
+            "properties": {
+              "score": {
+                "oneOf": [
+                  {
+                    "$ref": "#/$defs/computedScore"
+                  },
+                  {
+                    "$ref": "#/$defs/unscoredScore"
+                  }
+                ]
+              },
+              "coaching": {
+                "anyOf": [
+                  {
+                    "type": "null"
+                  },
+                  {
+                    "type": "object",
+                    "required": [
+                      "scoring"
+                    ]
+                  }
+                ]
+              }
+            }
+          },
+          "else": {
+            "properties": {
+              "score": {
+                "$ref": "#/$defs/legacyScore"
+              },
+              "coaching": {
+                "not": {
+                  "type": "object",
+                  "required": [
+                    "scoring"
+                  ]
+                }
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "score": {
+                "properties": {
+                  "validity": {
+                    "const": "RUBRIC_COMPUTED"
+                  }
+                }
+              }
+            }
+          },
+          "then": {
+            "properties": {
+              "status": {
+                "const": "COMPLETED"
+              },
+              "canonical": {
+                "type": "object",
+                "properties": {
+                  "decision": {
+                    "properties": {
+                      "status": {
+                        "const": "ACCEPT"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "sourceIdentity": {
+                "properties": {
+                  "llmManifestSha256": {
+                    "enum": [
+                      "f90440b764f78f32c989dc0785f41262397cc22e1d1ca48c40361189b81f86d5",
+                      "1612539f82a0b6e2c5c0b3551440b8094ca979bd8ab5d898386713bd0d1f54b7",
+                      "6a3bf7c872e718086cb9add4d48412c825188310cdc9eb394089301dd784ff57",
+                      "def65f68a849a2452b0e4dde600f0ef85d99beaa97123d30d97262653ebf8e77",
+                      "3e430635a4d714ead5d8e08352e41ff9a2b06c893d73af7f018fb43b4c37f61c",
+                      "d70372926d3406842b95c370b5ceb152480e7f0af83ba840028ec8d9ace2dc50"
+                    ]
+                  }
+                }
+              },
+              "coaching": {
+                "type": "object",
+                "properties": {
+                  "adapterStatus": {
+                    "const": "READY"
+                  }
+                }
+              }
+            }
+          },
+          "then": {
+            "properties": {
+              "selection": {
+                "const": null
+              },
+              "coaching": {
+                "required": [
+                  "feedback"
+                ],
+                "properties": {
+                  "items": {
+                    "maxItems": 0
+                  }
+                }
+              }
+            }
+          },
+          "else": {
+            "if": {
+              "properties": {
+                "coaching": {
+                  "type": "object",
+                  "properties": {
+                    "adapterStatus": {
+                      "const": "READY"
+                    }
+                  }
+                }
+              }
+            },
+            "then": {
+              "properties": {
+                "selection": {
+                  "$ref": "#/$defs/selection"
+                }
+              }
             }
           }
         }

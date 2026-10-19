@@ -235,7 +235,7 @@ class HttpRuntime:
                         raise ValueError()
             from .http_models import parse_json
             state = parse_json(bytes(raw))
-            if (state.get("contractVersion") != "voice-coaching.canonical-handoff.v1"
+            if (state.get("contractVersion") != "voice-coaching.canonical-handoff.v2"
                     or not state.get("supported")
                     or state.get("schemaDigests") != handoff_schema_digests()):
                 raise ValueError()
@@ -418,10 +418,8 @@ class HttpRuntime:
             raise HttpFailure(429, "CAPACITY_EXCEEDED")
         if not self.resource_budget.can_admit():
             raise HttpFailure(429, "CAPACITY_EXCEEDED")
-        from .http_models import RESULT_V5, RESULT_V6
-        canonical_ready = (self.audiovisual_admission_ready() if request.result_schema_version == RESULT_V6
-                           else self.handoff_admission_ready() if request.result_schema_version == RESULT_V5
-                           else self.canonical_admission_ready())
+        canonical_ready = (self.audiovisual_admission_ready() if request.is_audiovisual
+                           else self.handoff_admission_ready() if request.is_v6 else False)
         if not request.is_legacy and not canonical_ready:
             raise HttpFailure(503, "NOT_READY")
         if request.is_legacy and not self.legacy_ready():

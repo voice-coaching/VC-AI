@@ -142,8 +142,9 @@ def main():
         'runpod_canonical_input.schema.json', 'runpod_canonical_output.schema.json',
         'runpod_canonical_parent.schema.json', 'runpod_http_control_v1.schema.json',
         'runpod_http_control_v1_2.schema.json', 'runpod_canonical_journal_v1.schema.json',
-        'runpod_result_v5.schema.json', 'runpod_analysis_request_v3.schema.json',
-        'runpod_canonical_handoff_v1.schema.json')}
+        'runpod_result_v6.schema.json', 'runpod_analysis_request_v4.schema.json',
+        'runpod_canonical_handoff_v2.schema.json', 'runpod_media_preparation_v1.schema.json',
+        'runpod_visual_coaching_input_v1.schema.json')}
     if not args.resume_waiting:
         (WORK / 'runtime.json').write_bytes(raw)
         (WORK / 'plan.json').write_text(json.dumps(plan))

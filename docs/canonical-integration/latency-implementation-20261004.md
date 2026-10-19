@@ -34,7 +34,7 @@ Backend offline verifier의 파생 pin, v4 schema의 허용 identity tuple, expo
 
 ## 후속 구현과 남은 범위
 
-- P3/P4: [v5 영속 인계·archive worker](handoff-v5-20261004.md)에 후속 코드를 추가했다. 배포·개발자 수용은 별도다.
+- P3/P4: [현재 v6 계약](v6-unification.md)에 후속 코드를 추가했다. 배포·개발자 수용은 별도다.
 - P2 후속: 추론 1개 + GPT/인계 1개를 겹치는 execution별 context, 3회 제한 이후의 장기 상주 수명 검증.
 - P5 후속: 새 profile capability/FE parser, MFA feature 내부의 추가 계측·실측에 따른 변경.
 

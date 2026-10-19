@@ -4,15 +4,7 @@ import hashlib
 
 
 def schema_digests():
-    names = (
-        "runpod_http_control_v1.schema.json", "runpod_result_v1.schema.json",
-        "runpod_analysis_request_v2.schema.json", "runpod_http_control_v1_2.schema.json",
-        "runpod_result_v4.schema.json", "runpod_canonical_parent.schema.json",
-        "runpod_canonical_input.schema.json", "runpod_canonical_output.schema.json",
-        "runpod_canonical_journal_v1.schema.json")
-    root = Path(__file__).resolve().parents[3] / "docs/contracts"
-    return [{"file": name, "sha256": hashlib.sha256((root / name).read_bytes()).hexdigest()}
-            for name in names]
+    return [{"file": name, "sha256": sha} for name, sha in handoff_schema_digests().items()]
 
 def child_environment(environment):
     names = {
@@ -42,14 +34,12 @@ def handoff_schema_digests():
     names = ("runpod_http_control_v1.schema.json", "runpod_http_control_v1_2.schema.json",
         "runpod_canonical_parent.schema.json", "runpod_canonical_input.schema.json",
         "runpod_canonical_output.schema.json", "runpod_canonical_journal_v1.schema.json",
-        "runpod_analysis_request_v3.schema.json", "runpod_result_v5.schema.json",
-        "runpod_canonical_handoff_v1.schema.json")
+        "runpod_analysis_request_v4.schema.json", "runpod_result_v6.schema.json",
+        "runpod_canonical_handoff_v2.schema.json", "runpod_media_preparation_v1.schema.json",
+        "runpod_visual_coaching_input_v1.schema.json")
     return {name: hashlib.sha256((root / name).read_bytes()).hexdigest() for name in names}
 
 
 def audiovisual_schema_digests():
-    root = Path(__file__).resolve().parents[3] / "docs/contracts"
-    return {name: hashlib.sha256((root / name).read_bytes()).hexdigest() for name in (
-        "runpod_analysis_request_v4.schema.json", "runpod_result_v6.schema.json",
-        "runpod_canonical_handoff_v2.schema.json", "runpod_media_preparation_v1.schema.json",
-        "runpod_visual_coaching_input_v1.schema.json")}
+    # Audio and audiovisual readiness attest the same complete v6 contract set.
+    return handoff_schema_digests()

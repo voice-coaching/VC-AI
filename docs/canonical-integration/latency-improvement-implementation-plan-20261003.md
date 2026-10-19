@@ -2,7 +2,7 @@
 
 작성 기준: 2026-10-03 운영 관측, 2026-10-04 계획 구체화. 문서 파일명의 날짜는 측정 기준일이다.
 
-상태: **코드 구현 진행, 전체 계획·운영 수용 미완료**. 2026-10-04 [구현 현황](latency-implementation-20261004.md)과 [v5 인계·archive 구현](handoff-v5-20261004.md)에 코드·컴파일과 미완료 운영 확인을 구분했다. 아래 P3/P4의 최종 계약·테이블·설정은 v5 구현 문서를 따른다. 배포·개발자 수용 완료 기록은 아니다. 기존 운영 계약은 [callback v4 계획](callback-v4-plan.md), 측정 근거는 [구간별 시간](testvideo1-pipeline-timing-20261003.md), [병목 조사](pipeline-bottleneck-analysis-20261003.md)를 따른다. 로컬에 있을 경우 `incident-20261003-capacity-api-audit.md`도 참고한다. 이번 계획은 B2 완료를 사용자 결과의 선행조건으로 두는 기존 설계를 새 opt-in 경로에서 변경한다.
+상태: **코드 구현 진행, 전체 계획·운영 수용 미완료**. 2026-10-04 [구현 현황](latency-implementation-20261004.md)과 [현재 v6 계약](v6-unification.md)에 코드·컴파일과 미완료 운영 확인을 구분했다. 아래 P3/P4의 최종 계약·테이블·설정은 v5 구현 문서를 따른다. 배포·개발자 수용 완료 기록은 아니다. 기존 운영 계약은 [현재 v6 계약](v6-unification.md), 측정 근거는 [구간별 시간](testvideo1-pipeline-timing-20261003.md), [병목 조사](pipeline-bottleneck-analysis-20261003.md)를 따른다. 로컬에 있을 경우 `incident-20261003-capacity-api-audit.md`도 참고한다. 이번 계획은 B2 완료를 사용자 결과의 선행조건으로 두는 기존 설계를 새 opt-in 경로에서 변경한다.
 
 ## 1. 목표와 유지 조건
 

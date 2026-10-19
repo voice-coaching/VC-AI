@@ -6,17 +6,39 @@ again after container recreation; platform startup-hook integration is separate.
 import argparse
 import os
 from pathlib import Path
-import socket
+import shlex
 import stat
 import subprocess
+import time
 import host_identity
 
 
+def run_client(command):
+    # A disconnected AWS sshd may retain its forwards until its keepalive expires.
+    # Keep this supervisor child alive while SSH retries, so a temporary bind
+    # conflict cannot exhaust Supervisor's startup retries and strand ingress.
+    delay = 5
+    while True:
+        started = time.monotonic()
+        try:
+            result = subprocess.run(shlex.split(command), stdin=subprocess.DEVNULL)
+            code = result.returncode
+        except OSError:
+            code = 'SSH_START_FAILED'
+        if time.monotonic() - started >= 90:
+            delay = 5
+        print(f'AWS tunnel client exited ({code}); reconnecting in {delay}s', flush=True)
+        time.sleep(delay)
+        delay = min(delay * 2, 60)
 
 
 def main():
     parser = argparse.ArgumentParser()
-    parser.add_argument('--prepare-only', action='store_true')
+    mode = parser.add_mutually_exclusive_group()
+    mode.add_argument('--prepare-only', action='store_true')
+    mode.add_argument('--upgrade-client', action='store_true',
+                      help='Replace only the recognized previous SSH supervisor command')
+    mode.add_argument('--run-client', action='store_true', help=argparse.SUPPRESS)
     args = parser.parse_args()
     identity = host_identity.require_operator()
     aws = identity.aws()
@@ -33,7 +55,7 @@ def main():
     if not stat.S_ISDIR(info.st_mode) or info.st_uid != identity.uid or info.st_mode & 0o077:
         raise ValueError('PRIVATE_RUNTIME_REQUIRED')
     config = RUNTIME / 'supervisord.conf'
-    command = (
+    ssh_command = (
         f"/usr/bin/ssh -F /dev/null -NT -p {aws['port']} -o BatchMode=yes -o IdentitiesOnly=yes "
         '-o ConnectTimeout=10 -o ExitOnForwardFailure=yes -o ServerAliveInterval=30 '
         f"-o ServerAliveCountMax=3 -o StrictHostKeyChecking=yes -o HostKeyAlias={aws['host']} "
@@ -42,6 +64,10 @@ def main():
         f"-R 127.0.0.1:{aws['tunnel']['tts']}:127.0.0.1:8083 "
         f"ec2-user@{aws['host']}"
     )
+    if args.run_client:
+        run_client(ssh_command)
+        return
+    command = shlex.join([identity.tools_python, str(Path(__file__).resolve()), '--run-client'])
     content = f'''[unix_http_server]
 file={RUNTIME}/supervisor.sock
 chmod=0600
@@ -69,27 +95,41 @@ stdout_logfile_backups=2
 redirect_stderr=true
 '''
     if config.exists():
-        if config.is_symlink() or config.read_text() != content:
+        info = config.lstat()
+        if not stat.S_ISREG(info.st_mode) or info.st_uid != identity.uid or info.st_mode & 0o077:
+            raise ValueError('PRIVATE_TUNNEL_CONFIG_REQUIRED')
+        previous = config.read_text()
+        legacy = content.replace('command=' + command + '\n', 'command=' + ssh_command + '\n', 1)
+        if previous != content and (not args.upgrade_client or previous != legacy):
             raise ValueError('EXISTING_TUNNEL_CONFIG_DIFFERS')
+        if previous != content:
+            pending = RUNTIME / 'supervisord.conf.pending'
+            with pending.open('x') as stream:
+                stream.write(content)
+                stream.flush()
+                os.fsync(stream.fileno())
+            pending.replace(config)
     else:
         with config.open('x') as stream:
             stream.write(content)
     if args.prepare_only:
         print(f"AWS {aws['port']} tunnel prepared; not started")
         return
-    with socket.create_connection((aws['host'], aws['port']), timeout=8) as connection:
-        connection.settimeout(5)
-        if not connection.recv(128).startswith(b'SSH-'):
-            raise ValueError('AWS_SSH_BANNER_REQUIRED')
     ctl = [str(SUPERVISOR / 'supervisorctl'), '-c', str(config)]
-    status = subprocess.run(ctl + ['status'], capture_output=True, text=True)
+    if (RUNTIME / 'supervisor.sock').exists():
+        subprocess.run(ctl + ['reread'], check=True, timeout=15)
+        subprocess.run(ctl + ['update', 'aws-tunnel'], check=True, timeout=45)
+    else:
+        subprocess.run([str(SUPERVISOR / 'supervisord'), '-c', str(config)], check=True, timeout=15)
+        print('Supervisor started; confirm remote listeners before claiming connectivity')
+        return
+    status = subprocess.run(ctl + ['status', 'aws-tunnel'], capture_output=True, text=True, timeout=10)
     if 'RUNNING' in status.stdout or 'STARTING' in status.stdout:
         print(status.stdout.strip())
-    elif (RUNTIME / 'supervisor.sock').exists() and any(x in status.stdout for x in ('STOPPED', 'FATAL', 'EXITED')):
-        subprocess.run(ctl + ['start', 'aws-tunnel'], check=True)
+    elif any(x in status.stdout for x in ('STOPPED', 'FATAL', 'EXITED')):
+        subprocess.run(ctl + ['start', 'aws-tunnel'], check=True, timeout=30)
     else:
-        subprocess.run([str(SUPERVISOR / 'supervisord'), '-c', str(config)], check=True)
-        print('Supervisor started; confirm remote listeners before claiming connectivity')
+        raise ValueError('TUNNEL_SUPERVISOR_STATE_UNKNOWN')
 
 
 if __name__ == '__main__':
