@@ -4,7 +4,7 @@
 
 후속 canonical Native/P1·MFA·frozen LLM 통합은 이 입술 P0/P1 배포와 다른 작업이다. [canonical 통합 조사와 진행 상태](../canonical-integration/README.md)를 따른다. Frozen STEP7의 영상은 `NOT_CONNECTED`이므로 이 문서의 CTC/Seungun 입술 연결을 새 MFA 후보에 자동 적용하지 않는다.
 
-후속 사용자 결정에 따른 [callback v4 전면 개편 계획](../canonical-integration/callback-v4-plan.md)을 별도로 작성했다.
+후속 사용자 결정에 따른 [현재 v6 계약](../canonical-integration/v6-unification.md)을 별도로 작성했다.
 10/2 Backend/DB 확장과 RunPod 전체 실행기·부팅·writer 키 주입은 운영 반영했고
 후속 Backend reader·검증·journal/apply와 명시 opt-in 단독 음성 v4 접수도 활성화했다.
 [최신 실제 범위·미수행 실행 QA](../canonical-integration/rollout-execution-20261002.md#제한-v4-접수-활성화)를 따른다.

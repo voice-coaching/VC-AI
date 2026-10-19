@@ -24,7 +24,7 @@ from .canonical_producer import (
 )
 from .canonical_result import preflight_canonical_result, serialize_canonical_result, serialize_precore_failure, ServiceFailure, ResultIdentity
 from .canonical_transport import FrozenOpenAITransport
-from .http_models import AnalysisInput, parse_json, RESULT_V5
+from .http_models import AnalysisInput, parse_json
 from .canonical_handoff import CanonicalHandoffClient, handoff_document
 from .canonical_recovery import persist_handoff
 from .http_settings import HttpSettings
@@ -206,6 +206,7 @@ async def execute(path: Path, env, diagnostic: dict):
         # Post-core errors keep the private scratch for investigation, not a false success.
         if isinstance(identity, ResultIdentity) and produced is None and active():
             raw = serialize_precore_failure(request=request, identity=identity,
+                harness=frozen.artifacts.identity,
                 failure=ServiceFailure("INTEGRATION", "CANONICAL_EXECUTION_FAILED", "EXECUTION"))
             doc = handoff_document(body, raw, None, identity)
             await asyncio.to_thread(persist_handoff, work, doc, ())

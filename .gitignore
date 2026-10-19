@@ -38,14 +38,25 @@
 **/logs/
 /vendor/
 
-# Share only the reviewed agent guides. Other agent files, local state and
-# future additions stay ignored unless explicitly added to this allowlist.
+# Share reviewed guides, the start prompt and the eight developer rules.
+# User references, local state and future additions remain ignored.
 /.codex/*
 !/.codex/README.md
 !/.codex/backend-http.md
 !/.codex/runpod.md
 !/.codex/backblaze.md
 !/.codex/env.md
+!/.codex/codex_start_prompt.txt
+!/.codex/ai_rule_developer/
+/.codex/ai_rule_developer/*
+!/.codex/ai_rule_developer/GLOBAL_RULES.md
+!/.codex/ai_rule_developer/ARCHITECTURE_RULES.md
+!/.codex/ai_rule_developer/SERVICE_LAYER_RULES.md
+!/.codex/ai_rule_developer/EXTERNAL_INTEGRATION_RULES.md
+!/.codex/ai_rule_developer/API_DESIGN_RULES.md
+!/.codex/ai_rule_developer/DOMAIN_MODEL_RULES.md
+!/.codex/ai_rule_developer/CODE_STYLE_RULES.md
+!/.codex/ai_rule_developer/DOCUMENT_RULE.md
 
 # Local architecture working notes remain outside the product clone.
 /docs/architecture/

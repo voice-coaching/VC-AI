@@ -1,5 +1,46 @@
 # DLPC deployment
 
+## Unified v6 source contract — 2026-10-19
+
+New internal admissions use request v4, result v6 and handoff v2 for both audio
+and audiovisual inputs. Audio-only input has `video=null` and a NOT_PROVIDED
+visual result; no media receipt or video evidence is fabricated. Production
+startup and both handoff readiness paths require the same eleven schema hashes.
+The offline verifier accepts only VERIFY_HANDOFF and VERIFY_PRECORE.
+
+This is a source change, not an application deployment. The separate Backend
+must support the same nullable-media v6 contract, v2 readiness and verifier.
+Drain/reconcile existing handoffs before switching; retired journals are retained
+for operator reconciliation and never relabeled or replayed. Video still requires
+its existing execution identity/assets/admission gates. See the
+[current contract and rollout prerequisites](../../docs/canonical-integration/v6-unification.md).
+
+## Direct ingress tunnel recovery — 2026-10-19
+
+The J406 AWS reverse tunnel stopped after SSH disconnected and four rapid
+restarts failed to bind AWS loopback port 28080. Supervisor entered `FATAL`;
+the local direct API stayed ready, while public nginx returned 502 without
+CORS headers. Restarting only the tunnel restored public direct readiness.
+
+`start_aws_tunnel.py` now supervises a persistent SSH reconnect loop with delays
+of 5, 10, 20, 40 and at most 60 seconds. An SSH process lasting at least 90 seconds
+resets the delay. Host-key pinning, key restrictions and forwarding targets stay
+in the host identity configuration. Supervisor `RUNNING` reports the reconnect
+manager's liveness; public API readiness must be observed separately.
+
+After installing the reviewed launcher in the persistent `aws-tunnel` directory,
+invoke it as the operator with `--upgrade-client` once. It accepts only the exact
+previous generated supervisor configuration, replaces it atomically, and runs
+`reread`/`update` for the tunnel alone. Other configuration drift is rejected.
+Normal startup also reconciles the on-disk configuration with Supervisor.
+
+The updated launcher is installed on J406. Public direct readiness and its
+configured FE origin returned 200 at 11:27:29 UTC. The analysis and TTS processes
+were not restarted. No tests, preflight replay, analysis submission or browser
+verification were performed. Internal Backend handoff readiness remains a
+separate blocker: its result-v5 schema digest differs from the running AI copy.
+See [cause, observations and remaining scope](../../docs/canonical-integration/incident-20261019-direct-ingress-tunnel.md).
+
 ## Recovery completed — 2026-10-15
 
 The recreated DLPC runtime was restored from the pinned base archive and the

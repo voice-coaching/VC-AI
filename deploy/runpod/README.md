@@ -80,9 +80,9 @@ Backend는 root:0600 `/etc/alpha-canonical-secrets/backend-runtime.env`를 syste
 
 2026-10-01 후속 사용자 승인으로 [PostgreSQL journal](../../docs/canonical-integration/backend-journal.md)을 운영 방향으로 변경했다. 현 Pod의 FUSE/overlay에 영구 SQLite를 두지 않는다. B2 원본 정본은 유지하며 RunPod는 private scratch와 내부 HTTP client를 사용한다. V35·journal/apply 설정·DB spool 용량과 전체 factory/boot 연결이 선행돼야 한다. 로컬 구현/컴파일 단계이며 이 문서 편집으로 운영 키를 주입하거나 배포·활성화하지 않았다.
 
-키 발급·주입과 전체 서비스 전환 순서는 [2026-10-01 운영 배포 계획](../../docs/canonical-integration/production-rollout-plan.md)을 따른다. 역할별 제한 키, source/runtime 비밀 분리, 개발자 수용 및 단계별 gate를 정의한 계획이며 아직 운영에 적용하지 않았다.
+키 발급·주입과 전체 서비스 전환 순서는 [현재 v6 계약](../../docs/canonical-integration/v6-unification.md)을 따른다. 역할별 제한 키, source/runtime 비밀 분리, 개발자 수용 및 단계별 gate를 정의한 계획이며 아직 운영에 적용하지 않았다.
 
-후속 요청으로 전체 통합·배포와 v4 접수의 **사용자 승인은 확보**했다. 2026-09-30 23:28 KST 재확인에서 현재 배포는 여전히 `32d98e3`의 legacy 경로이며, 아래 B2/canonical 설정은 확인한 로컬·Pod 설정 경로에 없었다. 접수 승인을 기술 readiness로 대체하지 않으며 [재확인 및 배포 조건](../../docs/canonical-integration/callback-v4-plan.md#15-접수-승인과-배포-전-재확인)을 따른다.
+후속 요청으로 전체 통합·배포와 v4 접수의 **사용자 승인은 확보**했다. 2026-09-30 23:28 KST 재확인에서 현재 배포는 여전히 `32d98e3`의 legacy 경로이며, 아래 B2/canonical 설정은 확인한 로컬·Pod 설정 경로에 없었다. 접수 승인을 기술 readiness로 대체하지 않으며 [현재 v6 계약](../../docs/canonical-integration/v6-unification.md)을 따른다.
 
 이후 AWS Backend·DB 직접 배포까지 명시 승인됐다. 2026-10-01 00:02:49 KST에는 사용자가 제공한 키 쌍으로 B2 Native 인증 및 버킷 메타데이터 조회에 성공했다. 이전 key ID 부재로 인한 인증 차단은 해소됐다. 관리용 비밀값을 그대로 S3 실행 키로 사용하거나 docs에 기록하지 않는다.
 
@@ -103,7 +103,7 @@ Backend는 root:0600 `/etc/alpha-canonical-secrets/backend-runtime.env`를 syste
 
 위 B2 관측에서 `bucketType=allPrivate`, `lifecycleRules=[]`, 기본 암호화 `SSE-B2/AES256`을 확인했다. Object Lock은 비활성이므로 무기한 보존 결정이 서버 강제 WORM을 뜻하지 않는다. 기존 버킷 정책은 변경하지 않았다. 2026-10-01 03:19 UTC에 해당 bucket/prefix 제한 writer·Backend reader 키를 발급하고 03:20 UTC에 각각 Native 인증·범위·만료를 대조했다. AWS root 전용 공급 사본에 보관했으며 **runtime 주입·S3 동작 수용은 아직 미완료**다. [실행 기록](../../docs/canonical-integration/rollout-execution-20261001.md)에 비밀 제외 메타데이터를 남겼다. [비밀값 없는 설정 예시](canonical-evidence.env.example)는 준비용이고 운영 env나 readiness 증거가 아니다.
 
-비공개 객체 원본 한도는 개별 16 MiB이며 callback은 1 MiB다. 업로드 후 같은 versionId로 다시 읽어 확인하더라도 Backend의 `VERIFIED` receipt를 대신하지 않는다. 제한시간·lease를 포함한 worker 연결, Backend 검증 worker/DB, 전체 계약 일치와 담당자 E2E가 준비되기 전에는 v4 접수를 열지 않는다. 현재 어댑터는 운영 factory와 연결되지 않았으며 기존 분석·TTS·8082에는 적용하지 않았다. 진행 범위는 [v4 구현 현황](../../docs/canonical-integration/callback-v4-plan.md#14-구현-진행-현황)을 따른다.
+비공개 객체 원본 한도는 개별 16 MiB이며 callback은 1 MiB다. 업로드 후 같은 versionId로 다시 읽어 확인하더라도 Backend의 `VERIFIED` receipt를 대신하지 않는다. 제한시간·lease를 포함한 worker 연결, Backend 검증 worker/DB, 전체 계약 일치와 담당자 E2E가 준비되기 전에는 v4 접수를 열지 않는다. 현재 어댑터는 운영 factory와 연결되지 않았으며 기존 분석·TTS·8082에는 적용하지 않았다. 진행 범위는 [현재 v6 계약](../../docs/canonical-integration/v6-unification.md)을 따른다.
 
 ## 상태 확인
 

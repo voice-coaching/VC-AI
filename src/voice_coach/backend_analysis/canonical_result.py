@@ -1,4 +1,4 @@
-"""Private canonical v4/v5 preflight and serialization; no storage or activation.
+"""Canonical audio verification and unified v6 serialization; no activation.
 
 The calling server owns admission, current execution/lease, prepared-WAV
 verification and authenticated Backend receipt lookup. A local artifact upload,
@@ -37,14 +37,14 @@ if TYPE_CHECKING:
     from .http_models import AnalysisInput
 
 
-from .http_models import REQUEST_V2, REQUEST_V3, RESULT_V4, RESULT_V5, RESULT_V6, CANONICAL_PROFILE, HANDOFF_PROFILE
+from .http_models import REQUEST_V2, REQUEST_V4, RESULT_V4, RESULT_V6, CANONICAL_PROFILE, AUDIOVISUAL_PROFILE
 
 def _canonical_profile(request):
     from voice_coach.direct_analysis.domain import DirectInput
     if type(request) is DirectInput:
         return True
     return (request.request_schema_version, request.result_schema_version, request.analysis_profile) in {
-        (REQUEST_V2, RESULT_V4, CANONICAL_PROFILE), (REQUEST_V3, RESULT_V5, HANDOFF_PROFILE)}
+        (REQUEST_V2, RESULT_V4, CANONICAL_PROFILE), (REQUEST_V4, RESULT_V6, AUDIOVISUAL_PROFILE)}
 
 RESULT_VERSION = "voice-coaching.runpod-analysis-result.v4"
 PROFILE = "CANONICAL_FROZEN_20260928_V4"
@@ -52,7 +52,8 @@ PROMPT_SHA256 = "362ccc1f15d2e166110cca52d90fd3d6e81ee85646e96eb7018d8b827889871
 MAX_RESULT_BYTES = 1024 * 1024
 MAX_ARTIFACT_BYTES = MAX_CORE_BYTES
 MAX_MANIFEST_BYTES = 65536
-ArtifactKind = Literal["CORE", "BRIDGE_RESULT", "SELECTION_PROJECTION", "BINDING", "ASSOCIATION"]
+ArtifactKind = Literal["CORE", "BRIDGE_RESULT", "SELECTION_PROJECTION", "BINDING", "ASSOCIATION",
+                       "MEDIA_RECEIPT", "VISUAL_EVIDENCE"]
 ARTIFACT_SCHEMAS = {
     "CORE": "canonical_ai_predeploy_v1",
     "BRIDGE_RESULT": "canonical-llm-expression-result-v1",
@@ -255,6 +256,7 @@ def preflight_canonical_result(
     result: CanonicalExpressionResult, *, request: AnalysisInput,
     frozen: FrozenCanonicalCoaching, prepared_audio: PreparedAudioIdentity | None = None,
     _visual_payload: dict | None = None,
+    _audio_only: bool = False,
 ) -> CanonicalPreflight:
     """Validate actual originals before retention, without storage or dispatch.
 
@@ -262,7 +264,7 @@ def preflight_canonical_result(
     adapter/schema subset alone is intentionally insufficient to bless guidance.
     Invalid raw cores are not converted into fake canonical failure states.
     """
-    if getattr(request, "is_audiovisual", False):
+    if getattr(request, "is_v6", False) and not _audio_only:
         from .canonical_audiovisual_result import preflight
         return preflight(result, request=request, frozen=frozen, prepared_audio=prepared_audio)
     _require(type(result) is CanonicalExpressionResult, "CANONICAL_PRIVATE_RESULT_REQUIRED")
@@ -274,7 +276,10 @@ def preflight_canonical_result(
     _validate(binding, "binding")
     from voice_coach.direct_analysis.domain import DirectInput
     if type(request) is not DirectInput:
-        _validate(association, "association")
+        if request.is_v6:
+            _validate(association, "audioAssociation", schema_name="v6")
+        else:
+            _validate(association, "association")
     # Direct associations use UUID job/audio IDs, not invented Backend integers.
     # Full exact association is reconstructed and compared immediately below.
     _validate(expression, "coaching")
@@ -436,24 +441,25 @@ def serialize_canonical_result(
     prepared_audio: PreparedAudioIdentity | None = None,
     _visual_payload: dict | None = None,
     _max_result_bytes: int = MAX_RESULT_BYTES,
+    _audio_only: bool = False,
 ) -> bytes:
-    """Build v4 with a verified B2 receipt, or v5 for durable-original handoff.
+    """Build the unified v6 wire result from the original audio/visual evidence.
 
     No upload, receipt issuance, event-ID creation or readiness mutation occurs.
     Caller must persist/reuse these exact bytes for retransmission. A full-sized
     envelope is replaced only by the defined RETAINED_ONLY delivery failure;
     every original remains required in the verified artifact set.
     """
-    if getattr(request, "is_audiovisual", False):
+    if getattr(request, "is_v6", False) and not _audio_only:
         from .canonical_audiovisual_result import serialize
         return serialize(result, request=request, identity=identity, frozen=frozen,
                          receipt=receipt, prepared_audio=prepared_audio)
     preflight = preflight_canonical_result(result, request=request, frozen=frozen, prepared_audio=prepared_audio,
-                                          _visual_payload=_visual_payload)
+                                          _visual_payload=_visual_payload, _audio_only=_audio_only)
     if request.result_schema_version == RESULT_V4:
         retained = _verified_retention(receipt, preflight)
     else:
-        _require(receipt is None, "V5_RECEIPT_FORBIDDEN")
+        _require(receipt is None, "V6_RECEIPT_FORBIDDEN")
         retained = None
     core = _read_json(result.core_bytes)
     expression = _read_json(result.expression_bytes)
@@ -472,7 +478,7 @@ def serialize_canonical_result(
                                    evidence=dict(artifactKind="CORE", sha256=_sha(result.core_bytes),
                                                  pointers=dict(EVIDENCE_POINTERS))),
                     selection=_public_selection(view, expression), coaching=expression, retainedEvidence=retained)
-    if request.result_schema_version == RESULT_V5:
+    if request.result_schema_version == RESULT_V6:
         del document["retainedEvidence"]
     document["score"] = _public_score(expression, view, frozen.artifacts.identity)
     if expression["adapterStatus"] == "FAIL_CLOSED":
@@ -489,31 +495,34 @@ def serialize_canonical_result(
         document["canonical"].update(representation="RETAINED_ONLY", inputValidation=None)
         if frozen.artifacts.identity.scoring:
             document["score"] = dict(overallScore=None, validity="NOT_AVAILABLE", reason="RESULT_NOT_DELIVERED")
-    validate_canonical_result_document(document, preflight=preflight, receipt=receipt)
+    validate_canonical_result_document(document, preflight=preflight, receipt=receipt,
+                                      _audio_only=_audio_only, _max_result_bytes=_max_result_bytes)
     raw = _wire(document)
     _require(len(raw) <= _max_result_bytes, "RESULT_SUMMARY_TOO_LARGE")
     return raw
 
 
-def serialize_precore_failure(*, request: AnalysisInput, identity: ResultIdentity, failure: ServiceFailure) -> bytes:
+def serialize_precore_failure(*, request: AnalysisInput, identity: ResultIdentity, failure: ServiceFailure,
+                             harness: HarnessIdentity = H5,
+                             _audio_only: bool = False) -> bytes:
     """Only for execution without a valid core; no fabricated canonical object.
 
     Invalid core bytes require a separate quarantine policy. This does not turn
     them into normal evidence, fabricate a receipt, or support post-core loss.
     """
-    if getattr(request, "is_audiovisual", False):
+    if getattr(request, "is_v6", False) and not _audio_only:
         from .canonical_audiovisual_result import precore
-        return precore(request=request, identity=identity, failure=failure)
+        return precore(request=request, identity=identity, failure=failure, harness=harness)
     _require(type(failure) is ServiceFailure and failure.origin == "INTEGRATION"
              and failure.code in {"CANONICAL_EXECUTION_FAILED", "CORE_CONTRACT_INVALID",
                                   "CANONICAL_BINDING_FAILED", "EVIDENCE_STORAGE_FAILED"},
              "PRECORE_FAILURE_INVALID")
-    document = _base_document(request, identity)
+    document = _base_document(request, identity, harness)
     document.update(status="FAILED", failure=failure.to_document(), canonical=None,
                     selection=None, coaching=None, retainedEvidence=None)
-    if request.result_schema_version == RESULT_V5:
+    if request.result_schema_version == RESULT_V6:
         del document["retainedEvidence"]
-    validate_canonical_result_document(document)
+    validate_canonical_result_document(document, _audio_only=_audio_only)
     raw = _wire(document)
     _require(len(raw) <= MAX_RESULT_BYTES, "RESULT_ENVELOPE_TOO_LARGE")
     return raw
@@ -522,6 +531,8 @@ def serialize_precore_failure(*, request: AnalysisInput, identity: ResultIdentit
 def validate_canonical_result_document(
     document: dict, *, preflight: CanonicalPreflight | None = None,
     receipt: TrustedBackendVerifiedReceipt | None = None,
+    _audio_only: bool = False,
+    _max_result_bytes: int = MAX_RESULT_BYTES,
 ) -> None:
     """Strict service validation against private originals, not a Map-only DTO.
 
@@ -529,19 +540,19 @@ def validate_canonical_result_document(
     deserialized from a callback. Remote ingress must independently retrieve and
     validate its retained originals before calling this boundary.
     """
-    if document.get("schemaVersion") == RESULT_V6:
+    if document.get("schemaVersion") == RESULT_V6 and not _audio_only:
         from .canonical_audiovisual_result import validate
         return validate(document, preflight=preflight, receipt=receipt)
-    v5 = document.get("schemaVersion") == RESULT_V5
-    _validate(document, "result", schema_name="v5" if v5 else "v4")
-    _require(len(_wire(document)) <= MAX_RESULT_BYTES, "RESULT_ENVELOPE_TOO_LARGE")
+    handoff = document.get("schemaVersion") == RESULT_V6
+    _validate(document, "audioResult" if handoff else "result", schema_name="v6" if handoff else "v4")
+    _require(len(_wire(document)) <= _max_result_bytes, "RESULT_ENVELOPE_TOO_LARGE")
     if document["canonical"] is None:
         _require(preflight is None and receipt is None and document["failure"]["origin"] == "INTEGRATION",
                  "PRECORE_FAILURE_INVALID")
         return
     _require(type(preflight) is CanonicalPreflight, "VERIFIED_ORIGINALS_REQUIRED")
-    if v5:
-        _require(receipt is None, "V5_RECEIPT_FORBIDDEN")
+    if handoff:
+        _require(receipt is None, "V6_RECEIPT_FORBIDDEN")
     else:
         _require(type(receipt) is TrustedBackendVerifiedReceipt, "VERIFIED_ORIGINALS_REQUIRED")
         retained = _verified_retention(receipt, preflight)
@@ -585,7 +596,7 @@ def validate_canonical_result_document(
         elif validation["status"] == "SYSTEM_FAILURE":
             original_failure = ServiceFailure("CORE", "CORE_SYSTEM_FAILURE", "EXECUTION").to_document()
         inline.update(status="FAILED" if original_failure else "COMPLETED", failure=original_failure)
-        _require(len(_wire(inline)) > MAX_RESULT_BYTES, "RETAINED_ONLY_WITHOUT_OVERSIZE")
+        _require(len(_wire(inline)) > _max_result_bytes, "RETAINED_ONLY_WITHOUT_OVERSIZE")
         return
     _require(canonical["inputValidation"] == validation and document["coaching"] == expression,
              "ORIGINAL_RESULT_MISMATCH")

@@ -1,6 +1,6 @@
 # Canonical v4 배포 계획 실행 기록 — 2026-10-01
 
-상태: **제한 키 발급·Native 인증 확인, 보관 복구 코드 추가, runtime 주입·운영 배포/활성화 미완료**. [배포 계획](production-rollout-plan.md)의 후속 실행이다. 기존 API·서비스를 재시작하거나 v4 gate를 열지 않았다.
+상태: **제한 키 발급·Native 인증 확인, 보관 복구 코드 추가, runtime 주입·운영 배포/활성화 미완료**. [현재 v6 계약](v6-unification.md)의 후속 실행이다. 기존 API·서비스를 재시작하거나 v4 gate를 열지 않았다.
 
 ## 운영 기준선 재확인
 
@@ -123,7 +123,7 @@ JSON 및 local `$ref`를 정적으로 대조했다. SQL 실행, 실제 API 등�
 - `CanonicalCallbackInbox`는 원문 1 MiB 한도, raw SHA·JCS SHA, event/실행/worker 결속을 기록한다. 최초 등록 transaction은 503을 반환하기 전에 commit하며, 네트워크 작업을 analysis lock 안에서 실행하지 않는다. 동일 event+다른 bytes, execution의 다른 최종 event, 다른 실행의 event 재사용은 거부한다.
 - `CanonicalCallbackVerifierWorker`는 전용 lane에서 저장 요청의 JPA 복호화 accessor, VERIFIED receipt, B2 exact-version 원본 및 고정 오프라인 검증기로 callback을 독립 대조한다. 전후 lease/deadline/취소 검사를 수행하며 claim 복구·최대 8회 의존성 재시도를 지원한다. 기존 core manifest를 등록한 실행은 뒤늦게 core가 없는 실패로 위장할 수 없다. AI/GPT 호출은 하지 않는다.
 - 검증 중은 503 `DEPENDENCY_UNAVAILABLE` / `Retry-After: 1`이며 원래 event/body만 재전송한다. 이후 같은 POST에서 검증 완료를 확인하면 `CanonicalCallbackCommitter`가 원문·typed 상태·현재 포인터·구 API 안전 요약·캐시 후처리 outbox를 같은 transaction에 저장하고 나서 APPLIED를 응답한다. APPLIED의 동일 원문은 취소/노출 상태를 재확인한 뒤 DUPLICATE로 응답하며 lease 만료만으로 재확인을 막지 않는다.
-- 새 `V34__create_canonical_callback_inbox_and_results.sql`은 callback inbox, immutable 결과, 현재 analysis profile/예정 결과 버전/결과 포인터, 대상별 cache effect outbox를 추가한다. 사용자/녹음 삭제가 근거에 cascade하거나 기존 삭제를 막는 FK는 추가하지 않는다. JSONB 대신 JSON과 BYTEA를 사용한 근거는 [v4 계획 10절](callback-v4-plan.md#10-backend-저장-및-공개-조회)에 기록했다. migration은 실행하지 않았다.
+- 새 `V34__create_canonical_callback_inbox_and_results.sql`은 callback inbox, immutable 결과, 현재 analysis profile/예정 결과 버전/결과 포인터, 대상별 cache effect outbox를 추가한다. 사용자/녹음 삭제가 근거에 cascade하거나 기존 삭제를 막는 FK는 추가하지 않는다. JSONB 대신 JSON과 BYTEA를 사용한 근거는 [현재 v6 계약](v6-unification.md)에 기록했다. migration은 실행하지 않았다.
 - `AnalysisResult`의 canonical 종결은 점수·STT·selected phone·legacy coaching을 생성하지 않는다. retry/assignExecution은 profile/포인터를 새 세대에 맞게 초기화하고, fail/cancel은 현재 포인터를 지우되 현재 canonical profile은 남겨 timeout/실패를 식별한다. immutable 원문은 보존한다.
 - canonical 이력이 있는 분석 및 이후 재시도는 기존 DETAIL/SESSION_RESULT/SEGMENTS 캐시를 우회하고 현재 소유·선택·삭제·취소 상태를 확인한다. `CanonicalResultEffectsWorker`는 commit 후 해당 사용자·analysis·session의 정확한 캐시 키 두 개만 재시도 가능한 방식으로 무효화한다. segments의 페이지 키를 wildcard로 지우지 않으며 해당 이력의 조회를 캐시 밖으로 우회해 기존 TTL로 만료시킨다. canonical 완료의 기존 segments API는 빈 페이지이고 feedback regenerate는 기존 409 `FEEDBACK_EVIDENCE_UNAVAILABLE`로 차단한다.
 

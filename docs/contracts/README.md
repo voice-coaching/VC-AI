@@ -1,42 +1,32 @@
-# 현재 계약과 과거 호환성 정의
+# 현재 분석 계약
 
-**2026-10-03:** `runpod_result_v4.schema.json`은 기존 S7/H5 null 점수와 새 scored-H5 숫자 점수를 identity별로 구분한다. [채점 구현·실패·배포 계약](../canonical-integration/scoring-implementation-20261003.md)을 참조한다. 기존 null-only 설명은 과거 하네스에 적용한다.
+신규 내부 분석은 request v4 → result v6 → handoff v2다.
+[통합 명세와 Backend 적용 조건](../canonical-integration/v6-unification.md),
+[API 명세](../api/specification.md)를 따른다. 파일명 버전은 wire 메시지 버전과
+각각 독립적이다. 이 소스 변경을 운영 배포·준비 완료로 해석하지 않는다.
 
-현재 writer는 [GPT-6 HTTP 배포](../runpod-current-pipeline.md)다. JSON 파일은 런타임 parser가 읽는 계약이므로 설명 문서처럼 enum/const를 일괄 치환하지 않는다.
-
-후속 사용자 결정은 callback v3를 전면 개편하여 `voice-coaching.runpod-analysis-result.v4`로 승계하는 것이다. [v4 전환 계획·구현 현황](../canonical-integration/callback-v4-plan.md)은 canonical 상태·scoped ID·MFA와 원본 바이트 보존을 정의한다. **10/2 명시 opt-in v4를 활성화했으며 헤더 없는 기존 API는 legacy다.** 과거 Redis `voice-coaching.analysis-result.v4`와 혼동하지 않는다.
-
-| 파일 | 현재 사용과 과거 정의 |
+| 파일 | 현재 역할 |
 |---|---|
-| [runpod_http_control_v1.schema.json](runpod_http_control_v1.schema.json) | 운영 제어 voice-coaching.runpod-http.v1.1의 접수·상태·취소·callback |
-| [runpod_result_v1.schema.json](runpod_result_v1.schema.json) | 이름은 v1이나 과거 v1/v2와 coaching v3 정의가 공존. 현재 완료 코칭은 v3, 코칭 전 실패에는 legacy v1 경로가 남음 |
-| [coaching_result_v1.schema.json](coaching_result_v1.schema.json) | 현재 coaching 구조. writer provider는 OPENAI; TEMPLATE는 실패 시 생성 출처이지 별도 운영 모델이 아님 |
+| [request v4](runpod_analysis_request_v4.schema.json) | 음성 전용 또는 실제 음성·영상 신규 접수 |
+| [result v6](runpod_result_v6.schema.json) | 통합 결과·association v2와 내부 audio 검증 구조 |
+| [handoff v2](runpod_canonical_handoff_v2.schema.json) | 같은 원본·projection·실행 identity의 영속 인계 |
+| [media preparation](runpod_media_preparation_v1.schema.json) | 실제 동일 원본 normalization receipt |
+| [visual coaching input](runpod_visual_coaching_input_v1.schema.json) | 검증된 영상 관찰의 GPT 입력 경계 |
+| [HTTP control](runpod_http_control_v1.schema.json) | 상태·취소·claim/heartbeat·서버 제어 메시지 |
+| [HTTP control 확장](runpod_http_control_v1_2.schema.json) | 원본 manifest 등 내부 제어 구조 |
+| [canonical parent](runpod_canonical_parent.schema.json) | frozen core 원본의 구조 검증 |
+| [canonical input](runpod_canonical_input.schema.json) | frozen selection/projection 원본 구조 |
+| [canonical output](runpod_canonical_output.schema.json) | frozen GPT expression 원본 구조 |
+| [canonical journal](runpod_canonical_journal_v1.schema.json) | one-shot 실행 journal 경계 |
 
-## Callback v4 구현 자산 (제한 운영 활성)
+result v6의 audioResult/audioAssociation/audioVisual은 내부 음성 의미 검증용이다.
+별도 wire 버전이나 신규 접수 경로가 아니다. 음성 전용은 NOT_PROVIDED와 null 영상
+근거를 사용하며 가짜 영상·receipt·0점으로 채우지 않는다.
 
-10/2 후속: Backend reader·검증·journal/apply와 RunPod 실행기·부팅·writer를 연결하고
-명시 opt-in 단독 음성 발음 학습의 접수를 활성화했다. control v1.2 readiness를
-READY/NOT_READY 및 executor 진단 정의로 확장했다. 새 SHA는
-`7acd63e1a0ff9aa68bd2d86c2c5ec37827df10b85b186efac08c1d338287e7a4`다.
-양쪽 runtime의 legacy 포함 9개 계약 SHA를 대조한다. frozen R/S7와 result v4 의미는
-불변이며 [실제 범위·미수행 QA](../canonical-integration/rollout-execution-20261002.md#제한-v4-접수-활성화)를 따른다.
+현재 codec·frozen 원본 검증에서 사용하는 다른 schema는 해당 구조의 검증용이며
+과거 HTTP 요청의 신규 접수를 허용하지 않는다. JSON 구조 검사만으로 provenance,
+소유권·lease·원본 SHA·prepared 시간축·GPT 근거의 검증을 대체하지 않는다.
+공개 direct UUID 계약도 내부 Backend 정수 identity로 변환하지 않는다.
 
-| 파일 | 구현 경계 |
-|---|---|
-| [runpod_analysis_request_v2.schema.json](runpod_analysis_request_v2.schema.json) | 고정 canonical profile/result v4 요청. Python/Backend dual reader, readiness 기반 제한 접수 |
-| [runpod_http_control_v1_2.schema.json](runpod_http_control_v1_2.schema.json) | 인증 readiness v2 READY/NOT_READY, canonicalExecutorReadiness 및 private evidence manifest. 기존 v1.1 메시지 변경 없음 |
-| [runpod_result_v4.schema.json](runpod_result_v4.schema.json) | private callback preflight/serializer. 상태·scoped ID·G2P·MFA·retained-only 크기 초과 실패. Backend ingestion/apply 운영 활성 |
-| [runpod_canonical_parent.schema.json](runpod_canonical_parent.schema.json) | S7 dependency lock의 canonical parent 원본 bytes |
-| [runpod_canonical_input.schema.json](runpod_canonical_input.schema.json) | S7 frozen selection/projection 원본 bytes |
-| [runpod_canonical_output.schema.json](runpod_canonical_output.schema.json) | S7 frozen GPT expression output 원본 bytes; 전체 dispatch 결과와 구별 |
-
-서비스 v4 schema는 frozen substructure를 참조 범위를 보존하여 포함한다. 파일 존재나 JSON Schema 검증만으로 원본 association·prepared 음성 시간축·Backend VERIFIED receipt가 검증되지는 않는다. [canonical_result.py](../../src/voice_coach/backend_analysis/canonical_result.py)의 의미 대조와 저장소 경계가 별도로 필요하다. private 원문·object key·original_error는 공개 조회용 DTO가 아니다. callback은 1 MiB, manifest는 64 KiB, 원본 객체는 각각 16 MiB 상한이다. 저장 정책은 [RunPod 문서](../../deploy/runpod/README.md#canonical-callback-v4-근거-보관-설정-미활성)의 명시적 무기한 보존을 따른다.
-
-과거 Clova rubric ID, hyperclova const, CLOVA provider enum은 과거 결과 정의와 reader 호환성이다. 존재한다고 provider가 실행 중인 것은 아니다. 현재 overallScore/scoringEvidence는 null이다.
-
-이전 rubric을 GPT 이름으로 바꾸면 같은 schema ID의 의미가 달라지고 과거 결과를 오해한다. 정의 제거는 별도 계약 개정·과거 데이터 reader 검토·Backend 합의 후 진행한다. 신규 schema 추가와 별개로 기존 v1/v2/v3 schema는 변경하지 않았다.
-
-공개 영상 sampleCount=null, referenceStatus=NOT_VALIDATED, correctiveClaimsAllowed=false는 현재 v1 계약이다. P0/P1의 내부 v2에는 유효 표본 수·사용 시각·후보 결속·관찰 정책·statement 참조가 구현·배포됐다. 공개 응답은 기존 allowlist로 투영하므로 새 내부 필드를 추가하지 않는다. [확정 구현](../video-lip-analysis/p0-p1-deployment.md)을 따르며, [개선 설계](../video-lip-analysis/gpt6-integration-design.md)의 가상 예시 전체를 공개 계약으로 취급하지 않는다. P2 개인 교정은 비활성이다.
-
-
-Opt-in v5: `runpod_analysis_request_v3.schema.json`, `runpod_result_v5.schema.json`, `runpod_canonical_handoff_v1.schema.json`. See [durable handoff](../canonical-integration/handoff-v5-20261004.md). Existing v4 schemas are unchanged.
+삭제한 request v3/result v5/handoff v1 계약과 이전 전환 문서는 아카이브하지 않는다.
+기존 사용자 원본·미완료 journal을 삭제하거나 새 버전으로 재작성하지 않는다.

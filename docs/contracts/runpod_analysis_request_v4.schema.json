@@ -1,8 +1,8 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "$id": "urn:voice-coaching:runpod-analysis-request:v4",
-  "title": "Opt-in canonical v6 audiovisual durable handoff request",
-  "$comment": "Parsing support is not execution readiness. Keep v1 unchanged. Enforce the 65536-byte body limit, UTF-16 string limits, registered ownership/media metadata, original-payload JCS digest, and lease/deadline outside this schema. No caller-supplied grant, callback URL, model path or storage target is accepted.",
+  "title": "Unified v6 audio or audiovisual durable handoff request",
+  "$comment": "New admissions use request v4 and result v6 only. Audio-only input carries video=null and may carry mediaPreparation=null. Video requires a verified same-source media preparation. Parsing is not execution readiness; ownership, original-payload digest, lease and deadline remain server checks.",
   "$ref": "#/$defs/analysisRequest",
   "$defs": {
     "uuid": {
@@ -179,23 +179,48 @@
           "const": "voice-coaching.runpod-analysis-result.v6"
         },
         "mediaPreparation": {
-          "type": "object",
-          "additionalProperties": false,
-          "properties": {
-            "receipt": {
-              "$ref": "#/$defs/mediaPreparation"
+          "anyOf": [
+            {
+              "type": "object",
+              "additionalProperties": false,
+              "properties": {
+                "receipt": {
+                  "$ref": "#/$defs/mediaPreparation"
+                },
+                "receiptSha256": {
+                  "type": "string",
+                  "pattern": "^[0-9a-f]{64}$"
+                }
+              },
+              "required": [
+                "receipt",
+                "receiptSha256"
+              ]
             },
-            "receiptSha256": {
-              "type": "string",
-              "pattern": "^[0-9a-f]{64}$"
+            {
+              "type": "null"
             }
-          },
-          "required": [
-            "receipt",
-            "receiptSha256"
           ]
         }
-      }
+      },
+      "allOf": [
+        {
+          "if": {
+            "properties": {
+              "video": {
+                "type": "object"
+              }
+            }
+          },
+          "then": {
+            "properties": {
+              "mediaPreparation": {
+                "type": "object"
+              }
+            }
+          }
+        }
+      ]
     },
     "mediaPreparation": {
       "type": "object",

@@ -4,6 +4,7 @@
 
 | 목적 | 문서 |
 |---|---|
+| 신규 내부 음성·음성영상 v6 단일 계약 | [v6 통합·readiness·Backend 적용 조건](canonical-integration/v6-unification.md) |
 | canonical v4에 H5 짧은 총평 적용 | [파생 하네스·검증 계약·배포 인계](canonical-integration/h5-application-20261003.md) |
 | 최근 음성 분석 실패와 FE–AWS–RunPod 연결 | [단일 실행 슬롯·429 실패·운영 API 조사](canonical-integration/incident-20261003-capacity-api-audit.md) |
 | RunPod 사양에 맞춘 canonical 동시 실행 슬롯 | [Pod 자원 관측·3개 슬롯 선택·활성화 조건](canonical-integration/capacity-sizing-20261004.md) |
@@ -13,13 +14,11 @@
 | 현재 RunPod 구성·실측 상태·코드 근거 | [현재 배포 파이프라인 — 10/2 canonical 활성화 포함](runpod-current-pipeline.md) |
 | 실행기·부팅·운영 키·제한 v4 접수 활성 | [10/2 운영 배포와 실제 관측·미수행 QA](canonical-integration/rollout-execution-20261002.md#제한-v4-접수-활성화) |
 | 새 canonical core·frozen LLM 통합 진행 | [원본 위치·차이 분석·내부 연결 구현·남은 작업](canonical-integration/README.md) |
-| callback v3 → v4 전면 개편 계획 | [canonical 상태·scoped ID·MFA 무손실 보존과 서비스 전환](canonical-integration/callback-v4-plan.md) |
-| v4 운영 제한 키·전체 통합·배포 순서 | [역할별 비밀 주입·남은 구현·활성화 gate·원복 계획](canonical-integration/production-rollout-plan.md) |
 | 통합 8082 HTTPS 공개·재기동 복원 결과 | [통합 API 배포](runpod_api_gateway_20260930.md) |
 | 기동·복원·안전한 변경 | [RunPod 배포 안내](../deploy/runpod/README.md) |
 | 자동 배포와 관측 범위 | [GitHub Actions 안내](../deploy/runpod/GITHUB_ACTIONS.md) |
 | 운영 HTTP endpoint | [API 명세](api/specification.md), [목록](api/endpoints.md) |
-| 과거 provider/점수 정의가 남은 이유 | [계약 버전 안내](contracts/README.md) |
+| 현재 분석 계약과 원본 검증 구조 | [계약 목록](contracts/README.md) |
 | 입술 분석과 제약 | [영상·입술 분석](video-lip-analysis/README.md) |
 | 입술–GPT P0/P1 배포 완료·P2 비활성 | [구현·배포 기록](video-lip-analysis/p0-p1-deployment.md), [목표 설계](video-lip-analysis/gpt6-integration-design.md), [구현 계획](video-lip-analysis/implementation-plan.md) |
 | 전문가 참고 사례 | [사례 구성·복원](expert_feedback_rag_20260928.md) |
