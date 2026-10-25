@@ -105,7 +105,10 @@ def verify_main(manifest, token):
             return json.loads(raw)
     revision = manifest['revision']
     require(github('git/ref/heads/main')['object']['sha'] == revision, 'COORDINATED_MAIN_CHANGED')
-    tree = github('git/trees/'+revision+'?recursive=1')
+    commit = github('git/commits/'+revision)
+    require(commit['sha'] == revision and commit['tree']['sha'] == manifest['tree'],
+            'COORDINATED_COMMIT_TREE')
+    tree = github('git/trees/'+commit['tree']['sha']+'?recursive=1')
     require(not tree.get('truncated') and tree['sha'] == manifest['tree'], 'COORDINATED_TREE')
     expected = {row['path']: (row['sha'], row['mode']) for row in tree['tree']
                 if row['type'] == 'blob' and row['path'] not in PRESERVED}
