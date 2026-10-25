@@ -35,7 +35,7 @@ canonical_sources:
     - path: data/reference/r00/r00_sentence_card_v1.json
       sha256: 08dc149ccf10006a587e6216dda0471c19b5c55eab6b320b4348587527d82c4d
     - path: scripts/check_project_constraints.py
-      sha256: 7c885d9d863d1a505bb074e5be33b63e262b191585bcf7a02a03162ca0f1ba86
+      sha256: 1be314ecef3d8751d4d4452febf4fef42841e17aa12fd7d09f18366d0061e478
     - path: scripts/validate_r00_sentence_card.py
       sha256: 967517e74194936c91dad1eed4fcfb0c059b5480af32b8adfc9725fdb7d6e7d0
 

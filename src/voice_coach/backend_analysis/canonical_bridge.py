@@ -145,6 +145,7 @@ class FrozenCanonicalCoaching:
 
     def __init__(self, artifacts: FrozenCanonicalArtifacts):
         self.artifacts = artifacts
+        self._prepared_bridge = None
 
     def _bridge(self):
         # Frozen STEP7 used this dependency. Do not silently run it against the
@@ -154,10 +155,12 @@ class FrozenCanonicalCoaching:
         lock = self.artifacts.verify()
         identity = self.artifacts.identity
         root = self.artifacts.llm_root.resolve(strict=True)
+        if self._prepared_bridge is not None:
+            return self._prepared_bridge
         # Load the exact verified bytes, not an ambient `bridge` on sys.path or
         # a cached pyc. Relative legacy_pure import retains frozen semantics.
         source = {}
-        modules = ("phone_rubric", "gpt_rubric", "legacy_pure", "adapter") if identity.scoring else ("legacy_pure", "adapter")
+        modules: tuple[str, ...] = ("phone_rubric", "gpt_rubric", "legacy_pure", "adapter") if identity.scoring else ("legacy_pure", "adapter")
         if identity.native and not identity.gpt_grading:
             modules = ("phone_rubric", "native_phone_contract", "native_phone_alignment", "native_phone_assessment",
                        "native_phone_evidence", "gpt_rubric", "native_gpt_rubric", "legacy_pure", "adapter")
@@ -185,13 +188,17 @@ class FrozenCanonicalCoaching:
                     module.__file__ = str(root / "bridge" / (name + ".py"))
                     sys.modules[full_name] = module
                     exec(compile(raw, module.__file__, "exec"), module.__dict__)
-                return module.Bridge(root, expected_lock_sha256=identity.lock_sha256)
+                instance = module.Bridge(root, expected_lock_sha256=identity.lock_sha256)
+                if identity.gop_grading:
+                    self._prepared_bridge = instance
+                return instance
             finally:
                 for name in names:
-                    if previous[name] is None:
+                    previous_module = previous[name]
+                    if previous_module is None:
                         sys.modules.pop(name, None)
                     else:
-                        sys.modules[name] = previous[name]
+                        sys.modules[name] = previous_module
 
     def express_admitted(
         self,
@@ -227,7 +234,8 @@ class FrozenCanonicalCoaching:
         prepared_sha = core.get("prepared_wav_sha256")
         prepared_identity = None
         if prepared_sha is not None:
-            _require(prepared_wav is not None, "PREPARED_AUDIO_MISSING")
+            if prepared_wav is None:
+                raise CanonicalIntegrationError("PREPARED_AUDIO_MISSING")
             workspace = producer_workspace.resolve(strict=True)
             prepared = prepared_wav.resolve(strict=True)
             _require(prepared.is_relative_to(workspace) and prepared.is_file(),
@@ -264,15 +272,15 @@ class FrozenCanonicalCoaching:
         # Preserve all three axes and the full original bytes. STEP7 itself owns
         # non-ACCEPT dispatch=0, ranking/order, permission and deterministic fallback.
         selection_bytes = None
-        try:
-            _, view, _, _ = bridge.prepare(core_bytes, request.script_text, binding, **visual_args)
-            if view is not None:
-                selection_bytes = _encode(view)
-        except Exception:
-            # dispatch still owns fail-closed/errorCode semantics and performs
-            # its original prepare call. This extra deterministic preparation
-            # never invokes transport; each harness owns its pinned prompt.
-            pass
+        if self.artifacts.identity.selection_view:
+            try:
+                _, view, _, _ = bridge.prepare(core_bytes, request.script_text, binding, **visual_args)
+                if view is not None:
+                    selection_bytes = _encode(view)
+            except Exception:
+                # dispatch still owns fail-closed/errorCode semantics and its
+                # mandatory preparation. Only legacy selection needs this view.
+                pass
         native_args = {}
         if self.artifacts.identity.native and not self.artifacts.identity.gpt_grading:
             from .native_execution import admitted_binding

@@ -1,6 +1,6 @@
 # main 자동 배포
 
-[워크플로](../../.github/workflows/deploy-runpod.yml)는 `main` push 또는 `main`에서 수동 실행할 때 기존 RunPod에 커밋된 소스 변경을 배포한다. 새 Pod 생성·시작·중지·삭제·reset, 모델 추론, 브라우저·회귀 QA는 실행하지 않는다. 동시 실행은 하나로 제한하며 진행 중 배포를 취소하지 않는다. 대기 중 push가 여러 개면 GitHub concurrency가 가장 최근 대기 실행으로 합칠 수 있으며 그 커밋까지의 모든 소스 변경을 배포한다.
+현재 자동 배포는 [DLPC 워크플로](../../.github/workflows/deploy-dlpc.yml)와 [DLPC 배포 안내](../dlpc/README.md)를 따른다. 아래는 삭제된 RunPod 워크플로의 당시 연결·운영 설명이며 현재 DLPC 실행 절차가 아니다.
 
 ## 최초 연결
 

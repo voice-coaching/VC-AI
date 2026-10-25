@@ -3,6 +3,7 @@ import json
 import os
 from pathlib import Path
 import subprocess
+import time
 
 MFA_ADAPTER = Path('/workspace/intelligentai/validation/finish_20260916/latency_optimization_20260921T044013_2c3be9/mfa_startup_recovery_20260921T065201_ac461c/mfa_preflight_optimization_20260922T043055Z_0d7f6a/candidate/mfa.py')
 
@@ -45,9 +46,25 @@ class MFAProcessHealth:
             raise ValueError('MFA_HOST_NOT_READY')
         pids = (receipt['host_pid'], receipt['worker_pid'], receipt['startup']['ready']['pid'])
         self.identities = tuple(process_identity(pid) for pid in pids)
+        self.watchdog_log = (generation / 'mfa_runtime/logs/g1_memory.jsonl'
+                             if receipt['startup']['ready'].get('prepared_dependencies') else None)
 
     def alive(self):
         try:
-            return all(process_identity(pid) == (pid, started) for pid, started in self.identities)
+            if not all(process_identity(pid) == (pid, started) for pid, started in self.identities):
+                return False
+            if self.watchdog_log is not None:
+                # A failed watchdog can leave a live, unusable worker. Rotation
+                # briefly renames the current log, so also observe its predecessor.
+                ages = []
+                for path in (self.watchdog_log, self.watchdog_log.with_name(self.watchdog_log.name+'.previous')):
+                    try:
+                        if path.is_symlink():return False
+                        info = path.stat()
+                        if info.st_uid != os.geteuid():return False
+                        ages.append(time.time()-info.st_mtime)
+                    except FileNotFoundError:pass
+                if not any(0 <= age <= 10 for age in ages):return False
+            return True
         except (OSError, ValueError, IndexError):
             return False

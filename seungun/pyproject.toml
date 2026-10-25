@@ -21,10 +21,6 @@ inference = [
 [tool.setuptools.packages.find]
 where = ["src"]
 
-[tool.pytest.ini_options]
-addopts = "-q"
-pythonpath = ["src"]
-testpaths = ["tests"]
 
 [tool.ruff]
 line-length = 88

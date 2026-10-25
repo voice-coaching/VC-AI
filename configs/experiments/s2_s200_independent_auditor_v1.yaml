@@ -21,11 +21,11 @@ canonical_sources:
   access_scope: C1_code_and_policy_only
   pins:
     - path: scripts/check_project_constraints.py
-      sha256: 7c885d9d863d1a505bb074e5be33b63e262b191585bcf7a02a03162ca0f1ba86
+      sha256: 1be314ecef3d8751d4d4452febf4fef42841e17aa12fd7d09f18366d0061e478
     - path: pyproject.toml
-      sha256: c18ea49da964dafcf3ead484c84b90e9cb5aee9086b23a8a233689b759c153d7
+      sha256: 6e01be550ac4feec9330dba0d93f6028e66d3ff0d5a7eb9e65fc617863de5956
     - path: requirements/scorer-lock-linux-aarch64-cu130.txt
-      sha256: f6c5b10c1028506d7361c83ad1e9aae0b1fafcf34f4e918e5b7123c51fac8cf2
+      sha256: be001bfdb48459fdf2083c2e6977abfb496b1b7885de4ecb9ddda5247c9922c4
     - path: scripts/prepare_s2_s200_auditor.py
       sha256: 9b4e528f025743fe18dfcf7e6bb3a2ed3e57d3bcf05c76ce459ceac520a5b9d1
     - path: src/voice_coach/training/s2_s200_auditor_contract.py

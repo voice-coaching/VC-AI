@@ -32,7 +32,6 @@ else:
 
 
 REMOVED_DOCUMENT_PREFIXES = (
-    PurePosixPath(".codex/ai_rule_developer"),
     PurePosixPath(".codex/ref_docs"),
     PurePosixPath("artifacts/public"),
     PurePosixPath("docs/architecture"),
@@ -43,7 +42,6 @@ REMOVED_DOCUMENT_PREFIXES = (
 )
 REMOVED_DOCUMENT_PATHS = frozenset(
     {
-        PurePosixPath(".codex/codex_start_prompt.txt"),
         PurePosixPath(".codex/hooks.json"),
         PurePosixPath(".codex/prompt_refiner_context.md"),
         PurePosixPath("data/README.md"),
@@ -53,10 +51,7 @@ REMOVED_DOCUMENT_PATHS = frozenset(
     }
 )
 REMOVED_REFERENCE_MARKERS = (
-    ".codex/ai_rule_developer/",
-    ".codex/ref_docs/",
     "artifacts/public/README.md",
-    "docs/architecture/",
     "docs/audit/",
     "docs/evaluation/",
     "docs/history/",

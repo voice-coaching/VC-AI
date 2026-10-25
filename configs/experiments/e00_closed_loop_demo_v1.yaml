@@ -54,16 +54,16 @@ canonical_sources:
       sha256: 1d74038a7bc913bd03ba61712f0aaf469e3032e0dea02fda598fb90ca11e67f1
     - path: configs/experiments/wavlm_s108_no_locked_dry_run_v1.yaml
       scope: e00_static_contract
-      sha256: 28a5fd50c187a3b14826b147b7e96ca2bf2021f10e720421216fbaf640db0c08
+      sha256: 366083abb9f0303a5bfca4de77cd10c045102d33a882273f5527a9a65dfc9e97
     - path: configs/experiments/e01_metamorphic_robustness_v1.yaml
       scope: e00_static_contract
-      sha256: 43d618613033d98f0281b84e0bc0f30c54f70f74ff969be97cec22232ea57c59
+      sha256: e25fc445678af06ae8b9e4c27e29cef76491aa99ad25c15cbc78707e459abaf0
     - path: src/voice_coach/evaluation/e01_metamorphic_contract.py
       scope: e00_static_contract
       sha256: b0a246adf9e9d9738f0fb672420353c6d2617cc29c839cd04bb467105c0d89c3
     - path: configs/experiments/c02_deterministic_coaching_selection_v1.yaml
       scope: e00_static_contract
-      sha256: f0a3eefc701800e83b34637b46bd4d0958e22b92888575e109ea515371347eff
+      sha256: 7e8f46e007bda4fe8996b304e19b4d2b18ec67ce56c112c41f8d70647c819ef5
     - path: src/voice_coach/coaching/c02_selection_contract.py
       scope: e00_static_contract
       sha256: 477bd1fb3683ec4d70c33f9c498cf949ca44a81f68b24ccab8a263248ea95da7
@@ -72,7 +72,7 @@ canonical_sources:
       sha256: 611d6c4fc1cc4e1f1fd15a9bcc185deba781c145b23e2ed7432affbe5ae496ca
     - path: configs/experiments/c03_expert_coaching_audit_v1.yaml
       scope: e00_static_contract
-      sha256: f338c9257116ddfdd1808d662622a4a41c01008c06b81cdbbdaea5e976199026
+      sha256: 74862cbe9ccb431d8fac24b89628e1332a1ec6788b85005499851bad666e727a
     - path: configs/coaching/c03_expert_audit_report_v1.schema.json
       scope: e00_static_contract
       sha256: 5c3102aa2fdf9c2a58b100f928a16971dbb22c5a28fabed22b92a4370bb9b1dd
@@ -81,7 +81,7 @@ canonical_sources:
       sha256: 5b78d0fffd5421a2308c158cc850baeb41c909abfab603b5b958e0d889ca53f7
     - path: configs/experiments/e02_confidence_guard_v1.yaml
       scope: e00_static_contract
-      sha256: a365f2ad4fb9b2933d3740ea25bf18acf7d5184683deba9a7ce21a46fdf370dc
+      sha256: ce0df0ac42f31fbce2b4d21659f416866e8ea8091240d7eb0aaf7200e2207dcc
     - path: configs/coaching/e02_confidence_guard_input_v1.schema.json
       scope: e00_static_contract
       sha256: 2382601910d088ed3fb0b8d839bc38c6f992cf60fc592a8043ea586e76807e73
@@ -93,7 +93,7 @@ canonical_sources:
       sha256: f01e069a0026d52e14e760bf0b7f65f1ded9cd8aaf2624f52b77ce49fc89fff9
     - path: configs/experiments/r03_reference_bank_selection_v1.yaml
       scope: e00_static_contract
-      sha256: be50473052f5b60c7236b9ae1b7af4c49231eabe51d891ff112ac91e201610d8
+      sha256: a7f89e22311f52859cc189ed9c46e3f4b4f3efd1adcb2b84224cd1d77aafb96e
     - path: configs/reference/r03_reference_bank_manifest_v1.schema.json
       scope: e00_static_contract
       sha256: 2e6c4728943fbfb5519f7e961fca68da816b82e44fc65f003938644ade68ca83
@@ -102,7 +102,7 @@ canonical_sources:
       sha256: 3e7fbdaad254d55822c1b64cdd8084b252e7b2214f7107282f080875ff972406
     - path: configs/experiments/d08_native_multispeaker_reference_v1.yaml
       scope: e00_static_contract
-      sha256: 6c57cbd64883d27796a160d60dcbe78e9481602bcdb585083a1c75b6b4c358a1
+      sha256: 7cad6c0bc57dc9a1a45ec77cefc5bd7b11080060fadc88afb6cb10bd8c0d742e
     - path: configs/reference/d08_completion_v1.schema.json
       scope: e00_static_contract
       sha256: 1ae8e5d37e0ce25b7d5831e321c44d7bff8d9805c7c24a3f2367b73dad6ac59c
@@ -111,7 +111,7 @@ canonical_sources:
       sha256: d6fcbbba25f9f7e48be5b98a39d7b27602b5ccd7dda32c85afcb85c2876495cb
     - path: configs/experiments/h00_human_research_approval_v1.yaml
       scope: e00_static_contract
-      sha256: 6029a79763e10c1d1af5a5470e99d0c58317ab00b75dc33fd1bba3e7e7e42959
+      sha256: ff4ccfac70da519d5076231c46f604e56124cd37091e230050c8cfbf681f4dc6
     - path: src/voice_coach/human_research/h00_approval_contract.py
       scope: e00_static_contract
       sha256: 06580d68588a8cfe6ca7010dd8e9bbff2167f201ee82eb36f35b6f02689d80c3
@@ -138,19 +138,19 @@ canonical_sources:
       sha256: 9ec9019491f0fb5b6b64616ae7936c33cebd3b5fe9dad4fcd98de4d7961f44e2
     - path: scripts/check_project_constraints.py
       scope: data_privacy_boundary
-      sha256: 7c885d9d863d1a505bb074e5be33b63e262b191585bcf7a02a03162ca0f1ba86
+      sha256: 1be314ecef3d8751d4d4452febf4fef42841e17aa12fd7d09f18366d0061e478
     - path: docs/api/endpoints.md
       scope: api_contract
-      sha256: a27afea4ae407910ce01014634470395b08b1f24d41706401a7aeb0675c46216
+      sha256: 859b98792c6758c764af86dc13391dd802167ea7b4f6bae464ebe491350bad31
     - path: docs/api/specification.md
       scope: api_contract
-      sha256: b366726c91de7737e9f4a27874221f329db0e4fceb8a6a33dd0464ab7f67168a
+      sha256: d327d45c798a20bace5336ff0eaa92e831e2cf3341129fb9683344349627b2e9
 
 predecessors:
   s108:
     validation_order: 1
     delegate_config_path: configs/experiments/e01_metamorphic_robustness_v1.yaml
-    delegate_config_sha256: 43d618613033d98f0281b84e0bc0f30c54f70f74ff969be97cec22232ea57c59
+    delegate_config_sha256: e25fc445678af06ae8b9e4c27e29cef76491aa99ad25c15cbc78707e459abaf0
     delegate_contract_path: src/voice_coach/evaluation/e01_metamorphic_contract.py
     delegate_contract_sha256: b0a246adf9e9d9738f0fb672420353c6d2617cc29c839cd04bb467105c0d89c3
     completion_commit_path: artifacts/experiments/aihub71490_wavlm_s108_final_s1_v1/commit.json
@@ -164,7 +164,7 @@ predecessors:
   e01:
     validation_order: 2
     config_path: configs/experiments/e01_metamorphic_robustness_v1.yaml
-    config_sha256: 43d618613033d98f0281b84e0bc0f30c54f70f74ff969be97cec22232ea57c59
+    config_sha256: e25fc445678af06ae8b9e4c27e29cef76491aa99ad25c15cbc78707e459abaf0
     contract_path: src/voice_coach/evaluation/e01_metamorphic_contract.py
     contract_sha256: b0a246adf9e9d9738f0fb672420353c6d2617cc29c839cd04bb467105c0d89c3
     completion_commit_path: artifacts/experiments/e01_metamorphic_robustness_v1/commit.json
@@ -174,7 +174,7 @@ predecessors:
   c02_e02:
     validation_order: 3
     config_path: configs/experiments/e02_confidence_guard_v1.yaml
-    config_sha256: a365f2ad4fb9b2933d3740ea25bf18acf7d5184683deba9a7ce21a46fdf370dc
+    config_sha256: ce0df0ac42f31fbce2b4d21659f416866e8ea8091240d7eb0aaf7200e2207dcc
     contract_path: src/voice_coach/evaluation/e02_confidence_guard_contract.py
     contract_sha256: f01e069a0026d52e14e760bf0b7f65f1ded9cd8aaf2624f52b77ce49fc89fff9
     c02_bundle_commit_path: artifacts/coaching/c02/commit.json
@@ -186,7 +186,7 @@ predecessors:
   c03:
     validation_order: 4
     config_path: configs/experiments/c03_expert_coaching_audit_v1.yaml
-    config_sha256: f338c9257116ddfdd1808d662622a4a41c01008c06b81cdbbdaea5e976199026
+    config_sha256: 74862cbe9ccb431d8fac24b89628e1332a1ec6788b85005499851bad666e727a
     contract_path: src/voice_coach/coaching/c03_expert_audit_contract.py
     contract_sha256: 5b78d0fffd5421a2308c158cc850baeb41c909abfab603b5b958e0d889ca53f7
     report_path: artifacts/coaching/c03/c03_expert_audit_report_v1.json
@@ -196,7 +196,7 @@ predecessors:
   r03:
     validation_order: 5
     config_path: configs/experiments/r03_reference_bank_selection_v1.yaml
-    config_sha256: be50473052f5b60c7236b9ae1b7af4c49231eabe51d891ff112ac91e201610d8
+    config_sha256: a7f89e22311f52859cc189ed9c46e3f4b4f3efd1adcb2b84224cd1d77aafb96e
     contract_path: src/voice_coach/references/r03_selection_contract.py
     contract_sha256: 3e7fbdaad254d55822c1b64cdd8084b252e7b2214f7107282f080875ff972406
     bank_manifest_path: data/processed/references/r03/r03_reference_bank_manifest_v1.json
@@ -206,7 +206,7 @@ predecessors:
   d08:
     validation_order: 6
     config_path: configs/experiments/d08_native_multispeaker_reference_v1.yaml
-    config_sha256: 6c57cbd64883d27796a160d60dcbe78e9481602bcdb585083a1c75b6b4c358a1
+    config_sha256: 7cad6c0bc57dc9a1a45ec77cefc5bd7b11080060fadc88afb6cb10bd8c0d742e
     contract_path: src/voice_coach/references/d08_native_reference_contract.py
     contract_sha256: d6fcbbba25f9f7e48be5b98a39d7b27602b5ccd7dda32c85afcb85c2876495cb
     completion_path: artifacts/external_evaluation/d08/d08_completion_v1.json
@@ -306,7 +306,7 @@ privacy_and_safety:
 
 human_governance:
   h00_config_path: configs/experiments/h00_human_research_approval_v1.yaml
-  h00_config_sha256: 6029a79763e10c1d1af5a5470e99d0c58317ab00b75dc33fd1bba3e7e7e42959
+  h00_config_sha256: ff4ccfac70da519d5076231c46f604e56124cd37091e230050c8cfbf681f4dc6
   h00_contract_path: src/voice_coach/human_research/h00_approval_contract.py
   h00_contract_sha256: 06580d68588a8cfe6ca7010dd8e9bbff2167f201ee82eb36f35b6f02689d80c3
   h00_approval_sha256: TBD_H00_APPROVAL

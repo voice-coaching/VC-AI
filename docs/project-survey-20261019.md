@@ -104,7 +104,7 @@ host별 identity는 [host_identity.py](../deploy/dlpc/host_identity.py), 설치 
 | 항목 | 근거·영향 | 이번 처리 |
 |---|---|---|
 | 오래된 ‘현재’ 설명 | `docs/README.md`, `runpod-current-pipeline.md`, API/계약 목차에 서로 다른 날짜 상태 혼재 | 새 안내에서 날짜·소스와 대조하도록 명시. 이력 전체 재작성은 하지 않음 |
-| ignored 아키텍처 template | `docs/architecture/`에 `app/features`, 인증/외부 API 미사용, 빈 상태 표 등 | 현재 구현의 정본으로 인용하지 않도록 규칙·조사에서 경고. 사용자 로컬 template는 보존 |
+| ignored 아키텍처 template | `과거 구조 template 디렉토리`에 `app/features`, 인증/외부 API 미사용, 빈 상태 표 등 | 현재 구현의 정본으로 인용하지 않도록 규칙·조사에서 경고. 사용자 로컬 template는 보존 |
 | DB 문서 범위 혼재 | 무상태 oracle 설명 뒤에 Backend PostgreSQL handoff 추가 | 소유 경계를 새 규칙에 명시. 실제 Backend DB 전수조사는 별도 |
 | 사라진 RunPod workflow 링크 | `deploy/runpod/GITHUB_ACTIONS.md:3` → `../../.github/workflows/deploy-runpod.yml` | 기존 끊어진 링크로 기록. 폐기 workflow를 재생성하지 않음 |
 | 없는 성능 기록 | `docs/canonical-integration/dlpc-mfa-gop-optimization-plan-20261007.md:22` → `testaudio1-announcer-timing-20261007.md` | 원본 미확인, 추정 문서 생성 안 함 |

@@ -81,12 +81,17 @@ def _schema(name: str):
         raise CanonicalIntegrationError("CANONICAL_SCHEMA_UNAVAILABLE") from None
 
 
-def validate_document(value, definition: str | None = None, *, schema_name: str = "v4"):
+@lru_cache(maxsize=24)
+def _validator(schema_name: str, definition: str | None):
     schema = _schema(schema_name)
     if definition is not None:
         schema = dict(schema, **{"$ref": "#/$defs/" + definition})
+    return Draft202012Validator(schema, format_checker=FormatChecker())
+
+
+def validate_document(value, definition: str | None = None, *, schema_name: str = "v4"):
     try:
-        Draft202012Validator(schema, format_checker=FormatChecker()).validate(value)
+        _validator(schema_name, definition).validate(value)
     except ValidationError:
         # jsonschema exception messages contain private instance values.
         raise CanonicalIntegrationError("CANONICAL_SCHEMA_INVALID") from None

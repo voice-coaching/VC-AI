@@ -22,7 +22,10 @@ def main():
         raise ValueError('DIRECT_SERVICE_PATH_CHANGED')
     previous = TARGET.read_bytes()
     digest = hashlib.sha256(previous).hexdigest()
-    if digest == AFTER:
+    # The subsequent pinned Luna patch includes this resident recovery fix.
+    if digest in {AFTER, '911e2fcaebe929dff5ce2dcb5b303a0b125cdcc057acdc00bc24a6fe7b890f66',
+                  '9ff2385182ce3c3a1126679bba42805b2a369bbf1161eef6b50b09e6f0e3fc11',
+                  '62ba96c6f7a63a3c80883819e4c47f9ae7e674dc632a64dda347f4c5233d771b'}:
         print('Direct resident recovery patch already installed')
         return
     if digest != BEFORE:

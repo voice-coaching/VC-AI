@@ -2,10 +2,39 @@
 from __future__ import annotations
 
 from .canonical_bridge import _require as require
+from .canonical_harness import DLPC_LUNA, DLPC_LUNA_NONE, DLPC_MFA_TRACE, DLPC_MFA_PREPARED, DLPC_MFA_DISAMBIGUATION, DLPC_SEUNGUN_SERVER, DLPC_PIPELINE_LATENCY, DLPC_INTERNAL_BOUNDED
+from .canonical_harness import DLPC_PIPELINE_SOL61_LIGHT
 
 # Execution identity only: prevent an old release from entering new analysis.
 # GPT judges the single rubric; no calibration approval is consulted here.
 APPROVED_NATIVE_EXECUTIONS: frozenset[tuple[str, str]] = frozenset({(
+    # User-selected Sol 6.1 low; prepared numerical core and compact prompt retained.
+    DLPC_PIPELINE_SOL61_LIGHT.core_sha256, DLPC_PIPELINE_SOL61_LIGHT.manifest_sha256,
+), (
+    # Internal lane diagnostic bounds only; same numerical and provider policy.
+    DLPC_INTERNAL_BOUNDED.core_sha256, DLPC_INTERNAL_BOUNDED.manifest_sha256,
+), (
+    # Prepared pipeline, full-input-keyed FST copies and compact Luna output.
+    DLPC_PIPELINE_LATENCY.core_sha256, DLPC_PIPELINE_LATENCY.manifest_sha256,
+), (
+    # J406 Core-row disambiguation, four-thread MFA and unchanged GOP overlap.
+    DLPC_SEUNGUN_SERVER.core_sha256, DLPC_SEUNGUN_SERVER.manifest_sha256,
+), (
+    # Fixed-source equivalent prefix reduction; database and call ordering preserved.
+    DLPC_MFA_DISAMBIGUATION.core_sha256, DLPC_MFA_DISAMBIGUATION.manifest_sha256,
+), (
+    # Prepared dependencies only; the numerical path remains single-threaded.
+    DLPC_MFA_PREPARED.core_sha256, DLPC_MFA_PREPARED.manifest_sha256,
+), (
+    # M0 observations only; no alignment algorithm or resource setting change.
+    DLPC_MFA_TRACE.core_sha256, DLPC_MFA_TRACE.manifest_sha256,
+), (
+    # Only P1 is activated; compact/cached candidates remain read-only.
+    DLPC_LUNA_NONE.core_sha256, DLPC_LUNA_NONE.manifest_sha256,
+), (
+    # User-authorized model-only migration; core and feedback policy are unchanged.
+    DLPC_LUNA.core_sha256, DLPC_LUNA.manifest_sha256,
+), (
     "818a3c16cba39dfcfa9f1083865db7f122a3eba40bc332d85256da94d1d6fb1e",
     "f90440b764f78f32c989dc0785f41262397cc22e1d1ca48c40361189b81f86d5",
 ), (

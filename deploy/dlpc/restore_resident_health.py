@@ -28,6 +28,11 @@ def main():
             raise ValueError('HEALTH_TARGET_SYMLINK')
         old = p.read_bytes() if p.exists() else None
         digest = hashlib.sha256(old).hexdigest() if old is not None else None
+        if name == 'resident_health.py' and digest == '37f57a765b3ebe560ca82f97f95564335b8330e1eb1ad31b053309ad4178986c':
+            # The prepared-MFA recovery stage owns this newer pinned overlay.
+            continue
+        if name == 'canonical_resident.py' and digest == '3c1398727bd81bdd2d23d9e51e7a984de8b3ba684bd3c81d2c2e6929c221f9df':
+            continue  # Newer pinned pipeline stage owns this overlay.
         if digest == after:
             continue
         if digest != before:

@@ -41,11 +41,11 @@ canonical_sources:
     - path: configs/coaching/korean_error_advice_ontology_v1.json
       sha256: 1ba0c0198533abd51a3caa4b176f17aae17aa48d08899f6e7ced634a1eef0d60
     - path: configs/experiments/wavlm_s108_no_locked_dry_run_v1.yaml
-      sha256: 28a5fd50c187a3b14826b147b7e96ca2bf2021f10e720421216fbaf640db0c08
+      sha256: 366083abb9f0303a5bfca4de77cd10c045102d33a882273f5527a9a65dfc9e97
     - path: artifacts/evaluation/g04_amended_progress_v1.json
       sha256: f59ab54a5f2dbd9fefb2e061bbc0d4b1f7965272f5ff792750472ba69b36316e
     - path: scripts/check_project_constraints.py
-      sha256: 7c885d9d863d1a505bb074e5be33b63e262b191585bcf7a02a03162ca0f1ba86
+      sha256: 1be314ecef3d8751d4d4452febf4fef42841e17aa12fd7d09f18366d0061e478
     - path: src/voice_coach/evaluation/g04_amended_review_app.py
       sha256: bfb8f329477067b4cb43aebed1639532163eeb1256d825c8df4a0a45b398a930
     - path: scripts/prepare_d07_independent_expert_gold.py

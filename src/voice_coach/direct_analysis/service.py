@@ -15,20 +15,30 @@ from uuid import UUID
 from voice_coach.backend_analysis.canonical_resident import CanonicalResidentCore
 from .domain import DirectFailure
 from .store import JobStore, atomic, encoded
+from .executor_pool import ExecutionPool
+from typing import Any
 
 
 class AnalysisService:
     def __init__(self, store: JobStore, environment=None):
         self.store = store
         self.active = None
-        self.process = None
-        self.task = None
-        self.execution_task = None
-        self.resident = None
+        self.process: asyncio.subprocess.Process | None = None
+        self.executor: ExecutionPool | None = None
+        self.task: asyncio.Task[Any] | None = None
+        self.execution_task: asyncio.Task[Any] | None = None
+        self.resident: CanonicalResidentCore | None = None
         self.ready_error = None
         self.stopping = False
         self.recovering = False
         self.env = dict(os.environ if environment is None else environment)
+        # Keep internal Backend settings intact; a direct core override must have
+        # a matching server-approved H5. Invalid pairs close only direct admission.
+        from .release_selection import direct_environment
+        try:
+            self.env = direct_environment(self.env)
+        except ValueError:
+            self.ready_error = 'DIRECT_RELEASE_PAIR_MISMATCH'
         for suffix in ("RESERVE_BYTES", "MIN_FREE_BYTES"):
             key = "AI_DIRECT_STANDBY_" + suffix
             if key in self.env:
@@ -56,12 +66,19 @@ class AnalysisService:
         if self.store.settings.enabled and not self.ready_error:
             try:
                 self.resident = CanonicalResidentCore(self.env, self.python)
+                from voice_coach.backend_analysis.canonical_settings import child_environment
+                env = child_environment(self.env)
+                for key in ("AI_ANALYSIS_API_TOKEN", "AI_ANALYSIS_CALLBACK_TOKEN", "AWS_ACCESS_KEY_ID",
+                            "AWS_SECRET_ACCESS_KEY", "AWS_SESSION_TOKEN"):
+                    env.pop(key, None)
+                self.executor = ExecutionPool(env, self.python, self.store.root,
+                                             Path(self.env['AI_CANONICAL_WORKSPACE_ROOT']))
             except Exception:
                 self.ready_error = "APPROVED_NATIVE_RELEASE_REQUIRED"
         self.task = asyncio.create_task(self.loop())
 
     def core_ready(self):
-        return self.store.settings.enabled and not self.ready_error and self.resident is not None and self.resident.ready() and not self.stopping and not self.recovering
+        return self.store.settings.enabled and not self.ready_error and self.resident is not None and self.resident.ready() and self.executor is not None and self.executor.ready() and not self.stopping and not self.recovering
 
     def ready(self):
         return self.core_ready() and not Path("/run/intelligentai/direct-admission.closed").exists()
@@ -131,6 +148,8 @@ class AnalysisService:
                     # Prepare the next generation during inference, but keep the
                     # current socket owned by this execution until it finishes.
                     await self.resident.refresh(dispatch_active=self.active is not None)
+                if self.executor:
+                    await self.executor.refresh(active=self.active is not None)
                 if self.core_ready() and self.active is None:
                     job = next((d for d in self.store.documents() if d["status"] == "QUEUED"), None)
                     if job:
@@ -148,57 +167,68 @@ class AnalysisService:
     async def execute(self, doc):
         job_id = doc["jobId"]
         folder = self.store.directory(job_id)
-        await asyncio.to_thread(self.store.update, job_id, status="RUNNING", startedAt=time.time(),
-                          deadlineAt=time.time() + self.store.settings.deadline_seconds)
-        self.resident.requests += 1
-        from voice_coach.backend_analysis.canonical_settings import child_environment
-        env = child_environment(self.env) | {"AI_CANONICAL_RESIDENT_SOCKET": str(self.resident.socket),
-                          "AI_CANONICAL_VERIFIED_GENERATION": str(self.resident.generation)}
-        for key in ("AI_ANALYSIS_API_TOKEN", "AI_ANALYSIS_CALLBACK_TOKEN", "AWS_ACCESS_KEY_ID",
-                    "AWS_SECRET_ACCESS_KEY", "AWS_SESSION_TOKEN"):
-            env.pop(key, None)
-        with (folder / "executor.log").open("ab") as log:
-            self.process = await asyncio.create_subprocess_exec(str(self.python), "-B", "-m",
-                "voice_coach.direct_analysis.worker", str(folder), env=env,
-                stdout=log, stderr=log, start_new_session=True)
+        def start():
+            with self.store.mutation_lock:
+                status = self.store.read(job_id)['status']
+                if status == 'CANCELLED':
+                    return False
+                if status != 'QUEUED':
+                    raise ValueError('EXECUTION_STATE_CHANGED')
+                self.store.update(job_id, status='RUNNING', startedAt=time.time(),
+                                  deadlineAt=time.time()+self.store.settings.deadline_seconds)
+                return True
+        if not await asyncio.to_thread(start):
+            return
+        resident, executor = self.resident, self.executor
+        if resident is None or executor is None:
+            raise ValueError('EXECUTION_CONTEXT_UNAVAILABLE')
+        resident.requests += 1
+        deadline = time.monotonic() + self.store.settings.deadline_seconds
+        dispatched = asyncio.create_task(executor.current.dispatch(job_id, resident.generation, deadline))
+        retired = False
+        try:
+            while not dispatched.done():
+                if self.store.read(job_id)["status"] == "CANCELLED" or time.monotonic() >= deadline:
+                    dispatched.cancel()
+                    await executor.retire()
+                    await resident.stop()
+                    retired = True
+                    break
+                await asyncio.wait({dispatched}, timeout=.2)
+            error = None
             try:
-                deadline = time.monotonic() + self.store.settings.deadline_seconds
-                while self.process.returncode is None:
-                    if self.store.read(job_id)["status"] == "CANCELLED" or time.monotonic() >= deadline:
-                        await self.kill()
-                        await self.resident.stop()
-                        break
-                    try:
-                        await asyncio.wait_for(self.process.wait(), .2)
-                    except asyncio.TimeoutError:
-                        pass
-                # A zero exit status can publish a SYSTEM_FAILURE result after
-                # MFA's child has died. Close admission before publishing that
-                # result and retire its generation before accepting more work.
-                self.recovering = True
-                def finish():
-                    with self.store.mutation_lock:
-                        if self.store.read(job_id)["status"] != "CANCELLED":
-                            if self.process.returncode == 0 and (folder / "worker-complete.json").exists():
-                                completion = json.loads((folder / "worker-complete.json").read_bytes())
-                                timing = completion["timing"]
-                                self.store.update(job_id, status="RESULT_READY", resultReadyAt=time.time(), timing=timing)
-                                return completion.get("failed") is not False
-                            else:
-                                self.store.update(job_id, status="FAILED", failure="EXECUTION_FAILED")
+                await dispatched
+            except asyncio.CancelledError:
+                error = 'CANCELLED'
+            except Exception:
+                error = 'EXECUTOR_DISPATCH_UNCONFIRMED'
+            self.recovering = True
+            def finish():
+                with self.store.mutation_lock:
+                    doc = self.store.read(job_id)
+                    if doc['status'] == 'CANCELLED':
                         return True
-                recycle = await asyncio.to_thread(finish)
-                if recycle:
-                    # A pre-dispatch failure and an interrupted dispatch must not
-                    # desynchronize the parent's three-request generation budget.
-                    await self.resident.stop()
-                    print(json.dumps(dict(event="direct_resident_recycled", reason="FAILED_OR_CANCELLED_EXECUTION")), flush=True)
-                # Cleanup failures leave admission closed and are surfaced by
-                # loop() as EXECUTION_RECOVERY_REQUIRED; never replay the job.
-                self.recovering = False
-            finally:
-                await self.kill()
-                self.process = None
+                    complete, result = folder/'worker-complete.json', folder/'result.json'
+                    if complete.exists() and result.exists():
+                        completion = json.loads(complete.read_bytes())
+                        if (completion.get('executionId') != doc['executionId']
+                                or completion.get('requestId') != doc['requestId']):
+                            raise ValueError('EXECUTOR_COMPLETION_IDENTITY')
+                        self.store.update(job_id, status='RESULT_READY', resultReadyAt=time.time(),
+                                          timing=completion['timing'])
+                        return completion.get('failed') is not False or error is not None
+                    self.store.update(job_id, status='FAILED', failure='EXECUTION_FAILED')
+                    return True
+            recycle = await asyncio.to_thread(finish)
+            if recycle and not retired:
+                await executor.retire()
+                await resident.stop()
+                print(json.dumps(dict(event='direct_resident_recycled', reason='FAILED_OR_CANCELLED_EXECUTION')), flush=True)
+            self.recovering = False
+        finally:
+            if not dispatched.done():
+                dispatched.cancel()
+                await asyncio.gather(dispatched, return_exceptions=True)
 
     async def kill(self):
         if self.process and self.process.returncode is None:
@@ -214,5 +244,7 @@ class AnalysisService:
             self.execution_task.cancel()
             await asyncio.gather(self.execution_task, return_exceptions=True)
         await self.kill()
+        if self.executor:
+            await self.executor.close()
         if self.resident:
             await self.resident.close()
