@@ -15,7 +15,7 @@ from __future__ import annotations
 
 import argparse
 from collections.abc import Collection, Iterable, Mapping, Sequence
-from dataclasses import dataclass
+from dataclasses import dataclass, replace
 import hashlib
 import json
 from pathlib import Path, PurePosixPath
@@ -177,6 +177,17 @@ HISTORICAL_CONFIG_STATUSES: tuple[HistoricalConfigStatus, ...] = (
             ),
         ),
     ),
+)
+
+# Exact historical configs remain byte-identical. Their deleted test-only lock
+# dependencies must not be restored to satisfy a source pin. Other bindings and
+# all existing non-promotion fields remain checked.
+_HISTORICAL_SCORER_LOCKS = {'configs/experiments/wavlm_s104_adapter_v1.yaml': 'f6c5b10c1028506d7361c83ad1e9aae0b1fafcf34f4e918e5b7123c51fac8cf2', 'configs/experiments/wavlm_s104_adapter_v2_current_code.yaml': 'f6c5b10c1028506d7361c83ad1e9aae0b1fafcf34f4e918e5b7123c51fac8cf2', 'configs/experiments/wavlm_s104_adapter_v3_attempt2.yaml': 'f6c5b10c1028506d7361c83ad1e9aae0b1fafcf34f4e918e5b7123c51fac8cf2', 'configs/experiments/wavlm_s104_adapter_v3_attempt3.yaml': 'f6c5b10c1028506d7361c83ad1e9aae0b1fafcf34f4e918e5b7123c51fac8cf2'}
+HISTORICAL_CONFIG_STATUSES = tuple(
+    replace(status, exempt_pins=status.exempt_pins + ((
+        "requirements/scorer-lock-linux-aarch64-cu130.txt",
+        _HISTORICAL_SCORER_LOCKS[status.config_path.as_posix()],
+    ),)) for status in HISTORICAL_CONFIG_STATUSES
 )
 
 

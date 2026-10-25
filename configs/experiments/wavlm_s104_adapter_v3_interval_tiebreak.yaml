@@ -226,10 +226,10 @@ implementation:
     sha256: b80550bf80629382431e1d9a3bf246ac57f17b0544642245ed7c3d7ec0f3c452
   project_manifest:
     path: pyproject.toml
-    sha256: c18ea49da964dafcf3ead484c84b90e9cb5aee9086b23a8a233689b759c153d7
+    sha256: 6e01be550ac4feec9330dba0d93f6028e66d3ff0d5a7eb9e65fc617863de5956
   scorer_lock:
     path: requirements/scorer-lock-linux-aarch64-cu130.txt
-    sha256: f6c5b10c1028506d7361c83ad1e9aae0b1fafcf34f4e918e5b7123c51fac8cf2
+    sha256: be001bfdb48459fdf2083c2e6977abfb496b1b7885de4ecb9ddda5247c9922c4
 
 outputs:
   execution_lock: artifacts/experiments/aihub71490_wavlm_s104_adapter_v3_interval_tiebreak/execution_lock.json

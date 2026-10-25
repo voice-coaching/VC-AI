@@ -118,17 +118,9 @@ class _ResidentGeneration:
 
 def available_cgroup_memory():
     """Unknown or unlimited container accounting never enables a standby."""
-    for root, limit_name, used_name in (
-        (Path('/sys/fs/cgroup'), 'memory.max', 'memory.current'),
-        (Path('/sys/fs/cgroup/memory'), 'memory.limit_in_bytes', 'memory.usage_in_bytes')):
-        try:
-            limit = int((root / limit_name).read_text())
-            used = int((root / used_name).read_text())
-            if 0 < limit < 2**60 and 0 <= used <= limit:
-                return limit-used
-        except (OSError, ValueError):
-            pass
-    return None
+    from .cgroup_resources import memory_limits
+    limits = memory_limits()
+    return min(item['available'] for item in limits) if limits else None
 
 
 class CanonicalResidentCore:

@@ -81,3 +81,10 @@ __pycache__/
 
 # Single-writer flock files held by publishers at runtime.
 *.publish.lock
+# Permanent unit/regression tests and synthetic fixtures are excluded by project policy.
+tests/
+seungun/tests/
+scripts/tests/
+**/test_*.py
+**/*_test.py
+**/conftest.py

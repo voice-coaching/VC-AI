@@ -1,10 +1,24 @@
 # 문서 안내
 
-현재 운영 설명 생성기는 **외부 GPT-6 API(`OPENAI / gpt-6-astra`)**다. 로컬 Clova 추론·채점과 Redis worker는 현재 파이프라인의 필수 구성이 아니다.
+설명 생성기는 **외부 OpenAI API**를 사용한다. 모델은 실행 경로·관측 시각별로 구분한다. 2026-10-24 문장연습 direct의 Luna low 적용 관측과 후속 개선 범위는 [GPT API 지연 개선 계획](canonical-integration/gpt-api-latency-plan-20261024.md)을 참조한다. 이 문서 편집은 운영 상태 재조회나 내부 Backend 모델 전환을 뜻하지 않는다.
+
+후속 direct 운영은 [GPT-6.1 Sol low/default 전환·실측](canonical-integration/sol61-light-timing-20261026.md)에 기록했다. 해당 관측에서 Sol은 Luna none보다 GPT HTTP 시간이 길었다.
+사용자는 답변 품질을 우선해 Sol light(low)를 계속 사용하기로 결정했다.
 
 | 목적 | 문서 |
 |---|---|
+| 최적화·v6 main 통합과 coordinated 배포 | [범위·정적 확인·전체 Git tree 검증과 기동 복구](canonical-integration/main-pipeline-release-20261026.md) |
 | 신규 내부 음성·음성영상 v6 단일 계약 | [v6 통합·readiness·Backend 적용 조건](canonical-integration/v6-unification.md) |
+| GPT-6.1 Sol light 전환·실제 API 시간 | [Luna 비교·큐 대기 분리·MFA cache hit와 운영 상태](canonical-integration/sol61-light-timing-20261026.md) |
+| 전체 파이프라인 추가 단축 운영 반영 | [실행 worker·PCM·lexicon 재사용, compact Luna 적용과 확인 범위](canonical-integration/pipeline-latency-implementation-20261025.md) |
+| 전체 파이프라인 추가 지연 단축 계획 | [사전·worker 재사용, PCM 준비, GPT 축소의 적용 순서와 목표](canonical-integration/pipeline-latency-next-plan-20261025.md) |
+| Seungun 전체 코드·서버 최적화·실측 | [J406 자원·Core-row MFA·GOP 병렬 실행과 실제 API 시간](canonical-integration/seungun-server-optimization-20261025.md) |
+| MFA disambiguation 중복 연산 제거 | [출력 의미 보존 계획·고정 함수 최적화·운영 및 실측 결과](canonical-integration/mfa-disambiguation-20261025.md) |
+| MFA 준비 비용 단축 실행 | [기동 준비 재사용·관측 상한·MFA-only 병렬 후보와 반영 결과](canonical-integration/mfa-prepared-runtime-20261025.md) |
+| MFA 시간 개선 계획 | [11.95초 병목·8초 목표·구현 순서와 완료 기준](canonical-integration/mfa-latency-plan-20261025.md) |
+| MFA 상세 계측 운영 반영 | [M0 core/H5·direct 선택·복구·정적 확인과 관측 대기](canonical-integration/mfa-latency-implementation-20261025.md) |
+| 문장연습 GPT API 시간 50% 단축 계획 | [Luna none·compact 출력·cache 적용 순서와 완료 기준](canonical-integration/gpt-api-latency-plan-20261024.md) |
+| 문장연습 Luna none 운영 반영·관측 | [구현 범위·활성 설정·검증 결과와 남은 성능 관측](canonical-integration/gpt-api-latency-implementation-20261024.md) |
 | canonical v4에 H5 짧은 총평 적용 | [파생 하네스·검증 계약·배포 인계](canonical-integration/h5-application-20261003.md) |
 | 최근 음성 분석 실패와 FE–AWS–RunPod 연결 | [단일 실행 슬롯·429 실패·운영 API 조사](canonical-integration/incident-20261003-capacity-api-audit.md) |
 | RunPod 사양에 맞춘 canonical 동시 실행 슬롯 | [Pod 자원 관측·3개 슬롯 선택·활성화 조건](canonical-integration/capacity-sizing-20261004.md) |

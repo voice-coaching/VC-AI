@@ -19,23 +19,23 @@ canonical_sources:
   access_scope: C1_code_config_docs_only
   pins:
     - path: scripts/check_project_constraints.py
-      sha256: 7c885d9d863d1a505bb074e5be33b63e262b191585bcf7a02a03162ca0f1ba86
+      sha256: 1be314ecef3d8751d4d4452febf4fef42841e17aa12fd7d09f18366d0061e478
     - path: configs/experiments/wavlm_s108_no_locked_dry_run_v1.yaml
-      sha256: 28a5fd50c187a3b14826b147b7e96ca2bf2021f10e720421216fbaf640db0c08
+      sha256: 366083abb9f0303a5bfca4de77cd10c045102d33a882273f5527a9a65dfc9e97
     - path: src/voice_coach/training/wavlm_s108_dry_run.py
       sha256: 78444cdf5fd89dae71186028fcdf1a9771488937d698417f0ac1d84cd1aeeb32
     - path: scripts/prepare_wavlm_s108_no_locked_dry_run.py
       sha256: 467ef6011338ec48ef1485ce118466f5e440b4f7828f57e1bf6767622703b6b6
     - path: configs/experiments/s2_s200_independent_auditor_v1.yaml
-      sha256: 2083ae86716f418abc6822448ab45825c3e78cd19797d536b072b8e85514c886
+      sha256: e4881e1bf1b81ebc2946ace9431c9281fd315be4d1c2ae2058b85a66060b3bf4
     - path: configs/experiments/s2_s201_whisper_content_gate_v1.yaml
-      sha256: 614b6f2c95041b07933f2ea0000c8513e78b52ecb0f81b09fca4f30a89d631e2
+      sha256: 3e5fcc40316b79b32c07f46ad3961eb3f802732ac54788c98974e9b2e6f746e9
     - path: src/voice_coach/training/s2_s201_whisper_contract.py
       sha256: 88f0cd148129fd880b8af4322b30d21715e9aea26eea4d48bb2f64f130ad7667
     - path: scripts/prepare_s2_s201_whisper_content.py
       sha256: 0f10c1d9104e80152baba94e1764ffcc1af2b2c2f0147d20af656586ef22d2b2
     - path: configs/experiments/s2_s202_independent_auditor_v1.yaml
-      sha256: 8c50696009e9b382c192bca8db79947bb976f32e7586eb746e3c2dd416a88ba3
+      sha256: 4d70f68dacd29ae3673338d1bfd970d1ab129c79ec4404fef7d5112a1c0c7376
     - path: src/voice_coach/training/s2_s202_auditor_contract.py
       sha256: 0ba78271b3d4d99ec3fff865e65bbe992428edfb587785021632677bc46fdaac
     - path: scripts/prepare_s2_s202_independent_auditor.py

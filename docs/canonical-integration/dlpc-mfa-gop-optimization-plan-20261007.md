@@ -19,7 +19,7 @@
 | 배포 CPU 설정 | launcher의 OMP/MKL/OpenBLAS/NumExpr 각 1; Torch intra/inter-op 각 1. direct 분석 활성 1건 |
 | GPU 실행 조정 | 분석·TTS 공용 GPU lock 1개. VRAM이 비어 있어도 동시 실행 허용 근거가 되지 않음 |
 
-하드웨어 최신 근거는 사용자가 제공한 DLPC 터미널 출력이다. CPU 명령의 UTC 시각 `2026-10-07T02:54:36.284835+00:00`은 11:54:36 KST이며, 뒤이어 실행한 GPU/ps 명령에는 별도 시각이 없어 같은 묶음으로만 기록한다. 과거 비교는 [이전 기록](dlpc-migration-execution-20261005.md), 실행 시간은 [testaudio1 관측](testaudio1-announcer-timing-20261007.md)을 참조한다.
+하드웨어 최신 근거는 사용자가 제공한 DLPC 터미널 출력이다. CPU 명령의 UTC 시각 `2026-10-07T02:54:36.284835+00:00`은 11:54:36 KST이며, 뒤이어 실행한 GPU/ps 명령에는 별도 시각이 없어 같은 묶음으로만 기록한다. 과거 비교는 [이전 기록](dlpc-migration-execution-20261005.md), 실행 시간은 당시 testaudio1 관측(현재 저장소에 별도 문서 없음)을 참조한다.
 
 현재 AWS→DLPC 관리 경로는 분석/TTS API뿐이다. CPU/GPU telemetry API는 없다. 사용자 터미널에서 독립된 한 줄 조회 명령의 결과를 받았다. 최초 heredoc의 줄바꿈 유실 및 설명 제목까지 붙여넣은 명령은 실행되지 않았고, 이후 CPU/GPU/ps 명령은 성공했다. 기존 작업의 `worker-complete.json` 출력은 아직 받지 못했다. 명령행 전체·환경변수·비밀값은 수집하지 않는다. `ps %CPU`는 프로세스 수명 평균, nvidia-smi 출력은 순간 관측이므로 분석 중 최대 사용률로 해석하지 않는다. cgroup 파일 미노출은 무제한이라는 뜻이 아니다.
 

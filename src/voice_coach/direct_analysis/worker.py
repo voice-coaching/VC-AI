@@ -40,20 +40,21 @@ class LocalProducerJournal:
             os.close(fd)
 
 
-async def execute(folder: Path):
+async def execute(folder: Path, *, runtime_environment=None, shared_transport=None, shared_coaching=None):
+    env = os.environ if runtime_environment is None else runtime_environment
     marks = {"workerStartedAt": time.time()}
     doc = json.loads((folder / "job.json").read_bytes())
     request = DirectInput(UUID(doc["jobId"]), UUID(doc["requestId"]), UUID(doc["executionId"]),
                           UUID(doc["audioAssetId"]), doc["scriptText"], doc["scriptSha256"],
                           doc["audioSha256"], doc["fileSizeBytes"], doc["contentId"])
     deadline = time.monotonic() + max(0, doc["deadlineAt"] - time.time())
-    artifacts = FrozenCanonicalArtifacts(Path(os.environ["AI_CANONICAL_CORE_ROOT"]),
-                                         Path(os.environ["AI_CANONICAL_LLM_ROOT"]),
-                                         Path(os.environ['AI_CANONICAL_VERIFIED_GENERATION'])
-                                         if os.environ.get('AI_CANONICAL_VERIFIED_GENERATION') else None)
+    artifacts = FrozenCanonicalArtifacts(Path(env["AI_CANONICAL_CORE_ROOT"]),
+                                         Path(env["AI_CANONICAL_LLM_ROOT"]),
+                                         Path(env['AI_CANONICAL_VERIFIED_GENERATION'])
+                                         if env.get('AI_CANONICAL_VERIFIED_GENERATION') else None)
     require_native_execution(artifacts)
-    frozen = FrozenCanonicalCoaching(artifacts)
-    work = Path(os.environ["AI_CANONICAL_WORKSPACE_ROOT"]) / str(request.execution_id)
+    frozen = shared_coaching or FrozenCanonicalCoaching(artifacts)
+    work = Path(env["AI_CANONICAL_WORKSPACE_ROOT"]) / str(request.execution_id)
     (work / "media").mkdir(parents=True, mode=0o700)
     audio_path = work / "media/audio.wav"
     # Local copy from the accepted spool, no AWS reservation or remote download.
@@ -66,14 +67,23 @@ async def execute(folder: Path):
     # Do not poll the network spool on every resident response wait tick.
     active = lambda: time.monotonic() < deadline
     produced = await FrozenCanonicalProducer(artifacts, work / "core", LocalProducerJournal(folder),
-        nltk_data_root=Path(os.environ["AI_ANALYSIS_NLTK_DATA_ROOT"]),
-        resident_socket=Path(os.environ["AI_CANONICAL_RESIDENT_SOCKET"])).produce(
+        nltk_data_root=Path(env["AI_ANALYSIS_NLTK_DATA_ROOT"]),
+        resident_socket=Path(env["AI_CANONICAL_RESIDENT_SOCKET"])).produce(
             request, audio, deadline_monotonic=deadline, execution_is_active=active)
     marks["coreFinishedAt"] = marks["expressionStartedAt"] = time.time()
-    expression = await asyncio.to_thread(frozen.express_admitted, request, audio=audio,
-        core_bytes=produced.raw, prepared_wav=produced.prepared_wav,
-        producer_workspace=produced.workspace, transport=FrozenOpenAITransport(os.environ["OPENAI_API_KEY"],
-            combined_grading=artifacts.identity.gpt_grading))
+    transport = shared_transport or FrozenOpenAITransport.for_harness(env["OPENAI_API_KEY"], artifacts.identity)
+    try:
+        expression = await asyncio.to_thread(frozen.express_admitted, request, audio=audio,
+            core_bytes=produced.raw, prepared_wav=produced.prepared_wav,
+            producer_workspace=produced.workspace, transport=transport)
+    finally:
+        # Keep closed provider diagnostics even if later preflight/publication fails.
+        try:
+            atomic(folder / 'provider-observation.json', encoded(dict(
+                harnessManifestSha256=artifacts.identity.manifest_sha256, **transport.diagnostics)))
+        except OSError:
+            # Optional diagnostic I/O must not turn a valid generation into a failure.
+            transport.diagnostics['observationPersistence'] = 'FAILED'
     marks["expressionFinishedAt"] = marks["validationStartedAt"] = time.time()
     preflight = await asyncio.to_thread(preflight_canonical_result, expression,
         request=request, frozen=frozen, prepared_audio=produced.prepared_audio)
@@ -101,8 +111,13 @@ async def execute(folder: Path):
     atomic(folder / "result.json", encoded(public))
     marks["resultDurableAt"] = time.time()
     atomic(folder / "worker-complete.json", encoded({"timing": marks, "failed": failed,
+        "executionId": str(request.execution_id), "requestId": str(request.event_id),
         "coreTiming": core.get("stage_durations_s"), "producerTiming": produced.timings,
+        "providerTiming": transport.diagnostics,
+        "generationStatus": coaching.get("generationStatus"),
         "dispatchAttempts": coaching.get("dispatchAttempts")}))
+    if shared_transport is None:
+        transport.close()
 
 
 if __name__ == "__main__":

@@ -13,6 +13,11 @@ class HarnessIdentity:
     native: bool = False
     gpt_grading: bool = False
     gop_grading: bool = False
+    model: str = "gpt-6-astra"
+    reasoning_effort: str = "low"
+    service_tier: str | None = None
+    explicit_prompt_cache: bool = False
+    selection_view: bool = True
 
 
 S7 = HarnessIdentity(
@@ -130,6 +135,92 @@ DLPC_CONCISE = HarnessIdentity(
     DLPC_GOP.core_sha256, True, True, True, True,
 )
 DLPC_CONCISE_LLM_DIRECTORY = 'canonical_dlpc_gop_announcer_20261007_v2_h5'
+DLPC_LUNA = HarnessIdentity(
+    'canonical-dlpc-gop-luna-20261024-v1',
+    '1c62cd5f42625d80c2ca772d631ec3a2f9b6286d7e2a4b48e1b0b4f5a290899e',
+    '8da3410fba23a1f0c802b436edca181a7fa0c3a14f2b455f4a26b9f7a0330c73',
+    DLPC_CONCISE.prompt_sha256,
+    DLPC_GOP.core_sha256, True, True, True, True, model='gpt-6-luna',
+)
+DLPC_LUNA_LLM_DIRECTORY = 'canonical_dlpc_gop_luna_20261024_v1_h5'
+DLPC_LUNA_NONE = HarnessIdentity(
+    'canonical-dlpc-gop-luna-none-20261024-v1',
+    'a0be7ab1bd5738c14798f15e6c72f82558106f717798ad7e5da90f52e2dc5691',
+    'ed9bab85e9fbbda03196c77ebc7d191f382dfb108670a6fb296f15f83f061869',
+    DLPC_LUNA.prompt_sha256, DLPC_GOP.core_sha256, True, True, True, True,
+    model='gpt-6-luna', reasoning_effort='none', service_tier='default',
+)
+DLPC_LUNA_NONE_LLM_DIRECTORY = 'canonical_dlpc_gop_luna_none_20261024_v1_h5'
+DLPC_MFA_TRACE = HarnessIdentity(
+    'canonical-dlpc-mfa-trace-20261025-v1',
+    '1d227a6654060357c04fb1a592826bba2bfc464cc536837e2f142cc612573211',
+    '06907765cad8d14300e41fa6cf8709e32e11edf89c9bf021b945e534348e9579',
+    DLPC_LUNA_NONE.prompt_sha256,
+    'c9c7d893ebbf6e5a2fa7762c3fa2e72b33b4ada391c945ce564c59d4d4a5bf82',
+    True, True, True, True,
+    model='gpt-6-luna', reasoning_effort='none', service_tier='default',
+)
+DLPC_MFA_PREPARED = HarnessIdentity(
+    'canonical-dlpc-mfa-prepared-20261025-t1-v2',
+    '11d920cd07d3ed583885d6ea79d1bc2ee0a65903a42c98448cca87a37b4a5e94',
+    'fb322f24a263d385accb6b48f9f841bbaa8dd866b68b7129c5189b854ede553b',
+    DLPC_LUNA_NONE.prompt_sha256,
+    '755667629b5d603910ff2646daa807bf7757e2d3f3ca29845e265e2e4dc79984',
+    True, True, True, True,
+    model='gpt-6-luna', reasoning_effort='none', service_tier='default',
+)
+DLPC_MFA_DISAMBIGUATION = HarnessIdentity(
+    'canonical-dlpc-mfa-disambiguation-20261025-v1',
+    '0bc2d14c5229a932f56d0b984f357ccfcc3833775860a9857e986a36a55d2806',
+    'eb73ac8878e3154b6fc4c5b0609adb30bb0361e49048ad9b4bfbf5bde92e5e00',
+    DLPC_LUNA_NONE.prompt_sha256,
+    '55cdf30b40dd463080c2aeab8832821a2f6874a9994cc30657d8c5ef3eb6b714',
+    True, True, True, True,
+    model='gpt-6-luna', reasoning_effort='none', service_tier='default',
+)
+DLPC_SEUNGUN_SERVER = HarnessIdentity(
+    'canonical-dlpc-seungun-server-20261025-v3',
+    'c41b820326cd6a95a9ef6ff502b400be0a078ee9d51c5cce99fdabca5c60ee1d',
+    'ecc76bcc2ca505f4b717d7a49add8b556fef427c9a1bc61f84204f11ce572639',
+    DLPC_LUNA_NONE.prompt_sha256,
+    'fb597319347d106e4a8e59d7bb6a254f031a7e85a21b87d8c349763829b0152d',
+    True, True, True, True,
+    model='gpt-6-luna', reasoning_effort='none', service_tier='default',
+)
+DLPC_PIPELINE_LATENCY = HarnessIdentity(
+    'canonical-dlpc-pipeline-latency-20261025-v4',
+    'c3d78433cdb0d9ca999ab7b407464084a95cbf8f6d931a80ffd9610656ea3b68', '2864be8b43b850136c7b41ffc9242265b5faa5890c48c59847f807051fc44114', 'fdd98e37b076c3b36058a09bc40667bcd2cd1d9d3a9d31a7106b5caa7df8ca7a', '9e29fbc9a7fcc039a6d4fa36b323cdcca61431100f3786cc9a55e41b53c4a4ba',
+    True, True, True, True, model='gpt-6-luna', reasoning_effort='none', service_tier='default',
+    selection_view=False,
+)
+DLPC_PIPELINE_SOL61_LIGHT = HarnessIdentity(
+    'canonical-dlpc-pipeline-sol61-light-20261026-v1',
+    '8abd31b94aa245617c8a1caf1218e2dae62fdd19058f83a2876abd0a27e135a9',
+    '1903c5339773f301a1a26ba814e970987b3649a88fb3579c11ec41de30a16893',
+    DLPC_PIPELINE_LATENCY.prompt_sha256, DLPC_PIPELINE_LATENCY.core_sha256,
+    True, True, True, True, model='gpt-6.1-sol', reasoning_effort='low',
+    service_tier='default', selection_view=False,
+)
+DLPC_INTERNAL_BOUNDED = HarnessIdentity(
+    'canonical-dlpc-internal-bounded-20261025-v1',
+    '25531c9e52c1088c9cdceee82a5e2d57d52c46da4b4cd93cac75eea87d6ade60', '570f92d23aa19f241e4ac73b35fccc406761bdfd2c097d1c83f3bb66c821d742', DLPC_CONCISE.prompt_sha256, 'f562484d436e42626114e16afa2bcaa782c1abbfc3cc3cdbd5c3b3cf030b920a', True, True, True, True,
+)
+# Read/verification candidates; promoting them requires the preceding stage's observations.
+DLPC_LUNA_COMPACT = HarnessIdentity(
+    'canonical-dlpc-gop-luna-compact-20261024-v1',
+    '50701f1b8a64ddb1b6c5c9d440a7e1beb04ce12a0b423cc1e5f3277647d69db0',
+    '1044117f1c7d300984210263a9afebabaa2ee0501f56aa5ad83922479a08e20b',
+    '99a7270f45558a6a0c7cf5f4f169ebd7e6e74767e961c959152e9198b183eb58',
+    DLPC_GOP.core_sha256, True, True, True, True,
+    model='gpt-6-luna', reasoning_effort='none', service_tier='default',
+)
+DLPC_LUNA_CACHED = HarnessIdentity(
+    'canonical-dlpc-gop-luna-cached-20261024-v1',
+    '9cf431b34f7a5216236da8598ba4f127bbd89c56c920147a2d25d66b9b662c2d',
+    '432222eb78ed2ccba797cef2515dd1e1be3527572343abe7c67bf1e2981a84f2',
+    DLPC_LUNA_COMPACT.prompt_sha256, DLPC_GOP.core_sha256, True, True, True, True,
+    model='gpt-6-luna', reasoning_effort='none', service_tier='default', explicit_prompt_cache=True,
+)
 # Read/verification identity only; this is not a developer execution approval.
 AUDIOVISUAL = HarnessIdentity(
     'canonical-dlpc-audiovisual-20261007-v2',
@@ -140,7 +231,7 @@ AUDIOVISUAL = HarnessIdentity(
 )
 AUDIOVISUAL_LLM_DIRECTORY = 'canonical_dlpc_audiovisual_20261007_v2_h5'
 AUDIOVISUAL_CORE_DIRECTORY = "canonical_dlpc_audiovisual_core_20261007_v2"
-HARNESSES = {value.manifest_sha256: value for value in (S7, H5, SCORED_V1, SCORED_V2, SCORED, RESIDENT, NATIVE_V1, NATIVE, SEUNGUN_GPT_V1, SEUNGUN_GPT, DLPC_GOP, DLPC_ANNOUNCER, DLPC_CONCISE, AUDIOVISUAL)}
+HARNESSES = {value.manifest_sha256: value for value in (S7, H5, SCORED_V1, SCORED_V2, SCORED, RESIDENT, NATIVE_V1, NATIVE, SEUNGUN_GPT_V1, SEUNGUN_GPT, DLPC_GOP, DLPC_ANNOUNCER, DLPC_CONCISE, DLPC_LUNA, DLPC_LUNA_NONE, DLPC_MFA_TRACE, DLPC_MFA_PREPARED, DLPC_MFA_DISAMBIGUATION, DLPC_SEUNGUN_SERVER, DLPC_PIPELINE_LATENCY, DLPC_PIPELINE_SOL61_LIGHT, DLPC_INTERNAL_BOUNDED, DLPC_LUNA_COMPACT, DLPC_LUNA_CACHED, AUDIOVISUAL)}
 
 
 def harness_identity(manifest_sha256: str) -> HarnessIdentity:
@@ -155,21 +246,22 @@ def check_schema_registration(identity: HarnessIdentity) -> None:
     from jsonschema import Draft202012Validator, ValidationError
     from .canonical_codec import _schema
 
-    schema = _schema("v4")
     values = dict(parentManifestSha256=identity.core_sha256,
                   llmManifestSha256=identity.manifest_sha256,
                   llmDependencyLockSha256=identity.lock_sha256,
                   promptSha256=identity.prompt_sha256)
     try:
-        Draft202012Validator(schema["$defs"]["binding"]["properties"][
-            "parent_manifest_sha256"]).validate(identity.core_sha256)
-        for name in ("association", "sourceIdentity"):
-            definition = schema["$defs"][name]
-            # Validate the real configured identity and its closed tuple, not a
-            # fabricated recording/result. Other required fields belong to requests.
-            fragment = dict(properties={k: definition["properties"][k]
-                                        for k in values if k in definition["properties"]},
-                            oneOf=definition["oneOf"])
-            Draft202012Validator(fragment).validate(values)
+        for version, names in (("v4", ("association", "sourceIdentity")),
+                               ("v6", ("association", "audioAssociation", "sourceIdentity"))):
+            schema = _schema(version)
+            Draft202012Validator(schema["$defs"]["binding"]["properties"][
+                "parent_manifest_sha256"]).validate(identity.core_sha256)
+            for name in names:
+                definition = schema["$defs"][name]
+                # Check configured identities without a fabricated recording/result.
+                fragment = dict(properties={k: definition["properties"][k]
+                                            for k in values if k in definition["properties"]},
+                                oneOf=definition["oneOf"])
+                Draft202012Validator(fragment).validate(values)
     except ValidationError:
         raise ValueError("CANONICAL_HARNESS_SCHEMA_MISMATCH") from None

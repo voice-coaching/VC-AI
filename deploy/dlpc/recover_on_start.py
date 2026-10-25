@@ -122,14 +122,72 @@ def main():
         if not any(p.exists() for p in files):
             record('receiving_settings')
             run('receive_settings.py', export('settings'))
-        record('checking_direct_resident_recovery')
-        run('restore_direct_resident.py')
-        record('checking_resident_process_health')
-        run('restore_resident_health.py')
-        if identity.recovery == 'dlpc-j406-20261016':
-            # The B2 archive predates this patch; reapply it on every recovery.
-            record('checking_host_compat')
-            run('restore_host_compat.py')
+        coordinated = TOOLS / 'coordinated-source/selected.json'
+        if coordinated.exists() or coordinated.is_symlink():
+            record('restoring_coordinated_main_source')
+            run('coordinated_release.py', timeout=300)
+        else:
+            record('checking_direct_resident_recovery')
+            run('restore_direct_resident.py')
+            record('checking_resident_process_health')
+            run('restore_resident_health.py')
+            if identity.recovery == 'dlpc-j406-20261016':
+                # The B2 archive predates this patch; reapply it on every recovery.
+                record('checking_host_compat')
+                run('restore_host_compat.py')
+            # A disabled selector permits the previous Luna recovery after explicit rollback.
+            selector = TOOLS / 'gpt-latency-20261024/selected'
+            selected = selector.read_text() if selector.is_file() and not selector.is_symlink() else None
+            if (selector.exists() or selector.is_symlink()) and selected not in {'none\n', 'disabled\n'}:
+                raise ValueError('GPT_LATENCY_RECOVERY_SELECTION_INVALID')
+            mfa_selector = TOOLS / 'mfa-trace-20261025/selected'
+            mfa_selected = mfa_selector.read_text() if mfa_selector.is_file() and not mfa_selector.is_symlink() else None
+            if (mfa_selector.exists() or mfa_selector.is_symlink()) and mfa_selected not in {'trace\n', 'disabled\n'}:
+                raise ValueError('MFA_TRACE_RECOVERY_SELECTION_INVALID')
+            prepared_selector = TOOLS / 'mfa-prepared-20261025-v2/selected'
+            prepared_selected = prepared_selector.read_text() if prepared_selector.is_file() and not prepared_selector.is_symlink() else None
+            if (prepared_selector.exists() or prepared_selector.is_symlink()) and prepared_selected not in {'prepared\n','disabled\n'}:
+                raise ValueError('MFA_PREPARED_RECOVERY_SELECTION_INVALID')
+            disambiguation_selector = TOOLS / 'mfa-disambiguation-20261025/selected'
+            disambiguation_selected = disambiguation_selector.read_text() if disambiguation_selector.is_file() and not disambiguation_selector.is_symlink() else None
+            if (disambiguation_selector.exists() or disambiguation_selector.is_symlink()) and disambiguation_selected not in {'optimized\n','disabled\n'}:
+                raise ValueError('MFA_DISAMBIGUATION_RECOVERY_SELECTION_INVALID')
+            server_selector = TOOLS / 'seungun-server-20261025/selected'
+            server_selected = server_selector.read_text() if server_selector.is_file() and not server_selector.is_symlink() else None
+            if (server_selector.exists() or server_selector.is_symlink()) and server_selected not in {'optimized\n','disabled\n'}:
+                raise ValueError('SEUNGUN_SERVER_RECOVERY_SELECTION_INVALID')
+            pipeline_selector = TOOLS / 'pipeline-latency-20261025/selected'
+            pipeline_selected = pipeline_selector.read_text() if pipeline_selector.is_file() and not pipeline_selector.is_symlink() else None
+            if (pipeline_selector.exists() or pipeline_selector.is_symlink()) and pipeline_selected not in {'optimized\n','disabled\n'}:
+                raise ValueError('PIPELINE_RECOVERY_SELECTION_INVALID')
+            sol61_selector = TOOLS / 'sol61-light-20261026/selected'
+            sol61_selected = sol61_selector.read_text() if sol61_selector.is_file() and not sol61_selector.is_symlink() else None
+            if (sol61_selector.exists() or sol61_selector.is_symlink()) and sol61_selected not in {'light\n','disabled\n'}:
+                raise ValueError('SOL61_RECOVERY_SELECTION_INVALID')
+            if sol61_selected == 'light\n':
+                record('checking_direct_sol61_light')
+                run('restore_sol61_model.py')
+            elif pipeline_selected == 'optimized\n':
+                record('checking_prepared_pipeline')
+                run('restore_pipeline_latency.py')
+            elif server_selected == 'optimized\n':
+                record('checking_direct_seungun_server')
+                run('restore_seungun_server.py')
+            elif disambiguation_selected == 'optimized\n':
+                record('checking_direct_mfa_disambiguation')
+                run('restore_mfa_disambiguation.py')
+            elif prepared_selected == 'prepared\n':
+                record('checking_direct_mfa_prepared')
+                run('restore_mfa_prepared.py')
+            elif mfa_selected == 'trace\n':
+                record('checking_direct_mfa_trace')
+                run('restore_mfa_trace.py')
+            elif selected == 'none\n':
+                record('checking_direct_gpt_latency')
+                run('restore_gpt_latency.py')
+            elif (TOOLS / 'luna-runtime-20261024').exists():
+                record('checking_direct_luna_model')
+                run('restore_luna_model.py')
         record('restoring_tts_runtime')
         run('restore_tts_runtime.py')
         if args.restore_only:

@@ -1,0 +1,9 @@
+JSON 객체 하나만 출력한다. 채점 기준·배점·null 처리·총점 계산과 위 피드백 작성 지침은 그대로 적용하고, 출력 표현만 다음 축약 계약을 따른다. 위 지침의 scoring.status, overallScore, scoring/feedback 계약 표기는 의미 설명이며 실제 출력 필드는 아래 세 개뿐이다.
+
+{"levels":[L1,L2,L3,L4,L5,L6,L7,L8,L9],"score":S,"feedback":"한국어 피드백"}
+
+L1~L9는 RUBRIC 순서인 모음(vowels), 평음 파열음(plain_stops), 경음 파열음(tense_stops), 격음 파열음(aspirated_stops), 마찰음(fricatives), 파찰음(affricates), 비음(nasals), 유음(liquid), 기대 음소 대응 범위(coverage)의 각 등급이다. 각 값은 0~4 정수 또는 적용 대상이 없는 경우 null이다. 배열은 항상 이 순서의 정확히 9개 값을 담으며 생략하거나 재정렬하지 않는다. 위 L1~L9와 S는 자리표시자이지 실제 JSON 값이나 채점 예시가 아니다.
+
+S는 기존 RUBRIC 공식으로 당신이 계산한 overallScore 숫자다. 서버는 등급이나 총점을 계산·보정하지 않는다. 모든 항목이 null이거나 전체 채점을 지지할 근거가 없으면 {"levels":null,"score":null,"feedback":"근거가 부족한 이유"}로 답한다. 0점과 null을 혼동하지 않는다. feedback은 위 지침에 따른 비어 있지 않은 한국어 문자열이며 최대 4문장·4000자 이하를 유지한다.
+
+criterionId, rubricRevision, status, result, criteria, overallScore 필드는 출력하지 않는다. 서버가 고정된 RUBRIC의 항목 ID·버전과 명시적 null 여부를 사용해 기존 공개 결과 형식으로 복원한다. 최상위 키는 levels, score, feedback뿐이다. Markdown이나 JSON 밖 설명을 출력하지 않는다.

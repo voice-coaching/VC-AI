@@ -3,6 +3,7 @@ from dataclasses import dataclass
 from pathlib import Path
 import os
 import shutil
+from .cgroup_resources import cpu_quotas, memory_limits
 
 
 def effective_cpu_count():
@@ -11,32 +12,7 @@ def effective_cpu_count():
         count = len(os.sched_getaffinity(0))
     except (OSError, AttributeError):
         count = os.cpu_count() or 1
-    roots = [(Path('/sys/fs/cgroup'), 2), (Path('/sys/fs/cgroup/cpu'), 1)]
-    try:
-        for line in Path('/proc/self/cgroup').read_text().splitlines():
-            _, controllers, relative = line.split(':', 2)
-            if not controllers:
-                roots.append((Path('/sys/fs/cgroup') / relative.lstrip('/'), 2))
-            elif 'cpu' in controllers.split(','):
-                roots.append((Path('/sys/fs/cgroup/cpu') / relative.lstrip('/'), 1))
-    except (OSError, ValueError):
-        pass
-    for root, version in roots:
-        boundary = Path('/sys/fs/cgroup') if version == 2 else Path('/sys/fs/cgroup/cpu')
-        while root.is_relative_to(boundary):
-            try:
-                if version == 2:
-                    quota, period = (root / 'cpu.max').read_text().split()
-                    quota, period = int(quota), int(period)
-                else:
-                    quota = int((root / 'cpu.cfs_quota_us').read_text())
-                    period = int((root / 'cpu.cfs_period_us').read_text())
-                if quota > 0 and period > 0:
-                    count = min(count, max(1, quota // period))
-            except (OSError, ValueError):
-                pass
-            root = root.parent
-    return max(1, count)
+    return max(1, min([count] + cpu_quotas()))
 
 
 def core_cpu_threads(env):
@@ -58,17 +34,7 @@ def available_memory_bytes():
                 values.append(int(line.split()[1]) * 1024)
     except (OSError, ValueError, IndexError):
         pass
-    for root, limit, current in (
-        ('/sys/fs/cgroup', 'memory.max', 'memory.current'),
-        ('/sys/fs/cgroup/memory', 'memory.limit_in_bytes', 'memory.usage_in_bytes'),
-    ):
-        try:
-            cap = int((Path(root) / limit).read_text())
-            used = int((Path(root) / current).read_text())
-            if 0 < cap < 2**60 and used >= 0:
-                values.append(max(0, cap - used))
-        except (OSError, ValueError):
-            pass
+    values.extend(item['available'] for item in memory_limits())
     return min(values) if values else None
 
 

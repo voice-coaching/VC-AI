@@ -34,10 +34,6 @@ visual = [
   "mediapipe==1.0.1",
   "numpy==2.5.1",
 ]
-test = [
-  "httpx==0.28.1",
-  "pytest==9.1.1",
-]
 
 [tool.setuptools.packages.find]
 where = ["src"]
@@ -48,8 +44,3 @@ where = ["src"]
   "g04_review_frontend/*.css",
   "g04_review_frontend/*.js",
 ]
-
-[tool.pytest.ini_options]
-addopts = "-q"
-pythonpath = ["src"]
-testpaths = ["tests"]

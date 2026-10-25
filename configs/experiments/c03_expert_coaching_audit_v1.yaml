@@ -33,11 +33,11 @@ canonical_sources:
     - path: configs/coaching/c02_diagnostic_issues_input_v1.schema.json
       sha256: cd2588ffac9ff10870977e125969c7709ecde25c050c4845ab0c9b9f1f1d7742
     - path: configs/experiments/c02_deterministic_coaching_selection_v1.yaml
-      sha256: f0a3eefc701800e83b34637b46bd4d0958e22b92888575e109ea515371347eff
+      sha256: 7e8f46e007bda4fe8996b304e19b4d2b18ec67ce56c112c41f8d70647c819ef5
     - path: configs/experiments/wavlm_s107_calibration_v1.yaml
-      sha256: 9bf0b40a63e5399d3eab2dd9eb82a269ec37a885a5d13977bc0b3793f57a6199
+      sha256: 73945d75226612ba82f10ae034854b5cca2e93138ad0ff224d45b56f91034abd
     - path: scripts/check_project_constraints.py
-      sha256: 7c885d9d863d1a505bb074e5be33b63e262b191585bcf7a02a03162ca0f1ba86
+      sha256: 1be314ecef3d8751d4d4452febf4fef42841e17aa12fd7d09f18366d0061e478
     - path: scripts/prepare_c03_expert_coaching_audit.py
       sha256: 6dec5c22a0d18150de8f1d48ce4896ed1bc0580f14d6356cb1d919e1ee1b0b27
     - path: src/voice_coach/coaching/c02_selection_contract.py
@@ -50,7 +50,7 @@ canonical_sources:
 predecessor_s107:
   required_actual_completion: true
   config_path: configs/experiments/wavlm_s107_calibration_v1.yaml
-  config_sha256: 9bf0b40a63e5399d3eab2dd9eb82a269ec37a885a5d13977bc0b3793f57a6199
+  config_sha256: 73945d75226612ba82f10ae034854b5cca2e93138ad0ff224d45b56f91034abd
   completion_commit_path: artifacts/experiments/aihub71490_wavlm_s107_calibration_v1/commit.json
   completion_commit_sha256: TBD_S107_COMPLETION
   required_commit_schema_version: voice_coach.wavlm_s107_calibration_commit.v1
@@ -60,7 +60,7 @@ predecessor_s107:
 predecessor_c02:
   required_actual_d1_bundle: true
   config_path: configs/experiments/c02_deterministic_coaching_selection_v1.yaml
-  config_sha256: f0a3eefc701800e83b34637b46bd4d0958e22b92888575e109ea515371347eff
+  config_sha256: 7e8f46e007bda4fe8996b304e19b4d2b18ec67ce56c112c41f8d70647c819ef5
   contract_path: src/voice_coach/coaching/c02_selection_contract.py
   contract_sha256: 477bd1fb3683ec4d70c33f9c498cf949ca44a81f68b24ccab8a263248ea95da7
   completion_commit_path: artifacts/coaching/c02/commit.json
