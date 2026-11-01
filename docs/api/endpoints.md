@@ -59,3 +59,13 @@
 | GET | /api/v1/review-items/{item_hash}/audio | `X-Review-Token` | 제한 WAV의 loopback stream |
 | POST | /api/v1/review-items/{item_hash}/review | `X-Review-Token` | 최초 판정 원자 저장 |
 | PUT | /api/v1/review-items/{item_hash}/review | `X-Review-Token` | 기존 판정 원자 교체 |
+
+
+## 문장별 독립 연습
+
+| Method | Path | 인증 | 목적 |
+|---|---|---|---|
+| POST | `/direct/api/v1/practice-batches` | 없음 | 문장 목록을 연습 ID에 고정 |
+| POST | `/direct/api/v1/practice-batches/{batchId}/sentences/{sequenceNo}` | 없음 | 문장 WAV 한 개 접수·분석 시작 |
+| GET | `/direct/api/v1/practice-batches/{batchId}` | 없음 | 진행 또는 전 문장 피드백 일괄 조회 |
+| POST | `/direct/api/v1/practice-batches/{batchId}/cancellations` | 없음 | 미공개 연습과 접수 작업 취소 |

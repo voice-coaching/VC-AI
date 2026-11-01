@@ -265,3 +265,8 @@ field는 거부한다.
   `status`
 - Status: `200`, token 누락·불일치 `403`, unknown hash `404`, 중복 POST `409`,
   profile·field·notes·interval 계약 위반 `422`
+
+
+## 문장별 녹음 묶음 계약
+
+[문장별 녹음·일괄 피드백 API](sentence-practice-batches.md)의 네 endpoint, 상태·실패·복구 계약을 따른다. 기존 단일 direct 결과와 내부 canonical 계약의 버전은 유지한다.

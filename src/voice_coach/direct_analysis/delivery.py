@@ -50,6 +50,8 @@ class DeliveryWorkers:
                     break
                 if doc["status"] != "RESULT_READY" or doc[state] in ("COMPLETE", "CONFLICT") or doc.get(kind + "Next", 0) > time.time():
                     continue
+                if kind == "history" and not self.store.result_released(doc):
+                    continue
                 await asyncio.to_thread(self.store.update, doc["jobId"], **{state: "RUNNING"})
                 try:
                     archived_sent = await asyncio.to_thread(self.archive if kind == "archive" else self.history, doc)
