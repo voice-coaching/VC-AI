@@ -85,11 +85,11 @@ class JobStore:
         with self.lock:
             return [self.read(job) for job in self.attempts.values()]
 
-    def capacity(self, size):
+    def capacity(self, size, *, batch_id=None):
         if size > self.settings.maximum_bytes:
             raise DirectFailure("AUDIO_TOO_LARGE", 413)
         docs = self.documents()
-        if sum(d["status"] in ("QUEUED", "RUNNING") for d in docs) >= self.settings.maximum_pending:
+        if sum(d["status"] in ("QUEUED", "RUNNING") for d in docs) >= (50 if batch_id else self.settings.maximum_pending):
             raise DirectFailure("CAPACITY_EXCEEDED", 429)
         if len(docs) >= self.settings.maximum_jobs:
             raise DirectFailure("SPOOL_FULL", 503)
@@ -98,17 +98,20 @@ class JobStore:
         if used + size + 32 * 1024 * 1024 > self.settings.spool_bytes:
             raise DirectFailure("SPOOL_FULL", 503)
 
-    def accept(self, attempt: str, script: str, audio: bytes, content_id: int | None, claim_sha: str):
+    def accept(self, attempt: str, script: str, audio: bytes, content_id: int | None, claim_sha: str, *, batch_id: str | None = None):
         attempt = str(UUID(attempt))
         sha = hashlib.sha256(audio).hexdigest()
-        request_sha = hashlib.sha256(encoded([script, sha, content_id, claim_sha])).hexdigest()
+        identity = [script, sha, content_id, claim_sha]
+        if batch_id is not None:
+            identity.append(batch_id)
+        request_sha = hashlib.sha256(encoded(identity)).hexdigest()
         with self.mutation_lock:
             if attempt in self.attempts:
                 doc = self.read(self.attempts[attempt])
                 if doc["requestSha256"] != request_sha:
                     raise DirectFailure("IDEMPOTENCY_CONFLICT")
                 return doc
-            self.capacity(len(audio))
+            self.capacity(len(audio), batch_id=batch_id)
             job_id, execution_id, event_id, asset_id = [str(uuid4()) for _ in range(4)]
             folder = self.directory(job_id)
             folder.mkdir(mode=0o700)
@@ -123,7 +126,7 @@ class JobStore:
                        audioAssetId=asset_id, clientAttemptId=attempt, requestSha256=request_sha,
                        audioSha256=sha, scriptSha256=hashlib.sha256(script.encode()).hexdigest(),
                        scriptText=script, contentId=content_id, fileSizeBytes=len(audio),
-                       historyClaimSha256=claim_sha,
+                       historyClaimSha256=claim_sha, batchId=batch_id,
                        status="QUEUED", sequence=1, createdAt=time(), updatedAt=time(),
                        archiveStatus="PENDING", historySyncStatus="PENDING", failure=None)
             atomic(folder / "audio.wav", audio)
@@ -135,11 +138,19 @@ class JobStore:
     def view(self, job_id):
         doc = self.read(job_id)
         result = None
-        if doc["status"] == "RESULT_READY":
+        if doc["status"] == "RESULT_READY" and self.result_released(doc):
             result = json.loads((self.directory(job_id) / "result.json").read_bytes())
         return {key: doc[key] for key in ("jobId", "executionId", "clientAttemptId", "status",
                 "sequence", "createdAt", "updatedAt", "archiveStatus", "historySyncStatus", "failure")} | {
                     "schemaVersion": "voice-coaching.direct-analysis.v1", "result": result}
+
+    def result_released(self, doc):
+        """Batch feedback is hidden from child GET/SSE and history until publication."""
+        batch_id = doc.get("batchId")
+        if not batch_id:
+            return True
+        path = self.root / "batches" / (str(UUID(batch_id)) + ".json")
+        return path.exists() and json.loads(path.read_bytes()).get("published", False)
 
     def cancel(self, job_id):
         with self.mutation_lock:

@@ -14,6 +14,8 @@ from .delivery import DeliveryWorkers
 from .domain import DirectFailure, Settings
 from .service import AnalysisService
 from .store import JobStore
+from .batches import BatchService
+from .batch_api import install_batch_routes
 
 
 def create_app(environment=None):
@@ -27,6 +29,7 @@ def create_app(environment=None):
         service = AnalysisService(store, environment)
         delivery = DeliveryWorkers(store, environment)
         app.state.store, app.state.service = store, service
+        app.state.batches = BatchService(store, service)
         app.state.uploads = 0
         await service.start()
         delivery.start()
@@ -118,4 +121,5 @@ def create_app(environment=None):
                 await asyncio.sleep(.25)
         return StreamingResponse(stream(), media_type="text/event-stream",
             headers={"Cache-Control": "no-store", "X-Accel-Buffering": "no"})
+    install_batch_routes(app, settings)
     return app

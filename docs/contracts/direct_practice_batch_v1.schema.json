@@ -1,0 +1,419 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "voice-coaching.direct-practice-batch.v1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schemaVersion",
+    "batchId",
+    "status",
+    "sentenceCount",
+    "uploadedCount",
+    "completedCount",
+    "sentences",
+    "results"
+  ],
+  "properties": {
+    "schemaVersion": {
+      "const": "voice-coaching.direct-practice-batch.v1"
+    },
+    "batchId": {
+      "type": "string",
+      "format": "uuid"
+    },
+    "status": {
+      "enum": [
+        "RECORDING",
+        "PROCESSING",
+        "RESULT_READY",
+        "CANCELLED"
+      ]
+    },
+    "sentenceCount": {
+      "type": "integer",
+      "minimum": 1,
+      "maximum": 50
+    },
+    "uploadedCount": {
+      "type": "integer",
+      "minimum": 0,
+      "maximum": 50
+    },
+    "completedCount": {
+      "type": "integer",
+      "minimum": 0,
+      "maximum": 50
+    },
+    "sentences": {
+      "type": "array",
+      "minItems": 1,
+      "maxItems": 50,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "sequenceNo",
+          "scriptText",
+          "jobId",
+          "status"
+        ],
+        "properties": {
+          "sequenceNo": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 50
+          },
+          "scriptText": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 4000
+          },
+          "jobId": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "format": "uuid"
+          },
+          "status": {
+            "enum": [
+              "AWAITING_UPLOAD",
+              "QUEUED",
+              "RUNNING",
+              "RESULT_READY",
+              "FAILED",
+              "CANCELLED"
+            ]
+          }
+        }
+      }
+    },
+    "results": {
+      "oneOf": [
+        {
+          "type": "null"
+        },
+        {
+          "type": "array",
+          "minItems": 1,
+          "maxItems": 50,
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+              "sequenceNo",
+              "scriptText",
+              "analysis"
+            ],
+            "properties": {
+              "sequenceNo": {
+                "type": "integer",
+                "minimum": 1,
+                "maximum": 50
+              },
+              "scriptText": {
+                "type": "string",
+                "minLength": 1,
+                "maxLength": 4000
+              },
+              "analysis": {
+                "$ref": "#/$defs/directView"
+              }
+            }
+          }
+        }
+      ]
+    }
+  },
+  "allOf": [
+    {
+      "if": {
+        "properties": {
+          "status": {
+            "const": "RESULT_READY"
+          }
+        }
+      },
+      "then": {
+        "properties": {
+          "results": {
+            "type": "array"
+          }
+        }
+      },
+      "else": {
+        "properties": {
+          "results": {
+            "type": "null"
+          }
+        }
+      }
+    }
+  ],
+  "$defs": {
+    "directResult": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "decision",
+        "score",
+        "coaching",
+        "failure",
+        "sourceIdentity"
+      ],
+      "properties": {
+        "decision": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "status",
+            "reason_code",
+            "stage"
+          ],
+          "properties": {
+            "status": {
+              "enum": [
+                "ACCEPT",
+                "REJECT",
+                "INCONCLUSIVE",
+                "SYSTEM_FAILURE"
+              ]
+            },
+            "reason_code": {
+              "type": [
+                "string",
+                "null"
+              ]
+            },
+            "stage": {
+              "type": [
+                "string",
+                "null"
+              ]
+            }
+          }
+        },
+        "score": {
+          "$ref": "runpod_result_v6.schema.json#/$defs/score"
+        },
+        "coaching": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "items",
+            "generationStatus"
+          ],
+          "properties": {
+            "schemaVersion": {
+              "type": "string",
+              "minLength": 1
+            },
+            "adapterStatus": {
+              "type": "string",
+              "minLength": 1
+            },
+            "generationStatus": {
+              "type": "string",
+              "minLength": 1
+            },
+            "dispatchAttempts": {
+              "type": "integer",
+              "minimum": 0
+            },
+            "feedback": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 4000
+            },
+            "items": {
+              "type": "array",
+              "maxItems": 3,
+              "items": {
+                "type": "object",
+                "required": [
+                  "candidate",
+                  "expression"
+                ],
+                "properties": {
+                  "candidate": {
+                    "$ref": "runpod_result_v6.schema.json#/$defs/candidate"
+                  },
+                  "expression": {
+                    "type": "object",
+                    "required": [
+                      "explanation",
+                      "action",
+                      "practice",
+                      "selfCheck"
+                    ],
+                    "properties": {
+                      "candidateId": {
+                        "type": "string",
+                        "minLength": 1
+                      },
+                      "guidanceId": {
+                        "type": "string",
+                        "minLength": 1
+                      },
+                      "explanation": {
+                        "type": "string",
+                        "minLength": 1
+                      },
+                      "action": {
+                        "type": "string",
+                        "minLength": 1
+                      },
+                      "practice": {
+                        "type": "string",
+                        "minLength": 1
+                      },
+                      "selfCheck": {
+                        "type": "string",
+                        "minLength": 1
+                      }
+                    },
+                    "additionalProperties": false
+                  }
+                },
+                "additionalProperties": false
+              }
+            }
+          }
+        },
+        "failure": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "coreStatus": {
+          "type": "string",
+          "minLength": 1
+        },
+        "selection": {
+          "type": [
+            "object",
+            "null"
+          ]
+        },
+        "practiceResult": {
+          "$ref": "direct_practice_result_v1.schema.json"
+        },
+        "sourceIdentity": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "requestId",
+            "executionId",
+            "audioSha256",
+            "scriptSha256",
+            "coreManifestSha256",
+            "harnessManifestSha256"
+          ],
+          "properties": {
+            "requestId": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "executionId": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "audioSha256": {
+              "type": "string",
+              "pattern": "^[a-f0-9]{64}$"
+            },
+            "scriptSha256": {
+              "type": "string",
+              "pattern": "^[a-f0-9]{64}$"
+            },
+            "coreManifestSha256": {
+              "type": "string",
+              "pattern": "^[a-f0-9]{64}$"
+            },
+            "harnessManifestSha256": {
+              "type": "string",
+              "pattern": "^[a-f0-9]{64}$"
+            }
+          }
+        }
+      }
+    },
+    "directView": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "schemaVersion",
+        "jobId",
+        "executionId",
+        "clientAttemptId",
+        "status",
+        "sequence",
+        "archiveStatus",
+        "historySyncStatus",
+        "failure",
+        "result"
+      ],
+      "properties": {
+        "schemaVersion": {
+          "const": "voice-coaching.direct-analysis.v1"
+        },
+        "jobId": {
+          "type": "string",
+          "format": "uuid"
+        },
+        "executionId": {
+          "type": "string",
+          "format": "uuid"
+        },
+        "clientAttemptId": {
+          "type": "string",
+          "format": "uuid"
+        },
+        "status": {
+          "enum": [
+            "QUEUED",
+            "RUNNING",
+            "RESULT_READY",
+            "FAILED",
+            "CANCELLED"
+          ]
+        },
+        "sequence": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "createdAt": {
+          "type": "number"
+        },
+        "updatedAt": {
+          "type": "number"
+        },
+        "archiveStatus": {
+          "type": "string",
+          "minLength": 1
+        },
+        "historySyncStatus": {
+          "type": "string",
+          "minLength": 1
+        },
+        "failure": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "result": {
+          "oneOf": [
+            {
+              "type": "null"
+            },
+            {
+              "$ref": "#/$defs/directResult"
+            }
+          ]
+        }
+      }
+    }
+  }
+}

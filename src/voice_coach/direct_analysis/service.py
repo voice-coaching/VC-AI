@@ -104,7 +104,7 @@ class AnalysisService:
     def cancel(self, job_id):
         return self.store.cancel(job_id)
 
-    async def submit(self, metadata: dict, audio: bytes):
+    async def submit(self, metadata: dict, audio: bytes, *, batch_id: str | None = None):
         if not self.ready() and not self.known_attempt(metadata.get("clientAttemptId")):
             raise DirectFailure(self.ready_error or "CORE_NOT_READY", 503)
         script = metadata.get("scriptText")
@@ -127,7 +127,7 @@ class AnalysisService:
         except (ValueError, EOFError, wave.Error, ZeroDivisionError) as exc:
             raise DirectFailure("INVALID_PCM_WAV", 422) from exc
         try:
-            doc = await asyncio.to_thread(self.store.accept, metadata["clientAttemptId"], script, audio, content, claim_sha)
+            doc = await asyncio.to_thread(self.store.accept, metadata["clientAttemptId"], script, audio, content, claim_sha, batch_id=batch_id)
         except (KeyError, ValueError, TypeError, AttributeError) as exc:
             raise DirectFailure("INVALID_ATTEMPT_ID", 422) from exc
         return self.store.view(doc["jobId"])
