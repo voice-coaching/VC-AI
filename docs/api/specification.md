@@ -110,6 +110,25 @@ Backend 이력 동기화는 별도 상태이며 계정 이력 연결은 기존 �
 `/direct/readyz`는 ready/reasonCode/authentication/maximumAudioBytes와 200/503을
 반환한다. 공개 direct의 준비가 내부 Backend 인계의 준비를 뜻하지 않는다.
 
+### direct 결과의 연습 평가 범위 (2026-11-01)
+
+신규 실행의 `result.practiceResult`는 [direct practice result v1](../contracts/direct_practice_result_v1.schema.json)을 사용한다. `POST` 접수 후 `GET`·SSE가 반환하는 동일 `result.json`과 Backend 이력 이벤트에 포함된다. 기존 결과를 재분석하거나 다시 쓰지 않으며, 이전 결과에는 필드가 없다. FE는 그 경우 기존 `score`, `decision`, `coaching.feedback`를 전체 녹음 결과로 표시한다.
+
+| 필드 | 타입·필수·null | 의미 |
+|---|---|---|
+| schemaVersion | string, 필수 | `voice-coaching.direct-practice-result.v1` |
+| scope | string, 필수 | `UTTERANCE`: 전체 녹음 평가 |
+| scriptText | string, 필수, 1~4000자 | 접수된 원고 원문 |
+| decisionStatus | string, 필수 | 기존 decision.status와 동일한 ACCEPT/REJECT/INCONCLUSIVE/SYSTEM_FAILURE |
+| score | object, 필수 | 기존 공개 score 그대로. 새 채점·문장별 분배 없음 |
+| feedback | string 또는 null, 필수 | ACCEPT이고 실행 실패가 없을 때 기존 GPT feedback(1~4000자), 그 외 null |
+| sentenceResults | null, 필수 | 문장별 점수·판정을 생성하지 않는 계약 |
+| sentenceResultsReason | string, 필수 | `UTTERANCE_ONLY` |
+
+GOP 경로의 `coaching.items=[]`는 전체 녹음 피드백·점수 부재를 뜻하지 않는다. FE의 기존 문장 구간 모델(sequenceNo/expectedText/pronunciationScore/resultStatus 등)은 이 경로의 응답이 아니다. 빈 구간을 결과 미제공으로 표현하는 대신 검증된 전체 녹음 결과를 사용한다. 점수 임계값으로 정상/주의 판정을 만들거나 근거 없는 STT·타임스탬프를 추가하지 않는다. 내부 v6/handoff 및 frozen core/H5 계약은 변경하지 않는다.
+
+확인 범위는 소스·schema·문서 정적 확인과 Python 컴파일이다. 실제 녹음·GPT 생성·화면 QA는 개발자가 수행해야 하며, 본 변경은 배포 완료 선언이 아니다.
+
 ## 독립 TTS: POST /v1/tts/synthesize
 
 인증은 분석과 다른 TTS Bearer다. 본문은 최대 32,768 bytes이고 다음 **8개 필드만** 허용한다. 중복·추가 key는 거부한다.

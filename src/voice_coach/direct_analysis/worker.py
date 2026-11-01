@@ -16,6 +16,7 @@ from voice_coach.backend_analysis.canonical_transport import FrozenOpenAITranspo
 from voice_coach.backend_analysis.native_execution import require_native_execution
 from voice_coach.backend_analysis.ports import MaterializedAudio
 from .domain import DirectInput
+from .practice_result import practice_result
 from .store import atomic, encoded
 
 
@@ -102,6 +103,9 @@ async def execute(folder: Path, *, runtime_environment=None, shared_transport=No
             coreManifestSha256=artifacts.identity.core_sha256,
             harnessManifestSha256=artifacts.identity.manifest_sha256),
         failure="CANONICAL_ANALYSIS_FAILED" if failed else None)
+    public["practiceResult"] = practice_result(
+        script_text=request.script_text, decision=public["decision"],
+        score=public["score"], coaching=public["coaching"], failed=failed)
     artifacts_root = folder / "artifacts"
     artifacts_root.mkdir(mode=0o700)
     await asyncio.gather(*(asyncio.to_thread(atomic,
