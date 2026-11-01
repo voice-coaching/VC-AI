@@ -1,13 +1,14 @@
 """Parent-side isolated canonical executions with exclusive legacy admission."""
 from __future__ import annotations
 
+import asyncio
 from datetime import datetime, UTC
 from pathlib import Path
 import time
 
 from .canonical_codec import encode_document
 from .canonical_lease import publish_lease
-from .canonical_process import check_guard_python, private_directory, run_guarded
+from .canonical_process import check_guard_python, private_directory, run_guarded, CanonicalProcessCleanupUnconfirmed
 from .canonical_producer import read_private_result, write_private_new
 from .http_models import parse_json, timestamp
 
@@ -29,9 +30,9 @@ class CanonicalLane:
     def ready(self):
         return self.resident is None or self.resident.ready()
 
-    async def refresh(self):
+    async def refresh(self, *, dispatch_active=False):
         if self.resident is not None:
-            await self.resident.refresh()
+            await self.resident.refresh(dispatch_active=dispatch_active)
 
     async def close(self):
         if self.resident is not None:
@@ -59,6 +60,7 @@ class CanonicalLane:
             self.resident.requests += 1
             environment['AI_CANONICAL_RESIDENT_SOCKET'] = str(self.resident.socket)
             environment['AI_CANONICAL_VERIFIED_GENERATION'] = str(self.resident.generation)
+        cleanup_confirmed = True
         try:
             await run_guarded(guard_python=self.python,
                 command=[str(self.python), "-B", "-m", "voice_coach.backend_analysis.canonical_executor",
@@ -66,10 +68,19 @@ class CanonicalLane:
                 cwd=self.app, environment=environment, log_path=work / "executor.log",
                 deadline_monotonic=deadline,
                 execution_is_active=lambda: not job.cancel.is_set() and time.monotonic() < job.lease_until)
-        except BaseException:
+        except BaseException as error:
+            cleanup_confirmed = not isinstance(error, CanonicalProcessCleanupUnconfirmed)
             if self.resident is not None:
-                await self.resident.stop()
+                try:
+                    await self.resident.stop()
+                except CanonicalProcessCleanupUnconfirmed:
+                    cleanup_confirmed = False
+                    raise
             raise
+        finally:
+            if cleanup_confirmed:
+                from .scratch_cleanup import remove_audio
+                await asyncio.to_thread(remove_audio, work)
         result = parse_json(read_private_result(work / "completed.json", work, 1024))
         if set(result) != {"status"} or result["status"] not in ("COMPLETED", "FAILED", "HANDED_OFF"):
             raise ValueError("canonical_completion_invalid")

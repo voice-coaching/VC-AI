@@ -58,6 +58,8 @@ class DeliveryWorkers:
                     # Send the later archive state even if an earlier summary was acknowledged.
                     complete = kind == "archive" or archived_sent
                     await asyncio.to_thread(self.store.update, doc["jobId"], **{state: "COMPLETE" if complete else "PENDING", kind + "Next": time.time() + 3})
+                    if kind == "archive":
+                        await asyncio.to_thread(self.store.remove_terminal_audio, doc["jobId"])
                 except HTTPError as exc:
                     if kind == "history" and exc.code in (409, 422):
                         await asyncio.to_thread(self.store.update, doc["jobId"], **{state: "CONFLICT"})
