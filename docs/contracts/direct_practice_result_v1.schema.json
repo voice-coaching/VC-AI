@@ -1,0 +1,18 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "voice-coaching.direct-practice-result.v1",
+  "title": "Whole-recording practice result scope",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schemaVersion", "scope", "scriptText", "decisionStatus", "score", "feedback", "sentenceResults", "sentenceResultsReason"],
+  "properties": {
+    "schemaVersion": {"const": "voice-coaching.direct-practice-result.v1"},
+    "scope": {"const": "UTTERANCE"},
+    "scriptText": {"type": "string", "minLength": 1, "maxLength": 4000},
+    "decisionStatus": {"enum": ["ACCEPT", "REJECT", "INCONCLUSIVE", "SYSTEM_FAILURE"]},
+    "score": {"$ref": "runpod_result_v6.schema.json#/$defs/score"},
+    "feedback": {"type": ["string", "null"], "minLength": 1, "maxLength": 4000},
+    "sentenceResults": {"type": "null"},
+    "sentenceResultsReason": {"const": "UTTERANCE_ONLY"}
+  }
+}

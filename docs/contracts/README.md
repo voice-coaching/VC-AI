@@ -7,6 +7,7 @@
 
 | 파일 | 현재 역할 |
 |---|---|
+| [direct practice result](direct_practice_result_v1.schema.json) | 공개 direct의 전체 녹음 평가 범위·기존 점수/총평 projection |
 | [request v4](runpod_analysis_request_v4.schema.json) | 음성 전용 또는 실제 음성·영상 신규 접수 |
 | [result v6](runpod_result_v6.schema.json) | 통합 결과·association v2와 내부 audio 검증 구조 |
 | [handoff v2](runpod_canonical_handoff_v2.schema.json) | 같은 원본·projection·실행 identity의 영속 인계 |
