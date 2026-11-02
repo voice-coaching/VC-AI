@@ -242,7 +242,7 @@ def harness_identity(manifest_sha256: str) -> HarnessIdentity:
 
 
 def check_schema_registration(identity: HarnessIdentity) -> None:
-    """Catch missing or mismatched release pins before admitting inference."""
+    """Check release pins and v6 result classification before admitting inference."""
     from jsonschema import Draft202012Validator, ValidationError
     from .canonical_codec import _schema
 
@@ -263,5 +263,35 @@ def check_schema_registration(identity: HarnessIdentity) -> None:
                                             for k in values if k in definition["properties"]},
                                 oneOf=definition["oneOf"])
                 Draft202012Validator(fragment).validate(values)
+        _check_result_classification(_schema("v6"), identity)
     except ValidationError:
         raise ValueError("CANONICAL_HARNESS_SCHEMA_MISMATCH") from None
+
+
+def _check_result_classification(schema: dict, identity: HarnessIdentity) -> None:
+    """Registration alone does not select the scoring/GPT result branches.
+
+    Inspect the actual serializer contract without inventing a recording, score
+    or model response. Both the audiovisual result and its audio intermediate
+    must classify the configured H5 consistently with its server-owned flags.
+    """
+    from jsonschema import Draft202012Validator
+
+    for name in ("result", "audioResult"):
+        classifications = {"scoring": [], "gpt_grading": []}
+        for rule in schema["$defs"][name]["allOf"]:
+            fields = rule.get("then", {}).get("properties", {})
+            score_options = fields.get("score", {}).get("oneOf", [])
+            if {"$ref": "#/$defs/computedScore"} in score_options:
+                classifications["scoring"].append(rule)
+            if (fields.get("selection") == {"const": None}
+                    and "feedback" in fields.get("coaching", {}).get("required", [])):
+                classifications["gpt_grading"].append(rule)
+        for flag, rules in classifications.items():
+            # A changed/missing contract branch needs an explicit reader update.
+            if len(rules) != 1:
+                raise ValueError("CANONICAL_HARNESS_SCHEMA_MISMATCH")
+            manifest = rules[0]["if"]["properties"]["sourceIdentity"]["properties"]["llmManifestSha256"]
+            selected = Draft202012Validator(manifest).is_valid(identity.manifest_sha256)
+            if selected != getattr(identity, flag):
+                raise ValueError("CANONICAL_HARNESS_SCHEMA_MISMATCH")
