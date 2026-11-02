@@ -144,7 +144,8 @@ class HttpRuntime:
         if self.environment.get("AI_CANONICAL_BOOTSTRAP_READY") == "true":
             try:
                 from .canonical_lane import CanonicalLane
-                self.canonical_lane = CanonicalLane(self.environment)
+                self.canonical_lane = CanonicalLane(self.environment,
+                    capacity=min(2, self.resource_budget.max_active))
                 self.canonical_reason = None
             except Exception:
                 self.canonical_reason = "canonical_configuration_invalid"
@@ -411,7 +412,7 @@ class HttpRuntime:
         if any(k[0] == key[0] and not j.finished for k, j in self.history.items()):
             raise HttpFailure(409, "STALE_EXECUTION")
         capacity = (1 if request.is_legacy or self.canonical_lane is None
-                    or self.canonical_lane.resident is not None else CANONICAL_COLD_CAPACITY)
+                    else self.canonical_lane.capacity)
         capacity = min(capacity, self.resource_budget.max_active)
         if len(self.active) >= capacity or any(
                 job.request.is_legacy for job in self.active.values()):
@@ -430,6 +431,9 @@ class HttpRuntime:
         if timestamp(body["deadlineAt"]) <= datetime.now(UTC):
             raise HttpFailure(409, "DEADLINE_EXCEEDED")
         job = Job(body, request, sha)
+        if not request.is_legacy:
+            # Reserve without awaiting so concurrent claims cannot select the same worker.
+            self.canonical_lane.reserve(job)
         # No await between checking and reserving the slot on this event loop.
         self.active[key] = self.history[key] = job
         try:
@@ -447,6 +451,8 @@ class HttpRuntime:
         except BaseException:
             self.history.pop(key, None)
             self.active.pop(key, None)
+            if not request.is_legacy:
+                self.canonical_lane.release(job)
             raise
 
     def _identity(self, job):
@@ -608,6 +614,7 @@ class HttpRuntime:
             job.reason = job.reason or "INTERNAL_ERROR"
             job.state = "CANCELLED" if job.cancel.is_set() else "FAILED"
         finally:
+            self.canonical_lane.release(job)
             heartbeat.cancel()
             await asyncio.gather(heartbeat, return_exceptions=True)
             if cleanup_confirmed:

@@ -10,13 +10,13 @@ from .canonical_codec import encode_document
 from .canonical_lease import publish_lease
 from .canonical_process import check_guard_python, private_directory, run_guarded, CanonicalProcessCleanupUnconfirmed
 from .canonical_producer import read_private_result, write_private_new
-from .http_models import parse_json, timestamp
+from .http_models import HttpFailure, parse_json, timestamp
 
 
 from .canonical_settings import child_environment
 
 class CanonicalLane:
-    def __init__(self, environment):
+    def __init__(self, environment, *, capacity=1):
         self.environment = child_environment(environment)
         self.python = Path(environment["AI_CANONICAL_PYTHON"])
         check_guard_python(self.python)
@@ -25,18 +25,49 @@ class CanonicalLane:
         if environment.get('AI_CANONICAL_RESIDENT_ENABLED') != 'true':
             raise ValueError('NATIVE_RESIDENT_REQUIRED')
         from .canonical_resident import CanonicalResidentCore
-        self.resident = CanonicalResidentCore(self.environment, self.python)
+        if capacity not in (1, 2):
+            raise ValueError("CANONICAL_WORKER_CAPACITY_INVALID")
+        self.residents = [CanonicalResidentCore(self.environment, self.python) for _ in range(capacity)]
+        # Retain the reviewed identity accessor used by audiovisual health.
+        self.resident = self.residents[0]
+        self.capacity = capacity
+        self.reservations = {}
 
     def ready(self):
-        return self.resident is None or self.resident.ready()
+        return (not any(resident.blocked for resident in self.residents)
+                and any(resident.ready() for resident in self.residents))
+
+    def reserve(self, job):
+        if not self.ready():
+            raise HttpFailure(503, "NOT_READY")
+        key = str(job.request.execution_id)
+        if key in self.reservations:
+            raise ValueError("CANONICAL_WORKER_ALREADY_RESERVED")
+        busy = set(self.reservations.values())
+        for resident in self.residents:
+            if resident not in busy and resident.ready():
+                self.reservations[key] = resident
+                return
+        raise HttpFailure(429, "CAPACITY_EXCEEDED")
+
+    def release(self, job):
+        self.reservations.pop(str(job.request.execution_id), None)
 
     async def refresh(self, *, dispatch_active=False):
-        if self.resident is not None:
-            await self.resident.refresh(dispatch_active=dispatch_active)
+        busy = set(self.reservations.values())
+        outcomes = await asyncio.gather(
+            *(resident.refresh(dispatch_active=resident in busy) for resident in self.residents),
+            return_exceptions=True)
+        for outcome in outcomes:
+            if isinstance(outcome, BaseException):
+                raise outcome
 
     async def close(self):
-        if self.resident is not None:
-            await self.resident.close()
+        outcomes = await asyncio.gather(*(resident.close() for resident in self.residents),
+                                        return_exceptions=True)
+        for outcome in outcomes:
+            if isinstance(outcome, BaseException):
+                raise outcome
 
     @staticmethod
     def publish_lease(job):
@@ -45,6 +76,13 @@ class CanonicalLane:
         publish_lease(job.canonical_workspace, job.request.execution_id, job.lease_until)
 
     async def run(self, job, worker_id):
+        resident = self.reservations[str(job.request.execution_id)]
+        try:
+            return await self._run(job, worker_id, resident)
+        finally:
+            self.release(job)
+
+    async def _run(self, job, worker_id, resident):
         work = self.root / str(job.request.execution_id)
         # An existing attempt is never restarted, even if memory was lost.
         work.mkdir(mode=0o700, exist_ok=False)
@@ -54,12 +92,12 @@ class CanonicalLane:
             "request": job.body, "workerId": worker_id, "deadline": deadline}))
         self.publish_lease(job)
         environment = dict(self.environment)
-        if self.resident is not None:
-            if not self.resident.ready():
+        if resident is not None:
+            if not resident.ready():
                 raise ValueError('RESIDENT_NOT_READY')
-            self.resident.requests += 1
-            environment['AI_CANONICAL_RESIDENT_SOCKET'] = str(self.resident.socket)
-            environment['AI_CANONICAL_VERIFIED_GENERATION'] = str(self.resident.generation)
+            resident.requests += 1
+            environment['AI_CANONICAL_RESIDENT_SOCKET'] = str(resident.socket)
+            environment['AI_CANONICAL_VERIFIED_GENERATION'] = str(resident.generation)
         cleanup_confirmed = True
         try:
             await run_guarded(guard_python=self.python,
@@ -70,9 +108,9 @@ class CanonicalLane:
                 execution_is_active=lambda: not job.cancel.is_set() and time.monotonic() < job.lease_until)
         except BaseException as error:
             cleanup_confirmed = not isinstance(error, CanonicalProcessCleanupUnconfirmed)
-            if self.resident is not None:
+            if resident is not None:
                 try:
-                    await self.resident.stop()
+                    await resident.stop()
                 except CanonicalProcessCleanupUnconfirmed:
                     cleanup_confirmed = False
                     raise
