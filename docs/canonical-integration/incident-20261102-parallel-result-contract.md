@@ -115,3 +115,12 @@ manifest 등록만 확인해, 등록은 있지만 분류가 빠진 위 상태를
 schema 보호·서버 인증·실행 identity 검증을 우회하거나 실패한 요청을 재실행하지 않는다.
 확인은 소스/JSON/AST/문서 링크/Git diff 정적 확인에 한정하며 테스트·추론·배포는
 수행하지 않는다. 개발자가 수정 계약을 설치한 뒤 readiness 및 실제 결과 수신을 QA한다.
+
+## 운영 복구 중 분류 검사 범위 수정
+
+PR #51의 공통 artifact 검사에 v6 분류를 연결하면 별도의 공개 계약을 사용하는
+익명 Direct H5까지 내부 v6 분류로 거부한다. 2026-11-02 운영 전환 중 내부 경로는
+ready였지만 Direct가 EXECUTION_RECOVERY_REQUIRED여서 coordinated 완료 조건을
+충족하지 못했다. 검사 연결을 공통 artifact verifier에서 내부 CanonicalLane 생성으로
+옮긴다. 내부 v6는 계속 접수 전에 검사하며 Direct에는 기존 등록·pin 검사를 유지한다.
+임의 예외 H5 allowlist, 점수 조작, readiness 우회는 추가하지 않는다.

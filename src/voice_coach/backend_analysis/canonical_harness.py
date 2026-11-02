@@ -242,7 +242,7 @@ def harness_identity(manifest_sha256: str) -> HarnessIdentity:
 
 
 def check_schema_registration(identity: HarnessIdentity) -> None:
-    """Check release pins and v6 result classification before admitting inference."""
+    """Catch missing or mismatched release pins before admitting inference."""
     from jsonschema import Draft202012Validator, ValidationError
     from .canonical_codec import _schema
 
@@ -263,12 +263,11 @@ def check_schema_registration(identity: HarnessIdentity) -> None:
                                             for k in values if k in definition["properties"]},
                                 oneOf=definition["oneOf"])
                 Draft202012Validator(fragment).validate(values)
-        _check_result_classification(_schema("v6"), identity)
     except ValidationError:
         raise ValueError("CANONICAL_HARNESS_SCHEMA_MISMATCH") from None
 
 
-def _check_result_classification(schema: dict, identity: HarnessIdentity) -> None:
+def check_result_classification(identity: HarnessIdentity) -> None:
     """Registration alone does not select the scoring/GPT result branches.
 
     Inspect the actual serializer contract without inventing a recording, score
@@ -276,7 +275,9 @@ def _check_result_classification(schema: dict, identity: HarnessIdentity) -> Non
     must classify the configured H5 consistently with its server-owned flags.
     """
     from jsonschema import Draft202012Validator
+    from .canonical_codec import _schema
 
+    schema = _schema("v6")
     for name in ("result", "audioResult"):
         classifications = {"scoring": [], "gpt_grading": []}
         for rule in schema["$defs"][name]["allOf"]:
