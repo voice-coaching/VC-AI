@@ -17,6 +17,7 @@ from .domain import DirectFailure
 from .store import JobStore, atomic, encoded
 from .executor_pool import ExecutionPool
 from typing import Any
+from voice_coach.backend_analysis.scratch_cleanup import remove_audio
 
 
 class AnalysisService:
@@ -61,6 +62,9 @@ class AnalysisService:
                     continue
                 atomic(self.store.root / "recovery-required.json", encoded({"jobId": doc["jobId"]}))
                 self.store.update(doc["jobId"], status="FAILED", failure="EXECUTION_INTERRUPTED")
+        for doc in self.store.documents():
+            if doc["status"] in ("RESULT_READY", "FAILED", "CANCELLED"):
+                await self.cleanup_audio(doc["jobId"])
         if (self.store.root / "recovery-required.json").exists():
             self.ready_error = "RECOVERY_CONFIRMATION_REQUIRED"
         if self.store.settings.enabled and not self.ready_error:
@@ -186,6 +190,7 @@ class AnalysisService:
         deadline = time.monotonic() + self.store.settings.deadline_seconds
         dispatched = asyncio.create_task(executor.current.dispatch(job_id, resident.generation, deadline))
         retired = False
+        cleanup_confirmed = False
         try:
             while not dispatched.done():
                 if self.store.read(job_id)["status"] == "CANCELLED" or time.monotonic() >= deadline:
@@ -224,11 +229,23 @@ class AnalysisService:
                 await executor.retire()
                 await resident.stop()
                 print(json.dumps(dict(event='direct_resident_recycled', reason='FAILED_OR_CANCELLED_EXECUTION')), flush=True)
+            cleanup_confirmed = True
             self.recovering = False
         finally:
             if not dispatched.done():
                 dispatched.cancel()
                 await asyncio.gather(dispatched, return_exceptions=True)
+                await executor.retire()
+                await resident.stop()
+                cleanup_confirmed = True
+            if cleanup_confirmed:
+                await self.cleanup_audio(job_id)
+
+    async def cleanup_audio(self, job_id):
+        doc = self.store.read(job_id)
+        work = Path(self.env["AI_CANONICAL_WORKSPACE_ROOT"]) / str(UUID(doc["executionId"]))
+        await asyncio.to_thread(remove_audio, work)
+        await asyncio.to_thread(self.store.remove_terminal_audio, job_id)
 
     async def kill(self):
         if self.process and self.process.returncode is None:

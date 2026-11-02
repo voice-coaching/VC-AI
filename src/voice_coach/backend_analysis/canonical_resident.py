@@ -41,6 +41,18 @@ class _ResidentGeneration:
                 and self.requests < 3 and self.task is not None and not self.task.done()
                 and self.mfa_health is not None and self.mfa_health.alive())
 
+    async def cleanup(self):
+        if self.blocked or (self.task is not None and not self.task.done()):
+            raise CanonicalProcessCleanupUnconfirmed("RESIDENT_CLEANUP_UNCONFIRMED")
+        if self.generation is not None:
+            from .scratch_cleanup import remove_generation
+            try:
+                await asyncio.to_thread(remove_generation, self.generation)
+            except BaseException:
+                self.blocked = True
+                raise
+            self.generation = self.socket = None
+
     async def refresh(self):
         if self.stopping or self.blocked:
             return
@@ -50,12 +62,14 @@ class _ResidentGeneration:
         if self.task is not None and self.task.done():
             error = None if self.task.cancelled() else self.task.exception()
             self.prepared = False
-            self.task = None
             if isinstance(error, CanonicalProcessCleanupUnconfirmed):
                 self.blocked = True
                 return
+            await self.cleanup()
+            self.task = None
             self.next_start = time.monotonic() + (30 if error else 0)
         if self.task is None and time.monotonic() >= self.next_start:
+            await self.cleanup()
             from .canonical_generation import readonly_identity, write_verification
             before = (readonly_identity(self.artifacts.core_root), readonly_identity(self.artifacts.llm_root))
             verified_at = time.monotonic()
@@ -109,6 +123,7 @@ class _ResidentGeneration:
             if isinstance(result[0], CanonicalProcessCleanupUnconfirmed):
                 self.blocked = True
                 raise result[0]
+        await self.cleanup()
         self.next_start = time.monotonic() + 1
 
     async def close(self):
@@ -189,6 +204,7 @@ class CanonicalResidentCore:
                 if old.task and not old.task.cancelled() and isinstance(old.task.exception(), CanonicalProcessCleanupUnconfirmed):
                     self.blocked = True
                     return
+                await old.cleanup()
                 self.retired.remove(old)
         if self.preparing and self.preparing.done():
             error = None if self.preparing.cancelled() else self.preparing.exception()

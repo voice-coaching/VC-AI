@@ -135,6 +135,15 @@ class JobStore:
                 self.attempts[attempt] = job_id
             return doc
 
+    def remove_terminal_audio(self, job_id):
+        # Caller owns worker reclamation. Keep the accepted input until the B2
+        # archive is durable; result/history retries only need retained JSON.
+        with self.mutation_lock:
+            doc = self.read(job_id)
+            if (doc["status"] in ("FAILED", "CANCELLED")
+                    or (doc["status"] == "RESULT_READY" and doc["archiveStatus"] == "COMPLETE")):
+                (self.directory(job_id) / "audio.wav").unlink(missing_ok=True)
+
     def view(self, job_id):
         doc = self.read(job_id)
         result = None
@@ -158,4 +167,6 @@ class JobStore:
             if doc["status"] in ("RESULT_READY", "FAILED", "CANCELLED"):
                 return self.view(job_id)
             self.update(job_id, status="CANCELLED")
+            if doc["status"] == "QUEUED":
+                self.remove_terminal_audio(job_id)
             return self.view(job_id)

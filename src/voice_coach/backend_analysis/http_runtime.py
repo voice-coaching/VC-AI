@@ -258,7 +258,7 @@ class HttpRuntime:
         async with httpx.AsyncClient(trust_env=False, follow_redirects=False, timeout=8) as client:
             while not self.stopping:
                 try:
-                    await self.canonical_lane.refresh()
+                    await self.canonical_lane.refresh(dispatch_active=bool(self.active))
                     await self._monitor_handoff(client)
                     await self._monitor_audiovisual(client)
                     self.canonical_reason = None if time.monotonic() < self.handoff_dependencies_until else "handoff_backend_not_ready"
