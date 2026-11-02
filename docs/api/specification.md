@@ -73,10 +73,11 @@ UUID executionId 하나만 받는다. 응답은 identity/status/reasonCode다. �
 
 ## Health와 readiness
 
-canonical artifact 준비는 H5의 manifest/lock/prompt 등록뿐 아니라 v6의
+내부 canonical lane 준비는 H5의 manifest/lock/prompt 등록뿐 아니라 v6의
 `result`·`audioResult` 양쪽 scoring/GPT 분류가 실행 identity와 일치하는지도 확인한다.
 불일치하면 `CANONICAL_HARNESS_SCHEMA_MISMATCH`로 준비를 중단하며 해당 resident는
 ready가 되지 않는다. 이는 문서·identity 계약 확인이며 실제 추론/GPT 성공 검증은 아니다.
+익명 Direct의 공통 artifact 검증에는 내부 v6 분류를 적용하지 않는다.
 
 | 경로 | 인증 | 응답과 조건 |
 |---|---|---|

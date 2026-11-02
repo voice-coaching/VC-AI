@@ -32,6 +32,10 @@ class CanonicalLane:
         self.residents = [CanonicalResidentCore(self.environment, self.python) for _ in range(capacity)]
         # Retain the reviewed identity accessor used by audiovisual health.
         self.resident = self.residents[0]
+        # Only this lane serializes internal v6 results. Direct uses its own
+        # public contract, so shared artifact verification must not impose v6.
+        from .canonical_harness import check_result_classification
+        check_result_classification(self.resident.current.artifacts.identity)
         self.capacity = capacity
         compute_capacity = capacity if compute_capacity is None else compute_capacity
         if type(compute_capacity) is not int or not 1 <= compute_capacity <= capacity:
