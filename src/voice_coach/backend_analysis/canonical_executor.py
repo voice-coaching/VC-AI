@@ -84,6 +84,12 @@ async def execute(path: Path, env, diagnostic: dict):
     def stage(name: str) -> None:
         timing.stage(name)
         diagnostic["stage"] = name
+        if name == "EXPRESSION":
+            # Parent may schedule another core after this exact execution has
+            # finished CORE; provider I/O retains its resident and lease.
+            write_private_new(work / "core-finished.json", encode_document({
+                "schema": "canonical-core-finished-v1",
+                "executionId": str(request.execution_id)}))
         print(json.dumps({"event": "canonical_stage", **diagnostic}), file=sys.stderr, flush=True)
 
     def remaining():

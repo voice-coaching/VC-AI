@@ -38,7 +38,7 @@ mtime은 00:27:30 및 00:29:46 UTC였다. 로그 단계별 시간은 다음과 �
 
 수정은 다음과 같다.
 
-- DLPC 활성 요청 상한을 32개로 올리고, 각 요청에 독립된 CanonicalResidentCore/MFA
+- DLPC 활성 요청 상한은 자원 예산으로 계산한다(이번 관측의 짧은 음성 추정 36개). 각 요청에 독립된 CanonicalResidentCore/MFA
   generation·socket을 배정한다. 하나의 공유 resident에 동시 요청을 밀어 넣지 않는다.
 - Backend claim 전에 event loop에서 worker를 원자적으로 예약한다. claim 실패,
   실행 완료·취소 때 예약을 반환하고 한 작업의 일반 실패는 해당 resident만 회수한다.
@@ -72,7 +72,7 @@ Backend `develop` PR의 계약 파일과 AI 계약 파일은 byte 단위로 동�
 자동 테스트·브라우저 자동화·실제 녹음·추론·GPT 생성을 실행하지 않는다.
 PR 수정은 아직 배포 완료나 실제 피드백 성공을 뜻하지 않는다.
 
-## 32개 상한 변경
+## 이전 단계: 32개 상한 변경
 
 사용자 후속 요청에 따라 MAX_CANONICAL_WORKERS=32를 단일 상한으로 사용한다.
 DLPC ResourceBudget와 HttpRuntime, CanonicalLane 범위 검증을 함께 변경한다.
@@ -80,3 +80,9 @@ DLPC ResourceBudget와 HttpRuntime, CanonicalLane 범위 검증을 함께 변경
 시작 시 32개 모델/MFA를 동시에 기동하지 않는다. 사용된 worker는 기존 3회 generation
 수명과 정리 정책을 유지하며, 실제 32개 동시 처리 성능·메모리 사용량은 미검증이다.
 익명 Direct dispatcher와 Backend schema는 이번 상한 변경에서 추가 수정하지 않는다.
+
+## 최신 자원 예산 변경
+
+고정 32개는 [요청당 자원 비용·동시 처리 계획](capacity-budget-20261102.md)의
+관측·가정·계산으로 대체했다. 절대 ceiling 128, 현재 짧은 음성 상한 추정 36개,
+무거운 연산 예산 3개를 구분한다. 실제 부하·추론 검증이나 배포 완료를 뜻하지 않는다.

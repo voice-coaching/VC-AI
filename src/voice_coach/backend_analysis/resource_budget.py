@@ -5,7 +5,7 @@ import os
 import shutil
 from .cgroup_resources import cpu_quotas, memory_limits
 
-MAX_CANONICAL_WORKERS = 32
+from .capacity_planning import (MAX_CANONICAL_WORKERS, GIB, capacity_plan, free_bytes, gpu_memory)
 
 
 def effective_cpu_count():
@@ -47,6 +47,11 @@ class ResourceBudget:
     disk_root: Path | None = None
     minimum_disk_free_bytes: int = 0
     minimum_free_inodes: int = 0
+    compute_active: int = 3
+    capacity_estimate: dict | None = None
+    minimum_tmp_free_bytes: int = 0
+    gpu_indices: tuple[int, ...] = ()
+    minimum_gpu_free_bytes: int = 0
 
     @classmethod
     def from_environment(cls, env):
@@ -56,30 +61,48 @@ class ResourceBudget:
         if profile in ('dlpc-4cpu', 'dlpc-j406'):
             if profile == 'dlpc-j406':
                 core_cpu_threads(env)
-            # Grow independent workers on demand. Headroom is checked per admission;
-            # the concurrency ceiling is not a promise of available resources.
-            return cls(max_active=MAX_CANONICAL_WORKERS, minimum_available_bytes=(16 if profile == 'dlpc-j406' else 4) * 1024**3,
-                       disk_root=Path('/var/lib/intelligentai/work'),
-                       minimum_disk_free_bytes=14 * 1024**3,
+            work = Path("/var/lib/intelligentai/work")
+            plan = capacity_plan(profile=profile, cpu_count=effective_cpu_count(),
+                memory_available=available_memory_bytes(), disk_free=free_bytes(work),
+                tmp_free=free_bytes("/tmp"), gpus=gpu_memory())
+            return cls(max_active=plan.request_limit,
+                       compute_active=plan.compute_limit, capacity_estimate=plan.document(),
+                       minimum_available_bytes=24 * GIB + plan.ram_per_worker,
+                       disk_root=work, minimum_disk_free_bytes=8 * GIB + plan.disk_per_worker,
+                       minimum_tmp_free_bytes=GIB + plan.tmp_per_worker,
+                       gpu_indices=plan.gpu_indices, minimum_gpu_free_bytes=8 * GIB + plan.gpu_per_worker,
                        minimum_free_inodes=10000)
         raise ValueError('ANALYSIS_RESOURCE_PROFILE_INVALID')
 
-    def can_admit(self):
+    def can_admit(self, *, large_input=False):
         if self.minimum_available_bytes:
             free = available_memory_bytes()
-            if free is None or free < self.minimum_available_bytes:
+            required_memory = max(self.minimum_available_bytes, 32 * GIB if large_input else 0)
+            if free is None or free < required_memory:
                 return False
         if self.disk_root is not None:
             try:
                 root = self.disk_root
                 if not root.is_dir() or root.resolve(strict=True) != root:
                     return False
-                # 8 GiB reserve + 6 GiB initial working headroom. This is an
-                # admission floor, not a filesystem quota or peak-size proof.
-                if shutil.disk_usage(root).free < self.minimum_disk_free_bytes:
+                # Short-audio planning replaces the old fixed 6 GiB request
+                # headroom. Video/long audio retains the original 14 GiB floor.
+                required_disk = max(self.minimum_disk_free_bytes, 14 * GIB if large_input else 0)
+                if shutil.disk_usage(root).free < required_disk:
                     return False
                 if os.statvfs(root).f_favail < self.minimum_free_inodes:
                     return False
             except (OSError, ValueError, AttributeError):
+                return False
+        if self.minimum_tmp_free_bytes:
+            temporary = free_bytes("/tmp")
+            if temporary is None or temporary < self.minimum_tmp_free_bytes:
+                return False
+        if self.gpu_indices:
+            inventory = gpu_memory()
+            required_gpu = max(self.minimum_gpu_free_bytes, 16 * GIB if large_input else 0)
+            if inventory is None or any(
+                    i not in inventory or inventory[i]["free"] < required_gpu
+                    for i in self.gpu_indices):
                 return False
         return True
