@@ -18,7 +18,7 @@ from .canonical_bridge import CanonicalIntegrationError
 from .canonical_settings import child_environment
 
 class CanonicalLane:
-    def __init__(self, environment, *, capacity=1):
+    def __init__(self, environment, *, capacity=1, compute_capacity=None):
         self.environment = child_environment(environment)
         self.python = Path(environment["AI_CANONICAL_PYTHON"])
         check_guard_python(self.python)
@@ -33,6 +33,10 @@ class CanonicalLane:
         # Retain the reviewed identity accessor used by audiovisual health.
         self.resident = self.residents[0]
         self.capacity = capacity
+        compute_capacity = capacity if compute_capacity is None else compute_capacity
+        if type(compute_capacity) is not int or not 1 <= compute_capacity <= capacity:
+            raise ValueError("CANONICAL_COMPUTE_CAPACITY_INVALID")
+        self.compute_slots = asyncio.Semaphore(compute_capacity)
         self.reservations = {}
         self.activated = {self.resident}
         self.refresh_locks = {resident: asyncio.Lock() for resident in self.residents}
@@ -71,7 +75,9 @@ class CanonicalLane:
         busy = set(self.reservations.values())
         outcomes = await asyncio.gather(
             *(self.refresh_worker(resident, dispatch_active=resident in busy)
-              for resident in tuple(self.activated)), return_exceptions=True)
+              for resident in tuple(self.activated)
+              if resident is self.resident or resident in busy or resident.ready()),
+            return_exceptions=True)
         for outcome in outcomes:
             if isinstance(outcome, BaseException):
                 raise outcome
@@ -92,7 +98,26 @@ class CanonicalLane:
     async def run(self, job, worker_id):
         resident = self.reservations[str(job.request.execution_id)]
         prepared = False
+        held = False
+
+        def release_compute():
+            nonlocal held
+            if held:
+                self.compute_slots.release()
+                held = False
+
         try:
+            while not held:
+                if job.cancel.is_set():
+                    raise asyncio.CancelledError()
+                if (time.monotonic() >= job.lease_until
+                        or timestamp(job.body["deadlineAt"]) <= datetime.now(UTC)):
+                    raise CanonicalIntegrationError("CANONICAL_EXECUTION_INACTIVE")
+                try:
+                    await asyncio.wait_for(self.compute_slots.acquire(), .2)
+                    held = True
+                except TimeoutError:
+                    continue
             while not resident.ready():
                 if resident.blocked:
                     raise CanonicalProcessCleanupUnconfirmed("RESIDENT_CLEANUP_UNCONFIRMED")
@@ -106,15 +131,16 @@ class CanonicalLane:
                 await self.refresh_worker(resident, dispatch_active=False)
                 await asyncio.sleep(.1)
             prepared = True
-            return await self._run(job, worker_id, resident)
+            return await self._run(job, worker_id, resident, release_compute)
         except BaseException:
             if not prepared:
                 await resident.stop()
             raise
         finally:
+            release_compute()
             self.release(job)
 
-    async def _run(self, job, worker_id, resident):
+    async def _run(self, job, worker_id, resident, release_compute):
         work = self.root / str(job.request.execution_id)
         # An existing attempt is never restarted, even if memory was lost.
         work.mkdir(mode=0o700, exist_ok=False)
@@ -132,7 +158,8 @@ class CanonicalLane:
             environment['AI_CANONICAL_VERIFIED_GENERATION'] = str(resident.generation)
         cleanup_confirmed = True
         try:
-            await run_guarded(guard_python=self.python,
+            await self._guard_with_compute_release(job, work, release_compute,
+                guard_python=self.python,
                 command=[str(self.python), "-B", "-m", "voice_coach.backend_analysis.canonical_executor",
                          str(work / "request.json")],
                 cwd=self.app, environment=environment, log_path=work / "executor.log",
@@ -155,3 +182,26 @@ class CanonicalLane:
         if set(result) != {"status"} or result["status"] not in ("COMPLETED", "FAILED", "HANDED_OFF"):
             raise ValueError("canonical_completion_invalid")
         return result["status"]
+
+    async def _guard_with_compute_release(self, job, work, release_compute, **arguments):
+        guard = asyncio.create_task(run_guarded(**arguments))
+        released = False
+        try:
+            while not guard.done():
+                marker = work / "core-finished.json"
+                if not released and marker.exists():
+                    record = parse_json(read_private_result(marker, work, 1024))
+                    if record != {"schema": "canonical-core-finished-v1",
+                                  "executionId": str(job.request.execution_id)}:
+                        raise ValueError("CANONICAL_CORE_FINISH_IDENTITY")
+                    release_compute()
+                    released = True
+                await asyncio.wait({guard}, timeout=.1)
+            await guard
+        finally:
+            if not guard.done():
+                guard.cancel()
+            # Cancellation must reclaim descendants before any resident reuse.
+            outcomes = await asyncio.gather(guard, return_exceptions=True)
+            if isinstance(outcomes[0], CanonicalProcessCleanupUnconfirmed):
+                raise outcomes[0]

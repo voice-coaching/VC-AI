@@ -18,6 +18,7 @@ from uuid import uuid4
 from .adapters.backend_http import BackendHttp
 from .http_models import AnalysisInput, CONTRACT, HttpFailure, digest, result_payload, timestamp
 from .http_settings import HttpSettings
+from .capacity_planning import SHORT_AUDIO_MAX_MS
 
 
 CANONICAL_COLD_CAPACITY = 3
@@ -146,7 +147,8 @@ class HttpRuntime:
                 from .canonical_lane import CanonicalLane
                 from .resource_budget import MAX_CANONICAL_WORKERS
                 self.canonical_lane = CanonicalLane(self.environment,
-                    capacity=min(MAX_CANONICAL_WORKERS, self.resource_budget.max_active))
+                    capacity=min(MAX_CANONICAL_WORKERS, self.resource_budget.max_active),
+                    compute_capacity=self.resource_budget.compute_active)
                 self.canonical_reason = None
             except Exception:
                 self.canonical_reason = "canonical_configuration_invalid"
@@ -253,6 +255,7 @@ class HttpRuntime:
             raise HttpFailure(503, 'NOT_READY') from None
         return dict(protocol='canonical-deployment-v1', workerInstanceId=self.worker_id,
                     activeJobs=len(self.active), stopping=self.stopping,
+                    capacityPlan=self.resource_budget.capacity_estimate,
                     **self.deployment_identity)
 
     async def _monitor_canonical(self):
@@ -415,10 +418,14 @@ class HttpRuntime:
         capacity = (1 if request.is_legacy or self.canonical_lane is None
                     else self.canonical_lane.capacity)
         capacity = min(capacity, self.resource_budget.max_active)
+        exclusive = request.is_audiovisual or request.duration_ms > SHORT_AUDIO_MAX_MS
+        if exclusive:
+            capacity = min(capacity, 1)
         if len(self.active) >= capacity or any(
-                job.request.is_legacy for job in self.active.values()):
+                job.request.is_legacy or job.request.is_audiovisual
+                or job.request.duration_ms > SHORT_AUDIO_MAX_MS for job in self.active.values()):
             raise HttpFailure(429, "CAPACITY_EXCEEDED")
-        if not self.resource_budget.can_admit():
+        if not self.resource_budget.can_admit(large_input=exclusive):
             raise HttpFailure(429, "CAPACITY_EXCEEDED")
         canonical_ready = (self.audiovisual_admission_ready() if request.is_audiovisual
                            else self.handoff_admission_ready() if request.is_v6 else False)
