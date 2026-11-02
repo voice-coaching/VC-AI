@@ -86,3 +86,32 @@ DLPC ResourceBudget와 HttpRuntime, CanonicalLane 범위 검증을 함께 변경
 고정 32개는 [요청당 자원 비용·동시 처리 계획](capacity-budget-20261102.md)의
 관측·가정·계산으로 대체했다. 절대 ceiling 128, 현재 짧은 음성 상한 추정 36개,
 무거운 연산 예산 3개를 구분한다. 실제 부하·추론 검증이나 배포 완료를 뜻하지 않는다.
+
+## 후속 확인과 접수 전 계약 확인
+
+2026-11-02 10:45~11:00 UTC의 J406 읽기 전용 조사에서도 보존된 마지막 실행은
+analysisId=105, executionId=`cab43e0b-9cc3-49cf-b4f2-dee5928e8ee8`였다.
+`executor.log`는 00:29:16~00:29:48 UTC에 CORE/EXPRESSION/PREFLIGHT 통과 후
+RESULT_PUBLISH의 `CANONICAL_SCHEMA_INVALID`를 기록한다. Backend 관리 조회는
+실패했으므로 서비스 전체의 가장 최근 접수 여부는 확정하지 않는다.
+
+AI [PR #49](https://github.com/voice-coaching/intelligentAI/pull/49)는 01:01:16 UTC에
+main으로 병합됐다. 후속 조회에서 원격 main은 `05b0907`이었지만 운영 v6 schema는
+여전히 SHA-256 `e7a3d57bb3d8f2d7114a1f20c1339706f07e5b3377259bf6539bcb79dc0c6987`였다.
+수정 schema와의 차이는 위 bounded H5의 네 분류 enum 추가뿐이다. 소스 병합을
+운영 반영으로 보고하면 안 된다. 일반 source 배포 client는 `docs/contracts/` 변경에
+`COORDINATED_IMMUTABLE_RELEASE_REQUIRED`를 반환하도록 구현돼 있다.
+이번에 그 배포 workflow의 실제 실행 결과를 조회한 것은 아니다.
+
+후속 수정은 `check_schema_registration`에서 v6 result/audioResult의 실제 scoring 및
+GPT 분류 분기를 읽어 실행 H5의 `scoring`/`gpt_grading`과 대조한다. 기존 검사는
+manifest 등록만 확인해, 등록은 있지만 분류가 빠진 위 상태를 놓쳤다.
+이제 frozen artifact 준비 때 불일치를 감지하여 해당 resident가 ready가 되는 것을 막는다.
+분기 누락·중복도 거부하며 가짜 녹음·점수·결과를 만들어 검증하지 않는다.
+스키마 bytes와 기존 네 enum 보정은 이번 후속 commit에서 다시 변경하지 않는다.
+
+이 후속 소스만 운영에 넣으면 기존 schema가 자동으로 고쳐지는 것이 아니다.
+위 계약 배포 순서대로 PR #49의 schema와 이 후속 소스를 함께 반영해야 한다.
+schema 보호·서버 인증·실행 identity 검증을 우회하거나 실패한 요청을 재실행하지 않는다.
+확인은 소스/JSON/AST/문서 링크/Git diff 정적 확인에 한정하며 테스트·추론·배포는
+수행하지 않는다. 개발자가 수정 계약을 설치한 뒤 readiness 및 실제 결과 수신을 QA한다.
