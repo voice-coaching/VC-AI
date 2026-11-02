@@ -5,6 +5,8 @@ import os
 import shutil
 from .cgroup_resources import cpu_quotas, memory_limits
 
+MAX_CANONICAL_WORKERS = 32
+
 
 def effective_cpu_count():
     """Affinity plus the tightest CPU quota, including cgroup ancestors."""
@@ -54,8 +56,9 @@ class ResourceBudget:
         if profile in ('dlpc-4cpu', 'dlpc-j406'):
             if profile == 'dlpc-j406':
                 core_cpu_threads(env)
-            # Two-request overlap is not approved by selecting this profile.
-            return cls(max_active=1, minimum_available_bytes=(8 if profile == 'dlpc-j406' else 2) * 1024**3,
+            # Grow independent workers on demand. Headroom is checked per admission;
+            # the concurrency ceiling is not a promise of available resources.
+            return cls(max_active=MAX_CANONICAL_WORKERS, minimum_available_bytes=(16 if profile == 'dlpc-j406' else 4) * 1024**3,
                        disk_root=Path('/var/lib/intelligentai/work'),
                        minimum_disk_free_bytes=14 * 1024**3,
                        minimum_free_inodes=10000)
