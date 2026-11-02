@@ -11,6 +11,8 @@ from .canonical_lease import publish_lease
 from .canonical_process import check_guard_python, private_directory, run_guarded, CanonicalProcessCleanupUnconfirmed
 from .canonical_producer import read_private_result, write_private_new
 from .http_models import HttpFailure, parse_json, timestamp
+from .resource_budget import MAX_CANONICAL_WORKERS
+from .canonical_bridge import CanonicalIntegrationError
 
 
 from .canonical_settings import child_environment
@@ -25,13 +27,15 @@ class CanonicalLane:
         if environment.get('AI_CANONICAL_RESIDENT_ENABLED') != 'true':
             raise ValueError('NATIVE_RESIDENT_REQUIRED')
         from .canonical_resident import CanonicalResidentCore
-        if capacity not in (1, 2):
+        if type(capacity) is not int or not 1 <= capacity <= MAX_CANONICAL_WORKERS:
             raise ValueError("CANONICAL_WORKER_CAPACITY_INVALID")
         self.residents = [CanonicalResidentCore(self.environment, self.python) for _ in range(capacity)]
         # Retain the reviewed identity accessor used by audiovisual health.
         self.resident = self.residents[0]
         self.capacity = capacity
         self.reservations = {}
+        self.activated = {self.resident}
+        self.refresh_locks = {resident: asyncio.Lock() for resident in self.residents}
 
     def ready(self):
         return (not any(resident.blocked for resident in self.residents)
@@ -44,20 +48,30 @@ class CanonicalLane:
         if key in self.reservations:
             raise ValueError("CANONICAL_WORKER_ALREADY_RESERVED")
         busy = set(self.reservations.values())
-        for resident in self.residents:
-            if resident not in busy and resident.ready():
-                self.reservations[key] = resident
-                return
+        available = [resident for resident in self.residents
+                     if resident not in busy and not resident.blocked]
+        # Prefer an already warm worker. Cold workers own their own socket and
+        # are prepared only after this request has obtained its Backend lease.
+        available.sort(key=lambda resident: not resident.ready())
+        if available:
+            resident = available[0]
+            self.reservations[key] = resident
+            self.activated.add(resident)
+            return
         raise HttpFailure(429, "CAPACITY_EXCEEDED")
 
     def release(self, job):
         self.reservations.pop(str(job.request.execution_id), None)
 
+    async def refresh_worker(self, resident, *, dispatch_active):
+        async with self.refresh_locks[resident]:
+            await resident.refresh(dispatch_active=dispatch_active)
+
     async def refresh(self, *, dispatch_active=False):
         busy = set(self.reservations.values())
         outcomes = await asyncio.gather(
-            *(resident.refresh(dispatch_active=resident in busy) for resident in self.residents),
-            return_exceptions=True)
+            *(self.refresh_worker(resident, dispatch_active=resident in busy)
+              for resident in tuple(self.activated)), return_exceptions=True)
         for outcome in outcomes:
             if isinstance(outcome, BaseException):
                 raise outcome
@@ -77,8 +91,26 @@ class CanonicalLane:
 
     async def run(self, job, worker_id):
         resident = self.reservations[str(job.request.execution_id)]
+        prepared = False
         try:
+            while not resident.ready():
+                if resident.blocked:
+                    raise CanonicalProcessCleanupUnconfirmed("RESIDENT_CLEANUP_UNCONFIRMED")
+                if job.cancel.is_set():
+                    raise asyncio.CancelledError()
+                if (time.monotonic() >= job.lease_until
+                        or timestamp(job.body["deadlineAt"]) <= datetime.now(UTC)):
+                    raise CanonicalIntegrationError("CANONICAL_EXECUTION_INACTIVE")
+                # The monitor and this waiter serialize preparation of this
+                # worker, while other workers prepare and execute independently.
+                await self.refresh_worker(resident, dispatch_active=False)
+                await asyncio.sleep(.1)
+            prepared = True
             return await self._run(job, worker_id, resident)
+        except BaseException:
+            if not prepared:
+                await resident.stop()
+            raise
         finally:
             self.release(job)
 

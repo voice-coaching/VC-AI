@@ -144,8 +144,9 @@ class HttpRuntime:
         if self.environment.get("AI_CANONICAL_BOOTSTRAP_READY") == "true":
             try:
                 from .canonical_lane import CanonicalLane
+                from .resource_budget import MAX_CANONICAL_WORKERS
                 self.canonical_lane = CanonicalLane(self.environment,
-                    capacity=min(2, self.resource_budget.max_active))
+                    capacity=min(MAX_CANONICAL_WORKERS, self.resource_budget.max_active))
                 self.canonical_reason = None
             except Exception:
                 self.canonical_reason = "canonical_configuration_invalid"

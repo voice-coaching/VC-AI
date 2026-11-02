@@ -38,13 +38,15 @@ mtime은 00:27:30 및 00:29:46 UTC였다. 로그 단계별 시간은 다음과 �
 
 수정은 다음과 같다.
 
-- DLPC 활성 요청 상한을 2개로 올리고, 각 요청에 독립된 CanonicalResidentCore/MFA
+- DLPC 활성 요청 상한을 32개로 올리고, 각 요청에 독립된 CanonicalResidentCore/MFA
   generation·socket을 배정한다. 하나의 공유 resident에 동시 요청을 밀어 넣지 않는다.
 - Backend claim 전에 event loop에서 worker를 원자적으로 예약한다. claim 실패,
   실행 완료·취소 때 예약을 반환하고 한 작업의 일반 실패는 해당 resident만 회수한다.
 - worker 사용 중에는 generation 교체·삭제를 보류한다. 하위 프로세스 회수 미확인 시
   전체 admission은 닫힌 상태를 유지한다. 기존 3회 generation 수명과 lease 정책은 유지한다.
-- DLPC 메모리 admission 여유 기준을 2개 worker에 맞춰 올린다. 기존 디스크·inode 제한은 유지한다.
+- 시작 시 첫 worker만 준비하고 요청에 따라 최대 32개 독립 worker를 활성화한다.
+  cold worker 준비 중에도 Backend heartbeat·lease·deadline·취소를 유지한다.
+  worker별 refresh lock으로 준비 작업의 중복 실행을 막는다. 기존 메모리·디스크·inode admission 제한은 유지한다.
 - AI/Backend 양쪽 `runpod_result_v6.schema.json`의 result/audioResult에 있는 scoring과
   GPT grading 분류 enum, 총 네 곳에 위 운영 H5만 추가한다. 가짜 점수, schema 검증 생략,
   identity 치환이나 후보 모델의 일괄 승격은 하지 않는다.
@@ -64,8 +66,17 @@ Backend `develop` PR의 계약 파일과 AI 계약 파일은 byte 단위로 동�
 3. AI는 공식 coordinated 배포 경로로 schema와 소스를 함께 전환한다. protected schema를
    단순 source controller로 hot patch하거나 guard를 해제하지 않는다.
 4. 양쪽 11개 schema digest와 verifier 설치 identity, local/public readiness 및 Backend admission을 확인한다.
-5. 개발자가 두 요청 동시 실행, 독립 취소·실패, 3회 generation 교체, 결과 저장·표시를 직접 QA한다.
+5. 개발자가 동시 요청 증가(최대 32개), cold worker 준비 중 lease·취소, 독립 취소·실패, 3회 generation 교체, 결과 저장·표시를 직접 QA한다.
 
 이 작업에서는 변경 소스 AST/JSON 구문, 양쪽 schema bytes/hash, Git diff만 정적으로 확인한다.
 자동 테스트·브라우저 자동화·실제 녹음·추론·GPT 생성을 실행하지 않는다.
 PR 수정은 아직 배포 완료나 실제 피드백 성공을 뜻하지 않는다.
+
+## 32개 상한 변경
+
+사용자 후속 요청에 따라 MAX_CANONICAL_WORKERS=32를 단일 상한으로 사용한다.
+DLPC ResourceBudget와 HttpRuntime, CanonicalLane 범위 검증을 함께 변경한다.
+32개는 admission 상한이며 자원이 부족하면 기존 can_admit 제한으로 추가 접수를 거부한다.
+시작 시 32개 모델/MFA를 동시에 기동하지 않는다. 사용된 worker는 기존 3회 generation
+수명과 정리 정책을 유지하며, 실제 32개 동시 처리 성능·메모리 사용량은 미검증이다.
+익명 Direct dispatcher와 Backend schema는 이번 상한 변경에서 추가 수정하지 않는다.
