@@ -22,7 +22,7 @@ Backend 책임이다. 내부 JSON은 `application/json`, identity content encodi
 `analysisProfile=CANONICAL_AUDIOVISUAL_20261007_V6`가 필수 고정값이다.
 
 requestId/executionId는 UUID, analysisId/recordingId/contentId는 정수 Backend ID다.
-learningFocus, promptRevision, scriptText/scriptSha256, audio, video, deadlineAt,
+learningFocus=PRONUNCIATION, promptRevision, scriptText/scriptSha256, audio, video, deadlineAt,
 mediaPreparation을 명시한다. audio는 제한 저장소 key·MIME·SHA·byte size·duration을
 갖는 WAV다. script digest, object key 제한, UTF-16 길이와 deadline도 검증한다.
 임의 callback URL·bucket·grant·서명·동의 증빙은 받지 않는다.
@@ -85,8 +85,14 @@ ready가 되지 않는다. 이는 문서·identity 계약 확인이며 실제 �
 | `/readyz` | 없음 | 전체 내부 의존성 준비 시 ready 200, 아니면 not_ready 503 |
 | `/health/services` | Analysis Bearer | status/workerInstanceId/reasonCode/executorReady/handoffReady/coachingProvider/coachingModel/workerRevision, 200/503 |
 | `/health/deployment` | Analysis Bearer | 설치 identity와 activeJobs/directJobs, Cache-Control: no-store |
-| `/health/handoff` | Analysis Bearer | handoff v2, executorConfigured, admissionEnabled, 공통 11개 schemaDigests, 200/503 |
-| `/health/audiovisual` | Analysis Bearer | 같은 v2·11개 digest, 영상 llmManifestSha256, 영상 executor/admission, 200/503 |
+| `/health/handoff` | Analysis Bearer | handoff v2, executorConfigured, admissionEnabled, supportedLearningFocuses, 공통 11개 schemaDigests, 200/503 |
+| `/health/audiovisual` | Analysis Bearer | 같은 v2·11개 digest·supportedLearningFocuses, 영상 llmManifestSha256, 영상 executor/admission, 200/503 |
+
+두 readiness 응답의 `supportedLearningFocuses`는 request v4 schema의 허용값에서
+읽으며 현재 `["PRONUNCIATION"]`이다. 실행용 request/result나 11개 schema digest는
+바꾸지 않는 additive 필드다. Backend는 지원 유형·계약 버전·digest·executor/admission을
+함께 확인해야 한다. 이 AI 변경을 먼저 반영하고 이를 요구하는 Backend를 이어 배포한다.
+readiness 선언을 실제 녹음·GPT 생성·품질 QA 성공으로 해석하지 않는다.
 
 Backend의 `/api/internal/ai/worker-readiness/handoff`와 `/audiovisual`은 이 저장소의
 구현 endpoint가 아니다. 통합을 위해 handoff v2, supported와 [공통 11개 digest](../canonical-integration/v6-unification.md)를

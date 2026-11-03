@@ -74,10 +74,10 @@ canonical_sources:
       sha256: 1be314ecef3d8751d4d4452febf4fef42841e17aa12fd7d09f18366d0061e478
     - path: docs/api/endpoints.md
       scope: api_contract
-      sha256: 859b98792c6758c764af86dc13391dd802167ea7b4f6bae464ebe491350bad31
+      sha256: 4e9377490364280c5ab64ef29da1e4365bd8ddeaf52b260496935229a8f1f54a
     - path: docs/api/specification.md
       scope: api_contract
-      sha256: d327d45c798a20bace5336ff0eaa92e831e2cf3341129fb9683344349627b2e9
+      sha256: 5388e20bf089af84a7ed2818ff187b0bece601847ee35c3e540c8982d8aa164a
 
 predecessor_s107:
   deep_validation_required: true
