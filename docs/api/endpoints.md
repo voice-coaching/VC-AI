@@ -10,8 +10,8 @@
 | GET | `/readyz` | 없음 | 내부 분석 readiness |
 | GET | `/health/services` | Analysis Bearer | 의존성·실행기·인계 readiness |
 | GET | `/health/deployment` | Analysis Bearer | 설치 identity·진행 작업 수 |
-| GET | `/health/handoff` | Analysis Bearer | 공통 v6/handoff v2·11개 digest |
-| GET | `/health/audiovisual` | Analysis Bearer | v6 영상 실행·자산·admission |
+| GET | `/health/handoff` | Analysis Bearer | 공통 v6/handoff v2·지원 학습 유형·11개 digest |
+| GET | `/health/audiovisual` | Analysis Bearer | v6 영상 실행·지원 학습 유형·자산·admission |
 | POST | `/v1/analysis-jobs` | Analysis Bearer | 음성·음성영상 request v4/result v6 신규 접수 |
 | GET | `/v1/analysis-jobs/{requestId}?executionId={executionId}` | Analysis Bearer | 해당 실행 상태 |
 | POST | `/v1/analysis-jobs/{requestId}/cancel` | Analysis Bearer | 해당 실행 취소 |

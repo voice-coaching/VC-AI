@@ -73,7 +73,7 @@ canonical_sources:
     - path: src/voice_coach/coaching/c02_selection_contract.py
       sha256: 477bd1fb3683ec4d70c33f9c498cf949ca44a81f68b24ccab8a263248ea95da7
     - path: configs/experiments/e02_confidence_guard_v1.yaml
-      sha256: ce0df0ac42f31fbce2b4d21659f416866e8ea8091240d7eb0aaf7200e2207dcc
+      sha256: 0f2ab37ec807f8aa2e2fde384d6511fdc50e94d8e77be2f4afb46edd6d1a9a91
     - path: src/voice_coach/evaluation/e02_confidence_guard_contract.py
       sha256: f01e069a0026d52e14e760bf0b7f65f1ded9cd8aaf2624f52b77ce49fc89fff9
     - path: configs/experiments/c03_expert_coaching_audit_v1.yaml
@@ -81,7 +81,7 @@ canonical_sources:
     - path: src/voice_coach/coaching/c03_expert_audit_contract.py
       sha256: 5b78d0fffd5421a2308c158cc850baeb41c909abfab603b5b958e0d889ca53f7
     - path: configs/experiments/e00_closed_loop_demo_v1.yaml
-      sha256: 287e1696c933befc950bec212e9eb3be6acee4984d3b0412b8e47def5264e2ad
+      sha256: 1acdf95f8de39a799530a3e5ad7aaedc1df649705b6c78c2a201e9d0225bfa9e
     - path: src/voice_coach/evaluation/e00_closed_loop_contract.py
       sha256: 1d74038a7bc913bd03ba61712f0aaf469e3032e0dea02fda598fb90ca11e67f1
     - path: configs/experiments/r03_reference_bank_selection_v1.yaml
@@ -175,7 +175,7 @@ delivery_predecessors:
     completion_sha256: TBD_C02_COMPLETION
   e02:
     config_path: configs/experiments/e02_confidence_guard_v1.yaml
-    config_sha256: ce0df0ac42f31fbce2b4d21659f416866e8ea8091240d7eb0aaf7200e2207dcc
+    config_sha256: 0f2ab37ec807f8aa2e2fde384d6511fdc50e94d8e77be2f4afb46edd6d1a9a91
     contract_path: src/voice_coach/evaluation/e02_confidence_guard_contract.py
     contract_sha256: f01e069a0026d52e14e760bf0b7f65f1ded9cd8aaf2624f52b77ce49fc89fff9
     completion_path: artifacts/evaluation/e02/commit.json
@@ -189,7 +189,7 @@ delivery_predecessors:
     report_sha256: TBD_C03_COMPLETION
   e00:
     config_path: configs/experiments/e00_closed_loop_demo_v1.yaml
-    config_sha256: 287e1696c933befc950bec212e9eb3be6acee4984d3b0412b8e47def5264e2ad
+    config_sha256: 1acdf95f8de39a799530a3e5ad7aaedc1df649705b6c78c2a201e9d0225bfa9e
     contract_path: src/voice_coach/evaluation/e00_closed_loop_contract.py
     contract_sha256: 1d74038a7bc913bd03ba61712f0aaf469e3032e0dea02fda598fb90ca11e67f1
     completion_path: artifacts/demo/e00/e00_closed_loop_completion_v1.json

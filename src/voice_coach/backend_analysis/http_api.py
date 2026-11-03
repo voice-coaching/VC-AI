@@ -111,20 +111,22 @@ def create_app(environment=None):
 
     @app.get("/health/handoff")
     async def handoff_health():
-        from .canonical_settings import handoff_schema_digests
+        from .canonical_settings import canonical_learning_focuses, handoff_schema_digests
         configured = runtime.handoff_executor_ready()
         return JSONResponse(dict(contractVersion="voice-coaching.canonical-handoff.v2",
-            executorConfigured=configured, admissionEnabled=runtime.handoff_admission_ready(), schemaDigests=handoff_schema_digests()),
+            executorConfigured=configured, admissionEnabled=runtime.handoff_admission_ready(),
+            supportedLearningFocuses=list(canonical_learning_focuses()), schemaDigests=handoff_schema_digests()),
             status_code=200 if configured else 503, headers={"Cache-Control": "no-store"})
 
     @app.get("/health/audiovisual")
     async def audiovisual_health():
-        from .canonical_settings import audiovisual_schema_digests
+        from .canonical_settings import audiovisual_schema_digests, canonical_learning_focuses
         from .canonical_harness import AUDIOVISUAL
         configured = runtime.audiovisual_executor_ready()
         return JSONResponse(dict(contractVersion="voice-coaching.canonical-handoff.v2",
             executorConfigured=configured, admissionEnabled=runtime.audiovisual_admission_ready(),
             llmManifestSha256=AUDIOVISUAL.manifest_sha256,
+            supportedLearningFocuses=list(canonical_learning_focuses()),
             schemaDigests=audiovisual_schema_digests()), status_code=200 if configured else 503)
 
     @app.get("/v1/analysis-jobs/{request_id}")

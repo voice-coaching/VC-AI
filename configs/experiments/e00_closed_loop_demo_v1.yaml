@@ -81,7 +81,7 @@ canonical_sources:
       sha256: 5b78d0fffd5421a2308c158cc850baeb41c909abfab603b5b958e0d889ca53f7
     - path: configs/experiments/e02_confidence_guard_v1.yaml
       scope: e00_static_contract
-      sha256: ce0df0ac42f31fbce2b4d21659f416866e8ea8091240d7eb0aaf7200e2207dcc
+      sha256: 0f2ab37ec807f8aa2e2fde384d6511fdc50e94d8e77be2f4afb46edd6d1a9a91
     - path: configs/coaching/e02_confidence_guard_input_v1.schema.json
       scope: e00_static_contract
       sha256: 2382601910d088ed3fb0b8d839bc38c6f992cf60fc592a8043ea586e76807e73
@@ -141,10 +141,10 @@ canonical_sources:
       sha256: 1be314ecef3d8751d4d4452febf4fef42841e17aa12fd7d09f18366d0061e478
     - path: docs/api/endpoints.md
       scope: api_contract
-      sha256: 859b98792c6758c764af86dc13391dd802167ea7b4f6bae464ebe491350bad31
+      sha256: 4e9377490364280c5ab64ef29da1e4365bd8ddeaf52b260496935229a8f1f54a
     - path: docs/api/specification.md
       scope: api_contract
-      sha256: d327d45c798a20bace5336ff0eaa92e831e2cf3341129fb9683344349627b2e9
+      sha256: 5388e20bf089af84a7ed2818ff187b0bece601847ee35c3e540c8982d8aa164a
 
 predecessors:
   s108:
@@ -174,7 +174,7 @@ predecessors:
   c02_e02:
     validation_order: 3
     config_path: configs/experiments/e02_confidence_guard_v1.yaml
-    config_sha256: ce0df0ac42f31fbce2b4d21659f416866e8ea8091240d7eb0aaf7200e2207dcc
+    config_sha256: 0f2ab37ec807f8aa2e2fde384d6511fdc50e94d8e77be2f4afb46edd6d1a9a91
     contract_path: src/voice_coach/evaluation/e02_confidence_guard_contract.py
     contract_sha256: f01e069a0026d52e14e760bf0b7f65f1ded9cd8aaf2624f52b77ce49fc89fff9
     c02_bundle_commit_path: artifacts/coaching/c02/commit.json

@@ -1,6 +1,16 @@
 """Credential allowlist shared by root boot and the service child launcher."""
 from pathlib import Path
 import hashlib
+import json
+from functools import lru_cache
+
+
+@lru_cache(maxsize=1)
+def canonical_learning_focuses():
+    """Declare the same learning focus accepted by the versioned request schema."""
+    root = Path(__file__).resolve().parents[3] / "docs/contracts"
+    schema = json.loads((root / "runpod_analysis_request_v4.schema.json").read_text())
+    return (schema["$defs"]["analysisRequest"]["properties"]["learningFocus"]["const"],)
 
 
 def schema_digests():
