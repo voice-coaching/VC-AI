@@ -58,6 +58,7 @@ def check(env):
         cpu_threads=core_cpu_threads(env),
         dlpc_runtime=env.get('AI_ANALYSIS_RESOURCE_PROFILE', '').startswith('dlpc-'))
     frozen = FrozenCanonicalCoaching(artifacts(env))
+    _require(not frozen.artifacts.identity.direct_only, "DIRECT_ONLY_HARNESS_REQUIRED")
     from .canonical_provenance import check_provenance
     check_provenance(frozen.artifacts.core_root)
     bridge = frozen._bridge()

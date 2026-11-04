@@ -130,6 +130,45 @@ def install(payload, manifest):
             path.unlink()
 
 
+def release_assets(payload, manifest, *, install=False):
+    """Pin new H5 assets in the same durable transaction as source/selection."""
+    for lane, files in manifest.get('h5Releases', {}).items():
+        require(lane == 'direct', 'COORDINATED_H5_LANE')
+        prefix = 'AI_DIRECT_' if lane == 'direct' else 'AI_CANONICAL_'
+        root = Path(manifest['selection'][prefix+'LLM_ROOT'])
+        require(root.parent == Path('/workspace/intelligentai/validation')
+                and root.name == 'canonical_six_dimension_'+lane+'_20261104_v2_h5', 'COORDINATED_H5_PATH')
+        package = {}
+        for name, pin in files.items():
+            path = PurePosixPath(name)
+            require(not path.is_absolute() and '..' not in path.parts
+                    and path.as_posix() == name and '\\' not in name, 'COORDINATED_H5_FILE')
+            raw = owned(payload/'h5'/lane/name)
+            require(digest(raw) == pin, 'COORDINATED_H5_DIGEST')
+            package[name] = raw
+        contract = json.loads(package['contracts/llm/llm_contract_manifest.json'])
+        lock = package['contracts/llm/dependency_lock.json']
+        require(digest(package['contracts/llm/llm_contract_manifest.json']) == manifest[lane+'H5']
+                and contract['parent_core_manifest_sha256'] == manifest[lane+'Core']
+                and digest(lock) == contract['dependency_lock_sha256'], 'COORDINATED_H5_IDENTITY')
+        require(set(package) == set(json.loads(lock)['files']) | {
+            'contracts/llm/llm_contract_manifest.json', 'contracts/llm/dependency_lock.json'}, 'COORDINATED_H5_CONTENTS')
+        require(all(digest(package[n]) == pin for n,pin in json.loads(lock)['files'].items()),
+                'COORDINATED_H5_LOCK')
+        for name, raw in package.items():
+            target = root/name
+            require(target.resolve() == target, 'COORDINATED_H5_SYMLINK')
+            if target.exists():
+                require(owned(target) == raw, 'COORDINATED_H5_IMMUTABLE')
+            elif install:
+                target.parent.mkdir(mode=0o750, parents=True, exist_ok=True)
+                for parent in (target.parent, *target.parent.parents):
+                    if parent == root.parent:
+                        break
+                    os.chown(parent, 0, 10001); parent.chmod(0o750)
+                controller.atomic(target, raw, 0o440)
+
+
 def settings(manifest):
     values = controller.values()
     values.update(manifest['selection'])
@@ -187,7 +226,11 @@ def wait_ready(manifest):
     while time.monotonic() < until:
         try:
             state = controller.get('/health/deployment')
-            if state.get('sourceGitRevision') == manifest['revision'] and receipts_ready(manifest):
+            internal = (not manifest.get('h5Releases') or
+                        (state.get('coreManifestSha256') == manifest['internalCore']
+                         and state.get('llmManifestSha256') == manifest['internalH5']))
+            if state.get('sourceGitRevision') == manifest['revision'] and internal and receipts_ready(manifest):
+                controller.get('/readyz')
                 return
         except (OSError, ValueError):
             pass
@@ -200,7 +243,16 @@ def activate(payload, manifest, bundle):
     signal.signal(signal.SIGTERM, signal.SIG_IGN)
     verify_main(manifest, getpass.getpass('GitHub credential: '))
     require(not controller.HOLD.exists(), 'COORDINATED_EXISTING_HOLD')
-    require(all(controller.values().get(k) == v for k,v in manifest['selection'].items()),
+    before_selection = manifest.get('previousSelection', manifest['selection'])
+    if manifest.get('h5Releases'):
+        require(set(before_selection) == set(manifest['selection']) == {
+            'AI_DIRECT_CORE_ROOT','AI_DIRECT_LLM_ROOT','AI_CANONICAL_CORE_ROOT','AI_CANONICAL_LLM_ROOT'},
+            'COORDINATED_SELECTION_KEYS')
+        require(all(before_selection[k] == manifest['selection'][k] for k in (
+            'AI_DIRECT_CORE_ROOT','AI_CANONICAL_CORE_ROOT','AI_CANONICAL_LLM_ROOT')),
+            'COORDINATED_EXISTING_LANE_CHANGED')
+        release_assets(payload, manifest)
+    require(all(controller.values().get(k) == v for k,v in before_selection.items()),
             'COORDINATED_SELECTION_CHANGED')
     require(shutil.disk_usage('/var/lib').free >= 14*1024**3 +
             2*sum(len(owned(payload/'source'/n)) for n in manifest['files']),
@@ -243,6 +295,7 @@ def activate(payload, manifest, bundle):
         require(zeros == 2, 'COORDINATED_DRAIN_TIMEOUT')
         controller.service('stop');stopped = True
         record('installing');mutated = True
+        release_assets(payload, manifest, install=True)
         install(payload, manifest)
         doc = json.loads(old_metadata)
         doc['canonicalIntegration'].update(sourceGitRevision=revision, bundleSha256=bundle)
@@ -292,6 +345,7 @@ def restore():
         restore_gpt_latency.stopped()
     import restore_sol61_model
     restore_sol61_model.assets()
+    release_assets(payload, manifest, install=True)
     install(payload, manifest)
     settings(manifest)
     controller.atomic(controller.METADATA, encoded(completed['metadata']))

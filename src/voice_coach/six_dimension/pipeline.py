@@ -1,7 +1,7 @@
 """Six fixed scores -> deterministic lowest three -> one grounded GPT request.
 
-Uses a new result contract. It must not be serialized as canonical result.v6 or
-registered as an old immutable H5 identity.
+The detailed result is private; service adapters project the existing feedback
+contract and keep the six scores in retained analysis artifacts.
 """
 from __future__ import annotations
 
@@ -17,7 +17,7 @@ def _text(maximum: int) -> dict:
     return dict(type="string", minLength=1, maxLength=maximum, pattern="[가-힣]")
 
 
-def coaching_schema(assessment: dict) -> dict:
+def coaching_schema(assessment: dict, legacy_rubric: dict | None = None) -> dict:
     """Provider response contract pins score, order and criterion-owned evidence."""
     summaries, feedback = [], []
     by_id = {item["criterionId"]: item for item in assessment["criteria"]}
@@ -33,13 +33,24 @@ def coaching_schema(assessment: dict) -> dict:
                 "evidenceIds": dict(type="array", minItems=1, uniqueItems=True,
                                     items={"enum": by_id[key]["evidenceIds"]}),
                 "observation": _text(240), "practice": _text(400)}))
-    return dict(type="object", additionalProperties=False, required=["assessments", "feedback"], properties={
+    schema = dict(type="object", additionalProperties=False, required=["assessments", "feedback"], properties={
         "assessments": dict(type="array", prefixItems=summaries, items=False, minItems=6, maxItems=6),
         "feedback": dict(type="array", prefixItems=feedback, items=False,
                          minItems=len(feedback), maxItems=len(feedback))})
+    if legacy_rubric is not None:
+        schema["required"].append("legacyGrade")
+        schema["properties"]["legacyGrade"] = dict(type="object", additionalProperties=False,
+            required=["levels", "score"], properties={"levels": {}, "score": {}}, oneOf=[
+                dict(properties=dict(levels=dict(type="array", minItems=9, maxItems=9,
+                     items=dict(type=["integer", "null"], minimum=0, maximum=4),
+                     contains=dict(type="integer"), minContains=1),
+                     score=dict(type="number", minimum=0, maximum=100))),
+                dict(properties=dict(levels=dict(type="null"), score=dict(type="null")))])
+    return schema
 
 
-def request_payload(assessment: dict, core: dict, script: str, policy: dict, prompt: str) -> bytes:
+def request_payload(assessment: dict, core: dict, script: str, policy: dict, prompt: str,
+                    legacy_rubric: dict | None = None) -> bytes:
     require(isinstance(prompt, str) and bool(prompt.strip()), "SYSTEM_PROMPT_MISSING")
     config = policy["request"]
     # Explicit projection: no audio bytes, private logits, credentials or raw errors.
@@ -51,7 +62,10 @@ def request_payload(assessment: dict, core: dict, script: str, policy: dict, pro
                 RUBRIC=dict(revision=policy["revision"], validationStatus=policy["validationStatus"],
                             bands=policy["bands"], pronunciation=policy["pronunciation"],
                             scopes=policy["scopes"], pauseWeights=policy["pauseWeights"]),
-                OUTPUT_SCHEMA=coaching_schema(assessment))
+                OUTPUT_SCHEMA=coaching_schema(assessment, legacy_rubric))
+    if legacy_rubric is not None:
+        data["LEGACY_RUBRIC"] = legacy_rubric
+        data["SEUNGUN_OUTPUT"]["native"] = core.get("native")
     messages = [dict(role="system", content=prompt), dict(role="user", content=encode(data).decode("utf-8"))]
     require(sum(len(m["content"].encode("utf-8")) for m in messages) <= config["input_utf8_bound"],
             "INPUT_BUDGET_NO_SILENT_TRUNCATION")
@@ -60,8 +74,8 @@ def request_payload(assessment: dict, core: dict, script: str, policy: dict, pro
                   | {"messages": messages})
 
 
-def validate_coaching(candidate: dict, assessment: dict) -> None:
-    jsonschema.Draft202012Validator(coaching_schema(assessment)).validate(candidate)
+def validate_coaching(candidate: dict, assessment: dict, legacy_rubric: dict | None = None) -> None:
+    jsonschema.Draft202012Validator(coaching_schema(assessment, legacy_rubric)).validate(candidate)
     for supplied, expected in zip(candidate["assessments"], assessment["criteria"]):
         require(supplied["score"] is None if expected["score"] is None else
                 number(supplied["score"]) and supplied["score"] == expected["score"], "SCORE_CHANGED")
@@ -71,7 +85,8 @@ def validate_coaching(candidate: dict, assessment: dict) -> None:
 
 
 def evaluate(*, core_bytes: bytes, script: str, binding: dict, policy: dict,
-             policy_sha256: str, prompt: str, transport=None, measurements_only: bool = False) -> dict:
+             policy_sha256: str, prompt: str, transport=None, measurements_only: bool = False,
+             legacy_rubric: dict | None = None) -> dict:
     validate_policy(policy)
     require(re.fullmatch(r"[0-9a-f]{64}", policy_sha256) is not None, "POLICY_DIGEST")
     core = validate_binding(core_bytes, script, binding)
@@ -85,7 +100,7 @@ def evaluate(*, core_bytes: bytes, script: str, binding: dict, policy: dict,
         return result
     require(transport is not None, "TRANSPORT_REQUIRED")
     try:
-        payload = request_payload(assessment, core, script, policy, prompt)
+        payload = request_payload(assessment, core, script, policy, prompt, legacy_rubric)
     except ValueError as exc:
         result.update(generationStatus="NOT_DISPATCHED", errorCode=str(exc))
         return result
@@ -103,7 +118,7 @@ def evaluate(*, core_bytes: bytes, script: str, binding: dict, policy: dict,
         choice = choices[0]
         require(choice["finish_reason"] == "stop" and not choice["message"].get("refusal"), "PROVIDER_COMPLETION")
         candidate = strict_json(choice["message"]["content"])
-        validate_coaching(candidate, assessment)
+        validate_coaching(candidate, assessment, legacy_rubric)
         result.update(generationStatus="STRUCTURALLY_VALID", **candidate)
     except Exception as exc:
         # Scores survive provider failure; never manufacture coaching or rerun audio/GPT.

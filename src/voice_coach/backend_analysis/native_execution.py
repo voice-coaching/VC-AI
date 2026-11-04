@@ -9,7 +9,8 @@ from .canonical_harness import DLPC_PIPELINE_SOL61_LIGHT
 # Execution identity only: prevent an old release from entering new analysis.
 # GPT judges the single rubric; no calibration approval is consulted here.
 APPROVED_NATIVE_EXECUTIONS: frozenset[tuple[str, str]] = frozenset({
-    (SIX_DIMENSION.core_sha256, SIX_DIMENSION.manifest_sha256), (
+    (SIX_DIMENSION.core_sha256, SIX_DIMENSION.manifest_sha256),
+    (
     # User-selected Sol 6.1 low; prepared numerical core and compact prompt retained.
     DLPC_PIPELINE_SOL61_LIGHT.core_sha256, DLPC_PIPELINE_SOL61_LIGHT.manifest_sha256,
 ), (

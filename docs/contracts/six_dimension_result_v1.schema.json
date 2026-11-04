@@ -1,7 +1,7 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "$id": "urn:voice-coaching:six-dimension-result:v1",
-  "title": "Experimental six dimension result; incompatible with canonical result.v6",
+  "title": "Private experimental six dimension assessment and coaching artifact",
   "type": "object",
   "additionalProperties": false,
   "required": [
@@ -442,6 +442,18 @@
     },
     "naturalLanguageSemanticsFullyVerified": {
       "const": false
+    },
+    "legacyGrade": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "levels",
+        "score"
+      ],
+      "properties": {
+        "levels": {},
+        "score": {}
+      }
     }
   },
   "allOf": [
