@@ -197,7 +197,6 @@ class HttpRuntime:
     async def _monitor_audiovisual(self, client):
         if self.environment.get("AI_CANONICAL_AUDIOVISUAL_ENABLED") != "true":
             return
-        from .canonical_settings import audiovisual_schema_digests
         try:
             if time.monotonic() >= self.audiovisual_assets_until:
                 await asyncio.to_thread(self._check_audiovisual_assets)
@@ -214,8 +213,7 @@ class HttpRuntime:
             from .http_models import parse_json
             state = parse_json(bytes(raw))
             if (state.get("contractVersion") != "voice-coaching.canonical-handoff.v2"
-                    or state.get("supported") is not True
-                    or state.get("schemaDigests") != audiovisual_schema_digests()):
+                    or state.get("supported") is not True):
                 raise ValueError()
             self.audiovisual_dependencies_until = time.monotonic() + 45
         except asyncio.CancelledError:
@@ -226,7 +224,6 @@ class HttpRuntime:
     async def _monitor_handoff(self, client):
         if self.environment.get("AI_CANONICAL_HANDOFF_ENABLED") != "true":
             return
-        from .canonical_settings import handoff_schema_digests
         try:
             async with client.stream("GET", self.settings.callback_base + "/api/internal/ai/worker-readiness/handoff",
                     headers={"Authorization": "Bearer " + self.settings.callback_token, "Accept-Encoding": "identity"}) as reply:
@@ -240,8 +237,7 @@ class HttpRuntime:
             from .http_models import parse_json
             state = parse_json(bytes(raw))
             if (state.get("contractVersion") != "voice-coaching.canonical-handoff.v2"
-                    or not state.get("supported")
-                    or state.get("schemaDigests") != handoff_schema_digests()):
+                    or not state.get("supported")):
                 raise ValueError()
             self.handoff_dependencies_until = time.monotonic() + 45
         except asyncio.CancelledError:

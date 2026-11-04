@@ -133,7 +133,7 @@ def install(payload, manifest):
 def release_assets(payload, manifest, *, install=False):
     """Pin new H5 assets in the same durable transaction as source/selection."""
     for lane, files in manifest.get('h5Releases', {}).items():
-        require(lane == 'direct', 'COORDINATED_H5_LANE')
+        require(lane in ('direct', 'internal'), 'COORDINATED_H5_LANE')
         prefix = 'AI_DIRECT_' if lane == 'direct' else 'AI_CANONICAL_'
         root = Path(manifest['selection'][prefix+'LLM_ROOT'])
         require(root.parent == Path('/workspace/intelligentai/validation')
@@ -249,7 +249,7 @@ def activate(payload, manifest, bundle):
             'AI_DIRECT_CORE_ROOT','AI_DIRECT_LLM_ROOT','AI_CANONICAL_CORE_ROOT','AI_CANONICAL_LLM_ROOT'},
             'COORDINATED_SELECTION_KEYS')
         require(all(before_selection[k] == manifest['selection'][k] for k in (
-            'AI_DIRECT_CORE_ROOT','AI_CANONICAL_CORE_ROOT','AI_CANONICAL_LLM_ROOT')),
+            'AI_DIRECT_CORE_ROOT','AI_CANONICAL_CORE_ROOT')),
             'COORDINATED_EXISTING_LANE_CHANGED')
         release_assets(payload, manifest)
     require(all(controller.values().get(k) == v for k,v in before_selection.items()),
