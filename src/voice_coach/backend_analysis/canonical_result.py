@@ -317,6 +317,10 @@ def preflight_canonical_result(
                      and expression["errorCode"] == "SCORING_UNSCORABLE", "SCORING_FAILURE_STATUS")
         elif skip:
             _require(expression["adapterStatus"] == skip, "ADAPTER_STATUS_MISMATCH")
+        elif frozen.artifacts.identity.six_dimension:
+            _require(expected_view is None and expression["adapterStatus"] == "READY"
+                     and expression["items"] == [], "SIX_DIMENSION_EXPRESSION_CONTRACT")
+            bridge.verify_result(result.core_bytes, request.script_text, binding, result.expression_bytes)
         elif frozen.artifacts.identity.gop_grading:
             _require(expected_view is None and expression["adapterStatus"] == "READY"
                      and expression["items"] == [] and expression["dispatchAttempts"] == 1,

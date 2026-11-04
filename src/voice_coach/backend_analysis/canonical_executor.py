@@ -23,7 +23,7 @@ from .canonical_producer import (
     FrozenCanonicalProducer, check_core_environment, read_private_result, write_private_new,
 )
 from .canonical_result import preflight_canonical_result, serialize_canonical_result, serialize_precore_failure, ServiceFailure, ResultIdentity
-from .canonical_transport import FrozenOpenAITransport
+from .canonical_transport import transport_for_artifacts
 from .http_models import AnalysisInput, parse_json
 from .canonical_handoff import CanonicalHandoffClient, handoff_document
 from .canonical_recovery import persist_handoff
@@ -61,9 +61,9 @@ def check(env):
     from .canonical_provenance import check_provenance
     check_provenance(frozen.artifacts.core_root)
     bridge = frozen._bridge()
-    if frozen.artifacts.identity.scoring:
+    if frozen.artifacts.identity.scoring or frozen.artifacts.identity.six_dimension:
         bridge.scoring_policy()
-    FrozenOpenAITransport(env["OPENAI_API_KEY"])
+    transport_for_artifacts(env["OPENAI_API_KEY"], frozen.artifacts)
 
 
 async def execute(path: Path, env, diagnostic: dict):
@@ -187,8 +187,8 @@ async def execute(path: Path, env, diagnostic: dict):
         stage("EXPRESSION")
         expression = await asyncio.to_thread(frozen.express_admitted, request, audio=audio,
             core_bytes=produced.raw, prepared_wav=produced.prepared_wav,
-            producer_workspace=produced.workspace, transport=FrozenOpenAITransport(env["OPENAI_API_KEY"],
-                combined_grading=frozen.artifacts.identity.gpt_grading), visual_evidence_bytes=visual_bytes)
+            producer_workspace=produced.workspace, transport=transport_for_artifacts(env["OPENAI_API_KEY"],
+                frozen.artifacts), visual_evidence_bytes=visual_bytes)
         fence()
         stage("PREFLIGHT")
         preflight = await asyncio.to_thread(preflight_canonical_result, expression,

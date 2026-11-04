@@ -168,6 +168,8 @@ class FrozenCanonicalCoaching:
             modules = ("legacy_pure", "adapter")
         if identity.gop_grading:
             modules = ("adapter",)
+        if identity.six_dimension:
+            modules = ("policy", "assessment", "pipeline", "adapter")
         for name in modules:
             relative = f"bridge/{name}.py"
             raw = _contained_file(root, relative).read_bytes()

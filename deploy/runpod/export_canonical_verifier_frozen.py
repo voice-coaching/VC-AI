@@ -6,6 +6,7 @@ import json
 from pathlib import Path
 
 ROOTS = {
+    'canonical_six_dimension_20261104_v1_h5': Path('/workspace/intelligentai/validation/canonical_six_dimension_20261104_v1_h5'),
     'canonical_dlpc_gop_announcer_20261007_v1_h5': Path('/workspace/intelligentai/validation/canonical_dlpc_gop_announcer_20261007_v1_h5'),
     'canonical_dlpc_gop_cuda_20261007_v2': Path('/workspace/intelligentai/releases/canonical_dlpc_gop_cuda_20261007_v2'),
     'canonical_dlpc_gop_cuda_20261007_v2_h5': Path('/workspace/intelligentai/validation/canonical_dlpc_gop_cuda_20261007_v2_h5'),
@@ -29,6 +30,7 @@ ROOTS = {
     'canonical_scored_h5_20261003_v2': Path('/workspace/intelligentai/validation/canonical_scored_h5_20261003_v2'),
 }
 PINS = {
+    'canonical_six_dimension_20261104_v1_h5': ('contracts/llm/dependency_lock.json', 'f4309130f20715b3c2f055121a88197e09c8ae37088e8eb2341b337f36cc65c8'),
     'canonical_dlpc_gop_announcer_20261007_v1_h5': ('contracts/llm/dependency_lock.json', 'b605c3b9ba06bbf18fc126770b18de3d2da0d3f70c08e04873f17bc735b948bc'),
     'canonical_dlpc_gop_cuda_20261007_v2': ('release_manifest.json', 'f6d56e1decc160f0ca38cc8d52303f3de20945f872d714bf6a2e743ed94c0391'),
     'canonical_dlpc_gop_cuda_20261007_v2_h5': ('contracts/llm/dependency_lock.json', '3e2e81b43b1c1298266df428bc01ef0761d37f413073824cae2000623ea2eb3c'),
@@ -52,6 +54,7 @@ PINS = {
     'canonical_scored_h5_20261003_v2': ('contracts/llm/dependency_lock.json', 'b4ff1aa729d9c981a048d5b7df1293d9637df53269d0598d7ae6069f2b0cc989'),
 }
 MANIFESTS = {
+    'canonical_six_dimension_20261104_v1_h5': '7fbfbd4a56bd0d7a7d9c750a62c6b6e78c8654cd0ac5d721df9fe29c331a39e2',
     'canonical_dlpc_gop_announcer_20261007_v1_h5': 'def65f68a849a2452b0e4dde600f0ef85d99beaa97123d30d97262653ebf8e77',
     'canonical_dlpc_gop_cuda_20261007_v2_h5': '1612539f82a0b6e2c5c0b3551440b8094ca979bd8ab5d898386713bd0d1f54b7',
     'canonical_seungun_gpt_20261006_v1': '6a3bf7c872e718086cb9add4d48412c825188310cdc9eb394089301dd784ff57',
@@ -75,6 +78,7 @@ def main():
     roots = {kind: args.frozen_root / kind if args.frozen_root else root for kind, root in ROOTS.items()}
     omitted = set()
     for optional in (
+        {'canonical_six_dimension_20261104_v1_h5'},
         {'canonical_native_core_20261005_v4', 'canonical_native_h5_20261005_v4'},
         {'canonical_dlpc_gop_cuda_20261007_v2_h5', 'canonical_dlpc_gop_cuda_20261007_v2'},
         {'canonical_dlpc_gop_announcer_20261007_v1_h5'},

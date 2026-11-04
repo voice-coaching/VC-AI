@@ -1,0 +1,675 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:voice-coaching:six-dimension-result:v1",
+  "title": "Experimental six dimension result; incompatible with canonical result.v6",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schemaVersion",
+    "assessment",
+    "generationStatus",
+    "dispatchAttempts",
+    "feedback",
+    "assessments",
+    "model",
+    "promptSha256",
+    "requestConfigSha256",
+    "errorCode",
+    "naturalLanguageSemanticsFullyVerified"
+  ],
+  "properties": {
+    "schemaVersion": {
+      "const": "voice-coaching.six-dimension-result.v1"
+    },
+    "assessment": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "schemaVersion",
+        "status",
+        "policyRevision",
+        "policySha256",
+        "validationStatus",
+        "association",
+        "criteria",
+        "selectedCriterionIds",
+        "evidence",
+        "limitations",
+        "dependencies",
+        "auxiliary"
+      ],
+      "properties": {
+        "schemaVersion": {
+          "const": "voice-coaching.six-dimension-assessment.v1"
+        },
+        "status": {
+          "enum": [
+            "READY",
+            "PARTIAL",
+            "UNSCORABLE"
+          ]
+        },
+        "policyRevision": {
+          "type": "string",
+          "minLength": 1
+        },
+        "policySha256": {
+          "type": "string",
+          "pattern": "^[0-9a-f]{64}$"
+        },
+        "validationStatus": {
+          "const": "EXPERT_REVIEW_PENDING"
+        },
+        "association": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "requestId",
+            "coreSha256",
+            "scriptSha256",
+            "sourceAudioSha256",
+            "preparedWavSha256"
+          ],
+          "properties": {
+            "requestId": {
+              "type": "string",
+              "minLength": 1
+            },
+            "coreSha256": {
+              "type": "string",
+              "pattern": "^[0-9a-f]{64}$"
+            },
+            "scriptSha256": {
+              "type": "string",
+              "pattern": "^[0-9a-f]{64}$"
+            },
+            "sourceAudioSha256": {
+              "type": "string",
+              "pattern": "^[0-9a-f]{64}$"
+            },
+            "preparedWavSha256": {
+              "type": "string",
+              "pattern": "^[0-9a-f]{64}$"
+            }
+          }
+        },
+        "criteria": {
+          "type": "array",
+          "minItems": 6,
+          "maxItems": 6,
+          "prefixItems": [
+            {
+              "allOf": [
+                {
+                  "$ref": "#/$defs/criterion"
+                },
+                {
+                  "properties": {
+                    "criterionId": {
+                      "const": "pronunciation_accuracy"
+                    }
+                  }
+                }
+              ]
+            },
+            {
+              "allOf": [
+                {
+                  "$ref": "#/$defs/criterion"
+                },
+                {
+                  "properties": {
+                    "criterionId": {
+                      "const": "speaking_rate"
+                    }
+                  }
+                }
+              ]
+            },
+            {
+              "allOf": [
+                {
+                  "$ref": "#/$defs/criterion"
+                },
+                {
+                  "properties": {
+                    "criterionId": {
+                      "const": "articulation_rate"
+                    }
+                  }
+                }
+              ]
+            },
+            {
+              "allOf": [
+                {
+                  "$ref": "#/$defs/criterion"
+                },
+                {
+                  "properties": {
+                    "criterionId": {
+                      "const": "pauses"
+                    }
+                  }
+                }
+              ]
+            },
+            {
+              "allOf": [
+                {
+                  "$ref": "#/$defs/criterion"
+                },
+                {
+                  "properties": {
+                    "criterionId": {
+                      "const": "pitch"
+                    }
+                  }
+                }
+              ]
+            },
+            {
+              "allOf": [
+                {
+                  "$ref": "#/$defs/criterion"
+                },
+                {
+                  "properties": {
+                    "criterionId": {
+                      "const": "intensity"
+                    }
+                  }
+                }
+              ]
+            }
+          ],
+          "items": false
+        },
+        "selectedCriterionIds": {
+          "type": "array",
+          "uniqueItems": true,
+          "items": {
+            "type": "string",
+            "minLength": 1
+          },
+          "maxItems": 3
+        },
+        "evidence": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+              "evidenceId",
+              "criterionId",
+              "source",
+              "unit",
+              "value"
+            ],
+            "properties": {
+              "evidenceId": {
+                "type": "string",
+                "minLength": 1
+              },
+              "criterionId": {
+                "type": "string"
+              },
+              "source": {
+                "type": "string"
+              },
+              "unit": {
+                "type": "string"
+              },
+              "value": {
+                "type": "number"
+              },
+              "location": {
+                "type": "object"
+              },
+              "bestAlternative": {
+                "type": [
+                  "string",
+                  "null"
+                ]
+              },
+              "indistinguishablePhones": {
+                "type": [
+                  "array",
+                  "null"
+                ],
+                "items": {
+                  "type": "string"
+                }
+              },
+              "metric": {
+                "type": "string"
+              },
+              "startSeconds": {
+                "type": "number",
+                "minimum": 0
+              },
+              "endSeconds": {
+                "type": "number",
+                "exclusiveMinimum": 0
+              }
+            }
+          }
+        },
+        "limitations": {
+          "type": "array",
+          "minItems": 1,
+          "items": {
+            "type": "string"
+          }
+        },
+        "dependencies": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+              "criterionIds",
+              "reasonCode"
+            ],
+            "properties": {
+              "criterionIds": {
+                "type": "array",
+                "uniqueItems": true,
+                "items": {
+                  "type": "string",
+                  "minLength": 1
+                }
+              },
+              "reasonCode": {
+                "type": "string"
+              }
+            }
+          }
+        },
+        "auxiliary": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "coverage",
+            "alignmentAmbiguous",
+            "f0Coverage",
+            "referenceComparison"
+          ],
+          "properties": {
+            "coverage": {
+              "type": [
+                "object",
+                "null"
+              ]
+            },
+            "alignmentAmbiguous": {
+              "type": [
+                "boolean",
+                "null"
+              ]
+            },
+            "f0Coverage": {
+              "type": [
+                "number",
+                "null"
+              ]
+            },
+            "referenceComparison": {
+              "type": [
+                "object",
+                "null"
+              ]
+            }
+          }
+        }
+      }
+    },
+    "generationStatus": {
+      "enum": [
+        "NOT_REQUESTED",
+        "NOT_DISPATCHED",
+        "FAILED",
+        "STRUCTURALLY_VALID"
+      ]
+    },
+    "dispatchAttempts": {
+      "type": "integer",
+      "minimum": 0,
+      "maximum": 1
+    },
+    "assessments": {
+      "type": "array",
+      "maxItems": 6,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "criterionId",
+          "score",
+          "evidenceIds",
+          "observation"
+        ],
+        "properties": {
+          "criterionId": {
+            "type": "string"
+          },
+          "score": {
+            "type": [
+              "number",
+              "null"
+            ],
+            "minimum": 0,
+            "maximum": 100
+          },
+          "evidenceIds": {
+            "type": "array",
+            "uniqueItems": true,
+            "items": {
+              "type": "string",
+              "minLength": 1
+            }
+          },
+          "observation": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 240,
+            "pattern": "[가-힣]"
+          }
+        }
+      }
+    },
+    "feedback": {
+      "type": "array",
+      "maxItems": 3,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "criterionId",
+          "evidenceIds",
+          "observation",
+          "practice"
+        ],
+        "properties": {
+          "criterionId": {
+            "type": "string"
+          },
+          "evidenceIds": {
+            "type": "array",
+            "uniqueItems": true,
+            "items": {
+              "type": "string",
+              "minLength": 1
+            },
+            "minItems": 1
+          },
+          "observation": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 240,
+            "pattern": "[가-힣]"
+          },
+          "practice": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 400,
+            "pattern": "[가-힣]"
+          }
+        }
+      }
+    },
+    "model": {
+      "type": "string",
+      "minLength": 1
+    },
+    "promptSha256": {
+      "type": "string",
+      "pattern": "^[0-9a-f]{64}$"
+    },
+    "requestConfigSha256": {
+      "type": "string",
+      "pattern": "^[0-9a-f]{64}$"
+    },
+    "requestSha256": {
+      "type": "string",
+      "pattern": "^[0-9a-f]{64}$"
+    },
+    "errorCode": {
+      "type": [
+        "string",
+        "null"
+      ]
+    },
+    "naturalLanguageSemanticsFullyVerified": {
+      "const": false
+    }
+  },
+  "allOf": [
+    {
+      "if": {
+        "properties": {
+          "generationStatus": {
+            "const": "STRUCTURALLY_VALID"
+          }
+        }
+      },
+      "then": {
+        "properties": {
+          "dispatchAttempts": {
+            "const": 1
+          },
+          "assessments": {
+            "minItems": 6
+          },
+          "errorCode": {
+            "type": "null"
+          }
+        },
+        "required": [
+          "requestSha256"
+        ]
+      },
+      "else": {
+        "properties": {
+          "feedback": {
+            "maxItems": 0
+          },
+          "assessments": {
+            "maxItems": 0
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "generationStatus": {
+            "enum": [
+              "NOT_REQUESTED",
+              "NOT_DISPATCHED"
+            ]
+          }
+        }
+      },
+      "then": {
+        "properties": {
+          "dispatchAttempts": {
+            "const": 0
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "generationStatus": {
+            "const": "FAILED"
+          }
+        }
+      },
+      "then": {
+        "properties": {
+          "dispatchAttempts": {
+            "const": 1
+          },
+          "errorCode": {
+            "type": "string",
+            "minLength": 1
+          }
+        },
+        "required": [
+          "requestSha256"
+        ]
+      }
+    }
+  ],
+  "$defs": {
+    "criterion": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "criterionId",
+        "label",
+        "scope",
+        "status",
+        "score",
+        "reasonCode",
+        "evidenceIds",
+        "components"
+      ],
+      "properties": {
+        "criterionId": {
+          "enum": [
+            "pronunciation_accuracy",
+            "speaking_rate",
+            "articulation_rate",
+            "pauses",
+            "pitch",
+            "intensity"
+          ]
+        },
+        "label": {
+          "type": "string",
+          "minLength": 1
+        },
+        "scope": {
+          "type": "string",
+          "minLength": 1
+        },
+        "status": {
+          "enum": [
+            "SCORED",
+            "UNSCORABLE"
+          ]
+        },
+        "score": {
+          "type": [
+            "number",
+            "null"
+          ],
+          "minimum": 0,
+          "maximum": 100
+        },
+        "reasonCode": {
+          "type": "string",
+          "minLength": 1
+        },
+        "evidenceIds": {
+          "type": "array",
+          "uniqueItems": true,
+          "items": {
+            "type": "string",
+            "minLength": 1
+          }
+        },
+        "components": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+              "metric",
+              "value",
+              "unit",
+              "score",
+              "weight",
+              "direction"
+            ],
+            "properties": {
+              "metric": {
+                "type": "string"
+              },
+              "value": {
+                "type": "number"
+              },
+              "unit": {
+                "type": "string"
+              },
+              "score": {
+                "type": "number",
+                "minimum": 0,
+                "maximum": 100
+              },
+              "weight": {
+                "type": "number",
+                "exclusiveMinimum": 0
+              },
+              "direction": {
+                "type": "string"
+              },
+              "target": {
+                "type": "array",
+                "items": {
+                  "type": "number"
+                },
+                "minItems": 2,
+                "maxItems": 2
+              },
+              "validSampleCount": {
+                "type": "integer",
+                "minimum": 0
+              },
+              "expectedSampleCount": {
+                "type": "integer",
+                "minimum": 0
+              }
+            }
+          }
+        }
+      },
+      "allOf": [
+        {
+          "if": {
+            "properties": {
+              "status": {
+                "const": "SCORED"
+              }
+            }
+          },
+          "then": {
+            "properties": {
+              "score": {
+                "type": "number",
+                "minimum": 0,
+                "maximum": 100
+              },
+              "evidenceIds": {
+                "minItems": 1
+              },
+              "components": {
+                "minItems": 1
+              }
+            }
+          },
+          "else": {
+            "properties": {
+              "score": {
+                "type": "null"
+              }
+            }
+          }
+        }
+      ]
+    }
+  }
+}

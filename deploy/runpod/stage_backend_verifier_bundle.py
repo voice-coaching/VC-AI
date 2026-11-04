@@ -66,6 +66,7 @@ def main():
                      'frozen/canonical_dlpc_gop_cuda_20261007_v2/', 'frozen/canonical_dlpc_gop_cuda_20261007_v2_h5/',
                      'frozen/canonical_dlpc_gop_announcer_20261007_v1_h5/',
                      'frozen/canonical_dlpc_gop_announcer_20261007_v2_h5/',
+                     'frozen/canonical_six_dimension_20261104_v1_h5/',
                      'frozen/canonical_dlpc_audiovisual_20261007_v2_h5/',
                      'frozen/canonical_dlpc_audiovisual_core_20261007_v2/',
                      'frozen/canonical_seungun_gop_core_20261006_v1/', 'frozen/canonical_seungun_gop_gpt_20261006_v1/',
@@ -143,6 +144,12 @@ def main():
         pins.update({
             'frozen/canonical_dlpc_gop_announcer_20261007_v2_h5/contracts/llm/dependency_lock.json': '58c26086546abb8b94eb6998671101d67633af426adf373cceb42862ccaf0ec4',
             'frozen/canonical_dlpc_gop_announcer_20261007_v2_h5/contracts/llm/llm_contract_manifest.json': '3e430635a4d714ead5d8e08352e41ff9a2b06c893d73af7f018fb43b4c37f61c',
+        })
+    if any(name.startswith('frozen/canonical_six_dimension_20261104_v1_h5/') for name in files):
+        pins.update({
+            'frozen/canonical_dlpc_gop_cuda_20261007_v2/release_manifest.json': 'f6d56e1decc160f0ca38cc8d52303f3de20945f872d714bf6a2e743ed94c0391',
+            'frozen/canonical_six_dimension_20261104_v1_h5/contracts/llm/dependency_lock.json': 'f4309130f20715b3c2f055121a88197e09c8ae37088e8eb2341b337f36cc65c8',
+            'frozen/canonical_six_dimension_20261104_v1_h5/contracts/llm/llm_contract_manifest.json': '7fbfbd4a56bd0d7a7d9c750a62c6b6e78c8654cd0ac5d721df9fe29c331a39e2',
         })
     for name, expected in pins.items():
         require(name in files and files[name]['sha256'] == expected, 'BUNDLE_FROZEN_PIN')

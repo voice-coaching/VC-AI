@@ -18,6 +18,7 @@ class HarnessIdentity:
     service_tier: str | None = None
     explicit_prompt_cache: bool = False
     selection_view: bool = True
+    six_dimension: bool = False
 
 
 S7 = HarnessIdentity(
@@ -231,7 +232,16 @@ AUDIOVISUAL = HarnessIdentity(
 )
 AUDIOVISUAL_LLM_DIRECTORY = 'canonical_dlpc_audiovisual_20261007_v2_h5'
 AUDIOVISUAL_CORE_DIRECTORY = "canonical_dlpc_audiovisual_core_20261007_v2"
-HARNESSES = {value.manifest_sha256: value for value in (S7, H5, SCORED_V1, SCORED_V2, SCORED, RESIDENT, NATIVE_V1, NATIVE, SEUNGUN_GPT_V1, SEUNGUN_GPT, DLPC_GOP, DLPC_ANNOUNCER, DLPC_CONCISE, DLPC_LUNA, DLPC_LUNA_NONE, DLPC_MFA_TRACE, DLPC_MFA_PREPARED, DLPC_MFA_DISAMBIGUATION, DLPC_SEUNGUN_SERVER, DLPC_PIPELINE_LATENCY, DLPC_PIPELINE_SOL61_LIGHT, DLPC_INTERNAL_BOUNDED, DLPC_LUNA_COMPACT, DLPC_LUNA_CACHED, AUDIOVISUAL)}
+SIX_DIMENSION = HarnessIdentity(
+    'canonical-six-dimension-20261104-v1',
+    '7fbfbd4a56bd0d7a7d9c750a62c6b6e78c8654cd0ac5d721df9fe29c331a39e2',
+    'f4309130f20715b3c2f055121a88197e09c8ae37088e8eb2341b337f36cc65c8',
+    'd385cba01552b87ea27c6d032628aa96f3abb2aa3c373d93043e72fee60b1396',
+    DLPC_GOP.core_sha256, native=True, gpt_grading=True, gop_grading=True,
+    model='gpt-6.1-sol', service_tier='default', selection_view=False, six_dimension=True,
+)
+SIX_DIMENSION_LLM_DIRECTORY = 'canonical_six_dimension_20261104_v1_h5'
+HARNESSES = {value.manifest_sha256: value for value in (S7, H5, SCORED_V1, SCORED_V2, SCORED, RESIDENT, NATIVE_V1, NATIVE, SEUNGUN_GPT_V1, SEUNGUN_GPT, DLPC_GOP, DLPC_ANNOUNCER, DLPC_CONCISE, DLPC_LUNA, DLPC_LUNA_NONE, DLPC_MFA_TRACE, DLPC_MFA_PREPARED, DLPC_MFA_DISAMBIGUATION, DLPC_SEUNGUN_SERVER, DLPC_PIPELINE_LATENCY, DLPC_PIPELINE_SOL61_LIGHT, DLPC_INTERNAL_BOUNDED, DLPC_LUNA_COMPACT, DLPC_LUNA_CACHED, AUDIOVISUAL, SIX_DIMENSION)}
 
 
 def harness_identity(manifest_sha256: str) -> HarnessIdentity:
