@@ -1,3 +1,5 @@
+> 후속 사용자 결정: Backend와 AI 모두 배포하며 서버 간 GPT 릴리스 ID 및 공유 schema hash 일치 게이트를 제거한다. 내부 canonical 경로에도 canonical-six-dimension-internal-20261104-v2 H5를 적용한다. 내부 CORE f562484d…와 direct CORE 9e29fbc9…는 유지한다. 공개 feedback 문자열과 기존 총점 rubric은 같다. 아래 direct-only 설명은 #55의 앞선 배포 이력이다.
+
 # AI 직접 분석의 여섯 평가 항목과 기존 feedback 연결
 
 사용자 요청에 따라 Backend PR #192와 Frontend PR #104를 병합 없이 닫았다. 이미 병합된 AI PR #54의 공개 sixDimension 확장을 제거한다. 현재 변경은 AI 서버의 직접 분석(/direct)에 적용한다. Backend 내부 canonical 경로는 기존 실행 identity와 동작을 유지한다.

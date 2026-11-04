@@ -58,20 +58,11 @@ def get(url, token=None):
 def backend_ready(values, *, require_admission=True):
     if values.get('AI_ANALYSIS_CALLBACK_BASE_URL') != 'https://api.voice-coaching.site':
         raise ValueError('BACKEND_ORIGIN_CHANGED')
-    names = ('runpod_http_control_v1.schema.json', 'runpod_http_control_v1_2.schema.json',
-             'runpod_canonical_parent.schema.json', 'runpod_canonical_input.schema.json',
-             'runpod_canonical_output.schema.json', 'runpod_canonical_journal_v1.schema.json',
-             'runpod_analysis_request_v4.schema.json', 'runpod_result_v6.schema.json',
-             'runpod_canonical_handoff_v2.schema.json', 'runpod_media_preparation_v1.schema.json',
-             'runpod_visual_coaching_input_v1.schema.json')
-    expected = {name: hashlib.sha256((APP / 'docs/contracts' / name).read_bytes()).hexdigest()
-                for name in names}
     status, body = get(values['AI_ANALYSIS_CALLBACK_BASE_URL'] +
                        '/api/internal/ai/worker-readiness/handoff', values['AI_ANALYSIS_CALLBACK_TOKEN'])
     return (status == 200 and body.get('contractVersion') == 'voice-coaching.canonical-handoff.v2'
             and body.get('supported') is True
-            and (not require_admission or body.get('admissionEnabled') is True)
-            and body.get('schemaDigests') == expected)
+            and (not require_admission or body.get('admissionEnabled') is True))
 
 
 def run(argv, timeout=180):
