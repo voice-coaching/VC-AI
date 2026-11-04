@@ -1,3 +1,5 @@
+> 사용자 친화적 피드백 v3: 정량 정책과 선정 순서를 유지하면서, observation은 private BRIDGE_RESULT에 보관하고 practice만 기존 feedback 문자열로 전달한다. practice는 현재 원고의 대상/연습 주제와 화살표, 짧은 지시 하나를 포함하며 완성된 줄은 100자, 전체는 300자·최대 5문장 이하다. 정상 출력은 최대 세 줄·줄당 한 문장 또는 연습 구절이다. 특정 모범 대본은 프롬프트에 넣지 않는다. 아래 v2/direct-only 설명은 이전 배포 이력이다.
+
 > 후속 사용자 결정: Backend와 AI 모두 배포하며 서버 간 GPT 릴리스 ID 및 공유 schema hash 일치 게이트를 제거한다. 내부 canonical 경로에도 canonical-six-dimension-internal-20261104-v2 H5를 적용한다. 내부 CORE f562484d…와 direct CORE 9e29fbc9…는 유지한다. 공개 feedback 문자열과 기존 총점 rubric은 같다. 아래 direct-only 설명은 #55의 앞선 배포 이력이다.
 
 # AI 직접 분석의 여섯 평가 항목과 기존 feedback 연결
@@ -31,3 +33,13 @@ coordinated_release.py는 검증된 main 소스·새 H5 assets·선택 설정을
 ## 확인 범위
 
 Python 3.12 컴파일, JSON/schema 구조, 등록 identity와 선택 경로의 분류, dependency lock, 공유 schema의 운영 bytes 일치를 정적으로 확인한다. 배포 후 readiness는 운영 상태 확인이다. 음성 추론·GPT 응답·피드백 품질·전문가 점수 일치·브라우저 QA·성능 측정은 실행하지 않으며 개발자 확인이 남는다. 배포 완료 여부와 실제 commit/H5/관측 시각은 별도 운영 receipt에 기록한다.
+
+## v3 표현과 전달 검사
+
+기본 프롬프트와 legacy rubric 부록의 공개 practice 규칙을 일치시켰다. 내부 observation에는 측정과 제한 설명을 남길 수 있으나 공개 조립에서는 제외한다. practice는 글머리표 없는 `대상 → 연습 지시` 형식이며, 서버가 `* `를 붙인다. 기존 assessments/feedback/legacyGrade JSON 키와 외부 feedback 문자열은 유지한다. 측정 수치, 분석 용어, 반복적인 확정 진단 부인 문구를 사용자 지시로 나열하지 않도록 한다.
+
+pipeline의 provider 출력 검증 및 bridge의 최종 projection 모두 줄 수·글자 수·문장 종결 부호와 남은 구절 수를 확인한다. 문장 수 검사는 형식 검사이며 모든 한국어 문장의 의미 경계를 판정한다는 의미가 아니다. 흔한 복수 지시 종결형도 검사하며, 의미상 중복·모순·지도 적합성은 개발자 수동 QA로 확인한다. 제어 문자, 추가 줄바꿈, 잘못된 화살표 형식과 측정 단위 나열을 거부한다. 응답을 임의로 잘라내거나 추가 GPT 요청을 하지 않으며, 위반 시 기존 실패 상태와 짧은 안내를 사용하고 내부 여섯 점수는 보존한다.
+
+운영 중이던 프롬프트·소스·두 H5·CORE manifest 백업은 intelligentAI/systempromptbackup/friendly-feedback-20261104T133945Z에 있다. v3는 새 immutable 패키지로 만들며 기존 v2 패키지와 읽기 identity를 보존한다. 두 음향 CORE, 임시 정량 정책 SHA, 모델과 요청 설정, 기존 총점 rubric은 유지한다. Backend/Frontend 변경은 없다.
+
+확인은 Python 3.12 컴파일, JSON schema 구조, identity 분류, 패키지 lock과 정책/공개 schema의 동일성에 한정한다. 음성·GPT 생성·브라우저·자동 회귀 QA는 실행하지 않는다. 배포 후 readiness는 운영 상태 확인으로 기록하며 실제 생성 품질 검증과 구분한다.

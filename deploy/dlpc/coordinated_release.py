@@ -137,7 +137,8 @@ def release_assets(payload, manifest, *, install=False):
         prefix = 'AI_DIRECT_' if lane == 'direct' else 'AI_CANONICAL_'
         root = Path(manifest['selection'][prefix+'LLM_ROOT'])
         require(root.parent == Path('/workspace/intelligentai/validation')
-                and root.name == 'canonical_six_dimension_'+lane+'_20261104_v2_h5', 'COORDINATED_H5_PATH')
+                and root.name in {'canonical_six_dimension_'+lane+'_20261104_v2_h5',
+                                  'canonical_six_dimension_'+lane+'_20261104_v3_h5'}, 'COORDINATED_H5_PATH')
         package = {}
         for name, pin in files.items():
             path = PurePosixPath(name)

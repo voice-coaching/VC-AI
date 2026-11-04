@@ -5,7 +5,7 @@ import jsonschema
 
 from .policy import encode, require, sha, strict_json, validate_policy
 from .assessment import assess, validate_binding
-from .pipeline import evaluate, request_payload, validate_coaching
+from .pipeline import evaluate, request_payload, validate_coaching, public_feedback, validate_public_feedback
 from .compact_gop_output import expand_compact_output
 
 PARENT = "__CORE_MANIFEST__"
@@ -83,14 +83,13 @@ class Bridge:
 
     @staticmethod
     def feedback_text(result):
-        labels = {c["criterionId"]: c["label"] for c in result["assessment"]["criteria"]}
-        lines = ["* " + labels[item["criterionId"]] + " → " + item["observation"] + " " + item["practice"]
-                 for item in result["feedback"]]
-        if lines:
-            return "\n".join(lines)
-        return "분석 가능한 항목의 점수는 보관했습니다. " + (
-            "피드백 생성에 실패했습니다." if result["generationStatus"] in ("FAILED", "NOT_DISPATCHED")
-            else "구체적인 연습을 제안할 측정 근거가 부족합니다.")
+        text = public_feedback(result["feedback"])
+        if not text:
+            text = ("피드백을 준비하지 못했으니 잠시 후 다시 시도해 주세요."
+                    if result["generationStatus"] in ("FAILED", "NOT_DISPATCHED")
+                    else "지금은 구체적인 연습을 안내할 음성 정보가 부족해요.")
+        validate_public_feedback(text)
+        return text
 
     def dispatch(self, core_bytes, script, binding, *, transport, **_):
         core = strict_json(core_bytes)

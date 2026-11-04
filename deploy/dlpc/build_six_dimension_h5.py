@@ -12,7 +12,7 @@ sys.path.insert(0, str(ROOT / "src"))
 from release_packaging import encode, load_files, sha, write_release
 from voice_coach.six_dimension.policy import load_policy
 
-DIRECTORY = "canonical_six_dimension_direct_20261104_v2_h5"
+DIRECTORY = "canonical_six_dimension_direct_20261104_v3_h5"
 
 
 def build(source: Path, core_manifest: Path, destination: Path, *, directory: str = DIRECTORY):
