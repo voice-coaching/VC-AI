@@ -19,6 +19,7 @@ class HarnessIdentity:
     explicit_prompt_cache: bool = False
     selection_view: bool = True
     six_dimension: bool = False
+    direct_only: bool = False
 
 
 S7 = HarnessIdentity(
@@ -233,14 +234,14 @@ AUDIOVISUAL = HarnessIdentity(
 AUDIOVISUAL_LLM_DIRECTORY = 'canonical_dlpc_audiovisual_20261007_v2_h5'
 AUDIOVISUAL_CORE_DIRECTORY = "canonical_dlpc_audiovisual_core_20261007_v2"
 SIX_DIMENSION = HarnessIdentity(
-    'canonical-six-dimension-20261104-v1',
-    '7fbfbd4a56bd0d7a7d9c750a62c6b6e78c8654cd0ac5d721df9fe29c331a39e2',
-    'f4309130f20715b3c2f055121a88197e09c8ae37088e8eb2341b337f36cc65c8',
-    'd385cba01552b87ea27c6d032628aa96f3abb2aa3c373d93043e72fee60b1396',
-    DLPC_GOP.core_sha256, native=True, gpt_grading=True, gop_grading=True,
-    model='gpt-6.1-sol', service_tier='default', selection_view=False, six_dimension=True,
+    'canonical-six-dimension-direct-20261104-v2',
+    '55db06d7bfb9a1d3d101b0867740b76974097f45fc99a411de718c737411e506',
+    'c73a6f5f3c444fd854441ea6e75c963b096672a7b3e15fa01e89abe2c3cc5f36',
+    '7deaed8c5d7e7fc12cd27cffc8b2c31c90127a5f69798826a11738807902fc65',
+    DLPC_PIPELINE_LATENCY.core_sha256, scoring=True, native=True, gpt_grading=True, gop_grading=True,
+    model='gpt-6.1-sol', service_tier='default', selection_view=False, six_dimension=True, direct_only=True,
 )
-SIX_DIMENSION_LLM_DIRECTORY = 'canonical_six_dimension_20261104_v1_h5'
+SIX_DIMENSION_LLM_DIRECTORY = 'canonical_six_dimension_direct_20261104_v2_h5'
 HARNESSES = {value.manifest_sha256: value for value in (S7, H5, SCORED_V1, SCORED_V2, SCORED, RESIDENT, NATIVE_V1, NATIVE, SEUNGUN_GPT_V1, SEUNGUN_GPT, DLPC_GOP, DLPC_ANNOUNCER, DLPC_CONCISE, DLPC_LUNA, DLPC_LUNA_NONE, DLPC_MFA_TRACE, DLPC_MFA_PREPARED, DLPC_MFA_DISAMBIGUATION, DLPC_SEUNGUN_SERVER, DLPC_PIPELINE_LATENCY, DLPC_PIPELINE_SOL61_LIGHT, DLPC_INTERNAL_BOUNDED, DLPC_LUNA_COMPACT, DLPC_LUNA_CACHED, AUDIOVISUAL, SIX_DIMENSION)}
 
 
@@ -255,6 +256,16 @@ def check_schema_registration(identity: HarnessIdentity) -> None:
     """Catch missing or mismatched release pins before admitting inference."""
     from jsonschema import Draft202012Validator, ValidationError
     from .canonical_codec import _schema
+
+    if identity.direct_only:
+        # Direct uses UUID jobs and its own JSON response, not Backend's
+        # canonical association/sourceIdentity enum. Exact H5/lock/prompt pins
+        # are still checked by FrozenCanonicalArtifacts.verify().
+        if HARNESSES.get(identity.manifest_sha256) != identity or not identity.six_dimension:
+            raise ValueError("CANONICAL_HARNESS_UNKNOWN")
+        Draft202012Validator(_schema("v4")["$defs"]["binding"]["properties"][
+            "parent_manifest_sha256"]).validate(identity.core_sha256)
+        return
 
     values = dict(parentManifestSha256=identity.core_sha256,
                   llmManifestSha256=identity.manifest_sha256,
@@ -284,6 +295,9 @@ def check_result_classification(identity: HarnessIdentity) -> None:
     or model response. Both the audiovisual result and its audio intermediate
     must classify the configured H5 consistently with its server-owned flags.
     """
+    if identity.direct_only:
+        check_schema_registration(identity)
+        return
     from jsonschema import Draft202012Validator
     from .canonical_codec import _schema
 

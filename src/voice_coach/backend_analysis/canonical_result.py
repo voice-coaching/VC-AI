@@ -172,6 +172,8 @@ class ServiceFailure:
 
 def _binding_and_association(request: AnalysisInput, core: dict, raw: bytes,
                              prepared_audio: PreparedAudioIdentity | None, harness: HarnessIdentity):
+    from voice_coach.direct_analysis.domain import DirectInput
+    _require(not harness.direct_only or type(request) is DirectInput, "DIRECT_ONLY_HARNESS_REQUIRED")
     _require(_canonical_profile(request),
              "CANONICAL_PROFILE_REQUIRED")
     _require(_sha(request.script_text.encode("utf-8")) == request.script_sha256,
@@ -273,6 +275,8 @@ def preflight_canonical_result(
     binding = _read_json(result.binding_bytes)
     association = _read_json(result.association_bytes)
     expression = _read_json(result.expression_bytes)
+    _require("sixDimension" not in expression or frozen.artifacts.identity.six_dimension,
+             "UNEXPECTED_PRIVATE_ASSESSMENT")
     _validate(binding, "binding")
     from voice_coach.direct_analysis.domain import DirectInput
     if type(request) is not DirectInput:
@@ -282,7 +286,7 @@ def preflight_canonical_result(
             _validate(association, "association")
     # Direct associations use UUID job/audio IDs, not invented Backend integers.
     # Full exact association is reconstructed and compared immediately below.
-    _validate(expression, "coaching")
+    _validate(_public_coaching(expression), "coaching")
     expected_binding, expected_association, identity = _binding_and_association(
         request, core, result.core_bytes, prepared_audio, frozen.artifacts.identity)
     _require(binding == expected_binding and association == expected_association, "FULL_BINDING_MISMATCH")
@@ -318,7 +322,7 @@ def preflight_canonical_result(
         elif skip:
             _require(expression["adapterStatus"] == skip, "ADAPTER_STATUS_MISMATCH")
         elif frozen.artifacts.identity.six_dimension:
-            _require(expected_view is None and expression["adapterStatus"] == "READY"
+            _require(expected_view is None
                      and expression["items"] == [], "SIX_DIMENSION_EXPRESSION_CONTRACT")
             bridge.verify_result(result.core_bytes, request.script_text, binding, result.expression_bytes)
         elif frozen.artifacts.identity.gop_grading:
@@ -422,6 +426,11 @@ def _base_document(request: AnalysisInput, identity: ResultIdentity, harness: Ha
                 score=dict(overallScore=None, validity="NOT_AVAILABLE", reason="NO_APPROVED_SCORING_CONTRACT"))
 
 
+def _public_coaching(expression):
+    """Retain six-dimension evidence privately without changing API feedback."""
+    return {key: value for key, value in expression.items() if key != "sixDimension"}
+
+
 def _public_score(expression, view, harness):
     if not harness.scoring:
         return dict(overallScore=None, validity=view["score"]["validity"] if view else "NOT_AVAILABLE",
@@ -481,7 +490,7 @@ def serialize_canonical_result(
                                    pronunciationFeedbackSource=core["pronunciation_feedback_source"],
                                    evidence=dict(artifactKind="CORE", sha256=_sha(result.core_bytes),
                                                  pointers=dict(EVIDENCE_POINTERS))),
-                    selection=_public_selection(view, expression), coaching=expression, retainedEvidence=retained)
+                    selection=_public_selection(view, expression), coaching=_public_coaching(expression), retainedEvidence=retained)
     if request.result_schema_version == RESULT_V6:
         del document["retainedEvidence"]
     document["score"] = _public_score(expression, view, frozen.artifacts.identity)
@@ -592,7 +601,7 @@ def validate_canonical_result_document(
         # Schema enforces failure/null combination. Also prove the original
         # inline envelope really exceeded the limit, rather than hide content.
         inline = dict(document, selection=_public_selection(view, expression),
-                      coaching=expression, score=_public_score(expression, view, harness),
+                      coaching=_public_coaching(expression), score=_public_score(expression, view, harness),
                       canonical=dict(canonical, representation="INLINE", inputValidation=validation))
         original_failure = None
         if expression["adapterStatus"] == "FAIL_CLOSED":
@@ -602,7 +611,7 @@ def validate_canonical_result_document(
         inline.update(status="FAILED" if original_failure else "COMPLETED", failure=original_failure)
         _require(len(_wire(inline)) > _max_result_bytes, "RETAINED_ONLY_WITHOUT_OVERSIZE")
         return
-    _require(canonical["inputValidation"] == validation and document["coaching"] == expression,
+    _require(canonical["inputValidation"] == validation and document["coaching"] == _public_coaching(expression),
              "ORIGINAL_RESULT_MISMATCH")
     selection = _public_selection(view, expression)
     _require(document["selection"] == selection, "ORIGINAL_SELECTION_MISMATCH")

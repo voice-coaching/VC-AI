@@ -1,4 +1,4 @@
-이 문서는 2026-11-04 사용자 요청으로 구현한 **전문가 검토 전 임시 평가 경로**를 설명한다. 기존 Seungun 음향 추론을 재사용하며, 고정 점수 계산 → 하위 3항목 선택 → GPT 설명/연습 생성 순서로 실행한다. 처음 구현한 로컬 coach에 이어 서비스용 H5·검증·BE 공개 DTO·FE 표시를 연결했다. 서비스 연결의 정본과 배포 전제는 [서비스 인계](six-dimension-service-20261104.md)다. 실제 녹음·GPT 생성·개발자 QA·운영 배포는 이 구현 작업에서 수행하지 않았다.
+이 문서는 2026-11-04 사용자 요청으로 구현한 **전문가 검토 전 임시 평가 경로**를 설명한다. 기존 Seungun 음향 추론을 재사용하며, 고정 점수 계산 → 하위 3항목 선택 → GPT 설명/연습 생성 순서로 실행한다. 로컬 coach와 AI 직접 분석용 H5를 구현했다. 여섯 점수는 내부 자료이며 기존 feedback 문자열로 하위 세 항목의 연습을 전달한다. 서비스 적용 범위와 운영 기록은 [서비스 인계](six-dimension-service-20261104.md)를 따른다. 실제 녹음·GPT 생성·피드백 품질 QA는 개발자가 수행한다.
 
 ## 백업과 복구
 
@@ -85,8 +85,8 @@ GPT는 여섯 항목에 대해 점수를 그대로 복사한 설명과 하위 3�
 python deploy/dlpc/build_six_dimension.py --destination /tmp/six-dimension-bundle-v1
 ```
 
-새 evaluator bundle은 소스·정책·프롬프트·schema와 SHA-256 manifest를 포함한다. bundle에서는 기존 Seungun 결과를 `--analysis-dir`로 입력한다. 모델·키·녹음은 포함하지 않는다. 서비스는 별도의 새 H5 identity와 `coaching.sixDimension` 계약을 사용하며 기존 H5 hash를 재사용하지 않는다.
+새 evaluator bundle은 소스·정책·프롬프트·schema와 SHA-256 manifest를 포함한다. bundle에서는 기존 Seungun 결과를 `--analysis-dir`로 입력한다. 모델·키·녹음은 포함하지 않는다. 서비스는 별도의 새 direct 전용 H5 identity를 사용하며 기존 H5 hash를 재사용하지 않는다. 공유 Backend schema와 공개 feedback 필드는 변경하지 않는다.
 
-서비스용 bridge는 `voice_coach.six_dimension.pipeline.evaluate`와 같은 모듈 bytes를 hash-pinned package로 로드한다. 호출자가 신뢰할 수 있는 producer의 원본 CORE bytes와 requestId/coreSha256/scriptSha256/sourceAudioSha256/preparedWavSha256 binding을 제공해야 한다. binding과 bytes의 일치는 파일 무결성 확인이며 외부 입력의 인증을 대신하지 않는다. canonical v6 envelope에는 새 H5에만 허용되는 versioned `coaching.sixDimension` 결과를 추가했다. BE/FE와 verifier 소스 연결은 구현했으며 실제 설치·readiness·개발자 QA·배포는 별도다.
+서비스용 bridge는 `voice_coach.six_dimension.pipeline.evaluate`와 같은 모듈 bytes를 hash-pinned package로 로드한다. 호출자가 신뢰할 수 있는 producer의 원본 CORE bytes와 requestId/coreSha256/scriptSha256/sourceAudioSha256/preparedWavSha256 binding을 제공해야 한다. binding과 bytes의 일치는 파일 무결성 확인이며 외부 입력의 인증을 대신하지 않는다. 상세 six-dimension 결과는 private BRIDGE_RESULT에 보관하고 공개 응답에서는 제거한다. 기존 총점용 9개 음소군 rubric 채점은 같은 GPT 요청의 legacyGrade로 유지하며 하위 세 항목 선정에 사용하지 않는다. Backend 내부 canonical 경로는 기존 H5와 공유 schema를 유지한다.
 
 정적 확인 범위는 Python 컴파일, JSON/schema·정책 구조, 백업 hash, source diff다. 저장소 AGENTS.md에 따라 자동 회귀 테스트·관련 테스트 산출물·브라우저 자동화·실제 녹음/GPT 호출은 실행하거나 생성하지 않는다. 후속 개발자 QA에서는 여섯 점수/동점/누락/GPT 실패/원고 불일치와 실제 하위 3개 피드백의 근거 적합성을 확인해야 한다. 실제 녹음 품질·전문가 점수 일치·성능과 서비스 배포는 미확인이다.

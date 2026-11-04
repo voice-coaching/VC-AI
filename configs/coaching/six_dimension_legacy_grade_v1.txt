@@ -1,0 +1,4 @@
+
+서비스에서 LEGACY_RUBRIC을 제공하면 JSON 최상위에 legacyGrade를 추가한다. 이 객체의 키는 levels와 score뿐이다. 기존 화면의 발음 총점 호환성을 위한 별도 채점이며, 여섯 항목의 점수·하위 세 항목 선정에 사용하지 않는다. 여섯 점수를 평균하여 기존 총점으로 대체하지 않는다.
+levels는 LEGACY_RUBRIC.criteria의 순서대로 모음, 평음 파열음, 경음 파열음, 격음 파열음, 마찰음, 파찰음, 비음, 유음, 기대 음소 대응 범위의 9개 단계(0~4 정수 또는 null)다. 전체 음소 GOP 분포와 경쟁 가설에서 기존 stageJudgment에 따라 판단한다. 적용 표본이 없으면 null이며, 수치 경계를 임의로 만들거나 여섯 항목의 임시 GOP 변환 경계를 사용하지 않는다. coverage는 정렬 대응 범위이며 발음 정답률이 아니다. score = 100 × Σ(적용 항목 weight × level)/(4 × Σ 적용 항목 weight)이며 마지막에 소수 첫째 자리 HALF_UP 반올림한다. 전체 채점 근거가 부족하면 levels와 score 모두 null이다. 운율·입술·음성 길이·선택된 피드백을 기존 총점에 가감하지 않는다.
+LEGACY_RUBRIC은 기존 총점만 제어한다. feedback의 개수와 순서는 여전히 ASSESSMENT.selectedCriterionIds로만 정하며, 그 항목에 바로 따라 할 구체적인 연습을 작성한다. assessments 설명은 가급적 80자, feedback observation은 100자, practice는 180자 이내로 간결하게 작성한다.

@@ -96,7 +96,6 @@ def main():
         DLPC_GOP, DLPC_GOP_CORE_DIRECTORY, DLPC_GOP_LLM_DIRECTORY,
         DLPC_ANNOUNCER, DLPC_ANNOUNCER_LLM_DIRECTORY,
         DLPC_CONCISE, DLPC_CONCISE_LLM_DIRECTORY,
-        SIX_DIMENSION, SIX_DIMENSION_LLM_DIRECTORY,
         AUDIOVISUAL, AUDIOVISUAL_CORE_DIRECTORY, AUDIOVISUAL_LLM_DIRECTORY,
         SEUNGUN_GPT_V1, SEUNGUN_V1_CORE_DIRECTORY, SEUNGUN_V1_LLM_DIRECTORY,
     )
@@ -122,8 +121,6 @@ def main():
         args.core_root.parent / DLPC_GOP_CORE_DIRECTORY, args.llm_root.parent / DLPC_ANNOUNCER_LLM_DIRECTORY))
     dlpc_concise = FrozenCanonicalCoaching(FrozenCanonicalArtifacts(
         args.core_root.parent / DLPC_GOP_CORE_DIRECTORY, args.llm_root.parent / DLPC_CONCISE_LLM_DIRECTORY))
-    six_dimension = FrozenCanonicalCoaching(FrozenCanonicalArtifacts(
-        args.core_root.parent / DLPC_GOP_CORE_DIRECTORY, args.llm_root.parent / SIX_DIMENSION_LLM_DIRECTORY))
     seungun = FrozenCanonicalCoaching(FrozenCanonicalArtifacts(
         args.core_root.parent / SEUNGUN_CORE_DIRECTORY, args.llm_root.parent / SEUNGUN_LLM_DIRECTORY))
     seungun_v1 = FrozenCanonicalCoaching(FrozenCanonicalArtifacts(
@@ -189,11 +186,6 @@ def main():
             visual_assets(audiovisual)
             audiovisual._bridge().scoring_policy()
             audiovisual_installed = True
-        if six_dimension.artifacts.llm_root.exists():
-            if six_dimension.artifacts.identity != SIX_DIMENSION:
-                raise RuntimeError('VERIFIER_HARNESS_ROOT_MISMATCH')
-            six_dimension._bridge().scoring_policy()
-            installed_native = SIX_DIMENSION
     except Exception:
         raise RuntimeError('VERIFIER_DEPENDENCIES_UNAVAILABLE') from None
     if args.check_installation:
@@ -251,7 +243,7 @@ def main():
             association = _read_json(private.association_bytes)
             _validate(association, 'association', schema_name='v6')
             selected = harness_identity(association['llmManifestSha256'])
-            frozen = {S7: frozen, H5: h5, SCORED_V1: scored_v1, SCORED_V2: scored_v2, SCORED: scored, RESIDENT: resident, NATIVE_V1: native_v1, NATIVE: native, SEUNGUN_GPT: seungun, SEUNGUN_GPT_V1: seungun_v1, DLPC_GOP: dlpc_gop, DLPC_ANNOUNCER: dlpc_announcer, DLPC_CONCISE: dlpc_concise, AUDIOVISUAL: audiovisual, SIX_DIMENSION: six_dimension}[selected]
+            frozen = {S7: frozen, H5: h5, SCORED_V1: scored_v1, SCORED_V2: scored_v2, SCORED: scored, RESIDENT: resident, NATIVE_V1: native_v1, NATIVE: native, SEUNGUN_GPT: seungun, SEUNGUN_GPT_V1: seungun_v1, DLPC_GOP: dlpc_gop, DLPC_ANNOUNCER: dlpc_announcer, DLPC_CONCISE: dlpc_concise, AUDIOVISUAL: audiovisual}[selected]
             metadata = association['preparedAudio']
             prepared = PreparedAudioIdentity.from_document(metadata) if metadata is not None else None
             # Validate authenticated producer measurements, never re-run inference.
