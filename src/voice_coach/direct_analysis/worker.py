@@ -106,6 +106,9 @@ async def execute(folder: Path, *, runtime_environment=None, shared_transport=No
     public["practiceResult"] = practice_result(
         script_text=request.script_text, decision=public["decision"],
         score=public["score"], coaching=public["coaching"], failed=failed)
+    if artifacts.identity.six_dimension and "sixDimension" in coaching:
+        from voice_coach.six_dimension.public import public_view
+        public["coaching"]["sixDimension"] = public_view(coaching["sixDimension"])
     artifacts_root = folder / "artifacts"
     artifacts_root.mkdir(mode=0o700)
     await asyncio.gather(*(asyncio.to_thread(atomic,

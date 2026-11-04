@@ -18,6 +18,11 @@ MAX_REQUEST_BYTES = 1024 * 1024
 MAX_RESPONSE_BYTES = 131072
 
 
+def transport_for_artifacts(api_key: str, artifacts):
+    """Keep each verified release's model/settings and the shared transport lifecycle."""
+    return FrozenOpenAITransport.for_harness(api_key, artifacts.identity)
+
+
 class FrozenOpenAITransport:
     def __init__(self, api_key: str, *, combined_grading: bool = False,
                  model: str = "gpt-6-astra"):

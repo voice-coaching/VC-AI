@@ -1,0 +1,55 @@
+{
+  "revision": "six-dimension-experimental-v1",
+  "validationStatus": "EXPERT_REVIEW_PENDING",
+  "task": "KOREAN_READ_ALOUD",
+  "criteriaOrder": ["pronunciation_accuracy", "speaking_rate", "articulation_rate", "pauses", "pitch", "intensity"],
+  "labels": {
+    "pronunciation_accuracy": "발음 정확성",
+    "speaking_rate": "발음 속도",
+    "articulation_rate": "조음 속도",
+    "pauses": "쉼",
+    "pitch": "억양·음높이",
+    "intensity": "음량·강도"
+  },
+  "quality": {"minimumGopValidRatio": 0.8, "minimumSyllables": 5, "minimumDurationSeconds": 1.0, "minimumF0Coverage": 0.3},
+  "pronunciation": {
+    "gopScoreKnots": [[-8.0, 0], [-4.0, 40], [-2.0, 70], [-0.5, 90], [0.0, 100]],
+    "groups": [
+      {"id": "vowels", "weight": 25, "phones": "ㅏㅐㅑㅒㅓㅔㅕㅖㅗㅘㅙㅚㅛㅜㅝㅞㅟㅠㅡㅢㅣ"},
+      {"id": "plain_stops", "weight": 10, "phones": "ㄱㄷㅂ"},
+      {"id": "tense_stops", "weight": 10, "phones": "ㄲㄸㅃ"},
+      {"id": "aspirated_stops", "weight": 10, "phones": "ㅋㅌㅍ"},
+      {"id": "fricatives", "weight": 10, "phones": "ㅅㅆㅎ"},
+      {"id": "affricates", "weight": 10, "phones": "ㅈㅉㅊ"},
+      {"id": "nasals", "weight": 10, "phones": "ㄴㅁㅇ"},
+      {"id": "liquid", "weight": 5, "phones": "ㄹ"}
+    ]
+  },
+  "bands": {
+    "speech_rate": {"unit": "syllables/s", "target": [3.5, 5.5], "zeroAt": [1.0, 9.0]},
+    "articulation_rate": {"unit": "syllables/s", "target": [4.0, 6.5], "zeroAt": [1.5, 10.0]},
+    "pause_count_per_10_syllables": {"unit": "count/10syllables", "target": [0.0, 1.5], "zeroAt": [-1.0, 5.0]},
+    "pause_duration_per_10_syllables": {"unit": "s/10syllables", "target": [0.0, 0.8], "zeroAt": [-1.0, 3.0]},
+    "f0_range_st": {"unit": "semitone", "target": [3.0, 9.0], "zeroAt": [0.0, 18.0]},
+    "intensity_range_db": {"unit": "dB", "target": [4.0, 12.0], "zeroAt": [0.0, 24.0]}
+  },
+  "pauseWeights": {"pause_count_per_10_syllables": 0.5, "pause_duration_per_10_syllables": 0.5},
+  "feedbackCount": 3,
+  "request": {"model": "gpt-6.1-sol", "max_completion_tokens": 3000, "reasoning_effort": "low", "response_format": {"type": "json_object"}, "store": false, "service_tier": "default", "timeout_seconds": 120, "input_utf8_bound": 410821},
+  "scopes": {
+    "pronunciation_accuracy": "GOP_MODEL_SUPPORT",
+    "speaking_rate": "SCRIPT_SYLLABLES_PER_MFA_UTTERANCE_SECOND",
+    "articulation_rate": "SCRIPT_SYLLABLES_PER_RMS_PAUSE_EXCLUDED_SECOND",
+    "pauses": "SILENT_PAUSE_FREQUENCY_AND_DURATION_ONLY",
+    "pitch": "F0_VARIATION_RANGE_ONLY",
+    "intensity": "WITHIN_RECORDING_RELATIVE_INTENSITY_RANGE_ONLY"
+  },
+  "limitations": [
+    "All score knots, target bands, quality cutoffs and weights are provisional engineering values, not validated phonetic norms.",
+    "Pitch score does not assess Korean boundary tones or sentence-level intonational appropriateness.",
+    "Pause score does not assess semantic boundary appropriateness or filled pauses.",
+    "Intensity score does not measure calibrated SPL, loudness or the user's absolute speaking volume.",
+    "RMS pauses can include stop closures and can miss pauses in background noise.",
+    "Scores are not calibrated across dimensions. The three lowest are provisional priorities, not proven independent defects."
+  ]
+}

@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Windows/macOS host launcher. Only prepare/fetch permit container networking."""
+"""Offline acoustic containers; optional coach calls GPT separately on the host."""
 from __future__ import annotations
 
 import argparse
@@ -25,7 +25,30 @@ def main() -> int:
     analyze.add_argument('--text', required=True)
     analyze.add_argument('--output', type=Path, required=True)
     analyze.add_argument('--timeout', type=int, default=900)
+    coach = actions.add_parser('coach', help='six provisional scores and GPT feedback on the lowest three')
+    coach.add_argument('--audio', type=Path, required=True)
+    coach.add_argument('--text', required=True)
+    coach.add_argument('--output', type=Path, required=True)
+    coach.add_argument('--timeout', type=int, default=900)
+    coach.add_argument('--measurements-only', action='store_true')
+    coach.add_argument('--policy', type=Path)
     args = parser.parse_args()
+    if args.command == 'coach':
+        runner = ROOT.parents[1] / 'scripts/analyze_six_dimension.py'
+        command = [sys.executable, str(runner), '--audio', str(args.audio), '--text', args.text,
+                   '--output', str(args.output), '--device', args.device,
+                   '--cache', str(args.cache), '--timeout', str(args.timeout)]
+        if args.measurements_only:
+            command.append('--measurements-only')
+        if args.policy:
+            command.extend(['--policy', str(args.policy)])
+        try:
+            return subprocess.run(command).returncode
+        except KeyboardInterrupt:
+            return 130
+        except OSError:
+            print('{"status":"failed","code":"COACH_LAUNCH_FAILED"}', file=sys.stderr)
+            return 1
     architecture = 'arm64' if platform.machine().lower() in ('arm64', 'aarch64') else 'amd64'
     if args.device == 'cuda' and (architecture != 'amd64' or platform.system() == 'Darwin'):
         parser.error('CUDA requires Linux/Windows WSL2 on amd64 with NVIDIA container support')
