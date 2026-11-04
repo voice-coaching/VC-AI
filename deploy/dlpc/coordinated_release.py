@@ -138,7 +138,8 @@ def release_assets(payload, manifest, *, install=False):
         root = Path(manifest['selection'][prefix+'LLM_ROOT'])
         require(root.parent == Path('/workspace/intelligentai/validation')
                 and root.name in {'canonical_six_dimension_'+lane+'_20261104_v2_h5',
-                                  'canonical_six_dimension_'+lane+'_20261104_v3_h5'}, 'COORDINATED_H5_PATH')
+                                  'canonical_six_dimension_'+lane+'_20261104_v3_h5',
+                                  'canonical_six_dimension_'+lane+'_20261104_v4_h5'}, 'COORDINATED_H5_PATH')
         package = {}
         for name, pin in files.items():
             path = PurePosixPath(name)

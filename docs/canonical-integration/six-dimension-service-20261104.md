@@ -1,3 +1,5 @@
+> 모델 전환 v4: 내부·직접 분석의 실제 요청을 gpt-6.1-terra / reasoning_effort=none으로 전환한다. v3의 사용자 친화적 프롬프트와 출력 제한, 두 음향 CORE, 점수 계산, 기존 총점 rubric은 유지한다. 공개 /health/services 모델명 및 인증된 모델 가시성 점검은 canonical 실행 identity의 실제 모델을 따른다. 이전 gpt-6-astra 고정 표시는 실제 생성 모델과 달랐다. legacy generator와 과거 frozen identity는 과거 경로 호환성을 위해 보존하며 신규 canonical 요청의 모델 설정은 선택된 H5가 정본이다.
+
 > 사용자 친화적 피드백 v3: 정량 정책과 선정 순서를 유지하면서, observation은 private BRIDGE_RESULT에 보관하고 practice만 기존 feedback 문자열로 전달한다. practice는 현재 원고의 대상/연습 주제와 화살표, 짧은 지시 하나를 포함하며 완성된 줄은 100자, 전체는 300자·최대 5문장 이하다. 정상 출력은 최대 세 줄·줄당 한 문장 또는 연습 구절이다. 특정 모범 대본은 프롬프트에 넣지 않는다. 아래 v2/direct-only 설명은 이전 배포 이력이다.
 
 > 후속 사용자 결정: Backend와 AI 모두 배포하며 서버 간 GPT 릴리스 ID 및 공유 schema hash 일치 게이트를 제거한다. 내부 canonical 경로에도 canonical-six-dimension-internal-20261104-v2 H5를 적용한다. 내부 CORE f562484d…와 direct CORE 9e29fbc9…는 유지한다. 공개 feedback 문자열과 기존 총점 rubric은 같다. 아래 direct-only 설명은 #55의 앞선 배포 이력이다.

@@ -78,6 +78,7 @@ class HttpRuntime:
         self.backend = None
         self.process = self.connection = None
         self.executor_ready = False
+        self.coaching_model = self.environment.get("AI_ANALYSIS_COACHING_OPENAI_MODEL")
         self.openai_checked_until = 0.0
         self.dependencies_until = 0.0
         self.reason = "http_settings_incomplete_or_invalid"
@@ -149,6 +150,7 @@ class HttpRuntime:
                 self.canonical_lane = CanonicalLane(self.environment,
                     capacity=min(MAX_CANONICAL_WORKERS, self.resource_budget.max_active),
                     compute_capacity=self.resource_budget.compute_active)
+                self.coaching_model = self.canonical_lane.resident.current.artifacts.identity.model
                 self.canonical_reason = None
             except Exception:
                 self.canonical_reason = "canonical_configuration_invalid"
@@ -349,9 +351,9 @@ class HttpRuntime:
                 if time.monotonic() >= self.openai_checked_until:
                     import httpx
                     async with httpx.AsyncClient(trust_env=False, timeout=5, follow_redirects=False) as client:
-                        response = await client.get("https://api.openai.com/v1/models/gpt-6-astra",
+                        response = await client.get("https://api.openai.com/v1/models/" + self.coaching_model,
                             headers={"Authorization": "Bearer " + api_key})
-                        if response.status_code != 200 or response.json().get("id") != "gpt-6-astra":
+                        if response.status_code != 200 or response.json().get("id") != self.coaching_model:
                             raise ValueError()
                     # Authenticated model visibility, not an inference quality check.
                     self.openai_checked_until = time.monotonic() + 300
@@ -367,8 +369,8 @@ class HttpRuntime:
                 self.dependencies_until = 0
                 self.reason = stage
             if previous != self.reason:
-                logging.getLogger(__name__).warning("analysis_dependency_state provider=OPENAI model=gpt-6-astra reason=%s",
-                    self.reason or "ready")
+                logging.getLogger(__name__).warning("analysis_dependency_state provider=OPENAI model=%s reason=%s",
+                    self.coaching_model, self.reason or "ready")
             await asyncio.sleep(15)
 
     def _prune(self):

@@ -89,7 +89,7 @@ def create_app(environment=None):
                                  reasonCode=runtime.reason or runtime.canonical_reason,
                                  executorReady=runtime.handoff_executor_ready(),
                                  handoffReady=runtime.handoff_admission_ready(),
-                                 coachingProvider="OPENAI", coachingModel="gpt-6-astra",
+                                 coachingProvider="OPENAI", coachingModel=runtime.coaching_model,
                                  workerRevision=runtime.environment.get("VOICE_COACH_BUILD_REVISION")),
                             status_code=200 if is_ready else 503)
 

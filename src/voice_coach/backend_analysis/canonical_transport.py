@@ -31,7 +31,7 @@ class FrozenOpenAITransport:
                  "CANONICAL_PROVIDER_CONFIGURATION")
         self._api_key = api_key
         self._completion_tokens = 3000 if combined_grading else 1200
-        _require(model in {"gpt-6-astra", "gpt-6-luna", "gpt-6.1-sol"}, "CANONICAL_PROVIDER_CONFIGURATION")
+        _require(model in {"gpt-6-astra", "gpt-6-luna", "gpt-6.1-sol", "gpt-6.1-terra"}, "CANONICAL_PROVIDER_CONFIGURATION")
         self._model = model
         self._connection: http.client.HTTPSConnection | None = None
         self._expected = dict(model=model, max_completion_tokens=self._completion_tokens,
