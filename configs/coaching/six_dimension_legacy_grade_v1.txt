@@ -1,4 +1,44 @@
 
-서비스에서 LEGACY_RUBRIC을 제공하면 JSON 최상위에 legacyGrade를 추가한다. 이 객체의 키는 levels와 score뿐이다. 기존 화면의 발음 총점 호환성을 위한 별도 채점이며, 여섯 항목의 점수·하위 세 항목 선정에 사용하지 않는다. 여섯 점수를 평균하여 기존 총점으로 대체하지 않는다.
-levels는 LEGACY_RUBRIC.criteria의 순서대로 모음, 평음 파열음, 경음 파열음, 격음 파열음, 마찰음, 파찰음, 비음, 유음, 기대 음소 대응 범위의 9개 단계(0~4 정수 또는 null)다. 전체 음소 GOP 분포와 경쟁 가설에서 기존 stageJudgment에 따라 판단한다. 적용 표본이 없으면 null이며, 수치 경계를 임의로 만들거나 여섯 항목의 임시 GOP 변환 경계를 사용하지 않는다. coverage는 정렬 대응 범위이며 발음 정답률이 아니다. score = 100 × Σ(적용 항목 weight × level)/(4 × Σ 적용 항목 weight)이며 마지막에 소수 첫째 자리 HALF_UP 반올림한다. 전체 채점 근거가 부족하면 levels와 score 모두 null이다. 운율·입술·음성 길이·선택된 피드백을 기존 총점에 가감하지 않는다.
-LEGACY_RUBRIC은 기존 총점만 제어한다. feedback의 개수와 순서는 여전히 ASSESSMENT.selectedCriterionIds로만 정하며, 그 항목에 바로 따라 할 구체적인 연습을 작성한다. assessments와 observation은 내부 판단 근거다. 사용자용 practice에는 기본 프롬프트의 형식과 길이 제한(대상과 화살표 포함 98자 이하)을 그대로 적용한다. 기존 총점용 설명이나 추가 피드백을 practice에 붙이지 않는다.
+[기존 발음 총점: 서버 채점 계약]
+아래 규칙은 기존 화면의 9항목 발음 총점에만 적용한다. 여섯 항목 점수·하위 세 항목 선정에는 적용하지 않는다. 운율 측정값이 원문에 있더라도 이 총점에 섞지 않는다. 사용자에게 보이는 practice에는 총점용 설명·계산식·면책 문장을 추가하지 않으며 기본 프롬프트의 형식·최대 5문장 규칙을 유지한다.
+
+## 내부 채점표
+
+| 항목 | 기대 표지 | 기본 배점 |
+| --- | --- | --- |
+| 모음 | 현대 한글 모음 표지 21개 | 25 |
+| 평음 파열음 | ㄱ ㄷ ㅂ | 10 |
+| 경음 파열음 | ㄲ ㄸ ㅃ | 10 |
+| 격음 파열음 | ㅋ ㅌ ㅍ | 10 |
+| 마찰음 | ㅅ ㅆ ㅎ | 10 |
+| 파찰음 | ㅈ ㅉ ㅊ | 10 |
+| 비음 | ㄴ ㅁ ㅇ | 10 |
+| 유음 | ㄹ | 5 |
+| 기대 음소 대응 범위 | 전체 기대 음소의 정렬 커버리지 | 10 |
+
+## 채점 계산과 응답 작성의 책임
+
+수치 판정은 서버의 버전 고정 기준표 계산기가 담당한다. RUBRIC_RESULT는 그 계산기가 아래 규칙과 INPUT_DATA에 적용해 산출한 공식 검산표다. 기준표와 계산 근거를 참조하여 채점 응답을 작성하며 일반적인 발음 인상이나 독자적인 산술로 검산표의 level·overallScore를 바꾸지 않는다. 채점 응답에는 RUBRIC_RESULT 객체를 그대로 사용한다. 별도 설명이나 계산식은 출력하지 않는다. 필수 기준표·근거·검산표가 없거나 버전·항목 식별자가 일치하지 않으면 unscorable로 처리한다.
+
+1. coverage 항목의 근거 단위는 4 × (sampleCount − deletedClear − deletedFlagged)다. 이 항목은 어느 소리가 잘못됐는지가 아니라 전체 기대 음소에 대응한 범위를 평가한다.
+2. 근거 비율 = 근거 단위 / (4 × sampleCount). 중간에 반올림하지 않는다. 채점표의 높은 단계부터 비교한다: 95% 이상 4, 80% 이상 3, 60% 이상 2, 40% 이상 1, 나머지 0. 정확히 경계에 있으면 높은 단계다.
+3. sampleCount=0인 항목은 level=null이다. 0점이나 만점으로 만들지 말고 합산 배점에서 제외한다. sampleCount=1도 규칙대로 채점하되 확신을 추가하지 않는다.
+4. overallScore = 100 × Σ(적용 항목 weight × level) / (4 × Σ(적용 항목 weight)). 마지막 결과만 소수점 첫째 자리 HALF_UP으로 반올림한다.
+
+음소 항목의 관측 상태 단위는 RUBRIC_JSON.evidenceUnits에 고정되어 있다: matchedClear=4, matchedFlagged=2, substitutedClear=3, substitutedFlagged=1, deletedClear=0, deletedFlagged=0. 서버가 제공한 상태별 개수만 사용한다. GOP, bestAlternative, CLEAR_CONTRAST 또는 선택 경고 수에서 이 상태나 누락 개수를 임의로 만들지 않는다.
+
+## 정수 계산 보조값 사용
+
+INPUT_DATA의 evidenceUnits와 possibleUnits는 서버가 위 산식으로 계산한 근거 단위와 최대 단위다. minimumUnitsByLevel은 각 단계의 최소 단위를 정수로 올림한 표이며 높은 단계부터 나열돼 있다. sampleCount가 0이면 먼저 level=null로 제외한다. 계산기는 나머지 항목을 표의 맨 위부터 비교하여 evidenceUnits >= minimumUnits를 처음 만족하는 단계 하나로 정한다. 응답에는 RUBRIC_RESULT의 해당 단계를 사용한다. 예를 들어 최대 8단위 중 7단위는 87.5%이므로 3단계다. 2단계가 아니다.
+applicableWeight는 제외 항목을 뺀 배점 합이며 aggregationDenominator는 그 4배다. 선택한 단계에 해당 배점을 곱해 모두 더한 뒤 100을 곱하고 이 분모로 나눈다. 정수 보조값을 새 점수나 모델의 확률로 해석하지 말고 RUBRIC_JSON의 규칙과 대조한다.
+
+## 판정 범위
+
+이 9항목 채점 입력에는 받침 중화, 연음, 혀 위치, 억양, 속도, 강세, 쉼, 입술, 음색, 국적 또는 화자 특성에 대한 채점 근거가 없다. 해당 항목을 추측해 가감점하지 않는다. 원본의 별도 운율 측정은 여섯 항목 코칭의 근거이며 이 9항목 총점의 근거가 아니다. 정렬 길이를 발음 지속시간으로 해석하지 않는다. 선택된 교정 음소 하나만 보고 전체 점수를 매기지 않는다.
+여덟 음소 항목은 서로 다른 기대 표지 집합이며 coverage는 의도적으로 별도 10점이다. 없는 항목의 배점을 제외하므로 다른 대본의 점수가 같은 난이도를 뜻하지 않는다. 100점도 모든 발음이 정확하다는 보증이 아니다.
+
+## 출력
+
+TASK_MODE=SCORING 단독 채점 요청에서는 JSON 객체 하나만 출력한다. 설명, Markdown, 코드펜스와 추가 필드는 금지한다. 응답의 첫 글자는 {, 마지막 글자는 }다. JSON 앞뒤에 백틱 또는 json을 쓰지 않는다. rubricRevision, criteria, overallScore만 포함한다. criteria는 입력 순서의 9개 객체이며 각 객체는 criterionId와 level만 가진다. level은 0~4 정수 또는 평가 제외 시 null이다. overallScore는 위 규칙으로 얻은 0~100 숫자다. 근거나 채점표가 누락·모순되면 {"status":"unscorable"}만 반환한다. 서버가 이를 채점 실패로 처리하며 임의 점수로 대체하지 않는다.
+
+TASK_MODE=COACHING_WITH_SCORING에서는 위 채점 JSON을 최상위 legacyGrade 객체에 그대로 담고, 기본 프롬프트의 assessments와 feedback을 함께 반환한다. RUBRIC_RESULT={"status":"unscorable"}이면 legacyGrade도 그 객체 그대로다. 채점 실패를 여섯 항목 전체의 측정 실패로 확대하지 않는다. 유효한 ASSESSMENT가 있는 항목의 사용자 연습은 계속 작성한다. OUTPUT_SCHEMA가 유일한 결합 응답 형식이며 levels/score 축약이나 추가 필드는 쓰지 않는다.

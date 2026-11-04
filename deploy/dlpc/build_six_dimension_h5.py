@@ -11,8 +11,9 @@ sys.path.insert(0, str(ROOT / "deploy/runpod"))
 sys.path.insert(0, str(ROOT / "src"))
 from release_packaging import encode, load_files, sha, write_release
 from voice_coach.six_dimension.policy import load_policy
+from voice_coach.backend_analysis.phone_rubric import validate_policy as validate_rubric
 
-DIRECTORY = "canonical_six_dimension_direct_20261104_v4_h5"
+DIRECTORY = "canonical_six_dimension_direct_20261105_v5_h5"
 
 
 def build(source: Path, core_manifest: Path, destination: Path, *, directory: str = DIRECTORY):
@@ -30,9 +31,20 @@ def build(source: Path, core_manifest: Path, destination: Path, *, directory: st
              "contracts/llm/six_dimension_result.schema.json": (ROOT / "docs/contracts/six_dimension_result_v1.schema.json").read_bytes(),
              "contracts/llm/request_config.json": encode(policy["request"])}
     files["contracts/llm/llm_system_prompt.txt"] += (ROOT / "configs/coaching/six_dimension_legacy_grade_v1.txt").read_bytes()
-    for name in ("scoring_rubric.json", "llm_output.schema.json"):
-        files["contracts/llm/"+name] = inherited["contracts/llm/"+name]
-    files["bridge/compact_gop_output.py"] = (ROOT / "deploy/runpod/harnesses/compact_gop_output.py").read_bytes()
+    rubric_raw = (ROOT / "configs/pronunciation_feedback/phone_rubric_20261003_v1.json").read_bytes()
+    rubric = json.loads(rubric_raw)
+    validate_rubric(rubric)
+    files["contracts/llm/scoring_rubric.json"] = rubric_raw
+    output_schema = json.loads(inherited["contracts/llm/llm_output.schema.json"])
+    ready = [branch["properties"]["result"]["properties"]["rubricRevision"]
+             for branch in output_schema["properties"]["scoring"]["oneOf"]
+             if "result" in branch.get("properties", {})]
+    if len(ready) != 1:
+        raise ValueError("SCORING_OUTPUT_SCHEMA_IDENTITY")
+    ready[0]["const"] = rubric["rubricRevision"]
+    files["contracts/llm/llm_output.schema.json"] = encode(output_schema)
+    # Embed the original pure calculator, not the source package's import shim.
+    files["bridge/phone_rubric.py"] = (ROOT / "src/voice_coach/backend_analysis/phone_rubric.py").read_bytes()
     for name in ("policy", "assessment", "pipeline"):
         files["bridge/"+name+".py"] = (ROOT / "src/voice_coach/six_dimension" / (name+".py")).read_bytes()
     lock = encode(dict(files={name: sha(raw) for name, raw in sorted(files.items())}))
@@ -41,6 +53,8 @@ def build(source: Path, core_manifest: Path, destination: Path, *, directory: st
                            prompt_sha256=sha(files["contracts/llm/llm_system_prompt.txt"]),
                            policy_sha256=policy_sha, execution_profile="six-dimension-experimental-v1",
                            scoring_authority="PROVISIONAL_DETERMINISTIC_POLICY", developerQaVerified=False,
+                           core_input="ORIGINAL_UTF8_BYTES_SEPARATE_USER_MESSAGE",
+                           legacy_scoring_authority="SERVER_FIXED_RUBRIC_OR_UNSCORABLE",
                            public_contract="EXISTING_SCORING_AND_FEEDBACK_STRING", six_scores="PRIVATE_ARTIFACT_ONLY"))
     files["contracts/llm/dependency_lock.json"] = lock
     files["contracts/llm/llm_contract_manifest.json"] = manifest

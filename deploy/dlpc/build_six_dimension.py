@@ -23,7 +23,8 @@ def build(destination: Path) -> dict:
              "configs/pronunciation_feedback/six_dimension_v1.json",
              "docs/contracts/six_dimension_result_v1.schema.json",
              "docs/canonical-integration/six-dimension-feedback-v1.md",
-             "src/voice_coach/backend_analysis/secret_files.py"]
+             "src/voice_coach/backend_analysis/secret_files.py",
+             "src/voice_coach/backend_analysis/phone_rubric.py"]
     names.extend(str(path.relative_to(ROOT)) for path in (ROOT / "src/voice_coach/six_dimension").glob("*.py"))
     files = {name: (ROOT / name).read_bytes() for name in sorted(names)}
     # Isolate the installed runtime from unrelated repository modules.
