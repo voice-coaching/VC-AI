@@ -5,8 +5,7 @@ import jsonschema
 
 from .policy import encode, require, sha, strict_json, validate_policy
 from .assessment import assess, validate_binding
-from .pipeline import evaluate, request_payload, validate_coaching, public_feedback, validate_public_feedback
-from .compact_gop_output import expand_compact_output
+from .pipeline import evaluate, request_payload, validate_coaching, public_feedback, validate_public_feedback, rubric_context
 
 PARENT = "__CORE_MANIFEST__"
 
@@ -44,9 +43,17 @@ class Bridge:
             require(record == {"status": "NOT_REQUESTED"}, "SCORING_NONACCEPT_RESULT")
         else:
             jsonschema.Draft202012Validator(self.read("llm_output.schema.json")["properties"]["scoring"]).validate(record)
+            expected = rubric_context(core, self.read("scoring_rubric.json"))["RUBRIC_RESULT"]
+            require(record == self.scoring_record(expected), "SCORING_SERVER_RESULT_MISMATCH")
 
-    def _payload(self, assessment, core, script, policy, prompt):
-        return request_payload(assessment, core, script, policy, prompt, self.read("scoring_rubric.json"))
+    @staticmethod
+    def scoring_record(grade):
+        return ({"status": "UNSCORABLE"} if grade == {"status": "unscorable"}
+                else {"status": "READY", "result": grade})
+
+    def _payload(self, assessment, core, script, policy, prompt, *, core_bytes):
+        return request_payload(assessment, core, script, policy, prompt, self.read("scoring_rubric.json"),
+                               core_bytes=core_bytes)
 
     def _binding(self, core_bytes, script, binding):
         require(binding["parent_manifest_sha256"] == PARENT, "CORE_PARENT_BINDING")
@@ -75,7 +82,7 @@ class Bridge:
         payload = None
         if assessment["selectedCriterionIds"]:
             try:
-                payload = self._payload(assessment, core, script, policy, prompt)
+                payload = self._payload(assessment, core, script, policy, prompt, core_bytes=core_bytes)
             except ValueError as exc:
                 # dispatch/evaluate retains numeric scores when the input is over budget.
                 require(str(exc) == "INPUT_BUDGET_NO_SILENT_TRUNCATION", "SIX_DIMENSION_PREPARATION")
@@ -112,16 +119,15 @@ class Bridge:
 
     def expression(self, base, result):
         """Use existing wire states; the detailed six scores stay private."""
+        scoring = self.scoring_record(result["legacyGrade"])
         if not result["dispatchAttempts"]:
             if result["generationStatus"] == "NOT_REQUESTED":
                 return dict(base, adapterStatus="NO_PERMITTED_COACHING_CONTENT", generationStatus="NOT_DISPATCHED",
-                            scoring={"status":"UNSCORABLE"}, sixDimension=result)
+                            scoring=scoring, sixDimension=result)
             return dict(base, adapterStatus="FAIL_CLOSED", generationStatus="NOT_DISPATCHED",
-                        errorCode=result["errorCode"], scoring={"status":"UNSCORABLE"}, sixDimension=result)
+                        errorCode=result["errorCode"], scoring=scoring, sixDimension=result)
         feedback = self.feedback_text(result)
         valid = result["generationStatus"] == "STRUCTURALLY_VALID"
-        scoring = expand_compact_output(dict(result["legacyGrade"], feedback=feedback),
-                    self.read("scoring_rubric.json"))["scoring"] if valid else {"status":"UNSCORABLE"}
         return dict(base, adapterStatus="READY", dispatchAttempts=result["dispatchAttempts"],
                     generationStatus="SCHEMA_AND_STRUCTURAL_SEMANTICS_VALID" if valid else "DETERMINISTIC_FALLBACK",
                     fallbackReason=None if valid else result["errorCode"],
@@ -138,6 +144,8 @@ class Bridge:
         require(expression["coreInputValidation"] == core["input_validation"]
                 and expression["coreSha256"] == sha(core_bytes), "SIX_DIMENSION_CORE_MISMATCH")
         require(result["assessment"] == expected, "SIX_DIMENSION_ASSESSMENT_MISMATCH")
+        rubric_result = rubric_context(core, self.read("scoring_rubric.json"))["RUBRIC_RESULT"]
+        require(result["legacyGrade"] == rubric_result, "SCORING_SERVER_RESULT_MISMATCH")
         if not expected["selectedCriterionIds"]:
             require(result["dispatchAttempts"] == 0 and result["generationStatus"] == "NOT_REQUESTED",
                     "SIX_DIMENSION_UNAVAILABLE_DISPATCH")
@@ -145,14 +153,14 @@ class Bridge:
                 and result["requestConfigSha256"] == sha(encode(policy["request"])), "SIX_DIMENSION_CONFIG_MISMATCH")
         if result["generationStatus"] == "STRUCTURALLY_VALID":
             validate_coaching({key: result[key] for key in ("assessments", "feedback", "legacyGrade")},
-                              expected, self.read("scoring_rubric.json"))
+                              expected, rubric_result)
         if result["dispatchAttempts"]:
-            payload = self._payload(expected, core, script, policy, prompt)
+            payload = self._payload(expected, core, script, policy, prompt, core_bytes=core_bytes)
             require(result["requestSha256"] == sha(payload), "SIX_DIMENSION_REQUEST_MISMATCH")
         elif expected["selectedCriterionIds"]:
             # A scored request can be undispatched only if deterministic preparation failed.
             try:
-                self._payload(expected, core, script, policy, prompt)
+                self._payload(expected, core, script, policy, prompt, core_bytes=core_bytes)
             except ValueError as exc:
                 require(result["generationStatus"] == "NOT_DISPATCHED" and result["errorCode"] == str(exc),
                         "SIX_DIMENSION_PREPARATION_MISMATCH")

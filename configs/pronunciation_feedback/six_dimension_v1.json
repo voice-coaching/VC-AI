@@ -35,7 +35,7 @@
   },
   "pauseWeights": {"pause_count_per_10_syllables": 0.5, "pause_duration_per_10_syllables": 0.5},
   "feedbackCount": 3,
-  "request": {"model": "gpt-6.1-terra", "max_completion_tokens": 3000, "reasoning_effort": "none", "response_format": {"type": "json_object"}, "store": false, "service_tier": "default", "timeout_seconds": 120, "input_utf8_bound": 410821},
+  "request": {"model": "gpt-6.1-terra", "max_completion_tokens": 3000, "reasoning_effort": "none", "response_format": {"type": "json_object"}, "store": false, "service_tier": "default", "timeout_seconds": 120, "input_utf8_bound": 800000},
   "scopes": {
     "pronunciation_accuracy": "GOP_MODEL_SUPPORT",
     "speaking_rate": "SCRIPT_SYLLABLES_PER_MFA_UTTERANCE_SECOND",

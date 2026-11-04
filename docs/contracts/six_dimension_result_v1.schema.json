@@ -444,16 +444,236 @@
       "const": false
     },
     "legacyGrade": {
-      "type": "object",
-      "additionalProperties": false,
-      "required": [
-        "levels",
-        "score"
-      ],
-      "properties": {
-        "levels": {},
-        "score": {}
-      }
+      "oneOf": [
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "rubricRevision",
+            "criteria",
+            "overallScore"
+          ],
+          "properties": {
+            "rubricRevision": {
+              "const": "phone-rubric-20261003-v1"
+            },
+            "criteria": {
+              "type": "array",
+              "minItems": 9,
+              "maxItems": 9,
+              "items": false,
+              "prefixItems": [
+                {
+                  "type": "object",
+                  "additionalProperties": false,
+                  "required": [
+                    "criterionId",
+                    "level"
+                  ],
+                  "properties": {
+                    "criterionId": {
+                      "const": "vowels"
+                    },
+                    "level": {
+                      "type": [
+                        "integer",
+                        "null"
+                      ],
+                      "minimum": 0,
+                      "maximum": 4
+                    }
+                  }
+                },
+                {
+                  "type": "object",
+                  "additionalProperties": false,
+                  "required": [
+                    "criterionId",
+                    "level"
+                  ],
+                  "properties": {
+                    "criterionId": {
+                      "const": "plain_stops"
+                    },
+                    "level": {
+                      "type": [
+                        "integer",
+                        "null"
+                      ],
+                      "minimum": 0,
+                      "maximum": 4
+                    }
+                  }
+                },
+                {
+                  "type": "object",
+                  "additionalProperties": false,
+                  "required": [
+                    "criterionId",
+                    "level"
+                  ],
+                  "properties": {
+                    "criterionId": {
+                      "const": "tense_stops"
+                    },
+                    "level": {
+                      "type": [
+                        "integer",
+                        "null"
+                      ],
+                      "minimum": 0,
+                      "maximum": 4
+                    }
+                  }
+                },
+                {
+                  "type": "object",
+                  "additionalProperties": false,
+                  "required": [
+                    "criterionId",
+                    "level"
+                  ],
+                  "properties": {
+                    "criterionId": {
+                      "const": "aspirated_stops"
+                    },
+                    "level": {
+                      "type": [
+                        "integer",
+                        "null"
+                      ],
+                      "minimum": 0,
+                      "maximum": 4
+                    }
+                  }
+                },
+                {
+                  "type": "object",
+                  "additionalProperties": false,
+                  "required": [
+                    "criterionId",
+                    "level"
+                  ],
+                  "properties": {
+                    "criterionId": {
+                      "const": "fricatives"
+                    },
+                    "level": {
+                      "type": [
+                        "integer",
+                        "null"
+                      ],
+                      "minimum": 0,
+                      "maximum": 4
+                    }
+                  }
+                },
+                {
+                  "type": "object",
+                  "additionalProperties": false,
+                  "required": [
+                    "criterionId",
+                    "level"
+                  ],
+                  "properties": {
+                    "criterionId": {
+                      "const": "affricates"
+                    },
+                    "level": {
+                      "type": [
+                        "integer",
+                        "null"
+                      ],
+                      "minimum": 0,
+                      "maximum": 4
+                    }
+                  }
+                },
+                {
+                  "type": "object",
+                  "additionalProperties": false,
+                  "required": [
+                    "criterionId",
+                    "level"
+                  ],
+                  "properties": {
+                    "criterionId": {
+                      "const": "nasals"
+                    },
+                    "level": {
+                      "type": [
+                        "integer",
+                        "null"
+                      ],
+                      "minimum": 0,
+                      "maximum": 4
+                    }
+                  }
+                },
+                {
+                  "type": "object",
+                  "additionalProperties": false,
+                  "required": [
+                    "criterionId",
+                    "level"
+                  ],
+                  "properties": {
+                    "criterionId": {
+                      "const": "liquid"
+                    },
+                    "level": {
+                      "type": [
+                        "integer",
+                        "null"
+                      ],
+                      "minimum": 0,
+                      "maximum": 4
+                    }
+                  }
+                },
+                {
+                  "type": "object",
+                  "additionalProperties": false,
+                  "required": [
+                    "criterionId",
+                    "level"
+                  ],
+                  "properties": {
+                    "criterionId": {
+                      "const": "coverage"
+                    },
+                    "level": {
+                      "type": [
+                        "integer",
+                        "null"
+                      ],
+                      "minimum": 0,
+                      "maximum": 4
+                    }
+                  }
+                }
+              ]
+            },
+            "overallScore": {
+              "type": "number",
+              "minimum": 0,
+              "maximum": 100
+            }
+          }
+        },
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "status"
+          ],
+          "properties": {
+            "status": {
+              "const": "unscorable"
+            }
+          }
+        }
+      ]
     }
   },
   "allOf": [

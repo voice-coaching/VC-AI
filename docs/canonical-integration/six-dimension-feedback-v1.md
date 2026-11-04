@@ -69,9 +69,11 @@ python scripts/analyze_six_dimension.py --analysis-dir existing-seungun-result -
 
 ## GPT 입출력
 
-요청 모델의 기본값은 백업한 최근 로컬 릴리스와 같은 `gpt-6.1-sol`, reasoning=low, service_tier=default, 3000 출력 토큰, timeout=120초다. 설정 변경은 정책 revision과 digest로 추적한다. 공급자 endpoint는 OpenAI chat completions로 고정하며 환경 proxy·redirect·자동 재시도를 사용하지 않는다. 시스템 프롬프트는 `configs/coaching/six_dimension_system_v1.txt`다.
+요청 모델의 기본값은 `gpt-6.1-terra`, reasoning=none, service_tier=default, 3000 출력 토큰, timeout=120초다. 설정 변경은 정책 revision과 digest로 추적한다. 공급자 endpoint는 OpenAI chat completions로 고정하며 환경 proxy·redirect·자동 재시도를 사용하지 않는다. 시스템 프롬프트는 `configs/coaching/six_dimension_system_v1.txt`다.
 
-GPT 입력은 원고, 확정된 6항목 점수, 단위·구간·근거 ID, 전체 GOP 근거, 임시 정책, 하위 3개 ID와 출력 schema다. 원본 음성·private logits·API 키는 전달하지 않는다. 참조 분포는 보조 자료로 남기며 백분위를 품질 점수로 변환하지 않는다. 입력 예산을 넘으면 조용히 자르지 않고 호출 전에 실패한다.
+GPT 입력은 시스템 프롬프트, 별도 보조 자료 메시지, Seungun 원본 CORE JSON 메시지의 순서다. 보조 자료에는 원고·서버의 6항목 점수·근거 ID·정책·선정 ID·출력 schema가 있다. 원본 CORE는 producer bytes를 UTF-8로 읽어 마지막 user 메시지에 그대로 담는다. 필드 선택·요약·재직렬화·중복 제거를 하지 않으므로 발음 경고·MFA 구간·운율 곡선·참조 분포·native 및 운영 기록도 원본에 있으면 모두 전달된다. 이 원본 전달은 사용자 요청에 따른 변경이며, 음성 파일 자체나 API 키를 추가하는 것은 아니다. 직렬화한 HTTP 요청을 다시 읽었을 때 이 메시지의 UTF-8 bytes와 CORE의 SHA-256이 같다. 참조 백분위를 품질 점수로 변환하지 않는다.
+
+입력 메시지 합계는 800,000 UTF-8 bytes, HTTP 요청 전체는 기존 transport와 같은 1 MiB 이하다. 어느 한쪽을 넘으면 원본 일부를 잘라 보내지 않고 호출 전에 `INPUT_BUDGET_NO_SILENT_TRUNCATION`으로 실패한다. 이 제한은 바이트 용량 게이트이며 토큰 수·모델 문맥 한도의 실측이 아니다. 실제 전송·비용·지연·품질은 별도 개발자 QA 대상이다.
 
 GPT는 여섯 항목에 대해 점수를 그대로 복사한 설명과 하위 3개에 대한 observation/practice를 반환한다. 서버는 점수 변경·항목 순서 변경·선정 개수 불일치·다른 항목 근거 인용을 거절한다. 모든 점수가 높아도 상대적으로 낮은 세 항목에 대해 보완 연습만 안내한다. 점수가 세 개 미만이면 가능한 항목만 안내한다.
 
@@ -87,6 +89,6 @@ python deploy/dlpc/build_six_dimension.py --destination /tmp/six-dimension-bundl
 
 새 evaluator bundle은 소스·정책·프롬프트·schema와 SHA-256 manifest를 포함한다. bundle에서는 기존 Seungun 결과를 `--analysis-dir`로 입력한다. 모델·키·녹음은 포함하지 않는다. 서비스는 별도의 새 direct 전용 H5 identity를 사용하며 기존 H5 hash를 재사용하지 않는다. 공유 Backend schema와 공개 feedback 필드는 변경하지 않는다.
 
-서비스용 bridge는 `voice_coach.six_dimension.pipeline.evaluate`와 같은 모듈 bytes를 hash-pinned package로 로드한다. 호출자가 신뢰할 수 있는 producer의 원본 CORE bytes와 requestId/coreSha256/scriptSha256/sourceAudioSha256/preparedWavSha256 binding을 제공해야 한다. binding과 bytes의 일치는 파일 무결성 확인이며 외부 입력의 인증을 대신하지 않는다. 상세 six-dimension 결과는 private BRIDGE_RESULT에 보관하고 공개 응답에서는 제거한다. 기존 총점용 9개 음소군 rubric 채점은 같은 GPT 요청의 legacyGrade로 유지하며 하위 세 항목 선정에 사용하지 않는다. Backend 내부 canonical 경로는 기존 H5와 공유 schema를 유지한다.
+서비스용 bridge는 `voice_coach.six_dimension.pipeline.evaluate`와 같은 모듈 bytes를 hash-pinned package로 로드한다. 호출자가 신뢰할 수 있는 producer의 원본 CORE bytes와 requestId/coreSha256/scriptSha256/sourceAudioSha256/preparedWavSha256 binding을 제공해야 한다. binding과 bytes의 일치는 파일 무결성 확인이며 외부 입력의 인증을 대신하지 않는다. 상세 six-dimension 결과는 private BRIDGE_RESULT에 보관하고 공개 응답에서는 제거한다. 기존 총점용 9개 음소군은 서버 `phone_rubric.py`와 `phone_rubric_20261003_v1.json`의 고정 계산을 사용한다. 같은 GPT 요청에 `RUBRIC_JSON`, `INPUT_DATA`, `RUBRIC_RESULT`를 별도 제공하며 GPT는 후자를 내부 `legacyGrade`에 그대로 복사한다. 하위 세 항목 선정에는 사용하지 않는다. 외부 공개 `scoring`·`feedback` 구조는 유지한다. [원본 전달 변경 기록](raw-seungun-json-20261105.md)에 계산 불가 조건과 적용 범위를 기록한다.
 
 정적 확인 범위는 Python 컴파일, JSON/schema·정책 구조, 백업 hash, source diff다. 저장소 AGENTS.md에 따라 자동 회귀 테스트·관련 테스트 산출물·브라우저 자동화·실제 녹음/GPT 호출은 실행하거나 생성하지 않는다. 후속 개발자 QA에서는 여섯 점수/동점/누락/GPT 실패/원고 불일치와 실제 하위 3개 피드백의 근거 적합성을 확인해야 한다. 실제 녹음 품질·전문가 점수 일치·성능과 서비스 배포는 미확인이다.

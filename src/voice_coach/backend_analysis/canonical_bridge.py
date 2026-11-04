@@ -169,7 +169,11 @@ class FrozenCanonicalCoaching:
         if identity.gop_grading:
             modules = ("adapter",)
         if identity.six_dimension:
-            modules = ("policy", "assessment", "pipeline", "compact_gop_output", "adapter")
+            # Historical H5s keep their frozen imports. Raw-CORE releases embed
+            # the exact server calculator before loading the coaching pipeline.
+            modules = (("policy", "assessment", "phone_rubric", "pipeline", "adapter")
+                       if "bridge/phone_rubric.py" in lock["files"] else
+                       ("policy", "assessment", "pipeline", "compact_gop_output", "adapter"))
         for name in modules:
             relative = f"bridge/{name}.py"
             raw = _contained_file(root, relative).read_bytes()

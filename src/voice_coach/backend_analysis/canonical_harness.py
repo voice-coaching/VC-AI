@@ -266,7 +266,7 @@ SIX_DIMENSION_INTERNAL_V3 = HarnessIdentity(
     model='gpt-6.1-sol', service_tier='default', selection_view=False, six_dimension=True,
 )
 SIX_DIMENSION_INTERNAL_V3_LLM_DIRECTORY = 'canonical_six_dimension_internal_20261104_v3_h5'
-SIX_DIMENSION = HarnessIdentity(
+SIX_DIMENSION_V4 = HarnessIdentity(
     'canonical-six-dimension-direct-20261104-v4',
     '9e9f2a81d6d1ea223b15102197f1d59d2ce1a7f294e6b690d21e515f42f96c45',
     '917a9249822e21e49af659d88706a58c724a841c7913eb8ec6a15fd8de653849',
@@ -274,8 +274,8 @@ SIX_DIMENSION = HarnessIdentity(
     DLPC_PIPELINE_LATENCY.core_sha256, scoring=True, native=True, gpt_grading=True, gop_grading=True,
     model='gpt-6.1-terra', reasoning_effort='none', service_tier='default', selection_view=False, six_dimension=True, direct_only=True,
 )
-SIX_DIMENSION_LLM_DIRECTORY = 'canonical_six_dimension_direct_20261104_v4_h5'
-SIX_DIMENSION_INTERNAL = HarnessIdentity(
+SIX_DIMENSION_V4_LLM_DIRECTORY = 'canonical_six_dimension_direct_20261104_v4_h5'
+SIX_DIMENSION_INTERNAL_V4 = HarnessIdentity(
     'canonical-six-dimension-internal-20261104-v4',
     'e54bcffaf0bf7071d5c52f5d40d51a2acbd49fd721ac63957c4149aaf5f7b9ba',
     'b66b21b7e707a8664aef68ee93cdd3f0d47e1d417875f25cb6fa290a02bb790c',
@@ -283,8 +283,26 @@ SIX_DIMENSION_INTERNAL = HarnessIdentity(
     DLPC_INTERNAL_BOUNDED.core_sha256, scoring=True, native=True, gpt_grading=True, gop_grading=True,
     model='gpt-6.1-terra', reasoning_effort='none', service_tier='default', selection_view=False, six_dimension=True,
 )
-SIX_DIMENSION_INTERNAL_LLM_DIRECTORY = 'canonical_six_dimension_internal_20261104_v4_h5'
-HARNESSES = {value.manifest_sha256: value for value in (S7, H5, SCORED_V1, SCORED_V2, SCORED, RESIDENT, NATIVE_V1, NATIVE, SEUNGUN_GPT_V1, SEUNGUN_GPT, DLPC_GOP, DLPC_ANNOUNCER, DLPC_CONCISE, DLPC_LUNA, DLPC_LUNA_NONE, DLPC_MFA_TRACE, DLPC_MFA_PREPARED, DLPC_MFA_DISAMBIGUATION, DLPC_SEUNGUN_SERVER, DLPC_PIPELINE_LATENCY, DLPC_PIPELINE_SOL61_LIGHT, DLPC_INTERNAL_BOUNDED, DLPC_LUNA_COMPACT, DLPC_LUNA_CACHED, AUDIOVISUAL, SIX_DIMENSION_V2, SIX_DIMENSION_INTERNAL_V2, SIX_DIMENSION_V3, SIX_DIMENSION_INTERNAL_V3, SIX_DIMENSION, SIX_DIMENSION_INTERNAL)}
+SIX_DIMENSION_INTERNAL_V4_LLM_DIRECTORY = 'canonical_six_dimension_internal_20261104_v4_h5'
+SIX_DIMENSION = HarnessIdentity(
+    'canonical-six-dimension-direct-20261105-v5',
+    'b2125786731cf53f305110bffb782bf477369277ca21d423c73d415c01c964b4',
+    'f9e5c972cd87479afebbbb9e54f60f2a475f986cdbe470d4115a665f20595901',
+    'e923954e901714e34f8e3a6ceb5e4b76117a0e6dc72e1509af89e812edb8f941',
+    DLPC_PIPELINE_LATENCY.core_sha256, scoring=True, native=True, gpt_grading=True, gop_grading=True,
+    model='gpt-6.1-terra', reasoning_effort='none', service_tier='default', selection_view=False, six_dimension=True, direct_only=True,
+)
+SIX_DIMENSION_LLM_DIRECTORY = 'canonical_six_dimension_direct_20261105_v5_h5'
+SIX_DIMENSION_INTERNAL = HarnessIdentity(
+    'canonical-six-dimension-internal-20261105-v5',
+    '4b9550c95ec30b333487cc2b6c6cb2446ca3179bcec9cc068972a4d50269f835',
+    'ec7ef35bd815232debcaacfca6cb382549a37c90953d7c978a643edc8fcf43c4',
+    'e923954e901714e34f8e3a6ceb5e4b76117a0e6dc72e1509af89e812edb8f941',
+    DLPC_INTERNAL_BOUNDED.core_sha256, scoring=True, native=True, gpt_grading=True, gop_grading=True,
+    model='gpt-6.1-terra', reasoning_effort='none', service_tier='default', selection_view=False, six_dimension=True,
+)
+SIX_DIMENSION_INTERNAL_LLM_DIRECTORY = 'canonical_six_dimension_internal_20261105_v5_h5'
+HARNESSES = {value.manifest_sha256: value for value in (S7, H5, SCORED_V1, SCORED_V2, SCORED, RESIDENT, NATIVE_V1, NATIVE, SEUNGUN_GPT_V1, SEUNGUN_GPT, DLPC_GOP, DLPC_ANNOUNCER, DLPC_CONCISE, DLPC_LUNA, DLPC_LUNA_NONE, DLPC_MFA_TRACE, DLPC_MFA_PREPARED, DLPC_MFA_DISAMBIGUATION, DLPC_SEUNGUN_SERVER, DLPC_PIPELINE_LATENCY, DLPC_PIPELINE_SOL61_LIGHT, DLPC_INTERNAL_BOUNDED, DLPC_LUNA_COMPACT, DLPC_LUNA_CACHED, AUDIOVISUAL, SIX_DIMENSION_V2, SIX_DIMENSION_INTERNAL_V2, SIX_DIMENSION_V3, SIX_DIMENSION_INTERNAL_V3, SIX_DIMENSION_V4, SIX_DIMENSION_INTERNAL_V4, SIX_DIMENSION, SIX_DIMENSION_INTERNAL)}
 
 
 def harness_identity(manifest_sha256: str) -> HarnessIdentity:
