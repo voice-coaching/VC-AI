@@ -12,6 +12,57 @@ import jsonschema
 from .assessment import assess, validate_binding
 from .policy import encode, error_code, number, require, sha, strict_json, validate_policy
 
+MAX_FEEDBACK_LINES = 3
+MAX_FEEDBACK_SENTENCES = 5
+MAX_FEEDBACK_LINE_CHARACTERS = 100
+MAX_FEEDBACK_CHARACTERS = 300
+MAX_PRACTICE_CHARACTERS = MAX_FEEDBACK_LINE_CHARACTERS - len("* ")
+_TERMINATOR = re.compile(r"[.!?。！？]+(?!\d)")
+_CONTROL = re.compile(r"[\x00-\x1f\x7f-\x9f\u2028\u2029]")
+_INTERNAL_MEASUREMENT = re.compile(r"\b(?:GOP|CTC|F0)\b|\d\s*(?:dB|Hz|음절\s*/\s*초)|초당\s*\d", re.IGNORECASE)
+
+
+def _sentence_count(value: str) -> int:
+    # Count a final unpunctuated instruction as a sentence too. Decimal points
+    # are not sentence boundaries. This is a format check, not a semantic proof.
+    ends = list(_TERMINATOR.finditer(value))
+    return len(ends) + int(bool(value[ends[-1].end() if ends else 0:].strip(" \"'’”)]}")))
+
+
+def validate_public_feedback(value: str) -> None:
+    require(isinstance(value, str) and 0 < len(value) <= MAX_FEEDBACK_CHARACTERS, "FEEDBACK_TOTAL_LENGTH")
+    lines = value.split("\n")
+    require(1 <= len(lines) <= MAX_FEEDBACK_LINES, "FEEDBACK_LINE_LIMIT")
+    require(all(line == line.strip() and len(line) <= MAX_FEEDBACK_LINE_CHARACTERS
+                and not _CONTROL.search(line) for line in lines), "FEEDBACK_LINE_FORMAT")
+    counts = [_sentence_count(line) for line in lines]
+    require(all(count == 1 for count in counts) and sum(counts) <= MAX_FEEDBACK_SENTENCES,
+            "FEEDBACK_SENTENCE_LIMIT")
+
+
+def public_feedback(items: list[dict]) -> str:
+    """Project only coaching instructions; observations stay in private artifacts."""
+    require(isinstance(items, list) and len(items) <= MAX_FEEDBACK_LINES, "FEEDBACK_LINE_LIMIT")
+    if not items:
+        return ""
+    lines = []
+    for item in items:
+        practice = item["practice"]
+        require(isinstance(practice, str) and practice == practice.strip()
+                and not _CONTROL.search(practice) and practice.count(" → ") == 1,
+                "FEEDBACK_PRACTICE_FORMAT")
+        target, instruction = practice.split(" → ")
+        require(bool(target.strip()) and bool(instruction.strip())
+                and target == target.strip() and instruction == instruction.strip()
+                and not practice.startswith(("*", "-", "•")), "FEEDBACK_PRACTICE_FORMAT")
+        require(not _INTERNAL_MEASUREMENT.search(instruction), "FEEDBACK_INTERNAL_MEASUREMENT")
+        require(not re.search(r"(?:세요|십시오|습니다|입니다|합니다|해요|줘요)[’”\"']*\s+\S", instruction),
+                "FEEDBACK_MULTIPLE_INSTRUCTIONS")
+        lines.append("* " + practice)
+    result = "\n".join(lines)
+    validate_public_feedback(result)
+    return result
+
 
 def _text(maximum: int) -> dict:
     return dict(type="string", minLength=1, maxLength=maximum, pattern="[가-힣]")
@@ -32,7 +83,7 @@ def coaching_schema(assessment: dict, legacy_rubric: dict | None = None) -> dict
                 "criterionId": {"const": key},
                 "evidenceIds": dict(type="array", minItems=1, uniqueItems=True,
                                     items={"enum": by_id[key]["evidenceIds"]}),
-                "observation": _text(240), "practice": _text(400)}))
+                "observation": _text(240), "practice": _text(MAX_PRACTICE_CHARACTERS)}))
     schema = dict(type="object", additionalProperties=False, required=["assessments", "feedback"], properties={
         "assessments": dict(type="array", prefixItems=summaries, items=False, minItems=6, maxItems=6),
         "feedback": dict(type="array", prefixItems=feedback, items=False,
@@ -82,6 +133,7 @@ def validate_coaching(candidate: dict, assessment: dict, legacy_rubric: dict | N
     # Schema verifies references/shape, not natural-language truth.
     for item in candidate["feedback"]:
         require(bool(re.search(r"[가-힣]", item["practice"].strip())), "FEEDBACK_LANGUAGE")
+    public_feedback(candidate["feedback"])
 
 
 def evaluate(*, core_bytes: bytes, script: str, binding: dict, policy: dict,
