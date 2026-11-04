@@ -250,18 +250,18 @@ SIX_DIMENSION_INTERNAL_V2 = HarnessIdentity(
 )
 SIX_DIMENSION = HarnessIdentity(
     'canonical-six-dimension-direct-20261104-v3',
-    '5b36b033559669b8da8c69f9569595110444a22ffbd6a6b9ff016dfdc54d5530',
-    'da0e5d3cbe401983184aaf0b196fc47912b92086cb0fa960badb842e7ae73f20',
-    '9e6d203b90bf341a081331c34a20ff67bb03c379fe78683a482fe783df38406c',
+    '773b7a842b21dae10fee6f56134156c26b1b798eebc66c1a51d9232966ed2c4f',
+    '874f0b56b92a4b7d4a95630289024574ce96e77fc6e31aebd1da3dbe1bf7c9cb',
+    '05b6fa0abc8c44ae713996706a3f0c93020beced4093565759c1bf350cdbcd2c',
     DLPC_PIPELINE_LATENCY.core_sha256, scoring=True, native=True, gpt_grading=True, gop_grading=True,
     model='gpt-6.1-sol', service_tier='default', selection_view=False, six_dimension=True, direct_only=True,
 )
 SIX_DIMENSION_LLM_DIRECTORY = 'canonical_six_dimension_direct_20261104_v3_h5'
 SIX_DIMENSION_INTERNAL = HarnessIdentity(
     'canonical-six-dimension-internal-20261104-v3',
-    '548c781749bd4181583aa9a35e56b3a4dc77b9c3aef3de9b21e07db1df78aa0d',
-    '825afb15423da4128fdad8a11fccfd2bf5ef093e707df8abff912d84c8ab6f3c',
-    '9e6d203b90bf341a081331c34a20ff67bb03c379fe78683a482fe783df38406c',
+    'db7d8ebebdb0e5371c575e598f17f09b2f073f9fd71387e9c7616e5d96dce31f',
+    'ed86001f8f67912d15110dc0d6fb29a2563f5c4972265a95c25ace5a9b09da47',
+    '05b6fa0abc8c44ae713996706a3f0c93020beced4093565759c1bf350cdbcd2c',
     DLPC_INTERNAL_BOUNDED.core_sha256, scoring=True, native=True, gpt_grading=True, gop_grading=True,
     model='gpt-6.1-sol', service_tier='default', selection_view=False, six_dimension=True,
 )

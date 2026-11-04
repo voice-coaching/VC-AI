@@ -26,6 +26,6 @@ practice에 점수, 측정 수치·단위, GOP·CTC·F0, 상대 지지·경쟁 �
 
 [JSON 출력]
 JSON 객체 하나만 반환하며 최상위 키는 assessments와 feedback이다. LEGACY_RUBRIC이 있으면 별도 지침에 따라 legacyGrade만 추가한다.
-assessments는 ASSESSMENT.criteria 순서대로 여섯 객체를 담는다. 각 키는 criterionId, score, evidenceIds, observation이다. criterionId, score(null 포함), evidenceIds는 입력과 동일해야 한다. observation은 측정과 평가 범위에 맞는 내부 설명으로 240자 이하며, 측정 불가 항목은 그 사유만 기록한다.
-feedback의 각 객체는 criterionId, evidenceIds, observation, practice만 가진다. criterionId와 배열 순서는 selectedCriterionIds와 같다. evidenceIds는 해당 항목에 속하는 입력 근거 ID에서 한 개 이상 선택한다. observation은 내부 판단 근거를 240자 이하로 기록하고, practice는 위 형식·문체·길이 규칙을 지킨 완성된 사용자용 한 줄이다. observation을 practice에 반복하지 않는다.
+assessments는 ASSESSMENT.criteria 순서대로 여섯 객체를 담는다. 각 키는 criterionId, score, evidenceIds, observation이다. criterionId, score(null 포함), evidenceIds는 입력과 동일해야 한다. observation은 측정과 평가 범위에 맞는 내부 설명으로 80자 이하며, 측정 불가 항목은 그 사유만 기록한다.
+feedback의 각 객체는 criterionId, evidenceIds, observation, practice만 가진다. criterionId와 배열 순서는 selectedCriterionIds와 같다. evidenceIds는 해당 항목에 속하는 입력 근거 ID에서 한 개 이상 선택한다. observation은 내부 판단 근거를 100자 이하로 기록하고, practice는 위 형식·문체·길이 규칙을 지킨 완성된 사용자용 한 줄이다. observation을 practice에 반복하지 않는다.
 출력 전 선정 항목 대응, 근거 일치, 문장·줄 수와 글자 수, 쉬운 말, 지시의 구체성, 중복·모순 여부를 확인한다. JSON 밖 텍스트는 쓰지 않는다.
