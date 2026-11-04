@@ -248,7 +248,7 @@ SIX_DIMENSION_INTERNAL_V2 = HarnessIdentity(
     DLPC_INTERNAL_BOUNDED.core_sha256, scoring=True, native=True, gpt_grading=True, gop_grading=True,
     model='gpt-6.1-sol', service_tier='default', selection_view=False, six_dimension=True,
 )
-SIX_DIMENSION = HarnessIdentity(
+SIX_DIMENSION_V3 = HarnessIdentity(
     'canonical-six-dimension-direct-20261104-v3',
     '773b7a842b21dae10fee6f56134156c26b1b798eebc66c1a51d9232966ed2c4f',
     '874f0b56b92a4b7d4a95630289024574ce96e77fc6e31aebd1da3dbe1bf7c9cb',
@@ -256,8 +256,8 @@ SIX_DIMENSION = HarnessIdentity(
     DLPC_PIPELINE_LATENCY.core_sha256, scoring=True, native=True, gpt_grading=True, gop_grading=True,
     model='gpt-6.1-sol', service_tier='default', selection_view=False, six_dimension=True, direct_only=True,
 )
-SIX_DIMENSION_LLM_DIRECTORY = 'canonical_six_dimension_direct_20261104_v3_h5'
-SIX_DIMENSION_INTERNAL = HarnessIdentity(
+SIX_DIMENSION_V3_LLM_DIRECTORY = 'canonical_six_dimension_direct_20261104_v3_h5'
+SIX_DIMENSION_INTERNAL_V3 = HarnessIdentity(
     'canonical-six-dimension-internal-20261104-v3',
     'db7d8ebebdb0e5371c575e598f17f09b2f073f9fd71387e9c7616e5d96dce31f',
     'ed86001f8f67912d15110dc0d6fb29a2563f5c4972265a95c25ace5a9b09da47',
@@ -265,8 +265,26 @@ SIX_DIMENSION_INTERNAL = HarnessIdentity(
     DLPC_INTERNAL_BOUNDED.core_sha256, scoring=True, native=True, gpt_grading=True, gop_grading=True,
     model='gpt-6.1-sol', service_tier='default', selection_view=False, six_dimension=True,
 )
-SIX_DIMENSION_INTERNAL_LLM_DIRECTORY = 'canonical_six_dimension_internal_20261104_v3_h5'
-HARNESSES = {value.manifest_sha256: value for value in (S7, H5, SCORED_V1, SCORED_V2, SCORED, RESIDENT, NATIVE_V1, NATIVE, SEUNGUN_GPT_V1, SEUNGUN_GPT, DLPC_GOP, DLPC_ANNOUNCER, DLPC_CONCISE, DLPC_LUNA, DLPC_LUNA_NONE, DLPC_MFA_TRACE, DLPC_MFA_PREPARED, DLPC_MFA_DISAMBIGUATION, DLPC_SEUNGUN_SERVER, DLPC_PIPELINE_LATENCY, DLPC_PIPELINE_SOL61_LIGHT, DLPC_INTERNAL_BOUNDED, DLPC_LUNA_COMPACT, DLPC_LUNA_CACHED, AUDIOVISUAL, SIX_DIMENSION_V2, SIX_DIMENSION_INTERNAL_V2, SIX_DIMENSION, SIX_DIMENSION_INTERNAL)}
+SIX_DIMENSION_INTERNAL_V3_LLM_DIRECTORY = 'canonical_six_dimension_internal_20261104_v3_h5'
+SIX_DIMENSION = HarnessIdentity(
+    'canonical-six-dimension-direct-20261104-v4',
+    '9e9f2a81d6d1ea223b15102197f1d59d2ce1a7f294e6b690d21e515f42f96c45',
+    '917a9249822e21e49af659d88706a58c724a841c7913eb8ec6a15fd8de653849',
+    '05b6fa0abc8c44ae713996706a3f0c93020beced4093565759c1bf350cdbcd2c',
+    DLPC_PIPELINE_LATENCY.core_sha256, scoring=True, native=True, gpt_grading=True, gop_grading=True,
+    model='gpt-6.1-terra', reasoning_effort='none', service_tier='default', selection_view=False, six_dimension=True, direct_only=True,
+)
+SIX_DIMENSION_LLM_DIRECTORY = 'canonical_six_dimension_direct_20261104_v4_h5'
+SIX_DIMENSION_INTERNAL = HarnessIdentity(
+    'canonical-six-dimension-internal-20261104-v4',
+    'e54bcffaf0bf7071d5c52f5d40d51a2acbd49fd721ac63957c4149aaf5f7b9ba',
+    'b66b21b7e707a8664aef68ee93cdd3f0d47e1d417875f25cb6fa290a02bb790c',
+    '05b6fa0abc8c44ae713996706a3f0c93020beced4093565759c1bf350cdbcd2c',
+    DLPC_INTERNAL_BOUNDED.core_sha256, scoring=True, native=True, gpt_grading=True, gop_grading=True,
+    model='gpt-6.1-terra', reasoning_effort='none', service_tier='default', selection_view=False, six_dimension=True,
+)
+SIX_DIMENSION_INTERNAL_LLM_DIRECTORY = 'canonical_six_dimension_internal_20261104_v4_h5'
+HARNESSES = {value.manifest_sha256: value for value in (S7, H5, SCORED_V1, SCORED_V2, SCORED, RESIDENT, NATIVE_V1, NATIVE, SEUNGUN_GPT_V1, SEUNGUN_GPT, DLPC_GOP, DLPC_ANNOUNCER, DLPC_CONCISE, DLPC_LUNA, DLPC_LUNA_NONE, DLPC_MFA_TRACE, DLPC_MFA_PREPARED, DLPC_MFA_DISAMBIGUATION, DLPC_SEUNGUN_SERVER, DLPC_PIPELINE_LATENCY, DLPC_PIPELINE_SOL61_LIGHT, DLPC_INTERNAL_BOUNDED, DLPC_LUNA_COMPACT, DLPC_LUNA_CACHED, AUDIOVISUAL, SIX_DIMENSION_V2, SIX_DIMENSION_INTERNAL_V2, SIX_DIMENSION_V3, SIX_DIMENSION_INTERNAL_V3, SIX_DIMENSION, SIX_DIMENSION_INTERNAL)}
 
 
 def harness_identity(manifest_sha256: str) -> HarnessIdentity:

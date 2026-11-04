@@ -101,7 +101,9 @@ def validate_policy(policy: dict) -> None:
             and all(number(v) and v > 0 for v in weights.values()), "POLICY_PAUSE_WEIGHTS")
     config = policy["request"]
     require(isinstance(config["model"], str) and config["model"].startswith("gpt-")
-            and config["reasoning_effort"] == "low" and config["store"] is False
+            and (config["reasoning_effort"] == "low" or
+                 (config["model"] == "gpt-6.1-terra" and config["reasoning_effort"] == "none"))
+            and config["store"] is False
             and config["response_format"] == {"type": "json_object"}
             and config["service_tier"] in ("default", "priority")
             and type(config["max_completion_tokens"]) is int and 100 <= config["max_completion_tokens"] <= 8000
