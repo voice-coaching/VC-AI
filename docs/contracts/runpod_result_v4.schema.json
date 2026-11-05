@@ -1285,7 +1285,8 @@
             "b66b21b7e707a8664aef68ee93cdd3f0d47e1d417875f25cb6fa290a02bb790c",
             "ec7ef35bd815232debcaacfca6cb382549a37c90953d7c978a643edc8fcf43c4",
             "af1f99e564482f09dabbbe94ef5d477d3f29a4ef065845ed151fbe7cd385b277",
-            "e1dc855fa0acecf280c2328d0332be2f3d82a570a8536b8fc2a7d6b1ba1b6da0"
+            "e1dc855fa0acecf280c2328d0332be2f3d82a570a8536b8fc2a7d6b1ba1b6da0",
+            "ecfa13cbb8c524fe036009b51331b8fdaf4a85aef13b977a4db657b0ed2280c9"
           ]
         },
         "scriptSha256": {
@@ -2580,7 +2581,8 @@
             "b66b21b7e707a8664aef68ee93cdd3f0d47e1d417875f25cb6fa290a02bb790c",
             "ec7ef35bd815232debcaacfca6cb382549a37c90953d7c978a643edc8fcf43c4",
             "af1f99e564482f09dabbbe94ef5d477d3f29a4ef065845ed151fbe7cd385b277",
-            "e1dc855fa0acecf280c2328d0332be2f3d82a570a8536b8fc2a7d6b1ba1b6da0"
+            "e1dc855fa0acecf280c2328d0332be2f3d82a570a8536b8fc2a7d6b1ba1b6da0",
+            "ecfa13cbb8c524fe036009b51331b8fdaf4a85aef13b977a4db657b0ed2280c9"
           ]
         },
         "promptSha256": {
