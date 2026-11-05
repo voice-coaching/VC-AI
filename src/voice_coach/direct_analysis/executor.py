@@ -71,7 +71,14 @@ async def serve(spool: Path, control: Path):
                     raise ValueError('EXECUTOR_GENERATION_PATH')
                 env = dict(os.environ, AI_CANONICAL_VERIFIED_GENERATION=str(generation),
                            AI_CANONICAL_RESIDENT_SOCKET=str(generation / 'core.sock'))
-                await execute(spool / job, runtime_environment=env, shared_transport=transport, shared_coaching=coaching)
+                try:
+                    await execute(spool / job, runtime_environment=env, shared_transport=transport, shared_coaching=coaching)
+                except Exception as error:
+                    from voice_coach.six_dimension.policy import error_code
+                    atomic(spool / job / 'failure-diagnostic.json', encoded(dict(
+                        code=error_code(error), exceptionType=type(error).__name__,
+                        executionId=json.loads((spool / job / 'job.json').read_bytes())['executionId'])))
+                    raise
                 writer.write(encoded(dict(jobId=job, status='DURABLE', ordinal=ordinal))+b'\n')
                 await writer.drain()
                 writer.close()

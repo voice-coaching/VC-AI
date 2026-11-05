@@ -142,7 +142,8 @@ def release_assets(payload, manifest, *, install=False):
                                   'canonical_six_dimension_'+lane+'_20261104_v4_h5',
                                   'canonical_six_dimension_'+lane+'_20261105_v5_h5',
                                   'canonical_composite_exponential_'+lane+'_20261105_v2_h5',
-                                  'canonical_native_rubric_single_call_'+lane+'_20261105_v1_h5'}, 'COORDINATED_H5_PATH')
+                                  'canonical_native_rubric_single_call_'+lane+'_20261105_v1_h5',
+                                  'canonical_native_rubric_single_call_'+lane+'_20261105_v2_h5'}, 'COORDINATED_H5_PATH')
         package = {}
         for name, pin in files.items():
             path = PurePosixPath(name)

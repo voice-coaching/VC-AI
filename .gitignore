@@ -81,10 +81,17 @@ __pycache__/
 
 # Single-writer flock files held by publishers at runtime.
 *.publish.lock
-# Permanent unit/regression tests and synthetic fixtures are excluded by project policy.
-tests/
+# Only the user-authorized voice merge gate and its focused regressions are tracked.
+/tests/*
+!/tests/voice/
+/tests/voice/*
+!/tests/voice/cases.json
+!/tests/voice/README.md
+!/tests/analysis/
+/tests/analysis/*
 seungun/tests/
 scripts/tests/
 **/test_*.py
 **/*_test.py
 **/conftest.py
+!/tests/analysis/test_phone_rubric_decimal.py

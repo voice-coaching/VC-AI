@@ -90,6 +90,7 @@ class FrozenOpenAITransport:
                 connection.sock.settimeout(value)
 
         remaining()
+        self.diagnostics['postAttempts'] = self.diagnostics.get('postAttempts', 0) + 1
         connection.request('POST', '/v1/chat/completions', body=payload,
             headers={'Content-Type': 'application/json', 'Authorization': 'Bearer '+self._api_key})
         remaining()
@@ -103,6 +104,11 @@ class FrozenOpenAITransport:
                  "CANONICAL_REQUEST_SIZE")
         _require(timeout == 120, "FROZEN_TIMEOUT_MISMATCH")
         body = _json(payload)
+        import hashlib
+        messages = body.get('messages', []) if isinstance(body, dict) else []
+        self.diagnostics.update(postAttempts=0,
+            rawCoreMessageSha256=hashlib.sha256(messages[-1]['content'].encode('utf-8')).hexdigest()
+                if messages and isinstance(messages[-1].get('content'), str) else None)
         expected = self._expected
         _require(isinstance(body, dict) and set(body) == set(expected) | {"messages"}
                  and all(body.get(key) == value for key, value in expected.items())
