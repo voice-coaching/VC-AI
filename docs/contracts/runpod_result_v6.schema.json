@@ -3834,19 +3834,6 @@
                     "$ref": "#/$defs/unscoredScore"
                   }
                 ]
-              },
-              "coaching": {
-                "anyOf": [
-                  {
-                    "type": "null"
-                  },
-                  {
-                    "type": "object",
-                    "required": [
-                      "scoring"
-                    ]
-                  }
-                ]
               }
             }
           },
@@ -6056,19 +6043,6 @@
                   },
                   {
                     "$ref": "#/$defs/unscoredScore"
-                  }
-                ]
-              },
-              "coaching": {
-                "anyOf": [
-                  {
-                    "type": "null"
-                  },
-                  {
-                    "type": "object",
-                    "required": [
-                      "scoring"
-                    ]
                   }
                 ]
               }
