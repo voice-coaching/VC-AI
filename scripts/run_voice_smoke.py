@@ -61,6 +61,7 @@ def main(args):
         AI_CANONICAL_STANDBY_RESERVE_BYTES='0', AI_CANONICAL_STANDBY_MIN_FREE_BYTES='0',
         AI_DIRECT_STANDBY_RESERVE_BYTES='0', AI_DIRECT_STANDBY_MIN_FREE_BYTES='0')
     receipt = dict(schemaVersion='voice-analysis-smoke-receipt.v1', **before,
+        baseRevision=git(source, 'merge-base', 'HEAD', 'origin/main'),
         fixtureManifestSha256=sha(fixtures_raw), aliases=aliases, startedAt=time.time(),
         lanes={}, passed=False)
     for lane in ('direct', 'internal'):

@@ -47,6 +47,8 @@ def main(args):
         raise ValueError('SMOKE_PR_TARGET_MISMATCH')
     if pr['head']['sha'] != receipt['revision']:
         raise ValueError('SMOKE_RECEIPT_STALE_HEAD')
+    if pr['base']['sha'] != receipt['baseRevision']:
+        raise ValueError('SMOKE_RECEIPT_STALE_BASE')
     commit = api('GET', '/git/commits/'+receipt['revision'])
     if commit['tree']['sha'] != receipt['tree']:
         raise ValueError('SMOKE_RECEIPT_STALE_TREE')
@@ -61,10 +63,18 @@ def main(args):
     status = api('POST', '/statuses/'+receipt['revision'], dict(state='success', context=CONTEXT,
         description='Both CORE/H5 lanes: real audio, one GPT call, score and feedback passed', target_url=pr['html_url']))
     print(json.dumps(dict(context=status['context'], state=status['state'], revision=receipt['revision'])))
+    if args.merge:
+        merged = api('PUT', '/pulls/'+str(args.pr)+'/merge', dict(sha=receipt['revision'],
+            merge_method='merge', commit_title=pr['title']+' [skip ci]',
+            commit_message='Real voice-analysis-smoke passed on the exact PR head before merge.'))
+        if merged.get('merged') is not True:
+            raise ValueError('SMOKE_PR_NOT_MERGED')
+        print(json.dumps(dict(merged=True, revision=merged['sha'])))
 
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument('--receipt', type=Path, required=True)
     parser.add_argument('--pr', type=int, required=True)
+    parser.add_argument('--merge', action='store_true', help='Merge with the tested head SHA only after all receipt checks pass')
     main(parser.parse_args())

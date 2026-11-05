@@ -1,6 +1,6 @@
 # 실제 음성 분석 merge 전 검사
 
-2026-11-05 사용자 지시로 도입했다. `readyz`, 컴파일, JSON 스키마 검사만으로 AI 분석 변경 PR을 merge하지 않는다. `voice-analysis-smoke` 상태가 PR의 현재 head에서 성공해야 한다. 커밋이 추가되면 다시 실행한다.
+2026-11-05 사용자 지시로 도입했다. `readyz`, 컴파일, JSON 스키마 검사만으로 AI 분석 변경 PR을 merge하지 않는다. `voice-analysis-smoke` 상태가 PR의 현재 head에서 성공해야 한다. 커밋이 추가되거나 대상 main이 변경되면 다시 실행한다.
 
 ## 실행
 
@@ -22,7 +22,7 @@ direct와 internal 각각의 CORE/H5 조합에서 서로 다른 세 미디어를
 
 ```sh
 # GH_TOKEN은 호출 프로세스에만 주입한다. 파일이나 명령행에 토큰을 넣지 않는다.
-python3 scripts/publish_voice_smoke.py --receipt /var/lib/intelligentai/voice-smoke/unique-candidate-run/receipt.json --pr PR_NUMBER
+python3 scripts/publish_voice_smoke.py --receipt /var/lib/intelligentai/voice-smoke/unique-candidate-run/receipt.json --pr PR_NUMBER --merge
 ```
 
-GitHub main 보호 규칙의 필수 상태에 `voice-analysis-smoke`를 등록한다. 실패·누락·오래된 head의 결과로 merge하지 않는다. 자격 증명을 가진 자동 실행 환경을 임의 fork PR 코드에 노출하지 않기 위해 운영자가 후보를 검토한 후 실행하는 절차다. 배포 후에는 외부 HTTP를 통한 테스트 음성 분석도 별도로 확인한다.
+위 명령은 보호된 성공 기록과 PR의 head·tree·대상 main을 확인하고 상태를 게시한 뒤, 테스트한 head SHA를 지정해 merge한다. 실패·누락·오래된 결과로 merge하지 않는다. 현재 private 저장소의 요금제에서 GitHub가 branch protection/rulesets 조회를 403으로 거부하므로 GitHub UI 전체에 대한 강제 차단은 설정되지 않았다. 해당 기능을 사용할 수 있게 되면 main 필수 상태에 `voice-analysis-smoke`를 추가한다. 현재는 이 명령과 AGENTS.md 절차를 사용하며 수동 UI merge로 우회하지 않는다. 자격 증명을 가진 자동 실행 환경을 임의 fork PR 코드에 노출하지 않기 위해 운영자가 후보를 검토한 후 실행하는 절차다. 배포 후에는 외부 HTTP를 통한 테스트 음성 분석도 별도로 확인한다.
