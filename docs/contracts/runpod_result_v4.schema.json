@@ -1293,7 +1293,8 @@
             "af1f99e564482f09dabbbe94ef5d477d3f29a4ef065845ed151fbe7cd385b277",
             "e1dc855fa0acecf280c2328d0332be2f3d82a570a8536b8fc2a7d6b1ba1b6da0",
             "ecfa13cbb8c524fe036009b51331b8fdaf4a85aef13b977a4db657b0ed2280c9",
-            "fba356e5f2898ed30930aac0de9853f906b103732814a24a3684809a40a2882d"
+            "fba356e5f2898ed30930aac0de9853f906b103732814a24a3684809a40a2882d",
+            "3176da16ac416badc26557d85a37b2016e5618939ee8ae20cb365890d0fe7aa2"
           ]
         },
         "scriptSha256": {
@@ -2620,7 +2621,8 @@
             "af1f99e564482f09dabbbe94ef5d477d3f29a4ef065845ed151fbe7cd385b277",
             "e1dc855fa0acecf280c2328d0332be2f3d82a570a8536b8fc2a7d6b1ba1b6da0",
             "ecfa13cbb8c524fe036009b51331b8fdaf4a85aef13b977a4db657b0ed2280c9",
-            "fba356e5f2898ed30930aac0de9853f906b103732814a24a3684809a40a2882d"
+            "fba356e5f2898ed30930aac0de9853f906b103732814a24a3684809a40a2882d",
+            "3176da16ac416badc26557d85a37b2016e5618939ee8ae20cb365890d0fe7aa2"
           ]
         },
         "promptSha256": {
@@ -2638,7 +2640,8 @@
             "05b6fa0abc8c44ae713996706a3f0c93020beced4093565759c1bf350cdbcd2c",
             "e923954e901714e34f8e3a6ceb5e4b76117a0e6dc72e1509af89e812edb8f941",
             "3b1e807bc805f5dc0bdcca54c7e4eb765717d4ef9c505930517a155e7d2b60e0",
-            "af90fb82ee48e4ae271e94f8a2acf58febc39335f2a8e83e029bc5e894fe7b2c"
+            "af90fb82ee48e4ae271e94f8a2acf58febc39335f2a8e83e029bc5e894fe7b2c",
+            "f39e3012dcc85eba461d90baf2e657a97c4bec6b6b06e0056eb0807a94b00d07"
           ]
         }
       },
