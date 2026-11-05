@@ -1,5 +1,9 @@
 # RunPod 영상·입술모양 분석 파이프라인
 
+## 2026-11-06 입술 채점·피드백 연구 및 실행 계획
+
+[논문 16편 검토](lip-research-review-20261106.md), [구현·검증 계획](lip-scoring-feedback-plan-20261106.md), [로컬 원문 모음](../../literature/lip-analysis-20261106/README.md)을 추가했다. 연구·계획 산출물이며 운영 영상 기능의 구현·배포 완료를 뜻하지 않는다. 아래 기록은 각 작성 시점의 이력이다.
+
 ## 2026-10-07 통합 구현 후보
 
 [통합 계획](backend-audiovisual-implementation-plan-20261007.md)과 [구현 진행 기록](implementation-progress-20261007.md)을 먼저 읽는다. 현재는 미디어 receipt/snapshot 및 순수 계산·병렬 orchestration 기반을 추가한 상태다. v6 접수·GPT·handoff·조회·FE 연결은 아직 미완료이며 아래 9/30 기록을 현재 canonical 영상 지원으로 해석하지 않는다.
