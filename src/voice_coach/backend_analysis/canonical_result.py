@@ -427,14 +427,23 @@ def _base_document(request: AnalysisInput, identity: ResultIdentity, harness: Ha
 
 
 def _public_coaching(expression):
-    """Retain six-dimension evidence privately without changing API feedback."""
-    return {key: value for key, value in expression.items() if key != "sixDimension"}
+    """The AI owns worksheets; consumers receive the existing score/feedback."""
+    return {key: value for key, value in expression.items() if key not in {"sixDimension", "scoring"}}
 
 
 def _public_score(expression, view, harness):
     if not harness.scoring:
         return dict(overallScore=None, validity=view["score"]["validity"] if view else "NOT_AVAILABLE",
                     reason="NO_APPROVED_SCORING_CONTRACT")
+    composite = expression.get("sixDimension", {}).get("compositeGrade") if harness.six_dimension else None
+    if composite is not None:
+        # preflight verifies the full private result against the AI calculator.
+        # Preserve the existing public score name and states; do not ask peers
+        # to understand the private calculator revision or its worksheet.
+        if composite["overallScore"] is None:
+            return dict(overallScore=None, validity="UNSCORABLE", reason="SCORING_FAILED")
+        return dict(overallScore=composite["overallScore"], validity="RUBRIC_COMPUTED",
+                    reason="EVIDENCE_BOUND_PRACTICE_SCORE")
     scoring = expression["scoring"]
     if scoring["status"] == "READY":
         return dict(scoring["result"], validity="RUBRIC_COMPUTED", reason="EVIDENCE_BOUND_PRACTICE_SCORE")
