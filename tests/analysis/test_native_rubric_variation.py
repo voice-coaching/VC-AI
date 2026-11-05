@@ -4,6 +4,8 @@ import json
 from pathlib import Path
 import sys
 import unittest
+import jsonschema
+from referencing import Registry, Resource
 
 ROOT = Path(__file__).resolve().parents[2]
 sys.path.insert(0,str(ROOT/'src'))
@@ -116,6 +118,21 @@ class NativeRubricVariation(unittest.TestCase):
     def test_old_policy_remains_reproducible(self):
         self.assertEqual(grade(core(ambiguous=True),V1)['SCORING_FAILURE'],'NATIVE_RUBRIC_ALIGNMENT_AMBIGUOUS')
         self.assertEqual(grade(core(compound=True),V1)['SCORING_FAILURE'],'NATIVE_RUBRIC_EXPECTED_COUNT')
+
+    def test_private_schema_accepts_both_versions_and_v2_warning_metadata(self):
+        schema=json.loads((ROOT/'docs/contracts/six_dimension_result_v1.schema.json').read_bytes())
+        registry=Registry().with_resource(schema['$id'],Resource.from_contents(schema))
+        validator=jsonschema.Draft202012Validator(
+            {'$ref':schema['$id']+'#/$defs/nativeRubricEvidence'},registry=registry)
+        binding=dict(requestId='synthetic-protocol-fixture',**{k:'0'*64 for k in (
+            'coreSha256','scriptSha256','sourceAudioSha256','preparedWavSha256')})
+        for document,policy in [(core(),V1),(core(delete=(2,),compound=True,ambiguous=True),V2)]:
+            evidence=rubric_context(document,RUBRIC,policy,binding)['RUBRIC_EVIDENCE']
+            validator.validate(evidence)
+            if policy is V2:
+                missing=deepcopy(evidence)
+                missing.pop('alignment')
+                self.assertFalse(validator.is_valid(missing))
 
 
 if __name__=='__main__':unittest.main()

@@ -1329,7 +1329,10 @@
       "additionalProperties": false,
       "properties": {
         "policyRevision": {
-          "const": "native-phone-rubric-evidence-v1"
+          "enum": [
+            "native-phone-rubric-evidence-v1",
+            "native-phone-rubric-evidence-v2"
+          ]
         },
         "policySha256": {
           "type": "string",
@@ -1467,6 +1470,93 @@
             "type": "integer",
             "minimum": 0
           }
+        },
+        "referenceCounts": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "legacyDetectorExpectedCount",
+            "gopReferenceSampleCount",
+            "observedTokenCount",
+            "sameReferenceCount"
+          ],
+          "properties": {
+            "legacyDetectorExpectedCount": {
+              "type": [
+                "integer",
+                "null"
+              ],
+              "minimum": 0
+            },
+            "gopReferenceSampleCount": {
+              "type": "integer",
+              "minimum": 1
+            },
+            "observedTokenCount": {
+              "type": "integer",
+              "minimum": 0
+            },
+            "sameReferenceCount": {
+              "type": "boolean"
+            }
+          }
+        },
+        "alignment": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "ambiguous",
+            "policy",
+            "operationCounts",
+            "confirmedLocalDeletionClaimsAllowed"
+          ],
+          "properties": {
+            "ambiguous": {
+              "type": "boolean"
+            },
+            "policy": {
+              "const": "USE_REPORTED_CANONICAL_ALIGNMENT"
+            },
+            "operationCounts": {
+              "type": "object",
+              "additionalProperties": false,
+              "required": [
+                "MATCH",
+                "SUBSTITUTION",
+                "DELETION",
+                "INSERTION"
+              ],
+              "properties": {
+                "MATCH": {
+                  "type": "integer",
+                  "minimum": 0
+                },
+                "SUBSTITUTION": {
+                  "type": "integer",
+                  "minimum": 0
+                },
+                "DELETION": {
+                  "type": "integer",
+                  "minimum": 0
+                },
+                "INSERTION": {
+                  "type": "integer",
+                  "minimum": 0
+                }
+              }
+            },
+            "confirmedLocalDeletionClaimsAllowed": {
+              "const": false
+            }
+          }
+        },
+        "warnings": {
+          "type": "array",
+          "maxItems": 1,
+          "uniqueItems": true,
+          "items": {
+            "const": "MODEL_TOKEN_ALIGNMENT_AMBIGUOUS"
+          }
         }
       },
       "required": [
@@ -1501,6 +1591,55 @@
               "positions": {
                 "maxItems": 0
               }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "policyRevision": {
+                "const": "native-phone-rubric-evidence-v2"
+              },
+              "status": {
+                "const": "READY"
+              }
+            }
+          },
+          "then": {
+            "required": [
+              "referenceCounts",
+              "alignment",
+              "warnings"
+            ]
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "policyRevision": {
+                "const": "native-phone-rubric-evidence-v1"
+              }
+            }
+          },
+          "then": {
+            "not": {
+              "anyOf": [
+                {
+                  "required": [
+                    "referenceCounts"
+                  ]
+                },
+                {
+                  "required": [
+                    "alignment"
+                  ]
+                },
+                {
+                  "required": [
+                    "warnings"
+                  ]
+                }
+              ]
             }
           }
         }

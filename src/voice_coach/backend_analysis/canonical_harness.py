@@ -379,9 +379,9 @@ MFA_SEARCH_INTERNAL = HarnessIdentity(
     selection_view=False, six_dimension=True,
 )
 SCORE_VARIATION = HarnessIdentity(
-    'canonical-score-variation-direct-20261105-v1',
-    '9c62da78c0e8d012f3beb8f7e478d91c8315ca39994fefd675348ffdc9a83335',
-    '55b694d87fa485c98465fab30e3681a1575b69d1f1cd462b2870731850adb9fe',
+    'canonical-score-variation-direct-20261105-v2',
+    '2adc4424631b4d86c4f3baad617d516a613c1729619d4cb92a39880ece8b24c5',
+    '2d4fd280d023353a8e7027432c9e8e25a2868c6bc429f50c9e073307fcf13fed',
     'f39e3012dcc85eba461d90baf2e657a97c4bec6b6b06e0056eb0807a94b00d07',
     'e2b9f4fb3cc5640e27e96e217782a045990c25e1714baa967b7ff555621ad3d9',
     scoring=True, native=True, gpt_grading=True, gop_grading=True,
@@ -389,9 +389,9 @@ SCORE_VARIATION = HarnessIdentity(
     selection_view=False, six_dimension=True, direct_only=True,
 )
 SCORE_VARIATION_INTERNAL = HarnessIdentity(
-    'canonical-score-variation-internal-20261105-v1',
-    '1ebd346666d781c12d54e65a2d11289f39d2222f4ba5d9867360737a1753fdcc',
-    '3176da16ac416badc26557d85a37b2016e5618939ee8ae20cb365890d0fe7aa2',
+    'canonical-score-variation-internal-20261105-v2',
+    'aab733aa434cfa4566b03a71ab9e05ef48f06fa44c65cb59353f1b4a560fc6a9',
+    '26d77c2b4a05ae2022e1de0ad3ad72813e1b85b3165cf2fc60243fd591f59d90',
     'f39e3012dcc85eba461d90baf2e657a97c4bec6b6b06e0056eb0807a94b00d07',
     'a22fe17d4cb4ac0875672cf1b9b01f7435f8bbe53466f2693f0ad7749c074988',
     scoring=True, native=True, gpt_grading=True, gop_grading=True,
