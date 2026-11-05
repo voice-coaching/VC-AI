@@ -319,6 +319,101 @@
                 "object",
                 "null"
               ]
+            },
+            "composite": {
+              "type": "object",
+              "additionalProperties": false,
+              "required": [
+                "result",
+                "worksheet"
+              ],
+              "properties": {
+                "result": {
+                  "$ref": "#/$defs/compositeResult"
+                },
+                "worksheet": {
+                  "type": "array",
+                  "maxItems": 6,
+                  "items": {
+                    "type": "object",
+                    "additionalProperties": false,
+                    "required": [
+                      "criterionId",
+                      "metric",
+                      "referenceN",
+                      "weight",
+                      "userValue",
+                      "mean",
+                      "std",
+                      "coefficient",
+                      "squaredDeviation",
+                      "normalizedSquaredDeviation",
+                      "unroundedScore",
+                      "score"
+                    ],
+                    "properties": {
+                      "criterionId": {
+                        "enum": [
+                          "speaking_rate",
+                          "articulation_rate",
+                          "pauses",
+                          "pitch",
+                          "intensity"
+                        ]
+                      },
+                      "metric": {
+                        "enum": [
+                          "speech_rate",
+                          "articulation_rate",
+                          "pause_count_per_10_syllables",
+                          "pause_duration_per_10_syllables",
+                          "f0_range_st",
+                          "intensity_range_db"
+                        ]
+                      },
+                      "referenceN": {
+                        "type": "integer",
+                        "minimum": 2
+                      },
+                      "weight": {
+                        "type": "number",
+                        "exclusiveMinimum": 0
+                      },
+                      "userValue": {
+                        "type": "number"
+                      },
+                      "mean": {
+                        "type": "number"
+                      },
+                      "std": {
+                        "type": "number",
+                        "exclusiveMinimum": 0
+                      },
+                      "coefficient": {
+                        "type": "number",
+                        "exclusiveMinimum": 0
+                      },
+                      "squaredDeviation": {
+                        "type": "string",
+                        "minLength": 1
+                      },
+                      "normalizedSquaredDeviation": {
+                        "type": "string",
+                        "minLength": 1
+                      },
+                      "unroundedScore": {
+                        "type": "string",
+                        "minLength": 1
+                      },
+                      "score": {
+                        "type": "number",
+                        "minimum": 0,
+                        "maximum": 100
+                      }
+                    }
+                  }
+                }
+              }
             }
           }
         }
@@ -674,6 +769,9 @@
           }
         }
       ]
+    },
+    "compositeGrade": {
+      "$ref": "#/$defs/compositeResult"
     }
   },
   "allOf": [
@@ -752,6 +850,36 @@
         "required": [
           "requestSha256"
         ]
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "assessment": {
+            "properties": {
+              "policyRevision": {
+                "const": "announcer-composite-exponential-v2"
+              }
+            }
+          }
+        }
+      },
+      "then": {
+        "required": [
+          "legacyGrade",
+          "compositeGrade"
+        ],
+        "properties": {
+          "assessment": {
+            "properties": {
+              "auxiliary": {
+                "required": [
+                  "composite"
+                ]
+              }
+            }
+          }
+        }
       }
     }
   ],
@@ -902,6 +1030,297 @@
           }
         }
       ]
+    },
+    "compositeResult": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "rubricRevision",
+        "validationStatus",
+        "scoreMeaning",
+        "status",
+        "overallScore",
+        "criteria",
+        "missingCriterionIds",
+        "selectedCriterionIds",
+        "policySha256",
+        "referenceSha256"
+      ],
+      "properties": {
+        "rubricRevision": {
+          "const": "announcer-composite-exponential-v2"
+        },
+        "validationStatus": {
+          "const": "EXPERT_REVIEW_PENDING"
+        },
+        "scoreMeaning": {
+          "const": "FIXED_PHONE_RUBRIC_AND_PROSODY_REFERENCE_PROXIMITY"
+        },
+        "status": {
+          "enum": [
+            "READY",
+            "PARTIAL",
+            "UNSCORABLE"
+          ]
+        },
+        "overallScore": {
+          "type": [
+            "number",
+            "null"
+          ],
+          "minimum": 0,
+          "maximum": 100
+        },
+        "criteria": {
+          "type": "array",
+          "minItems": 6,
+          "maxItems": 6,
+          "items": false,
+          "prefixItems": [
+            {
+              "type": "object",
+              "additionalProperties": false,
+              "required": [
+                "criterionId",
+                "score",
+                "weight"
+              ],
+              "properties": {
+                "criterionId": {
+                  "const": "pronunciation_accuracy"
+                },
+                "score": {
+                  "type": [
+                    "number",
+                    "null"
+                  ],
+                  "minimum": 0,
+                  "maximum": 100
+                },
+                "weight": {
+                  "type": "integer",
+                  "minimum": 1,
+                  "maximum": 100
+                }
+              }
+            },
+            {
+              "type": "object",
+              "additionalProperties": false,
+              "required": [
+                "criterionId",
+                "score",
+                "weight"
+              ],
+              "properties": {
+                "criterionId": {
+                  "const": "speaking_rate"
+                },
+                "score": {
+                  "type": [
+                    "number",
+                    "null"
+                  ],
+                  "minimum": 0,
+                  "maximum": 100
+                },
+                "weight": {
+                  "type": "integer",
+                  "minimum": 1,
+                  "maximum": 100
+                }
+              }
+            },
+            {
+              "type": "object",
+              "additionalProperties": false,
+              "required": [
+                "criterionId",
+                "score",
+                "weight"
+              ],
+              "properties": {
+                "criterionId": {
+                  "const": "articulation_rate"
+                },
+                "score": {
+                  "type": [
+                    "number",
+                    "null"
+                  ],
+                  "minimum": 0,
+                  "maximum": 100
+                },
+                "weight": {
+                  "type": "integer",
+                  "minimum": 1,
+                  "maximum": 100
+                }
+              }
+            },
+            {
+              "type": "object",
+              "additionalProperties": false,
+              "required": [
+                "criterionId",
+                "score",
+                "weight"
+              ],
+              "properties": {
+                "criterionId": {
+                  "const": "pauses"
+                },
+                "score": {
+                  "type": [
+                    "number",
+                    "null"
+                  ],
+                  "minimum": 0,
+                  "maximum": 100
+                },
+                "weight": {
+                  "type": "integer",
+                  "minimum": 1,
+                  "maximum": 100
+                }
+              }
+            },
+            {
+              "type": "object",
+              "additionalProperties": false,
+              "required": [
+                "criterionId",
+                "score",
+                "weight"
+              ],
+              "properties": {
+                "criterionId": {
+                  "const": "pitch"
+                },
+                "score": {
+                  "type": [
+                    "number",
+                    "null"
+                  ],
+                  "minimum": 0,
+                  "maximum": 100
+                },
+                "weight": {
+                  "type": "integer",
+                  "minimum": 1,
+                  "maximum": 100
+                }
+              }
+            },
+            {
+              "type": "object",
+              "additionalProperties": false,
+              "required": [
+                "criterionId",
+                "score",
+                "weight"
+              ],
+              "properties": {
+                "criterionId": {
+                  "const": "intensity"
+                },
+                "score": {
+                  "type": [
+                    "number",
+                    "null"
+                  ],
+                  "minimum": 0,
+                  "maximum": 100
+                },
+                "weight": {
+                  "type": "integer",
+                  "minimum": 1,
+                  "maximum": 100
+                }
+              }
+            }
+          ]
+        },
+        "missingCriterionIds": {
+          "type": "array",
+          "uniqueItems": true,
+          "maxItems": 6,
+          "items": {
+            "enum": [
+              "pronunciation_accuracy",
+              "speaking_rate",
+              "articulation_rate",
+              "pauses",
+              "pitch",
+              "intensity"
+            ]
+          }
+        },
+        "selectedCriterionIds": {
+          "type": "array",
+          "uniqueItems": true,
+          "maxItems": 3,
+          "items": {
+            "enum": [
+              "pronunciation_accuracy",
+              "speaking_rate",
+              "articulation_rate",
+              "pauses",
+              "pitch",
+              "intensity"
+            ]
+          }
+        },
+        "policySha256": {
+          "type": "string",
+          "pattern": "^[0-9a-f]{64}$"
+        },
+        "referenceSha256": {
+          "type": "string",
+          "pattern": "^[0-9a-f]{64}$"
+        }
+      },
+      "allOf": [
+        {
+          "if": {
+            "properties": {
+              "status": {
+                "const": "READY"
+              }
+            }
+          },
+          "then": {
+            "properties": {
+              "overallScore": {
+                "type": "number"
+              },
+              "missingCriterionIds": {
+                "maxItems": 0
+              },
+              "criteria": {
+                "items": {
+                  "properties": {
+                    "score": {
+                      "type": "number"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "else": {
+            "properties": {
+              "overallScore": {
+                "type": "null"
+              },
+              "missingCriterionIds": {
+                "minItems": 1
+              }
+            }
+          }
+        }
+      ]
     }
-  }
+  },
+  "$comment": "Existing private result envelope retained. policyRevision identifies the algorithm; public frontend/backend wire names remain unchanged."
 }

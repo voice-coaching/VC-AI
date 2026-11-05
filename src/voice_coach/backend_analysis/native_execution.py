@@ -4,11 +4,14 @@ from __future__ import annotations
 from .canonical_bridge import _require as require
 from .canonical_harness import SIX_DIMENSION, SIX_DIMENSION_INTERNAL, SIX_DIMENSION_V2, SIX_DIMENSION_INTERNAL_V2, SIX_DIMENSION_V3, SIX_DIMENSION_INTERNAL_V3, SIX_DIMENSION_V4, SIX_DIMENSION_INTERNAL_V4
 from .canonical_harness import DLPC_LUNA, DLPC_LUNA_NONE, DLPC_MFA_TRACE, DLPC_MFA_PREPARED, DLPC_MFA_DISAMBIGUATION, DLPC_SEUNGUN_SERVER, DLPC_PIPELINE_LATENCY, DLPC_INTERNAL_BOUNDED
+from .canonical_harness import COMPOSITE_EXPONENTIAL, COMPOSITE_EXPONENTIAL_INTERNAL
 from .canonical_harness import DLPC_PIPELINE_SOL61_LIGHT
 
 # Execution identity only: prevent an old release from entering new analysis.
 # Scoring authority is bound to each H5; raw-CORE releases use the fixed server rubric.
 APPROVED_NATIVE_EXECUTIONS: frozenset[tuple[str, str]] = frozenset({
+    (COMPOSITE_EXPONENTIAL.core_sha256, COMPOSITE_EXPONENTIAL.manifest_sha256),
+    (COMPOSITE_EXPONENTIAL_INTERNAL.core_sha256, COMPOSITE_EXPONENTIAL_INTERNAL.manifest_sha256),
     (SIX_DIMENSION_V2.core_sha256, SIX_DIMENSION_V2.manifest_sha256),
     (SIX_DIMENSION_INTERNAL_V2.core_sha256, SIX_DIMENSION_INTERNAL_V2.manifest_sha256),
     (SIX_DIMENSION_V3.core_sha256, SIX_DIMENSION_V3.manifest_sha256),

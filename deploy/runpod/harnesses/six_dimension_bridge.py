@@ -4,8 +4,9 @@ from pathlib import Path
 import jsonschema
 
 from .policy import encode, require, sha, strict_json, validate_policy
-from .assessment import assess, validate_binding
-from .pipeline import evaluate, request_payload, validate_coaching, public_feedback, validate_public_feedback, rubric_context
+from .assessment import validate_binding
+from .pipeline import evaluate, request_payload, validate_coaching, public_feedback, validate_public_feedback, rubric_context, prepare_assessment
+from .composite import validate_composite_policy, validate_reference_asset
 
 PARENT = "__CORE_MANIFEST__"
 
@@ -38,6 +39,15 @@ class Bridge:
         require(self.read("request_config.json") == policy["request"], "REQUEST_POLICY_MISMATCH")
         return policy, policy_sha, prompt
 
+    def composite_policy(self):
+        self.integrity()
+        if "contracts/llm/composite_policy.json" not in self.read("dependency_lock.json")["files"]:
+            return None
+        policy = self.read("composite_policy.json")
+        validate_composite_policy(policy)
+        validate_reference_asset(policy, (self.root / "contracts/llm/composite_reference.json").read_bytes())
+        return policy
+
     def verify_scoring(self, core, record, **_):
         if core["input_validation"]["status"] != "ACCEPT":
             require(record == {"status": "NOT_REQUESTED"}, "SCORING_NONACCEPT_RESULT")
@@ -53,7 +63,7 @@ class Bridge:
 
     def _payload(self, assessment, core, script, policy, prompt, *, core_bytes):
         return request_payload(assessment, core, script, policy, prompt, self.read("scoring_rubric.json"),
-                               core_bytes=core_bytes)
+                               core_bytes=core_bytes, composite_policy=self.composite_policy())
 
     def _binding(self, core_bytes, script, binding):
         require(binding["parent_manifest_sha256"] == PARENT, "CORE_PARENT_BINDING")
@@ -78,7 +88,8 @@ class Bridge:
         status = core["input_validation"]["status"]
         if status != "ACCEPT":
             return core, None, None, "GLOBAL_" + status
-        assessment = assess(core, script, projected, policy, digest)
+        assessment, _ = prepare_assessment(core, script, projected, policy, digest,
+            legacy_rubric=self.read("scoring_rubric.json"), composite_policy=self.composite_policy())
         payload = None
         if assessment["selectedCriterionIds"]:
             try:
@@ -110,7 +121,7 @@ class Bridge:
             _, projected = self._binding(core_bytes, script, binding)
             result = evaluate(core_bytes=core_bytes, script=script, binding=projected, policy=policy,
                               policy_sha256=digest, prompt=prompt, transport=transport,
-                              legacy_rubric=self.read("scoring_rubric.json"))
+                              legacy_rubric=self.read("scoring_rubric.json"), composite_policy=self.composite_policy())
             jsonschema.Draft202012Validator(self.read("six_dimension_result.schema.json")).validate(result)
         except Exception as exc:
             return dict(base, adapterStatus="FAIL_CLOSED", generationStatus="NOT_DISPATCHED",
@@ -122,8 +133,8 @@ class Bridge:
         scoring = self.scoring_record(result["legacyGrade"])
         if not result["dispatchAttempts"]:
             if result["generationStatus"] == "NOT_REQUESTED":
-                return dict(base, adapterStatus="NO_PERMITTED_COACHING_CONTENT", generationStatus="NOT_DISPATCHED",
-                            scoring=scoring, sixDimension=result)
+                return dict(base, adapterStatus="FAIL_CLOSED", generationStatus="NOT_DISPATCHED",
+                            errorCode="NO_SCORABLE_DIMENSIONS", scoring=scoring, sixDimension=result)
             return dict(base, adapterStatus="FAIL_CLOSED", generationStatus="NOT_DISPATCHED",
                         errorCode=result["errorCode"], scoring=scoring, sixDimension=result)
         feedback = self.feedback_text(result)
@@ -140,20 +151,25 @@ class Bridge:
         core, projected = self._binding(core_bytes, script, binding)
         result = expression["sixDimension"]
         jsonschema.Draft202012Validator(self.read("six_dimension_result.schema.json")).validate(result)
-        expected = assess(core, script, projected, policy, digest)
+        composite_policy = self.composite_policy()
+        expected, _ = prepare_assessment(core, script, projected, policy, digest,
+            legacy_rubric=self.read("scoring_rubric.json"), composite_policy=composite_policy)
         require(expression["coreInputValidation"] == core["input_validation"]
                 and expression["coreSha256"] == sha(core_bytes), "SIX_DIMENSION_CORE_MISMATCH")
         require(result["assessment"] == expected, "SIX_DIMENSION_ASSESSMENT_MISMATCH")
         rubric_result = rubric_context(core, self.read("scoring_rubric.json"))["RUBRIC_RESULT"]
         require(result["legacyGrade"] == rubric_result, "SCORING_SERVER_RESULT_MISMATCH")
+        composite_result = expected["auxiliary"]["composite"]["result"] if composite_policy is not None else None
+        if composite_result is not None:
+            require(result["compositeGrade"] == composite_result, "COMPOSITE_SERVER_RESULT_MISMATCH")
         if not expected["selectedCriterionIds"]:
             require(result["dispatchAttempts"] == 0 and result["generationStatus"] == "NOT_REQUESTED",
                     "SIX_DIMENSION_UNAVAILABLE_DISPATCH")
         require(result["model"] == policy["request"]["model"] and result["promptSha256"] == sha(prompt.encode())
                 and result["requestConfigSha256"] == sha(encode(policy["request"])), "SIX_DIMENSION_CONFIG_MISMATCH")
         if result["generationStatus"] == "STRUCTURALLY_VALID":
-            validate_coaching({key: result[key] for key in ("assessments", "feedback", "legacyGrade")},
-                              expected, rubric_result)
+            keys = ("assessments", "feedback", "legacyGrade") + (("compositeGrade",) if composite_result is not None else ())
+            validate_coaching({key: result[key] for key in keys}, expected, rubric_result, composite_result)
         if result["dispatchAttempts"]:
             payload = self._payload(expected, core, script, policy, prompt, core_bytes=core_bytes)
             require(result["requestSha256"] == sha(payload), "SIX_DIMENSION_REQUEST_MISMATCH")

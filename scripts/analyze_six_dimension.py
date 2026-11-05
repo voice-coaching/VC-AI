@@ -16,6 +16,7 @@ sys.path.insert(0, str(ROOT / "src"))
 from voice_coach.six_dimension.pipeline import evaluate
 from voice_coach.six_dimension.policy import encode, error_code, load_policy, require, sha, strict_json
 from voice_coach.six_dimension.transport import OpenAITransport
+from voice_coach.six_dimension.composite import load_composite_policy, validate_reference_asset
 
 
 def file_sha(path: Path) -> str:
@@ -66,6 +67,11 @@ def main() -> int:
     parser.add_argument("--output", type=Path, required=True)
     parser.add_argument("--policy", type=Path, default=ROOT / "configs/pronunciation_feedback/six_dimension_v1.json")
     parser.add_argument("--system-prompt", type=Path, default=ROOT / "configs/coaching/six_dimension_system_v1.txt")
+    parser.add_argument("--composite-policy", type=Path,
+                        help="opt into exponential v2 with this versioned policy; v1 remains the default")
+    parser.add_argument("--reference-file", type=Path, default=ROOT / "standalone/seungun/assets/reference.json")
+    parser.add_argument("--rubric-worksheet", type=Path,
+                        help="server/operator-owned fixed-rubric worksheet bound to this exact analysis")
     parser.add_argument("--device", choices=("cpu", "cuda"), default="cpu")
     parser.add_argument("--cache", type=Path)
     parser.add_argument("--timeout", type=int, default=900, help="acoustic analysis timeout in seconds")
@@ -78,6 +84,18 @@ def main() -> int:
         require(1 <= args.timeout <= 3600, "ACOUSTIC_TIMEOUT")
         policy, policy_sha = load_policy(args.policy)
         prompt = bounded(args.system_prompt, 131072).decode("utf-8")
+        composite_policy = legacy_rubric = rubric_worksheet = None
+        require(args.rubric_worksheet is None or args.composite_policy is not None,
+                "WORKSHEET_REQUIRES_COMPOSITE_VERSION")
+        if args.composite_policy is not None:
+            composite_policy, composite_file_sha = load_composite_policy(args.composite_policy)
+            reference_raw = bounded(args.reference_file, 131072)
+            validate_reference_asset(composite_policy, reference_raw)
+            legacy_rubric = strict_json(bounded(ROOT / "configs/pronunciation_feedback/phone_rubric_20261003_v1.json", 131072))
+            prompt += bounded(ROOT / "configs/coaching/six_dimension_legacy_grade_v1.txt", 131072).decode("utf-8")
+            prompt += bounded(ROOT / "configs/coaching/composite_exponential_v2.txt", 131072).decode("utf-8")
+            if args.rubric_worksheet is not None:
+                rubric_worksheet = strict_json(bounded(args.rubric_worksheet, 131072))
         destination = args.output.expanduser().resolve()
         require(not destination.exists(), "OUTPUT_MUST_BE_NEW")
         destination.mkdir(parents=True, mode=0o700)
@@ -91,6 +109,17 @@ def main() -> int:
         with (output / "system_prompt.txt").open("xb") as stream:
             os.chmod(output / "system_prompt.txt", 0o600)
             stream.write(prompt.encode("utf-8"))
+        if composite_policy is not None:
+            composite_raw = bounded(args.composite_policy, 131072)
+            require(sha(composite_raw) == composite_file_sha, "COMPOSITE_POLICY_CHANGED_DURING_RUN")
+            for name, raw_snapshot in (("composite_policy.json", composite_raw),
+                                       ("reference.json", reference_raw),
+                                       ("phone_rubric.json", encode(legacy_rubric))):
+                with (output / name).open("xb") as stream:
+                    os.chmod(output / name, 0o600)
+                    stream.write(raw_snapshot)
+            if rubric_worksheet is not None:
+                write_private(output / "rubric_worksheet.json", rubric_worksheet)
         analysis = args.analysis_dir.expanduser().resolve(strict=True) if args.analysis_dir else output / "acoustic"
         if args.audio:
             launcher = ROOT / "standalone/seungun/run.py"
@@ -118,13 +147,16 @@ def main() -> int:
             return OpenAITransport(key)(payload, timeout=timeout)
         result = evaluate(core_bytes=raw, script=script, binding=binding, policy=policy,
                           policy_sha256=policy_sha, prompt=prompt, transport=transport,
-                          measurements_only=args.measurements_only)
+                          measurements_only=args.measurements_only, legacy_rubric=legacy_rubric,
+                          composite_policy=composite_policy, rubric_worksheet=rubric_worksheet)
         schema = strict_json(bounded(ROOT / "docs/contracts/six_dimension_result_v1.schema.json", 262144))
         import jsonschema
         jsonschema.Draft202012Validator(schema).validate(result)
         write_private(output / "result.json", result)
         print(json.dumps({"result": str(output / "result.json"), "assessmentStatus": result["assessment"]["status"],
-                          "generationStatus": result["generationStatus"], "dispatchAttempts": result["dispatchAttempts"]}))
+                          "generationStatus": result["generationStatus"], "dispatchAttempts": result["dispatchAttempts"],
+                          **({"overallScore": result["compositeGrade"]["overallScore"],
+                              "scoringRevision": composite_policy["revision"]} if composite_policy is not None else {})}))
         return 0 if result["assessment"]["status"] == "READY" and (
             args.measurements_only or result["generationStatus"] == "STRUCTURALLY_VALID") else 2
     except KeyboardInterrupt:
