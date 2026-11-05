@@ -45,6 +45,20 @@ class _ResidentGeneration:
         if self.blocked or (self.task is not None and not self.task.done()):
             raise CanonicalProcessCleanupUnconfirmed("RESIDENT_CLEANUP_UNCONFIRMED")
         if self.generation is not None:
+            # The old generation is deleted after an MFA failure. Preserve its
+            # private traceback first; public CORE keeps its original schema.
+            failure = self.generation/'mfa_runtime/host_failure.json'
+            if failure.exists():
+                try:
+                    from .canonical_producer import read_private_result, write_private_new
+                    folder = Path(self.env['AI_CANONICAL_WORKSPACE_ROOT'])/'mfa-diagnostics'
+                    folder.mkdir(mode=0o700,exist_ok=True)
+                    private_directory(folder)
+                    target = folder/(self.generation.name+'.private.json')
+                    if not target.exists():
+                        write_private_new(target,read_private_result(failure,self.generation,1024*1024))
+                except (OSError,ValueError):
+                    print('{"event":"mfa_diagnostic_persistence_failed"}',flush=True)
             from .scratch_cleanup import remove_generation
             try:
                 await asyncio.to_thread(remove_generation, self.generation)
