@@ -40,7 +40,7 @@ def build(source: Path, core_manifest: Path, destination: Path, *, directory: st
         native_raw = native_rubric_policy_path.read_bytes()
         validate_native_policy(json.loads(native_raw))
         if directory == "canonical_composite_exponential_direct_20261105_v2_h5":
-            directory = "canonical_native_rubric_single_call_direct_20261105_v1_h5"
+            directory = "canonical_native_rubric_single_call_direct_20261105_v2_h5"
     files = {"bridge/adapter.py": (ROOT / "deploy/runpod/harnesses/six_dimension_bridge.py").read_bytes().replace(
                  b"__CORE_MANIFEST__", core_sha.encode()),
              "contracts/llm/canonical_parent.schema.json": inherited["contracts/llm/canonical_parent.schema.json"],

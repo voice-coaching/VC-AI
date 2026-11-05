@@ -1,0 +1,34 @@
+{
+  "schemaVersion": "voice-analysis-smoke-fixtures.v1",
+  "cases": [
+    {
+      "id": "farm-m4a",
+      "file": "testaudio.m4a",
+      "sha256": "c1c2249e067b093f6728a71ddd71fb797cdb8243deeb3673b09583ea212536f1",
+      "scriptText": "쌀과 콩을 깨끗한 그릇에 담아요",
+      "requireNumericScore": true
+    },
+    {
+      "id": "farm-m4a-alias",
+      "file": "testaudio1.m4a",
+      "sha256": "c1c2249e067b093f6728a71ddd71fb797cdb8243deeb3673b09583ea212536f1",
+      "scriptText": "쌀과 콩을 깨끗한 그릇에 담아요",
+      "aliasOf": "farm-m4a",
+      "requireNumericScore": true
+    },
+    {
+      "id": "bank-m4a",
+      "file": "testaudio2.m4a",
+      "sha256": "5ae4e5b2f2180142933dee2051ab47e9fda67b8156ba244f5b3bd85716e92813",
+      "scriptText": "한국은행은 오늘 기준금리를 동결한다고 발표했습니다.",
+      "requireNumericScore": true
+    },
+    {
+      "id": "farm-mp3",
+      "file": "testaudio3.mp3",
+      "sha256": "e39731e6d6b2bda9bedb696e5d067a09b170bf4a62bee0b02e3fdb04e759ba4f",
+      "scriptText": "쌀과 콩을 깨끗한 그릇에 담아요",
+      "requireNumericScore": true
+    }
+  ]
+}

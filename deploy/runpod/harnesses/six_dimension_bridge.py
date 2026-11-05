@@ -8,6 +8,7 @@ from .assessment import validate_binding
 from .pipeline import evaluate, request_payload, validate_coaching, public_feedback, validate_public_feedback, rubric_context, prepare_assessment, SingleCallTransport
 from .composite import validate_composite_policy, validate_reference_asset
 from .native_rubric import validate_native_policy
+from .phone_rubric import validate_response as validate_rubric_response
 
 PARENT = "__CORE_MANIFEST__"
 
@@ -71,7 +72,16 @@ class Bridge:
                 core, projected = self._binding(core_bytes, script, binding)
             expected = rubric_context(core, self.read("scoring_rubric.json"), binding=projected,
                                       native_rubric_policy=native_policy)["RUBRIC_RESULT"]
-            require(record == self.scoring_record(expected), "SCORING_SERVER_RESULT_MISMATCH")
+            wanted = self.scoring_record(expected)
+            require(type(record) is dict and set(record) == set(wanted)
+                    and record["status"] == wanted["status"], "SCORING_SERVER_RESULT_MISMATCH")
+            if wanted["status"] == "READY":
+                # The service codec preserves JSON decimals while the pure
+                # calculator returns a display float. Compare decimal values
+                # through the original rubric validator, never binary float ==.
+                validate_rubric_response(record["result"], expected)
+            else:
+                require(record == wanted, "SCORING_SERVER_RESULT_MISMATCH")
 
     @staticmethod
     def scoring_record(grade):
