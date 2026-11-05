@@ -17,6 +17,7 @@ from voice_coach.six_dimension.pipeline import evaluate
 from voice_coach.six_dimension.policy import encode, error_code, load_policy, require, sha, strict_json
 from voice_coach.six_dimension.transport import OpenAITransport
 from voice_coach.six_dimension.composite import load_composite_policy, validate_reference_asset
+from voice_coach.six_dimension.native_rubric import validate_native_policy
 
 
 def file_sha(path: Path) -> str:
@@ -72,6 +73,8 @@ def main() -> int:
     parser.add_argument("--reference-file", type=Path, default=ROOT / "standalone/seungun/assets/reference.json")
     parser.add_argument("--rubric-worksheet", type=Path,
                         help="server/operator-owned fixed-rubric worksheet bound to this exact analysis")
+    parser.add_argument("--native-rubric-policy", type=Path,
+                        help="derive a separate fixed-rubric worksheet from unchanged Native/GOP CORE")
     parser.add_argument("--device", choices=("cpu", "cuda"), default="cpu")
     parser.add_argument("--cache", type=Path)
     parser.add_argument("--timeout", type=int, default=900, help="acoustic analysis timeout in seconds")
@@ -84,9 +87,13 @@ def main() -> int:
         require(1 <= args.timeout <= 3600, "ACOUSTIC_TIMEOUT")
         policy, policy_sha = load_policy(args.policy)
         prompt = bounded(args.system_prompt, 131072).decode("utf-8")
-        composite_policy = legacy_rubric = rubric_worksheet = None
+        composite_policy = legacy_rubric = rubric_worksheet = native_rubric_policy = None
         require(args.rubric_worksheet is None or args.composite_policy is not None,
                 "WORKSHEET_REQUIRES_COMPOSITE_VERSION")
+        require(args.native_rubric_policy is None or args.composite_policy is not None,
+                "NATIVE_RUBRIC_COMPOSITE_REQUIRED")
+        require(args.native_rubric_policy is None or args.rubric_worksheet is None,
+                "NATIVE_RUBRIC_EXTERNAL_WORKSHEET_CONFLICT")
         if args.composite_policy is not None:
             composite_policy, composite_file_sha = load_composite_policy(args.composite_policy)
             reference_raw = bounded(args.reference_file, 131072)
@@ -96,6 +103,11 @@ def main() -> int:
             prompt += bounded(ROOT / "configs/coaching/composite_exponential_v2.txt", 131072).decode("utf-8")
             if args.rubric_worksheet is not None:
                 rubric_worksheet = strict_json(bounded(args.rubric_worksheet, 131072))
+        if args.native_rubric_policy is not None:
+            native_raw = bounded(args.native_rubric_policy, 131072)
+            native_rubric_policy = strict_json(native_raw)
+            validate_native_policy(native_rubric_policy)
+            prompt += bounded(ROOT / "configs/coaching/native_rubric_single_call_v1.txt", 131072).decode("utf-8")
         destination = args.output.expanduser().resolve()
         require(not destination.exists(), "OUTPUT_MUST_BE_NEW")
         destination.mkdir(parents=True, mode=0o700)
@@ -120,6 +132,11 @@ def main() -> int:
                     stream.write(raw_snapshot)
             if rubric_worksheet is not None:
                 write_private(output / "rubric_worksheet.json", rubric_worksheet)
+        if native_rubric_policy is not None:
+            require(bounded(args.native_rubric_policy, 131072) == native_raw, "NATIVE_RUBRIC_POLICY_CHANGED_DURING_RUN")
+            with (output / "native_rubric_policy.json").open("xb") as stream:
+                os.chmod(output / "native_rubric_policy.json", 0o600)
+                stream.write(native_raw)
         analysis = args.analysis_dir.expanduser().resolve(strict=True) if args.analysis_dir else output / "acoustic"
         if args.audio:
             launcher = ROOT / "standalone/seungun/run.py"
@@ -148,7 +165,8 @@ def main() -> int:
         result = evaluate(core_bytes=raw, script=script, binding=binding, policy=policy,
                           policy_sha256=policy_sha, prompt=prompt, transport=transport,
                           measurements_only=args.measurements_only, legacy_rubric=legacy_rubric,
-                          composite_policy=composite_policy, rubric_worksheet=rubric_worksheet)
+                          composite_policy=composite_policy, rubric_worksheet=rubric_worksheet,
+                          native_rubric_policy=native_rubric_policy)
         schema = strict_json(bounded(ROOT / "docs/contracts/six_dimension_result_v1.schema.json", 262144))
         import jsonschema
         jsonschema.Draft202012Validator(schema).validate(result)

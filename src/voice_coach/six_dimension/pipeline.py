@@ -13,6 +13,7 @@ from .assessment import assess, validate_binding
 from .policy import encode, error_code, number, require, sha, strict_json, validate_policy
 from . import phone_rubric
 from .composite import composite_assessment, validate_composite_policy, validate_worksheet
+from .native_rubric import rubric_context as native_rubric_context
 
 MAX_FEEDBACK_LINES = 3
 MAX_FEEDBACK_SENTENCES = 5
@@ -22,6 +23,18 @@ MAX_PRACTICE_CHARACTERS = MAX_FEEDBACK_LINE_CHARACTERS - len("* ")
 _TERMINATOR = re.compile(r"[.!?。！？]+(?!\d)")
 _CONTROL = re.compile(r"[\x00-\x1f\x7f-\x9f\u2028\u2029]")
 _INTERNAL_MEASUREMENT = re.compile(r"\b(?:GOP|CTC|F0)\b|\d\s*(?:dB|Hz|음절\s*/\s*초)|초당\s*\d", re.IGNORECASE)
+
+
+class SingleCallTransport:
+    """An analysis consumes its one provider attempt even when the call fails."""
+
+    def __init__(self, transport):
+        self.transport, self.used = transport, False
+
+    def __call__(self, payload: bytes, *, timeout):
+        require(not self.used, "GPT_CALL_LIMIT_EXCEEDED")
+        self.used = True
+        return self.transport(payload, timeout=timeout)
 
 
 def _sentence_count(value: str) -> int:
@@ -71,12 +84,16 @@ def _text(maximum: int) -> dict:
 
 
 def rubric_context(core: dict, rubric: dict, *, worksheet: dict | None = None,
-                   binding: dict | None = None) -> dict:
+                   binding: dict | None = None, native_rubric_policy: dict | None = None) -> dict:
     """Only complete measured state evidence can populate the fixed worksheet.
 
-    GOP/alignment candidates and selected pronunciation warnings do not supply
-    the calculator's six per-position observation states. Never invent them.
+    The Native profile derives new, explicitly provisional states separately;
+    historical profiles still require their original measured detector states.
     """
+    if native_rubric_policy is not None:
+        require(worksheet is None, "NATIVE_RUBRIC_EXTERNAL_WORKSHEET_CONFLICT")
+        require(binding is not None, "NATIVE_RUBRIC_BINDING_REQUIRED")
+        return native_rubric_context(core, rubric, native_rubric_policy, binding)
     if worksheet is not None:
         require(binding is not None, "RUBRIC_WORKSHEET_BINDING_REQUIRED")
         return validate_worksheet(worksheet, binding=binding, rubric=rubric)
@@ -92,11 +109,15 @@ def rubric_context(core: dict, rubric: dict, *, worksheet: dict | None = None,
 
 def prepare_assessment(core: dict, script: str, binding: dict, policy: dict, policy_sha256: str,
                        *, legacy_rubric: dict | None = None, composite_policy: dict | None = None,
-                       rubric_worksheet: dict | None = None) -> tuple[dict, dict | None]:
+                       rubric_worksheet: dict | None = None,
+                       native_rubric_policy: dict | None = None) -> tuple[dict, dict | None]:
     require(rubric_worksheet is None or composite_policy is not None, "WORKSHEET_REQUIRES_COMPOSITE_VERSION")
     require(rubric_worksheet is None or legacy_rubric is not None, "WORKSHEET_RUBRIC_REQUIRED")
+    require(native_rubric_policy is None or composite_policy is not None and legacy_rubric is not None,
+            "NATIVE_RUBRIC_COMPOSITE_REQUIRED")
     assessment = assess(core, script, binding, policy, policy_sha256)
-    scoring = rubric_context(core, legacy_rubric, worksheet=rubric_worksheet, binding=binding) if legacy_rubric is not None else None
+    scoring = rubric_context(core, legacy_rubric, worksheet=rubric_worksheet, binding=binding,
+                             native_rubric_policy=native_rubric_policy) if legacy_rubric is not None else None
     if composite_policy is not None:
         require(scoring is not None, "COMPOSITE_PHONE_RUBRIC_REQUIRED")
         assessment = composite_assessment(assessment, core, scoring, composite_policy)
@@ -135,7 +156,8 @@ def coaching_schema(assessment: dict, rubric_result: dict | None = None,
 
 def request_payload(assessment: dict, core: dict, script: str, policy: dict, prompt: str,
                     legacy_rubric: dict | None = None, *, core_bytes: bytes,
-                    composite_policy: dict | None = None, rubric_worksheet: dict | None = None) -> bytes:
+                    composite_policy: dict | None = None, rubric_worksheet: dict | None = None,
+                    native_rubric_policy: dict | None = None) -> bytes:
     require(isinstance(prompt, str) and bool(prompt.strip()), "SYSTEM_PROMPT_MISSING")
     require(rubric_worksheet is None or composite_policy is not None, "WORKSHEET_REQUIRES_COMPOSITE_VERSION")
     require(type(core_bytes) is bytes and sha(core_bytes) == assessment["association"]["coreSha256"],
@@ -150,7 +172,8 @@ def request_payload(assessment: dict, core: dict, script: str, policy: dict, pro
         "status", "policyRevision", "validationStatus", "criteria", "selectedCriterionIds",
         "evidence", "limitations", "dependencies")}
     scoring = rubric_context(core, legacy_rubric, worksheet=rubric_worksheet,
-                             binding=assessment["association"]) if legacy_rubric is not None else None
+                             binding=assessment["association"],
+                             native_rubric_policy=native_rubric_policy) if legacy_rubric is not None else None
     composite_result = None
     if composite_policy is not None:
         validate_composite_policy(composite_policy)
@@ -174,6 +197,9 @@ def request_payload(assessment: dict, core: dict, script: str, policy: dict, pro
     messages = [dict(role="system", content=prompt),
                 dict(role="user", content=encode(data).decode("utf-8")),
                 dict(role="user", content=raw_core_text)]
+    # Several messages form ONE completion request. The raw CORE message is
+    # byte-identical; the worksheet belongs only to supplemental metadata.
+    require(messages[-1]["content"].encode("utf-8") == core_bytes, "RAW_CORE_MESSAGE_CHANGED")
     require(sum(len(m["content"].encode("utf-8")) for m in messages) <= config["input_utf8_bound"],
             "INPUT_BUDGET_NO_SILENT_TRUNCATION")
     payload = encode({key: config[key] for key in
@@ -203,12 +229,13 @@ def validate_coaching(candidate: dict, assessment: dict, rubric_result: dict | N
 def evaluate(*, core_bytes: bytes, script: str, binding: dict, policy: dict,
              policy_sha256: str, prompt: str, transport=None, measurements_only: bool = False,
              legacy_rubric: dict | None = None, composite_policy: dict | None = None,
-             rubric_worksheet: dict | None = None) -> dict:
+             rubric_worksheet: dict | None = None, native_rubric_policy: dict | None = None) -> dict:
     validate_policy(policy)
     require(re.fullmatch(r"[0-9a-f]{64}", policy_sha256) is not None, "POLICY_DIGEST")
     core = validate_binding(core_bytes, script, binding)
     assessment, scoring = prepare_assessment(core, script, binding, policy, policy_sha256,
-        legacy_rubric=legacy_rubric, composite_policy=composite_policy, rubric_worksheet=rubric_worksheet)
+        legacy_rubric=legacy_rubric, composite_policy=composite_policy, rubric_worksheet=rubric_worksheet,
+        native_rubric_policy=native_rubric_policy)
     result = dict(schemaVersion="voice-coaching.six-dimension-result.v1", assessment=assessment,
                   generationStatus="NOT_REQUESTED", dispatchAttempts=0, feedback=[], assessments=[],
                   model=policy["request"]["model"], promptSha256=sha(prompt.encode("utf-8")),
@@ -220,19 +247,24 @@ def evaluate(*, core_bytes: bytes, script: str, binding: dict, policy: dict,
         result["legacyGrade"] = rubric_result
     if composite_result is not None:
         result["compositeGrade"] = composite_result
+    if scoring is not None and "RUBRIC_EVIDENCE" in scoring:
+        # Retained only in BRIDGE_RESULT; never splice derived facts into CORE.
+        result["rubricEvidence"] = scoring["RUBRIC_EVIDENCE"]
     if measurements_only or not assessment["selectedCriterionIds"]:
         return result
     require(transport is not None, "TRANSPORT_REQUIRED")
     try:
         payload = request_payload(assessment, core, script, policy, prompt, legacy_rubric, core_bytes=core_bytes,
-                                  composite_policy=composite_policy, rubric_worksheet=rubric_worksheet)
+                                  composite_policy=composite_policy, rubric_worksheet=rubric_worksheet,
+                                  native_rubric_policy=native_rubric_policy)
     except ValueError as exc:
         result.update(generationStatus="NOT_DISPATCHED", errorCode=str(exc))
         return result
     result.update(dispatchAttempts=1, requestSha256=sha(payload))
     try:
         config = policy["request"]
-        raw = transport(payload, timeout=config["timeout_seconds"])
+        # There is no grading call, retry, repair call, or tool-call round trip.
+        raw = SingleCallTransport(transport)(payload, timeout=config["timeout_seconds"])
         require(type(raw) is bytes and 0 < len(raw) <= 131072, "PROVIDER_RESPONSE_SIZE")
         response = strict_json(raw)
         model = response.get("model")

@@ -172,6 +172,8 @@ def composite_assessment(base: dict, core: dict, scoring: dict, policy: dict) ->
     unrounded, worksheet = {}, []
     accuracy.update(score=None, status="UNSCORABLE", reasonCode="PHONE_RUBRIC_UNSCORABLE",
                     scope="FIXED_NINE_CATEGORY_SERVER_RUBRIC", components=[])
+    if "RUBRIC_EVIDENCE" in scoring:
+        accuracy["reasonCode"] = scoring["RUBRIC_EVIDENCE"]["reasonCode"]
     accepted = core.get("input_validation", {}).get("status") == "ACCEPT"
     if not accepted:
         accuracy["reasonCode"] = "INPUT_NOT_ACCEPTED"

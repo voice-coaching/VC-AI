@@ -772,6 +772,9 @@
     },
     "compositeGrade": {
       "$ref": "#/$defs/compositeResult"
+    },
+    "rubricEvidence": {
+      "$ref": "#/$defs/nativeRubricEvidence"
     }
   },
   "allOf": [
@@ -1315,6 +1318,188 @@
               },
               "missingCriterionIds": {
                 "minItems": 1
+              }
+            }
+          }
+        }
+      ]
+    },
+    "nativeRubricEvidence": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "policyRevision": {
+          "const": "native-phone-rubric-evidence-v1"
+        },
+        "policySha256": {
+          "type": "string",
+          "pattern": "^[0-9a-f]{64}$"
+        },
+        "policy": {
+          "type": "object",
+          "minProperties": 1
+        },
+        "association": {
+          "$ref": "#/properties/assessment/properties/association"
+        },
+        "sourceRevision": {
+          "const": "gop-ctc-af-sd-native-v1"
+        },
+        "status": {
+          "enum": [
+            "READY",
+            "UNSCORABLE"
+          ]
+        },
+        "reasonCode": {
+          "type": "string",
+          "pattern": "^[A-Z][A-Z0-9_]{0,79}$"
+        },
+        "positions": {
+          "type": "array",
+          "maxItems": 4096,
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "properties": {
+              "evidenceId": {
+                "type": "string",
+                "pattern": "^native-rubric:[0-9]+$"
+              },
+              "sourcePointer": {
+                "type": "string",
+                "pattern": "^/phonemeAssessment/samples/[0-9]+$"
+              },
+              "alignmentPointer": {
+                "type": "string",
+                "pattern": "^/phonemeAssessment/alignment/[0-9]+$"
+              },
+              "index": {
+                "type": "integer",
+                "minimum": 0
+              },
+              "sourceIndex": {
+                "type": "integer",
+                "minimum": 0
+              },
+              "phone": {
+                "type": "string",
+                "minLength": 1
+              },
+              "role": {
+                "enum": [
+                  "onset",
+                  "nucleus",
+                  "coda"
+                ]
+              },
+              "token": {
+                "type": "string",
+                "minLength": 1
+              },
+              "tokenId": {
+                "type": "integer",
+                "minimum": 0,
+                "maximum": 39
+              },
+              "indistinguishablePhones": {
+                "type": "array",
+                "minItems": 1,
+                "uniqueItems": true,
+                "items": {
+                  "type": "string",
+                  "minLength": 1
+                }
+              },
+              "alignmentOperation": {
+                "enum": [
+                  "MATCH",
+                  "SUBSTITUTION",
+                  "DELETION"
+                ]
+              },
+              "gop": {
+                "type": "number"
+              },
+              "state": {
+                "enum": [
+                  "matchedClear",
+                  "matchedFlagged",
+                  "substitutedClear",
+                  "substitutedFlagged",
+                  "deletedClear",
+                  "deletedFlagged"
+                ]
+              },
+              "wordIndex": {
+                "type": "integer",
+                "minimum": 0
+              },
+              "syllableIndex": {
+                "type": "integer",
+                "minimum": 0
+              }
+            },
+            "required": [
+              "evidenceId",
+              "sourcePointer",
+              "alignmentPointer",
+              "index",
+              "sourceIndex",
+              "phone",
+              "role",
+              "token",
+              "tokenId",
+              "indistinguishablePhones",
+              "alignmentOperation",
+              "gop",
+              "state",
+              "wordIndex",
+              "syllableIndex"
+            ]
+          }
+        },
+        "excludedSilentOnsetSourceIndices": {
+          "type": "array",
+          "maxItems": 4096,
+          "uniqueItems": true,
+          "items": {
+            "type": "integer",
+            "minimum": 0
+          }
+        }
+      },
+      "required": [
+        "policyRevision",
+        "policySha256",
+        "policy",
+        "association",
+        "sourceRevision",
+        "status",
+        "reasonCode",
+        "positions",
+        "excludedSilentOnsetSourceIndices"
+      ],
+      "allOf": [
+        {
+          "if": {
+            "properties": {
+              "status": {
+                "const": "READY"
+              }
+            }
+          },
+          "then": {
+            "properties": {
+              "positions": {
+                "minItems": 1
+              }
+            }
+          },
+          "else": {
+            "properties": {
+              "positions": {
+                "maxItems": 0
               }
             }
           }

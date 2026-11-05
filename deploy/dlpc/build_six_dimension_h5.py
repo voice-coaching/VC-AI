@@ -13,12 +13,14 @@ from release_packaging import encode, load_files, sha, write_release
 from voice_coach.six_dimension.policy import load_policy
 from voice_coach.backend_analysis.phone_rubric import validate_policy as validate_rubric
 from voice_coach.six_dimension.composite import load_composite_policy, validate_reference_asset
+from voice_coach.six_dimension.native_rubric import validate_native_policy
 
 DIRECTORY = "canonical_six_dimension_direct_20261105_v5_h5"
 
 
 def build(source: Path, core_manifest: Path, destination: Path, *, directory: str = DIRECTORY,
-          composite_policy_path: Path | None = None, reference_path: Path | None = None):
+          composite_policy_path: Path | None = None, reference_path: Path | None = None,
+          native_rubric_policy_path: Path | None = None):
     parent_raw = (source / "contracts/llm/llm_contract_manifest.json").read_bytes()
     parent = json.loads(parent_raw)
     _, inherited = load_files(source, "contracts/llm/dependency_lock.json", parent["dependency_lock_sha256"], "files")
@@ -32,6 +34,13 @@ def build(source: Path, core_manifest: Path, destination: Path, *, directory: st
         validate_reference_asset(composite_policy, reference_raw)
         if directory == DIRECTORY:
             directory = "canonical_composite_exponential_direct_20261105_v2_h5"
+    if native_rubric_policy_path is not None:
+        if composite_policy is None:
+            raise ValueError("NATIVE_RUBRIC_COMPOSITE_REQUIRED")
+        native_raw = native_rubric_policy_path.read_bytes()
+        validate_native_policy(json.loads(native_raw))
+        if directory == "canonical_composite_exponential_direct_20261105_v2_h5":
+            directory = "canonical_native_rubric_single_call_direct_20261105_v1_h5"
     files = {"bridge/adapter.py": (ROOT / "deploy/runpod/harnesses/six_dimension_bridge.py").read_bytes().replace(
                  b"__CORE_MANIFEST__", core_sha.encode()),
              "contracts/llm/canonical_parent.schema.json": inherited["contracts/llm/canonical_parent.schema.json"],
@@ -47,6 +56,9 @@ def build(source: Path, core_manifest: Path, destination: Path, *, directory: st
             raise ValueError("COMPOSITE_POLICY_CHANGED_DURING_BUILD")
         files["contracts/llm/composite_policy.json"] = composite_raw
         files["contracts/llm/composite_reference.json"] = reference_raw
+    if native_rubric_policy_path is not None:
+        files["contracts/llm/native_rubric_policy.json"] = native_raw
+        files["contracts/llm/llm_system_prompt.txt"] += (ROOT / "configs/coaching/native_rubric_single_call_v1.txt").read_bytes()
     rubric_raw = (ROOT / "configs/pronunciation_feedback/phone_rubric_20261003_v1.json").read_bytes()
     rubric = json.loads(rubric_raw)
     validate_rubric(rubric)
@@ -61,7 +73,7 @@ def build(source: Path, core_manifest: Path, destination: Path, *, directory: st
     files["contracts/llm/llm_output.schema.json"] = encode(output_schema)
     # Embed the original pure calculator, not the source package's import shim.
     files["bridge/phone_rubric.py"] = (ROOT / "src/voice_coach/backend_analysis/phone_rubric.py").read_bytes()
-    for name in ("policy", "assessment", "composite", "pipeline"):
+    for name in ("policy", "assessment", "composite", "native_rubric", "pipeline"):
         files["bridge/"+name+".py"] = (ROOT / "src/voice_coach/six_dimension" / (name+".py")).read_bytes()
     lock = encode(dict(files={name: sha(raw) for name, raw in sorted(files.items())}))
     manifest = encode(dict(contract_version=directory, parent_llm_manifest_sha256=sha(parent_raw),
@@ -74,6 +86,12 @@ def build(source: Path, core_manifest: Path, destination: Path, *, directory: st
                            legacy_scoring_authority="SERVER_FIXED_RUBRIC_OR_UNSCORABLE",
                            public_contract="EXISTING_SCORING_AND_FEEDBACK_STRING", six_scores="PRIVATE_ARTIFACT_ONLY",
                            composite_score="EXISTING_PUBLIC_SCORE_OVERALL_SCORE" if composite_policy else None))
+    if native_rubric_policy_path is not None:
+        metadata = json.loads(manifest)
+        metadata.update(native_rubric_policy_sha256=sha(native_raw),
+                        generation_call_limit=1, provider_retries=0,
+                        phone_evidence="SEPARATE_DERIVATION_FROM_UNCHANGED_CORE")
+        manifest = encode(metadata)
     files["contracts/llm/dependency_lock.json"] = lock
     files["contracts/llm/llm_contract_manifest.json"] = manifest
     write_release(destination / directory, files)
@@ -91,6 +109,8 @@ if __name__ == "__main__":
     parser.add_argument("--directory", default=DIRECTORY)
     parser.add_argument("--composite-policy", type=Path)
     parser.add_argument("--reference-file", type=Path)
+    parser.add_argument("--native-rubric-policy", type=Path)
     args = parser.parse_args()
     print(json.dumps(build(args.source, args.core_manifest, args.destination, directory=args.directory,
-                          composite_policy_path=args.composite_policy, reference_path=args.reference_file)))
+                          composite_policy_path=args.composite_policy, reference_path=args.reference_file,
+                          native_rubric_policy_path=args.native_rubric_policy)))

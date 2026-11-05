@@ -5,8 +5,9 @@ import jsonschema
 
 from .policy import encode, require, sha, strict_json, validate_policy
 from .assessment import validate_binding
-from .pipeline import evaluate, request_payload, validate_coaching, public_feedback, validate_public_feedback, rubric_context, prepare_assessment
+from .pipeline import evaluate, request_payload, validate_coaching, public_feedback, validate_public_feedback, rubric_context, prepare_assessment, SingleCallTransport
 from .composite import validate_composite_policy, validate_reference_asset
+from .native_rubric import validate_native_policy
 
 PARENT = "__CORE_MANIFEST__"
 
@@ -48,12 +49,28 @@ class Bridge:
         validate_reference_asset(policy, (self.root / "contracts/llm/composite_reference.json").read_bytes())
         return policy
 
-    def verify_scoring(self, core, record, **_):
+    def native_rubric_policy(self):
+        self.integrity()
+        if "contracts/llm/native_rubric_policy.json" not in self.read("dependency_lock.json")["files"]:
+            return None
+        policy = self.read("native_rubric_policy.json")
+        validate_native_policy(policy)
+        require(self.composite_policy() is not None, "NATIVE_RUBRIC_COMPOSITE_REQUIRED")
+        return policy
+
+    def verify_scoring(self, core, record, *, core_bytes=None, script=None, binding=None, **_):
         if core["input_validation"]["status"] != "ACCEPT":
             require(record == {"status": "NOT_REQUESTED"}, "SCORING_NONACCEPT_RESULT")
         else:
             jsonschema.Draft202012Validator(self.read("llm_output.schema.json")["properties"]["scoring"]).validate(record)
-            expected = rubric_context(core, self.read("scoring_rubric.json"))["RUBRIC_RESULT"]
+            native_policy = self.native_rubric_policy()
+            projected = None
+            if native_policy is not None:
+                # Decode the original bytes through the same codec as dispatch;
+                # the service verifier's Decimal view is not the GOP codec.
+                core, projected = self._binding(core_bytes, script, binding)
+            expected = rubric_context(core, self.read("scoring_rubric.json"), binding=projected,
+                                      native_rubric_policy=native_policy)["RUBRIC_RESULT"]
             require(record == self.scoring_record(expected), "SCORING_SERVER_RESULT_MISMATCH")
 
     @staticmethod
@@ -63,7 +80,8 @@ class Bridge:
 
     def _payload(self, assessment, core, script, policy, prompt, *, core_bytes):
         return request_payload(assessment, core, script, policy, prompt, self.read("scoring_rubric.json"),
-                               core_bytes=core_bytes, composite_policy=self.composite_policy())
+                               core_bytes=core_bytes, composite_policy=self.composite_policy(),
+                               native_rubric_policy=self.native_rubric_policy())
 
     def _binding(self, core_bytes, script, binding):
         require(binding["parent_manifest_sha256"] == PARENT, "CORE_PARENT_BINDING")
@@ -89,7 +107,8 @@ class Bridge:
         if status != "ACCEPT":
             return core, None, None, "GLOBAL_" + status
         assessment, _ = prepare_assessment(core, script, projected, policy, digest,
-            legacy_rubric=self.read("scoring_rubric.json"), composite_policy=self.composite_policy())
+            legacy_rubric=self.read("scoring_rubric.json"), composite_policy=self.composite_policy(),
+            native_rubric_policy=self.native_rubric_policy())
         payload = None
         if assessment["selectedCriterionIds"]:
             try:
@@ -111,6 +130,7 @@ class Bridge:
 
     def dispatch(self, core_bytes, script, binding, *, transport, **_):
         core = strict_json(core_bytes)
+        one_call = SingleCallTransport(transport)
         base = dict(schemaVersion="canonical-llm-expression-result-v1", coreInputValidation=core["input_validation"],
                     coreSha256=sha(core_bytes), items=[], dispatchAttempts=0)
         try:
@@ -120,10 +140,15 @@ class Bridge:
             policy, digest, prompt = self._configuration()
             _, projected = self._binding(core_bytes, script, binding)
             result = evaluate(core_bytes=core_bytes, script=script, binding=projected, policy=policy,
-                              policy_sha256=digest, prompt=prompt, transport=transport,
-                              legacy_rubric=self.read("scoring_rubric.json"), composite_policy=self.composite_policy())
+                              policy_sha256=digest, prompt=prompt, transport=one_call,
+                              legacy_rubric=self.read("scoring_rubric.json"), composite_policy=self.composite_policy(),
+                              native_rubric_policy=self.native_rubric_policy())
             jsonschema.Draft202012Validator(self.read("six_dimension_result.schema.json")).validate(result)
         except Exception as exc:
+            if one_call.used:
+                # A completed or failed POST cannot be relabeled NOT_DISPATCHED
+                # or retried because validation failed after that attempt.
+                raise ValueError("SIX_DIMENSION_POST_DISPATCH_FAILURE") from None
             return dict(base, adapterStatus="FAIL_CLOSED", generationStatus="NOT_DISPATCHED",
                         errorCode=type(exc).__name__, scoring={"status":"UNSCORABLE"})
         return self.expression(base, result)
@@ -152,13 +177,18 @@ class Bridge:
         result = expression["sixDimension"]
         jsonschema.Draft202012Validator(self.read("six_dimension_result.schema.json")).validate(result)
         composite_policy = self.composite_policy()
-        expected, _ = prepare_assessment(core, script, projected, policy, digest,
-            legacy_rubric=self.read("scoring_rubric.json"), composite_policy=composite_policy)
+        expected, scoring = prepare_assessment(core, script, projected, policy, digest,
+            legacy_rubric=self.read("scoring_rubric.json"), composite_policy=composite_policy,
+            native_rubric_policy=self.native_rubric_policy())
         require(expression["coreInputValidation"] == core["input_validation"]
                 and expression["coreSha256"] == sha(core_bytes), "SIX_DIMENSION_CORE_MISMATCH")
         require(result["assessment"] == expected, "SIX_DIMENSION_ASSESSMENT_MISMATCH")
-        rubric_result = rubric_context(core, self.read("scoring_rubric.json"))["RUBRIC_RESULT"]
+        rubric_result = scoring["RUBRIC_RESULT"]
         require(result["legacyGrade"] == rubric_result, "SCORING_SERVER_RESULT_MISMATCH")
+        if "RUBRIC_EVIDENCE" in scoring:
+            require(result.get("rubricEvidence") == scoring["RUBRIC_EVIDENCE"], "NATIVE_RUBRIC_EVIDENCE_MISMATCH")
+        else:
+            require("rubricEvidence" not in result, "UNEXPECTED_NATIVE_RUBRIC_EVIDENCE")
         composite_result = expected["auxiliary"]["composite"]["result"] if composite_policy is not None else None
         if composite_result is not None:
             require(result["compositeGrade"] == composite_result, "COMPOSITE_SERVER_RESULT_MISMATCH")

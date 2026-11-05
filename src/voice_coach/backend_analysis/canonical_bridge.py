@@ -176,6 +176,8 @@ class FrozenCanonicalCoaching:
                        ("policy", "assessment", "pipeline", "compact_gop_output", "adapter"))
             if "bridge/composite.py" in lock["files"]:
                 modules = ("policy", "assessment", "phone_rubric", "composite", "pipeline", "adapter")
+            if "bridge/native_rubric.py" in lock["files"]:
+                modules = ("policy", "assessment", "phone_rubric", "composite", "native_rubric", "pipeline", "adapter")
         for name in modules:
             relative = f"bridge/{name}.py"
             raw = _contained_file(root, relative).read_bytes()
