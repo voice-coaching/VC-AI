@@ -48,6 +48,12 @@ def main(args):
             cases.append(case)
         seen[case['id']] = case
     output = args.output.resolve()
+    # Linux AF_UNIX paths have a 108-byte limit including the trailing NUL.
+    # Reject a test layout that cannot start its real executor before any work.
+    for lane in ('direct','internal'):
+        socket_path=output/lane/'work/execution-abcdefgh/executor.sock'
+        if len(os.fsencode(socket_path))>=108:
+            raise ValueError('SMOKE_OUTPUT_PATH_TOO_LONG')
     output.mkdir(mode=0o755, parents=True, exist_ok=False)
     spec = importlib.util.spec_from_file_location('deployed_controller', '/opt/intelligentai/cicd/deploy_source.py')
     controller = importlib.util.module_from_spec(spec)

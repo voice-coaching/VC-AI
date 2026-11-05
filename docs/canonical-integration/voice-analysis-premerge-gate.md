@@ -19,7 +19,7 @@ sudo python3 scripts/run_voice_smoke.py \
   --backend-root /absolute/backend-checkout \
   --backend-classpath-file /private/backend-compile-classpath.txt \
   --java-home /absolute/jdk21 \
-  --output /var/lib/intelligentai/voice-smoke/unique-candidate-run
+  --output /var/lib/intelligentai/voice-smoke/run-001
 ```
 
 후보 코드와 실제 CORE/H5는 서비스 UID로 실행한다. 운영 env에서 필요한 OpenAI 키와 실행 경로만 메모리로 전달한다. 운영 작업을 재실행하지 않고, 테스트 결과를 사용자 이력이나 B2로 발송하지 않는다. 원본 음성과 CORE는 수정하지 않는다. 같은 파일인 `testaudio.m4a`와 `testaudio1.m4a`는 별도 성공 사례로 부풀리지 않고 alias로 기록한다.
@@ -32,8 +32,8 @@ direct와 internal 각각의 CORE/H5 조합에서 서로 다른 세 미디어를
 
 ```sh
 # GH_TOKEN은 호출 프로세스에만 주입한다. 파일이나 명령행에 토큰을 넣지 않는다.
-python3 scripts/publish_voice_smoke.py --receipt /var/lib/intelligentai/voice-smoke/unique-candidate-run/receipt.json --create-pr-head BRANCH --title TITLE --body-file /private/pr-body.md
-python3 scripts/publish_voice_smoke.py --receipt /var/lib/intelligentai/voice-smoke/unique-candidate-run/receipt.json --pr PR_NUMBER --merge
+python3 scripts/publish_voice_smoke.py --receipt /var/lib/intelligentai/voice-smoke/run-001/receipt.json --create-pr-head BRANCH --title TITLE --body-file /private/pr-body.md
+python3 scripts/publish_voice_smoke.py --receipt /var/lib/intelligentai/voice-smoke/run-001/receipt.json --pr PR_NUMBER --merge
 ```
 
 위 명령은 보호된 성공 기록과 PR의 head·tree·대상 main을 확인하고 상태를 게시한 뒤, 테스트한 head SHA를 지정해 merge한다. 실패·누락·오래된 결과로 merge하지 않는다. 현재 private 저장소의 요금제에서 GitHub가 branch protection/rulesets 조회를 403으로 거부하므로 GitHub UI 전체에 대한 강제 차단은 설정되지 않았다. 해당 기능을 사용할 수 있게 되면 main 필수 상태에 `voice-analysis-smoke`를 추가한다. 현재는 이 명령과 AGENTS.md 절차를 사용하며 수동 UI merge로 우회하지 않는다. 자격 증명을 가진 자동 실행 환경을 임의 fork PR 코드에 노출하지 않기 위해 운영자가 후보를 검토한 후 실행하는 절차다. 배포 후에는 외부 HTTP를 통한 테스트 음성 분석도 별도로 확인한다.
