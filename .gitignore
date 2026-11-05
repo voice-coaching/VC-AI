@@ -95,3 +95,4 @@ scripts/tests/
 **/*_test.py
 **/conftest.py
 !/tests/analysis/test_phone_rubric_decimal.py
+!/tests/analysis/test_canonical_transport_lifecycle.py

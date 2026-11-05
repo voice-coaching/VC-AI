@@ -113,6 +113,10 @@ class FrozenOpenAITransport:
         _require(isinstance(body, dict) and set(body) == set(expected) | {"messages"}
                  and all(body.get(key) == value for key, value in expected.items())
                  and body.get("store") is False, "FROZEN_REQUEST_CONFIG_MISMATCH")
+        # Audio inference leaves this connection idle between analyses. A stale
+        # keep-alive cannot safely be retried after POST. Open a fresh TLS
+        # connection for each analysis instead; still exactly one POST, no retry.
+        self.close()
         # No body reconstruction, arbitrary endpoint, env proxy or redirect.
         configured = time.perf_counter()
         self.diagnostics.update(status='DISPATCHING', requestBytes=len(payload),
@@ -140,10 +144,11 @@ class FrozenOpenAITransport:
                 body_received = time.perf_counter()
                 self.diagnostics.update(responseBytes=len(raw),
                                         responseBodySeconds=body_received - headers_received)
-        except (TimeoutError, OSError, http.client.HTTPException):
+        except (TimeoutError, OSError, http.client.HTTPException) as error:
             self.close()
             # Do not expose response bodies, request text, keys or URL diagnostics.
-            self.diagnostics.update(status='FAILED', errorCode='CANONICAL_PROVIDER_UNAVAILABLE')
+            self.diagnostics.update(status='FAILED', errorCode='CANONICAL_PROVIDER_UNAVAILABLE',
+                                    failureExceptionType=type(error).__name__)
             raise CanonicalIntegrationError("CANONICAL_PROVIDER_UNAVAILABLE") from None
         except CanonicalIntegrationError as error:
             self.close()
