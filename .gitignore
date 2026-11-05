@@ -96,3 +96,4 @@ scripts/tests/
 **/conftest.py
 !/tests/analysis/test_phone_rubric_decimal.py
 !/tests/analysis/test_canonical_transport_lifecycle.py
+!/tests/analysis/test_native_rubric_variation.py

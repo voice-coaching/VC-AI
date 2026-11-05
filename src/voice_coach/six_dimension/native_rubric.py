@@ -10,7 +10,8 @@ import math
 from . import phone_rubric
 from .policy import encode, error_code, number, require, sha
 
-REVISION = "native-phone-rubric-evidence-v1"
+REVISION = "native-phone-rubric-evidence-v2"
+LEGACY_REVISION = "native-phone-rubric-evidence-v1"
 OPERATIONS = {"MATCH": "matched", "SUBSTITUTION": "substituted", "DELETION": "deleted"}
 STATES = ("matchedClear", "matchedFlagged", "substitutedClear", "substitutedFlagged",
           "deletedClear", "deletedFlagged")
@@ -23,14 +24,21 @@ GROUPS = (
 
 
 def validate_native_policy(policy: dict) -> None:
-    require(type(policy) is dict and policy.get("revision") == REVISION, "NATIVE_RUBRIC_POLICY")
+    require(type(policy) is dict and policy.get("revision") in {REVISION, LEGACY_REVISION},
+            "NATIVE_RUBRIC_POLICY")
     fixed = dict(validationStatus="EXPERT_REVIEW_PENDING", sourceRevision="gop-ctc-af-sd-native-v1",
                  scope="MODEL_SUPPORT_AND_TOKEN_ALIGNMENT_NOT_HUMAN_CORRECTNESS",
                  flagRule="gop <= gopFlagThreshold",
                  thresholdBasis="PROVISIONAL_ENGINEERING_STARTING_VALUE_NOT_CALIBRATED",
-                 alignmentAmbiguity="UNSCORABLE", missingEvidence="UNSCORABLE_NO_IMPUTATION",
+                 missingEvidence="UNSCORABLE_NO_IMPUTATION",
                  silentOnset="PRESERVE_RECORDED_EXCLUSIONS",
                  mergedPhones="PRESERVE_TOKEN_EQUIVALENCE_NO_ADDED_PENALTY")
+    if policy["revision"] == LEGACY_REVISION:
+        fixed["alignmentAmbiguity"] = "UNSCORABLE"
+    else:
+        fixed.update(alignmentAmbiguity="SCORE_REPORTED_ALIGNMENT_RETAIN_WARNING",
+                     referenceCountBasis="GOP_REFERENCE_SAMPLES",
+                     deletionTreatment="ZERO_UNITS_IN_EXISTING_RUBRIC")
     require(set(policy) == {"revision", *fixed, "gopFlagThreshold", "logConsistencyTolerance", "maximumSamples"}
             and all(policy.get(k) == v for k, v in fixed.items()), "NATIVE_RUBRIC_POLICY_CONTRACT")
     require(number(policy["gopFlagThreshold"]) and policy["gopFlagThreshold"] < 0,
@@ -46,7 +54,8 @@ def _positions(core: dict, policy: dict) -> tuple[list[dict], list[int]]:
     require(type(source) is dict and source.get("revision") == policy["sourceRevision"],
             "NATIVE_RUBRIC_SOURCE_UNAVAILABLE")
     require(type(source.get("alignmentAmbiguous")) is bool, "NATIVE_RUBRIC_ALIGNMENT_STATUS")
-    require(not source["alignmentAmbiguous"], "NATIVE_RUBRIC_ALIGNMENT_AMBIGUOUS")
+    if policy["revision"] == LEGACY_REVISION:
+        require(not source["alignmentAmbiguous"], "NATIVE_RUBRIC_ALIGNMENT_AMBIGUOUS")
     samples, observed, alignment = (source.get(k) for k in ("samples", "observed", "alignment"))
     require(type(samples) is list and 0 < len(samples) <= policy["maximumSamples"], "NATIVE_RUBRIC_SAMPLES")
     require(type(observed) is list and len(observed) <= 2 * policy["maximumSamples"]
@@ -90,10 +99,13 @@ def _positions(core: dict, policy: dict) -> tuple[list[dict], list[int]]:
     require(source_indices == sorted(set(source_indices)) and not set(source_indices).intersection(excluded)
             and sorted(source_indices + excluded) == list(range(len(samples) + len(excluded))),
             "NATIVE_RUBRIC_SOURCE_COVERAGE")
-    # expected_phone_count belongs to this acoustic reference, not the source
-    # indices before silent onsets were excluded. Never rewrite either count.
-    require(type(core.get("expected_phone_count")) is int and core["expected_phone_count"] == len(samples),
-            "NATIVE_RUBRIC_EXPECTED_COUNT")
+    # The legacy detector expands ㅙ/ㅞ into two labels; GOP keeps one reference
+    # sample per phone. Neither count is the number of observed spoken phones.
+    # V2 scores the recorded GOP reference/alignment without rewriting either
+    # representation or rejecting speech because the reference counts differ.
+    if policy["revision"] == LEGACY_REVISION:
+        require(type(core.get("expected_phone_count")) is int and core["expected_phone_count"] == len(samples),
+                "NATIVE_RUBRIC_EXPECTED_COUNT")
     positions, expected_index, observed_index, deleted = [], 0, 0, 0
     for row_index, row in enumerate(alignment):
         require(type(row) is dict and set(row) == {"expectedIndex", "observedIndex", "operation"},
@@ -154,6 +166,20 @@ def rubric_context(core: dict, rubric: dict, policy: dict, binding: dict) -> dic
         result = phone_rubric.worksheet(rows, evidence_units=rubric["evidenceUnits"], revision=rubric["rubricRevision"])
         evidence.update(status="READY", reasonCode="NATIVE_GOP_POLICY_DERIVED_STATES", positions=positions,
                         excludedSilentOnsetSourceIndices=excluded)
+        if policy["revision"] == REVISION:
+            source = core["phonemeAssessment"]
+            operations = {key: sum(row["operation"] == key for row in source["alignment"])
+                          for key in (*OPERATIONS, "INSERTION")}
+            detector_count = core.get("expected_phone_count")
+            evidence.update(
+                referenceCounts=dict(legacyDetectorExpectedCount=detector_count,
+                    gopReferenceSampleCount=len(source["samples"]),
+                    observedTokenCount=len(source["observed"]),
+                    sameReferenceCount=detector_count == len(source["samples"])),
+                alignment=dict(ambiguous=source["alignmentAmbiguous"],
+                    policy="USE_REPORTED_CANONICAL_ALIGNMENT", operationCounts=operations,
+                    confirmedLocalDeletionClaimsAllowed=False),
+                warnings=(["MODEL_TOKEN_ALIGNMENT_AMBIGUOUS"] if source["alignmentAmbiguous"] else []))
     except ValueError as exc:
         evidence["reasonCode"] = error_code(exc)
         result = dict(RUBRIC_JSON=rubric, INPUT_DATA=None, RUBRIC_RESULT={"status": "unscorable"},

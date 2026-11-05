@@ -179,7 +179,8 @@ def release_assets(payload, manifest, *, install=False):
                                   'canonical_composite_exponential_'+lane+'_20261105_v2_h5',
                                   'canonical_native_rubric_single_call_'+lane+'_20261105_v1_h5',
                                   'canonical_native_rubric_single_call_'+lane+'_20261105_v2_h5',
-                                  'canonical_mfa_search_'+lane+'_20261105_v1_h5'}, 'COORDINATED_H5_PATH')
+                                  'canonical_mfa_search_'+lane+'_20261105_v1_h5',
+                                  'canonical_score_variation_'+lane+'_20261105_v2_h5'}, 'COORDINATED_H5_PATH')
         package = {}
         for name, pin in files.items():
             path = PurePosixPath(name)

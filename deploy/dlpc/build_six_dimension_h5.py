@@ -58,7 +58,10 @@ def build(source: Path, core_manifest: Path, destination: Path, *, directory: st
         files["contracts/llm/composite_reference.json"] = reference_raw
     if native_rubric_policy_path is not None:
         files["contracts/llm/native_rubric_policy.json"] = native_raw
-        files["contracts/llm/llm_system_prompt.txt"] += (ROOT / "configs/coaching/native_rubric_single_call_v1.txt").read_bytes()
+        prompt_name = ("native_rubric_single_call_v2.txt"
+                       if json.loads(native_raw)["revision"] == "native-phone-rubric-evidence-v2"
+                       else "native_rubric_single_call_v1.txt")
+        files["contracts/llm/llm_system_prompt.txt"] += (ROOT / "configs/coaching" / prompt_name).read_bytes()
     rubric_raw = (ROOT / "configs/pronunciation_feedback/phone_rubric_20261003_v1.json").read_bytes()
     rubric = json.loads(rubric_raw)
     validate_rubric(rubric)

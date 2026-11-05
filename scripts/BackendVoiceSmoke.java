@@ -18,6 +18,12 @@ public class BackendVoiceSmoke {
         }
         var view = new CanonicalPublicProjection(contract).project(result);
         if (view.coaching() == null) throw new IllegalStateException("BACKEND_VOICE_FEEDBACK_MISSING");
+        if (result.overallScore() == null || view.score() == null
+                || view.score().overallScore() == null
+                || view.score().overallScore().compareTo(result.overallScore()) != 0
+                || !"RUBRIC_COMPUTED".equals(view.score().validity())) {
+            throw new IllegalStateException("BACKEND_VOICE_NUMERIC_SCORE_MISSING_OR_CHANGED");
+        }
         System.out.println("{\"passed\":true,\"scope\":\"BACKEND_JAVA_PARSE_HANDOFF_PUBLIC_PROJECTION\",\"databaseWritten\":false}");
     }
 }

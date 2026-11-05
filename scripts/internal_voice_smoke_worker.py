@@ -82,6 +82,9 @@ async def main(root):
         result = json.loads(projection)
         doc = handoff_document(body,projection,checked,identity)
         require(result['status']=='COMPLETED' and result['failure'] is None, 'INTERNAL_SMOKE_RESULT_FAILED')
+        require(type(result['score']['overallScore']) in (int,float)
+                and 0 <= result['score']['overallScore'] <= 100
+                and result['score']['validity']=='RUBRIC_COMPUTED', 'INTERNAL_SMOKE_NUMERIC_SCORE_REQUIRED')
         require(result['schemaVersion']=='voice-coaching.runpod-analysis-result.v6', 'INTERNAL_SMOKE_V6_MISSING')
         require(result['coaching']['generationStatus']=='SCHEMA_AND_STRUCTURAL_SEMANTICS_VALID'
                 and bool(result['coaching']['feedback']), 'INTERNAL_SMOKE_FEEDBACK_INVALID')
