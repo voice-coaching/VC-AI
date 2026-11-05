@@ -132,6 +132,41 @@ def install(payload, manifest):
 
 def release_assets(payload, manifest, *, install=False):
     """Pin new H5 assets in the same durable transaction as source/selection."""
+    for lane, files in manifest.get('coreReleases', {}).items():
+        require(lane in ('direct','internal'), 'COORDINATED_CORE_LANE')
+        prefix='AI_DIRECT_' if lane=='direct' else 'AI_CANONICAL_'
+        root=Path(manifest['selection'][prefix+'CORE_ROOT'])
+        require(root.parent==Path('/workspace/intelligentai/validation')
+                and root.name=='canonical_mfa_search_'+lane+'_20261105_v1', 'COORDINATED_CORE_PATH')
+        package={}
+        for name,pin in files.items():
+            path=PurePosixPath(name)
+            require(not path.is_absolute() and '..' not in path.parts and path.as_posix()==name
+                    and '\\' not in name, 'COORDINATED_CORE_FILE')
+            raw=owned(payload/'core'/lane/name)
+            require(digest(raw)==pin, 'COORDINATED_CORE_DIGEST')
+            package[name]=raw
+        contract=json.loads(package['release_manifest.json'])
+        require(digest(package['release_manifest.json'])==manifest[lane+'Core']
+                and set(package)==set(contract['file_sha256'])|{'release_manifest.json'}
+                and all(digest(package[n])==pin for n,pin in contract['file_sha256'].items()),
+                'COORDINATED_CORE_IDENTITY')
+        previous=Path(manifest['previousSelection'][prefix+'CORE_ROOT'])
+        require(contract['parent_manifest_sha256']==digest(owned(previous/'release_manifest.json')),
+                'COORDINATED_CORE_PARENT')
+        require(contract['mfa_search_policy']['beam']==100 and contract['mfa_search_policy']['retryBeam']==400,
+                'COORDINATED_CORE_SEARCH_POLICY')
+        for name,raw in package.items():
+            target=root/name
+            require(target.resolve()==target, 'COORDINATED_CORE_SYMLINK')
+            if target.exists():
+                require(owned(target)==raw, 'COORDINATED_CORE_IMMUTABLE')
+            elif install:
+                target.parent.mkdir(mode=0o750,parents=True,exist_ok=True)
+                for parent in (target.parent,*target.parent.parents):
+                    if parent==root.parent:break
+                    os.chown(parent,0,10001);parent.chmod(0o750)
+                controller.atomic(target,raw,0o440)
     for lane, files in manifest.get('h5Releases', {}).items():
         require(lane in ('direct', 'internal'), 'COORDINATED_H5_LANE')
         prefix = 'AI_DIRECT_' if lane == 'direct' else 'AI_CANONICAL_'
@@ -143,7 +178,8 @@ def release_assets(payload, manifest, *, install=False):
                                   'canonical_six_dimension_'+lane+'_20261105_v5_h5',
                                   'canonical_composite_exponential_'+lane+'_20261105_v2_h5',
                                   'canonical_native_rubric_single_call_'+lane+'_20261105_v1_h5',
-                                  'canonical_native_rubric_single_call_'+lane+'_20261105_v2_h5'}, 'COORDINATED_H5_PATH')
+                                  'canonical_native_rubric_single_call_'+lane+'_20261105_v2_h5',
+                                  'canonical_mfa_search_'+lane+'_20261105_v1_h5'}, 'COORDINATED_H5_PATH')
         package = {}
         for name, pin in files.items():
             path = PurePosixPath(name)
@@ -254,8 +290,9 @@ def activate(payload, manifest, bundle):
         require(set(before_selection) == set(manifest['selection']) == {
             'AI_DIRECT_CORE_ROOT','AI_DIRECT_LLM_ROOT','AI_CANONICAL_CORE_ROOT','AI_CANONICAL_LLM_ROOT'},
             'COORDINATED_SELECTION_KEYS')
-        require(all(before_selection[k] == manifest['selection'][k] for k in (
-            'AI_DIRECT_CORE_ROOT','AI_CANONICAL_CORE_ROOT')),
+        require(all(before_selection[k] == manifest['selection'][k]
+                    or lane in manifest.get('coreReleases', {}) for lane,k in (
+            ('direct','AI_DIRECT_CORE_ROOT'),('internal','AI_CANONICAL_CORE_ROOT'))),
             'COORDINATED_EXISTING_LANE_CHANGED')
         release_assets(payload, manifest)
     require(all(controller.values().get(k) == v for k,v in before_selection.items()),
