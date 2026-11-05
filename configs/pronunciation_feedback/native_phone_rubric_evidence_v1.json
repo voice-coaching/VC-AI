@@ -1,0 +1,15 @@
+{
+  "revision": "native-phone-rubric-evidence-v1",
+  "validationStatus": "EXPERT_REVIEW_PENDING",
+  "sourceRevision": "gop-ctc-af-sd-native-v1",
+  "scope": "MODEL_SUPPORT_AND_TOKEN_ALIGNMENT_NOT_HUMAN_CORRECTNESS",
+  "gopFlagThreshold": -2.0,
+  "flagRule": "gop <= gopFlagThreshold",
+  "thresholdBasis": "PROVISIONAL_ENGINEERING_STARTING_VALUE_NOT_CALIBRATED",
+  "alignmentAmbiguity": "UNSCORABLE",
+  "missingEvidence": "UNSCORABLE_NO_IMPUTATION",
+  "silentOnset": "PRESERVE_RECORDED_EXCLUSIONS",
+  "mergedPhones": "PRESERVE_TOKEN_EQUIVALENCE_NO_ADDED_PENALTY",
+  "logConsistencyTolerance": 0.000001,
+  "maximumSamples": 4096
+}

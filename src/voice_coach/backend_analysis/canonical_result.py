@@ -295,6 +295,8 @@ def preflight_canonical_result(
     bridge = frozen._bridge()
     if frozen.artifacts.identity.scoring:
         native_args = {}
+        if frozen.artifacts.identity.six_dimension:
+            native_args.update(core_bytes=result.core_bytes, script=request.script_text, binding=binding)
         if frozen.artifacts.identity.native and not frozen.artifacts.identity.gpt_grading:
             from .native_execution import admitted_binding
             native_args['native_binding'] = admitted_binding(request,

@@ -43,6 +43,8 @@ score = 100 * exp(-lambda * normalizedSquaredDeviation)
 
 원본 CORE에 기존 계산기가 요구하는 모든 기대 음소의 관측 상태가 있으면 기존 계산기로 검산표를 산출한다. 현재 Native/GOP CORE에는 그 상태가 없으므로 이 경우 R은 원래 규칙대로 unscorable이다. GOP나 선택 경고를 새 관측 상태로 변환하지 않는다.
 
+후속 구현인 [Native 발음 검산·단일 요청 프로파일](native-rubric-single-call-v1.md)은 `--native-rubric-policy`를 명시할 때 원본 GOP/정렬에서 별도 버전의 임시 근거 정책으로 상태를 파생한다. 위 설명은 이 옵션이 없는 기본 v2 동작이며, 새 옵션도 원본과 기존 계산식을 변경하지 않는다. 후보 구현과 운영 배포는 구분한다.
+
 이미 별도 서버 계산기가 생성한 공식 검산표가 있으면 CLI의 `--rubric-worksheet`로 제공할 수 있다. 이 파일은 서버/운영자가 관리하는 자료이며, 다음 네 키를 가진다.
 
 ```
