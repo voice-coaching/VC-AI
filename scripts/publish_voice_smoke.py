@@ -46,6 +46,10 @@ def main(args):
         raise ValueError('SMOKE_REAL_INTERNAL_V6_REQUIRED')
     if receipt.get('backendVerification',{}).get('passed') is not True:
         raise ValueError('SMOKE_BACKEND_PARSE_PROJECTION_REQUIRED')
+    score = internal.get('score', {})
+    if (type(score.get('overallScore')) not in (int, float)
+            or not 0 <= score['overallScore'] <= 100 or score.get('validity') != 'RUBRIC_COMPUTED'):
+        raise ValueError('SMOKE_INTERNAL_NUMERIC_SCORE_REQUIRED')
     for lane in receipt['lanes'].values():
         rows = lane['cases']
         if not lane['passed'] or len(rows) < 3 or any(

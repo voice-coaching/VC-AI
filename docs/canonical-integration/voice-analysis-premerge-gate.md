@@ -26,7 +26,7 @@ sudo python3 scripts/run_voice_smoke.py \
 
 direct와 internal 각각의 CORE/H5 조합에서 서로 다른 세 미디어를 분석한다. 이 여섯 건은 DirectInput 기반 수치/피드백 회귀이며 Backend 전체 경로를 대신하지 않는다. 추가로 확인된 장애의 실제 내부 request v4, 원본 음성, 원고, mediaPreparation을 사용해 CORE·GPT·검산·result v6·handoff v2를 생성한다. 해당 실제 결과를 Backend Java 파서와 프론트용 응답 변환기에 전달한다. 운영 DB 요청을 재등록하거나 실패 이력을 덮어쓰지 않는다.
 
-일반 여섯 사례는 ACCEPT, 숫자 종합점수와 피드백을 요구한다. 장애 사례도 ACCEPT·COMPLETED와 유효한 피드백을 요구하며, 근거 모호성 때문에 점수가 null인 경우 이를 숫자 점수 통과로 표시하지 않는다. 모든 생성에서 GPT POST 1회, 원본 CORE 바이트 보존과 GPT 원본 전달 SHA 일치를 확인한다. Backend 식별자·실행 ID·파일 SHA 검사는 유지하고 AI 전용 릴리스 해시의 고정 목록을 Backend에서 중복 관리하지 않는다. 테스트용 저장소와 프로세스는 운영 저장소와 분리한다. 운영 Backend DB 저장·증빙 업로드·이력 동기화와 브라우저 확인은 이 검사의 범위가 아니다.
+일반 여섯 사례는 ACCEPT, 숫자 종합점수와 피드백을 요구한다. 장애 사례도 ACCEPT·COMPLETED, 숫자 종합점수와 유효한 피드백을 요구한다. 점수가 null이면 검사와 PR 게시를 실패 처리한다. 모든 생성에서 GPT POST 1회, 원본 CORE 바이트 보존과 GPT 원본 전달 SHA 일치를 확인한다. Backend 식별자·실행 ID·파일 SHA 검사는 유지하고 AI 전용 릴리스 해시의 고정 목록을 Backend에서 중복 관리하지 않는다. 테스트용 저장소와 프로세스는 운영 저장소와 분리한다. 운영 Backend DB 저장·증빙 업로드·이력 동기화와 브라우저 확인은 이 검사의 범위가 아니다.
 
 루트 소유이고 다른 사용자가 수정할 수 없는 경로의 `receipt.json`만 상태 게시에 사용한다. PR의 head·tree와 receipt가 일치해야 하며 두 조합의 모든 사례가 성공해야 한다.
 
