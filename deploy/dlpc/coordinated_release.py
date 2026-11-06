@@ -137,7 +137,8 @@ def release_assets(payload, manifest, *, install=False):
         prefix='AI_DIRECT_' if lane=='direct' else 'AI_CANONICAL_'
         root=Path(manifest['selection'][prefix+'CORE_ROOT'])
         require(root.parent==Path('/workspace/intelligentai/validation')
-                and root.name=='canonical_mfa_search_'+lane+'_20261105_v1', 'COORDINATED_CORE_PATH')
+                and root.name in {'canonical_mfa_search_'+lane+'_20261105_v1',
+                                  'canonical_lip_sidecar_'+lane+'_20261106_v3'}, 'COORDINATED_CORE_PATH')
         package={}
         for name,pin in files.items():
             path=PurePosixPath(name)
@@ -180,7 +181,8 @@ def release_assets(payload, manifest, *, install=False):
                                   'canonical_native_rubric_single_call_'+lane+'_20261105_v1_h5',
                                   'canonical_native_rubric_single_call_'+lane+'_20261105_v2_h5',
                                   'canonical_mfa_search_'+lane+'_20261105_v1_h5',
-                                  'canonical_score_variation_'+lane+'_20261105_v2_h5'}, 'COORDINATED_H5_PATH')
+                                  'canonical_score_variation_'+lane+'_20261105_v2_h5',
+                                  'canonical_lip_'+lane+'_20261106_v4_h5'}, 'COORDINATED_H5_PATH')
         package = {}
         for name, pin in files.items():
             path = PurePosixPath(name)

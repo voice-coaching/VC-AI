@@ -1,0 +1,12 @@
+{
+  "revision": "lip-reference-components-provisional-v1",
+  "aperture_scale": 0.04,
+  "width_scale": 0.04,
+  "closure_scale": 0.02,
+  "timing_scale": 0.2,
+  "shape_tolerance": 0.01,
+  "closure_tolerance": 0.005,
+  "timing_tolerance": 0.1,
+  "minimum_motion": 0.01,
+  "decay": 0.5
+}

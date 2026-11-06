@@ -326,7 +326,8 @@ def preflight_canonical_result(
         elif frozen.artifacts.identity.six_dimension:
             _require(expected_view is None
                      and expression["items"] == [], "SIX_DIMENSION_EXPRESSION_CONTRACT")
-            bridge.verify_result(result.core_bytes, request.script_text, binding, result.expression_bytes)
+            bridge.verify_result(result.core_bytes, request.script_text, binding, result.expression_bytes,
+                **({"visual": _visual_payload} if _visual_payload is not None else {}))
         elif frozen.artifacts.identity.gop_grading:
             _require(expected_view is None and expression["adapterStatus"] == "READY"
                      and expression["items"] == [] and expression["dispatchAttempts"] == 1,
@@ -438,6 +439,9 @@ def _public_score(expression, view, harness):
         return dict(overallScore=None, validity=view["score"]["validity"] if view else "NOT_AVAILABLE",
                     reason="NO_APPROVED_SCORING_CONTRACT")
     composite = expression.get("sixDimension", {}).get("compositeGrade") if harness.six_dimension else None
+    audiovisual = expression.get("sixDimension", {}).get("audiovisualGrade") if harness.six_dimension else None
+    if audiovisual is not None and composite is not None:
+        composite = audiovisual
     if composite is not None:
         # preflight verifies the full private result against the AI calculator.
         # Preserve the existing public score name and states; do not ask peers

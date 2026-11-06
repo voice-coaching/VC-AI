@@ -54,7 +54,8 @@
     "scoreKind": {
       "enum": [
         "NONE",
-        "CALIBRATED"
+        "CALIBRATED",
+        "PROVISIONAL"
       ]
     },
     "reasonCodes": {
@@ -66,7 +67,10 @@
       "maxItems": 32
     },
     "selectionPolicy": {
-      "const": "FIRST_12_OBSERVED_MFA_INDICES_V1"
+      "enum": [
+        "FIRST_12_OBSERVED_MFA_INDICES_V1",
+        "LOWEST_12_SCORED_THEN_OBSERVED_V1"
+      ]
     },
     "availablePhoneCount": {
       "type": "integer",
@@ -125,7 +129,8 @@
             "enum": [
               "NONE",
               "REFERENCE_SIMILARITY",
-              "CALIBRATED"
+              "CALIBRATED",
+              "PROVISIONAL"
             ]
           },
           "audioStartSeconds": {
@@ -198,9 +203,11 @@
           "allowedActionIds": {
             "type": "array",
             "items": {
-              "type": "string"
+              "enum": [
+                "COMPARE_REFERENCE"
+              ]
             },
-            "maxItems": 0
+            "maxItems": 1
           },
           "reasonCodes": {
             "type": "array",

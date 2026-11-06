@@ -45,6 +45,7 @@ class ReferenceCatalog:
     references: tuple[LipReference, ...]
     calibrations: tuple[Calibration, ...]
     minimum_coverage: float
+    lip_policy: object | None = None
 
     @classmethod
     def load(cls, path: Path, expected_sha256: str):
@@ -63,10 +64,19 @@ class ReferenceCatalog:
         from .feature_protocol import strict_json
         require(0 < len(raw) <= MAX_CATALOG_BYTES and hashlib.sha256(raw).hexdigest() == sha(expected_sha256))
         data = strict_json(raw)
-        require(type(data) is dict and set(data) == {"schemaVersion", "revision", "mappingRevision",
-            "contextPolicy", "distancePolicy", "minimumCoverage", "references", "calibrations"})
-        require(data["schemaVersion"] == SCHEMA and data["mappingRevision"] == MAPPING.revision
+        keys = {"schemaVersion", "revision", "mappingRevision", "contextPolicy", "distancePolicy",
+                "minimumCoverage", "references", "calibrations"}
+        require(type(data) is dict and set(data) in (keys, keys | {"lipScoring"}))
+        extended = data["schemaVersion"] == "voice-coaching.lip-reference-catalog.v3"
+        require((extended and "lipScoring" in data or data["schemaVersion"] == SCHEMA and set(data) == keys)
+                and data["mappingRevision"] == MAPPING.revision
                 and data["contextPolicy"] == "EXACT_WORD_AND_ROLE_V1")
+        lip_policy = None
+        if extended:
+            from .lip_scoring import LipScorePolicy
+            require(type(data["lipScoring"]) is dict)
+            lip_policy = LipScorePolicy(**data["lipScoring"])
+            lip_policy.validate()
         revision = text(data["revision"])
         policy = DistancePolicy(**data["distancePolicy"])
         policy.validate(3)
@@ -74,8 +84,14 @@ class ReferenceCatalog:
         require(type(data["references"]) is list and len(data["references"]) <= 256)
         references = []
         for item in data["references"]:
-            require(type(item) is dict and set(item) == {"referenceId", "videoSha256", "expectedPhone", "role",
-                "context", "expertReviewId", "trajectory", "provenance"})
+            item_keys = {"referenceId", "videoSha256", "expectedPhone", "role",
+                         "context", "expertReviewId", "trajectory", "provenance"}
+            require(type(item) is dict and (set(item) == item_keys or
+                    extended and set(item) == item_keys | {"referenceAuthority"}))
+            authority = item.get("referenceAuthority", "EXPERT_REVIEWED")
+            require(authority in {"EXPERT_REVIEWED", "USER_DESIGNATED_EXEMPLAR"})
+            require(authority == "EXPERT_REVIEWED" or extended and item["expertReviewId"] is None)
+            review_id = text(item["expertReviewId"]) if authority == "EXPERT_REVIEWED" else ""
             provenance = item["provenance"]
             require(type(provenance) is dict and set(provenance) == {"sourceSha256", "coreSha256",
                 "preparedWavSha256", "expectedIndex", "audioStartSeconds", "audioEndSeconds",
@@ -100,7 +116,7 @@ class ReferenceCatalog:
             require(item["role"] in {"onset", "nucleus", "coda"})
             references.append(LipReference(text(item["referenceId"]), sha(item["videoSha256"]),
                 text(item["expectedPhone"], 20), item["role"], text(item["context"]), MAPPING.revision,
-                trajectory, text(item["expertReviewId"]), provenance["sourceSha256"]))
+                trajectory, review_id, provenance["sourceSha256"], authority))
         require(len({r.reference_id for r in references}) == len(references))
         require(type(data["calibrations"]) is list and len(data["calibrations"]) <= 256)
         calibrations = []
@@ -111,6 +127,7 @@ class ReferenceCatalog:
             require(ids and len(ids) == len(set(ids)) and len(ids) <= 32)
             matching = [r.reference_id for r in references if (r.expected_phone, r.role, r.context) ==
                         (item["expectedPhone"], item["role"], item["context"])]
+            require(all(r.expert_review_id for r in references if r.reference_id in ids))
             require(sorted(ids) == sorted(matching))
             calibration = Calibration(text(item["revision"]), text(item["validationReceipt"]),
                 text(item["expectedPhone"], 20), text(item["role"]), text(item["context"]), MAPPING.revision,
@@ -127,7 +144,7 @@ class ReferenceCatalog:
             calibrations.append(calibration)
         keys = [(c.expected_phone, c.role, c.context) for c in calibrations]
         require(len(keys) == len(set(keys)))
-        return cls(expected_sha256, revision, policy, tuple(references), tuple(calibrations), data["minimumCoverage"])
+        return cls(expected_sha256, revision, policy, tuple(references), tuple(calibrations), data["minimumCoverage"], lip_policy)
 
     def calibration_for(self, anchor):
         return next((c for c in self.calibrations if (c.expected_phone, c.role, c.context) ==

@@ -20,6 +20,7 @@ class HarnessIdentity:
     selection_view: bool = True
     six_dimension: bool = False
     direct_only: bool = False
+    audiovisual: bool = False
 
 
 S7 = HarnessIdentity(
@@ -230,6 +231,7 @@ AUDIOVISUAL = HarnessIdentity(
     '934729ee467a2eb030c244584c6fa5c3575ca9ed0a43348a59a486199c0f55e9',
     'c727910b9e30c1648adb120cbb5f8ef2178c806285331dfd095fcc39c5aedfee',
     '4cc0cbacd41b5c6f2ac20e6e4840bc5406f4c7ab79ecf53702586eeb5874ecbc', True, True, True, True,
+    audiovisual=True,
 )
 AUDIOVISUAL_LLM_DIRECTORY = 'canonical_dlpc_audiovisual_20261007_v2_h5'
 AUDIOVISUAL_CORE_DIRECTORY = "canonical_dlpc_audiovisual_core_20261007_v2"
@@ -399,6 +401,64 @@ SCORE_VARIATION_INTERNAL = HarnessIdentity(
     selection_view=False, six_dimension=True,
 )
 HARNESSES = {value.manifest_sha256: value for value in (S7, H5, SCORED_V1, SCORED_V2, SCORED, RESIDENT, NATIVE_V1, NATIVE, SEUNGUN_GPT_V1, SEUNGUN_GPT, DLPC_GOP, DLPC_ANNOUNCER, DLPC_CONCISE, DLPC_LUNA, DLPC_LUNA_NONE, DLPC_MFA_TRACE, DLPC_MFA_PREPARED, DLPC_MFA_DISAMBIGUATION, DLPC_SEUNGUN_SERVER, DLPC_PIPELINE_LATENCY, DLPC_PIPELINE_SOL61_LIGHT, DLPC_INTERNAL_BOUNDED, DLPC_LUNA_COMPACT, DLPC_LUNA_CACHED, AUDIOVISUAL, SIX_DIMENSION_V2, SIX_DIMENSION_INTERNAL_V2, SIX_DIMENSION_V3, SIX_DIMENSION_INTERNAL_V3, SIX_DIMENSION_V4, SIX_DIMENSION_INTERNAL_V4, SIX_DIMENSION, SIX_DIMENSION_INTERNAL, COMPOSITE_EXPONENTIAL, COMPOSITE_EXPONENTIAL_INTERNAL, NATIVE_RUBRIC_SINGLE_CALL, NATIVE_RUBRIC_SINGLE_CALL_INTERNAL, NATIVE_RUBRIC_SINGLE_CALL_V2, NATIVE_RUBRIC_SINGLE_CALL_V2_INTERNAL, MFA_SEARCH, MFA_SEARCH_INTERNAL, SCORE_VARIATION, SCORE_VARIATION_INTERNAL)}
+
+
+LIP_CAPTURE_DIRECT_V1 = HarnessIdentity(
+    'canonical-lip-direct-20261106-v1',
+    '5803f76d564e285db8e6cf12ecf9c6de4720213bbe272b1ea9ab658634eec94c',
+    '303590059dc93a918db2fe69e9f957c09a38c03f46ae14db916cca3971c4165a',
+    'f6b256c1b3bbe17bd2453e23d722e25800dc178576e694c1585b8cf92b9fe5cb',
+    '99a8d999d0364db97d5a25f72b28ef1b3c933916ddbee0073117d4a5e06e00ca',
+    scoring=True, native=True, gpt_grading=True, gop_grading=True,
+    model='gpt-6.1-terra', reasoning_effort='none', service_tier='default',
+    selection_view=False, six_dimension=True, direct_only=True,
+)
+# Isolated reference capture only; this does not select the operational lane.
+HARNESSES[LIP_CAPTURE_DIRECT_V1.manifest_sha256] = LIP_CAPTURE_DIRECT_V1
+LIP_CAPTURE_DIRECT_V2 = HarnessIdentity(
+    'canonical-lip-capture-direct-20261106-v2',
+    '9b872e3582a35b1eb2dac9dd3dddda15d7e25db516fa540bdddadfa73cc254f1',
+    'e46b3de20be7494208b9b329a2c3964853799284ff30afb22b6bc2d181a11d15',
+    'f6b256c1b3bbe17bd2453e23d722e25800dc178576e694c1585b8cf92b9fe5cb',
+    'a242a55e708bfd732660bac9cb4b51ac69c75efee2ca41a7a22e4fb4f35b271e',
+    scoring=True, native=True, gpt_grading=True, gop_grading=True,
+    model='gpt-6.1-terra', reasoning_effort='none', service_tier='default',
+    selection_view=False, six_dimension=True, direct_only=True,
+)
+HARNESSES[LIP_CAPTURE_DIRECT_V2.manifest_sha256] = LIP_CAPTURE_DIRECT_V2
+LIP_CAPTURE_DIRECT = HarnessIdentity(
+    'canonical-lip-capture-direct-20261106-v3',
+    'c66fb185c7a2f2801da1746b6c61126f803d5cefcd5d5d6e5d105a20e852e8da',
+    'd7237f223580140df4480f026bb5de1135c797cf2bada1b9b78f02f7e1f283c9',
+    'f6b256c1b3bbe17bd2453e23d722e25800dc178576e694c1585b8cf92b9fe5cb',
+    '880c8d77649024063e664e7bb9b80b26db07e016612bac664d578637e44e1806',
+    scoring=True, native=True, gpt_grading=True, gop_grading=True,
+    model='gpt-6.1-terra', reasoning_effort='none', service_tier='default',
+    selection_view=False, six_dimension=True, direct_only=True,
+)
+HARNESSES[LIP_CAPTURE_DIRECT.manifest_sha256] = LIP_CAPTURE_DIRECT
+
+LIP = HarnessIdentity(
+    'canonical-lip-direct-20261106-v4',
+    '382c46531b72ecc8d6909aef6c1d4527ee4ede7aa4fcb780328c751b5bbfbb6a',
+    '11deda790f6802a67eec2d5283843de301fbdbd66b10f9152d61f48a9c155ede',
+    '8ddcf1f763fdbd806412c32bfe5d46e7d2507daf81158a7d5aedc0f754618396',
+    LIP_CAPTURE_DIRECT.core_sha256,
+    scoring=True, native=True, gpt_grading=True, gop_grading=True,
+    model='gpt-6.1-terra', reasoning_effort='none', service_tier='default',
+    selection_view=False, six_dimension=True, direct_only=True, audiovisual=True,
+)
+LIP_INTERNAL = HarnessIdentity(
+    'canonical-lip-internal-20261106-v4',
+    'ed86be97bf36354f3b38e36c4374b695988be6044c0cfbfc46e7eb3eb3c2bd44',
+    '8b5fa941aa8ab9e228f8269afdd8c138cba871645842839bfd00ad345e6b69b2',
+    LIP.prompt_sha256,
+    'dae36e72646904bcdefc081654f67c06f80ff0565c384d439a5692e51ab7026b',
+    scoring=True, native=True, gpt_grading=True, gop_grading=True,
+    model='gpt-6.1-terra', reasoning_effort='none', service_tier='default',
+    selection_view=False, six_dimension=True, audiovisual=True,
+)
+HARNESSES.update({v.manifest_sha256: v for v in (LIP, LIP_INTERNAL)})
 
 
 def harness_identity(manifest_sha256: str) -> HarnessIdentity:

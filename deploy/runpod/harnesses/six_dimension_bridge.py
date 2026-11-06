@@ -8,6 +8,7 @@ from .assessment import validate_binding
 from .pipeline import evaluate, request_payload, validate_coaching, public_feedback, validate_public_feedback, rubric_context, prepare_assessment, SingleCallTransport
 from .composite import validate_composite_policy, validate_reference_asset
 from .native_rubric import validate_native_policy
+from .visual import visual_context, feedback_targets
 from .phone_rubric import validate_response as validate_rubric_response
 
 PARENT = "__CORE_MANIFEST__"
@@ -88,10 +89,10 @@ class Bridge:
         return ({"status": "UNSCORABLE"} if grade == {"status": "unscorable"}
                 else {"status": "READY", "result": grade})
 
-    def _payload(self, assessment, core, script, policy, prompt, *, core_bytes):
+    def _payload(self, assessment, core, script, policy, prompt, *, core_bytes, visual=None):
         return request_payload(assessment, core, script, policy, prompt, self.read("scoring_rubric.json"),
                                core_bytes=core_bytes, composite_policy=self.composite_policy(),
-                               native_rubric_policy=self.native_rubric_policy())
+                               native_rubric_policy=self.native_rubric_policy(), visual=visual)
 
     def _binding(self, core_bytes, script, binding):
         require(binding["parent_manifest_sha256"] == PARENT, "CORE_PARENT_BINDING")
@@ -110,7 +111,7 @@ class Bridge:
             validate_binding(core_bytes, script, projected)
         return core, projected
 
-    def prepare(self, core_bytes, script, binding, **_):
+    def prepare(self, core_bytes, script, binding, *, visual=None, **_):
         policy, digest, prompt = self._configuration()
         core, projected = self._binding(core_bytes, script, binding)
         status = core["input_validation"]["status"]
@@ -120,9 +121,9 @@ class Bridge:
             legacy_rubric=self.read("scoring_rubric.json"), composite_policy=self.composite_policy(),
             native_rubric_policy=self.native_rubric_policy())
         payload = None
-        if assessment["selectedCriterionIds"]:
+        if feedback_targets(assessment, visual_context(assessment, visual)):
             try:
-                payload = self._payload(assessment, core, script, policy, prompt, core_bytes=core_bytes)
+                payload = self._payload(assessment, core, script, policy, prompt, core_bytes=core_bytes, visual=visual)
             except ValueError as exc:
                 # dispatch/evaluate retains numeric scores when the input is over budget.
                 require(str(exc) == "INPUT_BUDGET_NO_SILENT_TRUNCATION", "SIX_DIMENSION_PREPARATION")
@@ -138,13 +139,13 @@ class Bridge:
         validate_public_feedback(text)
         return text
 
-    def dispatch(self, core_bytes, script, binding, *, transport, **_):
+    def dispatch(self, core_bytes, script, binding, *, transport, visual=None, **_):
         core = strict_json(core_bytes)
         one_call = SingleCallTransport(transport)
         base = dict(schemaVersion="canonical-llm-expression-result-v1", coreInputValidation=core["input_validation"],
                     coreSha256=sha(core_bytes), items=[], dispatchAttempts=0)
         try:
-            _, _, _, skip = self.prepare(core_bytes, script, binding)
+            _, _, _, skip = self.prepare(core_bytes, script, binding, visual=visual)
             if skip:
                 return dict(base, adapterStatus=skip, generationStatus="NOT_DISPATCHED", scoring={"status":"NOT_REQUESTED"})
             policy, digest, prompt = self._configuration()
@@ -152,7 +153,7 @@ class Bridge:
             result = evaluate(core_bytes=core_bytes, script=script, binding=projected, policy=policy,
                               policy_sha256=digest, prompt=prompt, transport=one_call,
                               legacy_rubric=self.read("scoring_rubric.json"), composite_policy=self.composite_policy(),
-                              native_rubric_policy=self.native_rubric_policy())
+                              native_rubric_policy=self.native_rubric_policy(), visual=visual)
             jsonschema.Draft202012Validator(self.read("six_dimension_result.schema.json")).validate(result)
         except Exception as exc:
             if one_call.used:
@@ -180,7 +181,7 @@ class Bridge:
                     feedback=feedback, scoring=scoring, sixDimension=result,
                     naturalLanguageSemanticsFullyVerified=False, visualCorrectiveClaimsAllowed=False)
 
-    def verify_result(self, core_bytes, script, binding, expression_bytes):
+    def verify_result(self, core_bytes, script, binding, expression_bytes, *, visual=None):
         expression = strict_json(expression_bytes)
         policy, digest, prompt = self._configuration()
         core, projected = self._binding(core_bytes, script, binding)
@@ -200,23 +201,29 @@ class Bridge:
         else:
             require("rubricEvidence" not in result, "UNEXPECTED_NATIVE_RUBRIC_EVIDENCE")
         composite_result = expected["auxiliary"]["composite"]["result"] if composite_policy is not None else None
+        visual_info = visual_context(expected, visual)
+        if visual_info is not None:
+            require(result.get("audiovisualGrade") == visual_info["grade"], "AUDIOVISUAL_SERVER_RESULT_MISMATCH")
+        else:
+            require("audiovisualGrade" not in result, "UNEXPECTED_AUDIOVISUAL_GRADE")
         if composite_result is not None:
             require(result["compositeGrade"] == composite_result, "COMPOSITE_SERVER_RESULT_MISMATCH")
-        if not expected["selectedCriterionIds"]:
+        if not feedback_targets(expected, visual_info):
             require(result["dispatchAttempts"] == 0 and result["generationStatus"] == "NOT_REQUESTED",
                     "SIX_DIMENSION_UNAVAILABLE_DISPATCH")
         require(result["model"] == policy["request"]["model"] and result["promptSha256"] == sha(prompt.encode())
                 and result["requestConfigSha256"] == sha(encode(policy["request"])), "SIX_DIMENSION_CONFIG_MISMATCH")
         if result["generationStatus"] == "STRUCTURALLY_VALID":
             keys = ("assessments", "feedback", "legacyGrade") + (("compositeGrade",) if composite_result is not None else ())
-            validate_coaching({key: result[key] for key in keys}, expected, rubric_result, composite_result)
+            keys += (("audiovisualGrade",) if visual_info is not None else ())
+            validate_coaching({key: result[key] for key in keys}, expected, rubric_result, composite_result, visual_info)
         if result["dispatchAttempts"]:
-            payload = self._payload(expected, core, script, policy, prompt, core_bytes=core_bytes)
+            payload = self._payload(expected, core, script, policy, prompt, core_bytes=core_bytes, visual=visual)
             require(result["requestSha256"] == sha(payload), "SIX_DIMENSION_REQUEST_MISMATCH")
-        elif expected["selectedCriterionIds"]:
+        elif feedback_targets(expected, visual_info):
             # A scored request can be undispatched only if deterministic preparation failed.
             try:
-                self._payload(expected, core, script, policy, prompt, core_bytes=core_bytes)
+                self._payload(expected, core, script, policy, prompt, core_bytes=core_bytes, visual=visual)
             except ValueError as exc:
                 require(result["generationStatus"] == "NOT_DISPATCHED" and result["errorCode"] == str(exc),
                         "SIX_DIMENSION_PREPARATION_MISMATCH")

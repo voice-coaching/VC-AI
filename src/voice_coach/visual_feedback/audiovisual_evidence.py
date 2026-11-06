@@ -69,6 +69,7 @@ class LipReference:
     trajectory: Trajectory
     expert_review_id: str
     source_sha256: str
+    authority: str = "EXPERT_REVIEWED"
 
 
 @dataclass(frozen=True)
@@ -124,7 +125,9 @@ def assess_phone(anchor: PhoneAnchor, *, frames: tuple[LipFrame, ...],
             raise UnscorableTrajectory("INVALID_FRAME_PTS")
         selected = [frame for frame in frames if start <= frame.pts_s < end]
         # Dropping occluded frames can silently hide the closure gesture.
-        if not selected or any(not frame.observable for frame in selected):
+        if not selected:
+            raise UnscorableTrajectory("NO_FRAME_IN_ALIGNED_SPAN")
+        if any(not frame.observable for frame in selected):
             raise UnscorableTrajectory("LOW_VISIBILITY")
         result["frameCount"] = len(selected)
         observed = Trajectory(tuple(f.pts_s for f in selected), tuple(f.landmarks for f in selected),
@@ -156,7 +159,7 @@ def assess_phone(anchor: PhoneAnchor, *, frames: tuple[LipFrame, ...],
 
 
 def aggregate(assessments: list[dict], *, target_count: int, visually_eligible_count: int,
-              minimum_coverage: float) -> dict:
+              minimum_coverage: float, allow_provisional: bool = False) -> dict:
     """Aggregate calibrated scores only, with explicit coverage. Missing is not zero."""
     indices = [row["expectedIndex"] for row in assessments]
     if (type(target_count) is not int or type(visually_eligible_count) is not int
@@ -164,7 +167,8 @@ def aggregate(assessments: list[dict], *, target_count: int, visually_eligible_c
             or len(indices) != len(set(indices)) or not math.isfinite(minimum_coverage)
             or not 0 <= minimum_coverage <= 1):
         raise UnscorableTrajectory("INVALID_COVERAGE")
-    scored = [r["score"] for r in assessments if r["status"] == "SCORED" and r["scoreKind"] == "CALIBRATED"]
+    kinds = {"CALIBRATED", "PROVISIONAL"} if allow_provisional else {"CALIBRATED"}
+    scored = [r["score"] for r in assessments if r["status"] == "SCORED" and r["scoreKind"] in kinds]
     if any(type(v) not in (int, float) or not math.isfinite(v) or not 0 <= v <= 100 for v in scored):
         raise UnscorableTrajectory("INVALID_SCORE")
     coverage = len(scored) / visually_eligible_count if visually_eligible_count else None

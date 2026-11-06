@@ -43,7 +43,7 @@ async def _bounded(stream, limit):
     return bytes(result)
 
 
-async def _reap(processes):
+async def _reap(processes, tasks=()):
     # Even a leader that exited may have left its own group alive. The launcher
     # prohibits fork/setpgid, so only native threads are possible, but kill the
     # group as well rather than relying on that implementation detail.
@@ -52,6 +52,15 @@ async def _reap(processes):
             os.killpg(process.pid, signal.SIGKILL)
         except ProcessLookupError:
             pass
+    # Cancelled readers must release their StreamReader before we drain it.
+    # Process.wait() can otherwise hang after SIGKILL when a full pipe has
+    # paused its transport, so drain discarded output before waiting/reaping.
+    await asyncio.gather(*tasks, return_exceptions=True)
+    async def discard(stream):
+        if stream is not None:
+            while await stream.read(65536):
+                pass
+    await asyncio.gather(*(discard(stream) for p in processes for stream in (p.stdout, p.stderr)))
     await asyncio.gather(*(p.wait() for p in processes))
 
 
@@ -60,8 +69,7 @@ async def _drain_cleanup(processes, tasks):
         if not task.done():
             task.cancel()
     async def cleanup():
-        await _reap(processes)
-        await asyncio.gather(*tasks, return_exceptions=True)
+        await _reap(processes, tasks)
     task = asyncio.create_task(cleanup())
     cancelled = False
     while not task.done():
@@ -129,7 +137,7 @@ class CanonicalVideoFeatures:
             raw = await self._capture([c.ffprobe, "-v", "error", "-protocol_whitelist", "file,pipe",
                 "-show_streams", "-show_frames", "-show_entries",
                 "stream=index,codec_type,codec_name,width,height,time_base,sample_rate:"
-                "stream_tags=rotate:stream_side_data=rotation:"
+                "stream_tags=rotate:"
                 "frame=stream_index,best_effort_timestamp,nb_samples", "-of", "json", locator],
                 descriptor=descriptor, limit=8 * 1024**2)
             metadata = _strict_json(raw)
@@ -207,7 +215,7 @@ class CanonicalVideoFeatures:
         try:
             decoder = await self._spawn([c.ffmpeg, "-nostdin", "-v", "error", "-threads", "1",
                 "-protocol_whitelist", "file,pipe", "-noautorotate", "-copyts", "-i", locator,
-                "-map", "0:v:0", "-an", "-fps_mode", "passthrough", "-threads", "1",
+                "-map", "0:v:0", "-an", "-vsync", "0", "-threads", "1",
                 "-pix_fmt", "rgb24", "-f", "rawvideo", "pipe:1"], descriptor=descriptor)
             processes.append(decoder)
             decoder.stdin.close()

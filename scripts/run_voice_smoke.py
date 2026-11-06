@@ -84,7 +84,7 @@ def main(args):
             b'__CORE_MANIFEST__', sha((core/'release_manifest.json').read_bytes()).encode())
         if frozen != (h5/'bridge/adapter.py').read_bytes():
             raise ValueError('SMOKE_H5_ADAPTER_NOT_CANDIDATE')
-        for name in ('policy', 'assessment', 'composite', 'native_rubric', 'pipeline'):
+        for name in ('policy', 'assessment', 'composite', 'native_rubric', 'pipeline', 'visual'):
             if (source/f'src/voice_coach/six_dimension/{name}.py').read_bytes() != (h5/f'bridge/{name}.py').read_bytes():
                 raise ValueError('SMOKE_H5_MODULE_NOT_CANDIDATE')
         root = output/lane

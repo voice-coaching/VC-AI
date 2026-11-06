@@ -21,9 +21,8 @@ def audio_expression(result):
 
 
 def visual_assets(frozen):
-    from .canonical_harness import AUDIOVISUAL
     from voice_coach.visual_feedback.reference_catalog import ReferenceCatalog
-    _require(frozen.artifacts.identity == AUDIOVISUAL, "AUDIOVISUAL_HARNESS_REQUIRED")
+    _require(frozen.artifacts.identity.audiovisual, "AUDIOVISUAL_HARNESS_REQUIRED")
     lock = frozen.artifacts.verify()
     root = frozen.artifacts.llm_root
     catalog_path = "contracts/visual/reference-catalog.json"
@@ -32,7 +31,7 @@ def visual_assets(frozen):
     return catalog, configuration
 
 
-def validated_visual(raw, *, request, frozen, core, prepared_audio):
+def validated_visual(raw, *, request, frozen, core, prepared_audio, core_raw=None):
     from .media_preparation import MediaPreparation
     from voice_coach.visual_feedback.canonical_verification import verify_visual_evidence
     _require(request.is_audiovisual and request.visual_input is not None, "AUDIOVISUAL_REQUEST_REQUIRED")
@@ -40,7 +39,7 @@ def validated_visual(raw, *, request, frozen, core, prepared_audio):
                                video_sha256=request.visual_input.sha256)
     catalog, configuration = visual_assets(frozen)
     return verify_visual_evidence(raw, core=core, request=request, catalog=catalog,
-        expected_model_sha256=configuration["modelSha256"], prepared_audio=prepared_audio)
+        expected_model_sha256=configuration["modelSha256"], prepared_audio=prepared_audio, core_raw=core_raw)
 
 
 def preflight(result, *, request, frozen, prepared_audio=None):
@@ -59,7 +58,7 @@ def preflight(result, *, request, frozen, prepared_audio=None):
     if request.is_audiovisual:
         _require(result.visual_evidence_bytes is not None, "AUDIOVISUAL_ARTIFACTS_REQUIRED")
         visual = validated_visual(result.visual_evidence_bytes, request=request, frozen=frozen,
-                                   core=_json(result.core_bytes), prepared_audio=prepared_audio)["visual"]
+            core=_json(result.core_bytes), prepared_audio=prepared_audio, core_raw=result.core_bytes)["visual"]
         payload = prepare_visual_coaching(result.visual_evidence_bytes, core_bytes=result.core_bytes)
     else:
         _require(result.visual_evidence_bytes is None, "UNEXPECTED_VISUAL_EVIDENCE")
