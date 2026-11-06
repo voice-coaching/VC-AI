@@ -775,6 +775,80 @@
     },
     "rubricEvidence": {
       "$ref": "#/$defs/nativeRubricEvidence"
+    },
+    "audiovisualGrade": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "rubricRevision",
+        "validationStatus",
+        "overallScore",
+        "audioScore",
+        "visualScore",
+        "audioWeight",
+        "visualWeight",
+        "aggregationMode",
+        "scoreMeaning",
+        "visualScoreKind"
+      ],
+      "properties": {
+        "rubricRevision": {
+          "const": "audiovisual-lip-composite-v1"
+        },
+        "validationStatus": {
+          "const": "EXPERT_REVIEW_PENDING"
+        },
+        "overallScore": {
+          "type": [
+            "number",
+            "null"
+          ],
+          "minimum": 0,
+          "maximum": 100
+        },
+        "audioScore": {
+          "type": [
+            "number",
+            "null"
+          ],
+          "minimum": 0,
+          "maximum": 100
+        },
+        "visualScore": {
+          "type": [
+            "number",
+            "null"
+          ],
+          "minimum": 0,
+          "maximum": 100
+        },
+        "audioWeight": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 100
+        },
+        "visualWeight": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 100
+        },
+        "aggregationMode": {
+          "enum": [
+            "AUDIO_VISUAL",
+            "AUDIO_ONLY"
+          ]
+        },
+        "scoreMeaning": {
+          "const": "VISIBLE_LIP_REFERENCE_PROXIMITY_AND_AUDIO"
+        },
+        "visualScoreKind": {
+          "enum": [
+            "NONE",
+            "CALIBRATED",
+            "PROVISIONAL"
+          ]
+        }
+      }
     }
   },
   "allOf": [

@@ -25,11 +25,40 @@ class AlignmentAnchors:
     scope: str = ALIGNMENT_SCOPE
 
 
-def anchors_from_core(core: dict, *, request_id: str, audio_sha256: str, prepared_sha256: str):
+def anchors_from_core(core: dict, *, request_id: str, audio_sha256: str, prepared_sha256: str,
+                      alignment_evidence: dict | None = None, core_sha256: str | None = None,
+                      core_raw: bytes | None = None):
     if (core.get("request_id") != request_id or core.get("source_audio_sha256") != audio_sha256
             or core.get("prepared_wav_sha256") != prepared_sha256):
         raise MediaIntegrityFailure("MFA_ATTEMPT_MISMATCH")
     alignment = core.get("mfa_phone_alignment")
+    if alignment_evidence is not None:
+        import json
+        from .feature_protocol import strict_json
+        sidecar = alignment_evidence
+        if core_raw is None or (core_sha256 is not None and hashlib.sha256(core_raw).hexdigest() != core_sha256):
+            raise MediaIntegrityFailure("MFA_ATTEMPT_MISMATCH")
+        # The service codec may use Decimal; hash the original JSON's ordinary
+        # decoding exactly as the exporter did, without altering CORE bytes.
+        original = strict_json(core_raw)
+        receipt_sha = hashlib.sha256(json.dumps(original.get("mfa_receipt"), ensure_ascii=False,
+            sort_keys=True, separators=(",", ":"), allow_nan=False).encode()).hexdigest()
+        if (type(sidecar) is not dict or set(sidecar) != {"schemaVersion", "requestId", "coreSha256",
+                "sourceAudioSha256", "preparedWavSha256", "mfaReceiptSha256", "alignment"}
+                or sidecar["schemaVersion"] != "voice-coaching.mfa-alignment-sidecar.v1"
+                or sidecar["coreSha256"] != hashlib.sha256(core_raw).hexdigest()
+                or sidecar["requestId"] != request_id or sidecar["sourceAudioSha256"] != audio_sha256
+                or sidecar["preparedWavSha256"] != prepared_sha256 or sidecar["mfaReceiptSha256"] != receipt_sha):
+            raise MediaIntegrityFailure("MFA_ATTEMPT_MISMATCH")
+        if alignment is not None and alignment != sidecar["alignment"]:
+            raise MediaIntegrityFailure("MFA_EVIDENCE_CONFLICT")
+        alignment = sidecar["alignment"]
+    if alignment is None:
+        # Modern audio COREs do not export MFA spans. Preserve the original
+        # JSON and audio scoring instead of manufacturing phone timestamps.
+        count = core.get("expected_phone_count")
+        count = count if type(count) is int and 0 <= count <= 2048 else 0
+        return AlignmentAnchors((), tuple(range(count)), count)
     if (type(alignment) is not dict or set(alignment) != {"schemaVersion", "indexNamespace", "rows"}
             or alignment["schemaVersion"] != "voice-coaching.canonical-mfa-phone-alignment.v1"
             or alignment["indexNamespace"] != "DETECTOR_METADATA_V2"):

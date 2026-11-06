@@ -94,6 +94,7 @@ class ProducedCanonicalCore:
     prepared_wav: Path | None = field(repr=False)
     prepared_audio: PreparedAudioIdentity | None
     timings: dict[str, float] = field(default_factory=dict)
+    alignment_evidence: bytes | None = field(default=None, repr=False)
 
 
 def write_private_new(path: Path, raw: bytes) -> None:
@@ -208,4 +209,8 @@ class FrozenCanonicalProducer:
             ("preparationSeconds", "audioVerified", "prepared"),
             ("residentSeconds", "prepared", "inferenceFinished"),
             ("outputValidationSeconds", "inferenceFinished", "outputValidated"))}
-        return ProducedCanonicalCore(raw, work, prepared, identity, timings)
+        alignment = None
+        sidecar = output / 'candidate/results' / (str(request.event_id) + '.alignment.json')
+        if getattr(request, 'is_audiovisual', False) and sidecar.exists():
+            alignment = read_private_result(sidecar, work, 1024**2)
+        return ProducedCanonicalCore(raw, work, prepared, identity, timings, alignment)

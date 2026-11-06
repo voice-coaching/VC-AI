@@ -40,13 +40,12 @@ def write_new(path, raw):
 async def capture(args):
     from jsonschema import Draft202012Validator
     from voice_coach.backend_analysis.canonical_bridge import FrozenCanonicalArtifacts
-    from voice_coach.backend_analysis.canonical_harness import AUDIOVISUAL
     from voice_coach.backend_analysis.canonical_audiovisual_result import visual_assets
     from voice_coach.backend_analysis.canonical_bridge import FrozenCanonicalCoaching
     from voice_coach.visual_feedback.adapters.canonical_video_features import CanonicalVideoFeatures, VideoFeatureConfiguration
     from voice_coach.visual_feedback.canonical_alignment import pcm_identity
     artifacts = FrozenCanonicalArtifacts(args.core_root, args.llm_root)
-    require(artifacts.identity == AUDIOVISUAL)
+    require(artifacts.identity.audiovisual)
     artifacts.verify()
     catalog, config = visual_assets(FrozenCanonicalCoaching(artifacts))
     core_raw = read(args.core_result, 16 * 1024**2)
@@ -64,7 +63,9 @@ async def capture(args):
                                             byte_count=args.video.stat().st_size)
     result = capture_reference(core=core, core_raw=core_raw, receipt=receipt, features=features,
         source_pcm=pcm_identity(args.source_pcm, receipt["canonicalPcmSha256"]),
-        prepared_pcm=pcm_identity(args.prepared_pcm, core["prepared_wav_sha256"]), catalog=catalog)
+        prepared_pcm=pcm_identity(args.prepared_pcm, core["prepared_wav_sha256"]), catalog=catalog,
+        alignment_evidence=(strict_json(read(args.alignment_sidecar, 1024**2))
+                            if args.alignment_sidecar is not None else None))
     raw = encode(result)
     require(len(raw) <= 8 * 1024**2)
     write_new(args.output, raw)
@@ -82,11 +83,15 @@ def main():
                  "video", "visual-python", "model", "output", "review-output"):
         c.add_argument("--" + name, type=Path, required=True)
     c.add_argument("--source-sha256", required=True)
+    c.add_argument("--alignment-sidecar", type=Path)
     b = commands.add_parser("compile")
     for name in ("capture", "review", "base-catalog", "output"):
         b.add_argument("--" + name, type=Path, required=True)
     b.add_argument("--revision", required=True)
     b.add_argument("--model-sha256", required=True)
+    b.add_argument("--lip-score-policy", type=Path,
+                   help="Explicit opt-in to provisional components; requires measured reviewed references")
+    b.add_argument("--minimum-coverage", type=float, default=0.6)
     args = parser.parse_args()
     try:
         if args.operation == "capture":
@@ -95,6 +100,10 @@ def main():
             raw = compile_reviewed_catalog(capture_raw=read(args.capture, 8 * 1024**2),
                 review_raw=read(args.review, 256 * 1024), base_raw=read(args.base_catalog, 8 * 1024**2),
                 revision=args.revision, model_sha256=args.model_sha256)
+            if args.lip_score_policy is not None:
+                from voice_coach.visual_feedback.reference_preparation import enable_provisional_scoring
+                raw = enable_provisional_scoring(raw, read(args.lip_score_policy, 16384),
+                                                minimum_coverage=args.minimum_coverage)
             write_new(args.output, raw)
             result = dict(catalogSha256=hashlib.sha256(raw).hexdigest(), calibrationFitted=False, activationPerformed=False)
         print(encode(result).decode("utf-8"))

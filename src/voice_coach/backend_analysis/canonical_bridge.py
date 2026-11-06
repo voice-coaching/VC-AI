@@ -178,6 +178,8 @@ class FrozenCanonicalCoaching:
                 modules = ("policy", "assessment", "phone_rubric", "composite", "pipeline", "adapter")
             if "bridge/native_rubric.py" in lock["files"]:
                 modules = ("policy", "assessment", "phone_rubric", "composite", "native_rubric", "pipeline", "adapter")
+            if "bridge/visual.py" in lock["files"]:
+                modules = tuple(m for name in modules for m in (("visual", "pipeline") if name == "pipeline" else (name,)))
         for name in modules:
             relative = f"bridge/{name}.py"
             raw = _contained_file(root, relative).read_bytes()
@@ -269,7 +271,7 @@ class FrozenCanonicalCoaching:
             from voice_coach.visual_feedback.coaching_input import prepare_visual_coaching
             _require(visual_evidence_bytes is not None, "VISUAL_EVIDENCE_REQUIRED")
             validated_visual(visual_evidence_bytes, request=request, frozen=self,
-                             core=core, prepared_audio=prepared_identity)
+                             core=core, prepared_audio=prepared_identity, core_raw=core_bytes)
             visual_args["visual"] = prepare_visual_coaching(visual_evidence_bytes, core_bytes=core_bytes)
             media_receipt_bytes = _encode(request.media_preparation["receipt"])
         else:

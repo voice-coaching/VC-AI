@@ -18,7 +18,7 @@ def require(ok):
 
 
 def verify_visual_evidence(raw: bytes, *, core: dict, request, catalog: ReferenceCatalog,
-                           expected_model_sha256: str, prepared_audio):
+                           expected_model_sha256: str, prepared_audio, core_raw=None):
     """Return evidence only after identity, structure, score and observation replay.
 
 This verifies consistency of retained extraction evidence. It does not certify
@@ -27,9 +27,10 @@ Authenticated producer provenance is a separate handoff responsibility.
 """
     require(0 < len(raw) <= 16 * 1024**2 and request.visual_input is not None)
     value = strict_json(raw)
-    require(type(value) is dict and set(value) == {"schemaVersion", "requestId", "executionId",
+    keys = {"schemaVersion", "requestId", "executionId",
         "audioSha256", "videoSha256", "preparedWavSha256", "referenceCatalogSha256", "mappingRevision",
-        "distancePolicyRevision", "sourcePcm", "preparedPcm", "timeMap", "decoder", "frames", "visual"})
+        "distancePolicyRevision", "sourcePcm", "preparedPcm", "timeMap", "decoder", "frames", "visual"}
+    require(type(value) is dict and set(value) in (keys, keys | {"alignmentSidecar"}))
     require(value["schemaVersion"] == EVIDENCE_SCHEMA and value["requestId"] == str(request.event_id)
         and value["executionId"] == str(request.execution_id) and value["audioSha256"] == request.audio_sha256
         and value["videoSha256"] == request.visual_input.sha256
@@ -38,6 +39,7 @@ Authenticated producer provenance is a separate handoff responsibility.
         and value["distancePolicyRevision"] == catalog.policy.revision)
     decoder = value["decoder"]
     if decoder is None:
+        require("alignmentSidecar" not in value)
         visual = value["visual"]
         require(type(visual) is dict and set(visual) == {"status", "correctiveClaimsAllowed", "score",
             "scoreKind", "coverage", "phoneAssessments", "reasonCodes", "alignmentScope", "unresolvedExpectedIndices"})
@@ -86,6 +88,7 @@ Authenticated producer provenance is a separate handoff responsibility.
     # scores cannot be substituted or recalculated from a different reference.
     features = dict(decoder, features=dict(protocol=PROTOCOL, mappingRevision=MAPPING.revision, frames=value["frames"]))
     replay = assess_aligned(core=core, request=request, feature_value=features,
-        source_pcm=value["sourcePcm"], prepared_pcm=value["preparedPcm"], catalog=catalog)
+        source_pcm=value["sourcePcm"], prepared_pcm=value["preparedPcm"], catalog=catalog,
+        alignment_evidence=value.get("alignmentSidecar"), core_raw=core_raw)
     require(replay == value)
     return value

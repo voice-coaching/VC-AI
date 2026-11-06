@@ -172,10 +172,9 @@ class HttpRuntime:
                 and self.environment.get("AI_CANONICAL_HANDOFF_ENABLED") == "true")
 
     def audiovisual_executor_ready(self):
-        from .canonical_harness import AUDIOVISUAL
         return (self.handoff_executor_ready()
                 and self.environment.get("AI_CANONICAL_AUDIOVISUAL_ENABLED") == "true"
-                and self.canonical_lane.resident.artifacts.identity == AUDIOVISUAL
+                and self.canonical_lane.resident.artifacts.identity.audiovisual
                 and time.monotonic() < self.audiovisual_assets_until)
 
     def audiovisual_admission_ready(self):

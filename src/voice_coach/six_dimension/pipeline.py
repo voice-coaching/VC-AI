@@ -14,6 +14,7 @@ from .policy import encode, error_code, number, require, sha, strict_json, valid
 from . import phone_rubric
 from .composite import composite_assessment, validate_composite_policy, validate_worksheet
 from .native_rubric import rubric_context as native_rubric_context
+from .visual import visual_context, feedback_targets
 
 MAX_FEEDBACK_LINES = 3
 MAX_FEEDBACK_SENTENCES = 5
@@ -125,21 +126,21 @@ def prepare_assessment(core: dict, script: str, binding: dict, policy: dict, pol
 
 
 def coaching_schema(assessment: dict, rubric_result: dict | None = None,
-                    composite_result: dict | None = None) -> dict:
+                    composite_result: dict | None = None, visual=None) -> dict:
     """Provider response contract pins score, order and criterion-owned evidence."""
     summaries, feedback = [], []
-    by_id = {item["criterionId"]: item for item in assessment["criteria"]}
     for item in assessment["criteria"]:
         summaries.append(dict(type="object", additionalProperties=False,
             required=["criterionId", "score", "evidenceIds", "observation"], properties={
                 "criterionId": {"const": item["criterionId"]}, "score": {"const": item["score"]},
                 "evidenceIds": {"const": item["evidenceIds"]}, "observation": _text(240)}))
-    for key in assessment["selectedCriterionIds"]:
+    for target in feedback_targets(assessment, visual):
+        key = target["criterionId"]
         feedback.append(dict(type="object", additionalProperties=False,
             required=["criterionId", "evidenceIds", "observation", "practice"], properties={
                 "criterionId": {"const": key},
                 "evidenceIds": dict(type="array", minItems=1, uniqueItems=True,
-                                    items={"enum": by_id[key]["evidenceIds"]}),
+                                    items={"enum": target["evidenceIds"]}),
                 "observation": _text(240), "practice": _text(MAX_PRACTICE_CHARACTERS)}))
     schema = dict(type="object", additionalProperties=False, required=["assessments", "feedback"], properties={
         "assessments": dict(type="array", prefixItems=summaries, items=False, minItems=6, maxItems=6),
@@ -151,13 +152,16 @@ def coaching_schema(assessment: dict, rubric_result: dict | None = None,
     if composite_result is not None:
         schema["required"].append("compositeGrade")
         schema["properties"]["compositeGrade"] = {"const": composite_result}
+    if visual is not None:
+        schema["required"].append("audiovisualGrade")
+        schema["properties"]["audiovisualGrade"] = {"const": visual["grade"]}
     return schema
 
 
 def request_payload(assessment: dict, core: dict, script: str, policy: dict, prompt: str,
                     legacy_rubric: dict | None = None, *, core_bytes: bytes,
                     composite_policy: dict | None = None, rubric_worksheet: dict | None = None,
-                    native_rubric_policy: dict | None = None) -> bytes:
+                    native_rubric_policy: dict | None = None, visual: dict | None = None) -> bytes:
     require(isinstance(prompt, str) and bool(prompt.strip()), "SYSTEM_PROMPT_MISSING")
     require(rubric_worksheet is None or composite_policy is not None, "WORKSHEET_REQUIRES_COMPOSITE_VERSION")
     require(type(core_bytes) is bytes and sha(core_bytes) == assessment["association"]["coreSha256"],
@@ -166,6 +170,7 @@ def request_payload(assessment: dict, core: dict, script: str, policy: dict, pro
     raw_core_text = core_bytes.decode("utf-8", errors="strict")
     require(raw_core_text.encode("utf-8") == core_bytes, "RAW_CORE_UTF8_IDENTITY")
     config = policy["request"]
+    visual_info = visual_context(assessment, visual)
     # Supplemental scoring metadata stays separate from the original CORE.
     # Never re-encode, select fields, summarize or truncate the raw JSON message.
     projected = {key: assessment[key] for key in (
@@ -185,7 +190,7 @@ def request_payload(assessment: dict, core: dict, script: str, policy: dict, pro
                 RUBRIC=dict(revision=policy["revision"], validationStatus=policy["validationStatus"],
                             bands=policy["bands"], pronunciation=policy["pronunciation"],
                             scopes=policy["scopes"], pauseWeights=policy["pauseWeights"]),
-                OUTPUT_SCHEMA=coaching_schema(assessment, scoring["RUBRIC_RESULT"] if scoring else None, composite_result))
+                OUTPUT_SCHEMA=coaching_schema(assessment, scoring["RUBRIC_RESULT"] if scoring else None, composite_result, visual_info))
     if scoring is not None:
         data.update(scoring)
     if composite_result is not None:
@@ -194,6 +199,9 @@ def request_payload(assessment: dict, core: dict, script: str, policy: dict, pro
                               validationStatus=composite_policy["validationStatus"])
         data.update(COMPOSITE_POLICY=composite_policy, COMPOSITE_RESULT=composite_result,
                     COMPOSITE_WORKSHEET=assessment["auxiliary"]["composite"]["worksheet"])
+    if visual_info is not None:
+        data.update(VISUAL_EVIDENCE=visual_info["input"], AUDIOVISUAL_RESULT=visual_info["grade"],
+                    FEEDBACK_TARGETS=feedback_targets(assessment, visual_info))
     messages = [dict(role="system", content=prompt),
                 dict(role="user", content=encode(data).decode("utf-8")),
                 dict(role="user", content=raw_core_text)]
@@ -210,8 +218,8 @@ def request_payload(assessment: dict, core: dict, script: str, policy: dict, pro
 
 
 def validate_coaching(candidate: dict, assessment: dict, rubric_result: dict | None = None,
-                      composite_result: dict | None = None) -> None:
-    jsonschema.Draft202012Validator(coaching_schema(assessment, rubric_result, composite_result)).validate(candidate)
+                      composite_result: dict | None = None, visual=None) -> None:
+    jsonschema.Draft202012Validator(coaching_schema(assessment, rubric_result, composite_result, visual)).validate(candidate)
     if rubric_result is not None:
         if rubric_result == {"status": "unscorable"}:
             require(candidate["legacyGrade"] == rubric_result, "SCORING_UNSCORABLE_CHANGED")
@@ -229,7 +237,8 @@ def validate_coaching(candidate: dict, assessment: dict, rubric_result: dict | N
 def evaluate(*, core_bytes: bytes, script: str, binding: dict, policy: dict,
              policy_sha256: str, prompt: str, transport=None, measurements_only: bool = False,
              legacy_rubric: dict | None = None, composite_policy: dict | None = None,
-             rubric_worksheet: dict | None = None, native_rubric_policy: dict | None = None) -> dict:
+             rubric_worksheet: dict | None = None, native_rubric_policy: dict | None = None,
+             visual: dict | None = None) -> dict:
     validate_policy(policy)
     require(re.fullmatch(r"[0-9a-f]{64}", policy_sha256) is not None, "POLICY_DIGEST")
     core = validate_binding(core_bytes, script, binding)
@@ -243,6 +252,9 @@ def evaluate(*, core_bytes: bytes, script: str, binding: dict, policy: dict,
                   naturalLanguageSemanticsFullyVerified=False)
     rubric_result = scoring["RUBRIC_RESULT"] if scoring is not None else None
     composite_result = assessment["auxiliary"]["composite"]["result"] if composite_policy is not None else None
+    visual_info = visual_context(assessment, visual)
+    if visual_info is not None:
+        result["audiovisualGrade"] = visual_info["grade"]
     if rubric_result is not None:
         result["legacyGrade"] = rubric_result
     if composite_result is not None:
@@ -250,13 +262,13 @@ def evaluate(*, core_bytes: bytes, script: str, binding: dict, policy: dict,
     if scoring is not None and "RUBRIC_EVIDENCE" in scoring:
         # Retained only in BRIDGE_RESULT; never splice derived facts into CORE.
         result["rubricEvidence"] = scoring["RUBRIC_EVIDENCE"]
-    if measurements_only or not assessment["selectedCriterionIds"]:
+    if measurements_only or not feedback_targets(assessment, visual_info):
         return result
     require(transport is not None, "TRANSPORT_REQUIRED")
     try:
         payload = request_payload(assessment, core, script, policy, prompt, legacy_rubric, core_bytes=core_bytes,
                                   composite_policy=composite_policy, rubric_worksheet=rubric_worksheet,
-                                  native_rubric_policy=native_rubric_policy)
+                                  native_rubric_policy=native_rubric_policy, visual=visual)
     except ValueError as exc:
         result.update(generationStatus="NOT_DISPATCHED", errorCode=str(exc))
         return result
@@ -275,7 +287,7 @@ def evaluate(*, core_bytes: bytes, script: str, binding: dict, policy: dict,
         choice = choices[0]
         require(choice["finish_reason"] == "stop" and not choice["message"].get("refusal"), "PROVIDER_COMPLETION")
         candidate = strict_json(choice["message"]["content"])
-        validate_coaching(candidate, assessment, rubric_result, composite_result)
+        validate_coaching(candidate, assessment, rubric_result, composite_result, visual_info)
         result.update(generationStatus="STRUCTURALLY_VALID", **candidate)
     except Exception as exc:
         # Scores survive provider failure; never manufacture coaching or rerun audio/GPT.

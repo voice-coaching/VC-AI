@@ -71,8 +71,18 @@ async def main(root):
             provider = json.loads((folder / 'provider-observation.json').read_bytes())
             raw = (folder / 'artifacts/CORE.json').read_bytes()
             raw_sha = hashlib.sha256(raw).hexdigest()
-            originals = list((root / 'work' / view['executionId'] / 'core').glob('*/release-output/candidate/results/*.json'))
+            originals = [p for p in (root / 'work' / view['executionId'] / 'core').glob(
+                '*/release-output/candidate/results/*.json') if not p.name.endswith('.alignment.json')]
             require(len(originals) == 1 and originals[0].read_bytes() == raw, 'SMOKE_CORE_BYTES_CHANGED')
+            if config.get('retainAlignmentEvidence') is True:
+                # Private capture for explicitly supplied reference fixtures;
+                # no result is uploaded or relabeled an expert calibration.
+                sidecar = originals[0].with_suffix('.alignment.json')
+                prepared = originals[0].parents[1]/'prepared_cache'/(originals[0].stem+'.wav')
+                require(sidecar.is_file() and prepared.is_file(), 'SMOKE_ALIGNMENT_CAPTURE_MISSING')
+                atomic(root/(case['id']+'.core.private.json'),raw)
+                atomic(root/(case['id']+'.alignment.private.json'),sidecar.read_bytes())
+                atomic(root/(case['id']+'.prepared.wav'),prepared.read_bytes())
             require(provider['postAttempts'] == 1 and provider['httpStatus'] == 200, 'SMOKE_PROVIDER_CALL_COUNT')
             require(provider['rawCoreMessageSha256'] == raw_sha, 'SMOKE_RAW_CORE_MESSAGE_CHANGED')
             row.update(coreSha256=raw_sha, postAttempts=provider['postAttempts'],

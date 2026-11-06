@@ -8,10 +8,14 @@ from .canonical_harness import COMPOSITE_EXPONENTIAL, COMPOSITE_EXPONENTIAL_INTE
 from .canonical_harness import NATIVE_RUBRIC_SINGLE_CALL, NATIVE_RUBRIC_SINGLE_CALL_INTERNAL, NATIVE_RUBRIC_SINGLE_CALL_V2, NATIVE_RUBRIC_SINGLE_CALL_V2_INTERNAL
 from .canonical_harness import DLPC_PIPELINE_SOL61_LIGHT, MFA_SEARCH, MFA_SEARCH_INTERNAL
 from .canonical_harness import SCORE_VARIATION, SCORE_VARIATION_INTERNAL
+from .canonical_harness import LIP_CAPTURE_DIRECT, LIP, LIP_INTERNAL
 
 # Execution identity only: prevent an old release from entering new analysis.
 # Scoring authority is bound to each H5; raw-CORE releases use the fixed server rubric.
 APPROVED_NATIVE_EXECUTIONS: frozenset[tuple[str, str]] = frozenset({
+    (LIP.core_sha256, LIP.manifest_sha256),
+    (LIP_INTERNAL.core_sha256, LIP_INTERNAL.manifest_sha256),
+    (LIP_CAPTURE_DIRECT.core_sha256, LIP_CAPTURE_DIRECT.manifest_sha256),
     (SCORE_VARIATION.core_sha256, SCORE_VARIATION.manifest_sha256),
     (SCORE_VARIATION_INTERNAL.core_sha256, SCORE_VARIATION_INTERNAL.manifest_sha256),
     (NATIVE_RUBRIC_SINGLE_CALL_V2.core_sha256, NATIVE_RUBRIC_SINGLE_CALL_V2.manifest_sha256),

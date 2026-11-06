@@ -20,7 +20,8 @@ DIRECTORY = "canonical_six_dimension_direct_20261105_v5_h5"
 
 def build(source: Path, core_manifest: Path, destination: Path, *, directory: str = DIRECTORY,
           composite_policy_path: Path | None = None, reference_path: Path | None = None,
-          native_rubric_policy_path: Path | None = None):
+          native_rubric_policy_path: Path | None = None, visual_catalog_path: Path | None = None,
+          visual_runtime_path: Path | None = None):
     parent_raw = (source / "contracts/llm/llm_contract_manifest.json").read_bytes()
     parent = json.loads(parent_raw)
     _, inherited = load_files(source, "contracts/llm/dependency_lock.json", parent["dependency_lock_sha256"], "files")
@@ -74,9 +75,21 @@ def build(source: Path, core_manifest: Path, destination: Path, *, directory: st
         raise ValueError("SCORING_OUTPUT_SCHEMA_IDENTITY")
     ready[0]["const"] = rubric["rubricRevision"]
     files["contracts/llm/llm_output.schema.json"] = encode(output_schema)
+    if visual_catalog_path is not None or visual_runtime_path is not None:
+        if visual_catalog_path is None or visual_runtime_path is None or composite_policy is None:
+            raise ValueError("VISUAL_COMPOSITE_ASSETS_REQUIRED")
+        from voice_coach.visual_feedback.reference_catalog import ReferenceCatalog
+        visual_raw = visual_catalog_path.read_bytes()
+        ReferenceCatalog.from_bytes(visual_raw, sha(visual_raw))
+        runtime_raw = visual_runtime_path.read_bytes()
+        runtime = json.loads(runtime_raw)
+        if runtime.get("schemaVersion") != "voice-coaching.visual-runtime-candidate.v1":
+            raise ValueError("VISUAL_RUNTIME_CONTRACT")
+        files["contracts/visual/reference-catalog.json"] = visual_raw
+        files["contracts/visual/runtime-candidate.json"] = runtime_raw
     # Embed the original pure calculator, not the source package's import shim.
     files["bridge/phone_rubric.py"] = (ROOT / "src/voice_coach/backend_analysis/phone_rubric.py").read_bytes()
-    for name in ("policy", "assessment", "composite", "native_rubric", "pipeline"):
+    for name in ("policy", "assessment", "composite", "native_rubric", "pipeline", "visual"):
         files["bridge/"+name+".py"] = (ROOT / "src/voice_coach/six_dimension" / (name+".py")).read_bytes()
     lock = encode(dict(files={name: sha(raw) for name, raw in sorted(files.items())}))
     manifest = encode(dict(contract_version=directory, parent_llm_manifest_sha256=sha(parent_raw),
@@ -89,6 +102,13 @@ def build(source: Path, core_manifest: Path, destination: Path, *, directory: st
                            legacy_scoring_authority="SERVER_FIXED_RUBRIC_OR_UNSCORABLE",
                            public_contract="EXISTING_SCORING_AND_FEEDBACK_STRING", six_scores="PRIVATE_ARTIFACT_ONLY",
                            composite_score="EXISTING_PUBLIC_SCORE_OVERALL_SCORE" if composite_policy else None))
+    if visual_catalog_path is not None:
+        metadata = json.loads(manifest)
+        metadata.update(audiovisual=True, audiovisual_policy="audiovisual-lip-composite-v1",
+                        visual_score_authority="MEASURED_CONTEXT_REFERENCE_PROXIMITY",
+                        visual_reference_catalog_sha256=sha(visual_raw),
+                        requiresNewHarnessRegistration=True, productionActivated=False)
+        manifest = encode(metadata)
     if native_rubric_policy_path is not None:
         metadata = json.loads(manifest)
         metadata.update(native_rubric_policy_sha256=sha(native_raw),
@@ -113,7 +133,10 @@ if __name__ == "__main__":
     parser.add_argument("--composite-policy", type=Path)
     parser.add_argument("--reference-file", type=Path)
     parser.add_argument("--native-rubric-policy", type=Path)
+    parser.add_argument("--visual-catalog", type=Path)
+    parser.add_argument("--visual-runtime", type=Path)
     args = parser.parse_args()
     print(json.dumps(build(args.source, args.core_manifest, args.destination, directory=args.directory,
                           composite_policy_path=args.composite_policy, reference_path=args.reference_file,
-                          native_rubric_policy_path=args.native_rubric_policy)))
+                          native_rubric_policy_path=args.native_rubric_policy,
+                          visual_catalog_path=args.visual_catalog, visual_runtime_path=args.visual_runtime)))
