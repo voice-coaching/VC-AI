@@ -14,11 +14,11 @@ import time
 from uuid import UUID, uuid4
 
 from voice_coach.backend_analysis.canonical_bridge import FrozenCanonicalArtifacts, FrozenCanonicalCoaching
-from voice_coach.backend_analysis.canonical_codec import encode_document
+from voice_coach.backend_analysis.canonical_codec import encode_document, read_document
 from voice_coach.backend_analysis.canonical_handoff import handoff_document
 from voice_coach.backend_analysis.canonical_producer import FrozenCanonicalProducer, write_private_new
 from voice_coach.backend_analysis.canonical_resident import CanonicalResidentCore
-from voice_coach.backend_analysis.canonical_result import ResultIdentity, preflight_canonical_result, serialize_canonical_result
+from voice_coach.backend_analysis.canonical_result import ResultIdentity, preflight_canonical_result, serialize_canonical_result, validate_canonical_result_document
 from voice_coach.backend_analysis.canonical_transport import transport_for_artifacts
 from voice_coach.backend_analysis.http_models import AnalysisInput
 from voice_coach.backend_analysis.ports import MaterializedAudio
@@ -80,6 +80,12 @@ async def main(root):
         projection = await asyncio.to_thread(serialize_canonical_result,expression,request=request,
             identity=identity,frozen=frozen,prepared_audio=produced.prepared_audio)
         result = json.loads(projection)
+        require(len(result['score'].get('details', {}).get('criteria', [])) == 6,
+                'INTERNAL_SMOKE_SCORE_DETAILS_MISSING')
+        historical = read_document(projection)
+        historical['score'].pop('details')
+        validate_canonical_result_document(historical, preflight=checked)
+        report.update(scoreDetailsPresent=True, legacyWithoutDetailsVerified=True)
         doc = handoff_document(body,projection,checked,identity)
         require(result['status']=='COMPLETED' and result['failure'] is None, 'INTERNAL_SMOKE_RESULT_FAILED')
         require(type(result['score']['overallScore']) in (int,float)

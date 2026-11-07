@@ -68,6 +68,15 @@ async def main(root):
             score = result['score']['overallScore']
             require(type(score) in (float, int) and math.isfinite(score) and 0 <= score <= 100, 'SMOKE_SCORE_NOT_NUMERIC')
             require(bool(coaching.get('feedback')), 'SMOKE_FEEDBACK_MISSING')
+            details = result['score'].get('details')
+            require(isinstance(details, dict) and len(details.get('criteria', [])) == 6,
+                    'SMOKE_SCORE_DETAILS_MISSING')
+            private = json.loads((folder / 'artifacts/BRIDGE_RESULT.json').read_bytes())
+            original = private['sixDimension']['compositeGrade']
+            require(details['audioScore'] == original['overallScore'], 'SMOKE_AUDIO_SCORE_CHANGED')
+            require([{k: item[k] for k in ('criterionId', 'score', 'weight')}
+                     for item in details['criteria']] == original['criteria'], 'SMOKE_SCORE_DETAILS_CHANGED')
+            row['scoreDetailsPresent'] = True
             provider = json.loads((folder / 'provider-observation.json').read_bytes())
             raw = (folder / 'artifacts/CORE.json').read_bytes()
             raw_sha = hashlib.sha256(raw).hexdigest()

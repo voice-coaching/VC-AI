@@ -3,6 +3,8 @@
 현재 소스 계약이며 배포 완료 선언이 아니다. 상세는 [API 명세](specification.md),
 전환 조건은 [v6 통합](../canonical-integration/v6-unification.md)을 따른다.
 
+기존 결과 조회의 optional `score.details`는 [Frontend 세부점수 명세](frontend-score-details-response.md)를 따른다.
+
 분석 API의 요청 처리 오류는 실제 HTTP 4xx·5xx와 JSON으로 응답한다. 내부·Direct의
 기존 오류 본문 형식과 비동기 상태 조회 계약은 유지한다.
 [오류 응답 상세](specification.md#http-오류-응답)를 참조한다.

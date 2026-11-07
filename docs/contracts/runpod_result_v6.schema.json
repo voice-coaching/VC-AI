@@ -4534,6 +4534,9 @@
         },
         "reason": {
           "const": "EVIDENCE_BOUND_PRACTICE_SCORE"
+        },
+        "details": {
+          "$ref": "#/$defs/scoreDetails"
         }
       },
       "$comment": "AI-owned calculated overallScore. Legacy rubric metadata is optional and opaque to consumers; no peer worksheet/version/phone-level gate."
@@ -4557,6 +4560,9 @@
             },
             "reason": {
               "const": "SCORING_FAILED"
+            },
+            "details": {
+              "$ref": "#/$defs/scoreDetails"
             }
           }
         },
@@ -6610,6 +6616,230 @@
               }
             }
           }
+        }
+      },
+      "allOf": [
+        {
+          "if": {
+            "properties": {
+              "status": {
+                "const": "SCORED"
+              }
+            }
+          },
+          "then": {
+            "properties": {
+              "score": {
+                "type": "number"
+              }
+            }
+          },
+          "else": {
+            "properties": {
+              "score": {
+                "type": "null"
+              }
+            }
+          }
+        }
+      ]
+    },
+    "scoreDetails": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "schemaVersion",
+        "validationStatus",
+        "aggregationMode",
+        "audioScore",
+        "visualScore",
+        "audioWeight",
+        "visualWeight",
+        "criteria"
+      ],
+      "properties": {
+        "schemaVersion": {
+          "const": "voice-coaching.score-details.v1"
+        },
+        "validationStatus": {
+          "const": "EXPERT_REVIEW_PENDING"
+        },
+        "aggregationMode": {
+          "enum": [
+            "AUDIO_ONLY",
+            "AUDIO_VISUAL"
+          ]
+        },
+        "audioScore": {
+          "type": [
+            "number",
+            "null"
+          ],
+          "minimum": 0,
+          "maximum": 100
+        },
+        "visualScore": {
+          "type": [
+            "number",
+            "null"
+          ],
+          "minimum": 0,
+          "maximum": 100
+        },
+        "audioWeight": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 100
+        },
+        "visualWeight": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 100
+        },
+        "criteria": {
+          "type": "array",
+          "minItems": 6,
+          "maxItems": 6,
+          "prefixItems": [
+            {
+              "allOf": [
+                {
+                  "$ref": "#/$defs/scoreDetailCriterion"
+                },
+                {
+                  "properties": {
+                    "criterionId": {
+                      "const": "pronunciation_accuracy"
+                    }
+                  }
+                }
+              ]
+            },
+            {
+              "allOf": [
+                {
+                  "$ref": "#/$defs/scoreDetailCriterion"
+                },
+                {
+                  "properties": {
+                    "criterionId": {
+                      "const": "speaking_rate"
+                    }
+                  }
+                }
+              ]
+            },
+            {
+              "allOf": [
+                {
+                  "$ref": "#/$defs/scoreDetailCriterion"
+                },
+                {
+                  "properties": {
+                    "criterionId": {
+                      "const": "articulation_rate"
+                    }
+                  }
+                }
+              ]
+            },
+            {
+              "allOf": [
+                {
+                  "$ref": "#/$defs/scoreDetailCriterion"
+                },
+                {
+                  "properties": {
+                    "criterionId": {
+                      "const": "pauses"
+                    }
+                  }
+                }
+              ]
+            },
+            {
+              "allOf": [
+                {
+                  "$ref": "#/$defs/scoreDetailCriterion"
+                },
+                {
+                  "properties": {
+                    "criterionId": {
+                      "const": "pitch"
+                    }
+                  }
+                }
+              ]
+            },
+            {
+              "allOf": [
+                {
+                  "$ref": "#/$defs/scoreDetailCriterion"
+                },
+                {
+                  "properties": {
+                    "criterionId": {
+                      "const": "intensity"
+                    }
+                  }
+                }
+              ]
+            }
+          ],
+          "items": false
+        }
+      }
+    },
+    "scoreDetailCriterion": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "criterionId",
+        "label",
+        "score",
+        "status",
+        "reasonCode",
+        "weight"
+      ],
+      "properties": {
+        "criterionId": {
+          "enum": [
+            "pronunciation_accuracy",
+            "speaking_rate",
+            "articulation_rate",
+            "pauses",
+            "pitch",
+            "intensity"
+          ]
+        },
+        "label": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 80
+        },
+        "score": {
+          "type": [
+            "number",
+            "null"
+          ],
+          "minimum": 0,
+          "maximum": 100
+        },
+        "status": {
+          "enum": [
+            "SCORED",
+            "UNSCORABLE"
+          ]
+        },
+        "reasonCode": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 100
+        },
+        "weight": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 100
         }
       },
       "allOf": [

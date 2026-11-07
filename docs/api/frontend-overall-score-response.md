@@ -35,6 +35,7 @@ Backend HTTP 응답의 최상위 `result`는 **boolean**이다. Direct 응답의
 | `overallScore` | `number \| null` | 필수 | 0~100의 유한한 숫자. 소수점 첫째 자리까지 제공하며 정수도 가능 |
 | `validity` | `string` | 필수 | 점수 산출 상태 |
 | `reason` | `string` | 필수 | 점수 상태의 사유 코드 |
+| `details` | 선택 객체 | 선택 | 음성 6항목 점수·상태·가중치. [세부점수 명세](frontend-score-details-response.md) 참조 |
 | `rubricRevision` | 선택적 메타데이터 | 선택 | 과거 결과에 존재할 수 있음. 총점 표시 조건이 아님 |
 | `criteria` | 선택적 메타데이터 | 선택 | 과거 음소별 채점표. 현재 6항목 배열이 아니며 총점 표시 조건이 아님 |
 

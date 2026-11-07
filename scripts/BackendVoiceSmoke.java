@@ -24,6 +24,14 @@ public class BackendVoiceSmoke {
                 || !"RUBRIC_COMPUTED".equals(view.score().validity())) {
             throw new IllegalStateException("BACKEND_VOICE_NUMERIC_SCORE_MISSING_OR_CHANGED");
         }
+        var sourceDetails = contract.parse(result.bytes(), "result").path("score").path("details");
+        if (!sourceDetails.isMissingNode()) {
+            var mapper = new com.fasterxml.jackson.databind.ObjectMapper();
+            if (view.score().details() == null || !contract.digest(sourceDetails).equals(
+                    contract.digest(mapper.valueToTree(view.score().details())))) {
+                throw new IllegalStateException("BACKEND_SCORE_DETAILS_DROPPED_OR_CHANGED");
+            }
+        }
         System.out.println("{\"passed\":true,\"scope\":\"BACKEND_JAVA_PARSE_HANDOFF_PUBLIC_PROJECTION\",\"databaseWritten\":false}");
     }
 }
