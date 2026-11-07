@@ -443,13 +443,16 @@ def _public_score(expression, view, harness):
     if audiovisual is not None and composite is not None:
         composite = audiovisual
     if composite is not None:
+        from .public_score_details import score_details
+        details = score_details(expression["sixDimension"])
+        extra = {"details": details} if details is not None else {}
         # preflight verifies the full private result against the AI calculator.
         # Preserve the existing public score name and states; do not ask peers
         # to understand the private calculator revision or its worksheet.
         if composite["overallScore"] is None:
-            return dict(overallScore=None, validity="UNSCORABLE", reason="SCORING_FAILED")
+            return dict(overallScore=None, validity="UNSCORABLE", reason="SCORING_FAILED", **extra)
         return dict(overallScore=composite["overallScore"], validity="RUBRIC_COMPUTED",
-                    reason="EVIDENCE_BOUND_PRACTICE_SCORE")
+                    reason="EVIDENCE_BOUND_PRACTICE_SCORE", **extra)
     scoring = expression["scoring"]
     if scoring["status"] == "READY":
         return dict(scoring["result"], validity="RUBRIC_COMPUTED", reason="EVIDENCE_BOUND_PRACTICE_SCORE")
@@ -610,6 +613,10 @@ def validate_canonical_result_document(
     expected_score = (dict(overallScore=None, validity="NOT_AVAILABLE", reason="RESULT_NOT_DELIVERED")
                       if harness.scoring and canonical["representation"] == "RETAINED_ONLY"
                       else _public_score(expression, view, harness))
+    # Retained/retried results written before the optional display projection
+    # must remain verifiable without rewriting their bytes or rerunning GPT.
+    if "details" not in document["score"]:
+        expected_score.pop("details", None)
     _require(document["score"] == expected_score,
              "SCORE_RESULT_MISMATCH")
     if canonical["representation"] == "RETAINED_ONLY":

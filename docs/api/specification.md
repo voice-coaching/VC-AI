@@ -1,5 +1,7 @@
 # API 명세 — intelligentAI
 
+결과 조회의 optional `score.details`는 [Frontend 세부점수 명세](frontend-score-details-response.md)를 따른다.
+
 종합점수 연결의 새 후보 구현은 [Native 발음 검산·GPT 단일 요청](../canonical-integration/native-rubric-single-call-v1.md)을 참고한다. 서버에서 발음 검산표·종합점수를 먼저 계산하고 원본 CORE와 같은 요청의 messages에 담는다. 외부 스키마 이름·점수·피드백 필드는 유지하며 후보 패키지 생성은 운영 활성화를 뜻하지 않는다.
 
 현재 checkout의 소스 계약이다. 운영 활성화·실제 Backend/FE 배포를 뜻하지 않는다.
