@@ -153,8 +153,11 @@ def release_assets(payload, manifest, *, install=False):
                 and all(digest(package[n])==pin for n,pin in contract['file_sha256'].items()),
                 'COORDINATED_CORE_IDENTITY')
         previous=Path(manifest['previousSelection'][prefix+'CORE_ROOT'])
-        require(contract['parent_manifest_sha256']==digest(owned(previous/'release_manifest.json')),
-                'COORDINATED_CORE_PARENT')
+        # Carry the unchanged, fully hash-verified CORE with an H5-only release.
+        # Cold recovery cannot read its own not-yet-restored manifest as a parent.
+        if root != previous:
+            require(contract['parent_manifest_sha256']==digest(owned(previous/'release_manifest.json')),
+                    'COORDINATED_CORE_PARENT')
         require(contract['mfa_search_policy']['beam']==100 and contract['mfa_search_policy']['retryBeam']==400,
                 'COORDINATED_CORE_SEARCH_POLICY')
         for name,raw in package.items():
