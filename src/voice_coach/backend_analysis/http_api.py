@@ -1,11 +1,13 @@
 """Authenticated asynchronous analysis API; health never claims inference success."""
 from contextlib import AsyncExitStack, asynccontextmanager
+from datetime import datetime, UTC
 import hmac
 import logging
 import os
 
 from fastapi import FastAPI, Request
 from fastapi.responses import JSONResponse
+from voice_coach.http_errors import install_http_error_handlers
 
 from .http_models import HttpFailure, MAX_CONTROL_BYTES, parse_json, validate, validate_analysis_request
 from .http_runtime import HttpRuntime
@@ -33,18 +35,21 @@ def create_app(environment=None):
     app.state.runtime = runtime
 
     @app.exception_handler(HttpFailure)
-    async def failure(request, error):
-        logging.getLogger(__name__).info("analysis_http_rejected status=%s code=%s", error.status, error.code)
+    async def failure(request, error, extra_headers=None):
+        logging.getLogger(__name__).warning("analysis_http_rejected utc=%s status=%s code=%s",
+            datetime.now(UTC).isoformat(), error.status, error.code)
         headers = {"Cache-Control": "no-store"}
         if error.status in (429, 503):
             headers["Retry-After"] = str(max(1, int(error.retry_after)))
         if error.status == 401:
             headers["WWW-Authenticate"] = "Bearer"
+        headers.update(extra_headers or {})
         return JSONResponse(error.payload(), status_code=error.status, headers=headers)
 
-    @app.exception_handler(Exception)
-    async def internal_failure(request, error):
-        return await failure(request, HttpFailure(500, "INTERNAL_ERROR"))
+    async def respond(request, status, code, headers):
+        return await failure(request, HttpFailure(status, code), headers)
+
+    install_http_error_handlers(app, respond)
 
     @app.middleware("http")
     async def boundary(request: Request, call_next):

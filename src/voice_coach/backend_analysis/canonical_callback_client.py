@@ -31,12 +31,14 @@ _RECONCILE_CODES = frozenset({'ANALYSIS_TERMINAL', 'LEASE_EXPIRED', 'DEADLINE_EX
 
 
 class CallbackTransportError(CanonicalIntegrationError):
-    def __init__(self, code: str, *, retryable: bool, retry_after: float = 1):
+    def __init__(self, code: str, *, retryable: bool, retry_after: float = 1,
+                 upstream_status: int | None = None):
         super().__init__(code)
         self.code, self.retryable, self.retry_after = code, retryable, retry_after
+        self.upstream_status = upstream_status
 
 
-def _retry_after(value: str) -> float:
+def _retry_after(value: str, *, upstream_status: int | None = None) -> float:
     try:
         delay = float(value)
     except ValueError:
@@ -45,7 +47,8 @@ def _retry_after(value: str) -> float:
         except (ValueError, TypeError, OverflowError):
             return 1
     if not math.isfinite(delay) or delay > 60:
-        raise CallbackTransportError('CALLBACK_BACKOFF_EXCEEDS_BUDGET', retryable=False)
+        raise CallbackTransportError('CALLBACK_BACKOFF_EXCEEDS_BUDGET', retryable=False,
+                                     upstream_status=upstream_status)
     return max(1, delay)
 
 
@@ -96,7 +99,9 @@ class CanonicalCallbackClient:
                                  'CALLBACK_ERROR_IDENTITY')
                         reason, retryable = error['reasonCode'], retryable and error['retryable']
                     raise CallbackTransportError(reason, retryable=retryable,
-                        retry_after=_retry_after(response.headers.get('Retry-After', '1')) if retryable else 1)
+                        upstream_status=response.status_code,
+                        retry_after=_retry_after(response.headers.get('Retry-After', '1'),
+                                                 upstream_status=response.status_code) if retryable else 1)
                 _require(response.headers.get('Content-Type', '').split(';')[0].strip() == 'application/json',
                          'CALLBACK_RESPONSE_TYPE')
                 ack = read_document(bytes(raw), MAX_CONTROL_BYTES)

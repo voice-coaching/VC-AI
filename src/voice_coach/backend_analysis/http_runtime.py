@@ -481,7 +481,7 @@ class HttpRuntime:
                 logging.getLogger(__name__).warning("canonical_recovery_descriptor_invalid")
 
     async def _recover_handoff(self, job):
-        from .canonical_handoff import CanonicalHandoffClient
+        from .canonical_handoff import CanonicalHandoffClient, HandoffHttpFailure
         from .canonical_recovery import load_handoff
         from .canonical_producer import write_private_new
         from .canonical_codec import encode_document
@@ -509,7 +509,7 @@ class HttpRuntime:
                             active=lambda: not job.cancel.is_set() and time.monotonic() < min(deadline, job.lease_until),
                             remaining=lambda: min(deadline, job.lease_until) - time.monotonic(), probe_first=True)
                         break
-                    except HttpFailure as error:
+                    except (HttpFailure, HandoffHttpFailure) as error:
                         if error.status not in (429, 500, 502, 503, 504):
                             raise
                         await asyncio.sleep(min(1, max(0, deadline - time.monotonic())))
@@ -524,10 +524,13 @@ class HttpRuntime:
         except asyncio.CancelledError:
             job.state = "CANCELLED"
             raise
-        except Exception:
+        except Exception as error:
             job.state = "CANCELLED" if job.cancel.is_set() else "FAILED"
-            job.reason = "INTERNAL_ERROR"
-            logging.getLogger(__name__).warning("canonical_handoff_recovery_failed executionId=%s", job.request.execution_id)
+            job.reason = error.reason_code if isinstance(error, HandoffHttpFailure) else "INTERNAL_ERROR"
+            logging.getLogger(__name__).warning(
+                "canonical_handoff_recovery_failed executionId=%s upstreamStatus=%s code=%s",
+                job.request.execution_id, error.status if isinstance(error, HandoffHttpFailure) else None,
+                job.reason)
         finally:
             if heartbeat:
                 heartbeat.cancel()

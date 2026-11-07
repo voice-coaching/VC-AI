@@ -266,11 +266,15 @@ def main():
     except Exception as error:
         # Do not leak provider/SDK exceptions, transcripts, object paths or keys.
         diagnostic = {"event": "canonical_executor_unavailable", "code": "INTERNAL_ERROR", **context}
+        from .canonical_handoff import HandoffHttpFailure
         if isinstance(error, CanonicalProcessFailed):
             diagnostic.update(code="CANONICAL_PROCESS_FAILED", guardExitStatus=error.exit_status)
         elif isinstance(error, BackendJournalFailure):
             diagnostic.update(code=str(error), upstreamStatus=error.upstream_status,
                               failureKind=error.failure_kind)
+        elif isinstance(error, HandoffHttpFailure):
+            diagnostic.update(code="HANDOFF_REJECTED", upstreamStatus=error.status,
+                              upstreamReasonCode=error.reason_code, retryable=error.retryable)
         elif isinstance(error, CanonicalIntegrationError) and str(error) in {
                 "CANONICAL_GUARD_RUNTIME_UNAVAILABLE", "CANONICAL_PROCESS_CLEANUP_UNCONFIRMED",
                 "BACKEND_JOURNAL_RESPONSE_INVALID", "CANONICAL_EXECUTION_INACTIVE",
