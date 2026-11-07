@@ -102,7 +102,8 @@ def validate_policy(policy: dict) -> None:
     config = policy["request"]
     require(isinstance(config["model"], str) and config["model"].startswith("gpt-")
             and (config["reasoning_effort"] == "low" or
-                 (config["model"] == "gpt-6.1-terra" and config["reasoning_effort"] == "none"))
+                 (config["model"] in {"gpt-6.1-terra", "gpt-6-luna"}
+                  and config["reasoning_effort"] == "none"))
             and config["store"] is False
             and config["response_format"] == {"type": "json_object"}
             and config["service_tier"] in ("default", "priority")
