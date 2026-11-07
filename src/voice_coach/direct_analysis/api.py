@@ -2,13 +2,16 @@
 import asyncio
 import base64
 from contextlib import asynccontextmanager
+from datetime import datetime, UTC
 import json
+import logging
 import os
 from pathlib import Path
 
 from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse, StreamingResponse
+from voice_coach.http_errors import install_http_error_handlers
 
 from .delivery import DeliveryWorkers
 from .domain import DirectFailure, Settings
@@ -41,18 +44,28 @@ def create_app(environment=None):
             store.close()
 
     app = FastAPI(lifespan=lifespan, docs_url=None, redoc_url=None, openapi_url=None)
+    async def respond(request, status, code, extra_headers=None):
+        logging.getLogger(__name__).warning("direct_http_rejected utc=%s status=%s code=%s",
+            datetime.now(UTC).isoformat(), status, code)
+        headers = {"Cache-Control": "no-store"}
+        if status in (429, 503):
+            headers["Retry-After"] = "3"
+        headers.update(extra_headers or {})
+        return JSONResponse({"code": code}, status_code=status, headers=headers)
+
+    install_http_error_handlers(app, respond)
+    # CORS must wrap the error boundary so browser clients can read JSON 500s.
     app.add_middleware(CORSMiddleware, allow_origins=list(settings.origins),
         allow_credentials=False, allow_methods=["GET", "POST"],
         allow_headers=["Content-Type", "X-Analysis-Metadata", "Last-Event-ID"], max_age=3600)
 
     @app.exception_handler(DirectFailure)
     async def failure(request, exc):
-        return JSONResponse({"code": exc.code}, status_code=exc.status,
-                            headers={"Cache-Control": "no-store", "Retry-After": "3"})
+        return await respond(request, exc.status, exc.code)
 
     @app.exception_handler(TimeoutError)
     async def upload_timeout(request, exc):
-        return JSONResponse({"code": "UPLOAD_TIMEOUT"}, status_code=408, headers={"Cache-Control": "no-store"})
+        return await respond(request, 408, "UPLOAD_TIMEOUT")
 
     @app.get("/readyz")
     async def ready():

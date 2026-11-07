@@ -43,6 +43,35 @@ schema 위반 400/422, 크기 초과 413, 잘못된 MIME/encoding 415, 오래된
 409다. 429/503에는 Retry-After를 제공한다. 오류 본문은 reasonCode/message/
 requestId/executionId/retryable이며 최종 분석 결과는 이 응답에 넣지 않는다.
 
+## HTTP 오류 응답
+
+내부 분석과 익명 Direct는 요청 처리 중 발생한 400~599 상태를 HTTP 상태 코드로
+그대로 반환한다. 애플리케이션 오류뿐 아니라 프레임워크 404·405·422와 미처리 예외
+500도 JSON으로 응답하며 `Cache-Control: no-store`를 설정한다. 미처리 예외는
+`INTERNAL_ERROR`로 응답하고 연결을 끊거나 200으로 바꾸지 않는다. Direct는 등록한
+origin의 브라우저가 500 본문도 읽을 수 있도록 CORS를 오류 응답 바깥에 적용한다.
+
+- 내부 오류 형식: `reasonCode/message/requestId/executionId/retryable`.
+- Direct 오류 형식: `{"code":"..."}`. 새 오류 envelope를 만들지 않는다.
+- 404는 `TARGET_NOT_FOUND`, 405·프레임워크 422는 `VALIDATION_FAILED`, 미처리
+  500은 `INTERNAL_ERROR`다. 그 외 HTTP 예외도 원래 4xx·5xx 상태를 보존하며
+  기존 제어 코드 집합의 안전한 사유로 표현한다.
+- 프로토콜상 필요한 `Allow`, `WWW-Authenticate`, `Retry-After`는 보존한다.
+  예외의 detail·검증 입력·임의 헤더·traceback·원고·인증정보는 반환하지 않는다.
+- 거부 로그에는 UTC 시각·HTTP 상태·고정 사유 코드를 남긴다.
+
+이 계약은 접수 응답과 작업 결과를 구분한다. 접수 성공의 202는 분석 성공을 뜻하지
+않는다. 이미 202를 보낸 작업의 이후 실패를 그 응답의 4xx·5xx로 소급할 수 없다.
+알려진 작업의 정상적인 상태 조회는 기존 200과 `FAILED`/사유를 유지하며, 조회 요청
+자체의 인증·identity·입력·서버 오류에는 4xx·5xx를 반환한다. SSE 헤더가 이미 전송된
+후에는 새 HTTP 상태를 보낼 수 없으므로 기존 작업 상태 event로 실패를 알린다.
+
+Backend handoff의 4xx·5xx는 응답 본문 형식이 달라도 `upstreamStatus`로 보존하며
+안전하게 검증된 사유만 기록한다. 429·500·502·503·504의 기존 재전송 예산을
+유지하고 그 밖의 HTTP 거부는 즉시 상위로 전달한다. 재시도는 같은 인계 bytes의
+전송·수령증 조회에 한정하며 음성 추론·GPT를 다시 호출하지 않는다. 이미 존재하지
+않는 인계 수령증을 조회한 GET 404는 기존 계약의 `UNKNOWN` 상태로 해석한다.
+
 ## 결과와 인계
 
 [result v6 schema](../contracts/runpod_result_v6.schema.json)를 사용한다. COMPLETED/FAILED,

@@ -4,12 +4,22 @@ from __future__ import annotations
 import asyncio
 import base64
 import hashlib
+from datetime import datetime, UTC
+import logging
 
 import httpx
 
 from .canonical_bridge import _require
 from .canonical_codec import encode_document, read_document, validate_document
-from .http_models import digest, parse_json
+from .http_models import HttpFailure, digest, parse_json, validate
+
+
+class HandoffHttpFailure(Exception):
+    """A Backend rejection retains its HTTP status without retaining its body."""
+    def __init__(self, status: int, reason_code: str = "DEPENDENCY_UNAVAILABLE"):
+        super().__init__("HANDOFF_REJECTED")
+        self.status, self.reason_code = status, reason_code
+        self.retryable = status in (429, 500, 502, 503, 504)
 
 
 def handoff_document(request_body, projection_raw, preflight, identity):
@@ -53,19 +63,33 @@ class CanonicalHandoffClient:
     async def _exchange(self, method, path, raw=None, binary=False, timeout=10):
         headers = {"Content-Type": "application/octet-stream" if binary else "application/json"}
         async with self.client.stream(method, self.base + path, content=raw, headers=headers, timeout=timeout) as reply:
+            failed = 400 <= reply.status_code <= 599
+            reason = "DEPENDENCY_UNAVAILABLE"
+            if failed and not (method == "GET" and reply.status_code == 404):
+                logging.getLogger(__name__).warning(
+                    "handoff_http_rejected utc=%s status=%s method=%s",
+                    datetime.now(UTC).isoformat(), reply.status_code, method)
+            if failed and reply.headers.get("Content-Encoding", "identity") != "identity":
+                raise HandoffHttpFailure(reply.status_code)
             _require(reply.headers.get("Content-Encoding", "identity") == "identity", "HANDOFF_RESPONSE_INVALID")
             body = bytearray()
             async for chunk in reply.aiter_raw():
                 body.extend(chunk)
+                if failed and len(body) > 65536:
+                    raise HandoffHttpFailure(reply.status_code)
                 _require(len(body) <= 65536, "HANDOFF_RESPONSE_INVALID")
             if reply.status_code in (200, 202):
                 return parse_json(bytes(body))
             if reply.status_code == 204:
                 return None
-            if reply.status_code == 404:
+            if reply.status_code == 404 and method == "GET":
                 return {"state": "UNKNOWN"}
-            if reply.status_code in (429, 500, 502, 503, 504):
-                raise httpx.TransportError("HANDOFF_RETRY")
+            if failed:
+                try:
+                    reason = validate(parse_json(bytes(body)), "error")["reasonCode"]
+                except HttpFailure:
+                    pass  # Proxy HTML or a different error contract is not an ACK.
+                raise HandoffHttpFailure(reply.status_code, reason)
             _require(False, "HANDOFF_REJECTED")
 
     async def publish(self, projection_raw):
@@ -90,6 +114,7 @@ class CanonicalHandoffClient:
         raw = encode_document(doc)
         # First send is already idempotent. Probe only after an uncertain transport outcome.
         first = not probe_first
+        last_http_failure = None
         while active() and remaining() > 0:
             try:
                 if first:
@@ -119,8 +144,15 @@ class CanonicalHandoffClient:
                          and state.get("handoffSha256") == doc["handoffSha256"]
                          and state["state"] in ("RECEIVED", "VERIFYING", "COMMITTED"), "HANDOFF_RESPONSE_INVALID")
                 return state
+            except HandoffHttpFailure as error:
+                if not error.retryable:
+                    raise
+                last_http_failure = error
+                await asyncio.sleep(min(1, max(0, remaining())))
             except (httpx.TransportError, httpx.TimeoutException):
                 await asyncio.sleep(min(1, max(0, remaining())))
+        if last_http_failure is not None:
+            raise last_http_failure
         _require(False, "CANONICAL_EXECUTION_INACTIVE")
 
     async def close(self):
