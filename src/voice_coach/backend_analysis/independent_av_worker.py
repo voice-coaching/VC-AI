@@ -29,6 +29,17 @@ from .ports import MaterializedAudio, MaterializedVideo
 async def execute(folder, env):
     d = json.loads((folder/'job.json').read_bytes())
     m = d['metadata']
+    normalization_seconds = 0
+    if d.get('inputMode') == 'ORIGINAL_VIDEO':
+        from .browser_video_normalize import normalize
+        began = time.monotonic()
+        try:
+            m = await normalize(folder,m,deadline=time.monotonic()+max(0,d['deadlineAt']-time.time()))
+        except Exception:
+            atomic(folder/'worker-failure.json',encoded(dict(executionId=d['executionId'],
+                requestId=d['requestId'],code='MEDIA_NORMALIZATION_FAILED')))
+            raise
+        normalization_seconds = time.monotonic()-began
     request = IndependentAudiovisualInput(UUID(d['jobId']), UUID(d['requestId']), UUID(d['executionId']),
         UUID(d['audioAssetId']), m['scriptText'], hashlib.sha256(m['scriptText'].encode()).hexdigest(),
         m['audio']['sha256'], m['audio']['fileSizeBytes'], m['contentId'],
@@ -57,7 +68,8 @@ async def execute(folder, env):
     combined = await CanonicalAudiovisualService(video_port=port, catalog=catalog).produce(
         request=request, audio=audio, video=video,
         media_preparation=MediaPreparation.from_wire(m['mediaPreparation'],
-            audio_sha256=audio.sha256, video_sha256=video.sha256), producer=producer,
+            audio_sha256=audio.sha256, video_sha256=video.sha256,
+            allow_ai=d.get('inputMode') == 'ORIGINAL_VIDEO'), producer=producer,
         deadline=deadline-configuration['gptAndHandoffReserveSeconds'],
         visual_timeout=configuration['visualTimeoutSeconds'], execution_is_active=active)
     produced = combined.audio
@@ -98,6 +110,9 @@ async def execute(folder, env):
             mediaReceiptSha256=m['mediaPreparation']['receiptSha256'],
             visualEvidenceSha256=hashlib.sha256(visual_raw).hexdigest()),
         failure={'code':'CANONICAL_ANALYSIS_FAILED'} if failed else None)
+    if d.get('inputMode') == 'ORIGINAL_VIDEO':
+        result['sourceIdentity'].update(originalVideoSha256=d['metadata']['source']['sha256'],
+            normalizationRevision=m['mediaPreparation']['receipt']['normalizationRevision'])
     originals = {a.kind:a.raw for a in preflight.artifacts}
     originals.update(MEDIA_RECEIPT=encode_document(m['mediaPreparation']['receipt']), VISUAL_EVIDENCE=visual_raw)
     for kind, raw in originals.items(): atomic(saved/(kind+'.json'), raw)
@@ -110,6 +125,7 @@ async def execute(folder, env):
     atomic(folder/'worker-complete.json', encoded(dict(executionId=d['executionId'], requestId=d['requestId'],
         status=result['status'], failure='CANONICAL_ANALYSIS_FAILED' if failed else None,
         resultSha256=hashlib.sha256(raw).hexdigest(), timing=dict(
+            normalizationSeconds=normalization_seconds,
             coreSeconds=core_finished-started, expressionSeconds=expression_finished-core_finished,
             publicationSeconds=time.monotonic()-expression_finished, parallel=combined.timings,
             producer=produced.timings, provider=transport.diagnostics))))

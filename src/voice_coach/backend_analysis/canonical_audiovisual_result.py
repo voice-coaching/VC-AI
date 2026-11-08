@@ -33,10 +33,11 @@ def visual_assets(frozen):
 
 def validated_visual(raw, *, request, frozen, core, prepared_audio, core_raw=None):
     from .media_preparation import MediaPreparation
+    from .independent_av_domain import is_local_input
     from voice_coach.visual_feedback.canonical_verification import verify_visual_evidence
     _require(request.is_audiovisual and request.visual_input is not None, "AUDIOVISUAL_REQUEST_REQUIRED")
     MediaPreparation.from_wire(request.media_preparation, audio_sha256=request.audio_sha256,
-                               video_sha256=request.visual_input.sha256)
+                               video_sha256=request.visual_input.sha256,allow_ai=is_local_input(request))
     catalog, configuration = visual_assets(frozen)
     return verify_visual_evidence(raw, core=core, request=request, catalog=catalog,
         expected_model_sha256=configuration["modelSha256"], prepared_audio=prepared_audio, core_raw=core_raw)

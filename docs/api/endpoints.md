@@ -10,6 +10,22 @@
 미디어 PUT, start, 상태·result·artifacts GET, ack·cancel POST가 추가된다.
 기존 음성 전용 API 및 handoff v2와 구분한다.
 
+브라우저의 원본 MP4/WebM/MOV 직접 업로드는 별도
+[Backend 발급 권한·브라우저 영상 API](browser-original-video-v1.md)를 사용한다.
+
+| Method | Path | 인증 | 목적 |
+|---|---|---|---|
+| GET | `/health/browser-video` | Analysis Bearer | 브라우저 키·로컬 영상 실행기 readiness |
+| OPTIONS | `/browser/v1/video-analysis-jobs` 및 하위 경로 | 허용 Origin | 브라우저 preflight |
+| POST | `/browser/v1/video-analysis-jobs` | Backend 발급 grant + Origin | 원본 영상 작업 생성 |
+| GET | `/browser/v1/video-analysis-jobs?clientRequestId=UUID` | 같은 grant + Origin | 접수 응답 유실 조정 |
+| GET | `/browser/v1/video-analysis-jobs/{jobId}` | 같은 grant + Origin | 상태 |
+| PUT | `/browser/v1/video-analysis-jobs/{jobId}/source` | 같은 grant + Origin | 원본 파일 스트리밍 업로드 |
+| POST | `/browser/v1/video-analysis-jobs/{jobId}/start` | 같은 grant + Origin | 정규화·영상 실행 예약 |
+| GET | `/browser/v1/video-analysis-jobs/{jobId}/result` | 같은 grant + Origin | 종합·세부점수와 피드백 |
+| POST | `/browser/v1/video-analysis-jobs/{jobId}/cancel` | 같은 grant + Origin | 실행 취소 |
+| POST | Backend `/api/training-sessions/{sessionId}/video-analysis-upload-grants` | 로그인 Bearer + Origin | 사용자·세션·원본에 묶인 단기 권한 |
+
 분석 API의 요청 처리 오류는 실제 HTTP 4xx·5xx와 JSON으로 응답한다. 내부·Direct의
 기존 오류 본문 형식과 비동기 상태 조회 계약은 유지한다.
 [오류 응답 상세](specification.md#http-오류-응답)를 참조한다.

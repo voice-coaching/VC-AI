@@ -12,6 +12,10 @@
 
 ## 공통 경계
 
+브라우저 전용 원본 영상 경로와 Backend 권한 발급 API는
+[브라우저 원본 영상 API v1](browser-original-video-v1.md)에 별도로 정의한다.
+기존 내부 API에 grant 필드를 추가하는 변경이 아니다.
+
 내부 분석은 Analysis Bearer, Backend callback/handoff는 Callback Bearer 및
 해당 요청의 worker identity를 사용한다. 사용자 로그인·선택 녹음 소유 확인은
 Backend 책임이다. 내부 JSON은 `application/json`, identity content encoding,

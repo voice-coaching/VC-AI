@@ -120,9 +120,26 @@ class IndependentAudiovisualRuntime:
             raise HttpFailure(503,'NOT_READY')
         return store.view(store.enqueue(job)['jobId'])
 
+    def create_original(self, value, grant):
+        from .browser_video_grants import binding, source_valid
+        if (type(value) is not dict or set(value) != {'clientRequestId','scriptText','contentId','source'}
+                or type(value.get('scriptText')) is not str or not value['scriptText'].strip()
+                or not 1 <= len(value['scriptText']) <= 4000 or not source_valid(value['source'])):
+            raise HttpFailure(422,'VALIDATION_FAILED')
+        if (value['clientRequestId'] != grant['clientRequestId'] or value['contentId'] != grant['contentId']
+                or type(value['contentId']) != type(grant['contentId']) or value['source'] != grant['source']
+                or hashlib.sha256(value['scriptText'].encode()).hexdigest() != grant['scriptSha256']):
+            raise HttpFailure(403,'UPLOAD_GRANT_BINDING_MISMATCH')
+        store = self.require_store()
+        known = value['clientRequestId'] in store.attempts
+        if not known and not self.ready(): raise HttpFailure(503,'NOT_READY')
+        if not known and not self.budget.can_admit(): raise HttpFailure(429,'CAPACITY_EXCEEDED')
+        return store.view(store.create_original(value,binding(grant))['jobId'])
+
     async def loop(self):
         while not self.stopping:
             try:
+                self.store.expire_original_uploads()
                 if self.execution_task is not None and self.execution_task.done():
                     await self.execution_task
                     self.execution_task = self.active = None
@@ -168,8 +185,17 @@ class IndependentAudiovisualRuntime:
                     self.store.update(job,status=c['status'],failure=c.get('failure'))
         except BaseException as error:
             cleanup = not isinstance(error,CanonicalProcessCleanupUnconfirmed)
+            code = 'EXECUTION_INTERRUPTED' if isinstance(error,asyncio.CancelledError) else 'EXECUTION_FAILED'
+            marker = self.store.directory(job)/'worker-failure.json'
+            if code == 'EXECUTION_FAILED' and doc.get('inputMode') == 'ORIGINAL_VIDEO' and marker.is_file():
+                try:
+                    failure = json.loads(marker.read_bytes())
+                    if (failure.get('executionId') == doc['executionId'] and failure.get('requestId') == doc['requestId']
+                            and failure.get('code') == 'MEDIA_NORMALIZATION_FAILED'):
+                        code = failure['code']
+                except (ValueError,OSError): pass
             if self.store.read(job)['status']=='RUNNING':
-                self.store.update(job,status='FAILED',failure='EXECUTION_INTERRUPTED' if isinstance(error,asyncio.CancelledError) else 'EXECUTION_FAILED')
+                self.store.update(job,status='FAILED',failure=code)
             try: await self.resident.stop()
             except CanonicalProcessCleanupUnconfirmed:cleanup=False
             if not cleanup:

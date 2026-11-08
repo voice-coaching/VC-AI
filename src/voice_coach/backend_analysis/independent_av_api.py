@@ -13,6 +13,20 @@ from .independent_av_store import ARTIFACTS
 PREFIX='/v2/audiovisual-analysis-jobs'
 
 
+async def control_body(request,limit,content_type):
+    if (request.headers.get('content-type','').split(';')[0].strip()!=content_type
+            or request.headers.get('content-encoding','identity')!='identity'):
+        raise HttpFailure(415,'UNSUPPORTED_MEDIA_TYPE')
+    raw=bytearray()
+    try:
+        async with asyncio.timeout(120):
+            async for part in request.stream():
+                if len(raw)+len(part)>limit:raise HttpFailure(413,'PAYLOAD_TOO_LARGE')
+                raw.extend(part)
+    except TimeoutError:raise HttpFailure(408,'UPLOAD_TIMEOUT') from None
+    return bytes(raw)
+
+
 def install_routes(app, runtime):
     app.state.audiovisual_uploads=0
 
@@ -20,18 +34,7 @@ def install_routes(app, runtime):
         try:return await asyncio.to_thread(fn,*args)
         except DirectFailure as error:raise HttpFailure(error.status,error.code) from None
 
-    async def body(request,limit,content_type):
-        if (request.headers.get('content-type','').split(';')[0].strip()!=content_type
-                or request.headers.get('content-encoding','identity')!='identity'):
-            raise HttpFailure(415,'UNSUPPORTED_MEDIA_TYPE')
-        raw=bytearray()
-        try:
-            async with asyncio.timeout(120):
-                async for part in request.stream():
-                    if len(raw)+len(part)>limit:raise HttpFailure(413,'PAYLOAD_TOO_LARGE')
-                    raw.extend(part)
-        except TimeoutError:raise HttpFailure(408,'UPLOAD_TIMEOUT') from None
-        return bytes(raw)
+    body = control_body
 
     def reply(value,status=200):
         return JSONResponse(value,status_code=status,headers={'Cache-Control':'no-store'})
