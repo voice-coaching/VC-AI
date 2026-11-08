@@ -27,7 +27,7 @@ class AlignmentAnchors:
 
 def anchors_from_core(core: dict, *, request_id: str, audio_sha256: str, prepared_sha256: str,
                       alignment_evidence: dict | None = None, core_sha256: str | None = None,
-                      core_raw: bytes | None = None):
+                      core_raw: bytes | None = None, recover_words: bool = False):
     if (core.get("request_id") != request_id or core.get("source_audio_sha256") != audio_sha256
             or core.get("prepared_wav_sha256") != prepared_sha256):
         raise MediaIntegrityFailure("MFA_ATTEMPT_MISMATCH")
@@ -63,6 +63,9 @@ def anchors_from_core(core: dict, *, request_id: str, audio_sha256: str, prepare
             or alignment["schemaVersion"] != "voice-coaching.canonical-mfa-phone-alignment.v1"
             or alignment["indexNamespace"] != "DETECTOR_METADATA_V2"):
         raise MediaIntegrityFailure("MFA_ALIGNMENT_CONTRACT_REQUIRED")
+    if recover_words:
+        from .alignment_recovery import recover_word_alignment
+        alignment = recover_word_alignment(alignment,core.get('mfa_receipt'))
     rows = alignment["rows"]
     if type(rows) is not list or len(rows) > 2048:
         raise MediaIntegrityFailure("MFA_EVIDENCE_INVALID")

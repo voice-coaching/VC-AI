@@ -1,7 +1,7 @@
 """Offline replay of visual evidence, with no media decoder/model/provider calls."""
 from __future__ import annotations
 
-from .canonical_service import EVIDENCE_SCHEMA, assess_aligned
+from .canonical_service import EVIDENCE_SCHEMA, LEGACY_ASSESSMENT, PARTIAL_ASSESSMENT, assess_aligned
 from .feature_protocol import MAPPING, PROTOCOL, strict_json
 from .parallel_analysis import MediaIntegrityFailure
 from .reference_catalog import ReferenceCatalog, sha
@@ -30,7 +30,8 @@ Authenticated producer provenance is a separate handoff responsibility.
     keys = {"schemaVersion", "requestId", "executionId",
         "audioSha256", "videoSha256", "preparedWavSha256", "referenceCatalogSha256", "mappingRevision",
         "distancePolicyRevision", "sourcePcm", "preparedPcm", "timeMap", "decoder", "frames", "visual"}
-    require(type(value) is dict and set(value) in (keys, keys | {"alignmentSidecar"}))
+    require(type(value) is dict and set(value) in (keys, keys | {"alignmentSidecar"},
+        keys | {'assessmentPolicy'},keys | {'assessmentPolicy','alignmentSidecar'}))
     require(value["schemaVersion"] == EVIDENCE_SCHEMA and value["requestId"] == str(request.event_id)
         and value["executionId"] == str(request.execution_id) and value["audioSha256"] == request.audio_sha256
         and value["videoSha256"] == request.visual_input.sha256
@@ -38,6 +39,8 @@ Authenticated producer provenance is a separate handoff responsibility.
         and value["referenceCatalogSha256"] == catalog.sha256 and value["mappingRevision"] == MAPPING.revision
         and value["distancePolicyRevision"] == catalog.policy.revision)
     decoder = value["decoder"]
+    if 'assessmentPolicy' in value:
+        require(value['assessmentPolicy']==PARTIAL_ASSESSMENT and decoder is not None)
     if decoder is None:
         require("alignmentSidecar" not in value)
         visual = value["visual"]
@@ -89,6 +92,7 @@ Authenticated producer provenance is a separate handoff responsibility.
     features = dict(decoder, features=dict(protocol=PROTOCOL, mappingRevision=MAPPING.revision, frames=value["frames"]))
     replay = assess_aligned(core=core, request=request, feature_value=features,
         source_pcm=value["sourcePcm"], prepared_pcm=value["preparedPcm"], catalog=catalog,
-        alignment_evidence=value.get("alignmentSidecar"), core_raw=core_raw)
+        alignment_evidence=value.get("alignmentSidecar"), core_raw=core_raw,
+        assessment_policy=value.get('assessmentPolicy',LEGACY_ASSESSMENT))
     require(replay == value)
     return value

@@ -19,7 +19,8 @@ def _validator(ai=False):
     if ai:
         schema['properties']['schemaVersion']['const'] = 'voice-coaching.ai-media-preparation.v1'
         schema['properties']['normalizationRevision'] = {'enum':[
-            'ai-original-video-pcm-20261108-v1','ai-original-video-pcm-20261108-v2']}
+            'ai-original-video-pcm-20261108-v1','ai-original-video-pcm-20261108-v2',
+            'ai-original-video-pcm-20261108-v3']}
     return Draft202012Validator(schema)
 
 

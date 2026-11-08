@@ -19,6 +19,8 @@ from .reference_catalog import ReferenceCatalog
 from .lip_scoring import BILABIALS, VOWELS, display, enrich_phone, summarize_subscores
 
 EVIDENCE_SCHEMA = "voice-coaching.visual-evidence.v1"
+LEGACY_ASSESSMENT = 'EXACT_WORD_COVERAGE_V1'
+PARTIAL_ASSESSMENT = 'PHONE_ROLE_PARTIAL_PROVISIONAL_V1'
 
 
 def _sha(value):
@@ -27,19 +29,24 @@ def _sha(value):
 
 
 def assess_aligned(*, core: dict, request, feature_value: dict, source_pcm, prepared_pcm,
-                   catalog: ReferenceCatalog, alignment_evidence=None, core_raw=None):
+                   catalog: ReferenceCatalog, alignment_evidence=None, core_raw=None,
+                   assessment_policy=LEGACY_ASSESSMENT):
     """Pure re-computation used both by execution and an offline verifier.
 
 PCM measurements come from the materialized files during execution; the
 verifier must additionally match them to the retained receipt/association.
 """
+    if assessment_policy not in {LEGACY_ASSESSMENT,PARTIAL_ASSESSMENT}:
+        raise MediaIntegrityFailure('VISUAL_ASSESSMENT_POLICY_INVALID')
+    partial = assessment_policy == PARTIAL_ASSESSMENT
     video_sha = request.visual_input.sha256
     mapping = verified_time_map(source_pcm=source_pcm, prepared_pcm=prepared_pcm,
         prepared_sha256=core["prepared_wav_sha256"], video_sha256=video_sha, features=feature_value)
     located = anchors_from_core(core, request_id=str(request.event_id),
         audio_sha256=request.audio_sha256, prepared_sha256=core["prepared_wav_sha256"],
         alignment_evidence=alignment_evidence,
-        core_sha256=hashlib.sha256(core_raw).hexdigest() if core_raw is not None else None, core_raw=core_raw)
+        core_sha256=hashlib.sha256(core_raw).hexdigest() if core_raw is not None else None,
+        core_raw=core_raw,recover_words=partial)
     raw_frames = feature_value["features"]["frames"]
     validate_features(feature_value["features"], [r["pts"] for r in raw_frames])
     frames = tuple(LipFrame(r["pts"], tuple(tuple(p) for p in r["landmarks"]),
@@ -54,7 +61,8 @@ verifier must additionally match them to the retained receipt/association.
             references=catalog.references, policy=catalog.policy, calibration=catalog.calibration_for(anchor))
         if catalog.lip_policy is not None:
             enrich_phone(row, anchor, frames, references=catalog.references, policy=catalog.lip_policy,
-                video_sha256=video_sha, source_sha256=request.media_preparation["receipt"]["sourceSha256"])
+                video_sha256=video_sha, source_sha256=request.media_preparation["receipt"]["sourceSha256"],
+                allow_cross_word=partial)
         if row["videoStartSeconds"] is not None:
             selected = [f for f in frames if row["videoStartSeconds"] <= f.pts_s < row["videoEndSeconds"]]
             consumed_pts.update(f.pts_s for f in selected)
@@ -84,8 +92,12 @@ verifier must additionally match them to the retained receipt/association.
                              for r in alignment["rows"])
     summary = aggregate(eligible_rows, target_count=located.target_count,
         visually_eligible_count=eligible_count,
-        minimum_coverage=catalog.minimum_coverage, allow_provisional=catalog.lip_policy is not None)
+        minimum_coverage=catalog.minimum_coverage, allow_provisional=catalog.lip_policy is not None,
+        allow_partial_provisional=partial)
     reasons = sorted({r for row in rows for r in row["reasonCodes"]})
+    partial_total = summary['score'] is not None and summary['coverage'] < catalog.minimum_coverage
+    if partial_total:
+        reasons = sorted(set(reasons) | {'PARTIAL_REFERENCE_COVERAGE','EXPERT_REVIEW_PENDING'})
     if located.unresolved_indices:
         reasons = sorted(set(reasons) | {"ALIGNMENT_AMBIGUOUS"})
     if mapping is None:
@@ -99,7 +111,7 @@ verifier must additionally match them to the retained receipt/association.
         status = "REFERENCE_ONLY"
     if summary["score"] is not None:
         status = "SCORED"
-    kind = ("PROVISIONAL" if any(r["scoreKind"] == "PROVISIONAL" for r in eligible_rows)
+    kind = ("PROVISIONAL" if partial_total or any(r["scoreKind"] == "PROVISIONAL" for r in eligible_rows)
             else "CALIBRATED") if status == "SCORED" else "NONE"
     visual = dict(status=status, correctiveClaimsAllowed=False,
         score=summary.pop("score"), scoreKind=kind,
@@ -122,6 +134,8 @@ verifier must additionally match them to the retained receipt/association.
         frames=[r for r in raw_frames if r["pts"] in consumed_pts], visual=visual)
     if alignment_evidence is not None:
         evidence["alignmentSidecar"] = alignment_evidence
+    if partial:
+        evidence['assessmentPolicy'] = assessment_policy
     return evidence
 
 
@@ -167,7 +181,8 @@ class CanonicalAudiovisualService:
             evidence = assess_aligned(core=core, request=request, feature_value=parallel.visual.value,
                 source_pcm=source, prepared_pcm=prepared, catalog=self.catalog, core_raw=produced.raw,
                 alignment_evidence=(strict_json(produced.alignment_evidence)
-                    if getattr(produced, "alignment_evidence", None) is not None else None))
+                    if getattr(produced, "alignment_evidence", None) is not None else None),
+                assessment_policy=PARTIAL_ASSESSMENT)
         else:
             reason = parallel.visual.reason or "ALIGNMENT_UNAVAILABLE"
             evidence = dict(schemaVersion=EVIDENCE_SCHEMA, requestId=str(request.event_id),

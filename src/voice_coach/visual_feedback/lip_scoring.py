@@ -69,7 +69,7 @@ def _metrics(trajectory, phone, role, policy):
     return result
 
 
-def score_phone(anchor, frames, references, *, policy):
+def score_phone(anchor, frames, references, *, policy, cross_word=False):
     """Equal-context reference medians, dead band, squared-distance exponential."""
     policy.validate()
     observed = Trajectory(tuple(f.pts_s for f in frames), tuple(f.landmarks for f in frames),
@@ -81,7 +81,11 @@ def score_phone(anchor, frames, references, *, policy):
         candidates = [r[key] for r in ref_values if key in r]
         row = dict(criterionId=key, label=label, score=None, status="NOT_APPLICABLE",
                    reasonCode="GESTURE_NOT_OBSERVABLE_IN_THIS_CONTEXT", measurements=[])
-        if key in values and candidates:
+        if cross_word and key == 'lip_timing':
+            # Different word/coarticulation contexts do not define the same
+            # temporal gesture. Shape proximity is provisional; timing is not.
+            row.update(status='UNSCORABLE',reasonCode='CROSS_WORD_TIMING_UNSUPPORTED')
+        elif key in values and candidates:
             center = statistics.median(candidates)
             floor = {"lip_aperture": policy.aperture_scale, "lip_rounding": policy.width_scale,
                      "lip_closure": policy.closure_scale, "lip_timing": policy.timing_scale}[key]
@@ -102,7 +106,8 @@ def score_phone(anchor, frames, references, *, policy):
     return rows, display(statistics.mean(available)) if available else None
 
 
-def enrich_phone(row, anchor, frames, *, references, policy, video_sha256, source_sha256):
+def enrich_phone(row, anchor, frames, *, references, policy, video_sha256, source_sha256,
+                 allow_cross_word=False):
     """Add scores only to a valid measured join; preserve identity rejections."""
     blocked = {"SYNC_UNCERTAIN", "LOW_VISIBILITY", "REFERENCE_SELF_COMPARISON",
                "REFERENCE_CATALOG_INVALID", "INVALID_FRAME_PTS"}
@@ -111,7 +116,16 @@ def enrich_phone(row, anchor, frames, *, references, policy, video_sha256, sourc
     eligible = [r for r in references if (r.expert_review_id or r.authority == "USER_DESIGNATED_EXEMPLAR")
         and r.mapping_revision == MAPPING.revision and
         (r.expected_phone, r.role, r.context) == (anchor.expected_phone, anchor.role, anchor.context)]
+    cross_word = False
+    if not eligible and allow_cross_word:
+        eligible = [r for r in references if (r.expert_review_id or r.authority == 'USER_DESIGNATED_EXEMPLAR')
+            and r.mapping_revision == MAPPING.revision
+            and (r.expected_phone,r.role)==(anchor.expected_phone,anchor.role)]
+        cross_word = bool(eligible)
     if not eligible:
+        return
+    if len(eligible)>32:
+        row['reasonCodes']=['REFERENCE_CATALOG_INVALID']
         return
     if any(r.video_sha256 == video_sha256 or r.source_sha256 == source_sha256 for r in eligible):
         row["reasonCodes"] = ["REFERENCE_SELF_COMPARISON"]
@@ -120,7 +134,7 @@ def enrich_phone(row, anchor, frames, *, references, policy, video_sha256, sourc
     if not selected or any(not f.observable for f in selected):
         return
     try:
-        subscores, score = score_phone(anchor, selected, eligible, policy=policy)
+        subscores, score = score_phone(anchor, selected, eligible, policy=policy,cross_word=cross_word)
     except ValueError:
         # A component with no observable event cannot cancel the audio result.
         return
@@ -128,7 +142,8 @@ def enrich_phone(row, anchor, frames, *, references, policy, video_sha256, sourc
     if score is not None and row["scoreKind"] != "CALIBRATED":
         row.update(score=score, status="SCORED", scoreKind="PROVISIONAL",
             referenceIds=sorted(r.reference_id for r in eligible), calibrationRevision=None,
-            reasonCodes=["EXPERT_REVIEW_PENDING"], allowedActionIds=["COMPARE_REFERENCE"])
+            reasonCodes=(["CROSS_WORD_PROVISIONAL_REFERENCE"] if cross_word else [])+
+                        ["EXPERT_REVIEW_PENDING"], allowedActionIds=["COMPARE_REFERENCE"])
 
 
 def summarize_subscores(rows):

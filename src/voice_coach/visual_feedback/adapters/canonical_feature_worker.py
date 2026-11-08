@@ -40,6 +40,19 @@ def exact(size):
     return bytes(raw)
 
 
+def constrain_native_worker_cpu():
+    """Bound only this isolated process before importing the native SDK.
+
+    MediaPipe 1.0.1 intermittently segfaults with the host-wide native thread
+    topology on J406. Keep its graph on one already-allowed CPU. The parent,
+    audio CORE, memory limits and syscall filters are unaffected.
+    """
+    allowed = os.sched_getaffinity(0)
+    if not allowed:
+        raise ValueError('VISUAL_WORKER_CPU_UNAVAILABLE')
+    os.sched_setaffinity(0, {min(allowed)})
+
+
 @contextmanager
 def sealed_model_path(model):
     """Keep verified bytes immutable and alive through the native file loader."""
@@ -83,6 +96,7 @@ def landmarker(mp, model, quality):
 
 
 def main():
+    constrain_native_worker_cpu()
     _bootstrap()
     from voice_coach.visual_feedback.feature_protocol import (
         MAPPING, PROTOCOL, MAX_HEADER_BYTES, validate_header, require)

@@ -13,7 +13,7 @@ from voice_coach.pronunciation_attempts.adapters.network_isolated_exec import is
 from .http_models import digest
 from .independent_av_store import AUDIO_LIMIT, VIDEO_LIMIT, pcm_valid
 
-REVISION = 'ai-original-video-pcm-20261108-v2'
+REVISION = 'ai-original-video-pcm-20261108-v3'
 
 
 async def capture(args, deadline, limit=1024**2):
@@ -56,6 +56,18 @@ async def probe(path, deadline, demuxer=None):
     if demuxer == 'mov': args += ['-enable_drefs','0','-use_absolute_path','0']
     args += ['-show_streams','-show_format','-of','json',str(path)]
     return json.loads(await capture(args,deadline))
+
+
+async def audio_clock(path, deadline, demuxer):
+    from voice_coach.visual_feedback.audio_timeline import sample_clock
+    args = ['/usr/bin/ffprobe','-v','error','-protocol_whitelist','file,pipe','-f',demuxer]
+    if demuxer == 'mov': args += ['-enable_drefs','0','-use_absolute_path','0']
+    args += ['-select_streams','a:0','-show_streams','-show_frames','-show_entries',
+        'stream=index,sample_rate,time_base:frame=stream_index,best_effort_timestamp,nb_samples',
+        '-of','json',str(path)]
+    data = json.loads(await capture(args,deadline,limit=8*1024**2))
+    if len(data.get('streams',[])) != 1: return None
+    return sample_clock(data['streams'][0],data.get('frames',[]))
 
 
 def streams(doc):
@@ -102,13 +114,19 @@ async def normalize(folder, metadata, *, deadline):
     # One common origin; no independent setpts/asetpts that would erase A/V offset.
     args += ['-copyts','-start_at_zero','-i',str(source),'-map','0:v:0','-map','0:a:0',
         '-map_metadata','-1','-map_chapters','-1']
-    preserved = preserve_tracks(v,a)
+    clock = await audio_clock(source,deadline,demuxer)
+    preserved = preserve_tracks(v,a) and not (clock and clock['requiresRegularization'])
     if preserved:
         args += ['-c','copy']
     else:
         args += ['-vf',"scale=w='if(gte(iw,ih),min(1920,iw),min(1080,iw))':h='if(gte(iw,ih),min(1080,ih),min(1920,ih))':force_original_aspect_ratio=decrease:force_divisible_by=2,fps=30",
             '-c:v','libx264','-preset','veryfast','-pix_fmt','yuv420p','-threads','1',
             '-c:a','aac','-ac','1','-ar','16000','-b:a','64k']
+        if clock is not None:
+            # Keep STARTPTS: independently resetting audio/video to zero loses
+            # the real capture offset. Only bounded jitter is regularized;
+            # real gaps/drift keep their original PTS and remain unscorable.
+            args += ['-af','aresample=16000,asetpts=N/SR/TB+STARTPTS']
     args += ['-metadata:s:v:0','rotate=0','-movflags','+faststart','-f','mp4','-n',str(video)]
     await capture(args,deadline)
     if not 0 < video.stat().st_size <= VIDEO_LIMIT: raise ValueError('NORMALIZED_VIDEO_TOO_LARGE')
@@ -139,5 +157,6 @@ async def normalize(folder, metadata, *, deadline):
     out['mediaPreparation']=dict(receipt=receipt,receiptSha256=digest(receipt))
     atomic(folder/'normalized-input.json',encoded(out))
     atomic(folder/'normalization-observation.json',encoded(dict(revision=REVISION,
-        tracksPreserved=preserved,width=v['width'],height=v['height'])))
+        tracksPreserved=preserved,width=v['width'],height=v['height'],
+        audioClockRegularized=not preserved and clock is not None,sourceAudioClock=clock)))
     return out

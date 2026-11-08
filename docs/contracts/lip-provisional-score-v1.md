@@ -68,3 +68,41 @@ Backend DTO/공유 schema와 Frontend reader가 위 확장을 수용한 뒤 AI�
 타입 검사·컴파일·국소 필드 파싱은 실제 Backend 영상 정규화·result v6/handoff·공개 조회 및 운영 DB 저장을 대신하지 않는다.
 이번 후보의 실제 영상 검사에서 짧은 음소 구간의 프레임 부족으로 입술 총점은 보류됐다. 참조·coverage 기준을
 통과시키기 위해 임의로 낮추지 않으며 음성 점수와 측정 가능한 국소 연습을 유지한다.
+
+## 2026-11-08 임시 부분 비교 정책
+
+후속 사용자 승인에 따라 새 실행은 `PHONE_ROLE_PARTIAL_PROVISIONAL_V1` 정책을 사용한다.
+위의 동일 단어·전체 coverage 채점은 이전 정책이며, 기존 근거는 그 정책으로 재검산한다.
+새 정책은 `VISUAL_EVIDENCE.assessmentPolicy`에 기록한다. Seungun CORE 원본과 기존 결과를
+수정하거나 다른 정책으로 덮어쓰지 않는다.
+
+- 같은 음소·초중종성·단어의 실제 참조를 우선한다. 없으면 같은 음소·초중종성·mapping의
+  실제 참조를 사용해 입술 벌림·폭·폐쇄를 임시 비교한다. 다른 단어의 시간 동작은 채점하지 않는다.
+- 다른 단어 비교에는 `CROSS_WORD_PROVISIONAL_REFERENCE`, 전문가 검증 전 점수에는
+  `EXPERT_REVIEW_PENDING`을 기록한다. 자기 비교·가림·복수 얼굴·시간축 미검증은 점수를 만들지 않는다.
+- 최소 coverage 미달이어도 실제 채점된 발생 위치가 있으면 그 부분의 평균을
+  `visual.score`로 제공한다. `status=SCORED`, `scoreKind=PROVISIONAL`,
+  `reasonCodes`에 `PARTIAL_REFERENCE_COVERAGE`를 포함한다. 이는 전체 입술 발음 정답률이 아니다.
+- `coverage.scoredCount / coverage.visuallyEligibleCount`가 실제 채점 범위다.
+  `observedCount`는 관찰 수이므로 채점 수와 같다고 가정하지 않는다. 미측정 항목은 null이다.
+- **부분 점수는 음성 종합점수에 40%로 합산하지 않는다.** GPT용 투영에서는 대표 입술 총점을
+  보류하고 부분 점수·coverage·개별 연습 대상을 별도로 제공한다. 기존 계산기가 음성 총점을
+  보존하면서 입술 연습을 최대 2개 우선 선택한다. 전체 coverage를 충족하면 기존 60:40 계산이다.
+- 공개 필드 이름과 필수 필드는 유지한다. Frontend는 기존 `visual.score`를 표시하면서
+  `PARTIAL_REFERENCE_COVERAGE`일 때 “관찰·참조가 있는 N/M개 음소의 임시 비교점수”라고 설명해야 한다.
+  숫자 0은 유효한 점수이며 null과 구분한다. 부분 점수와 영상 종합점수는 서로 다른 범위다.
+
+GPT에는 같은 요청의 `coverage`, `comparisonPolicy`, 선택 음소의 `subScores`와 측정 근거를
+추가로 제공한다. 부분 점수는 `partialScore.scope=ASSESSED_PHONES_ONLY`로 표시한다.
+계산식·원본 CORE 메시지·GPT 1회 제한과 기존 공개 피드백 형식은 유지한다.
+참조 차이만으로 더 벌리기·더 오므리기 등의 교정 방향을 확정하지 않는다.
+
+숫자 포함 단어가 MFA에서 나뉘면 원본 MFA 영수증의 단어·음소 구간을 사용해 유일한
+단어 대응을 복원한다. 실제 구간과 기대 음소 수가 정확히 일치한 자음만 복원하며,
+`spn`·소속 근거가 불확실한 모음은 추측하지 않는다. CTC 시간을 대체해 넣지 않는다.
+
+이 절은 코드·소비 계약의 변경 설명이며 운영 반영 완료 기록이 아니다.
+
+배포 전 실제 영상 검사에서 MediaPipe 1.0.1 native worker의 간헐적인 SIGSEGV를
+확인했다. 격리 영상 worker만 이미 허용된 CPU 1개에 제한한 뒤 SDK를 import한다.
+음성 CORE·부모 프로세스의 CPU affinity와 기존 메모리·syscall 격리는 유지한다.
