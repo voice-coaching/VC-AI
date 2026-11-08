@@ -1,7 +1,7 @@
 """Offline replay of visual evidence, with no media decoder/model/provider calls."""
 from __future__ import annotations
 
-from .canonical_service import EVIDENCE_SCHEMA, LEGACY_ASSESSMENT, PARTIAL_ASSESSMENT, assess_aligned
+from .canonical_service import EVIDENCE_SCHEMA, LEGACY_ASSESSMENT, PARTIAL_ASSESSMENT, SPARSE_ASSESSMENT, assess_aligned
 from .feature_protocol import MAPPING, PROTOCOL, strict_json
 from .parallel_analysis import MediaIntegrityFailure
 from .reference_catalog import ReferenceCatalog, sha
@@ -40,7 +40,8 @@ Authenticated producer provenance is a separate handoff responsibility.
         and value["distancePolicyRevision"] == catalog.policy.revision)
     decoder = value["decoder"]
     if 'assessmentPolicy' in value:
-        require(value['assessmentPolicy']==PARTIAL_ASSESSMENT and decoder is not None)
+        require(value['assessmentPolicy'] in {PARTIAL_ASSESSMENT,SPARSE_ASSESSMENT}
+                and (decoder is not None or value['assessmentPolicy'] == SPARSE_ASSESSMENT))
     if decoder is None:
         require("alignmentSidecar" not in value)
         visual = value["visual"]

@@ -1,0 +1,129 @@
+{
+  "type": "object",
+  "additionalProperties": false,
+  "properties": {
+    "schemaVersion": {
+      "const": "voice-coaching.browser-video-summary.v1"
+    },
+    "jobId": {
+      "type": "string",
+      "format": "uuid"
+    },
+    "executionId": {
+      "type": "string",
+      "format": "uuid"
+    },
+    "clientRequestId": {
+      "type": "string",
+      "format": "uuid"
+    },
+    "status": {
+      "enum": [
+        "COMPLETED",
+        "FAILED"
+      ]
+    },
+    "score": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "overallScore": {
+          "type": [
+            "number",
+            "null"
+          ],
+          "minimum": 0,
+          "maximum": 100
+        },
+        "validity": {
+          "type": "string"
+        },
+        "reason": {
+          "type": "string"
+        }
+      },
+      "required": [
+        "overallScore",
+        "validity",
+        "reason"
+      ]
+    },
+    "visual": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "score": {
+          "type": [
+            "number",
+            "null"
+          ],
+          "minimum": 0,
+          "maximum": 100
+        },
+        "scoreKind": {
+          "enum": [
+            "NONE",
+            "PROVISIONAL",
+            "CALIBRATED"
+          ]
+        },
+        "scoreScope": {
+          "enum": [
+            "UNAVAILABLE",
+            "ASSESSED_PHONES_ONLY",
+            "WHOLE_CLIP"
+          ]
+        }
+      },
+      "required": [
+        "score",
+        "scoreKind",
+        "scoreScope"
+      ]
+    },
+    "coaching": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "feedback": {
+          "type": "string"
+        }
+      },
+      "required": [
+        "feedback"
+      ]
+    },
+    "failure": {
+      "anyOf": [
+        {
+          "type": "null"
+        },
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "code": {
+              "type": "string"
+            }
+          },
+          "required": [
+            "code"
+          ]
+        }
+      ]
+    }
+  },
+  "required": [
+    "schemaVersion",
+    "jobId",
+    "executionId",
+    "clientRequestId",
+    "status",
+    "score",
+    "visual",
+    "coaching",
+    "failure"
+  ],
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "voice-coaching.browser-video-summary.v1"
+}

@@ -102,7 +102,8 @@ class Calibration:
 def assess_phone(anchor: PhoneAnchor, *, frames: tuple[LipFrame, ...],
                  pcm_sha256: str, video_sha256: str, time_map: VerifiedTimeMap | None,
                  mapping_revision: str, references: tuple[LipReference, ...],
-                 policy: DistancePolicy, source_sha256: str, calibration: Calibration | None = None) -> dict:
+                 policy: DistancePolicy, source_sha256: str, calibration: Calibration | None = None,
+                 allow_sparse_frames: bool = False) -> dict:
     """Null with an explicit reason is a valid outcome; no corrective action is inferred."""
     result = dict(expectedIndex=anchor.expected_index, expectedPhone=anchor.expected_phone,
         role=anchor.role, status="UNSCORABLE", score=None, scoreKind="NONE",
@@ -127,14 +128,25 @@ def assess_phone(anchor: PhoneAnchor, *, frames: tuple[LipFrame, ...],
         # Dropping occluded frames can silently hide the closure gesture.
         if not selected:
             raise UnscorableTrajectory("NO_FRAME_IN_ALIGNED_SPAN")
-        if any(not frame.observable for frame in selected):
+        occluded = any(not frame.observable for frame in selected)
+        if occluded and not allow_sparse_frames:
             raise UnscorableTrajectory("LOW_VISIBILITY")
+        if allow_sparse_frames:
+            selected = [f for f in selected if f.observable]
+            if not selected:
+                raise UnscorableTrajectory("LOW_VISIBILITY")
         result["frameCount"] = len(selected)
         observed = Trajectory(tuple(f.pts_s for f in selected), tuple(f.landmarks for f in selected),
                               tuple(f.features for f in selected))
         policy.validate(len(observed.features[0]))
-        observed.validate(policy.max_frames)
+        observed.validate(policy.max_frames, minimum_frames=1 if allow_sparse_frames else 3)
         result["status"] = "OBSERVED"
+        if occluded:
+            raise UnscorableTrajectory("PARTIAL_VISIBILITY_STATIC_ONLY")
+        if len(selected) < 3:
+            # A snapshot supports shape, never a DTW trajectory or calibrated
+            # motion score. Component scoring is a separate provisional policy.
+            raise UnscorableTrajectory("SPARSE_STATIC_OBSERVATION")
         eligible = [r for r in references if r.expert_review_id and
             (r.expected_phone, r.role, r.context, r.mapping_revision) ==
             (anchor.expected_phone, anchor.role, anchor.context, mapping_revision)]
@@ -160,7 +172,7 @@ def assess_phone(anchor: PhoneAnchor, *, frames: tuple[LipFrame, ...],
 
 def aggregate(assessments: list[dict], *, target_count: int, visually_eligible_count: int,
               minimum_coverage: float, allow_provisional: bool = False,
-              allow_partial_provisional: bool = False) -> dict:
+              allow_partial_provisional: bool = False, minimum_observed_frames: int = 3) -> dict:
     """Aggregate calibrated scores only, with explicit coverage. Missing is not zero."""
     indices = [row["expectedIndex"] for row in assessments]
     if (type(target_count) is not int or type(visually_eligible_count) is not int
@@ -177,5 +189,5 @@ def aggregate(assessments: list[dict], *, target_count: int, visually_eligible_c
                     coverage >= minimum_coverage or allow_provisional and allow_partial_provisional) else None,
                 targetCount=target_count, visuallyEligibleCount=visually_eligible_count,
                 observedCount=sum(r["status"] in {"OBSERVED", "REFERENCE_ONLY", "SCORED"}
-                                  and r["frameCount"] >= 3 for r in assessments),
+                                  and r["frameCount"] >= minimum_observed_frames for r in assessments),
                 scoredCount=len(scored), coverage=coverage)

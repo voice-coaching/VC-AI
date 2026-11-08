@@ -223,6 +223,11 @@
             "items": {
               "$ref": "#/$defs/lipSubScore"
             }
+          },
+          "frameCount": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 240
           }
         },
         "required": [
@@ -242,7 +247,10 @@
       "maxItems": 12
     },
     "comparisonPolicy": {
-      "const": "PHONE_ROLE_PARTIAL_PROVISIONAL_V1"
+      "enum": [
+        "PHONE_ROLE_PARTIAL_PROVISIONAL_V1",
+        "PHONE_ROLE_SPARSE_30FPS_V1"
+      ]
     },
     "coverage": {
       "type": "object",

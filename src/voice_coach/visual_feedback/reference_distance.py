@@ -21,9 +21,9 @@ class Trajectory:
     landmarks: tuple[tuple[tuple[float, float], ...], ...]
     features: tuple[tuple[float, ...], ...]
 
-    def validate(self, max_frames: int) -> None:
+    def validate(self, max_frames: int, *, minimum_frames: int = 3) -> None:
         n = len(self.times)
-        if not 3 <= n <= max_frames or len(self.landmarks) != n or len(self.features) != n:
+        if not 1 <= minimum_frames <= n <= max_frames or len(self.landmarks) != n or len(self.features) != n:
             raise UnscorableTrajectory("INSUFFICIENT_OR_EXCESSIVE_FRAMES")
         if any(not math.isfinite(t) for t in self.times) or any(
                 a >= b for a, b in zip(self.times, self.times[1:])):

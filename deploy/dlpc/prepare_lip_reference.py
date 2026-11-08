@@ -65,7 +65,8 @@ async def capture(args):
         source_pcm=pcm_identity(args.source_pcm, receipt["canonicalPcmSha256"]),
         prepared_pcm=pcm_identity(args.prepared_pcm, core["prepared_wav_sha256"]), catalog=catalog,
         alignment_evidence=(strict_json(read(args.alignment_sidecar, 1024**2))
-                            if args.alignment_sidecar is not None else None))
+                            if args.alignment_sidecar is not None else None),
+        allow_sparse_frames=args.allow_sparse_frames)
     raw = encode(result)
     require(len(raw) <= 8 * 1024**2)
     write_new(args.output, raw)
@@ -84,6 +85,8 @@ def main():
         c.add_argument("--" + name, type=Path, required=True)
     c.add_argument("--source-sha256", required=True)
     c.add_argument("--alignment-sidecar", type=Path)
+    c.add_argument('--allow-sparse-frames', action='store_true',
+                   help='Versioned static capture from 1 real frame; never fabricates motion')
     b = commands.add_parser("compile")
     for name in ("capture", "review", "base-catalog", "output"):
         b.add_argument("--" + name, type=Path, required=True)
@@ -99,7 +102,8 @@ def main():
         else:
             raw = compile_reviewed_catalog(capture_raw=read(args.capture, 8 * 1024**2),
                 review_raw=read(args.review, 256 * 1024), base_raw=read(args.base_catalog, 8 * 1024**2),
-                revision=args.revision, model_sha256=args.model_sha256)
+                revision=args.revision, model_sha256=args.model_sha256,
+                lip_policy_raw=read(args.lip_score_policy,16384) if args.lip_score_policy is not None else None)
             if args.lip_score_policy is not None:
                 from voice_coach.visual_feedback.reference_preparation import enable_provisional_scoring
                 raw = enable_provisional_scoring(raw, read(args.lip_score_policy, 16384),

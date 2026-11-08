@@ -21,6 +21,7 @@ from .lip_scoring import BILABIALS, VOWELS, display, enrich_phone, summarize_sub
 EVIDENCE_SCHEMA = "voice-coaching.visual-evidence.v1"
 LEGACY_ASSESSMENT = 'EXACT_WORD_COVERAGE_V1'
 PARTIAL_ASSESSMENT = 'PHONE_ROLE_PARTIAL_PROVISIONAL_V1'
+SPARSE_ASSESSMENT = 'PHONE_ROLE_SPARSE_30FPS_V1'
 
 
 def _sha(value):
@@ -36,9 +37,10 @@ def assess_aligned(*, core: dict, request, feature_value: dict, source_pcm, prep
 PCM measurements come from the materialized files during execution; the
 verifier must additionally match them to the retained receipt/association.
 """
-    if assessment_policy not in {LEGACY_ASSESSMENT,PARTIAL_ASSESSMENT}:
+    if assessment_policy not in {LEGACY_ASSESSMENT,PARTIAL_ASSESSMENT,SPARSE_ASSESSMENT}:
         raise MediaIntegrityFailure('VISUAL_ASSESSMENT_POLICY_INVALID')
-    partial = assessment_policy == PARTIAL_ASSESSMENT
+    partial = assessment_policy in {PARTIAL_ASSESSMENT,SPARSE_ASSESSMENT}
+    sparse = assessment_policy == SPARSE_ASSESSMENT
     video_sha = request.visual_input.sha256
     mapping = verified_time_map(source_pcm=source_pcm, prepared_pcm=prepared_pcm,
         prepared_sha256=core["prepared_wav_sha256"], video_sha256=video_sha, features=feature_value)
@@ -58,11 +60,12 @@ verifier must additionally match them to the retained receipt/association.
         row = assess_phone(anchor, frames=frames, pcm_sha256=core["prepared_wav_sha256"],
             video_sha256=video_sha, time_map=mapping, mapping_revision=MAPPING.revision,
             source_sha256=request.media_preparation["receipt"]["sourceSha256"],
-            references=catalog.references, policy=catalog.policy, calibration=catalog.calibration_for(anchor))
+            references=catalog.references, policy=catalog.policy, calibration=catalog.calibration_for(anchor),
+            allow_sparse_frames=sparse)
         if catalog.lip_policy is not None:
             enrich_phone(row, anchor, frames, references=catalog.references, policy=catalog.lip_policy,
                 video_sha256=video_sha, source_sha256=request.media_preparation["receipt"]["sourceSha256"],
-                allow_cross_word=partial)
+                allow_cross_word=partial, allow_sparse_frames=sparse)
         if row["videoStartSeconds"] is not None:
             selected = [f for f in frames if row["videoStartSeconds"] <= f.pts_s < row["videoEndSeconds"]]
             consumed_pts.update(f.pts_s for f in selected)
@@ -70,10 +73,12 @@ verifier must additionally match them to the retained receipt/association.
                               and r["reason"] is not None})
             if reasons:
                 row["reasonCodes"] = sorted(set(row["reasonCodes"]) | set(reasons))
-            elif row["frameCount"] >= 3:
+            if (not reasons or sparse) and row["frameCount"] >= (1 if sparse else 3) and (not sparse or row['status'] in {'OBSERVED','REFERENCE_ONLY','SCORED'}):
                 # Measurements are observations, not a normal/abnormal label or
                 # an instruction to change articulation. No closure threshold
                 # or 3-D tongue/protrusion inference is introduced here.
+                if sparse:
+                    selected = [f for f in selected if f.observable]
                 row["observations"] = [dict(observationId=f"{scope}:phone-{anchor.expected_index}:{name}",
                     code=name, minimum=min(f.features[i] for f in selected),
                     maximum=max(f.features[i] for f in selected), unit="FACE_SCALE_NORMALIZED")
@@ -93,7 +98,7 @@ verifier must additionally match them to the retained receipt/association.
     summary = aggregate(eligible_rows, target_count=located.target_count,
         visually_eligible_count=eligible_count,
         minimum_coverage=catalog.minimum_coverage, allow_provisional=catalog.lip_policy is not None,
-        allow_partial_provisional=partial)
+        allow_partial_provisional=partial, minimum_observed_frames=1 if sparse else 3)
     reasons = sorted({r for row in rows for r in row["reasonCodes"]})
     partial_total = summary['score'] is not None and summary['coverage'] < catalog.minimum_coverage
     if partial_total:
@@ -182,10 +187,11 @@ class CanonicalAudiovisualService:
                 source_pcm=source, prepared_pcm=prepared, catalog=self.catalog, core_raw=produced.raw,
                 alignment_evidence=(strict_json(produced.alignment_evidence)
                     if getattr(produced, "alignment_evidence", None) is not None else None),
-                assessment_policy=PARTIAL_ASSESSMENT)
+                assessment_policy=SPARSE_ASSESSMENT)
         else:
             reason = parallel.visual.reason or "ALIGNMENT_UNAVAILABLE"
             evidence = dict(schemaVersion=EVIDENCE_SCHEMA, requestId=str(request.event_id),
+                assessmentPolicy=SPARSE_ASSESSMENT,
                 executionId=str(request.execution_id), audioSha256=request.audio_sha256,
                 videoSha256=video.sha256, preparedWavSha256=core.get("prepared_wav_sha256"),
                 referenceCatalogSha256=self.catalog.sha256, mappingRevision=MAPPING.revision,

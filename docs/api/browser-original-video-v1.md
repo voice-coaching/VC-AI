@@ -12,6 +12,9 @@
 4. start를 호출하면 AI가 원본을 정규화하고 기존 독립 영상 실행기로 분석·피드백을 생성한다.
 5. 브라우저는 상태와 결과를 조회한다. Backend의 결과 수집은 별도 서버 Bearer 경로를 사용한다.
 
+화면에서 최종 점수·피드백만 받는 새 `/summary` 경로는
+[Frontend 요약 명세](lip-summary-frontend-handoff-20261108.md)를 따른다.
+
 AI는 접수·실행·결과 저장 중 Backend readiness·callback·heartbeat·lease를 호출하지 않는다.
 권한 검증 공개키도 로컬 설정에서 읽는다. 원본 영상이나 프레임을 GPT에 보내지 않으며,
 기존 Seungun 원본 JSON 보존과 요청당 GPT 생성 최대 1회 정책을 유지한다.
@@ -87,6 +90,7 @@ Backend 로그인 토큰·AI 서버 Bearer는 이 경로의 권한을 대신하�
 | PUT | `/browser/v1/video-analysis-jobs/{jobId}/source` | **원본 파일 bytes**, 선언 MIME | 200 작업 상태 |
 | POST | `/browser/v1/video-analysis-jobs/{jobId}/start` | 본문 없음 | 202 작업 상태 |
 | GET | `/browser/v1/video-analysis-jobs/{jobId}/result` | 결과 조회 | 200 원본 결과 JSON bytes |
+| GET | `/browser/v1/video-analysis-jobs/{jobId}/summary` | 화면용 최종 점수·피드백 조회 | 200 요약 JSON |
 | POST | `/browser/v1/video-analysis-jobs/{jobId}/cancel` | 본문 없음 | 200 작업 상태 |
 
 POST metadata는 `clientRequestId`, `scriptText`, `contentId`, `source`만 허용한다.

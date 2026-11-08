@@ -45,8 +45,8 @@ def display(value):
     return float(Decimal(str(value)).quantize(Decimal("0.1"), rounding=ROUND_HALF_UP))
 
 
-def _metrics(trajectory, phone, role, policy):
-    trajectory.validate(240)
+def _metrics(trajectory, phone, role, policy, *, allow_sparse_frames=False, static_only=False):
+    trajectory.validate(240, minimum_frames=1 if allow_sparse_frames else 3)
     if any(len(row) != 3 or any(v < 0 for v in row) for row in trajectory.features):
         raise ValueError("LIP_FEATURE_SHAPE_INVALID")
     aperture = [row[0] for row in trajectory.features]
@@ -59,9 +59,9 @@ def _metrics(trajectory, phone, role, policy):
     if vowel and phone in "ㅗㅜㅛㅠ":
         # 2-D width relative to fixed eye scale, never inferred 3-D protrusion.
         result["lip_rounding"] = statistics.median(width)
-    if bilabial:
+    if bilabial and len(aperture) >= 2 and not static_only:
         result["lip_closure"] = min(aperture)
-    if (bilabial or vowel) and max(aperture) - min(aperture) >= policy.minimum_motion:
+    if not static_only and len(aperture) >= 3 and (bilabial or vowel) and max(aperture) - min(aperture) >= policy.minimum_motion:
         event = min(aperture) if bilabial else max(aperture)
         # Plateaus use their median time; zero lag to the audio is NOT a target.
         event_time = statistics.median(t for t, value in zip(trajectory.times, aperture) if value == event)
@@ -69,22 +69,33 @@ def _metrics(trajectory, phone, role, policy):
     return result
 
 
-def score_phone(anchor, frames, references, *, policy, cross_word=False):
+def score_phone(anchor, frames, references, *, policy, cross_word=False, allow_sparse_frames=False,
+                static_only=False):
     """Equal-context reference medians, dead band, squared-distance exponential."""
     policy.validate()
     observed = Trajectory(tuple(f.pts_s for f in frames), tuple(f.landmarks for f in frames),
                           tuple(f.features for f in frames))
-    values = _metrics(observed, anchor.expected_phone, anchor.role, policy)
-    ref_values = [_metrics(r.trajectory, anchor.expected_phone, anchor.role, policy) for r in references]
+    values = _metrics(observed, anchor.expected_phone, anchor.role, policy,
+                      allow_sparse_frames=allow_sparse_frames, static_only=static_only)
+    ref_values = [_metrics(r.trajectory, anchor.expected_phone, anchor.role, policy,
+                          allow_sparse_frames=allow_sparse_frames) for r in references]
     rows = []
     for key, label in LABELS.items():
         candidates = [r[key] for r in ref_values if key in r]
         row = dict(criterionId=key, label=label, score=None, status="NOT_APPLICABLE",
                    reasonCode="GESTURE_NOT_OBSERVABLE_IN_THIS_CONTEXT", measurements=[])
-        if cross_word and key == 'lip_timing':
+        if static_only and key in {'lip_closure','lip_timing'}:
+            row.update(status='UNSCORABLE',reasonCode='PARTIAL_VISIBILITY_STATIC_ONLY')
+        elif cross_word and key == 'lip_timing':
             # Different word/coarticulation contexts do not define the same
             # temporal gesture. Shape proximity is provisional; timing is not.
             row.update(status='UNSCORABLE',reasonCode='CROSS_WORD_TIMING_UNSUPPORTED')
+        elif (allow_sparse_frames and key == 'lip_timing' and len(frames) < 3
+              and (anchor.expected_phone in VOWELS or anchor.expected_phone in BILABIALS)):
+            row.update(status='UNSCORABLE', reasonCode='INSUFFICIENT_MOTION_FRAMES')
+        elif (allow_sparse_frames and key == 'lip_closure' and len(frames) < 2
+              and anchor.expected_phone in BILABIALS):
+            row.update(status='UNSCORABLE', reasonCode='INSUFFICIENT_CLOSURE_FRAMES')
         elif key in values and candidates:
             center = statistics.median(candidates)
             floor = {"lip_aperture": policy.aperture_scale, "lip_rounding": policy.width_scale,
@@ -107,11 +118,11 @@ def score_phone(anchor, frames, references, *, policy, cross_word=False):
 
 
 def enrich_phone(row, anchor, frames, *, references, policy, video_sha256, source_sha256,
-                 allow_cross_word=False):
+                 allow_cross_word=False, allow_sparse_frames=False):
     """Add scores only to a valid measured join; preserve identity rejections."""
     blocked = {"SYNC_UNCERTAIN", "LOW_VISIBILITY", "REFERENCE_SELF_COMPARISON",
                "REFERENCE_CATALOG_INVALID", "INVALID_FRAME_PTS"}
-    if row["frameCount"] < 3 or blocked.intersection(row["reasonCodes"]):
+    if row["frameCount"] < (1 if allow_sparse_frames else 3) or blocked.intersection(row["reasonCodes"]):
         return
     eligible = [r for r in references if (r.expert_review_id or r.authority == "USER_DESIGNATED_EXEMPLAR")
         and r.mapping_revision == MAPPING.revision and
@@ -131,10 +142,14 @@ def enrich_phone(row, anchor, frames, *, references, policy, video_sha256, sourc
         row["reasonCodes"] = ["REFERENCE_SELF_COMPARISON"]
         return
     selected = [f for f in frames if row["videoStartSeconds"] <= f.pts_s < row["videoEndSeconds"]]
-    if not selected or any(not f.observable for f in selected):
+    occluded = any(not f.observable for f in selected)
+    if allow_sparse_frames:
+        selected = [f for f in selected if f.observable]
+    if not selected or occluded and not allow_sparse_frames:
         return
     try:
-        subscores, score = score_phone(anchor, selected, eligible, policy=policy,cross_word=cross_word)
+        subscores, score = score_phone(anchor, selected, eligible, policy=policy,cross_word=cross_word,
+                                      allow_sparse_frames=allow_sparse_frames,static_only=occluded)
     except ValueError:
         # A component with no observable event cannot cancel the audio result.
         return
@@ -143,7 +158,10 @@ def enrich_phone(row, anchor, frames, *, references, policy, video_sha256, sourc
         row.update(score=score, status="SCORED", scoreKind="PROVISIONAL",
             referenceIds=sorted(r.reference_id for r in eligible), calibrationRevision=None,
             reasonCodes=(["CROSS_WORD_PROVISIONAL_REFERENCE"] if cross_word else [])+
-                        ["EXPERT_REVIEW_PENDING"], allowedActionIds=["COMPARE_REFERENCE"])
+                        ["EXPERT_REVIEW_PENDING"] +
+                        (["SPARSE_STATIC_OBSERVATION"] if len(selected) < 3 else []) +
+                        (["PARTIAL_VISIBILITY_STATIC_ONLY"] if occluded else []),
+            allowedActionIds=["COMPARE_REFERENCE"])
 
 
 def summarize_subscores(rows):

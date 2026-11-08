@@ -127,6 +127,15 @@ class BrowserVideoAPI:
             raw,pin = await self.invoke(self.runtime.require_store().result,job_id)
             return Response(raw,media_type='application/json',headers={'X-Result-SHA256':pin,'ETag':'"'+pin+'"'})
 
+        @app.get(PREFIX+'/{job_id}/summary')
+        async def summary(job_id:str,request:Request):
+            from .browser_video_summary import summarize
+            self.owned(request,job_id)
+            raw,_ = await self.invoke(self.runtime.require_store().result,job_id)
+            payload,pin = summarize(raw)
+            return Response(payload,media_type='application/json',headers={
+                'Cache-Control':'no-store','X-Result-SHA256':pin,'ETag':'"'+pin+'"'})
+
         @app.post(PREFIX+'/{job_id}/cancel')
         async def cancel(job_id:str,request:Request):
             self.owned(request,job_id)
