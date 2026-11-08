@@ -15,6 +15,10 @@ from .http_runtime import HttpRuntime
 
 def create_app(environment=None):
     runtime = HttpRuntime(os.environ if environment is None else environment)
+    audiovisual = None
+    if runtime.environment.get('AI_INDEPENDENT_AV_ENABLED') == 'true':
+        from .independent_av_runtime import IndependentAudiovisualRuntime
+        audiovisual = IndependentAudiovisualRuntime(runtime.environment)
     direct = None
     if runtime.environment.get("AI_DIRECT_ENABLED") == "true":
         from voice_coach.direct_analysis.api import create_app as create_direct_app
@@ -27,12 +31,19 @@ def create_app(environment=None):
             async with AsyncExitStack() as stack:
                 if direct is not None:
                     await stack.enter_async_context(direct.router.lifespan_context(direct))
+                if audiovisual is not None:
+                    stack.push_async_callback(audiovisual.close)
+                    await audiovisual.start()
                 yield
         finally:
             await runtime.close()
 
     app = FastAPI(lifespan=lifespan, docs_url=None, redoc_url=None, openapi_url=None)
     app.state.runtime = runtime
+    app.state.audiovisual = audiovisual
+    if audiovisual is not None:
+        from .independent_av_api import install_routes
+        install_routes(app, audiovisual)
 
     @app.exception_handler(HttpFailure)
     async def failure(request, error, extra_headers=None):
@@ -105,6 +116,10 @@ def create_app(environment=None):
             count = sum(d["status"] in ("QUEUED", "RUNNING") for d in direct.state.store.documents())
             state["directJobs"] = count
             state["activeJobs"] += count
+        if audiovisual is not None:
+            count = audiovisual.snapshot()['activeJobs']
+            state['audiovisualJobs'] = count
+            state['activeJobs'] += count
         return JSONResponse(state, headers={"Cache-Control": "no-store"})
 
     @app.post("/v1/analysis-jobs")
@@ -125,6 +140,9 @@ def create_app(environment=None):
 
     @app.get("/health/audiovisual")
     async def audiovisual_health():
+        if audiovisual is not None:
+            return JSONResponse(audiovisual.snapshot(), status_code=200 if audiovisual.ready() else 503,
+                                headers={'Cache-Control':'no-store'})
         from .canonical_settings import audiovisual_schema_digests, canonical_learning_focuses
         from .canonical_harness import AUDIOVISUAL
         configured = runtime.audiovisual_executor_ready()

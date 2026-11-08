@@ -26,6 +26,7 @@ from .canonical_bridge import (
 )
 from .canonical_media import PreparedAudioIdentity
 from .canonical_harness import H5, HarnessIdentity
+from .independent_av_domain import is_local_input
 # Compatibility aliases for existing private callers; new infrastructure imports
 # the codec directly instead of reaching through result assembly.
 from .canonical_codec import (
@@ -40,8 +41,7 @@ if TYPE_CHECKING:
 from .http_models import REQUEST_V2, REQUEST_V4, RESULT_V4, RESULT_V6, CANONICAL_PROFILE, AUDIOVISUAL_PROFILE
 
 def _canonical_profile(request):
-    from voice_coach.direct_analysis.domain import DirectInput
-    if type(request) is DirectInput:
+    if is_local_input(request):
         return True
     return (request.request_schema_version, request.result_schema_version, request.analysis_profile) in {
         (REQUEST_V2, RESULT_V4, CANONICAL_PROFILE), (REQUEST_V4, RESULT_V6, AUDIOVISUAL_PROFILE)}
@@ -172,8 +172,7 @@ class ServiceFailure:
 
 def _binding_and_association(request: AnalysisInput, core: dict, raw: bytes,
                              prepared_audio: PreparedAudioIdentity | None, harness: HarnessIdentity):
-    from voice_coach.direct_analysis.domain import DirectInput
-    _require(not harness.direct_only or type(request) is DirectInput, "DIRECT_ONLY_HARNESS_REQUIRED")
+    _require(not harness.direct_only or is_local_input(request), "DIRECT_ONLY_HARNESS_REQUIRED")
     _require(_canonical_profile(request),
              "CANONICAL_PROFILE_REQUIRED")
     _require(_sha(request.script_text.encode("utf-8")) == request.script_sha256,
@@ -191,8 +190,8 @@ def _binding_and_association(request: AnalysisInput, core: dict, raw: bytes,
                    source_audio_sha256=request.audio_sha256,
                    prepared_wav_sha256=core["prepared_wav_sha256"],
                    provenance_source="admitted-http-canonical-producer-v1")
-    from voice_coach.direct_analysis.domain import DirectAssociation, DirectInput
-    association_type = DirectAssociation if type(request) is DirectInput else ExecutionAssociation
+    from voice_coach.direct_analysis.domain import DirectAssociation
+    association_type = DirectAssociation if is_local_input(request) else ExecutionAssociation
     identity = association_type(request.event_id, request.execution_id, request.analysis_id,
                                     request.recording_id, request.content_id, core_id, _sha(raw))
     association = dict(identity.to_document(), parentManifestSha256=harness.core_sha256,
@@ -278,8 +277,7 @@ def preflight_canonical_result(
     _require("sixDimension" not in expression or frozen.artifacts.identity.six_dimension,
              "UNEXPECTED_PRIVATE_ASSESSMENT")
     _validate(binding, "binding")
-    from voice_coach.direct_analysis.domain import DirectInput
-    if type(request) is not DirectInput:
+    if not is_local_input(request):
         if request.is_v6:
             _validate(association, "audioAssociation", schema_name="v6")
         else:
@@ -370,7 +368,7 @@ def preflight_canonical_result(
     if result.selection_bytes is not None:
         raw_by_kind.append(("SELECTION_PROJECTION", result.selection_bytes))
     artifacts = tuple(PrivateArtifact(kind,
-        "voice-coaching.direct-association.v1" if type(request) is DirectInput and kind == "ASSOCIATION"
+        "voice-coaching.direct-association.v1" if is_local_input(request) and kind == "ASSOCIATION"
         else ARTIFACT_SCHEMAS[kind], raw) for kind, raw in raw_by_kind)
     _require(all(0 < len(a.raw) <= MAX_ARTIFACT_BYTES for a in artifacts), "EVIDENCE_SIZE_INVALID")
     return CanonicalPreflight(result, identity, artifacts)

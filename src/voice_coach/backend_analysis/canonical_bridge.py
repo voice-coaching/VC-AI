@@ -316,8 +316,8 @@ class FrozenCanonicalCoaching:
             association.update(media_binding(request, visual_evidence_bytes),
                 visualStatus=_json(visual_evidence_bytes)["visual"]["status"]
                     if visual_evidence_bytes is not None else "NOT_PROVIDED")
-        from voice_coach.direct_analysis.domain import DirectInput
-        if type(request) is DirectInput:
+        from .independent_av_domain import is_local_input
+        if is_local_input(request):
             association["schemaVersion"] = "voice-coaching.direct-association.v1"
             association["jobId"] = association.pop("analysisId")
             association["audioAssetId"] = association.pop("recordingId")

@@ -5,6 +5,11 @@
 
 기존 결과 조회의 optional `score.details`는 [Frontend 세부점수 명세](frontend-score-details-response.md)를 따른다.
 
+독립 영상 모드를 활성화하면 `/health/audiovisual`은 AI 로컬 readiness를 반환한다.
+[독립 영상 API v1](independent-audiovisual-v1.md)의 `/v2/audiovisual-analysis-jobs` 접수,
+미디어 PUT, start, 상태·result·artifacts GET, ack·cancel POST가 추가된다.
+기존 음성 전용 API 및 handoff v2와 구분한다.
+
 분석 API의 요청 처리 오류는 실제 HTTP 4xx·5xx와 JSON으로 응답한다. 내부·Direct의
 기존 오류 본문 형식과 비동기 상태 조회 계약은 유지한다.
 [오류 응답 상세](specification.md#http-오류-응답)를 참조한다.

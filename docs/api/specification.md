@@ -315,3 +315,10 @@ field는 거부한다.
 ## 문장별 녹음 묶음 계약
 
 [문장별 녹음·일괄 피드백 API](sentence-practice-batches.md)의 네 endpoint, 상태·실패·복구 계약을 따른다. 기존 단일 direct 결과와 내부 canonical 계약의 버전은 유지한다.
+
+## 독립 영상 분석 추가 계약
+
+`AI_INDEPENDENT_AV_ENABLED=true`일 때의 영상 접수·업로드·실행·결과 수집과
+`/health/audiovisual`의 AI 로컬 준비 상태는 [독립 영상 API v1](independent-audiovisual-v1.md)을
+따른다. 이 모드는 Backend readiness·claim·heartbeat·journal·결과 callback을 호출하지 않는다.
+기존 음성/handoff 요청을 새 영상 요청으로 자동 변환하지 않는다.
