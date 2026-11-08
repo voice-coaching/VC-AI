@@ -19,7 +19,7 @@ from cryptography.hazmat.primitives import serialization
 
 from voice_coach.backend_analysis.browser_video_api import PREFIX
 from voice_coach.backend_analysis.browser_video_grants import TYPE, SCOPE
-from voice_coach.backend_analysis.browser_video_normalize import normalize, probe
+from voice_coach.backend_analysis.browser_video_normalize import normalize, probe, preserve_tracks
 from voice_coach.backend_analysis.http_api import create_app
 from voice_coach.backend_analysis.http_models import HttpFailure
 from voice_coach.backend_analysis.independent_av_runtime import IndependentAudiovisualRuntime
@@ -28,6 +28,7 @@ from voice_coach.backend_analysis.media_preparation import MediaPreparation
 from voice_coach.direct_analysis.domain import Settings
 from voice_coach.direct_analysis.store import atomic
 from voice_coach.visual_feedback.parallel_analysis import MediaIntegrityFailure
+from voice_coach.visual_feedback.adapters.canonical_feature_worker import sealed_model_path
 
 
 class BrowserVideo(unittest.IsolatedAsyncioTestCase):
@@ -196,6 +197,22 @@ class BrowserVideo(unittest.IsolatedAsyncioTestCase):
 
 
 class VideoNormalization(unittest.IsolatedAsyncioTestCase):
+    def test_native_model_snapshot_is_exact_immutable_and_closed(self):
+        import os
+        from pathlib import Path
+        with sealed_model_path(b'verified-model-fixture') as path:
+            self.assertEqual(Path(path).read_bytes(),b'verified-model-fixture')
+            with self.assertRaises(PermissionError):
+                with open(path,'wb') as stream:stream.write(b'changed')
+        self.assertFalse(Path(path).exists())
+
+    def test_supported_portrait_hevc_tracks_are_preserved(self):
+        video=dict(codec_name='hevc',width=1080,height=1920,avg_frame_rate='30/1',nb_frames='145')
+        self.assertTrue(preserve_tracks(video,dict(codec_name='aac')))
+        self.assertFalse(preserve_tracks(dict(video,width=2160,height=3840),dict(codec_name='aac')))
+        self.assertFalse(preserve_tracks(dict(video,tags={'rotate':'90'}),dict(codec_name='aac')))
+        self.assertFalse(preserve_tracks(dict(video,avg_frame_rate='60/1'),dict(codec_name='aac')))
+
     async def test_real_webm_decode_preserves_relative_clock_and_exact_pcm(self):
         with tempfile.TemporaryDirectory(dir='/home/2020067/.cache') as tmp:
             root=Path(tmp)

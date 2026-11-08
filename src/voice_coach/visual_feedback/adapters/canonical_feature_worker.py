@@ -8,6 +8,10 @@ from __future__ import annotations
 
 import json
 import math
+from contextlib import contextmanager
+import fcntl
+import os
+import ctypes
 from pathlib import Path
 import struct
 import sys
@@ -36,6 +40,48 @@ def exact(size):
     return bytes(raw)
 
 
+@contextmanager
+def sealed_model_path(model):
+    """Keep verified bytes immutable and alive through the native file loader."""
+    # The deployed CPython build omits these Linux wrappers. Use the system
+    # libc entry point and stable Linux UAPI flags, with an exact ctypes ABI.
+    libc = ctypes.CDLL(None, use_errno=True)
+    create = libc.memfd_create
+    create.argtypes = (ctypes.c_char_p, ctypes.c_uint)
+    create.restype = ctypes.c_int
+    fd = create(b'verified-landmark-model', 0x0001 | 0x0002)
+    if fd < 0: raise OSError(ctypes.get_errno(), 'VISUAL_MODEL_SNAPSHOT_FAILED')
+    try:
+        remaining = memoryview(model)
+        while remaining:
+            written = os.write(fd, remaining)
+            if written <= 0: raise ValueError('VISUAL_MODEL_SNAPSHOT_FAILED')
+            remaining = remaining[written:]
+        os.lseek(fd, 0, os.SEEK_SET)
+        # F_ADD_SEALS; WRITE | GROW | SHRINK | SEAL (linux/fcntl.h).
+        fcntl.fcntl(fd, 1033, 0x0008 | 0x0004 | 0x0002 | 0x0001)
+        yield f'/proc/self/fd/{fd}'
+    finally:
+        os.close(fd)
+
+
+@contextmanager
+def landmarker(mp, model, quality):
+    # The 1.0.1 buffer loader intermittently corrupts its heap during native
+    # initialization on J406. Its file loader uses the same pinned task bytes.
+    # A sealed anonymous file avoids a path race and survives until native close.
+    with sealed_model_path(model) as path:
+        options = mp.tasks.vision.FaceLandmarkerOptions(
+            base_options=mp.tasks.BaseOptions(model_asset_path=path),
+            running_mode=mp.tasks.vision.RunningMode.VIDEO, num_faces=2,
+            min_face_detection_confidence=quality['detectionConfidence'],
+            min_face_presence_confidence=quality['presenceConfidence'],
+            min_tracking_confidence=quality['trackingConfidence'],
+            output_face_blendshapes=False, output_facial_transformation_matrixes=True)
+        with mp.tasks.vision.FaceLandmarker.create_from_options(options) as detector:
+            yield detector
+
+
 def main():
     _bootstrap()
     from voice_coach.visual_feedback.feature_protocol import (
@@ -52,16 +98,9 @@ def main():
     import mediapipe as mp
     import numpy as np
     q = header["quality"]
-    options = mp.tasks.vision.FaceLandmarkerOptions(
-        base_options=mp.tasks.BaseOptions(model_asset_buffer=model),
-        running_mode=mp.tasks.vision.RunningMode.VIDEO, num_faces=2,
-        min_face_detection_confidence=q["detectionConfidence"],
-        min_face_presence_confidence=q["presenceConfidence"],
-        min_tracking_confidence=q["trackingConfidence"],
-        output_face_blendshapes=False, output_facial_transformation_matrixes=True)
     width, height = header["width"], header["height"]
     frames = []
-    with mp.tasks.vision.FaceLandmarker.create_from_options(options) as detector:
+    with landmarker(mp, model, q) as detector:
         for pts in header["pts"]:
             pixels = np.frombuffer(exact(width * height * 3), dtype=np.uint8).reshape(height, width, 3)
             result = detector.detect_for_video(mp.Image(image_format=mp.ImageFormat.SRGB, data=pixels),

@@ -138,15 +138,23 @@ AI 실행 deadline은 900초이며 원본 정규화도 그 안에 포함된다.
 손상 파일·선언 MIME과 다른 컨테이너·영상만 있거나 음성만 있는 파일은 정규화에 실패한다.
 이 실패는 비동기 작업의 FAILED/MEDIA_NORMALIZATION_FAILED로 조회한다.
 
-AI는 네트워크를 차단한 ffmpeg/ffprobe에서 공통 시간 원점을 유지하며 회전을 적용하고
-최대 1920×1080 영역·30fps H.264/AAC MP4로 변환한다. 그 **MP4에서** mono 16kHz
+AI는 네트워크를 차단한 ffmpeg/ffprobe에서 공통 시간 원점을 유지한다. 이미 H.264/HEVC·AAC,
+회전 없음, 양축 1920 이하·면적 1920×1080 이하, 30fps 이하·3600프레임 이하인 입력은
+재인코딩하지 않고 트랙을 보존해 MP4로 remux한다. 그 외에는 회전을 적용하고 세로/가로
+방향을 유지한 1920×1080 면적·30fps H.264/AAC로 변환한다. 그 **MP4에서** mono 16kHz
 16bit WAV를 추출한다. 독립적으로 오디오/영상 PTS를 각각 0으로 초기화하지 않는다.
 디코더 CPU·메모리·출력 파일 크기·wall time을 제한한다. 원본은 그대로 보존한다.
 
 AI 생성 receipt는 `schemaVersion=voice-coaching.ai-media-preparation.v1`,
-`normalizationRevision=ai-original-video-pcm-20261108-v1`이다. 기존 Backend 생성 receipt
+`normalizationRevision=ai-original-video-pcm-20261108-v2`이다. 기존 Backend 생성 receipt
 v1을 위장하거나 기존 내부 요청 계약을 완화하지 않는다. 실제 영상 오디오와 WAV의
-샘플 일치·연속 시간 정보는 기존 visual 분석기가 다시 확인한다.
+샘플 일치·연속 시간 정보는 기존 visual 분석기가 다시 확인한다. 이전 로컬 시험의 v1
+receipt는 읽기 호환으로 보존하며 새 정규화는 v2를 기록한다.
+
+J406의 MediaPipe 1.0.1 buffer 모델 초기화 경로에서 native heap 오류가 재현돼, 검증된
+동일 모델 bytes를 Linux 익명 파일에 복사·봉인한 뒤 공식 파일 로더로 전달한다. 모델·
+landmark mapping·품질 기준·점수 정의는 바꾸지 않는다. 파일 descriptor는 native detector
+종료까지 유지하고 닫는다. 네트워크 차단과 자원 제한은 유지한다.
 
 결과 본문은 `voice-coaching.independent-audiovisual-result.v1` 그대로다.
 `score.overallScore`, optional `score.details`, `coaching`, `visual`은 기존 영상 결과와

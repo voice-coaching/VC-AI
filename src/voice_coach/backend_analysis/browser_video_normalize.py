@@ -2,6 +2,7 @@
 import asyncio
 import hashlib
 import json
+from fractions import Fraction
 import os
 from pathlib import Path
 import sys
@@ -12,7 +13,7 @@ from voice_coach.pronunciation_attempts.adapters.network_isolated_exec import is
 from .http_models import digest
 from .independent_av_store import AUDIO_LIMIT, VIDEO_LIMIT, pcm_valid
 
-REVISION = 'ai-original-video-pcm-20261108-v1'
+REVISION = 'ai-original-video-pcm-20261108-v2'
 
 
 async def capture(args, deadline, limit=1024**2):
@@ -64,6 +65,20 @@ def streams(doc):
     return v[0],a[0]
 
 
+def preserve_tracks(video,audio):
+    """Remux already supported tracks; do not resize valid portrait recordings."""
+    try:
+        rotation=[video.get('tags',{}).get('rotate',0),
+                  *(s.get('rotation',0) for s in video.get('side_data_list',[]))]
+        return (video['codec_name'] in ('h264','hevc') and audio['codec_name']=='aac'
+                and all(Fraction(str(x))%360==0 for x in rotation)
+                and 16<=int(video['width'])<=1920 and 16<=int(video['height'])<=1920
+                and int(video['width'])*int(video['height'])<=1920*1080
+                and 0<Fraction(video['avg_frame_rate'])<=30
+                and 1<=int(video['nb_frames'])<=3600)
+    except (KeyError,ValueError,TypeError,ZeroDivisionError):return False
+
+
 async def normalize(folder, metadata, *, deadline):
     source = folder/'original-video'
     spec = metadata['source']
@@ -86,11 +101,15 @@ async def normalize(folder, metadata, *, deadline):
     if demuxer=='mov': args += ['-enable_drefs','0','-use_absolute_path','0']
     # One common origin; no independent setpts/asetpts that would erase A/V offset.
     args += ['-copyts','-start_at_zero','-i',str(source),'-map','0:v:0','-map','0:a:0',
-        '-map_metadata','-1','-map_chapters','-1',
-        '-vf',"scale=w='min(1920,iw)':h='min(1080,ih)':force_original_aspect_ratio=decrease:force_divisible_by=2,fps=30",
-        '-c:v','libx264','-preset','veryfast','-pix_fmt','yuv420p','-threads','1',
-        '-c:a','aac','-ac','1','-ar','16000','-b:a','64k',
-        '-metadata:s:v:0','rotate=0','-movflags','+faststart','-f','mp4','-n',str(video)]
+        '-map_metadata','-1','-map_chapters','-1']
+    preserved = preserve_tracks(v,a)
+    if preserved:
+        args += ['-c','copy']
+    else:
+        args += ['-vf',"scale=w='if(gte(iw,ih),min(1920,iw),min(1080,iw))':h='if(gte(iw,ih),min(1080,ih),min(1920,ih))':force_original_aspect_ratio=decrease:force_divisible_by=2,fps=30",
+            '-c:v','libx264','-preset','veryfast','-pix_fmt','yuv420p','-threads','1',
+            '-c:a','aac','-ac','1','-ar','16000','-b:a','64k']
+    args += ['-metadata:s:v:0','rotate=0','-movflags','+faststart','-f','mp4','-n',str(video)]
     await capture(args,deadline)
     if not 0 < video.stat().st_size <= VIDEO_LIMIT: raise ValueError('NORMALIZED_VIDEO_TOO_LARGE')
     # Decode the accepted canonical MP4, not the source: visual replay later
@@ -103,7 +122,7 @@ async def normalize(folder, metadata, *, deadline):
     pcm_valid(audio.read_bytes())
     final = await probe(video,deadline)
     v,a = streams(final)
-    if (v['codec_name']!='h264' or a['codec_name']!='aac'
+    if (v['codec_name'] not in ('h264','hevc') or a['codec_name']!='aac'
             or not .5 <= float(final['format']['duration']) <= 120
             or any(float(s.get('rotation',0))%360 for s in v.get('side_data_list',[]))):
         raise ValueError('NORMALIZED_VIDEO_INVALID')
@@ -119,4 +138,6 @@ async def normalize(folder, metadata, *, deadline):
         canonicalVideoTimeBase=v['time_base'],syncStatus='UNVERIFIED')
     out['mediaPreparation']=dict(receipt=receipt,receiptSha256=digest(receipt))
     atomic(folder/'normalized-input.json',encoded(out))
+    atomic(folder/'normalization-observation.json',encoded(dict(revision=REVISION,
+        tracksPreserved=preserved,width=v['width'],height=v['height'])))
     return out
