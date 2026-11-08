@@ -4,6 +4,9 @@ AI가 영상 작업을 접수·실행·저장하고 Backend가 결과를 수집�
 `/v2/analysis-jobs` 및 익명 `/direct`와 다른 인증된 영상 API다. Backend DB 정수 ID,
 callback URL, claim·heartbeat·journal·handoff 준비 상태를 입력받거나 조회하지 않는다.
 
+서버 Bearer와 정규화 WAV/MP4를 사용할 수 없는 브라우저는 별도
+[원본 영상 직접 업로드 API](browser-original-video-v1.md)를 사용한다.
+
 ## 인증·readiness
 
 모든 아래 요청은 기존 `AI_ANALYSIS_API_TOKEN`의 `Authorization: Bearer …`로 인증한다.

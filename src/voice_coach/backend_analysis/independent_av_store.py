@@ -11,6 +11,7 @@ import wave
 from voice_coach.direct_analysis.store import JobStore, atomic, encoded
 from .http_models import HttpFailure
 from .media_preparation import MediaPreparation
+from .browser_video_grants import source_valid
 from voice_coach.visual_feedback.parallel_analysis import MediaIntegrityFailure
 
 AUDIO_LIMIT = 20 * 1024**2
@@ -60,7 +61,24 @@ def pcm_valid(raw):
 class AudiovisualStore(JobStore):
     def create(self, value):
         request = metadata(value)
-        pin = hashlib.sha256(encoded(request)).hexdigest()
+        return self._create(request)
+
+    def create_original(self, request, binding):
+        if (type(request) is not dict or set(request) != {
+                'clientRequestId','scriptText','contentId','source'}
+                or not source_valid(request.get('source'))):
+            raise HttpFailure(422, 'VALIDATION_FAILED')
+        return self._create(request, browser_binding=binding)
+
+    @staticmethod
+    def reserved_bytes(request):
+        if 'source' in request:
+            # Original + bounded canonical video/WAV, before any decoder runs.
+            return request['source']['fileSizeBytes'] + VIDEO_LIMIT + AUDIO_LIMIT
+        return sum(request[k]['fileSizeBytes'] for k in ('audio', 'video'))
+
+    def _create(self, request, browser_binding=None):
+        pin = hashlib.sha256(encoded(request if browser_binding is None else [request,browser_binding])).hexdigest()
         with self.mutation_lock:
             known = self.attempts.get(request['clientRequestId'])
             if known:
@@ -70,9 +88,9 @@ class AudiovisualStore(JobStore):
                 return doc
             if sum(d['status'] not in TERMINAL for d in self.documents()) >= self.settings.maximum_pending:
                 raise HttpFailure(429, 'CAPACITY_EXCEEDED')
-            total = sum(request[k]['fileSizeBytes'] for k in ('audio', 'video'))
+            total = self.reserved_bytes(request)
             # Reserve declared upload bytes for every unfinished job.
-            reserved = sum(sum(d['metadata'][k]['fileSizeBytes'] for k in ('audio','video'))
+            reserved = sum(self.reserved_bytes(d['metadata'])
                            for d in self.documents() if d['status'] not in TERMINAL)
             used = sum(p.stat().st_size for p in self.root.rglob('*') if p.is_file())
             if (len(self.cache) >= self.settings.maximum_jobs
@@ -88,15 +106,37 @@ class AudiovisualStore(JobStore):
                 clientAttemptId=request['clientRequestId'], requestSha256=pin, metadata=request,
                 status='AWAITING_MEDIA', uploaded=[], sequence=1, createdAt=time(), updatedAt=time(),
                 failure=None, acknowledgedAt=None)
+            if browser_binding is not None:
+                doc.update(inputMode='ORIGINAL_VIDEO', browserBinding=browser_binding)
             self.write(doc)
             self.attempts[request['clientRequestId']] = job
             return doc
+
+    def upload_original_file(self, job, temporary, size, pin):
+        with self.mutation_lock:
+            doc = self.read(job)
+            spec = doc['metadata']['source']
+            if size != spec['fileSizeBytes'] or pin != spec['sha256']:
+                raise HttpFailure(422, 'PAYLOAD_DIGEST_MISMATCH')
+            path = self.directory(job)/'original-video'
+            if 'source' in doc['uploaded']:
+                with path.open('rb') as stream:
+                    if hashlib.file_digest(stream,'sha256').hexdigest() != pin:
+                        raise HttpFailure(409,'STORED_MEDIA_CONFLICT')
+                return doc
+            if doc['status'] != 'AWAITING_MEDIA': raise HttpFailure(409,'JOB_STATE_CONFLICT')
+            os.replace(temporary,path)
+            fd = os.open(path.parent,os.O_RDONLY|os.O_DIRECTORY)
+            try: os.fsync(fd)
+            finally: os.close(fd)
+            return self.update(job,uploaded=['source'])
 
     def upload(self, job, kind, raw):
         if kind not in ('audio','video'):
             raise HttpFailure(404, 'NOT_FOUND')
         with self.mutation_lock:
             doc = self.read(job)
+            if doc.get('inputMode') == 'ORIGINAL_VIDEO': raise HttpFailure(409,'ORIGINAL_VIDEO_UPLOAD_REQUIRED')
             declared = doc['metadata'][kind]
             if len(raw) != declared['fileSizeBytes'] or hashlib.sha256(raw).hexdigest() != declared['sha256']:
                 raise HttpFailure(422, 'PAYLOAD_DIGEST_MISMATCH')
@@ -115,11 +155,20 @@ class AudiovisualStore(JobStore):
         with self.mutation_lock:
             doc = self.read(job)
             if doc['status'] == 'AWAITING_MEDIA':
-                if doc['uploaded'] != ['audio','video']:
+                expected = ['source'] if doc.get('inputMode') == 'ORIGINAL_VIDEO' else ['audio','video']
+                if doc['uploaded'] != expected:
                     raise HttpFailure(409, 'MEDIA_NOT_READY')
                 return self.update(job, status='QUEUED')
             if doc['status'] in ('QUEUED','RUNNING',*TERMINAL): return doc
             raise HttpFailure(409, 'JOB_STATE_CONFLICT')
+
+    def expire_original_uploads(self, now=None):
+        now = time() if now is None else now
+        with self.mutation_lock:
+            for doc in self.documents():
+                if (doc.get('inputMode') == 'ORIGINAL_VIDEO' and doc['status'] == 'AWAITING_MEDIA'
+                        and now-doc['createdAt'] > 900):
+                    self.update(doc['jobId'],status='FAILED',failure='UPLOAD_EXPIRED')
 
     def recover(self):
         # An interrupted producer is never replayed. Keep all accepted bytes.

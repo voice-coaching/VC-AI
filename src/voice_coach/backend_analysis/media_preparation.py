@@ -12,10 +12,14 @@ from .http_models import digest
 from voice_coach.visual_feedback.parallel_analysis import MediaIntegrityFailure
 
 
-@lru_cache(maxsize=1)
-def _validator():
+@lru_cache(maxsize=2)
+def _validator(ai=False):
     path = Path(__file__).resolve().parents[3] / "docs/contracts/runpod_media_preparation_v1.schema.json"
-    return Draft202012Validator(json.loads(path.read_text(encoding="utf-8")))
+    schema = json.loads(path.read_text(encoding="utf-8"))
+    if ai:
+        schema['properties']['schemaVersion']['const'] = 'voice-coaching.ai-media-preparation.v1'
+        schema['properties']['normalizationRevision']['const'] = 'ai-original-video-pcm-20261108-v1'
+    return Draft202012Validator(schema)
 
 
 @dataclass(frozen=True)
@@ -28,11 +32,13 @@ class MediaPreparation:
     sync_status: str
 
     @classmethod
-    def from_wire(cls, value: dict, *, audio_sha256: str, video_sha256: str | None):
+    def from_wire(cls, value: dict, *, audio_sha256: str, video_sha256: str | None, allow_ai=False):
         if type(value) is not dict or set(value) != {"receipt", "receiptSha256"}:
             raise MediaIntegrityFailure("MEDIA_PREPARATION_INVALID")
         receipt = value["receipt"]
-        if not _validator().is_valid(receipt):
+        ai = (allow_ai and type(receipt) is dict
+              and receipt.get('schemaVersion') == 'voice-coaching.ai-media-preparation.v1')
+        if not _validator(ai).is_valid(receipt):
             raise MediaIntegrityFailure("MEDIA_PREPARATION_INVALID")
         if (value["receiptSha256"] != digest(receipt)
                 or receipt["canonicalPcmSha256"] != audio_sha256

@@ -44,6 +44,11 @@ def create_app(environment=None):
     if audiovisual is not None:
         from .independent_av_api import install_routes
         install_routes(app, audiovisual)
+    browser_video = None
+    if runtime.environment.get('AI_BROWSER_VIDEO_ENABLED') == 'true':
+        from .browser_video_api import BrowserVideoAPI
+        browser_video = BrowserVideoAPI(app,audiovisual,runtime.environment)
+    app.state.browser_video = browser_video
 
     @app.exception_handler(HttpFailure)
     async def failure(request, error, extra_headers=None):
@@ -64,9 +69,19 @@ def create_app(environment=None):
 
     @app.middleware("http")
     async def boundary(request: Request, call_next):
+        cors_headers = {}
         try:
             public_direct = direct is not None and request.url.path.startswith("/direct/")
-            if not public_direct and request.url.path not in ("/health", "/readyz"):
+            browser_request = browser_video is not None and browser_video.handles(request.url.path)
+            if browser_request:
+                cors_headers = browser_video.cors(request)
+                if request.method == 'OPTIONS':
+                    response = browser_video.preflight(request)
+                    response.headers.update(cors_headers)
+                    response.headers['Cache-Control'] = 'no-store'
+                    return response
+                browser_video.authorize(request)
+            if not browser_request and not public_direct and request.url.path not in ("/health", "/readyz"):
                 values = request.headers.getlist("authorization")
                 configured = runtime.environment.get("AI_ANALYSIS_API_TOKEN", "")
                 if (not configured or len(values) != 1 or not values[0].startswith("Bearer ")
@@ -74,9 +89,14 @@ def create_app(environment=None):
                     raise HttpFailure(401, "UNAUTHENTICATED")
             response = await call_next(request)
             response.headers["Cache-Control"] = "no-store"
+            response.headers.update(cors_headers)
             return response
         except HttpFailure as error:
-            return await failure(request, error)
+            return await failure(request, error, cors_headers)
+        except Exception as error:
+            if browser_video is None or not browser_video.handles(request.url.path): raise
+            logging.getLogger(__name__).error('browser_video_http_failed exceptionType=%s',type(error).__name__)
+            return await failure(request,HttpFailure(500,'INTERNAL_ERROR'),cors_headers)
 
     async def body(request):
         if (request.headers.get("content-type", "").split(";")[0].strip() != "application/json"
@@ -151,6 +171,17 @@ def create_app(environment=None):
             llmManifestSha256=AUDIOVISUAL.manifest_sha256,
             supportedLearningFocuses=list(canonical_learning_focuses()),
             schemaDigests=audiovisual_schema_digests()), status_code=200 if configured else 503)
+
+    @app.get('/health/browser-video')
+    async def browser_video_health():
+        configured = (browser_video is not None and browser_video.verifier is not None
+                      and audiovisual is not None and audiovisual.executor_ready())
+        ready = bool(configured and audiovisual.ready())
+        return JSONResponse(dict(contractVersion='voice-coaching.browser-video-grant.v1',
+            executorConfigured=bool(configured),admissionEnabled=ready,backendRequired=False,
+            reasonCode=None if ready else ('BROWSER_VIDEO_NOT_CONFIGURED' if browser_video is None
+                or browser_video.verifier is None else 'LOCAL_VIDEO_NOT_READY')),
+            status_code=200 if ready else 503)
 
     @app.get("/v1/analysis-jobs/{request_id}")
     async def status(request_id: str, request: Request):
