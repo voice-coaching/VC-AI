@@ -107,6 +107,37 @@ class BrowserVideo(unittest.IsolatedAsyncioTestCase):
             self.assertEqual(r.status_code,403)
             self.assertNotIn('access-control-allow-origin',r.headers)
 
+    async def test_summary_keeps_attempt_identity_and_full_result_collection_bytes(self):
+        async with self.client() as c:
+            p=await self.create(c)
+            self.assertEqual((await c.get(p+'/summary')).status_code,409)
+            job=p.rsplit('/',1)[1];state=self.runtime.store.read(job)
+            value=dict(schemaVersion='voice-coaching.independent-audiovisual-result.v1',
+                jobId=job,executionId=state['executionId'],clientRequestId=state['clientAttemptId'],
+                status='COMPLETED',failure=None,
+                score=dict(overallScore=76.1,validity='RUBRIC_COMPUTED',reason='EVIDENCE_BOUND_PRACTICE_SCORE',details={}),
+                coaching=dict(feedback='* 입술 → 입모양을 확인하며 읽으세요.'),
+                visual=dict(score=51.0,scoreKind='PROVISIONAL',reasonCodes=['PARTIAL_REFERENCE_COVERAGE'],
+                            phoneAssessments=[{'expectedPhone':'synthetic-private'}]))
+            raw=json.dumps(value).encode()
+            atomic(self.runtime.store.directory(job)/'result.json',raw)
+            self.runtime.store.update(job,status='COMPLETED')
+            r=await c.get(p+'/summary')
+            self.assertEqual(r.status_code,200)
+            self.assertEqual(r.json()['clientRequestId'],state['clientAttemptId'])
+            self.assertNotIn('phoneAssessments',r.text)
+            self.assertEqual(r.headers['x-result-sha256'],hashlib.sha256(r.content).hexdigest())
+            self.assertEqual(r.headers['etag'],'"'+hashlib.sha256(r.content).hexdigest()+'"')
+            self.assertEqual(r.headers['cache-control'],'no-store')
+            legacy=await c.get(p+'/result')
+            self.assertEqual(legacy.content,raw)
+            self.assertEqual(self.runtime.store.result(job),(raw,hashlib.sha256(raw).hexdigest()))
+            import jsonschema
+            schema=json.loads((Path(__file__).parents[2]/'docs/contracts/browser_video_summary_v1.schema.json').read_bytes())
+            jsonschema.Draft202012Validator(schema,format_checker=jsonschema.FormatChecker()).validate(r.json())
+        async with self.client(self.token({'sub':'8'})) as c:
+            self.assertEqual((await c.get(p+'/summary')).status_code,404)
+
     async def test_browser_readiness_is_separate_and_bad_config_fails_closed(self):
         async with httpx.AsyncClient(transport=httpx.ASGITransport(app=self.app),base_url='http://ai',
                 headers={'Authorization':'Bearer '+'a'*40}) as c:

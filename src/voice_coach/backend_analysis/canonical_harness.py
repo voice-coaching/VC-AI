@@ -480,6 +480,27 @@ LUNA_STANDARD_INTERNAL = HarnessIdentity(
 )
 HARNESSES.update({v.manifest_sha256: v for v in (LUNA_STANDARD, LUNA_STANDARD_INTERNAL)})
 
+SPARSE_LIP = HarnessIdentity(
+    'canonical-sparse-lip-direct-20261108-v1',
+    '26aa0e405104f0bb01383b808c36ac90d61d32e310e681a4d602925fe4c73a3b',
+    '097205ca9faa8fd9cd4b0795614a10c5bfd734fd5f23055d8ff3eb011539a8bb',
+    '9d28ef351dcd33c6d4a7e4f3fc96c2d94db5a4aa7abdca0ccbc640d62606939f',
+    LUNA_STANDARD.core_sha256,
+    scoring=True, native=True, gpt_grading=True, gop_grading=True,
+    model='gpt-6-luna', reasoning_effort='none', service_tier='default',
+    selection_view=False, six_dimension=True, direct_only=True, audiovisual=True,
+)
+SPARSE_LIP_INTERNAL = HarnessIdentity(
+    'canonical-sparse-lip-internal-20261108-v1',
+    '232df793470dfdbcda38057f34b6c36d18dbd90f128171b24342baa3878c1b78',
+    '65b33d998c79c5694fa0554337d154328a7bcc944203b0f6747a9cf0b5f0559f',
+    SPARSE_LIP.prompt_sha256, LUNA_STANDARD_INTERNAL.core_sha256,
+    scoring=True, native=True, gpt_grading=True, gop_grading=True,
+    model='gpt-6-luna', reasoning_effort='none', service_tier='default',
+    selection_view=False, six_dimension=True, audiovisual=True,
+)
+HARNESSES.update({v.manifest_sha256: v for v in (SPARSE_LIP, SPARSE_LIP_INTERNAL)})
+
 
 def harness_identity(manifest_sha256: str) -> HarnessIdentity:
     try:

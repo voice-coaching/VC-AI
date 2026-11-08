@@ -67,7 +67,8 @@ class ReferenceCatalog:
         keys = {"schemaVersion", "revision", "mappingRevision", "contextPolicy", "distancePolicy",
                 "minimumCoverage", "references", "calibrations"}
         require(type(data) is dict and set(data) in (keys, keys | {"lipScoring"}))
-        extended = data["schemaVersion"] == "voice-coaching.lip-reference-catalog.v3"
+        sparse = data['schemaVersion'] == 'voice-coaching.lip-reference-catalog.v4'
+        extended = sparse or data["schemaVersion"] == "voice-coaching.lip-reference-catalog.v3"
         require((extended and "lipScoring" in data or data["schemaVersion"] == SCHEMA and set(data) == keys)
                 and data["mappingRevision"] == MAPPING.revision
                 and data["contextPolicy"] == "EXACT_WORD_AND_ROLE_V1")
@@ -108,7 +109,7 @@ class ReferenceCatalog:
             require(type(t) is dict and set(t) == {"times", "landmarks", "features"})
             trajectory = Trajectory(tuple(t["times"]), tuple(tuple(tuple(p) for p in row) for row in t["landmarks"]),
                                     tuple(tuple(row) for row in t["features"]))
-            trajectory.validate(policy.max_frames)
+            trajectory.validate(policy.max_frames,minimum_frames=1 if sparse else 3)
             require(all(provenance["videoStartSeconds"] <= t < provenance["videoEndSeconds"]
                         for t in trajectory.times))
             require(all(len(row) == len(MAPPING.lip_indices) for row in trajectory.landmarks)
@@ -128,6 +129,8 @@ class ReferenceCatalog:
             matching = [r.reference_id for r in references if (r.expected_phone, r.role, r.context) ==
                         (item["expectedPhone"], item["role"], item["context"])]
             require(all(r.expert_review_id for r in references if r.reference_id in ids))
+            # Sparse references are provisional shapes, never DTW calibration.
+            require(all(len(r.trajectory.times) >= 3 for r in references if r.reference_id in ids))
             require(sorted(ids) == sorted(matching))
             calibration = Calibration(text(item["revision"]), text(item["validationReceipt"]),
                 text(item["expectedPhone"], 20), text(item["role"]), text(item["context"]), MAPPING.revision,

@@ -43,4 +43,7 @@ feedback의 각 객체는 criterionId, evidenceIds, observation, practice만 가
 VISUAL_EVIDENCE가 있으면 원본 CORE와 별개로 보존된 같은 시도의 입술 근거다. FEEDBACK_TARGETS가 있으면 feedback의 항목과 순서는 이 배열을 따른다. 음성 assessments 여섯 개와 compositeGrade는 그대로 유지하며 AUDIOVISUAL_RESULT를 audiovisualGrade에 그대로 복사한다. 점수나 비중을 새로 계산하지 않는다.
 입술 대상은 서버가 고른 실제 관측 구간이다. 입술 대상은 최대 두 개, 나머지는 음성 대상이며 전체 최대 세 줄·5문장·300자 제한을 유지한다. 실제 원고와 expectedPhone·시간 근거가 연결되는 범위에서 바로 따라 할 짧은 연습 하나를 안내한다. 같은 음소가 여러 번 나오면 근거 없이 단어 위치를 확정하지 않는다.
 practiceScope=COMPARE_REFERENCE_VISIBLE_MOVEMENT_ONLY이면 해당 소리를 읽으며 참조와 눈에 보이는 입술 동작을 비교하는 연습만 제안한다. 참조와 다르다는 이유로 오발음, 입술 접촉 실패, 혀 위치나 돌출 길이, 발성 문제를 단정하지 않는다. 수치 차이만으로 더 벌리기·더 오므리기 같은 교정 방향을 새로 만들지 않는다.
+practiceScope=COMPARE_REFERENCE_VISIBLE_SHAPE_ONLY이면 해당 소리를 읽으며 실제 참조와 눈에 보이는 입술 형상을 비교하는 연습만 제안한다. 움직임의 타이밍이나 완전한 닫힘을 판단하지 않는다. 비교가 가능한 형상만 다루고 수치 차이만으로 교정 방향을 만들어 내지 않는다.
+practiceScope=OBSERVE_VISIBLE_SHAPE_ONLY이면 실제 관찰된 소리를 읽으며 자기 입술 형상을 확인하는 짧은 연습만 안내한다. 참조가 없으므로 잘못된 입모양이나 교정 방향을 단정하지 않고 참조 영상 비교를 요구하지 않는다. 1~2프레임의 정적 형상으로 닫힘의 완성, 움직임의 순서·속도·타이밍을 판단하지 않는다.
+practiceScope=CAPTURE_VISIBILITY_ONLY이면 얼굴이나 입술이 보이지 않은 촬영 근거에 맞춰 입이 화면에 보이게 촬영하는 방법 하나만 안내한다. 특정 음소를 틀렸다고 말하거나 발음 교정을 만들어 내지 않는다. 이 대상도 전체 피드백 세 줄 제한에 포함한다.
 PROVISIONAL과 EXPERT_REVIEW_PENDING은 임시 참조 적합성 점수다. 정확도·정상 확률·전문가 검증 점수로 설명하지 않는다. 시각 관측이 부족하면 음성 피드백을 유지하며 입술 과제를 지어내 채우지 않는다. 근거 ID는 각 FEEDBACK_TARGETS에 속한 값에서 선택한다.

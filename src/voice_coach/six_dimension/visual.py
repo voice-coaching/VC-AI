@@ -25,6 +25,7 @@ def visual_context(assessment, visual):
     if valid:
         score = float(Decimal(str(score)).quantize(Decimal("0.1"), rounding=ROUND_HALF_UP))
     targets = []
+    sparse = visual.get('comparisonPolicy') == 'PHONE_ROLE_SPARSE_30FPS_V1'
     # Lowest two different measured occurrences, never two copies of one phone.
     # A withheld whole-clip score must not erase a valid local observation.
     # Coverage controls the total only; each practice needs its own action.
@@ -45,9 +46,36 @@ def visual_context(assessment, visual):
             evidenceIds=["visual:" + visual["visualEvidenceSha256"] + ":phone-" + str(index)],
             expectedPhone=row["expectedPhone"], role=row["role"],
             audioStartSeconds=row["audioStartSeconds"], audioEndSeconds=row["audioEndSeconds"],
-            practiceScope="COMPARE_REFERENCE_VISIBLE_MOVEMENT_ONLY"))
+            practiceScope=('COMPARE_REFERENCE_VISIBLE_SHAPE_ONLY' if sparse and (
+                row.get('frameCount',0) < 3 or 'PARTIAL_VISIBILITY_STATIC_ONLY' in row.get('reasonCodes',[])
+                or not any(s['criterionId']=='lip_timing' and s['status']=='SCORED'
+                           for s in row.get('subScores',[]))) else 'COMPARE_REFERENCE_VISIBLE_MOVEMENT_ONLY')))
         if len(targets) == 2:
             break
+    if sparse and len(targets) < 2:
+        # A missing comparison score does not erase a real shape observation.
+        # Never convert this into a low score or a corrective direction.
+        for row in sorted(visual.get('phones', []), key=lambda r: r['expectedIndex']):
+            index = row['expectedIndex']
+            if (index in seen or row.get('status') != 'OBSERVED'
+                    or row.get('frameCount', 0) < 1 or not row.get('observations')
+                    or not (row.get('role') == 'nucleus' or row.get('expectedPhone') in 'ㅁㅂㅃㅍ')):
+                continue
+            seen.add(index)
+            targets.append(dict(criterionId='lip_articulation:'+str(index),label='입술 관찰 연습',score=None,
+                evidenceIds=['visual:'+visual['visualEvidenceSha256']+':phone-'+str(index)],
+                expectedPhone=row['expectedPhone'],role=row['role'],
+                audioStartSeconds=row['audioStartSeconds'],audioEndSeconds=row['audioEndSeconds'],
+                practiceScope='OBSERVE_VISIBLE_SHAPE_ONLY'))
+            if len(targets) == 2:
+                break
+    if sparse and not targets:
+        capture_reasons = sorted(set(visual.get('reasonCodes', [])) &
+                                 {'NO_FACE','LOW_VISIBILITY','MULTIPLE_FACES'})
+        if capture_reasons:
+            targets.append(dict(criterionId='lip_capture',label='입술 촬영',score=None,
+                evidenceIds=['visual:'+visual['visualEvidenceSha256']+':capture'],
+                reasonCodes=capture_reasons,practiceScope='CAPTURE_VISIBILITY_ONLY'))
     audio = assessment.get("auxiliary", {}).get("composite", {}).get("result", {}).get("overallScore")
     combined = valid and number(audio)
     total = (float(((Decimal(str(audio)) * AUDIO_WEIGHT + Decimal(str(score)) * VISUAL_WEIGHT) / 100)
