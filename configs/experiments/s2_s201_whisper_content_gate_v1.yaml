@@ -20,7 +20,7 @@ canonical_sources:
     - path: scripts/check_project_constraints.py
       sha256: 1be314ecef3d8751d4d4452febf4fef42841e17aa12fd7d09f18366d0061e478
     - path: configs/experiments/s2_s200_independent_auditor_v1.yaml
-      sha256: e4881e1bf1b81ebc2946ace9431c9281fd315be4d1c2ae2058b85a66060b3bf4
+      sha256: b44fb9e782f3e300420c9ca9eb10db69e2b6fe63fa02d4e8a86e6f63f51782f9
     - path: scripts/prepare_s2_s201_whisper_content.py
       sha256: 0f10c1d9104e80152baba94e1764ffcc1af2b2c2f0147d20af656586ef22d2b2
     - path: src/voice_coach/training/s2_s200_auditor_contract.py

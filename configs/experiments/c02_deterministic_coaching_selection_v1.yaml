@@ -32,7 +32,7 @@ canonical_sources:
     - path: configs/coaching/c02_coaching_selection_output_v1.schema.json
       sha256: 935db571a2371e96b082a59979af7b24a508318f5385f62032d4ce735ed6c643
     - path: configs/experiments/wavlm_s107_calibration_v1.yaml
-      sha256: 73945d75226612ba82f10ae034854b5cca2e93138ad0ff224d45b56f91034abd
+      sha256: 43caeb44947ef757c90ad619bdd67d87b5b6e1ea7f835f657919e34c102c8ed6
     - path: data/processed/aihub71490/manifests/aihub71490_data_card.json
       sha256: 4ab53c6837b1a28fbf153dd3a351a195f6931a43694467114cea6c21b8a57b13
     - path: scripts/check_project_constraints.py
@@ -80,7 +80,7 @@ predecessor_s107:
   deep_validation_required: true
   actual_completed_output_required: true
   config_path: configs/experiments/wavlm_s107_calibration_v1.yaml
-  config_sha256: 73945d75226612ba82f10ae034854b5cca2e93138ad0ff224d45b56f91034abd
+  config_sha256: 43caeb44947ef757c90ad619bdd67d87b5b6e1ea7f835f657919e34c102c8ed6
   contract_path: src/voice_coach/training/wavlm_s107_calibration_contract.py
   contract_sha256: 04909937b7b8eb4a135a0f7e44c7ec0afc8a438c29aae2d2cbe3de4dcdafac1e
   completion_validator_path: src/voice_coach/training/wavlm_s107_calibration_training.py
