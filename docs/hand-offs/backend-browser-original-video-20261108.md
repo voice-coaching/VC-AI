@@ -33,6 +33,12 @@ Backend 작업 폴더: `/home/2020067/VC-BE-browser-video-20261108`.
 - infrastructure/BrowserVideoSessionReaderImpl.java 및 BrowserVideoGrantSigner.java
 - 관련 BrowserVideo*Test.java
 
+후속 운영 요청의 Backend 후보에는 공개키 endpoint용
+`controller/BrowserVideoPublicKeysController.java`, 최초 키 설치용
+`scripts/deployment/browser_video_keys.py`와 관련 검사 및 기존 CI 배포 연결도 포함된다.
+개인키는 AWS의 `/etc/alpha-browser-video/private.pem`에서 생성·보존하며 J406이나
+GitHub로 전송하지 않는다. AI는 공개키 endpoint를 배포 시에만 읽어 로컬에 고정한다.
+
 기존 DB table·migration·공식 점수 검산표 게이트를 추가하지 않는다. 코드·설정 검토 후
 최신 develop에 적용하고 Backend 담당자가 검증·배포한다. AI 코드만 배포해도 Backend
 발급 API가 생기는 것은 아니다. 개인키는 Backend에만, 공개키는 AI에만 설치한다.

@@ -234,12 +234,21 @@ Access-Control-Allow-Credentials를 활성화하지 않는다. 실제 동의 UI�
 | ai.browser-video.allowed-origins | 정확한 HTTPS origin의 쉼표 구분 목록 |
 | ai.browser-video.key-id | `[A-Za-z0-9_-]{1,64}`, AI map의 kid와 동일 |
 | ai.browser-video.private-key-file | Backend 전용 PKCS#8 Ed25519 PEM 파일 절대경로 |
+| ai.browser-video.public-key-file | 대응하는 Ed25519 공개키 PEM 파일 절대경로 |
 
 AI에는 공개키만 배포한다. Backend 서명 개인키·기존 AI 서버 Bearer는 브라우저에
 전달하지 않는다. AI는 grant의 `alg=EdDSA`, 전용 typ, kid, 발급자, 대상, scope,
 정수 iat/nbf/exp(최대 300초), sub·session·시도·원고·원본·origin을 확인한다.
 키 선택 URL·jku·x5u·임의 alg는 허용하지 않는다. 키 회전은 AI 공개키를 먼저 추가한 후
 Backend kid를 바꾸며, 구성은 시작 시 로드하므로 작업을 drain한 뒤 재시작해야 한다.
+
+Backend 배포 후보에는 AWS 내부에서 키를 최초 1회 생성하고 기존 키를 재사용하는
+`scripts/deployment/browser_video_keys.py --apply`와 전용 systemd 환경 파일 설치가
+포함된다. `GET /api/browser-video/.well-known/upload-grant-keys`는 공개 검증키만
+`{schemaVersion:"voice-coaching.browser-video-keyset.v1",keys:{kid:publicPem}}`로 제공한다.
+AI 운영 도구는 기존 Backend HTTPS origin에서 배포할 때만 이를 가져와 로컬 파일에
+고정한다. 요청 중 공개키를 갱신하거나 Backend를 조회하지 않는다. Backend의 키쌍은
+시작 시 서명·검증으로 일치 여부를 확인한다. 비활성 상태의 공개키 endpoint는 503이다.
 
 인증된 `GET /health/browser-video`는 200/503과 executorConfigured·admissionEnabled·
 reasonCode를 반환한다. 기존 `/health/audiovisual`과 별개여서 브라우저 키 설정 실패가
