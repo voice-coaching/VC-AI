@@ -6,6 +6,8 @@ import hashlib
 import json
 from pathlib import Path
 import subprocess
+import os
+import sys
 import tempfile
 import time
 import unittest
@@ -31,6 +33,17 @@ from voice_coach.six_dimension.policy import encode,sha
 
 
 class ClockRegression(unittest.TestCase):
+    def test_native_cpu_restriction_is_local_to_the_visual_child(self):
+        before=os.sched_getaffinity(0)
+        r=subprocess.run([sys.executable,'-B','-c',
+            'import os; from voice_coach.visual_feedback.adapters.canonical_feature_worker import constrain_native_worker_cpu; '
+            'allowed=os.sched_getaffinity(0); constrain_native_worker_cpu(); '
+            'assert os.sched_getaffinity(0)=={min(allowed)}'],
+            env=dict(os.environ,PYTHONPATH=str(Path(__file__).parents[2]/'src')),
+            capture_output=True)
+        self.assertEqual(r.returncode,0,r.stderr.decode())
+        self.assertEqual(os.sched_getaffinity(0),before)
+
     def test_browser_jitter_is_classified_for_derivative_not_accepted_as_exact(self):
         stream=dict(index=1,sample_rate='16000',time_base='1/16000')
         rows=[dict(stream_index=1,best_effort_timestamp=p,nb_samples=1024)

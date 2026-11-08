@@ -102,3 +102,7 @@ GPT에는 같은 요청의 `coverage`, `comparisonPolicy`, 선택 음소의 `sub
 `spn`·소속 근거가 불확실한 모음은 추측하지 않는다. CTC 시간을 대체해 넣지 않는다.
 
 이 절은 코드·소비 계약의 변경 설명이며 운영 반영 완료 기록이 아니다.
+
+배포 전 실제 영상 검사에서 MediaPipe 1.0.1 native worker의 간헐적인 SIGSEGV를
+확인했다. 격리 영상 worker만 이미 허용된 CPU 1개에 제한한 뒤 SDK를 import한다.
+음성 CORE·부모 프로세스의 CPU affinity와 기존 메모리·syscall 격리는 유지한다.
