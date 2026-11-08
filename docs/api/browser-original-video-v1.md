@@ -247,7 +247,8 @@ Backend 배포 후보에는 AWS 내부에서 키를 최초 1회 생성하고 기
 포함된다. `GET /api/browser-video/.well-known/upload-grant-keys`는 공개 검증키만
 `{schemaVersion:"voice-coaching.browser-video-keyset.v1",keys:{kid:publicPem}}`로 제공한다.
 AI 운영 도구는 기존 Backend HTTPS origin에서 배포할 때만 이를 가져와 로컬 파일에
-고정한다. 요청 중 공개키를 갱신하거나 Backend를 조회하지 않는다. Backend의 키쌍은
+고정한다. 운영 게이트웨이의 기존 서버 Bearer로 공개키를 조회하며, 서버 토큰으로
+사용자 권한을 발급할 수는 없다. 요청 중 공개키를 갱신하거나 Backend를 조회하지 않는다. Backend의 키쌍은
 시작 시 서명·검증으로 일치 여부를 확인한다. 비활성 상태의 공개키 endpoint는 503이다.
 
 인증된 `GET /health/browser-video`는 200/503과 executorConfigured·admissionEnabled·
