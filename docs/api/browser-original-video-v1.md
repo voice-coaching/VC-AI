@@ -274,3 +274,19 @@ Backend 이력 수집/AI jobId 매핑 및 Frontend 화면 연결·배포는 이 
 
 서명 검증 설계 참고: [JWT 보안 권고 RFC 8725](https://www.rfc-editor.org/rfc/rfc8725.html),
 [cryptography Ed25519 API](https://cryptography.io/en/latest/hazmat/primitives/asymmetric/ed25519/).
+
+## 2026-11-08 후속 후보: 오디오 시간축·부분 입술 점수
+
+정규화 revision `ai-original-video-pcm-20261108-v3`는 원본을 보존하고, 오디오 프레임의
+국소·누적 타임스탬프 오차가 각각 2ms 이내인 경우에만 새 파생 영상의 시간축을 샘플 수로
+정리한다. 첫 decoded audio PTS를 유지해 실제 영상과의 시작 시각 차이를 지우지 않는다.
+실제 단절·누적 drift는 이 처리로 숨기지 않으며, 입술 분석의 기존 sample-exact PCM
+동일성 검사와 연속 오디오 시간축 검사를 모두 통과해야 한다. 기존 v1/v2 receipt 읽기도 유지한다.
+
+응답의 `visual.score`, `visual.scoreKind`, `visual.coverage`, `visual.subScores`,
+`visual.phoneAssessments` 이름은 유지한다. 승인된 임시 부분 비교의 표시·종합점수 반영 범위는
+[입술 소비 계약의 후속 정책](../contracts/lip-provisional-score-v1.md#2026-11-08-임시-부분-비교-정책)을 따른다.
+`PARTIAL_REFERENCE_COVERAGE`에서는 채점된 음소 범위의 임시 점수이며, 음성 종합점수는 보존한다.
+다른 단어 참조의 동작 타이밍이나 보이지 않는 입술의 점수는 추정하지 않는다.
+
+후속 후보는 운영 배포 완료를 뜻하지 않는다. 기존 사용자 job/result/spool을 수정하거나 자동 재실행하지 않는다.

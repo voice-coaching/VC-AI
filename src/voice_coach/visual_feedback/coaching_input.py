@@ -40,5 +40,21 @@ corrective actions. Private frame coordinates/receipts never enter the prompt.
                                                          else "FIRST_12_OBSERVED_MFA_INDICES_V1"),
         availablePhoneCount=len(rows), omittedPhoneCount=max(0, len(rows) - 12),
         phones=[{k: r[k] for k in fields} for r in rows[:12]])
+    if evidence.get('assessmentPolicy') == 'PHONE_ROLE_PARTIAL_PROVISIONAL_V1':
+        value.update(comparisonPolicy=evidence['assessmentPolicy'],coverage=visual['coverage'],
+            limitations=[
+                '임시 점수는 실제로 관찰·비교한 음소에만 해당하며, 전체 발음의 정답률이 아니다.',
+                '다른 단어의 같은 음소·초중종성 참조는 비교 연습용이며, 입을 더 벌리거나 오므려야 한다는 확정 근거가 아니다.',
+                '다른 단어 참조로 입술 동작 타이밍을 채점하지 않는다. 없는 측정이나 참조를 추측하지 않는다.'])
+        for projected,row in zip(value['phones'],rows[:12]):
+            if 'subScores' in row: projected['subScores']=row['subScores']
+        if 'PARTIAL_REFERENCE_COVERAGE' in visual['reasonCodes']:
+            # A displayed partial comparison is not a representative whole-clip
+            # grade. The unchanged frozen composite therefore keeps audio-only
+            # weighting, while its existing selector still accepts local lip
+            # practice. Give GPT the measured subset separately and explicitly.
+            value['partialScore']=dict(score=visual['score'],scoreKind='PROVISIONAL',
+                scope='ASSESSED_PHONES_ONLY')
+            value.update(status='OBSERVED',score=None,scoreKind='NONE')
     _validator().validate(value)
     return value

@@ -159,7 +159,8 @@ def assess_phone(anchor: PhoneAnchor, *, frames: tuple[LipFrame, ...],
 
 
 def aggregate(assessments: list[dict], *, target_count: int, visually_eligible_count: int,
-              minimum_coverage: float, allow_provisional: bool = False) -> dict:
+              minimum_coverage: float, allow_provisional: bool = False,
+              allow_partial_provisional: bool = False) -> dict:
     """Aggregate calibrated scores only, with explicit coverage. Missing is not zero."""
     indices = [row["expectedIndex"] for row in assessments]
     if (type(target_count) is not int or type(visually_eligible_count) is not int
@@ -172,7 +173,8 @@ def aggregate(assessments: list[dict], *, target_count: int, visually_eligible_c
     if any(type(v) not in (int, float) or not math.isfinite(v) or not 0 <= v <= 100 for v in scored):
         raise UnscorableTrajectory("INVALID_SCORE")
     coverage = len(scored) / visually_eligible_count if visually_eligible_count else None
-    return dict(score=statistics.mean(scored) if scored and coverage >= minimum_coverage else None,
+    return dict(score=statistics.mean(scored) if scored and (
+                    coverage >= minimum_coverage or allow_provisional and allow_partial_provisional) else None,
                 targetCount=target_count, visuallyEligibleCount=visually_eligible_count,
                 observedCount=sum(r["status"] in {"OBSERVED", "REFERENCE_ONLY", "SCORED"}
                                   and r["frameCount"] >= 3 for r in assessments),

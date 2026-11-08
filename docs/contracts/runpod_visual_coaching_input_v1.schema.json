@@ -216,6 +216,13 @@
               "pattern": "^[A-Z][A-Z0-9_]{0,79}$"
             },
             "maxItems": 32
+          },
+          "subScores": {
+            "type": "array",
+            "maxItems": 4,
+            "items": {
+              "$ref": "#/$defs/lipSubScore"
+            }
           }
         },
         "required": [
@@ -233,6 +240,84 @@
         ]
       },
       "maxItems": 12
+    },
+    "comparisonPolicy": {
+      "const": "PHONE_ROLE_PARTIAL_PROVISIONAL_V1"
+    },
+    "coverage": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "targetCount": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 2048
+        },
+        "visuallyEligibleCount": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 2048
+        },
+        "observedCount": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 2048
+        },
+        "scoredCount": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 2048
+        },
+        "coverage": {
+          "anyOf": [
+            {
+              "type": "number",
+              "minimum": 0,
+              "maximum": 1
+            },
+            {
+              "type": "null"
+            }
+          ]
+        }
+      },
+      "required": [
+        "targetCount",
+        "visuallyEligibleCount",
+        "observedCount",
+        "scoredCount",
+        "coverage"
+      ]
+    },
+    "limitations": {
+      "type": "array",
+      "maxItems": 4,
+      "items": {
+        "type": "string",
+        "maxLength": 240
+      }
+    },
+    "partialScore": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "score",
+        "scoreKind",
+        "scope"
+      ],
+      "properties": {
+        "score": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 100
+        },
+        "scoreKind": {
+          "const": "PROVISIONAL"
+        },
+        "scope": {
+          "const": "ASSESSED_PHONES_ONLY"
+        }
+      }
     }
   },
   "required": [
@@ -250,5 +335,121 @@
     "availablePhoneCount",
     "omittedPhoneCount",
     "phones"
-  ]
+  ],
+  "$defs": {
+    "lipSubScore": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "criterionId",
+        "label",
+        "score",
+        "status",
+        "reasonCode"
+      ],
+      "properties": {
+        "criterionId": {
+          "enum": [
+            "lip_aperture",
+            "lip_rounding",
+            "lip_closure",
+            "lip_timing"
+          ]
+        },
+        "label": {
+          "type": "string"
+        },
+        "score": {
+          "type": [
+            "number",
+            "null"
+          ],
+          "minimum": 0,
+          "maximum": 100
+        },
+        "status": {
+          "enum": [
+            "SCORED",
+            "UNSCORABLE",
+            "NOT_APPLICABLE"
+          ]
+        },
+        "reasonCode": {
+          "type": "string"
+        },
+        "measurements": {
+          "type": "array",
+          "maxItems": 1,
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+              "metricId",
+              "value",
+              "referenceMedian",
+              "referenceScale",
+              "referenceCount",
+              "tolerance",
+              "unit"
+            ],
+            "properties": {
+              "metricId": {
+                "type": "string"
+              },
+              "value": {
+                "type": "number"
+              },
+              "referenceMedian": {
+                "type": "number"
+              },
+              "referenceScale": {
+                "type": "number",
+                "exclusiveMinimum": 0
+              },
+              "referenceCount": {
+                "type": "integer",
+                "minimum": 1,
+                "maximum": 32
+              },
+              "tolerance": {
+                "type": "number",
+                "minimum": 0
+              },
+              "unit": {
+                "enum": [
+                  "PHONE_PHASE",
+                  "FACE_SCALE_NORMALIZED"
+                ]
+              }
+            }
+          }
+        }
+      },
+      "allOf": [
+        {
+          "if": {
+            "properties": {
+              "status": {
+                "const": "SCORED"
+              }
+            }
+          },
+          "then": {
+            "properties": {
+              "score": {
+                "type": "number"
+              }
+            }
+          },
+          "else": {
+            "properties": {
+              "score": {
+                "type": "null"
+              }
+            }
+          }
+        }
+      ]
+    }
+  }
 }
