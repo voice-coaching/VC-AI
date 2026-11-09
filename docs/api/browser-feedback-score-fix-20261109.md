@@ -51,8 +51,20 @@ criteria 순서는 `pronunciation_accuracy`, `speaking_rate`, `articulation_rate
 `pitch`, `intensity`다. 숫자는 모두 0~100 범위다. `validationStatus`는 기존 계약의
 `EXPERT_REVIEW_PENDING`이며 사용자 피드백에 면책 문구로 붙이지 않는다.
 
-기존 Frontend의 `canonicalScoreSchema`는 이미 이 선택 필드를 읽는다. 그 구현에서는
-별도 산술·릴리스 해시 검사·Backend 채점표 검증을 추가할 필요가 없다. 실제 배포된
+기존 Frontend의 `canonicalScoreSchema`는 이미 이 선택 필드를 읽는다. 다만 확인한
+최신 dev `597cc6962058efcf7586a770f792c60cb2e1e49d`와 main
+`a99ee7fa8d899a69bd0b1058348915f04266e88e`의 `browserVideoPresentation`은
+화면 데이터로 넘기지 않으므로 반환 객체에 다음 한 줄을 추가해야 한다.
+
+```ts
+scoreDetails: failed ? undefined : result.score.details,
+```
+
+이후 `AnalysisView`가 기존 `analysis.scoreDetails` 경로로 표시한다. 첨부
+[Frontend 패치](browser-score-details-frontend.patch)는 해당 dev 기준이다.
+격리 checkout에서 성공 시 원본 객체 전달, 실패 시 제외, 과거 details 누락 시 전체 점수
+유지를 실제 TypeScript 함수 실행으로 검사했다. Frontend merge·화면 QA·배포는 담당자가
+진행한다. 별도 산술·릴리스 해시 검사·Backend 채점표 검증은 추가하지 않는다. 실제 배포된
 Frontend revision은 별도 확인 대상이다. 누락된 과거 details는 전체 점수 표시를 막지 않는다.
 요약 응답의 `X-Result-SHA256`와 `ETag`는 실제 요약 bytes를 기준으로 검증한다.
 전체 수집 결과의 digest와 요약 digest를 서로 비교하지 않는다.

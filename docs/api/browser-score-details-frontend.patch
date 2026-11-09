@@ -1,0 +1,12 @@
+diff --git a/src/lib/browser-video-presentation.ts b/src/lib/browser-video-presentation.ts
+index 6086ae3..9aa0a78 100644
+--- a/src/lib/browser-video-presentation.ts
++++ b/src/lib/browser-video-presentation.ts
+@@ -14,6 +14,7 @@ export function browserVideoPresentation(
+     transcript: null,
+     sttConfidence: null,
+     overallScore: failed ? null : result.score.overallScore,
++    scoreDetails: failed ? undefined : result.score.details,
+     pronunciationScore: null,
+     intonationScore: null,
+     speedWpm: null,
