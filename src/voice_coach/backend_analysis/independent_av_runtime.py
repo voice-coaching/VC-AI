@@ -69,19 +69,15 @@ class IndependentAudiovisualRuntime:
             logging.getLogger(__name__).warning('independent_av_configuration_failed exceptionType=%s', type(error).__name__)
 
     def check_assets(self):
-        from voice_coach.pronunciation_attempts.adapters.mediapipe_landmark_worker import _read_model_bytes
         artifacts = FrozenCanonicalArtifacts(Path(self.env['AI_CANONICAL_CORE_ROOT']),Path(self.env['AI_CANONICAL_LLM_ROOT']))
         _, config = visual_assets(FrozenCanonicalCoaching(artifacts))
         from .canonical_transport import transport_for_artifacts
         transport_for_artifacts(self.env['OPENAI_API_KEY'], artifacts).close()
         check_guard_python(self.python)
-        _read_model_bytes(self.env['AI_ANALYSIS_VISUAL_LANDMARK_MODEL_PATH'], config['modelSha256'])
-        import subprocess
-        r = subprocess.run([self.env['AI_CANONICAL_VISUAL_PYTHON'],'-I','-B','-c',
-            'import importlib.util; assert importlib.util.find_spec("mediapipe"); assert importlib.util.find_spec("cv2")'],
-            env={'PATH':'/usr/bin:/bin','PYTHONDONTWRITEBYTECODE':'1'},
-            stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL,timeout=10)
-        if r.returncode or any(not os.access(p,os.X_OK) for p in ('/usr/bin/ffmpeg','/usr/bin/ffprobe')):
+        from voice_coach.visual_feedback.adapters.canonical_video_features import check_feature_runtime
+        check_feature_runtime(Path(self.env['AI_CANONICAL_VISUAL_PYTHON']),
+            Path(self.env['AI_ANALYSIS_VISUAL_LANDMARK_MODEL_PATH']), config['modelSha256'])
+        if any(not os.access(p,os.X_OK) for p in ('/usr/bin/ffmpeg','/usr/bin/ffprobe')):
             raise ValueError('VISUAL_RUNTIME_UNAVAILABLE')
 
     def executor_ready(self):

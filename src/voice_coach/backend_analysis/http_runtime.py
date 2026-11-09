@@ -184,13 +184,11 @@ class HttpRuntime:
     def _check_audiovisual_assets(self):
         from .canonical_bridge import FrozenCanonicalCoaching
         from .canonical_audiovisual_result import visual_assets
-        from .canonical_process import check_guard_python
-        from voice_coach.pronunciation_attempts.adapters.mediapipe_landmark_worker import _read_model_bytes
         resident = self.canonical_lane.resident
         _, configuration = visual_assets(FrozenCanonicalCoaching(resident.artifacts))
-        check_guard_python(Path(self.environment["AI_CANONICAL_VISUAL_PYTHON"]))
-        _read_model_bytes(self.environment["AI_ANALYSIS_VISUAL_LANDMARK_MODEL_PATH"],
-                          configuration["modelSha256"])
+        from voice_coach.visual_feedback.adapters.canonical_video_features import check_feature_runtime
+        check_feature_runtime(Path(self.environment["AI_CANONICAL_VISUAL_PYTHON"]),
+            Path(self.environment["AI_ANALYSIS_VISUAL_LANDMARK_MODEL_PATH"]),configuration["modelSha256"])
         for tool in ("/usr/bin/ffmpeg", "/usr/bin/ffprobe"):
             if not os.access(tool, os.X_OK):
                 raise ValueError("VISUAL_EXECUTABLE_UNAVAILABLE")

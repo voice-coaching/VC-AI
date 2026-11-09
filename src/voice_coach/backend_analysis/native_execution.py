@@ -13,10 +13,13 @@ from .canonical_harness import LUNA_STANDARD, LUNA_STANDARD_INTERNAL
 from .canonical_harness import SPARSE_LIP, SPARSE_LIP_INTERNAL
 from .canonical_harness import AIHUB_LIP, AIHUB_LIP_INTERNAL
 from .canonical_harness import FEEDBACK_PRESENTATION, FEEDBACK_PRESENTATION_INTERNAL
+from .canonical_harness import YUNET_LIP, YUNET_LIP_INTERNAL
 
 # Execution identity only: prevent an old release from entering new analysis.
 # Scoring authority is bound to each H5; raw-CORE releases use the fixed server rubric.
 APPROVED_NATIVE_EXECUTIONS: frozenset[tuple[str, str]] = frozenset({
+    (YUNET_LIP.core_sha256, YUNET_LIP.manifest_sha256),
+    (YUNET_LIP_INTERNAL.core_sha256, YUNET_LIP_INTERNAL.manifest_sha256),
     (FEEDBACK_PRESENTATION.core_sha256, FEEDBACK_PRESENTATION.manifest_sha256),
     (FEEDBACK_PRESENTATION_INTERNAL.core_sha256, FEEDBACK_PRESENTATION_INTERNAL.manifest_sha256),
     (AIHUB_LIP.core_sha256, AIHUB_LIP.manifest_sha256),

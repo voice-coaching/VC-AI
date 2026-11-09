@@ -189,7 +189,8 @@ def release_assets(payload, manifest, *, install=False):
                                   'canonical_luna_standard_'+lane+'_20261107_v1_h5',
                                   'canonical_sparse_lip_'+lane+'_20261108_v1_h5',
                                   'canonical_aihub_lip_'+lane+'_20261109_v1_h5',
-                                  'canonical_feedback_presentation_'+lane+'_20261109_v1_h5'}, 'COORDINATED_H5_PATH')
+                                  'canonical_feedback_presentation_'+lane+'_20261109_v1_h5',
+                                  'canonical_yunet_lip_'+lane+'_20261109_v1_h5'}, 'COORDINATED_H5_PATH')
         package = {}
         for name, pin in files.items():
             path = PurePosixPath(name)
@@ -219,6 +220,42 @@ def release_assets(payload, manifest, *, install=False):
                         break
                     os.chown(parent, 0, 10001); parent.chmod(0o750)
                 controller.atomic(target, raw, 0o440)
+    if manifest.get('visualRelease'):
+        visual_release(payload, manifest, install=install)
+
+
+def visual_release(payload, manifest, *, install=False):
+    """Recover the model with source/H5 selection; use a separate persistent runtime."""
+    value = manifest['visualRelease']
+    require(set(value) == {'modelSha256','runtimeReceiptSha256'}, 'COORDINATED_VISUAL_RELEASE')
+    model = Path(manifest['selection']['AI_ANALYSIS_VISUAL_LANDMARK_MODEL_PATH'])
+    require(model == Path('/workspace/intelligentai/validation/canonical_yunet_visual_20261109_v1/model.task'),
+            'COORDINATED_VISUAL_MODEL_PATH')
+    python = Path(manifest['selection']['AI_CANONICAL_VISUAL_PYTHON'])
+    runtime = Path('/home/2020067/.local/share/intelligentai-visual-yunet-20261109-v1')
+    require(python == runtime/'bin/python' and python.is_file()
+            and python.resolve() == Path('/opt/intelligentai/envs/canonical/bin/python').resolve(),
+            'COORDINATED_VISUAL_RUNTIME_PATH')
+    receipt_raw = owned(runtime/'installation-receipt.json')
+    require(digest(receipt_raw) == value['runtimeReceiptSha256'], 'COORDINATED_VISUAL_RUNTIME_RECEIPT')
+    receipt = json.loads(receipt_raw)
+    require(digest(owned(python.resolve(),64*1024**2)) == receipt['pythonExecutableSha256']
+            and digest(owned(runtime/'requirements.lock')) == receipt['requirementsLockSha256'],
+            'COORDINATED_VISUAL_RUNTIME_CHANGED')
+    require(receipt['packages'] == {'ai-edge-litert':'2.3.0','numpy':'2.2.6',
+                                   'opencv-python-headless':'4.12.0.88'}, 'COORDINATED_VISUAL_RUNTIME_VERSION')
+    raw = owned(payload/'visual/model.task',64*1024**2)
+    require(digest(raw) == value['modelSha256'], 'COORDINATED_VISUAL_MODEL_DIGEST')
+    for lane in ('direct','internal'):
+        config = json.loads(owned(payload/'h5'/lane/'contracts/visual/runtime-candidate.json'))
+        require(config['modelSha256'] == value['modelSha256'], 'COORDINATED_VISUAL_H5_MISMATCH')
+    require(model.resolve() == model, 'COORDINATED_VISUAL_SYMLINK')
+    if model.exists():
+        require(owned(model,64*1024**2) == raw, 'COORDINATED_VISUAL_MODEL_IMMUTABLE')
+    elif install:
+        model.parent.mkdir(mode=0o750,parents=True,exist_ok=True)
+        os.chown(model.parent,0,10001)
+        controller.atomic(model,raw,0o440)
 
 
 def settings(manifest):
@@ -297,8 +334,10 @@ def activate(payload, manifest, bundle):
     require(not controller.HOLD.exists(), 'COORDINATED_EXISTING_HOLD')
     before_selection = manifest.get('previousSelection', manifest['selection'])
     if manifest.get('h5Releases'):
-        require(set(before_selection) == set(manifest['selection']) == {
-            'AI_DIRECT_CORE_ROOT','AI_DIRECT_LLM_ROOT','AI_CANONICAL_CORE_ROOT','AI_CANONICAL_LLM_ROOT'},
+        keys = {'AI_DIRECT_CORE_ROOT','AI_DIRECT_LLM_ROOT','AI_CANONICAL_CORE_ROOT','AI_CANONICAL_LLM_ROOT'}
+        if manifest.get('visualRelease'):
+            keys |= {'AI_CANONICAL_VISUAL_PYTHON','AI_ANALYSIS_VISUAL_LANDMARK_MODEL_PATH'}
+        require(set(before_selection) == set(manifest['selection']) == keys,
             'COORDINATED_SELECTION_KEYS')
         require(all(before_selection[k] == manifest['selection'][k]
                     or lane in manifest.get('coreReleases', {}) for lane,k in (
