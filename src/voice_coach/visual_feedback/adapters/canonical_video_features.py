@@ -34,6 +34,29 @@ class VideoFeatureConfiguration:
     ffmpeg: Path = Path("/usr/bin/ffmpeg")
 
 
+def check_feature_runtime(python: Path, model: Path, model_sha256: str):
+    """Check the selected backend's dependencies without images or inference."""
+    import subprocess
+    from .yunet_landmarks import read_bundle
+    from ...pronunciation_attempts.adapters.mediapipe_landmark_worker import _read_model_bytes
+    from ...backend_analysis.canonical_process import check_guard_python
+    check_guard_python(python)
+    bundle = read_bundle(_read_model_bytes(str(model), model_sha256))
+    if bundle is None:
+        code = ('import importlib.util; assert importlib.util.find_spec("mediapipe"); '
+                'assert importlib.util.find_spec("cv2")')
+    else:
+        code = ('import importlib.metadata as m; '
+                'assert m.version("ai-edge-litert")=="2.3.0"; '
+                'assert m.version("opencv-python-headless")=="4.12.0.88"; '
+                'assert m.version("numpy")=="2.2.6"')
+    result = subprocess.run([str(python), '-I', '-B', '-c', code],
+        env={'PATH':'/usr/bin:/bin','PYTHONDONTWRITEBYTECODE':'1'},
+        stdin=subprocess.DEVNULL,stdout=subprocess.DEVNULL,stderr=subprocess.DEVNULL,timeout=10)
+    if result.returncode:
+        raise ValueError('VISUAL_RUNTIME_UNAVAILABLE')
+
+
 async def _bounded(stream, limit):
     result = bytearray()
     while chunk := await stream.read(min(65536, limit + 1 - len(result))):

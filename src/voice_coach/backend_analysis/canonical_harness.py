@@ -536,6 +536,16 @@ FEEDBACK_PRESENTATION_INTERNAL = _replace(AIHUB_LIP_INTERNAL,
     lock_sha256='73d933006e0249984984097b21aa652c4ac051fd585eaf2478dce8e1e5cd7262')
 HARNESSES.update({v.manifest_sha256: v for v in (FEEDBACK_PRESENTATION, FEEDBACK_PRESENTATION_INTERNAL)})
 
+YUNET_LIP = _replace(FEEDBACK_PRESENTATION,
+    revision='canonical-yunet-lip-direct-20261109-v1',
+    manifest_sha256='19802f16e8bcd8b8e9ada0148eb24e0aa2d6fb30b56769dae05c84794d350430',
+    lock_sha256='80a24bb78137cff4f13246148b34f985194c1b77f141b09541978eacbc8dd31a')
+YUNET_LIP_INTERNAL = _replace(FEEDBACK_PRESENTATION_INTERNAL,
+    revision='canonical-yunet-lip-internal-20261109-v1',
+    manifest_sha256='d3e13ad9f3b5ad25d209736e7fbd8642c2df2c081d66cf1587e6def8834aaae4',
+    lock_sha256='e07c3304af372b00125ed6e7f09a7dfaa63e06fe03426c1b779e81ab014544e1')
+HARNESSES.update({v.manifest_sha256: v for v in (YUNET_LIP, YUNET_LIP_INTERNAL)})
+
 
 def harness_identity(manifest_sha256: str) -> HarnessIdentity:
     try:

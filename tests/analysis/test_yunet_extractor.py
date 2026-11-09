@@ -4,6 +4,8 @@ import json
 import math
 import unittest
 import zipfile
+from types import SimpleNamespace
+from unittest.mock import patch
 
 import cv2
 import numpy as np
@@ -65,3 +67,27 @@ class YuNetExtractor(unittest.TestCase):
         with self.assertRaises(ValueError):crop_transform(np.zeros(15))
         points=np.zeros((478,3));points[13,0]=float('nan')
         with self.assertRaises(ValueError):image_landmarks(points,np.eye(2,3),640,480)
+
+    def test_new_harness_keeps_audio_contract_and_pins_new_visual_assets(self):
+        from voice_coach.backend_analysis.canonical_harness import (YUNET_LIP,YUNET_LIP_INTERNAL,
+            FEEDBACK_PRESENTATION,FEEDBACK_PRESENTATION_INTERNAL,check_schema_registration,check_result_classification)
+        for parent,new in [(FEEDBACK_PRESENTATION,YUNET_LIP),(FEEDBACK_PRESENTATION_INTERNAL,YUNET_LIP_INTERNAL)]:
+            self.assertEqual(parent.core_sha256,new.core_sha256)
+            self.assertEqual(parent.prompt_sha256,new.prompt_sha256)
+            self.assertNotEqual(parent.manifest_sha256,new.manifest_sha256)
+            check_schema_registration(new);check_result_classification(new)
+
+    def test_readiness_checks_backend_dependencies_without_inference(self):
+        from pathlib import Path
+        from voice_coach.visual_feedback.adapters.canonical_video_features import check_feature_runtime
+        with patch('voice_coach.backend_analysis.canonical_process.check_guard_python'), \
+             patch('voice_coach.pronunciation_attempts.adapters.mediapipe_landmark_worker._read_model_bytes',return_value=b'x'), \
+             patch('voice_coach.visual_feedback.adapters.yunet_landmarks.read_bundle',return_value={}), \
+             patch('subprocess.run',return_value=SimpleNamespace(returncode=0)) as run:
+            check_feature_runtime(Path('/test/python'),Path('/test/model'),'0'*64)
+            program=run.call_args.args[0][-1]
+            self.assertIn('ai-edge-litert',program)
+            self.assertNotIn('mediapipe',program)
+            run.return_value.returncode=1
+            with self.assertRaisesRegex(ValueError,'VISUAL_RUNTIME_UNAVAILABLE'):
+                check_feature_runtime(Path('/test/python'),Path('/test/model'),'0'*64)
