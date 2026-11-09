@@ -7,6 +7,7 @@ import unittest
 
 from jsonschema import Draft202012Validator
 from voice_coach.backend_analysis.canonical_result import _public_score, _public_coaching
+from voice_coach.backend_analysis.browser_video_summary import summarize
 from voice_coach.six_dimension.policy import CRITERIA
 
 ROOT = Path(__file__).resolve().parents[2]
@@ -75,6 +76,33 @@ class PublicScoreDetails(unittest.TestCase):
         legacy = _public_score(record, None, HARNESS)
         self.assertEqual(legacy['criteria'][0]['level'], 4)
         self.assertNotIn('details', legacy)
+
+    def test_browser_summary_preserves_six_scores_and_excludes_private_measurements(self):
+        score = _public_score(expression(), None, HARNESS)
+        expected = deepcopy(score)
+        score['details']['privateEvidence'] = {'frames': [1]}
+        score['details']['criteria'][0]['rawGop'] = -1.0
+        value = dict(schemaVersion='voice-coaching.independent-audiovisual-result.v1',
+                     jobId='6cd07d62-c3b5-4a15-bc87-d339542f6ed5',
+                     executionId='6cd07d62-c3b5-4a15-bc87-d339542f6ed5',
+                     clientRequestId='6cd07d62-c3b5-4a15-bc87-d339542f6ed5',
+                     status='COMPLETED', score=score,
+                     visual=dict(score=None, scoreKind='NONE', reasonCodes=['NO_FACE'],
+                                 phoneAssessments=[{'landmarks': [1]}]),
+                     coaching=dict(feedback='마지막까지 고르게 읽으세요.'), failure=None)
+        raw = json.dumps(value).encode(); projected, _ = summarize(raw)
+        result = json.loads(projected)
+        self.assertEqual(result['score'], expected)
+        self.assertNotIn('phoneAssessments', result['visual'])
+        self.assertNotIn('rawGop', projected.decode())
+        self.assertNotIn('privateEvidence', projected.decode())
+        schema = json.loads((ROOT/'docs/contracts/browser_video_summary_v1.schema.json').read_bytes())
+        Draft202012Validator(schema).validate(result)
+        self.assertEqual(json.loads(raw), value)
+        del value['score']['details']
+        historical, _ = summarize(json.dumps(value).encode())
+        self.assertNotIn('details', json.loads(historical)['score'])
+        self.assertEqual(json.loads(historical)['score']['overallScore'], 58.5)
 
 
 if __name__ == '__main__':

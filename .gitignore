@@ -104,3 +104,5 @@ scripts/tests/
 !/tests/analysis/test_independent_av.py
 !/tests/analysis/test_browser_video.py
 !/tests/analysis/test_memory_admission.py
+
+!tests/analysis/test_feedback_presentation.py

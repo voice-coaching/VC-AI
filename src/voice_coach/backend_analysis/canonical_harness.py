@@ -524,6 +524,18 @@ AIHUB_LIP_INTERNAL = HarnessIdentity(
 )
 HARNESSES.update({v.manifest_sha256: v for v in (AIHUB_LIP, AIHUB_LIP_INTERNAL)})
 
+# The same numerical/model/prompt policy, with tolerant display typography.
+from dataclasses import replace as _replace
+FEEDBACK_PRESENTATION = _replace(AIHUB_LIP,
+    revision='canonical-feedback-presentation-direct-20261109-v1',
+    manifest_sha256='a827304fca571741f72e2b660bbeececb3ec153778024a0c409e28049329d2cd',
+    lock_sha256='920e8b315e9946143cac518027c6af979cfc078f3b4205645f30ee4ded27825f')
+FEEDBACK_PRESENTATION_INTERNAL = _replace(AIHUB_LIP_INTERNAL,
+    revision='canonical-feedback-presentation-internal-20261109-v1',
+    manifest_sha256='5ba067af6f3300994a2b5d04e425951419cd3ff30029a2b5e42897f11b47aaff',
+    lock_sha256='73d933006e0249984984097b21aa652c4ac051fd585eaf2478dce8e1e5cd7262')
+HARNESSES.update({v.manifest_sha256: v for v in (FEEDBACK_PRESENTATION, FEEDBACK_PRESENTATION_INTERNAL)})
+
 
 def harness_identity(manifest_sha256: str) -> HarnessIdentity:
     try:
