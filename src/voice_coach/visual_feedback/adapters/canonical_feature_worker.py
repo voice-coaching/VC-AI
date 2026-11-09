@@ -23,6 +23,7 @@ def _bootstrap():
     # Do not import the app's legacy orchestration or its optional dependencies.
     for name, directory in (("voice_coach", root),
         ("voice_coach.visual_feedback", root / "visual_feedback"),
+        ("voice_coach.visual_feedback.adapters", root / "visual_feedback/adapters"),
         ("voice_coach.pronunciation_attempts", root / "pronunciation_attempts"),
         ("voice_coach.pronunciation_attempts.adapters", root / "pronunciation_attempts/adapters")):
         package = ModuleType(name)
@@ -109,6 +110,13 @@ def main():
     require(0 < size <= MAX_HEADER_BYTES)
     header = validate_header(json.loads(exact(size)))
     model = _read_model_bytes(header["modelPath"], header["modelSha256"])
+    from voice_coach.visual_feedback.adapters.yunet_landmarks import read_bundle, extract_frames
+    bundle = read_bundle(model)
+    if bundle is not None:
+        features = extract_frames(bundle, header, exact)
+        require(sys.stdin.buffer.read(1) == b"")
+        sys.stdout.write(json.dumps(features, ensure_ascii=False, allow_nan=False, separators=(",", ":")))
+        return
     import mediapipe as mp
     import numpy as np
     q = header["quality"]
