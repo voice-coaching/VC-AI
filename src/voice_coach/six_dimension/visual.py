@@ -25,14 +25,16 @@ def visual_context(assessment, visual):
     if valid:
         score = float(Decimal(str(score)).quantize(Decimal("0.1"), rounding=ROUND_HALF_UP))
     targets = []
-    sparse = visual.get('comparisonPolicy') == 'PHONE_ROLE_SPARSE_30FPS_V1'
+    corpus = visual.get('comparisonPolicy') in {'AIHUB_POPULATION_30FPS_V1','AIHUB_RESEARCH_30FPS_V1'}
+    sparse = visual.get('comparisonPolicy') in {'PHONE_ROLE_SPARSE_30FPS_V1','AIHUB_POPULATION_30FPS_V1','AIHUB_RESEARCH_30FPS_V1'}
     # Lowest two different measured occurrences, never two copies of one phone.
     # A withheld whole-clip score must not erase a valid local observation.
     # Coverage controls the total only; each practice needs its own action.
     rows = sorted((r for r in visual.get("phones", []) if r.get("status") == "SCORED"
                    and number(r.get("score")) and 0 <= r["score"] <= 100
                    and r.get("scoreKind") in {"CALIBRATED", "PROVISIONAL"}
-                   and "COMPARE_REFERENCE" in r.get("allowedActionIds", [])),
+                   and ("COMPARE_REFERENCE" in r.get("allowedActionIds", [])
+                        or corpus and bool(r.get('corpusComparisons')))),
                   key=lambda r: (r["score"], r["expectedIndex"])) if visual.get("status") in {
                       "SCORED", "OBSERVED", "REFERENCE_ONLY"} else []
     seen = set()
@@ -46,10 +48,12 @@ def visual_context(assessment, visual):
             evidenceIds=["visual:" + visual["visualEvidenceSha256"] + ":phone-" + str(index)],
             expectedPhone=row["expectedPhone"], role=row["role"],
             audioStartSeconds=row["audioStartSeconds"], audioEndSeconds=row["audioEndSeconds"],
-            practiceScope=('COMPARE_REFERENCE_VISIBLE_SHAPE_ONLY' if sparse and (
+            practiceScope=('CORPUS_VISIBLE_SHAPE_PRACTICE' if corpus else 'COMPARE_REFERENCE_VISIBLE_SHAPE_ONLY' if sparse and (
                 row.get('frameCount',0) < 3 or 'PARTIAL_VISIBILITY_STATIC_ONLY' in row.get('reasonCodes',[])
                 or not any(s['criterionId']=='lip_timing' and s['status']=='SCORED'
                            for s in row.get('subScores',[]))) else 'COMPARE_REFERENCE_VISIBLE_MOVEMENT_ONLY')))
+        if corpus:
+            targets[-1]['corpusComparisons']=row['corpusComparisons']
         if len(targets) == 2:
             break
     if sparse and len(targets) < 2:

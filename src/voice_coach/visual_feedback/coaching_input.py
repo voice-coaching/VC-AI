@@ -40,7 +40,8 @@ corrective actions. Private frame coordinates/receipts never enter the prompt.
                                                          else "FIRST_12_OBSERVED_MFA_INDICES_V1"),
         availablePhoneCount=len(rows), omittedPhoneCount=max(0, len(rows) - 12),
         phones=[{k: r[k] for k in fields} for r in rows[:12]])
-    if evidence.get('assessmentPolicy') in {'PHONE_ROLE_PARTIAL_PROVISIONAL_V1','PHONE_ROLE_SPARSE_30FPS_V1'}:
+    corpus = evidence.get('assessmentPolicy') in {'AIHUB_POPULATION_30FPS_V1','AIHUB_RESEARCH_30FPS_V1'}
+    if evidence.get('assessmentPolicy') in {'PHONE_ROLE_PARTIAL_PROVISIONAL_V1','PHONE_ROLE_SPARSE_30FPS_V1','AIHUB_POPULATION_30FPS_V1','AIHUB_RESEARCH_30FPS_V1'}:
         value.update(comparisonPolicy=evidence['assessmentPolicy'],coverage=visual['coverage'],
             limitations=[
                 '임시 점수는 실제로 관찰·비교한 음소에만 해당하며, 전체 발음의 정답률이 아니다.',
@@ -48,8 +49,15 @@ corrective actions. Private frame coordinates/receipts never enter the prompt.
                 '다른 단어 참조로 입술 동작 타이밍을 채점하지 않는다. 없는 측정이나 참조를 추측하지 않는다.'])
         for projected,row in zip(value['phones'],rows[:12]):
             if 'subScores' in row: projected['subScores']=row['subScores']
-            if evidence['assessmentPolicy'] == 'PHONE_ROLE_SPARSE_30FPS_V1':
+            if evidence['assessmentPolicy'] in {'PHONE_ROLE_SPARSE_30FPS_V1','AIHUB_POPULATION_30FPS_V1','AIHUB_RESEARCH_30FPS_V1'}:
                 projected['frameCount']=row['frameCount']
+            if corpus:
+                projected['corpusComparisons']=evidence['corpusComparisons'].get(str(row['expectedIndex']),[])
+        if corpus:
+            value['limitations']=[
+                'AI-Hub 538 참조 분포와 비교한 점수다. 검증 상태와 null은 내부에서 유지하고 사용자 연습 문장으로 옮기지 않는다.',
+                '측정된 음소·입술 성분·시간 위상만 비교한다. 없는 참조와 관측을 추측하지 않는다.',
+                '입술의 통계적 차이로 혀 위치·치료 필요성·발음 오류를 단정하지 않는다. 참조 영상 재생을 요구하지 않는다.']
         if evidence['assessmentPolicy'] == 'PHONE_ROLE_SPARSE_30FPS_V1':
             value['limitations'].append('1프레임은 정적 형상 관찰이며 움직임이나 타이밍이 아니다. 2프레임의 폐쇄 값도 완전한 닫힘 동작을 보증하지 않는다.')
         if 'PARTIAL_REFERENCE_COVERAGE' in visual['reasonCodes']:

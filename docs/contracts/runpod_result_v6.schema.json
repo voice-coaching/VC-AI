@@ -1263,7 +1263,8 @@
             "aab733aa434cfa4566b03a71ab9e05ef48f06fa44c65cb59353f1b4a560fc6a9",
             "ed86be97bf36354f3b38e36c4374b695988be6044c0cfbfc46e7eb3eb3c2bd44",
             "9c34499f21f0f408f7f26fe45da309977494a2f1b0a6cdae5a7f9662c33e7a5f",
-            "232df793470dfdbcda38057f34b6c36d18dbd90f128171b24342baa3878c1b78"
+            "232df793470dfdbcda38057f34b6c36d18dbd90f128171b24342baa3878c1b78",
+            "9a1d148b8c6f19a88e62b38f9eb0f8ae94bdee198f20fd3e997967383d4994c2"
           ]
         },
         "llmDependencyLockSha256": {
@@ -1305,7 +1306,8 @@
             "26d77c2b4a05ae2022e1de0ad3ad72813e1b85b3165cf2fc60243fd591f59d90",
             "8b5fa941aa8ab9e228f8269afdd8c138cba871645842839bfd00ad345e6b69b2",
             "69ac87832e3f3b5b65a6cf81a543838892573f977afe70cc4ef41ae08345cda1",
-            "65b33d998c79c5694fa0554337d154328a7bcc944203b0f6747a9cf0b5f0559f"
+            "65b33d998c79c5694fa0554337d154328a7bcc944203b0f6747a9cf0b5f0559f",
+            "f54967fa7ea96ed9f6c9598d63280a73da8ce81d62c52ab21b4284a7452bdb0d"
           ]
         },
         "scriptSha256": {
@@ -1892,6 +1894,19 @@
             },
             "llmDependencyLockSha256": {
               "const": "65b33d998c79c5694fa0554337d154328a7bcc944203b0f6747a9cf0b5f0559f"
+            }
+          }
+        },
+        {
+          "properties": {
+            "parentManifestSha256": {
+              "const": "dae36e72646904bcdefc081654f67c06f80ff0565c384d439a5692e51ab7026b"
+            },
+            "llmManifestSha256": {
+              "const": "9a1d148b8c6f19a88e62b38f9eb0f8ae94bdee198f20fd3e997967383d4994c2"
+            },
+            "llmDependencyLockSha256": {
+              "const": "f54967fa7ea96ed9f6c9598d63280a73da8ce81d62c52ab21b4284a7452bdb0d"
             }
           }
         }
@@ -2673,7 +2688,8 @@
             "aab733aa434cfa4566b03a71ab9e05ef48f06fa44c65cb59353f1b4a560fc6a9",
             "ed86be97bf36354f3b38e36c4374b695988be6044c0cfbfc46e7eb3eb3c2bd44",
             "9c34499f21f0f408f7f26fe45da309977494a2f1b0a6cdae5a7f9662c33e7a5f",
-            "232df793470dfdbcda38057f34b6c36d18dbd90f128171b24342baa3878c1b78"
+            "232df793470dfdbcda38057f34b6c36d18dbd90f128171b24342baa3878c1b78",
+            "9a1d148b8c6f19a88e62b38f9eb0f8ae94bdee198f20fd3e997967383d4994c2"
           ]
         },
         "llmDependencyLockSha256": {
@@ -2715,7 +2731,8 @@
             "26d77c2b4a05ae2022e1de0ad3ad72813e1b85b3165cf2fc60243fd591f59d90",
             "8b5fa941aa8ab9e228f8269afdd8c138cba871645842839bfd00ad345e6b69b2",
             "69ac87832e3f3b5b65a6cf81a543838892573f977afe70cc4ef41ae08345cda1",
-            "65b33d998c79c5694fa0554337d154328a7bcc944203b0f6747a9cf0b5f0559f"
+            "65b33d998c79c5694fa0554337d154328a7bcc944203b0f6747a9cf0b5f0559f",
+            "f54967fa7ea96ed9f6c9598d63280a73da8ce81d62c52ab21b4284a7452bdb0d"
           ]
         },
         "promptSha256": {
@@ -2736,7 +2753,8 @@
             "af90fb82ee48e4ae271e94f8a2acf58febc39335f2a8e83e029bc5e894fe7b2c",
             "f39e3012dcc85eba461d90baf2e657a97c4bec6b6b06e0056eb0807a94b00d07",
             "8ddcf1f763fdbd806412c32bfe5d46e7d2507daf81158a7d5aedc0f754618396",
-            "9d28ef351dcd33c6d4a7e4f3fc96c2d94db5a4aa7abdca0ccbc640d62606939f"
+            "9d28ef351dcd33c6d4a7e4f3fc96c2d94db5a4aa7abdca0ccbc640d62606939f",
+            "b8e4b50784c85c2dcf5deb530c7decdfb7083cca39eb9bac6b577d6c961db62d"
           ]
         }
       },
@@ -3357,6 +3375,22 @@
             },
             "promptSha256": {
               "const": "9d28ef351dcd33c6d4a7e4f3fc96c2d94db5a4aa7abdca0ccbc640d62606939f"
+            }
+          }
+        },
+        {
+          "properties": {
+            "parentManifestSha256": {
+              "const": "dae36e72646904bcdefc081654f67c06f80ff0565c384d439a5692e51ab7026b"
+            },
+            "llmManifestSha256": {
+              "const": "9a1d148b8c6f19a88e62b38f9eb0f8ae94bdee198f20fd3e997967383d4994c2"
+            },
+            "llmDependencyLockSha256": {
+              "const": "f54967fa7ea96ed9f6c9598d63280a73da8ce81d62c52ab21b4284a7452bdb0d"
+            },
+            "promptSha256": {
+              "const": "b8e4b50784c85c2dcf5deb530c7decdfb7083cca39eb9bac6b577d6c961db62d"
             }
           }
         }
@@ -4070,7 +4104,8 @@
                       "aab733aa434cfa4566b03a71ab9e05ef48f06fa44c65cb59353f1b4a560fc6a9",
                       "ed86be97bf36354f3b38e36c4374b695988be6044c0cfbfc46e7eb3eb3c2bd44",
                       "9c34499f21f0f408f7f26fe45da309977494a2f1b0a6cdae5a7f9662c33e7a5f",
-                      "232df793470dfdbcda38057f34b6c36d18dbd90f128171b24342baa3878c1b78"
+                      "232df793470dfdbcda38057f34b6c36d18dbd90f128171b24342baa3878c1b78",
+                      "9a1d148b8c6f19a88e62b38f9eb0f8ae94bdee198f20fd3e997967383d4994c2"
                     ]
                   }
                 }
@@ -4164,7 +4199,8 @@
                       "aab733aa434cfa4566b03a71ab9e05ef48f06fa44c65cb59353f1b4a560fc6a9",
                       "ed86be97bf36354f3b38e36c4374b695988be6044c0cfbfc46e7eb3eb3c2bd44",
                       "9c34499f21f0f408f7f26fe45da309977494a2f1b0a6cdae5a7f9662c33e7a5f",
-                      "232df793470dfdbcda38057f34b6c36d18dbd90f128171b24342baa3878c1b78"
+                      "232df793470dfdbcda38057f34b6c36d18dbd90f128171b24342baa3878c1b78",
+                      "9a1d148b8c6f19a88e62b38f9eb0f8ae94bdee198f20fd3e997967383d4994c2"
                     ]
                   }
                 }
@@ -5187,7 +5223,8 @@
             "aab733aa434cfa4566b03a71ab9e05ef48f06fa44c65cb59353f1b4a560fc6a9",
             "ed86be97bf36354f3b38e36c4374b695988be6044c0cfbfc46e7eb3eb3c2bd44",
             "9c34499f21f0f408f7f26fe45da309977494a2f1b0a6cdae5a7f9662c33e7a5f",
-            "232df793470dfdbcda38057f34b6c36d18dbd90f128171b24342baa3878c1b78"
+            "232df793470dfdbcda38057f34b6c36d18dbd90f128171b24342baa3878c1b78",
+            "9a1d148b8c6f19a88e62b38f9eb0f8ae94bdee198f20fd3e997967383d4994c2"
           ]
         },
         "llmDependencyLockSha256": {
@@ -5229,7 +5266,8 @@
             "26d77c2b4a05ae2022e1de0ad3ad72813e1b85b3165cf2fc60243fd591f59d90",
             "8b5fa941aa8ab9e228f8269afdd8c138cba871645842839bfd00ad345e6b69b2",
             "69ac87832e3f3b5b65a6cf81a543838892573f977afe70cc4ef41ae08345cda1",
-            "65b33d998c79c5694fa0554337d154328a7bcc944203b0f6747a9cf0b5f0559f"
+            "65b33d998c79c5694fa0554337d154328a7bcc944203b0f6747a9cf0b5f0559f",
+            "f54967fa7ea96ed9f6c9598d63280a73da8ce81d62c52ab21b4284a7452bdb0d"
           ]
         },
         "scriptSha256": {
@@ -5775,6 +5813,19 @@
             },
             "llmDependencyLockSha256": {
               "const": "65b33d998c79c5694fa0554337d154328a7bcc944203b0f6747a9cf0b5f0559f"
+            }
+          }
+        },
+        {
+          "properties": {
+            "parentManifestSha256": {
+              "const": "dae36e72646904bcdefc081654f67c06f80ff0565c384d439a5692e51ab7026b"
+            },
+            "llmManifestSha256": {
+              "const": "9a1d148b8c6f19a88e62b38f9eb0f8ae94bdee198f20fd3e997967383d4994c2"
+            },
+            "llmDependencyLockSha256": {
+              "const": "f54967fa7ea96ed9f6c9598d63280a73da8ce81d62c52ab21b4284a7452bdb0d"
             }
           }
         }
@@ -6433,7 +6484,8 @@
                       "aab733aa434cfa4566b03a71ab9e05ef48f06fa44c65cb59353f1b4a560fc6a9",
                       "ed86be97bf36354f3b38e36c4374b695988be6044c0cfbfc46e7eb3eb3c2bd44",
                       "9c34499f21f0f408f7f26fe45da309977494a2f1b0a6cdae5a7f9662c33e7a5f",
-                      "232df793470dfdbcda38057f34b6c36d18dbd90f128171b24342baa3878c1b78"
+                      "232df793470dfdbcda38057f34b6c36d18dbd90f128171b24342baa3878c1b78",
+                      "9a1d148b8c6f19a88e62b38f9eb0f8ae94bdee198f20fd3e997967383d4994c2"
                     ]
                   }
                 }
@@ -6527,7 +6579,8 @@
                       "aab733aa434cfa4566b03a71ab9e05ef48f06fa44c65cb59353f1b4a560fc6a9",
                       "ed86be97bf36354f3b38e36c4374b695988be6044c0cfbfc46e7eb3eb3c2bd44",
                       "9c34499f21f0f408f7f26fe45da309977494a2f1b0a6cdae5a7f9662c33e7a5f",
-                      "232df793470dfdbcda38057f34b6c36d18dbd90f128171b24342baa3878c1b78"
+                      "232df793470dfdbcda38057f34b6c36d18dbd90f128171b24342baa3878c1b78",
+                      "9a1d148b8c6f19a88e62b38f9eb0f8ae94bdee198f20fd3e997967383d4994c2"
                     ]
                   }
                 }

@@ -501,6 +501,29 @@ SPARSE_LIP_INTERNAL = HarnessIdentity(
 )
 HARNESSES.update({v.manifest_sha256: v for v in (SPARSE_LIP, SPARSE_LIP_INTERNAL)})
 
+# Explicit provisional AI-Hub model serving; historical CORE identities remain
+# unchanged and the reference validation status stays in the pinned catalog.
+AIHUB_LIP = HarnessIdentity(
+    'canonical-aihub-lip-direct-20261109-v1',
+    '920570f14c74f7b8db4c72982fb3a5b6f992caa4f27401c37caaf2f9549aba6f',
+    'de6b91ba1e5606c670f5915be8e6877a86334c7b4826ca2396e5f39ddef2d061',
+    'b8e4b50784c85c2dcf5deb530c7decdfb7083cca39eb9bac6b577d6c961db62d',
+    SPARSE_LIP.core_sha256,
+    scoring=True, native=True, gpt_grading=True, gop_grading=True,
+    model='gpt-6-luna', reasoning_effort='none', service_tier='default',
+    selection_view=False, six_dimension=True, direct_only=True, audiovisual=True,
+)
+AIHUB_LIP_INTERNAL = HarnessIdentity(
+    'canonical-aihub-lip-internal-20261109-v1',
+    '9a1d148b8c6f19a88e62b38f9eb0f8ae94bdee198f20fd3e997967383d4994c2',
+    'f54967fa7ea96ed9f6c9598d63280a73da8ce81d62c52ab21b4284a7452bdb0d',
+    AIHUB_LIP.prompt_sha256, SPARSE_LIP_INTERNAL.core_sha256,
+    scoring=True, native=True, gpt_grading=True, gop_grading=True,
+    model='gpt-6-luna', reasoning_effort='none', service_tier='default',
+    selection_view=False, six_dimension=True, audiovisual=True,
+)
+HARNESSES.update({v.manifest_sha256: v for v in (AIHUB_LIP, AIHUB_LIP_INTERNAL)})
+
 
 def harness_identity(manifest_sha256: str) -> HarnessIdentity:
     try:

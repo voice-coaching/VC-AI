@@ -228,6 +228,90 @@
             "type": "integer",
             "minimum": 1,
             "maximum": 240
+          },
+          "corpusComparisons": {
+            "type": "array",
+            "maxItems": 10,
+            "items": {
+              "type": "object",
+              "additionalProperties": false,
+              "properties": {
+                "criterionId": {
+                  "enum": [
+                    "lip_aperture",
+                    "lip_rounding",
+                    "lip_closure",
+                    "lip_timing"
+                  ]
+                },
+                "phaseBin": {
+                  "enum": [
+                    "0",
+                    "1",
+                    "2",
+                    "3",
+                    "WHOLE"
+                  ]
+                },
+                "contextId": {
+                  "type": "string"
+                },
+                "value": {
+                  "type": "number",
+                  "minimum": 0,
+                  "maximum": 100
+                },
+                "referenceMean": {
+                  "type": "number",
+                  "minimum": 0,
+                  "maximum": 100
+                },
+                "referenceStandardDeviation": {
+                  "type": "number",
+                  "exclusiveMinimum": 0
+                },
+                "zScore": {
+                  "type": "number"
+                },
+                "direction": {
+                  "enum": [
+                    "LOWER",
+                    "HIGHER",
+                    "AT_MEAN"
+                  ]
+                },
+                "trainSpeakerCount": {
+                  "type": "integer",
+                  "minimum": 1
+                },
+                "trainOccurrenceCount": {
+                  "type": "integer",
+                  "minimum": 1
+                },
+                "calibrationSpeakerCount": {
+                  "type": "integer",
+                  "minimum": 0
+                },
+                "testSpeakerCount": {
+                  "type": "integer",
+                  "minimum": 0
+                }
+              },
+              "required": [
+                "criterionId",
+                "phaseBin",
+                "contextId",
+                "value",
+                "referenceMean",
+                "referenceStandardDeviation",
+                "zScore",
+                "direction",
+                "trainSpeakerCount",
+                "trainOccurrenceCount",
+                "calibrationSpeakerCount",
+                "testSpeakerCount"
+              ]
+            }
           }
         },
         "required": [
@@ -249,7 +333,9 @@
     "comparisonPolicy": {
       "enum": [
         "PHONE_ROLE_PARTIAL_PROVISIONAL_V1",
-        "PHONE_ROLE_SPARSE_30FPS_V1"
+        "PHONE_ROLE_SPARSE_30FPS_V1",
+        "AIHUB_POPULATION_30FPS_V1",
+        "AIHUB_RESEARCH_30FPS_V1"
       ]
     },
     "coverage": {
