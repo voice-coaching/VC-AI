@@ -46,6 +46,18 @@ class ReferenceCatalog:
     calibrations: tuple[Calibration, ...]
     minimum_coverage: float
     lip_policy: object | None = None
+    corpus: object | None = None
+
+    @property
+    def scoring_enabled(self):
+        return self.lip_policy is not None or self.corpus is not None
+
+    @property
+    def assessment_policy(self):
+        if self.corpus is None:
+            return 'PHONE_ROLE_SPARSE_30FPS_V1'
+        return ('AIHUB_RESEARCH_30FPS_V1' if self.corpus.value.get('schemaVersion') ==
+                'voice-coaching.aihub538-phoneme-geometry-research-model.v1' else 'AIHUB_POPULATION_30FPS_V1')
 
     @classmethod
     def load(cls, path: Path, expected_sha256: str):
@@ -64,8 +76,26 @@ class ReferenceCatalog:
         from .feature_protocol import strict_json
         require(0 < len(raw) <= MAX_CATALOG_BYTES and hashlib.sha256(raw).hexdigest() == sha(expected_sha256))
         data = strict_json(raw)
+        require(type(data) is dict)
         keys = {"schemaVersion", "revision", "mappingRevision", "contextPolicy", "distancePolicy",
                 "minimumCoverage", "references", "calibrations"}
+        research = data.get('schemaVersion') == 'voice-coaching.lip-reference-catalog.v6'
+        population = data.get('schemaVersion') == 'voice-coaching.lip-reference-catalog.v5'
+        if population or research:
+            from .corpus_reference import CorpusReference
+            extra = {'researchModel','researchModelSha256'} if research else {'population'}
+            require(set(data)==keys|extra and data['references']==[] and data['calibrations']==[])
+            require(data['mappingRevision']==MAPPING.revision and data['contextPolicy']=='CORPUS_PHASE_AND_NEIGHBOUR_V1')
+            if research:
+                from .corpus_reference import encode
+                from .research_reference import ResearchReference
+                require(hashlib.sha256(encode(data['researchModel'])).hexdigest()==sha(data['researchModelSha256']))
+                corpus=ResearchReference.load(data['researchModel'])
+            else:
+                corpus=CorpusReference.load(data['population'])
+            policy=DistancePolicy(**data['distancePolicy']);policy.validate(3)
+            require(type(data['minimumCoverage']) in (int,float) and 0 < data['minimumCoverage'] <= 1)
+            return cls(expected_sha256,text(data['revision']),policy,(),(),data['minimumCoverage'],None,corpus)
         require(type(data) is dict and set(data) in (keys, keys | {"lipScoring"}))
         sparse = data['schemaVersion'] == 'voice-coaching.lip-reference-catalog.v4'
         extended = sparse or data["schemaVersion"] == "voice-coaching.lip-reference-catalog.v3"

@@ -5,6 +5,8 @@ from .canonical_service import EVIDENCE_SCHEMA, LEGACY_ASSESSMENT, PARTIAL_ASSES
 from .feature_protocol import MAPPING, PROTOCOL, strict_json
 from .parallel_analysis import MediaIntegrityFailure
 from .reference_catalog import ReferenceCatalog, sha
+from .corpus_reference import ASSESSMENT as CORPUS_ASSESSMENT
+from .research_reference import ASSESSMENT as RESEARCH_ASSESSMENT
 
 FAILURE_REASONS = {
     "VIDEO_TIMEOUT", "VIDEO_PROCESSING_FAILED", "NO_FACE", "MULTIPLE_FACES", "LOW_VISIBILITY",
@@ -30,6 +32,9 @@ Authenticated producer provenance is a separate handoff responsibility.
     keys = {"schemaVersion", "requestId", "executionId",
         "audioSha256", "videoSha256", "preparedWavSha256", "referenceCatalogSha256", "mappingRevision",
         "distancePolicyRevision", "sourcePcm", "preparedPcm", "timeMap", "decoder", "frames", "visual"}
+    if value.get('assessmentPolicy') in {CORPUS_ASSESSMENT,RESEARCH_ASSESSMENT}:
+        require(catalog.corpus is not None)
+        keys=keys|{'corpusComparisons'}
     require(type(value) is dict and set(value) in (keys, keys | {"alignmentSidecar"},
         keys | {'assessmentPolicy'},keys | {'assessmentPolicy','alignmentSidecar'}))
     require(value["schemaVersion"] == EVIDENCE_SCHEMA and value["requestId"] == str(request.event_id)
@@ -40,9 +45,11 @@ Authenticated producer provenance is a separate handoff responsibility.
         and value["distancePolicyRevision"] == catalog.policy.revision)
     decoder = value["decoder"]
     if 'assessmentPolicy' in value:
-        require(value['assessmentPolicy'] in {PARTIAL_ASSESSMENT,SPARSE_ASSESSMENT}
-                and (decoder is not None or value['assessmentPolicy'] == SPARSE_ASSESSMENT))
+        require(value['assessmentPolicy'] in {PARTIAL_ASSESSMENT,SPARSE_ASSESSMENT,CORPUS_ASSESSMENT,RESEARCH_ASSESSMENT}
+                and (decoder is not None or value['assessmentPolicy'] in {SPARSE_ASSESSMENT,CORPUS_ASSESSMENT,RESEARCH_ASSESSMENT}))
     if decoder is None:
+        if value.get('assessmentPolicy') in {CORPUS_ASSESSMENT,RESEARCH_ASSESSMENT}:
+            require(value['corpusComparisons']=={})
         require("alignmentSidecar" not in value)
         visual = value["visual"]
         require(type(visual) is dict and set(visual) == {"status", "correctiveClaimsAllowed", "score",

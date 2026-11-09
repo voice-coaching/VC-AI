@@ -98,6 +98,7 @@ scripts/tests/
 !/tests/analysis/test_canonical_transport_lifecycle.py
 !/tests/analysis/test_native_rubric_variation.py
 !/tests/analysis/test_lip_scoring.py
+!/tests/analysis/test_aihub_lip_corpus.py
 !/tests/analysis/test_public_score_details.py
 !/tests/analysis/test_http_error_responses.py
 !/tests/analysis/test_independent_av.py

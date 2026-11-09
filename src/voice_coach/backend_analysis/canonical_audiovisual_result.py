@@ -28,6 +28,11 @@ def visual_assets(frozen):
     catalog_path = "contracts/visual/reference-catalog.json"
     catalog = ReferenceCatalog.load(root / catalog_path, lock["files"][catalog_path])
     configuration = _json((root / "contracts/visual/runtime-candidate.json").read_bytes())
+    if catalog.corpus is not None:
+        from voice_coach.visual_feedback.corpus_reference import encode,sha
+        _require(catalog.corpus.value['modelSha256']==configuration['modelSha256']
+                 and catalog.corpus.value['qualitySha256']==sha(encode(configuration['quality'])),
+                 'CORPUS_FEATURE_PROTOCOL_MISMATCH')
     return catalog, configuration
 
 

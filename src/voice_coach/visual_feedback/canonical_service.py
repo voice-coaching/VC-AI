@@ -17,6 +17,8 @@ from .feature_protocol import MAPPING, validate_features, strict_json
 from .parallel_analysis import analyze_parallel, MediaIntegrityFailure
 from .reference_catalog import ReferenceCatalog
 from .lip_scoring import BILABIALS, VOWELS, display, enrich_phone, summarize_subscores
+from .corpus_reference import ASSESSMENT as CORPUS_ASSESSMENT, neighbour_context
+from .research_reference import ASSESSMENT as RESEARCH_ASSESSMENT
 
 EVIDENCE_SCHEMA = "voice-coaching.visual-evidence.v1"
 LEGACY_ASSESSMENT = 'EXACT_WORD_COVERAGE_V1'
@@ -37,10 +39,18 @@ def assess_aligned(*, core: dict, request, feature_value: dict, source_pcm, prep
 PCM measurements come from the materialized files during execution; the
 verifier must additionally match them to the retained receipt/association.
 """
-    if assessment_policy not in {LEGACY_ASSESSMENT,PARTIAL_ASSESSMENT,SPARSE_ASSESSMENT}:
+    if assessment_policy not in {LEGACY_ASSESSMENT,PARTIAL_ASSESSMENT,SPARSE_ASSESSMENT,CORPUS_ASSESSMENT,RESEARCH_ASSESSMENT}:
         raise MediaIntegrityFailure('VISUAL_ASSESSMENT_POLICY_INVALID')
-    partial = assessment_policy in {PARTIAL_ASSESSMENT,SPARSE_ASSESSMENT}
-    sparse = assessment_policy == SPARSE_ASSESSMENT
+    partial = assessment_policy in {PARTIAL_ASSESSMENT,SPARSE_ASSESSMENT,CORPUS_ASSESSMENT,RESEARCH_ASSESSMENT}
+    sparse = assessment_policy in {SPARSE_ASSESSMENT,CORPUS_ASSESSMENT,RESEARCH_ASSESSMENT}
+    if ((assessment_policy in {CORPUS_ASSESSMENT,RESEARCH_ASSESSMENT}) != (catalog.corpus is not None)
+            or catalog.corpus is not None and assessment_policy != catalog.assessment_policy):
+        raise MediaIntegrityFailure('CORPUS_ASSESSMENT_CATALOG_MISMATCH')
+    if catalog.corpus is not None:
+        protocol=catalog.corpus.value
+        configuration={k:v for k,v in feature_value.items() if k=='modelSha256'}
+        if configuration.get('modelSha256')!=protocol['modelSha256']:
+            raise MediaIntegrityFailure('CORPUS_FEATURE_PROTOCOL_MISMATCH')
     video_sha = request.visual_input.sha256
     mapping = verified_time_map(source_pcm=source_pcm, prepared_pcm=prepared_pcm,
         prepared_sha256=core["prepared_wav_sha256"], video_sha256=video_sha, features=feature_value)
@@ -54,6 +64,9 @@ verifier must additionally match them to the retained receipt/association.
     frames = tuple(LipFrame(r["pts"], tuple(tuple(p) for p in r["landmarks"]),
                            tuple(r["features"]), r["reason"] is None) for r in raw_frames)
     rows = []
+    corpus_comparisons = {}
+    alignment_rows = (alignment_evidence['alignment'] if alignment_evidence is not None else
+                      core.get('mfa_phone_alignment') or {'rows':[]})['rows']
     consumed_pts = set()
     scope = _sha([str(request.execution_id), request.audio_sha256, video_sha, catalog.sha256])
     for anchor in located.anchors:
@@ -62,7 +75,17 @@ verifier must additionally match them to the retained receipt/association.
             source_sha256=request.media_preparation["receipt"]["sourceSha256"],
             references=catalog.references, policy=catalog.policy, calibration=catalog.calibration_for(anchor),
             allow_sparse_frames=sparse)
-        if catalog.lip_policy is not None:
+        if catalog.corpus is not None:
+            selected_reasons={r['reason'] for r in raw_frames if row['videoStartSeconds'] is not None
+                and row['videoStartSeconds'] <= r['pts'] < row['videoEndSeconds']}
+            if 'MULTIPLE_FACES' in selected_reasons:
+                row.update(status='UNSCORABLE',score=None,scoreKind='NONE',reasonCodes=['MULTIPLE_FACES'])
+            else:
+                comparisons=catalog.corpus.assess(row,anchor,frames,
+                    context=neighbour_context(alignment_rows,anchor.expected_index),video_sha256=video_sha,
+                    source_sha256=request.media_preparation['receipt']['sourceSha256'])
+                if comparisons:corpus_comparisons[str(anchor.expected_index)]=comparisons
+        elif catalog.lip_policy is not None:
             enrich_phone(row, anchor, frames, references=catalog.references, policy=catalog.lip_policy,
                 video_sha256=video_sha, source_sha256=request.media_preparation["receipt"]["sourceSha256"],
                 allow_cross_word=partial, allow_sparse_frames=sparse)
@@ -86,7 +109,7 @@ verifier must additionally match them to the retained receipt/association.
         rows.append(row)
     eligible_rows = rows
     eligible_count = located.target_count
-    if catalog.lip_policy is not None:
+    if catalog.scoring_enabled:
         eligible_rows = [r for r in rows if (r["role"] == "nucleus" and r["expectedPhone"] in VOWELS)
                          or (r["role"] in {"onset", "coda"} and r["expectedPhone"] in BILABIALS)]
         alignment = (alignment_evidence["alignment"] if alignment_evidence is not None else
@@ -97,7 +120,7 @@ verifier must additionally match them to the retained receipt/association.
                              for r in alignment["rows"])
     summary = aggregate(eligible_rows, target_count=located.target_count,
         visually_eligible_count=eligible_count,
-        minimum_coverage=catalog.minimum_coverage, allow_provisional=catalog.lip_policy is not None,
+        minimum_coverage=catalog.minimum_coverage, allow_provisional=catalog.scoring_enabled,
         allow_partial_provisional=partial, minimum_observed_frames=1 if sparse else 3)
     reasons = sorted({r for row in rows for r in row["reasonCodes"]})
     partial_total = summary['score'] is not None and summary['coverage'] < catalog.minimum_coverage
@@ -122,7 +145,7 @@ verifier must additionally match them to the retained receipt/association.
         score=summary.pop("score"), scoreKind=kind,
         coverage=summary, phoneAssessments=rows, reasonCodes=reasons,
         alignmentScope=located.scope, unresolvedExpectedIndices=list(located.unresolved_indices))
-    if catalog.lip_policy is not None:
+    if catalog.scoring_enabled:
         if visual["score"] is not None:
             visual["score"] = display(visual["score"])
         visual["subScores"] = summarize_subscores(rows)
@@ -141,6 +164,8 @@ verifier must additionally match them to the retained receipt/association.
         evidence["alignmentSidecar"] = alignment_evidence
     if partial:
         evidence['assessmentPolicy'] = assessment_policy
+    if catalog.corpus is not None:
+        evidence['corpusComparisons']=corpus_comparisons
     return evidence
 
 
@@ -187,11 +212,11 @@ class CanonicalAudiovisualService:
                 source_pcm=source, prepared_pcm=prepared, catalog=self.catalog, core_raw=produced.raw,
                 alignment_evidence=(strict_json(produced.alignment_evidence)
                     if getattr(produced, "alignment_evidence", None) is not None else None),
-                assessment_policy=SPARSE_ASSESSMENT)
+                assessment_policy=self.catalog.assessment_policy)
         else:
             reason = parallel.visual.reason or "ALIGNMENT_UNAVAILABLE"
             evidence = dict(schemaVersion=EVIDENCE_SCHEMA, requestId=str(request.event_id),
-                assessmentPolicy=SPARSE_ASSESSMENT,
+                assessmentPolicy=self.catalog.assessment_policy,
                 executionId=str(request.execution_id), audioSha256=request.audio_sha256,
                 videoSha256=video.sha256, preparedWavSha256=core.get("prepared_wav_sha256"),
                 referenceCatalogSha256=self.catalog.sha256, mappingRevision=MAPPING.revision,
@@ -202,6 +227,8 @@ class CanonicalAudiovisualService:
                         targetCount=0, visuallyEligibleCount=0, observedCount=0, scoredCount=0, coverage=None),
                     phoneAssessments=[], reasonCodes=[reason],
                     alignmentScope="CANONICAL_MFA_DETECTOR_PHONES_V1", unresolvedExpectedIndices=[]))
+            if self.catalog.corpus is not None:
+                evidence['corpusComparisons']={}
         return AudiovisualProduction(produced, evidence, dict(
             audioSeconds=parallel.audio_finished - parallel.started,
             videoSeconds=parallel.visual_finished - parallel.started,
