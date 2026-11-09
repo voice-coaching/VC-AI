@@ -64,14 +64,19 @@ def public_feedback(items: list[dict]) -> str:
     lines = []
     for item in items:
         practice = item["practice"]
-        require(isinstance(practice, str) and practice == practice.strip()
-                and not _CONTROL.search(practice) and practice.count(" → ") == 1,
-                "FEEDBACK_PRACTICE_FORMAT")
-        target, instruction = practice.split(" → ")
-        require(bool(target.strip()) and bool(instruction.strip())
-                and target == target.strip() and instruction == instruction.strip()
-                and not practice.startswith(("*", "-", "•")), "FEEDBACK_PRACTICE_FORMAT")
-        require(not _INTERNAL_MEASUREMENT.search(instruction), "FEEDBACK_INTERNAL_MEASUREMENT")
+        require(isinstance(practice, str) and not _CONTROL.search(practice), "FEEDBACK_PRACTICE_FORMAT")
+        # Typography is presentation, not evidence. Preserve the generated
+        # instruction rather than losing all feedback for a missing arrow,
+        # redundant bullet or spacing. Never repair content or call GPT again.
+        practice = re.sub(r"^[*•-](?:\s+|$)", "", practice.strip())
+        practice = re.sub(r"\s*(?:→|->)\s*", " → ", practice)
+        require(bool(practice) and practice.count(" → ") <= 1, "FEEDBACK_PRACTICE_FORMAT")
+        if " → " in practice:
+            target, instruction = practice.split(" → ")
+            require(bool(target.strip()) and bool(instruction.strip()), "FEEDBACK_PRACTICE_FORMAT")
+        else:
+            instruction = practice
+        require(not _INTERNAL_MEASUREMENT.search(practice), "FEEDBACK_INTERNAL_MEASUREMENT")
         require(not re.search(r"(?:세요|십시오|습니다|입니다|합니다|해요|줘요)[’”\"']*\s+\S", instruction),
                 "FEEDBACK_MULTIPLE_INSTRUCTIONS")
         lines.append("* " + practice)

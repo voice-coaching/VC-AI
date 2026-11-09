@@ -1264,7 +1264,8 @@
             "ed86be97bf36354f3b38e36c4374b695988be6044c0cfbfc46e7eb3eb3c2bd44",
             "9c34499f21f0f408f7f26fe45da309977494a2f1b0a6cdae5a7f9662c33e7a5f",
             "232df793470dfdbcda38057f34b6c36d18dbd90f128171b24342baa3878c1b78",
-            "9a1d148b8c6f19a88e62b38f9eb0f8ae94bdee198f20fd3e997967383d4994c2"
+            "9a1d148b8c6f19a88e62b38f9eb0f8ae94bdee198f20fd3e997967383d4994c2",
+            "5ba067af6f3300994a2b5d04e425951419cd3ff30029a2b5e42897f11b47aaff"
           ]
         },
         "llmDependencyLockSha256": {
@@ -1307,7 +1308,8 @@
             "8b5fa941aa8ab9e228f8269afdd8c138cba871645842839bfd00ad345e6b69b2",
             "69ac87832e3f3b5b65a6cf81a543838892573f977afe70cc4ef41ae08345cda1",
             "65b33d998c79c5694fa0554337d154328a7bcc944203b0f6747a9cf0b5f0559f",
-            "f54967fa7ea96ed9f6c9598d63280a73da8ce81d62c52ab21b4284a7452bdb0d"
+            "f54967fa7ea96ed9f6c9598d63280a73da8ce81d62c52ab21b4284a7452bdb0d",
+            "73d933006e0249984984097b21aa652c4ac051fd585eaf2478dce8e1e5cd7262"
           ]
         },
         "scriptSha256": {
@@ -1907,6 +1909,19 @@
             },
             "llmDependencyLockSha256": {
               "const": "f54967fa7ea96ed9f6c9598d63280a73da8ce81d62c52ab21b4284a7452bdb0d"
+            }
+          }
+        },
+        {
+          "properties": {
+            "parentManifestSha256": {
+              "const": "dae36e72646904bcdefc081654f67c06f80ff0565c384d439a5692e51ab7026b"
+            },
+            "llmManifestSha256": {
+              "const": "5ba067af6f3300994a2b5d04e425951419cd3ff30029a2b5e42897f11b47aaff"
+            },
+            "llmDependencyLockSha256": {
+              "const": "73d933006e0249984984097b21aa652c4ac051fd585eaf2478dce8e1e5cd7262"
             }
           }
         }
@@ -2689,7 +2704,8 @@
             "ed86be97bf36354f3b38e36c4374b695988be6044c0cfbfc46e7eb3eb3c2bd44",
             "9c34499f21f0f408f7f26fe45da309977494a2f1b0a6cdae5a7f9662c33e7a5f",
             "232df793470dfdbcda38057f34b6c36d18dbd90f128171b24342baa3878c1b78",
-            "9a1d148b8c6f19a88e62b38f9eb0f8ae94bdee198f20fd3e997967383d4994c2"
+            "9a1d148b8c6f19a88e62b38f9eb0f8ae94bdee198f20fd3e997967383d4994c2",
+            "5ba067af6f3300994a2b5d04e425951419cd3ff30029a2b5e42897f11b47aaff"
           ]
         },
         "llmDependencyLockSha256": {
@@ -2732,7 +2748,8 @@
             "8b5fa941aa8ab9e228f8269afdd8c138cba871645842839bfd00ad345e6b69b2",
             "69ac87832e3f3b5b65a6cf81a543838892573f977afe70cc4ef41ae08345cda1",
             "65b33d998c79c5694fa0554337d154328a7bcc944203b0f6747a9cf0b5f0559f",
-            "f54967fa7ea96ed9f6c9598d63280a73da8ce81d62c52ab21b4284a7452bdb0d"
+            "f54967fa7ea96ed9f6c9598d63280a73da8ce81d62c52ab21b4284a7452bdb0d",
+            "73d933006e0249984984097b21aa652c4ac051fd585eaf2478dce8e1e5cd7262"
           ]
         },
         "promptSha256": {
@@ -3388,6 +3405,22 @@
             },
             "llmDependencyLockSha256": {
               "const": "f54967fa7ea96ed9f6c9598d63280a73da8ce81d62c52ab21b4284a7452bdb0d"
+            },
+            "promptSha256": {
+              "const": "b8e4b50784c85c2dcf5deb530c7decdfb7083cca39eb9bac6b577d6c961db62d"
+            }
+          }
+        },
+        {
+          "properties": {
+            "parentManifestSha256": {
+              "const": "dae36e72646904bcdefc081654f67c06f80ff0565c384d439a5692e51ab7026b"
+            },
+            "llmManifestSha256": {
+              "const": "5ba067af6f3300994a2b5d04e425951419cd3ff30029a2b5e42897f11b47aaff"
+            },
+            "llmDependencyLockSha256": {
+              "const": "73d933006e0249984984097b21aa652c4ac051fd585eaf2478dce8e1e5cd7262"
             },
             "promptSha256": {
               "const": "b8e4b50784c85c2dcf5deb530c7decdfb7083cca39eb9bac6b577d6c961db62d"
@@ -4105,7 +4138,8 @@
                       "ed86be97bf36354f3b38e36c4374b695988be6044c0cfbfc46e7eb3eb3c2bd44",
                       "9c34499f21f0f408f7f26fe45da309977494a2f1b0a6cdae5a7f9662c33e7a5f",
                       "232df793470dfdbcda38057f34b6c36d18dbd90f128171b24342baa3878c1b78",
-                      "9a1d148b8c6f19a88e62b38f9eb0f8ae94bdee198f20fd3e997967383d4994c2"
+                      "9a1d148b8c6f19a88e62b38f9eb0f8ae94bdee198f20fd3e997967383d4994c2",
+                      "5ba067af6f3300994a2b5d04e425951419cd3ff30029a2b5e42897f11b47aaff"
                     ]
                   }
                 }
@@ -4200,7 +4234,8 @@
                       "ed86be97bf36354f3b38e36c4374b695988be6044c0cfbfc46e7eb3eb3c2bd44",
                       "9c34499f21f0f408f7f26fe45da309977494a2f1b0a6cdae5a7f9662c33e7a5f",
                       "232df793470dfdbcda38057f34b6c36d18dbd90f128171b24342baa3878c1b78",
-                      "9a1d148b8c6f19a88e62b38f9eb0f8ae94bdee198f20fd3e997967383d4994c2"
+                      "9a1d148b8c6f19a88e62b38f9eb0f8ae94bdee198f20fd3e997967383d4994c2",
+                      "5ba067af6f3300994a2b5d04e425951419cd3ff30029a2b5e42897f11b47aaff"
                     ]
                   }
                 }
@@ -5224,7 +5259,8 @@
             "ed86be97bf36354f3b38e36c4374b695988be6044c0cfbfc46e7eb3eb3c2bd44",
             "9c34499f21f0f408f7f26fe45da309977494a2f1b0a6cdae5a7f9662c33e7a5f",
             "232df793470dfdbcda38057f34b6c36d18dbd90f128171b24342baa3878c1b78",
-            "9a1d148b8c6f19a88e62b38f9eb0f8ae94bdee198f20fd3e997967383d4994c2"
+            "9a1d148b8c6f19a88e62b38f9eb0f8ae94bdee198f20fd3e997967383d4994c2",
+            "5ba067af6f3300994a2b5d04e425951419cd3ff30029a2b5e42897f11b47aaff"
           ]
         },
         "llmDependencyLockSha256": {
@@ -5267,7 +5303,8 @@
             "8b5fa941aa8ab9e228f8269afdd8c138cba871645842839bfd00ad345e6b69b2",
             "69ac87832e3f3b5b65a6cf81a543838892573f977afe70cc4ef41ae08345cda1",
             "65b33d998c79c5694fa0554337d154328a7bcc944203b0f6747a9cf0b5f0559f",
-            "f54967fa7ea96ed9f6c9598d63280a73da8ce81d62c52ab21b4284a7452bdb0d"
+            "f54967fa7ea96ed9f6c9598d63280a73da8ce81d62c52ab21b4284a7452bdb0d",
+            "73d933006e0249984984097b21aa652c4ac051fd585eaf2478dce8e1e5cd7262"
           ]
         },
         "scriptSha256": {
@@ -5826,6 +5863,19 @@
             },
             "llmDependencyLockSha256": {
               "const": "f54967fa7ea96ed9f6c9598d63280a73da8ce81d62c52ab21b4284a7452bdb0d"
+            }
+          }
+        },
+        {
+          "properties": {
+            "parentManifestSha256": {
+              "const": "dae36e72646904bcdefc081654f67c06f80ff0565c384d439a5692e51ab7026b"
+            },
+            "llmManifestSha256": {
+              "const": "5ba067af6f3300994a2b5d04e425951419cd3ff30029a2b5e42897f11b47aaff"
+            },
+            "llmDependencyLockSha256": {
+              "const": "73d933006e0249984984097b21aa652c4ac051fd585eaf2478dce8e1e5cd7262"
             }
           }
         }
@@ -6485,7 +6535,8 @@
                       "ed86be97bf36354f3b38e36c4374b695988be6044c0cfbfc46e7eb3eb3c2bd44",
                       "9c34499f21f0f408f7f26fe45da309977494a2f1b0a6cdae5a7f9662c33e7a5f",
                       "232df793470dfdbcda38057f34b6c36d18dbd90f128171b24342baa3878c1b78",
-                      "9a1d148b8c6f19a88e62b38f9eb0f8ae94bdee198f20fd3e997967383d4994c2"
+                      "9a1d148b8c6f19a88e62b38f9eb0f8ae94bdee198f20fd3e997967383d4994c2",
+                      "5ba067af6f3300994a2b5d04e425951419cd3ff30029a2b5e42897f11b47aaff"
                     ]
                   }
                 }
@@ -6580,7 +6631,8 @@
                       "ed86be97bf36354f3b38e36c4374b695988be6044c0cfbfc46e7eb3eb3c2bd44",
                       "9c34499f21f0f408f7f26fe45da309977494a2f1b0a6cdae5a7f9662c33e7a5f",
                       "232df793470dfdbcda38057f34b6c36d18dbd90f128171b24342baa3878c1b78",
-                      "9a1d148b8c6f19a88e62b38f9eb0f8ae94bdee198f20fd3e997967383d4994c2"
+                      "9a1d148b8c6f19a88e62b38f9eb0f8ae94bdee198f20fd3e997967383d4994c2",
+                      "5ba067af6f3300994a2b5d04e425951419cd3ff30029a2b5e42897f11b47aaff"
                     ]
                   }
                 }
