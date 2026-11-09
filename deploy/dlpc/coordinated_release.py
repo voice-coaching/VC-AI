@@ -188,7 +188,8 @@ def release_assets(payload, manifest, *, install=False):
                                   'canonical_lip_'+lane+'_20261106_v4_h5',
                                   'canonical_luna_standard_'+lane+'_20261107_v1_h5',
                                   'canonical_sparse_lip_'+lane+'_20261108_v1_h5',
-                                  'canonical_aihub_lip_'+lane+'_20261109_v1_h5'}, 'COORDINATED_H5_PATH')
+                                  'canonical_aihub_lip_'+lane+'_20261109_v1_h5',
+                                  'canonical_feedback_presentation_'+lane+'_20261109_v1_h5'}, 'COORDINATED_H5_PATH')
         package = {}
         for name, pin in files.items():
             path = PurePosixPath(name)
