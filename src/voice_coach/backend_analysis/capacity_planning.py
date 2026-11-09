@@ -65,7 +65,9 @@ def capacity_plan(*, profile, cpu_count, memory_available, disk_free, tmp_free, 
     complete = (memory_available is not None and disk_free is not None
                 and tmp_free is not None and gpus is not None
                 and all(index in gpus for index in indices))
-    ram = max(0, (memory_available - 24 * GIB) // ram_per_worker) if memory_available else 0
+    # Available RAM already excludes resident allocations. Admission and slot
+    # planning use the same per-worker budget without a fixed global reserve.
+    ram = max(0, memory_available // ram_per_worker) if memory_available else 0
     gpu = (min(max(0, (gpus[i]['total'] - 8 * GIB) // gpu_per_worker) for i in indices)
            if gpus is not None and all(i in gpus for i in indices) else 0)
     disk = max(0, (disk_free - 8 * GIB) // disk_per_worker) if disk_free else 0

@@ -103,3 +103,4 @@ scripts/tests/
 !/tests/analysis/test_http_error_responses.py
 !/tests/analysis/test_independent_av.py
 !/tests/analysis/test_browser_video.py
+!/tests/analysis/test_memory_admission.py

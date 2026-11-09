@@ -62,15 +62,39 @@ def hierarchies(controller):
             continue
 
 
-def memory_limits():
+def _clean_inactive_file(root, version, used):
+    """Estimate reclaimable cache; never count active file pages or tmpfs.
+
+    Admission needs working-set headroom rather than treating every cached read
+    as unreclaimable RAM. Hierarchical v1 counters match the usage counter's
+    scope. Dirty/writeback pages are conservatively excluded when reported.
+    Missing, inconsistent or malformed statistics retain raw headroom.
+    """
+    try:
+        stats = dict(line.split() for line in (root / 'memory.stat').read_text().splitlines())
+        def count(primary, fallback):
+            value = int(stats.get(primary, stats.get(fallback, '0')))
+            if value < 0:
+                raise ValueError()
+            return value
+        inactive = count('total_inactive_file', 'inactive_file') if version == 1 else count('inactive_file', 'inactive_file')
+        dirty = count('total_dirty', 'dirty') if version == 1 else count('file_dirty', 'file_dirty')
+        writeback = count('total_writeback', 'writeback') if version == 1 else count('file_writeback', 'file_writeback')
+        return max(0, inactive - dirty - writeback) if inactive <= used else 0
+    except (OSError, ValueError):
+        return 0
+
+
+def memory_limits(*, reclaim_file_cache=False):
     values = []
     for version, root in hierarchies('memory'):
         try:
             cap = int((root / ('memory.max' if version == 2 else 'memory.limit_in_bytes')).read_text())
             used = int((root / ('memory.current' if version == 2 else 'memory.usage_in_bytes')).read_text())
             if 0 < cap < 2**60 and used >= 0:
+                reclaimable = _clean_inactive_file(root, version, used) if reclaim_file_cache else 0
                 values.append(dict(version=version, limit=cap, current=used,
-                                   available=max(0, cap-used)))
+                                   available=max(0, min(cap, cap-used+reclaimable))))
         except (OSError, ValueError):
             pass
     return values
