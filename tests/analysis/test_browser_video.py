@@ -92,6 +92,27 @@ class BrowserVideo(unittest.IsolatedAsyncioTestCase):
                 self.assertEqual((await c.post(p+'/cancel')).json()['status'],'CANCELLED')
                 self.assertEqual((self.runtime.store.directory(job)/'original-video').read_bytes(),self.raw)
 
+    async def test_video_admission_uses_worker_ram_and_preserves_rejected_attempt(self):
+        from voice_coach.backend_analysis.resource_budget import ResourceBudget
+        from voice_coach.backend_analysis.capacity_planning import GIB
+        self.runtime.budget=ResourceBudget(minimum_available_bytes=3*GIB)
+        async with self.client() as c:
+            with patch('voice_coach.backend_analysis.resource_budget.available_memory_bytes',return_value=4*GIB):
+                path=await self.create(c)
+            with patch('voice_coach.backend_analysis.resource_budget.available_memory_bytes',return_value=2*GIB):
+                # An accepted attempt remains discoverable without new inference.
+                same=await c.post(PREFIX,json=self.metadata)
+                self.assertEqual(same.status_code,202)
+                self.assertEqual(path,PREFIX+'/'+same.json()['jobId'])
+        self.metadata['clientRequestId']=self.claims['clientRequestId']=str(uuid4())
+        async with self.client() as c:
+            with patch('voice_coach.backend_analysis.resource_budget.available_memory_bytes',return_value=2*GIB):
+                r=await c.post(PREFIX,json=self.metadata)
+        self.assertEqual(r.status_code,429)
+        self.assertEqual(r.json()['reasonCode'],'CAPACITY_EXCEEDED')
+        self.assertIn('retry-after',r.headers)
+        self.assertEqual(len(self.runtime.store.documents()),1)
+
     async def test_cors_preflight_and_readable_auth_failure(self):
         async with self.client('invalid') as c:
             r=await c.options(PREFIX,headers={'Access-Control-Request-Method':'PUT',

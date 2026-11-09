@@ -28,7 +28,7 @@ def core_cpu_threads(env):
 
 
 def available_memory_bytes():
-    """Use the tightest known host/container headroom; unknown fails closed."""
+    """Use the tightest host/container working-set headroom; unknown fails closed."""
     values = []
     try:
         for line in Path('/proc/meminfo').read_text().splitlines():
@@ -36,7 +36,7 @@ def available_memory_bytes():
                 values.append(int(line.split()[1]) * 1024)
     except (OSError, ValueError, IndexError):
         pass
-    values.extend(item['available'] for item in memory_limits())
+    values.extend(item['available'] for item in memory_limits(reclaim_file_cache=True))
     return min(values) if values else None
 
 
@@ -67,7 +67,11 @@ class ResourceBudget:
                 tmp_free=free_bytes("/tmp"), gpus=gpu_memory())
             return cls(max_active=plan.request_limit,
                        compute_active=plan.compute_limit, capacity_estimate=plan.document(),
-                       minimum_available_bytes=24 * GIB + plan.ram_per_worker,
+                       # Already resident models are charged in available RAM.
+                       # Require one worker budget, without a second global
+                       # 24 GiB reserve. The current 3 GiB profile also covers
+                       # the designated video tree's observed 2.10 GiB peak.
+                       minimum_available_bytes=plan.ram_per_worker,
                        disk_root=work, minimum_disk_free_bytes=8 * GIB + plan.disk_per_worker,
                        minimum_tmp_free_bytes=GIB + plan.tmp_per_worker,
                        gpu_indices=plan.gpu_indices, minimum_gpu_free_bytes=8 * GIB + plan.gpu_per_worker,
@@ -77,7 +81,9 @@ class ResourceBudget:
     def can_admit(self, *, large_input=False):
         if self.minimum_available_bytes:
             free = available_memory_bytes()
-            required_memory = max(self.minimum_available_bytes, 32 * GIB if large_input else 0)
+            # Large inputs retain their disk/GPU checks below. RAM admission
+            # uses the worker budget rather than an unrelated 32 GiB floor.
+            required_memory = self.minimum_available_bytes
             if free is None or free < required_memory:
                 return False
         if self.disk_root is not None:
