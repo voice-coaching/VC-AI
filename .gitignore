@@ -108,3 +108,5 @@ scripts/tests/
 !tests/analysis/test_feedback_presentation.py
 !tests/analysis/test_yunet_extractor.py
 !tests/analysis/test_composite_power.py
+!tests/analysis/test_feedback_only.py
+!tests/analysis/test_gop_overlap.py

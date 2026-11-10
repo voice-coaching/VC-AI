@@ -17,10 +17,13 @@ from .canonical_harness import YUNET_LIP, YUNET_LIP_INTERNAL
 from .canonical_harness import COMPOSITE_POWER, COMPOSITE_POWER_INTERNAL
 from .canonical_harness import SPECIFIC_FEEDBACK_V4, SPECIFIC_FEEDBACK_V4_INTERNAL
 from .canonical_harness import ACTIONABLE_COACHING, ACTIONABLE_COACHING_INTERNAL
+from .canonical_harness import VOICE_LATENCY, VOICE_LATENCY_INTERNAL
 
 # Execution identity only: prevent an old release from entering new analysis.
 # Scoring authority is bound to each H5; raw-CORE releases use the fixed server rubric.
 APPROVED_NATIVE_EXECUTIONS: frozenset[tuple[str, str]] = frozenset({
+    (VOICE_LATENCY.core_sha256, VOICE_LATENCY.manifest_sha256),
+    (VOICE_LATENCY_INTERNAL.core_sha256, VOICE_LATENCY_INTERNAL.manifest_sha256),
     (ACTIONABLE_COACHING.core_sha256, ACTIONABLE_COACHING.manifest_sha256),
     (ACTIONABLE_COACHING_INTERNAL.core_sha256, ACTIONABLE_COACHING_INTERNAL.manifest_sha256),
     (SPECIFIC_FEEDBACK_V4.core_sha256, SPECIFIC_FEEDBACK_V4.manifest_sha256),

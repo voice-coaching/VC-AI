@@ -582,6 +582,19 @@ ACTIONABLE_COACHING_INTERNAL = _replace(SPECIFIC_FEEDBACK_V4_INTERNAL,
     prompt_sha256='2369cf4a328e7600f881661d3169a764a898e54a85cc46116458285dbe5fdbcb')
 HARNESSES.update({v.manifest_sha256: v for v in (ACTIONABLE_COACHING, ACTIONABLE_COACHING_INTERNAL)})
 
+VOICE_LATENCY = _replace(ACTIONABLE_COACHING,
+    revision='canonical-voice-latency-direct-20261110-v1',
+    manifest_sha256='2bf42762b6445f76db4770168fe6b3902934cb3bfdb5612dff97bef181592e48',
+    lock_sha256='caed294c750589e3c773f8d8571582a8744b5fb9fdce54a1e07e248271d20b21',
+    prompt_sha256='921e63155e9b785a7422309f9052800a844fb706869bf486930d9ca4d6c81877')
+VOICE_LATENCY_INTERNAL = _replace(ACTIONABLE_COACHING_INTERNAL,
+    revision='canonical-voice-latency-internal-20261110-v1',
+    core_sha256='46410550bcab94739b6a62a8a7366f9ad97ec1ded47a0076c34570ce41654806',
+    manifest_sha256='4a73c128f2b81027e7e59ce9f56015ca76abfe4dd0d1764a875b4d34c97ede20',
+    lock_sha256='2f55ec20205cf0cb06f630ca716535a018f647aaeca796f69d0d1e71d50f8c38',
+    prompt_sha256='921e63155e9b785a7422309f9052800a844fb706869bf486930d9ca4d6c81877')
+HARNESSES.update({v.manifest_sha256: v for v in (VOICE_LATENCY, VOICE_LATENCY_INTERNAL)})
+
 
 def harness_identity(manifest_sha256: str) -> HarnessIdentity:
     try:

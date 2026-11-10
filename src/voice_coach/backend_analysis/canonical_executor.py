@@ -186,10 +186,25 @@ async def execute(path: Path, env, diagnostic: dict):
             produced = await producer.produce(request, audio, deadline_monotonic=deadline, execution_is_active=active)
         fence()
         stage("EXPRESSION")
-        expression = await asyncio.to_thread(frozen.express_admitted, request, audio=audio,
-            core_bytes=produced.raw, prepared_wav=produced.prepared_wav,
-            producer_workspace=produced.workspace, transport=transport_for_artifacts(env["OPENAI_API_KEY"],
-                frozen.artifacts), visual_evidence_bytes=visual_bytes)
+        transport = transport_for_artifacts(env["OPENAI_API_KEY"], frozen.artifacts)
+        try:
+            expression = await asyncio.to_thread(frozen.express_admitted, request, audio=audio,
+                core_bytes=produced.raw, prepared_wav=produced.prepared_wav,
+                producer_workspace=produced.workspace, transport=transport, visual_evidence_bytes=visual_bytes)
+        finally:
+            # Transport diagnostics contain numeric usage and closed status fields,
+            # never prompts, transcripts, response text, keys or headers.
+            allowed = ("requestedModel", "reasoningEffort", "requestedServiceTier", "actualServiceTier",
+                       "status", "errorCode", "httpStatus", "postAttempts", "requestBytes", "responseBytes",
+                       "requestValidationSeconds", "connectSeconds", "httpHeadersSeconds",
+                       "responseBodySeconds", "totalSeconds", "promptTokens", "completionTokens",
+                       "cachedTokens", "reasoningTokens", "outputTextTokens", "finishReason")
+            print(json.dumps(dict(event="canonical_provider_timing", executionId=str(request.execution_id),
+                                  **{k: transport.diagnostics[k] for k in allowed if k in transport.diagnostics})),
+                  file=sys.stderr, flush=True)
+            transport.close()
+        print(json.dumps(dict(event="canonical_producer_timing", executionId=str(request.execution_id),
+                              **produced.timings)), file=sys.stderr, flush=True)
         fence()
         stage("PREFLIGHT")
         preflight = await asyncio.to_thread(preflight_canonical_result, expression,
