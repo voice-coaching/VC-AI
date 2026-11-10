@@ -107,3 +107,4 @@ scripts/tests/
 
 !tests/analysis/test_feedback_presentation.py
 !tests/analysis/test_yunet_extractor.py
+!tests/analysis/test_composite_power.py

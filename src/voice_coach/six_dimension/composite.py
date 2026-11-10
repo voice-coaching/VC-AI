@@ -1,4 +1,4 @@
-"""Fixed phone grade + five Gaussian-shaped reference-proximity scores.
+"""Fixed phone grade + five versioned exponential reference-proximity scores.
 
 No audio inference, inferred phone states, percentile-as-quality conversion or
 provider calls. The original nine-category calculator remains authoritative.
@@ -13,7 +13,12 @@ import re
 from . import phone_rubric
 from .policy import CRITERIA, METRICS, encode, number, require, sha, strict_json
 
-REVISION = "announcer-composite-exponential-v2"
+LEGACY_REVISION = "announcer-composite-exponential-v2"
+REVISION = "announcer-composite-exponential-v3"
+FORMULAS = {
+    LEGACY_REVISION: "100 * exp(-lambda * ((userValue - mean) / std) ** 2)",
+    REVISION: "100 * exp(-lambda * abs((userValue - mean) / std) ** (2 / 3))",
+}
 PHONE_REVISION = "phone-rubric-20261003-v1"
 MAPPING = {
     "speaking_rate": ("speech_rate",),
@@ -25,13 +30,16 @@ MAPPING = {
 
 
 def validate_composite_policy(policy: dict) -> None:
-    require(type(policy) is dict and policy.get("revision") == REVISION,
+    require(type(policy) is dict and policy.get("revision") in FORMULAS,
             "COMPOSITE_REVISION")
     require(policy.get("validationStatus") == "EXPERT_REVIEW_PENDING"
             and policy.get("scoreMeaning") == "FIXED_PHONE_RUBRIC_AND_PROSODY_REFERENCE_PROXIMITY",
             "COMPOSITE_SCOPE")
-    require(policy.get("formula") == "100 * exp(-lambda * ((userValue - mean) / std) ** 2)",
+    require(policy.get("formula") == FORMULAS[policy["revision"]],
             "COMPOSITE_FORMULA")
+    if policy["revision"] == REVISION:
+        require(policy.get("distancePower") == dict(numerator=2, denominator=3),
+                "COMPOSITE_DISTANCE_POWER")
     coefficients = policy["lambdaByMetric"]
     require(set(coefficients) == set(METRICS)
             and all(number(v) and v > 0 for v in coefficients.values()), "COMPOSITE_LAMBDA")
@@ -121,22 +129,31 @@ def _display(value: Decimal) -> float:
     return float(value.quantize(Decimal("0.1"), rounding=ROUND_HALF_UP))
 
 
-def exponential_score(value, mean, std, coefficient) -> tuple[Decimal, dict]:
+def exponential_score(value, mean, std, coefficient, *, revision=REVISION) -> tuple[Decimal, dict]:
     """Return an unrounded score and finite, serializable arithmetic evidence."""
     require(number(value) and number(mean), "COMPOSITE_METRIC_OR_MEAN_UNAVAILABLE")
     require(number(std) and std > 0, "COMPOSITE_STD_UNAVAILABLE_OR_ZERO")
     require(number(coefficient) and coefficient > 0, "COMPOSITE_LAMBDA")
+    require(revision in FORMULAS, "COMPOSITE_REVISION")
     with localcontext() as context:
         context.prec = 50
         delta = Decimal(str(value)) - Decimal(str(mean))
         squared = delta * delta
         normalized = squared / (Decimal(str(std)) ** 2)
-        score = Decimal(100) * (-Decimal(str(coefficient)) * normalized).exp()
+        # cbrt(z**2) equals abs(z)**(2/3), including negative deviations.
+        # Keep the old branch exact for historical policies and frozen H5s.
+        powered = (context.power(normalized, Decimal(1) / Decimal(3))
+                   if revision == REVISION and normalized else normalized)
+        score = Decimal(100) * (-Decimal(str(coefficient)) * powered).exp()
         # Decimal strings preserve huge but finite squared distances; JSON
         # floats could overflow to Infinity for otherwise finite inputs.
-        return score, dict(userValue=value, mean=mean, std=std, coefficient=coefficient,
-                           squaredDeviation=str(squared), normalizedSquaredDeviation=str(normalized),
-                           unroundedScore=str(score), score=_display(score))
+        evidence = dict(userValue=value, mean=mean, std=std, coefficient=coefficient,
+                        squaredDeviation=str(squared), normalizedSquaredDeviation=str(normalized),
+                        unroundedScore=str(score), score=_display(score))
+        if revision == REVISION:
+            evidence.update(distancePowerNumerator=2, distancePowerDenominator=3,
+                            poweredNormalizedDeviation=str(powered))
+        return score, evidence
 
 
 def _reference_failure(core: dict, policy: dict) -> str | None:
@@ -162,7 +179,7 @@ def _reference_failure(core: dict, policy: dict) -> str | None:
 
 
 def composite_assessment(base: dict, core: dict, scoring: dict, policy: dict) -> dict:
-    """Replace v1 temporary bands with the selected v2 rules, retaining evidence."""
+    """Replace temporary bands with the selected version, retaining evidence."""
     validate_composite_policy(policy)
     result = deepcopy(base)
     result.update(policyRevision=policy["revision"], policySha256=sha(encode(policy)))
@@ -220,7 +237,8 @@ def composite_assessment(base: dict, core: dict, scoring: dict, policy: dict) ->
                         failure = "COMPOSITE_REFERENCE_TOO_FEW_SPEAKERS"
                         break
                     try:
-                        score, evidence = exponential_score(value, stats["mean"], stats["std"], policy["lambdaByMetric"][metric])
+                        score, evidence = exponential_score(value, stats["mean"], stats["std"],
+                            policy["lambdaByMetric"][metric], revision=policy["revision"])
                     except ValueError as exc:
                         failure = str(exc)
                         break
@@ -241,7 +259,7 @@ def composite_assessment(base: dict, core: dict, scoring: dict, policy: dict) ->
     selected = sorted(available, key=lambda item: (item["score"], CRITERIA.index(item["criterionId"])))[:3]
     status = "READY" if not missing else "PARTIAL" if available else "UNSCORABLE"
     result.update(status=status, selectedCriterionIds=[item["criterionId"] for item in selected])
-    summary = dict(rubricRevision=REVISION, validationStatus=policy["validationStatus"],
+    summary = dict(rubricRevision=policy["revision"], validationStatus=policy["validationStatus"],
         scoreMeaning=policy["scoreMeaning"], status=status, overallScore=overall,
         criteria=[dict(criterionId=item["criterionId"], score=item["score"], weight=policy["weights"][item["criterionId"]]) for item in result["criteria"]],
         missingCriterionIds=missing, selectedCriterionIds=result["selectedCriterionIds"],

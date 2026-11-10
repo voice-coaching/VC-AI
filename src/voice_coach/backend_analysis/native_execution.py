@@ -14,10 +14,13 @@ from .canonical_harness import SPARSE_LIP, SPARSE_LIP_INTERNAL
 from .canonical_harness import AIHUB_LIP, AIHUB_LIP_INTERNAL
 from .canonical_harness import FEEDBACK_PRESENTATION, FEEDBACK_PRESENTATION_INTERNAL
 from .canonical_harness import YUNET_LIP, YUNET_LIP_INTERNAL
+from .canonical_harness import COMPOSITE_POWER, COMPOSITE_POWER_INTERNAL
 
 # Execution identity only: prevent an old release from entering new analysis.
 # Scoring authority is bound to each H5; raw-CORE releases use the fixed server rubric.
 APPROVED_NATIVE_EXECUTIONS: frozenset[tuple[str, str]] = frozenset({
+    (COMPOSITE_POWER.core_sha256, COMPOSITE_POWER.manifest_sha256),
+    (COMPOSITE_POWER_INTERNAL.core_sha256, COMPOSITE_POWER_INTERNAL.manifest_sha256),
     (YUNET_LIP.core_sha256, YUNET_LIP.manifest_sha256),
     (YUNET_LIP_INTERNAL.core_sha256, YUNET_LIP_INTERNAL.manifest_sha256),
     (FEEDBACK_PRESENTATION.core_sha256, FEEDBACK_PRESENTATION.manifest_sha256),
