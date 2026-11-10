@@ -5,6 +5,7 @@ contract and keep the six scores in retained analysis artifacts.
 """
 from __future__ import annotations
 
+from copy import deepcopy
 import re
 
 import jsonschema
@@ -171,7 +172,8 @@ def coaching_schema(assessment: dict, rubric_result: dict | None = None,
 def request_payload(assessment: dict, core: dict, script: str, policy: dict, prompt: str,
                     legacy_rubric: dict | None = None, *, core_bytes: bytes,
                     composite_policy: dict | None = None, rubric_worksheet: dict | None = None,
-                    native_rubric_policy: dict | None = None, visual: dict | None = None) -> bytes:
+                    native_rubric_policy: dict | None = None, visual: dict | None = None,
+                    feedback_only: bool = False) -> bytes:
     require(isinstance(prompt, str) and bool(prompt.strip()), "SYSTEM_PROMPT_MISSING")
     require(rubric_worksheet is None or composite_policy is not None, "WORKSHEET_REQUIRES_COMPOSITE_VERSION")
     require(type(core_bytes) is bytes and sha(core_bytes) == assessment["association"]["coreSha256"],
@@ -212,6 +214,9 @@ def request_payload(assessment: dict, core: dict, script: str, policy: dict, pro
     if visual_info is not None:
         data.update(VISUAL_EVIDENCE=visual_info["input"], AUDIOVISUAL_RESULT=visual_info["grade"],
                     FEEDBACK_TARGETS=feedback_targets(assessment, visual_info))
+    if feedback_only:
+        data["TASK_MODE"] = "FEEDBACK_ONLY_SERVER_SCORED"
+        data["OUTPUT_SCHEMA"] = feedback_response_schema(data["OUTPUT_SCHEMA"])
     messages = [dict(role="system", content=prompt),
                 dict(role="user", content=encode(data).decode("utf-8")),
                 dict(role="user", content=raw_core_text)]
@@ -225,6 +230,31 @@ def request_payload(assessment: dict, core: dict, script: str, policy: dict, pro
                   | {"messages": messages})
     require(len(payload) <= 1024 * 1024, "INPUT_BUDGET_NO_SILENT_TRUNCATION")
     return payload
+
+
+def feedback_response_schema(full_schema: dict) -> dict:
+    """The provider writes language; the server retains all score authority."""
+    return dict(type="object", additionalProperties=False, required=["feedback"],
+                properties={"feedback": deepcopy(full_schema["properties"]["feedback"])})
+
+
+def expand_feedback_response(candidate: dict, assessment: dict, rubric_result=None,
+                             composite_result=None, visual=None) -> dict:
+    """Expand only trusted server values, without changing the public contract."""
+    full_schema = coaching_schema(assessment, rubric_result, composite_result, visual)
+    jsonschema.Draft202012Validator(feedback_response_schema(full_schema)).validate(candidate)
+    expanded = dict(feedback=deepcopy(candidate["feedback"]), assessments=[dict(
+        criterionId=item["criterionId"], score=item["score"], evidenceIds=deepcopy(item["evidenceIds"]),
+        observation=("서버가 계산한 점수와 해당 측정 근거를 사용합니다." if item["score"] is not None
+                     else "측정 근거가 부족해 해당 항목의 점수를 제공하지 않습니다."))
+        for item in assessment["criteria"]])
+    if rubric_result is not None:
+        expanded["legacyGrade"] = deepcopy(rubric_result)
+    if composite_result is not None:
+        expanded["compositeGrade"] = deepcopy(composite_result)
+    if visual is not None:
+        expanded["audiovisualGrade"] = deepcopy(visual["grade"])
+    return expanded
 
 
 def validate_coaching(candidate: dict, assessment: dict, rubric_result: dict | None = None,
@@ -248,7 +278,7 @@ def evaluate(*, core_bytes: bytes, script: str, binding: dict, policy: dict,
              policy_sha256: str, prompt: str, transport=None, measurements_only: bool = False,
              legacy_rubric: dict | None = None, composite_policy: dict | None = None,
              rubric_worksheet: dict | None = None, native_rubric_policy: dict | None = None,
-             visual: dict | None = None) -> dict:
+             visual: dict | None = None, feedback_only: bool = False) -> dict:
     validate_policy(policy)
     require(re.fullmatch(r"[0-9a-f]{64}", policy_sha256) is not None, "POLICY_DIGEST")
     core = validate_binding(core_bytes, script, binding)
@@ -278,7 +308,8 @@ def evaluate(*, core_bytes: bytes, script: str, binding: dict, policy: dict,
     try:
         payload = request_payload(assessment, core, script, policy, prompt, legacy_rubric, core_bytes=core_bytes,
                                   composite_policy=composite_policy, rubric_worksheet=rubric_worksheet,
-                                  native_rubric_policy=native_rubric_policy, visual=visual)
+                                  native_rubric_policy=native_rubric_policy, visual=visual,
+                                  feedback_only=feedback_only)
     except ValueError as exc:
         result.update(generationStatus="NOT_DISPATCHED", errorCode=str(exc))
         return result
@@ -297,6 +328,8 @@ def evaluate(*, core_bytes: bytes, script: str, binding: dict, policy: dict,
         choice = choices[0]
         require(choice["finish_reason"] == "stop" and not choice["message"].get("refusal"), "PROVIDER_COMPLETION")
         candidate = strict_json(choice["message"]["content"])
+        if feedback_only:
+            candidate = expand_feedback_response(candidate, assessment, rubric_result, composite_result, visual_info)
         validate_coaching(candidate, assessment, rubric_result, composite_result, visual_info)
         result.update(generationStatus="STRUCTURALLY_VALID", **candidate)
     except Exception as exc:
