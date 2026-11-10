@@ -47,6 +47,22 @@ def fixture(version='v3'):
 
 
 class CompositeDistancePower(unittest.TestCase):
+    def test_specific_feedback_preserves_the_numerical_execution(self):
+        from voice_coach.backend_analysis.canonical_harness import (
+            COMPOSITE_POWER, COMPOSITE_POWER_INTERNAL, SPECIFIC_FEEDBACK, SPECIFIC_FEEDBACK_INTERNAL,
+            check_schema_registration, check_result_classification,
+        )
+        from voice_coach.backend_analysis.native_execution import APPROVED_NATIVE_EXECUTIONS
+        for parent, candidate in ((COMPOSITE_POWER, SPECIFIC_FEEDBACK),
+                                  (COMPOSITE_POWER_INTERNAL, SPECIFIC_FEEDBACK_INTERNAL)):
+            self.assertEqual(parent.core_sha256, candidate.core_sha256)
+            self.assertEqual(parent.model, candidate.model)
+            self.assertEqual(parent.reasoning_effort, candidate.reasoning_effort)
+            self.assertNotEqual(parent.prompt_sha256, candidate.prompt_sha256)
+            self.assertIn((candidate.core_sha256, candidate.manifest_sha256), APPROVED_NATIVE_EXECUTIONS)
+            check_schema_registration(candidate)
+            check_result_classification(candidate)
+
     def test_new_harnesses_are_registered_for_both_lanes(self):
         from voice_coach.backend_analysis.canonical_harness import (
             YUNET_LIP, YUNET_LIP_INTERNAL, COMPOSITE_POWER, COMPOSITE_POWER_INTERNAL,
