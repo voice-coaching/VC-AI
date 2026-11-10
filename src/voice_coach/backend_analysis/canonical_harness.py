@@ -570,6 +570,18 @@ SPECIFIC_FEEDBACK_V4_INTERNAL = _replace(COMPOSITE_POWER_INTERNAL,
     prompt_sha256='e3a916bebf07a4fc5bbd165ffa8d2440a8784992023d6b3061950b7642ad07c5')
 HARNESSES.update({v.manifest_sha256: v for v in (SPECIFIC_FEEDBACK_V4, SPECIFIC_FEEDBACK_V4_INTERNAL)})
 
+ACTIONABLE_COACHING = _replace(SPECIFIC_FEEDBACK_V4,
+    revision='canonical-actionable-coaching-direct-20261110-v1',
+    manifest_sha256='5aa736e70fd9ef2602d21f55d891a126cb63235103d2ab13e1ffcf41cc3534e7',
+    lock_sha256='aa9b8b1937859c820a93aa411828e2d47ddd21bbefdf303bebe2e59417ae21a5',
+    prompt_sha256='2369cf4a328e7600f881661d3169a764a898e54a85cc46116458285dbe5fdbcb')
+ACTIONABLE_COACHING_INTERNAL = _replace(SPECIFIC_FEEDBACK_V4_INTERNAL,
+    revision='canonical-actionable-coaching-internal-20261110-v1',
+    manifest_sha256='be11bd3693996c72adf15eb5ace75408d41f8200549bcd052fb282a1f69bee24',
+    lock_sha256='4b6b272c0738f6c33b9102c58eb411296571378bff473c3c058b378db3ad5b0b',
+    prompt_sha256='2369cf4a328e7600f881661d3169a764a898e54a85cc46116458285dbe5fdbcb')
+HARNESSES.update({v.manifest_sha256: v for v in (ACTIONABLE_COACHING, ACTIONABLE_COACHING_INTERNAL)})
+
 
 def harness_identity(manifest_sha256: str) -> HarnessIdentity:
     try:

@@ -39,7 +39,7 @@ def build(source, destination, lane):
     changed = {name for name in files if files[name] != inherited[name]}
     if changed != {prompt_name, 'bridge/pipeline.py'}:
         raise ValueError('SPECIFIC_FEEDBACK_UNEXPECTED_CHANGE')
-    directory = f'canonical_specific_feedback_{lane}_20261110_v4_h5'
+    directory = f'canonical_actionable_coaching_{lane}_20261110_v1_h5'
     lock = encode(dict(files={name: sha(body) for name, body in sorted(files.items())}))
     prompt_sha = sha(files[prompt_name])
     manifest = encode(dict(parent, contract_version=directory,

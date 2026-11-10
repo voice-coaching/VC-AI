@@ -192,7 +192,8 @@ def release_assets(payload, manifest, *, install=False):
                                   'canonical_feedback_presentation_'+lane+'_20261109_v1_h5',
                                   'canonical_yunet_lip_'+lane+'_20261109_v1_h5',
                                   'canonical_composite_power_'+lane+'_20261110_v3_h5',
-                                  'canonical_specific_feedback_'+lane+'_20261110_v4_h5'}, 'COORDINATED_H5_PATH')
+                                  'canonical_specific_feedback_'+lane+'_20261110_v4_h5',
+                                  'canonical_actionable_coaching_'+lane+'_20261110_v1_h5'}, 'COORDINATED_H5_PATH')
         package = {}
         for name, pin in files.items():
             path = PurePosixPath(name)
