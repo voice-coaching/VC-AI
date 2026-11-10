@@ -582,6 +582,18 @@ SPECIFIC_FEEDBACK_V2_INTERNAL = _replace(COMPOSITE_POWER_INTERNAL,
     prompt_sha256='f8126f2d95da1a5d9dd48ba5facf8a26fcb186fcb836855a1353b363fc3241c6')
 HARNESSES.update({v.manifest_sha256: v for v in (SPECIFIC_FEEDBACK_V2, SPECIFIC_FEEDBACK_V2_INTERNAL)})
 
+SPECIFIC_FEEDBACK_V3 = _replace(COMPOSITE_POWER,
+    revision='canonical-specific-feedback-direct-20261110-v3',
+    manifest_sha256='4722181c5925151e1e70bfbd5e8f730dbc210665218123a6f4c9f2d5dae144fa',
+    lock_sha256='ad64d01f35143c5ae5d52748c7833294895992e90468bb3d547e7d5d9c2dd89a',
+    prompt_sha256='f8126f2d95da1a5d9dd48ba5facf8a26fcb186fcb836855a1353b363fc3241c6')
+SPECIFIC_FEEDBACK_V3_INTERNAL = _replace(COMPOSITE_POWER_INTERNAL,
+    revision='canonical-specific-feedback-internal-20261110-v3',
+    manifest_sha256='423b67a1d78702cf6d173d798229fdee4b9d82b9a49e5bd438cd2593fbe979f6',
+    lock_sha256='b5f92cd4f49b675948d5de66644402b37e1f1ec3f9215694db059f8efb019231',
+    prompt_sha256='f8126f2d95da1a5d9dd48ba5facf8a26fcb186fcb836855a1353b363fc3241c6')
+HARNESSES.update({v.manifest_sha256: v for v in (SPECIFIC_FEEDBACK_V3, SPECIFIC_FEEDBACK_V3_INTERNAL)})
+
 
 def harness_identity(manifest_sha256: str) -> HarnessIdentity:
     try:

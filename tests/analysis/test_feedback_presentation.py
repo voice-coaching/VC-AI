@@ -29,6 +29,20 @@ class FeedbackPresentation(unittest.TestCase):
         text = '문장 전체 → 마지막까지 고르게 읽으세요.'
         self.assertEqual(self.render(text), '* ' + text)
 
+    def test_quoted_script_endings_do_not_become_extra_instructions(self):
+        for opening, closing in (('‘', '’'), ('“', '”'), ('"', '"'), ("'", "'"), ('「', '」')):
+            text = f'문장 끝 → {opening}끝났습니다{closing} 뒤를 부드럽게 이어 읽으세요.'
+            with self.subTest(opening=opening):
+                self.assertEqual(self.render(text), '* ' + text)
+
+    def test_quoting_does_not_hide_real_multiple_instructions(self):
+        for text in ('문장 → 먼저 읽으세요 ‘끝났습니다’ 뒤에 쉬세요.',
+                     '문장 → ‘끝났습니다’ 뒤를 읽으세요 다시 해요',
+                     '문장 → ‘끝났습니다’ 뒤를 읽으세요. 다시 해요.',
+                     '문장 → ‘끝났습니다 뒤를 읽으세요.'):
+            with self.subTest(text=text), self.assertRaises(ValueError):
+                self.render(text)
+
     def test_relaxed_typography_keeps_content_and_length_guards(self):
         for text in ('', '  ', '* ', '대상 → ', ' → 연습하세요.',
                      '대상 → 하나 → 둘', '문장\n읽으세요.',

@@ -51,13 +51,16 @@ class CompositeDistancePower(unittest.TestCase):
         from voice_coach.backend_analysis.canonical_harness import (
             COMPOSITE_POWER, COMPOSITE_POWER_INTERNAL, SPECIFIC_FEEDBACK, SPECIFIC_FEEDBACK_INTERNAL,
             SPECIFIC_FEEDBACK_V2, SPECIFIC_FEEDBACK_V2_INTERNAL,
+            SPECIFIC_FEEDBACK_V3, SPECIFIC_FEEDBACK_V3_INTERNAL,
             check_schema_registration, check_result_classification,
         )
         from voice_coach.backend_analysis.native_execution import APPROVED_NATIVE_EXECUTIONS
         for parent, candidate in ((COMPOSITE_POWER, SPECIFIC_FEEDBACK),
                                   (COMPOSITE_POWER_INTERNAL, SPECIFIC_FEEDBACK_INTERNAL),
                                   (COMPOSITE_POWER, SPECIFIC_FEEDBACK_V2),
-                                  (COMPOSITE_POWER_INTERNAL, SPECIFIC_FEEDBACK_V2_INTERNAL)):
+                                  (COMPOSITE_POWER_INTERNAL, SPECIFIC_FEEDBACK_V2_INTERNAL),
+                                  (COMPOSITE_POWER, SPECIFIC_FEEDBACK_V3),
+                                  (COMPOSITE_POWER_INTERNAL, SPECIFIC_FEEDBACK_V3_INTERNAL)):
             self.assertEqual(parent.core_sha256, candidate.core_sha256)
             self.assertEqual(parent.model, candidate.model)
             self.assertEqual(parent.reasoning_effort, candidate.reasoning_effort)

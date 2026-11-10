@@ -35,10 +35,11 @@ def build(source, destination, lane):
     if not final_rules.strip():
         raise ValueError('SPECIFIC_FEEDBACK_FINAL_RULES_REQUIRED')
     files[prompt_name] = new + old[OLD_PREFIX_BYTES:] + final_rules
+    files['bridge/pipeline.py'] = (ROOT / 'src/voice_coach/six_dimension/pipeline.py').read_bytes()
     changed = {name for name in files if files[name] != inherited[name]}
-    if changed != {prompt_name}:
+    if changed != {prompt_name, 'bridge/pipeline.py'}:
         raise ValueError('SPECIFIC_FEEDBACK_UNEXPECTED_CHANGE')
-    directory = f'canonical_specific_feedback_{lane}_20261110_v2_h5'
+    directory = f'canonical_specific_feedback_{lane}_20261110_v3_h5'
     lock = encode(dict(files={name: sha(body) for name, body in sorted(files.items())}))
     prompt_sha = sha(files[prompt_name])
     manifest = encode(dict(parent, contract_version=directory,
