@@ -1,9 +1,8 @@
 # 문서 안내
 
-설명 생성기는 **외부 OpenAI API**를 사용한다. 모델은 실행 경로·관측 시각별로 구분한다. 2026-10-24 문장연습 direct의 Luna low 적용 관측과 후속 개선 범위는 [GPT API 지연 개선 계획](canonical-integration/gpt-api-latency-plan-20261024.md)을 참조한다. 이 문서 편집은 운영 상태 재조회나 내부 Backend 모델 전환을 뜻하지 않는다.
+설명 생성기는 **외부 OpenAI API**를 사용한다. 운영 모델은 **`gpt-6-luna` / `reasoning_effort=none` / `service_tier=default`**를 유지한다. 2026-11-10 09:32 UTC에 direct·내부 분석 설정, 실행 중인 direct worker의 H5 identity, 재기동 복구 선택을 확인했다. 공개 direct readiness는 200/ready=true였다. 실제 분석·GPT 생성 요청은 추가하지 않았다.
 
-후속 direct 운영은 [GPT-6.1 Sol low/default 전환·실측](canonical-integration/sol61-light-timing-20261026.md)에 기록했다. 해당 관측에서 Sol은 Luna none보다 GPT HTTP 시간이 길었다.
-사용자는 답변 품질을 우선해 Sol light(low)를 계속 사용하기로 결정했다.
+2026-10-24의 [GPT API 지연 개선 계획](canonical-integration/gpt-api-latency-plan-20261024.md)과 [10월 Sol 비교 실측](canonical-integration/sol61-light-timing-20261026.md)은 당시의 기록이다. 현재 운영 모델 선택은 위의 Luna none 정책을 따른다.
 
 | 목적 | 문서 |
 |---|---|

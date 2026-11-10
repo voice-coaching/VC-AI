@@ -4,6 +4,7 @@
 
 ## 프로젝트 결정
 
+- 운영 설명·채점 모델은 `gpt-6-luna`, `reasoning_effort=none`, `service_tier=default`를 유지한다.
 - Seungun 원본 관측과 legacy 선택값을 보존한다. 버전 있는 근거 정책으로 다중 후보·정렬 모호성을 판단하며 legacy 최고점 하나를 학습 과제로 강제하지 않는다. 같은 시도의 입술 근거, 파일 digest·음소 index·시간 출처를 보존한다. 9월 legacy 코칭의 최대 3개 후보·GPT-6(`gpt-6-astra`) 설명·근거 기반 deterministic fallback과 사유는 해당 경로의 정책이다. Native/GOP·canonical 경로는 해당 revision의 계약·실행 identity·실패 정책을 확인한다. Clova는 운영 경로에서 폐기됐다.
 - 근거에 없는 교정·STT·점수를 만들지 않는다. 근거와 계약을 갖춘 후속 기능 확장은 별도로 설계한다.
 - 사용자 결정에 따라 Backend–RunPod 내부 HTTP API에 동의 증빙·정책 revision·요청별 처리 권한 grant·서명을 포함하지 않는다. 사용자 로그인·녹음 소유 관계, 양방향 서버 인증, 파일 무결성 확인은 유지한다.
