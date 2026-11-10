@@ -34,7 +34,9 @@ def build(source: Path, core_manifest: Path, destination: Path, *, directory: st
         reference_raw = (reference_path or ROOT / "standalone/seungun/assets/reference.json").read_bytes()
         validate_reference_asset(composite_policy, reference_raw)
         if directory == DIRECTORY:
-            directory = "canonical_composite_exponential_direct_20261105_v2_h5"
+            directory = ("canonical_composite_exponential_direct_20261110_v3_h5"
+                         if composite_policy["revision"].endswith("-v3") else
+                         "canonical_composite_exponential_direct_20261105_v2_h5")
     if native_rubric_policy_path is not None:
         if composite_policy is None:
             raise ValueError("NATIVE_RUBRIC_COMPOSITE_REQUIRED")
@@ -51,7 +53,8 @@ def build(source: Path, core_manifest: Path, destination: Path, *, directory: st
              "contracts/llm/request_config.json": encode(policy["request"])}
     files["contracts/llm/llm_system_prompt.txt"] += (ROOT / "configs/coaching/six_dimension_legacy_grade_v1.txt").read_bytes()
     if composite_policy is not None:
-        files["contracts/llm/llm_system_prompt.txt"] += (ROOT / "configs/coaching/composite_exponential_v2.txt").read_bytes()
+        version = "v3" if composite_policy["revision"].endswith("-v3") else "v2"
+        files["contracts/llm/llm_system_prompt.txt"] += (ROOT / f"configs/coaching/composite_exponential_{version}.txt").read_bytes()
         composite_raw = composite_policy_path.read_bytes()
         if sha(composite_raw) != composite_sha:
             raise ValueError("COMPOSITE_POLICY_CHANGED_DURING_BUILD")
@@ -63,6 +66,7 @@ def build(source: Path, core_manifest: Path, destination: Path, *, directory: st
                        if json.loads(native_raw)["revision"] == "native-phone-rubric-evidence-v2"
                        else "native_rubric_single_call_v1.txt")
         files["contracts/llm/llm_system_prompt.txt"] += (ROOT / "configs/coaching" / prompt_name).read_bytes()
+    files["contracts/llm/llm_system_prompt.txt"] += (ROOT / "configs/coaching/specific_feedback_final_v2.txt").read_bytes()
     rubric_raw = (ROOT / "configs/pronunciation_feedback/phone_rubric_20261003_v1.json").read_bytes()
     rubric = json.loads(rubric_raw)
     validate_rubric(rubric)

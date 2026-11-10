@@ -24,6 +24,7 @@ MAX_PRACTICE_CHARACTERS = MAX_FEEDBACK_LINE_CHARACTERS - len("* ")
 _TERMINATOR = re.compile(r"[.!?。！？]+(?!\d)")
 _CONTROL = re.compile(r"[\x00-\x1f\x7f-\x9f\u2028\u2029]")
 _INTERNAL_MEASUREMENT = re.compile(r"\b(?:GOP|CTC|F0)\b|\d\s*(?:dB|Hz|음절\s*/\s*초)|초당\s*\d", re.IGNORECASE)
+_QUOTED_TEXT = re.compile(r"'[^'\n]*'|\"[^\"\n]*\"|‘[^’\n]*’|“[^”\n]*”|「[^」\n]*」|『[^』\n]*』")
 
 
 class SingleCallTransport:
@@ -77,7 +78,11 @@ def public_feedback(items: list[dict]) -> str:
         else:
             instruction = practice
         require(not _INTERNAL_MEASUREMENT.search(practice), "FEEDBACK_INTERNAL_MEASUREMENT")
-        require(not re.search(r"(?:세요|십시오|습니다|입니다|합니다|해요|줘요)[’”\"']*\s+\S", instruction),
+        # A quoted script ending is material to read, not another instruction.
+        # Mask balanced quotes only for this check; keep the public text and
+        # the sentence/line/character limits unchanged.
+        unquoted = _QUOTED_TEXT.sub(lambda match: " " * len(match[0]), instruction)
+        require(not re.search(r"(?:세요|십시오|습니다|입니다|합니다|해요|줘요)[’”\"']*\s+\S", unquoted),
                 "FEEDBACK_MULTIPLE_INSTRUCTIONS")
         lines.append("* " + practice)
     result = "\n".join(lines)

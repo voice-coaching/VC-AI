@@ -546,6 +546,30 @@ YUNET_LIP_INTERNAL = _replace(FEEDBACK_PRESENTATION_INTERNAL,
     lock_sha256='e07c3304af372b00125ed6e7f09a7dfaa63e06fe03426c1b779e81ab014544e1')
 HARNESSES.update({v.manifest_sha256: v for v in (YUNET_LIP, YUNET_LIP_INTERNAL)})
 
+COMPOSITE_POWER = _replace(YUNET_LIP,
+    revision='canonical-composite-power-direct-20261110-v3',
+    manifest_sha256='0f379753c1f8878e2133ccdf94e9e08d38d3f58281bc211fecbe78faddbb81cd',
+    lock_sha256='acbfd5e1517ad36b7dd7f6c9c719171151818a6b200e859b2ea6cee6fc2048a2',
+    prompt_sha256='ef465f4ab0598b85c7160f3023867f765e457e149f189aecd72a8978ac27581d')
+COMPOSITE_POWER_INTERNAL = _replace(YUNET_LIP_INTERNAL,
+    revision='canonical-composite-power-internal-20261110-v3',
+    manifest_sha256='d21652d16dec4818c1244f4375190c3125d6bad73aacab3ec2ada14e18efb16b',
+    lock_sha256='407a33bc42ca61d9ab0b2dbd58100c48820cb28bd8dca49ca231d0719e7a3a85',
+    prompt_sha256='ef465f4ab0598b85c7160f3023867f765e457e149f189aecd72a8978ac27581d')
+HARNESSES.update({v.manifest_sha256: v for v in (COMPOSITE_POWER, COMPOSITE_POWER_INTERNAL)})
+
+SPECIFIC_FEEDBACK_V4 = _replace(COMPOSITE_POWER,
+    revision='canonical-specific-feedback-direct-20261110-v4',
+    manifest_sha256='6b83bee3d91d7799e917cfa5d587b447b63d416550e7f57b716a7b4852194f9e',
+    lock_sha256='284383468087d38809952b9b5ec931aac51e96aca011d9705fc0212df7729137',
+    prompt_sha256='e3a916bebf07a4fc5bbd165ffa8d2440a8784992023d6b3061950b7642ad07c5')
+SPECIFIC_FEEDBACK_V4_INTERNAL = _replace(COMPOSITE_POWER_INTERNAL,
+    revision='canonical-specific-feedback-internal-20261110-v4',
+    manifest_sha256='7fb9dcc9ffec7fd39cfc207edd24d295d487f904ff1045044d59b330f48c8e31',
+    lock_sha256='a51806613dd2d660ec41f06a6efdea977cd9377aec9cc70af813b801398a195e',
+    prompt_sha256='e3a916bebf07a4fc5bbd165ffa8d2440a8784992023d6b3061950b7642ad07c5')
+HARNESSES.update({v.manifest_sha256: v for v in (SPECIFIC_FEEDBACK_V4, SPECIFIC_FEEDBACK_V4_INTERNAL)})
+
 
 def harness_identity(manifest_sha256: str) -> HarnessIdentity:
     try:

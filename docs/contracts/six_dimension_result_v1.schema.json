@@ -409,6 +409,16 @@
                         "type": "number",
                         "minimum": 0,
                         "maximum": 100
+                      },
+                      "distancePowerNumerator": {
+                        "const": 2
+                      },
+                      "distancePowerDenominator": {
+                        "const": 3
+                      },
+                      "poweredNormalizedDeviation": {
+                        "type": "string",
+                        "minLength": 1
                       }
                     }
                   }
@@ -935,7 +945,10 @@
           "assessment": {
             "properties": {
               "policyRevision": {
-                "const": "announcer-composite-exponential-v2"
+                "enum": [
+                  "announcer-composite-exponential-v2",
+                  "announcer-composite-exponential-v3"
+                ]
               }
             }
           }
@@ -953,6 +966,101 @@
                 "required": [
                   "composite"
                 ]
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "assessment": {
+            "properties": {
+              "policyRevision": {
+                "const": "announcer-composite-exponential-v3"
+              }
+            }
+          }
+        }
+      },
+      "then": {
+        "properties": {
+          "compositeGrade": {
+            "properties": {
+              "rubricRevision": {
+                "const": "announcer-composite-exponential-v3"
+              }
+            }
+          },
+          "assessment": {
+            "properties": {
+              "auxiliary": {
+                "properties": {
+                  "composite": {
+                    "properties": {
+                      "result": {
+                        "properties": {
+                          "rubricRevision": {
+                            "const": "announcer-composite-exponential-v3"
+                          }
+                        }
+                      },
+                      "worksheet": {
+                        "items": {
+                          "required": [
+                            "distancePowerNumerator",
+                            "distancePowerDenominator",
+                            "poweredNormalizedDeviation"
+                          ]
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "assessment": {
+            "properties": {
+              "policyRevision": {
+                "const": "announcer-composite-exponential-v2"
+              }
+            }
+          }
+        }
+      },
+      "then": {
+        "properties": {
+          "compositeGrade": {
+            "properties": {
+              "rubricRevision": {
+                "const": "announcer-composite-exponential-v2"
+              }
+            }
+          },
+          "assessment": {
+            "properties": {
+              "auxiliary": {
+                "properties": {
+                  "composite": {
+                    "properties": {
+                      "result": {
+                        "properties": {
+                          "rubricRevision": {
+                            "const": "announcer-composite-exponential-v2"
+                          }
+                        }
+                      }
+                    }
+                  }
+                }
               }
             }
           }
@@ -1125,7 +1233,10 @@
       ],
       "properties": {
         "rubricRevision": {
-          "const": "announcer-composite-exponential-v2"
+          "enum": [
+            "announcer-composite-exponential-v2",
+            "announcer-composite-exponential-v3"
+          ]
         },
         "validationStatus": {
           "const": "EXPERT_REVIEW_PENDING"

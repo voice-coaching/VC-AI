@@ -69,7 +69,7 @@ def main() -> int:
     parser.add_argument("--policy", type=Path, default=ROOT / "configs/pronunciation_feedback/six_dimension_v1.json")
     parser.add_argument("--system-prompt", type=Path, default=ROOT / "configs/coaching/six_dimension_system_v1.txt")
     parser.add_argument("--composite-policy", type=Path,
-                        help="opt into exponential v2 with this versioned policy; v1 remains the default")
+                        help="opt into exponential v2/v3 with this versioned policy; v1 remains the default")
     parser.add_argument("--reference-file", type=Path, default=ROOT / "standalone/seungun/assets/reference.json")
     parser.add_argument("--rubric-worksheet", type=Path,
                         help="server/operator-owned fixed-rubric worksheet bound to this exact analysis")
@@ -100,7 +100,8 @@ def main() -> int:
             validate_reference_asset(composite_policy, reference_raw)
             legacy_rubric = strict_json(bounded(ROOT / "configs/pronunciation_feedback/phone_rubric_20261003_v1.json", 131072))
             prompt += bounded(ROOT / "configs/coaching/six_dimension_legacy_grade_v1.txt", 131072).decode("utf-8")
-            prompt += bounded(ROOT / "configs/coaching/composite_exponential_v2.txt", 131072).decode("utf-8")
+            version = "v3" if composite_policy["revision"].endswith("-v3") else "v2"
+            prompt += bounded(ROOT / f"configs/coaching/composite_exponential_{version}.txt", 131072).decode("utf-8")
             if args.rubric_worksheet is not None:
                 rubric_worksheet = strict_json(bounded(args.rubric_worksheet, 131072))
         if args.native_rubric_policy is not None:
@@ -108,6 +109,8 @@ def main() -> int:
             native_rubric_policy = strict_json(native_raw)
             validate_native_policy(native_rubric_policy)
             prompt += bounded(ROOT / "configs/coaching/native_rubric_single_call_v1.txt", 131072).decode("utf-8")
+        if args.system_prompt.resolve() == (ROOT / "configs/coaching/six_dimension_system_v1.txt").resolve():
+            prompt += bounded(ROOT / "configs/coaching/specific_feedback_final_v2.txt", 131072).decode("utf-8")
         destination = args.output.expanduser().resolve()
         require(not destination.exists(), "OUTPUT_MUST_BE_NEW")
         destination.mkdir(parents=True, mode=0o700)

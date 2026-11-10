@@ -1,0 +1,124 @@
+{
+  "revision": "announcer-composite-exponential-v3",
+  "validationStatus": "EXPERT_REVIEW_PENDING",
+  "scoreMeaning": "FIXED_PHONE_RUBRIC_AND_PROSODY_REFERENCE_PROXIMITY",
+  "formula": "100 * exp(-lambda * abs((userValue - mean) / std) ** (2 / 3))",
+  "lambdaByMetric": {
+    "speech_rate": 0.2231435513142097,
+    "articulation_rate": 0.2231435513142097,
+    "pause_count_per_10_syllables": 0.2231435513142097,
+    "pause_duration_per_10_syllables": 0.2231435513142097,
+    "f0_range_st": 0.2231435513142097,
+    "intensity_range_db": 0.2231435513142097
+  },
+  "reference": {
+    "version": "aihub71557_prosody_reference_v1",
+    "group": "현직아나운서",
+    "fileSha256": "e230b1fe524b18d008d1d3007d0b098cd718c9704541a70478119a03273ee722",
+    "aggregation": "utterance metrics -> per-speaker median -> speaker-balanced distribution",
+    "metricVersion": "aihub71557_compatible_metrics_v2",
+    "analysisWindowSource": "mfa_speech_bounds",
+    "referenceWindowSource": "aihub_json_utterance_bounds",
+    "extractorCompatibility": "aihub71557_parity_fixture_v1",
+    "statistics": {
+      "speech_rate": {
+        "n": 37,
+        "mean": 5.076102297846724,
+        "std": 0.38302090244895665,
+        "p10": 4.54280418772553,
+        "p25": 4.88641234462066,
+        "p50": 5.057046723493915,
+        "p75": 5.269868253293668,
+        "p90": 5.565826983911064
+      },
+      "articulation_rate": {
+        "n": 37,
+        "mean": 5.385001229547837,
+        "std": 0.4156146542379195,
+        "p10": 4.915820849983737,
+        "p25": 5.12214342001576,
+        "p50": 5.344131934582054,
+        "p75": 5.568484042553192,
+        "p90": 6.002000666888963
+      },
+      "pause_count_per_10_syllables": {
+        "n": 37,
+        "mean": 0.34520476673160083,
+        "std": 0.16216524333538154,
+        "p10": 0.19037433155080213,
+        "p25": 0.22727272727272727,
+        "p50": 0.35714285714285715,
+        "p75": 0.46511627906976744,
+        "p90": 0.5213009619789281
+      },
+      "pause_duration_per_10_syllables": {
+        "n": 37,
+        "mean": 0.09147713452043889,
+        "std": 0.056708850514569864,
+        "p10": 0.03456410256410257,
+        "p25": 0.04657534246575343,
+        "p50": 0.08461538461538462,
+        "p75": 0.12222222222222223,
+        "p90": 0.15791727716727716
+      },
+      "f0_range_st": {
+        "n": 37,
+        "mean": 9.096794746748834,
+        "std": 1.37870823307259,
+        "p10": 7.401657834983755,
+        "p25": 8.320049577911806,
+        "p50": 9.073401228863254,
+        "p75": 10.127882415553104,
+        "p90": 10.814556137795863
+      },
+      "intensity_range_db": {
+        "n": 37,
+        "mean": 21.764825971619278,
+        "std": 1.1911376656370352,
+        "p10": 20.31589399378222,
+        "p25": 21.146773732590137,
+        "p50": 22.11500993562201,
+        "p75": 22.50365950624683,
+        "p90": 23.203812434900062
+      }
+    }
+  },
+  "pronunciation": {
+    "source": "RUBRIC_RESULT.overallScore",
+    "rubricRevision": "phone-rubric-20261003-v1",
+    "mode": "COPY_FIXED_SERVER_GRADE",
+    "additionalGopMeanPenalty": false
+  },
+  "weights": {
+    "pronunciation_accuracy": 40,
+    "speaking_rate": 10,
+    "articulation_rate": 10,
+    "pauses": 10,
+    "pitch": 15,
+    "intensity": 15
+  },
+  "pauseWeights": {
+    "pause_count_per_10_syllables": 0.5,
+    "pause_duration_per_10_syllables": 0.5
+  },
+  "rounding": {
+    "mode": "HALF_UP",
+    "decimalPlaces": 1,
+    "intermediateProsodyRounding": false,
+    "pronunciationUsesExistingFinalGrade": true
+  },
+  "missingDimension": "UNSCORABLE_TOTAL_NO_WEIGHT_REDISTRIBUTION",
+  "selection": "LOWEST_DISPLAYED_SCORE_THEN_CRITERIA_ORDER",
+  "feedbackCount": 3,
+  "limitations": [
+    "Reference proximity is not pronunciation correctness, a population percentile, or an expert-validated quality score.",
+    "Lambda and composite weights are provisional engineering choices.",
+    "Pitch assesses F0 range; intensity assesses relative RMS range; pauses assess frequency and duration.",
+    "Speaking rate, articulation rate and pauses share timing evidence.",
+    "Pronunciation uses the original fixed nine-category server grade without GOP remapping or a mean-distance penalty."
+  ],
+  "distancePower": {
+    "numerator": 2,
+    "denominator": 3
+  }
+}
