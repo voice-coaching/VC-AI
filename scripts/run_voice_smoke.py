@@ -80,7 +80,10 @@ def main(args):
             if sha((h5/module).read_bytes()) != pin:
                 raise ValueError('SMOKE_H5_FILE_CHANGED')
         # Prevent testing an old frozen adapter with new source changes.
-        frozen = (source/'deploy/runpod/harnesses/six_dimension_bridge.py').read_bytes().replace(
+        template = ('six_dimension_feedback_only_bridge.py' if manifest['contract_version'] in {
+            'canonical_voice_latency_direct_20261110_v1_h5',
+            'canonical_voice_latency_internal_20261110_v1_h5'} else 'six_dimension_bridge.py')
+        frozen = (source/'deploy/runpod/harnesses'/template).read_bytes().replace(
             b'__CORE_MANIFEST__', sha((core/'release_manifest.json').read_bytes()).encode())
         if frozen != (h5/'bridge/adapter.py').read_bytes():
             raise ValueError('SMOKE_H5_ADAPTER_NOT_CANDIDATE')

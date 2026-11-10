@@ -65,14 +65,10 @@ def build(core, h5, destination, lane):
         core_files['release_manifest.json'] = core_raw
         core_pin = sha(core_raw)
         packages.append((selected_core, core_files))
-    adapter = llm['bridge/adapter.py'].decode()
-    adapter = replace_once(adapter, 'PARENT = "' + PARENTS[lane][0] + '"', 'PARENT = "' + core_pin + '"')
-    before = 'native_rubric_policy=self.native_rubric_policy(), visual=visual)'
-    count = adapter.count(before)
-    if count != 2:
-        raise ValueError('VOICE_LATENCY_ADAPTER_CALL_BOUNDARY')
-    adapter = adapter.replace(before, before[:-1] + ', feedback_only=True)')
-    llm['bridge/adapter.py'] = adapter.encode()
+    adapter = (ROOT / 'deploy/runpod/harnesses/six_dimension_feedback_only_bridge.py').read_bytes()
+    if adapter.count(b'__CORE_MANIFEST__') != 1:
+        raise ValueError('VOICE_LATENCY_ADAPTER_PARENT_BOUNDARY')
+    llm['bridge/adapter.py'] = adapter.replace(b'__CORE_MANIFEST__', core_pin.encode())
     llm['bridge/pipeline.py'] = (ROOT / 'src/voice_coach/six_dimension/pipeline.py').read_bytes()
     llm['contracts/llm/llm_system_prompt.txt'] += (ROOT / 'configs/coaching/feedback_only_output_v1.txt').read_bytes()
     name = f'canonical_voice_latency_{lane}_20261110_v1_h5'
