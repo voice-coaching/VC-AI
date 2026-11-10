@@ -109,6 +109,8 @@ def main() -> int:
             native_rubric_policy = strict_json(native_raw)
             validate_native_policy(native_rubric_policy)
             prompt += bounded(ROOT / "configs/coaching/native_rubric_single_call_v1.txt", 131072).decode("utf-8")
+        if args.system_prompt.resolve() == (ROOT / "configs/coaching/six_dimension_system_v1.txt").resolve():
+            prompt += bounded(ROOT / "configs/coaching/specific_feedback_final_v2.txt", 131072).decode("utf-8")
         destination = args.output.expanduser().resolve()
         require(not destination.exists(), "OUTPUT_MUST_BE_NEW")
         destination.mkdir(parents=True, mode=0o700)

@@ -22,6 +22,7 @@ def build(destination: Path) -> dict:
     names = ["scripts/analyze_six_dimension.py", "configs/coaching/six_dimension_system_v1.txt",
              "configs/coaching/six_dimension_legacy_grade_v1.txt", "configs/coaching/composite_exponential_v2.txt",
              "configs/coaching/composite_exponential_v3.txt",
+             "configs/coaching/specific_feedback_final_v2.txt",
              "configs/coaching/native_rubric_single_call_v1.txt",
              "configs/pronunciation_feedback/six_dimension_v1.json",
              "configs/pronunciation_feedback/composite_exponential_v2.json",

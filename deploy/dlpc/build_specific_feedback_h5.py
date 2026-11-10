@@ -31,11 +31,14 @@ def build(source, destination, lane):
     new = (ROOT / 'configs/coaching/six_dimension_system_v1.txt').read_bytes()
     if not new.strip() or sha(new) == OLD_PREFIX_SHA256:
         raise ValueError('SPECIFIC_FEEDBACK_NEW_PROMPT_REQUIRED')
-    files[prompt_name] = new + old[OLD_PREFIX_BYTES:]
+    final_rules = (ROOT / 'configs/coaching/specific_feedback_final_v2.txt').read_bytes()
+    if not final_rules.strip():
+        raise ValueError('SPECIFIC_FEEDBACK_FINAL_RULES_REQUIRED')
+    files[prompt_name] = new + old[OLD_PREFIX_BYTES:] + final_rules
     changed = {name for name in files if files[name] != inherited[name]}
     if changed != {prompt_name}:
         raise ValueError('SPECIFIC_FEEDBACK_UNEXPECTED_CHANGE')
-    directory = f'canonical_specific_feedback_{lane}_20261110_v1_h5'
+    directory = f'canonical_specific_feedback_{lane}_20261110_v2_h5'
     lock = encode(dict(files={name: sha(body) for name, body in sorted(files.items())}))
     prompt_sha = sha(files[prompt_name])
     manifest = encode(dict(parent, contract_version=directory,
