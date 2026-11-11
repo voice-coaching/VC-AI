@@ -63,7 +63,7 @@ def main():
         headers={'Authorization': 'Bearer '+os.environ['GH_TOKEN'], 'Accept': 'application/vnd.github+json'})
     class NoRedirect(urllib.request.HTTPRedirectHandler):
         def redirect_request(self, *args, **kwargs):return None
-    with urllib.request.build_opener(urllib.request.ProxyHandler({}), NoRedirect()).open(request, timeout=20) as reply:
+    with urllib.request.build_opener(NoRedirect()).open(request, timeout=20) as reply:
         latest = json.loads(reply.read(65536))['object']['sha']
     if target != latest:
         result = {'status': 'skipped', 'reason': 'SUPERSEDED_MAIN_REVISION', 'revision': target}

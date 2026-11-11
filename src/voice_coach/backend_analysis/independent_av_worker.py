@@ -8,6 +8,8 @@ import sys
 import time
 from uuid import UUID
 
+PROCESS_ENTRY_AT = time.time()
+
 from voice_coach.direct_analysis.store import atomic, encoded
 from voice_coach.direct_analysis.worker import LocalProducerJournal
 from voice_coach.visual_feedback.canonical_service import CanonicalAudiovisualService
@@ -24,9 +26,12 @@ from .independent_av_domain import IndependentAudiovisualInput
 from .independent_av_store import CONTRACT
 from .media_preparation import MediaPreparation
 from .ports import MaterializedAudio, MaterializedVideo
+from voice_coach.visual_feedback.timing import SpanTimer
 
 
 async def execute(folder, env):
+    worker_started = time.monotonic()
+    steps = SpanTimer()
     d = json.loads((folder/'job.json').read_bytes())
     m = d['metadata']
     normalization_seconds = 0
@@ -93,11 +98,13 @@ async def execute(folder, env):
     expression_finished = time.monotonic()
     # Validate actual visual evidence and replay the frozen expression checks;
     # no second provider invocation or fabricated Backend retention receipt.
-    visual = validated_visual(visual_raw, request=request, frozen=frozen,
-        core=json.loads(produced.raw), prepared_audio=produced.prepared_audio, core_raw=produced.raw)['visual']
-    preflight = await asyncio.to_thread(preflight_canonical_result, expression, request=request,
-        frozen=frozen, prepared_audio=produced.prepared_audio,
-        _visual_payload=prepare_visual_coaching(visual_raw, core_bytes=produced.raw))
+    with steps.measure('visualValidation'):
+        visual = validated_visual(visual_raw, request=request, frozen=frozen,
+            core=json.loads(produced.raw), prepared_audio=produced.prepared_audio, core_raw=produced.raw)['visual']
+    with steps.measure('resultPreflight'):
+        preflight = await asyncio.to_thread(preflight_canonical_result, expression, request=request,
+            frozen=frozen, prepared_audio=produced.prepared_audio,
+            _visual_payload=prepare_visual_coaching(visual_raw, core_bytes=produced.raw))
     coaching, core = json.loads(expression.expression_bytes), json.loads(produced.raw)
     failed = coaching['adapterStatus'] == 'FAIL_CLOSED' or core['input_validation']['status'] == 'SYSTEM_FAILURE'
     result = dict(schemaVersion='voice-coaching.independent-audiovisual-result.v1',
@@ -115,19 +122,29 @@ async def execute(folder, env):
             normalizationRevision=m['mediaPreparation']['receipt']['normalizationRevision'])
     originals = {a.kind:a.raw for a in preflight.artifacts}
     originals.update(MEDIA_RECEIPT=encode_document(m['mediaPreparation']['receipt']), VISUAL_EVIDENCE=visual_raw)
-    for kind, raw in originals.items(): atomic(saved/(kind+'.json'), raw)
+    with steps.measure('artifactPersistence'):
+        for kind, raw in originals.items(): atomic(saved/(kind+'.json'), raw)
     # A separate manifest binds every immutable audio/visual original to this job.
     atomic(folder/'artifacts-manifest.json', encoded(dict(schemaVersion=CONTRACT,
         jobId=d['jobId'], executionId=d['executionId'], sourceIdentity=result['sourceIdentity'],
         artifacts={k:hashlib.sha256(v).hexdigest() for k,v in originals.items()})))
     raw = encoded(result)
     atomic(folder/'result.json', raw)
+    ready_at = time.time()
+    normalization_path = folder/'normalization-observation.json'
+    normalization_timing = (json.loads(normalization_path.read_bytes()).get('timing', {})
+                            if normalization_path.exists() else {})
     atomic(folder/'worker-complete.json', encoded(dict(executionId=d['executionId'], requestId=d['requestId'],
         status=result['status'], failure='CANONICAL_ANALYSIS_FAILED' if failed else None,
+        timestamps=dict(createdAt=d.get('createdAt'), enqueuedAt=d.get('enqueuedAt'),
+            scheduledAt=d.get('startedAt'), processEntryAt=PROCESS_ENTRY_AT, resultReadyAt=ready_at),
         resultSha256=hashlib.sha256(raw).hexdigest(), timing=dict(
+            workerSeconds=time.monotonic()-worker_started,
+            setupSeconds=started-worker_started-normalization_seconds,
             normalizationSeconds=normalization_seconds,
             coreSeconds=core_finished-started, expressionSeconds=expression_finished-core_finished,
             publicationSeconds=time.monotonic()-expression_finished, parallel=combined.timings,
+            normalization=normalization_timing, video=port.timings, publication=steps.spans,
             producer=produced.timings, provider=transport.diagnostics))))
 
 

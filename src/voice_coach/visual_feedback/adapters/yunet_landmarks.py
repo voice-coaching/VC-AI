@@ -9,6 +9,7 @@ from __future__ import annotations
 import hashlib
 import io
 import math
+import time
 import zipfile
 
 from ..feature_protocol import MAPPING, PROTOCOL, strict_json
@@ -173,12 +174,21 @@ class YuNetMesh:
         return row
 
 
-def extract_frames(files, header, read):
+def extract_frames(files, header, read, *, timings=None):
     import numpy as np
+    timings = {} if timings is None else timings
+    started = time.monotonic()
     detector = YuNetMesh(files, header['quality'])
+    timings['modelInitializationSeconds'] = time.monotonic() - started
+    timings.update(rgbReadSeconds=0., frameInferenceSeconds=0., frameCount=0)
     width, height = header['width'], header['height']
     rows = []
     for pts in header['pts']:
+        started = time.monotonic()
         rgb = np.frombuffer(read(width*height*3), dtype=np.uint8).reshape(height,width,3)
+        timings['rgbReadSeconds'] += time.monotonic() - started
+        started = time.monotonic()
         rows.append(detector.observe(rgb, pts))
+        timings['frameInferenceSeconds'] += time.monotonic() - started
+        timings['frameCount'] += 1
     return dict(protocol=PROTOCOL, mappingRevision=MAPPING.revision, frames=rows)

@@ -161,7 +161,8 @@ class IndependentAudiovisualRuntime:
         try:
             with self.store.mutation_lock:
                 if self.store.read(job)['status'] != 'QUEUED':return
-                self.store.update(job,status='RUNNING',deadlineAt=time.time()+900)
+                now = time.time()
+                self.store.update(job,status='RUNNING',startedAt=now,deadlineAt=now+900)
             self.resident.requests += 1
             env = dict(self.env,AI_CANONICAL_RESIDENT_SOCKET=str(self.resident.socket),
                        AI_CANONICAL_VERIFIED_GENERATION=str(self.resident.generation))
@@ -178,7 +179,7 @@ class IndependentAudiovisualRuntime:
                 raise ValueError('LOCAL_COMPLETION_IDENTITY')
             with self.store.mutation_lock:
                 if self.store.read(job)['status']=='RUNNING':
-                    self.store.update(job,status=c['status'],failure=c.get('failure'))
+                    self.store.update(job,status=c['status'],failure=c.get('failure'),completedAt=time.time())
         except BaseException as error:
             cleanup = not isinstance(error,CanonicalProcessCleanupUnconfirmed)
             code = 'EXECUTION_INTERRUPTED' if isinstance(error,asyncio.CancelledError) else 'EXECUTION_FAILED'

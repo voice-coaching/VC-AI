@@ -158,7 +158,7 @@ class AudiovisualStore(JobStore):
                 expected = ['source'] if doc.get('inputMode') == 'ORIGINAL_VIDEO' else ['audio','video']
                 if doc['uploaded'] != expected:
                     raise HttpFailure(409, 'MEDIA_NOT_READY')
-                return self.update(job, status='QUEUED')
+                return self.update(job, status='QUEUED', enqueuedAt=time())
             if doc['status'] in ('QUEUED','RUNNING',*TERMINAL): return doc
             raise HttpFailure(409, 'JOB_STATE_CONFLICT')
 

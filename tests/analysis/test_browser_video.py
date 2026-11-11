@@ -19,7 +19,7 @@ from cryptography.hazmat.primitives import serialization
 
 from voice_coach.backend_analysis.browser_video_api import PREFIX
 from voice_coach.backend_analysis.browser_video_grants import TYPE, SCOPE
-from voice_coach.backend_analysis.browser_video_normalize import normalize, probe, preserve_tracks
+from voice_coach.backend_analysis.browser_video_normalize import normalize, probe, preserve_tracks, preserve_video
 from voice_coach.backend_analysis.http_api import create_app
 from voice_coach.backend_analysis.http_models import HttpFailure
 from voice_coach.backend_analysis.independent_av_runtime import IndependentAudiovisualRuntime
@@ -264,6 +264,51 @@ class VideoNormalization(unittest.IsolatedAsyncioTestCase):
         self.assertFalse(preserve_tracks(dict(video,width=2160,height=3840),dict(codec_name='aac')))
         self.assertFalse(preserve_tracks(dict(video,tags={'rotate':'90'}),dict(codec_name='aac')))
         self.assertFalse(preserve_tracks(dict(video,avg_frame_rate='60/1'),dict(codec_name='aac')))
+
+    def test_video_copy_does_not_depend_on_audio_codec(self):
+        video=dict(codec_name='h264',width=480,height=720,avg_frame_rate='30/1',nb_frames='60')
+        self.assertTrue(preserve_video(video))
+        self.assertFalse(preserve_tracks(video,dict(codec_name='opus')))
+
+    async def test_experimental_copy_is_opt_in_and_preserves_video_and_pcm(self):
+        with tempfile.TemporaryDirectory(dir='/home/2020067/.cache') as tmp:
+            root=Path(tmp);source=root/'original-video'
+            subprocess.run(['/usr/bin/ffmpeg','-nostdin','-v','error','-f','lavfi','-i',
+                'testsrc2=s=320x240:r=30:d=1','-f','lavfi','-i',
+                'sine=frequency=440:sample_rate=48000:duration=1','-c:v','libx264','-threads','1',
+                '-c:a','aac','-f','mp4',str(source)],check=True,stdout=subprocess.DEVNULL,stderr=subprocess.DEVNULL)
+            raw=source.read_bytes()
+            metadata=dict(clientRequestId=str(uuid4()),scriptText='시험',contentId=None,
+                source=dict(sha256=hashlib.sha256(raw).hexdigest(),fileSizeBytes=len(raw),mimeType='video/mp4'))
+            from voice_coach.backend_analysis import browser_video_normalize as normalizer
+            original_clock=normalizer.audio_clock
+            async def regularize(*args):
+                clock=await original_clock(*args)
+                self.assertIsNotNone(clock)
+                return dict(clock,requiresRegularization=True)
+            default=root/'default';default.mkdir();(default/'original-video').write_bytes(raw)
+            with patch.object(normalizer,'audio_clock',side_effect=regularize):
+                await normalize(default,metadata,deadline=time.monotonic()+120)
+                await normalize(root,metadata,deadline=time.monotonic()+120,
+                    preserve_video_during_audio_encode=True)
+            default_observation=json.loads((default/'normalization-observation.json').read_text())
+            self.assertEqual(default_observation['normalizationMode'],'ENCODE_VIDEO_AUDIO')
+            self.assertFalse(default_observation['videoTrackPreserved'])
+            def packets(path):
+                return subprocess.run(['/usr/bin/ffmpeg','-nostdin','-v','error','-i',str(path),
+                    '-map','0:v:0','-c:v','copy','-an','-f','hash','-hash','sha256','pipe:1'],
+                    capture_output=True,check=True).stdout
+            self.assertEqual(packets(source),packets(root/'video.mp4'))
+            obs=json.loads((root/'normalization-observation.json').read_text())
+            self.assertEqual(obs['normalizationMode'],'COPY_VIDEO_ENCODE_AUDIO')
+            self.assertTrue(obs['videoTrackPreserved'])
+            self.assertFalse(obs['audioTrackPreserved'])
+            self.assertIn('canonicalPcmDecode',obs['timing']['spans'])
+            pcm=subprocess.run(['/usr/bin/ffmpeg','-nostdin','-v','error','-i',str(root/'video.mp4'),
+                '-map','0:a:0','-vn','-ar','16000','-ac','1','-c:a','pcm_s16le','-f','s16le','pipe:1'],
+                capture_output=True,check=True).stdout
+            with wave.open(str(root/'audio.wav')) as w:self.assertEqual(pcm,w.readframes(w.getnframes()))
+            self.assertEqual(source.read_bytes(),raw)
 
     async def test_real_webm_decode_preserves_relative_clock_and_exact_pcm(self):
         with tempfile.TemporaryDirectory(dir='/home/2020067/.cache') as tmp:

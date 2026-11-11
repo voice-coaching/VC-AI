@@ -81,6 +81,7 @@ def main(args):
                 raise ValueError('SMOKE_H5_FILE_CHANGED')
         # Prevent testing an old frozen adapter with new source changes.
         template = ('six_dimension_feedback_only_bridge.py' if manifest['contract_version'] in {
+            'canonical_video_latency_internal_20261111_v1_h5',
             'canonical_voice_latency_direct_20261110_v1_h5',
             'canonical_voice_latency_internal_20261110_v1_h5'} else 'six_dimension_bridge.py')
         frozen = (source/'deploy/runpod/harnesses'/template).read_bytes().replace(
