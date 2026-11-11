@@ -95,7 +95,7 @@ def verify_main(manifest, token):
     class NoRedirect(urllib.request.HTTPRedirectHandler):
         def redirect_request(self, *args, **kwargs):
             return None
-    opener = urllib.request.build_opener(urllib.request.ProxyHandler({}), NoRedirect())
+    opener = urllib.request.build_opener(NoRedirect())
     def github(path):
         request = urllib.request.Request('https://api.github.com/repos/voice-coaching/intelligentAI/'+path,
             headers={'Authorization': 'Bearer '+token, 'Accept': 'application/vnd.github+json'})
@@ -334,6 +334,53 @@ def wait_ready(manifest):
     raise ValueError('COORDINATED_READINESS_TIMEOUT')
 
 
+def disk_headroom(payload, manifest, state):
+    """Budget an existing-assets promotion using the admission disk policy.
+
+    New/missing frozen assets or an unknown capacity plan retain the historical
+    14-GiB reserve. A source-only promotion keeps the live admission reserves,
+    all admitted media/scratch slots, complete new source and rollback bytes.
+    Nested model trees are hash-checked by release_assets before this call.
+    """
+    gib = 1024**3
+    source = sum(len(owned(payload/'source'/name)) for name in manifest['files'])
+    rollback = sum(len(raw) for name in manifest['before']
+                   if (raw := source_bytes(relative(name))) is not None)
+    legacy = 14*gib + 2*source + rollback
+    plan = state.get('capacityPlan', {})
+    keys = ('request_limit', 'compute_limit', 'disk_per_worker', 'tmp_per_worker')
+    known = (plan.get('basis') == 'SHORT_AUDIO_PLANNING_ESTIMATE_NOT_PEAK_QA'
+             and plan.get('inventory_complete') is True
+             and all(type(plan.get(k)) is int and plan[k] > 0 for k in keys)
+             and plan['compute_limit'] <= plan['request_limit'] <= 128
+             and plan['disk_per_worker'] >= 256*1024**2
+             and plan['tmp_per_worker'] >= 64*1024**2)
+    installed = True
+    for kind, prefix in (('coreReleases','CORE_ROOT'), ('h5Releases','LLM_ROOT')):
+        for lane, files in manifest.get(kind, {}).items():
+            selection = ('AI_DIRECT_' if lane == 'direct' else 'AI_CANONICAL_') + prefix
+            installed &= all((Path(manifest['selection'][selection])/name).is_file() for name in files)
+    if manifest.get('visualRelease'):
+        installed &= Path(manifest['selection']['AI_ANALYSIS_VISUAL_LANDMARK_MODEL_PATH']).is_file()
+    if not known or not installed:
+        require(shutil.disk_usage('/var/lib').free >= legacy, 'COORDINATED_DISK_HEADROOM')
+        return dict(policy='LEGACY_UNKNOWN_OR_NEW_ASSETS', rootRequiredBytes=legacy)
+    slots = plan['request_limit']
+    # Match capacity_planning: retain 8 GiB on media disk and 1 GiB on tmp,
+    # plus every admitted slot (not only the smaller active compute count).
+    root_required = 8*gib + slots*plan['disk_per_worker'] + 2*source + rollback
+    tmp_required = gib + slots*plan['tmp_per_worker']
+    shared = os.stat('/var/lib').st_dev == os.stat('/tmp').st_dev
+    if shared:
+        root_required += tmp_required
+    else:
+        require(shutil.disk_usage('/tmp').free >= tmp_required, 'COORDINATED_TMP_HEADROOM')
+    require(shutil.disk_usage('/var/lib').free >= root_required, 'COORDINATED_DISK_HEADROOM')
+    return dict(policy='INSTALLED_ASSETS_ADMISSION_BUDGET', rootRequiredBytes=root_required,
+                tmpRequiredBytes=tmp_required, sharedRootAndTmp=shared, admittedSlots=slots,
+                sourceBytes=source, rollbackBytes=rollback)
+
+
 def activate(payload, manifest, bundle):
     signal.signal(signal.SIGHUP, signal.SIG_IGN)
     signal.signal(signal.SIGTERM, signal.SIG_IGN)
@@ -353,9 +400,7 @@ def activate(payload, manifest, bundle):
         release_assets(payload, manifest)
     require(all(controller.values().get(k) == v for k,v in before_selection.items()),
             'COORDINATED_SELECTION_CHANGED')
-    require(shutil.disk_usage('/var/lib').free >= 14*1024**3 +
-            2*sum(len(owned(payload/'source'/n)) for n in manifest['files']),
-            'COORDINATED_DISK_HEADROOM')
+    disk_headroom(payload, manifest, controller.get('/health/deployment'))
     for name, before in manifest['before'].items():
         raw = source_bytes(relative(name))
         require((digest(raw) if raw is not None else None) == before, 'COORDINATED_SOURCE_CHANGED')
@@ -392,6 +437,8 @@ def activate(payload, manifest, bundle):
                 break
             time.sleep(3)
         require(zeros == 2, 'COORDINATED_DRAIN_TIMEOUT')
+        # Admission may have written files while the initial preflight ran.
+        disk_headroom(payload, manifest, controller.get('/health/deployment'))
         controller.service('stop');stopped = True
         record('installing');mutated = True
         release_assets(payload, manifest, install=True)

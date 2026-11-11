@@ -465,3 +465,21 @@ in the actual service environment. No automated inference, regression or quality
 QA was run while implementing this candidate; no speedup factor is established.
 AI/Backend release identities and persistent recovery pins must be updated
 together after review, using the coordinated immutable release procedure.
+
+
+### 2026-11-11 existing-assets coordinated source promotion
+
+`coordinated_release.disk_headroom` distinguishes a promotion whose frozen CORE/H5/model
+files are already installed and hash-verified from an unknown/new-assets operation.
+For installed assets and a complete capacity plan it retains the admission policy's
+8 GiB media reserve, every admitted slot's disk budget, the 1 GiB tmp reserve and
+every slot's tmp budget, twice the full source payload and all rollback bytes.
+When root and tmp are different filesystems, each is checked separately. Missing
+assets or an unknown plan retain the historical 14 GiB reserve plus source/rollback.
+The check runs before holding admission and again after drain, before stopping services.
+This does not change analysis admission, configured worker limits, model/search settings,
+or permit installation without sufficient measured free space.
+
+Main/tree verification keeps normal managed proxy settings and rejects redirects;
+GitHub authentication is not sent through a proxy-bypass override. The staged reviewed
+helper is verified against the immutable main source before updating the installed helper.

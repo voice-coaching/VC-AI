@@ -111,3 +111,4 @@ scripts/tests/
 !tests/analysis/test_feedback_only.py
 !tests/analysis/test_gop_overlap.py
 !tests/analysis/test_video_latency.py
+!tests/analysis/test_deployment_headroom.py
