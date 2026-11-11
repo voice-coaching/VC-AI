@@ -139,6 +139,7 @@ def release_assets(payload, manifest, *, install=False):
         require(root.parent==Path('/workspace/intelligentai/validation')
                 and root.name in {'canonical_mfa_search_'+lane+'_20261105_v1',
                                   'canonical_lip_sidecar_'+lane+'_20261106_v3',
+                                  'canonical_video_latency_'+lane+'_20261111_v1',
                                   'canonical_voice_latency_'+lane+'_20261110_v1'}, 'COORDINATED_CORE_PATH')
         package={}
         for name,pin in files.items():
@@ -195,6 +196,7 @@ def release_assets(payload, manifest, *, install=False):
                                   'canonical_composite_power_'+lane+'_20261110_v3_h5',
                                   'canonical_specific_feedback_'+lane+'_20261110_v4_h5',
                                   'canonical_actionable_coaching_'+lane+'_20261110_v1_h5',
+                                  'canonical_video_latency_'+lane+'_20261111_v1_h5',
                                   'canonical_voice_latency_'+lane+'_20261110_v1_h5'}, 'COORDINATED_H5_PATH')
         package = {}
         for name, pin in files.items():

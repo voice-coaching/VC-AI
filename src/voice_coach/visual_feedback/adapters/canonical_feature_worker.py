@@ -113,8 +113,10 @@ def main():
     from voice_coach.visual_feedback.adapters.yunet_landmarks import read_bundle, extract_frames
     bundle = read_bundle(model)
     if bundle is not None:
-        features = extract_frames(bundle, header, exact)
+        timings = {}
+        features = extract_frames(bundle, header, exact, timings=timings)
         require(sys.stdin.buffer.read(1) == b"")
+        features['performance'] = timings
         sys.stdout.write(json.dumps(features, ensure_ascii=False, allow_nan=False, separators=(",", ":")))
         return
     import mediapipe as mp

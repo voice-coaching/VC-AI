@@ -11,6 +11,7 @@ from dataclasses import dataclass
 from fractions import Fraction
 import hashlib
 import json
+import math
 import os
 from pathlib import Path
 import signal
@@ -21,6 +22,7 @@ import sys
 from ..feature_protocol import (MAX_FRAMES, MAX_DURATION_SECONDS, MAX_OUTPUT_BYTES,
     MAX_HEADER_BYTES, PROTOCOL, validate_features, validate_header, strict_json as _strict_json)
 from ..parallel_analysis import MediaIntegrityFailure, VisualObservationUnavailable
+from ..timing import SpanTimer
 from ...pronunciation_attempts.adapters.network_isolated_exec import isolated_command
 
 
@@ -108,6 +110,13 @@ async def _drain_cleanup(processes, tasks):
 class CanonicalVideoFeatures:
     def __init__(self, configuration: VideoFeatureConfiguration):
         self.configuration = configuration
+        self.timing = SpanTimer()
+        self.worker_timings = {}
+
+    @property
+    def timings(self):
+        return dict(semantics='inclusive; featureStream and pcmVerification overlap',
+                    spans=self.timing.spans, worker=self.worker_timings)
 
     async def _spawn(self, command, *, descriptor):
         launcher = Path(__file__).parents[2] / "pronunciation_attempts/adapters/network_isolated_exec.py"
@@ -145,6 +154,8 @@ class CanonicalVideoFeatures:
             await _drain_cleanup([process], [task])
 
     async def extract(self, *, video_path: Path, video_sha256: str, byte_count: int):
+        self.timing = SpanTimer()
+        self.worker_timings = {}
         c = self.configuration
         if sys.platform != "linux" or any(not p.is_absolute() for p in (c.python, c.ffmpeg, c.ffprobe, c.model)):
             raise ValueError("VISUAL_RUNTIME_UNAVAILABLE")
@@ -157,12 +168,13 @@ class CanonicalVideoFeatures:
                         or hashlib.file_digest(source, "sha256").hexdigest() != video_sha256):
                     raise MediaIntegrityFailure("VIDEO_IDENTITY_MISMATCH")
             locator = f"/proc/self/fd/{descriptor}"
-            raw = await self._capture([c.ffprobe, "-v", "error", "-protocol_whitelist", "file,pipe",
-                "-show_streams", "-show_frames", "-show_entries",
-                "stream=index,codec_type,codec_name,width,height,time_base,sample_rate:"
-                "stream_tags=rotate:"
-                "frame=stream_index,best_effort_timestamp,nb_samples", "-of", "json", locator],
-                descriptor=descriptor, limit=8 * 1024**2)
+            with self.timing.measure('canonicalProbe'):
+                raw = await self._capture([c.ffprobe, "-v", "error", "-protocol_whitelist", "file,pipe",
+                    "-show_streams", "-show_frames", "-show_entries",
+                    "stream=index,codec_type,codec_name,width,height,time_base,sample_rate:"
+                    "stream_tags=rotate:"
+                    "frame=stream_index,best_effort_timestamp,nb_samples", "-of", "json", locator],
+                    descriptor=descriptor, limit=8 * 1024**2)
             metadata = _strict_json(raw)
             streams = metadata.get("streams", [])
             videos = [s for s in streams if s.get("codec_type") == "video"]
@@ -184,17 +196,35 @@ class CanonicalVideoFeatures:
                 raise VisualObservationUnavailable("FRAME_LIMIT_EXCEEDED")
             header = validate_header(dict(protocol=PROTOCOL, width=v["width"], height=v["height"], pts=pts,
                 modelPath=str(c.model), modelSha256=c.model_sha256, quality=c.quality))
-            feature_result = await self._features(header, locator, descriptor)
             # Preserve uncertainty unless the decoded audio has a continuous
             # clock. Reproduce its PCM for a sample-exact equality check later;
             # this is verification, not a second audio analysis or STT call.
             clock = self._audio_clock(a, frames)
             pcm_hash, pcm_frames = None, None
-            if clock is not None:
-                pcm = await self._capture([c.ffmpeg, "-nostdin", "-v", "error", "-threads", "1",
-                    "-protocol_whitelist", "file,pipe", "-i", locator, "-map", "0:a:0", "-vn",
-                    "-ac", "1", "-ar", "16000", "-c:a", "pcm_s16le", "-f", "s16le", "pipe:1"],
-                    descriptor=descriptor, limit=MAX_DURATION_SECONDS * 16000 * 2)
+            async def features():
+                with self.timing.measure('featureStream'):
+                    return await self._features(header, locator, descriptor)
+
+            async def decoded_pcm():
+                if clock is None:
+                    return None
+                with self.timing.measure('pcmVerification'):
+                    return await self._capture([c.ffmpeg, "-nostdin", "-v", "error", "-threads", "1",
+                        "-protocol_whitelist", "file,pipe", "-i", locator, "-map", "0:a:0", "-vn",
+                        "-ac", "1", "-ar", "16000", "-c:a", "pcm_s16le", "-f", "s16le", "pipe:1"],
+                        descriptor=descriptor, limit=MAX_DURATION_SECONDS * 16000 * 2)
+
+            # Both ports own their children. Drain siblings on error/cancellation
+            # before closing the shared verified input descriptor.
+            tasks = [asyncio.create_task(features()), asyncio.create_task(decoded_pcm())]
+            try:
+                feature_result, pcm = await asyncio.gather(*tasks)
+            finally:
+                for task in tasks:
+                    if not task.done(): task.cancel()
+                from ...backend_analysis.canonical_async import drain_on_cancel
+                await drain_on_cancel(asyncio.gather(*tasks, return_exceptions=True))
+            if pcm is not None:
                 if not pcm or len(pcm) % 2:
                     raise ValueError("VISUAL_PCM_INVALID")
                 pcm_hash, pcm_frames = hashlib.sha256(pcm).hexdigest(), len(pcm) // 2
@@ -264,6 +294,14 @@ class CanonicalVideoFeatures:
             codes = await asyncio.gather(*(p.wait() for p in processes))
             if any(codes):
                 raise ValueError("VISUAL_FEATURE_WORKER_FAILED")
-            return validate_features(_strict_json(raw), header["pts"])
+            result = _strict_json(raw)
+            perf = result.pop('performance', {})
+            keys = {'modelInitializationSeconds','rgbReadSeconds','frameInferenceSeconds','frameCount'}
+            valid = (type(perf) is dict and not set(perf)-keys and all(
+                type(v) in (int,float) and math.isfinite(v) and v >= 0 for v in perf.values()))
+            # Optional diagnostics must not turn valid lip evidence into a
+            # failed analysis. The feature protocol itself remains strict.
+            self.worker_timings = perf if valid else {}
+            return validate_features(result, header["pts"])
         finally:
             await _drain_cleanup(processes, tasks)

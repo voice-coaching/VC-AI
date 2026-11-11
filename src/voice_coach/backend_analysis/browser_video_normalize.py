@@ -12,8 +12,9 @@ from voice_coach.direct_analysis.store import atomic, encoded
 from voice_coach.pronunciation_attempts.adapters.network_isolated_exec import isolated_command
 from .http_models import digest
 from .independent_av_store import AUDIO_LIMIT, VIDEO_LIMIT, pcm_valid
+from voice_coach.visual_feedback.timing import SpanTimer
 
-REVISION = 'ai-original-video-pcm-20261108-v3'
+REVISION = 'ai-original-video-pcm-20261111-v4'
 
 
 async def capture(args, deadline, limit=1024**2):
@@ -77,12 +78,12 @@ def streams(doc):
     return v[0],a[0]
 
 
-def preserve_tracks(video,audio):
-    """Remux already supported tracks; do not resize valid portrait recordings."""
+def preserve_video(video):
+    """Audio clock correction must not itself require video re-encoding."""
     try:
         rotation=[video.get('tags',{}).get('rotate',0),
                   *(s.get('rotation',0) for s in video.get('side_data_list',[]))]
-        return (video['codec_name'] in ('h264','hevc') and audio['codec_name']=='aac'
+        return (video['codec_name'] in ('h264','hevc')
                 and all(Fraction(str(x))%360==0 for x in rotation)
                 and 16<=int(video['width'])<=1920 and 16<=int(video['height'])<=1920
                 and int(video['width'])*int(video['height'])<=1920*1080
@@ -91,17 +92,28 @@ def preserve_tracks(video,audio):
     except (KeyError,ValueError,TypeError,ZeroDivisionError):return False
 
 
-async def normalize(folder, metadata, *, deadline):
+def preserve_tracks(video,audio):
+    return preserve_video(video) and audio.get('codec_name') == 'aac'
+
+
+async def normalize(folder, metadata, *, deadline, preserve_video_during_audio_encode=False):
+    # Opt-in evaluation only: changing encoded pixels changed the lip score in
+    # the paired fixture. Production retains the historical encoder path.
+    timing = SpanTimer()
+    started = time.monotonic()
     source = folder/'original-video'
     spec = metadata['source']
-    with source.open('rb') as stream:
-        if (os.fstat(stream.fileno()).st_size != spec['fileSizeBytes']
-                or hashlib.file_digest(stream,'sha256').hexdigest() != spec['sha256']):
-            raise ValueError('ORIGINAL_VIDEO_IDENTITY_MISMATCH')
+    with timing.measure('originalIdentity'):
+        with source.open('rb') as stream:
+            if (os.fstat(stream.fileno()).st_size != spec['fileSizeBytes']
+                    or hashlib.file_digest(stream,'sha256').hexdigest() != spec['sha256']):
+                raise ValueError('ORIGINAL_VIDEO_IDENTITY_MISMATCH')
     deadline = min(deadline,time.monotonic()+120)
     demuxer = 'matroska' if spec['mimeType']=='video/webm' else 'mov'
-    initial = await probe(source,deadline,demuxer)
+    with timing.measure('initialProbe'):
+        initial = await probe(source,deadline,demuxer)
     v,a = streams(initial)
+    source_video_codec = v['codec_name']
     if (not .5 <= float(initial['format']['duration']) <= 120
             or not 2 <= int(v['width']) <= 3840 or not 2 <= int(v['height']) <= 3840
             or int(v['width'])*int(v['height']) > 3840*2160
@@ -114,31 +126,39 @@ async def normalize(folder, metadata, *, deadline):
     # One common origin; no independent setpts/asetpts that would erase A/V offset.
     args += ['-copyts','-start_at_zero','-i',str(source),'-map','0:v:0','-map','0:a:0',
         '-map_metadata','-1','-map_chapters','-1']
-    clock = await audio_clock(source,deadline,demuxer)
+    with timing.measure('audioClockProbe'):
+        clock = await audio_clock(source,deadline,demuxer)
     preserved = preserve_tracks(v,a) and not (clock and clock['requiresRegularization'])
+    video_preserved = preserved or (preserve_video_during_audio_encode and preserve_video(v))
     if preserved:
         args += ['-c','copy']
     else:
-        args += ['-vf',"scale=w='if(gte(iw,ih),min(1920,iw),min(1080,iw))':h='if(gte(iw,ih),min(1080,ih),min(1920,ih))':force_original_aspect_ratio=decrease:force_divisible_by=2,fps=30",
-            '-c:v','libx264','-preset','veryfast','-pix_fmt','yuv420p','-threads','1',
-            '-c:a','aac','-ac','1','-ar','16000','-b:a','64k']
+        if video_preserved:
+            args += ['-c:v','copy']
+        else:
+            args += ['-vf',"scale=w='if(gte(iw,ih),min(1920,iw),min(1080,iw))':h='if(gte(iw,ih),min(1080,ih),min(1920,ih))':force_original_aspect_ratio=decrease:force_divisible_by=2,fps=30",
+                '-c:v','libx264','-preset','veryfast','-pix_fmt','yuv420p','-threads','1']
+        args += ['-c:a','aac','-ac','1','-ar','16000','-b:a','64k']
         if clock is not None:
             # Keep STARTPTS: independently resetting audio/video to zero loses
             # the real capture offset. Only bounded jitter is regularized;
             # real gaps/drift keep their original PTS and remain unscorable.
             args += ['-af','aresample=16000,asetpts=N/SR/TB+STARTPTS']
     args += ['-metadata:s:v:0','rotate=0','-movflags','+faststart','-f','mp4','-n',str(video)]
-    await capture(args,deadline)
+    with timing.measure('canonicalMux'):
+        await capture(args,deadline)
     if not 0 < video.stat().st_size <= VIDEO_LIMIT: raise ValueError('NORMALIZED_VIDEO_TOO_LARGE')
     # Decode the accepted canonical MP4, not the source: visual replay later
     # verifies sample-exact equality against this same AAC decode.
-    await capture(['/usr/bin/ffmpeg','-nostdin','-v','error','-threads','1',
-        '-protocol_whitelist','file,pipe','-i',str(video),'-map','0:a:0','-vn',
-        '-ac','1','-ar','16000','-c:a','pcm_s16le','-f','wav','-n',str(audio)],deadline)
+    with timing.measure('canonicalPcmDecode'):
+        await capture(['/usr/bin/ffmpeg','-nostdin','-v','error','-threads','1',
+            '-protocol_whitelist','file,pipe','-i',str(video),'-map','0:a:0','-vn',
+            '-ac','1','-ar','16000','-c:a','pcm_s16le','-f','wav','-n',str(audio)],deadline)
     if not 0 < audio.stat().st_size <= AUDIO_LIMIT: raise ValueError('NORMALIZED_AUDIO_TOO_LARGE')
     for path in (video,audio): path.chmod(0o600)
     pcm_valid(audio.read_bytes())
-    final = await probe(video,deadline)
+    with timing.measure('finalProbe'):
+        final = await probe(video,deadline)
     v,a = streams(final)
     if (v['codec_name'] not in ('h264','hevc') or a['codec_name']!='aac'
             or not .5 <= float(final['format']['duration']) <= 120
@@ -148,7 +168,8 @@ async def normalize(folder, metadata, *, deadline):
         with path.open('rb') as f: pin=hashlib.file_digest(f,'sha256').hexdigest()
         return dict(sha256=pin,fileSizeBytes=path.stat().st_size,mimeType=mime)
     out = {k:metadata[k] for k in ('clientRequestId','scriptText','contentId')}
-    out.update(audio=spec_for(audio,'audio/wav'),video=spec_for(video,'video/mp4'))
+    with timing.measure('canonicalIdentity'):
+        out.update(audio=spec_for(audio,'audio/wav'),video=spec_for(video,'video/mp4'))
     receipt=dict(schemaVersion='voice-coaching.ai-media-preparation.v1',sourceSha256=spec['sha256'],
         canonicalPcmSha256=out['audio']['sha256'],canonicalVideoSha256=out['video']['sha256'],
         normalizationRevision=REVISION,canonicalAudioStartSeconds=float(a['start_time']),
@@ -158,5 +179,11 @@ async def normalize(folder, metadata, *, deadline):
     atomic(folder/'normalized-input.json',encoded(out))
     atomic(folder/'normalization-observation.json',encoded(dict(revision=REVISION,
         tracksPreserved=preserved,width=v['width'],height=v['height'],
+        videoTrackPreserved=video_preserved,audioTrackPreserved=preserved,
+        experimentalVideoCopyDuringAudioEncode=preserve_video_during_audio_encode,
+        sourceVideoCodec=source_video_codec,
+        sourceClockRequiresRegularization=bool(clock and clock['requiresRegularization']),
+        normalizationMode='COPY_ALL' if preserved else 'COPY_VIDEO_ENCODE_AUDIO' if video_preserved else 'ENCODE_VIDEO_AUDIO',
+        timing=dict(totalSeconds=time.monotonic()-started,semantics='inclusive; do not add nested spans',spans=timing.spans),
         audioClockRegularized=not preserved and clock is not None,sourceAudioClock=clock)))
     return out

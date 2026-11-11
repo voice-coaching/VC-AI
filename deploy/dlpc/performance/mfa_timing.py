@@ -6,7 +6,9 @@ import time
 
 def attach(aligner, record):
     spans = record.setdefault('performanceSpans', {})
-    methods = ('setup', 'setup_database', 'load_corpus', '_load_corpus_from_source_mp',
+    methods = ('setup', 'setup_database', 'initialize_database', 'inspect_database',
+               'load_corpus', '_load_corpus', '_load_corpus_from_source_mp',
+               'validate_corpus', '_create_dummy_dictionary',
                'dictionary_setup', 'initialize_jobs', 'normalize_text',
                'generate_features', 'compile_train_graphs', 'align_utterances',
                'analyze_alignments', 'export_files', 'cleanup')

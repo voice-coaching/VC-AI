@@ -194,7 +194,7 @@ class RealCodecRegression(unittest.IsolatedAsyncioTestCase):
             with wave.open(str(root/'audio.wav')) as wav:self.assertEqual(wav.readframes(wav.getnframes()),pcm)
             self.assertEqual(source.read_bytes(),raw)
             self.assertTrue(json.loads((root/'normalization-observation.json').read_bytes())['audioClockRegularized'])
-            self.assertEqual(normalized['mediaPreparation']['receipt']['normalizationRevision'],'ai-original-video-pcm-20261108-v3')
+            self.assertEqual(normalized['mediaPreparation']['receipt']['normalizationRevision'],'ai-original-video-pcm-20261111-v4')
 
 
 if __name__=='__main__':unittest.main()
